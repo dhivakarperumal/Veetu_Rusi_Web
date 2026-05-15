@@ -184,6 +184,8 @@ const Profile = () => {
         ? new Date(profileData.created_at).toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" })
         : "";
 
+    const profileInitial = (profileData.name || profileData.username || "U").charAt(0).toUpperCase();
+
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
@@ -203,14 +205,8 @@ const Profile = () => {
 
                         {/* Avatar */}
                         <div className="relative group">
-                            <div className="w-32 h-32 rounded-[2rem] bg-indigo-500 ring-8 ring-white shadow-xl overflow-hidden flex items-center justify-center">
-                                <img
-                                    src={`https://ui-avatars.com/api/?name=${profileData.username || "User"}&background=random&size=128`}
-                                    alt="Profile"
-                                />
-                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-[2rem] cursor-pointer">
-                                    <FiCamera className="text-white text-2xl" />
-                                </div>
+                            <div className="w-32 h-32 rounded-[2rem] bg-indigo-500 ring-8 ring-white shadow-xl overflow-hidden flex items-center justify-center text-white text-7xl font-black">
+                                {profileInitial}
                             </div>
                         </div>
 

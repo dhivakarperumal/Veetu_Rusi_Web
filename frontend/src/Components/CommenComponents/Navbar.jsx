@@ -10,7 +10,8 @@ import {
   ShoppingCart,
   Package
 } from "lucide-react";
-import logo from "/assets/sareelogo.png";
+
+import logo from "/logo.png";
 import PageContainer from "./PageContainer";
 import api from "../../api";
 import { FiHome, FiShoppingBag, FiGrid, FiFileText, FiPhone, FiChevronDown } from "react-icons/fi";
@@ -293,7 +294,7 @@ const navClass = ({ isActive }) =>
                   onClick={() => setUserMenu(!userMenu)}
                   className="w-9 h-9 cursor-pointer rounded-full bg-gradient-to-r from-primary to-primary-light text-white flex items-center justify-center font-semibold shadow-md hover:scale-110 transition"
                 >
-                  {user.username?.charAt(0).toUpperCase()}
+                  {(user.username || user.name || "User").charAt(0).toUpperCase()}
                 </button>
 
                 {userMenu && (

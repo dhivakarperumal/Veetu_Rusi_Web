@@ -84,13 +84,13 @@ function Login() {
         </h2>
 
         {/* LOGO */}
-        {/* <div className="flex justify-center mb-4">
+        <div className="flex justify-center mb-4">
           <img
             src="/logo.png"
             alt="Logo"
             className="h-14 object-contain"
           />
-        </div> */}
+        </div>
 
         <p className="text-center text-muted mb-6 text-sm">
           Login to explore our premium saree collection

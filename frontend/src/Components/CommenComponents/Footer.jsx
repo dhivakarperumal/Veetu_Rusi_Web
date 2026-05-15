@@ -28,7 +28,7 @@ const Footer = () => {
             <Link to="/" className="flex items-center gap-3 mb-4">
 
               <img
-                src="/assets/sareelogo.png"
+                src="/logo.png"
                 alt="My Store"
                 className="w-12 h-12 rounded-lg bg-white p-1"
               />
