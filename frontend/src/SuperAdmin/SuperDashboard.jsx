@@ -98,16 +98,25 @@ const StatCard = ({ icon: Icon, label, value, trend, positive, gradient, iconBg,
 );
 
 // ─── Chart Card wrapper ───────────────────────────────────────────────────────
-const ChartCard = ({ title, subtitle, icon: Icon, iconColor, children }) => (
-  <div className="bg-[#0B1120]/60 backdrop-blur-md border border-white/5 rounded-[2rem] p-6 shadow-xl">
-    <div className="flex items-center justify-between mb-5">
-      <div>
-        <h3 className="text-sm font-black text-white uppercase tracking-tight">{title}</h3>
-        <p className="text-[10px] text-white/30 font-bold uppercase tracking-widest mt-0.5">{subtitle}</p>
+const ChartCard = ({ title, subtitle, icon: Icon, iconColor, children, gradient = "linear-gradient(135deg,#0a0f1c 0%,#04060b 100%)" }) => (
+  <div className="relative overflow-hidden border border-white/5 rounded-[2rem] p-6 shadow-2xl" style={{ background: gradient }}>
+    {/* Subtle Background Glow */}
+    <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/4 pointer-events-none" />
+    
+    <div className="relative z-10">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h3 className="text-sm font-black text-white uppercase tracking-tight">{title}</h3>
+          <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-1">{subtitle}</p>
+        </div>
+        {Icon && (
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white/5 border border-white/10 shadow-inner">
+            <Icon className={`w-5 h-5 ${iconColor}`} strokeWidth={2.5} />
+          </div>
+        )}
       </div>
-      {Icon && <Icon className={`w-5 h-5 ${iconColor}`} />}
+      {children}
     </div>
-    {children}
   </div>
 );
 
@@ -211,7 +220,7 @@ const SuperDashboard = () => {
 
       {/* ── Quick Access ──────────────────────────────────────────── */}
       <div>
-        <h2 className="text-sm font-black text-white uppercase tracking-tight mb-4 flex items-center gap-2">
+        <h2 className="text-sm font-black text-slate-800 uppercase tracking-tight mb-4 flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_#10B981]" />
           Quick Actions
         </h2>
