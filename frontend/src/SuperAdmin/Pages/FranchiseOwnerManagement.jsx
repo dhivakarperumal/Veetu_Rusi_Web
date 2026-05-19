@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import api from "../../api";
 import { toast } from "react-hot-toast";
 import { Search, Plus, Trash2, Edit2, Landmark, MapPin } from "lucide-react";
@@ -228,8 +229,8 @@ const FranchiseOwnerManagement = () => {
       )}
 
       {/* Add / Edit Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {isModalOpen && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={() => setIsModalOpen(false)}></div>
           <form
             onSubmit={handleSubmit}
@@ -350,7 +351,8 @@ const FranchiseOwnerManagement = () => {
               </button>
             </div>
           </form>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
