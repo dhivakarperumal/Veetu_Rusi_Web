@@ -56,12 +56,12 @@ const ErrorPage = React.lazy(() => import("./Admin/Pages/ErrorPage.jsx"));
 // Lazy Load SuperAdmin Components
 const SuperAdminPanel = React.lazy(() => import("./SuperAdmin/SuperAdminPanel.jsx"));
 const SuperDashboard = React.lazy(() => import("./SuperAdmin/SuperDashboard.jsx"));
-const RestaurantManagement = React.lazy(() => import("./SuperAdmin/Pages/RestaurantManagement.jsx"));
-const HomeChefManagement = React.lazy(() => import("./SuperAdmin/Pages/HomeChefManagement.jsx"));
-const DeliveryPartnerManagement = React.lazy(() => import("./SuperAdmin/Pages/DeliveryPartnerManagement.jsx"));
-const UserManagement = React.lazy(() => import("./SuperAdmin/Pages/UserManagement.jsx"));
-const OrderManagement = React.lazy(() => import("./SuperAdmin/Pages/OrderManagement.jsx"));
-const PayoutManagement = React.lazy(() => import("./SuperAdmin/Pages/PayoutManagement.jsx"));
+const RestaurantManagement = React.lazy(() => import("./Admin/Pages/RestaurantManagement.jsx"));
+const HomeChefManagement = React.lazy(() => import("./Admin/Pages/HomeChefManagement.jsx"));
+const DeliveryPartnerManagement = React.lazy(() => import("./Admin/Pages/DeliveryPartnerManagement.jsx"));
+const UserManagement = React.lazy(() => import("./Admin/Pages/UserManagement.jsx"));
+const OrderManagement = React.lazy(() => import("./Admin/Pages/OrderManagement.jsx"));
+const PayoutManagement = React.lazy(() => import("./Admin/Pages/PayoutManagement.jsx"));
 const FranchiseOwnerManagement = React.lazy(() => import("./SuperAdmin/Pages/FranchiseOwnerManagement.jsx"));
 const CommissionManagement = React.lazy(() => import("./SuperAdmin/Pages/CommissionManagement.jsx"));
 const SuperBannerManagement = React.lazy(() => import("./SuperAdmin/Pages/BannerManagement.jsx"));
@@ -129,6 +129,12 @@ const router = createBrowserRouter([
     errorElement: <ErrorPage />,
     children: [
       { index: true, element: <Dashboard /> },
+      { path: "restaurants", element: <RestaurantManagement /> },
+      { path: "homechefs", element: <HomeChefManagement /> },
+      { path: "delivery-partners", element: <DeliveryPartnerManagement /> },
+      { path: "users", element: <UserManagement /> },
+      { path: "orders", element: <OrderManagement /> },
+      { path: "payouts", element: <PayoutManagement /> },
       // Products
       { path: "products/all", element: <AllProducts /> },
       { path: "products/add", element: <AddProducts /> },

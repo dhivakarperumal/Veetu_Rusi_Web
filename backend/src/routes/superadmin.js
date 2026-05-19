@@ -6,7 +6,7 @@ const upload = require('../config/multer');
 
 // Apply JWT verification & superadmin role check to all superadmin endpoints
 router.use(verifyToken);
-router.use(requireRole(['superadmin']));
+router.use(requireRole(['superadmin', 'admin']));
 
 // Dashboard Analytics
 router.get('/dashboard-stats', controller.getDashboardStats);

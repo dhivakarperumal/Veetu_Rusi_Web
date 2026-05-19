@@ -20,7 +20,12 @@ import {
   Archive,
   Handshake,
   Video,
-  Image
+  Image,
+  Store,
+  ChefHat,
+  Bike,
+  ShoppingBag,
+  CreditCard
 } from "lucide-react";
 
 import { useAuth } from "../PrivateRouter/AuthContext";
@@ -28,6 +33,12 @@ import { useAuth } from "../PrivateRouter/AuthContext";
 /* ================= NAV ITEMS ================= */
 const navItems = [
   { path: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
+  { path: "/admin/restaurants", label: "Restaurants", icon: Store },
+  { path: "/admin/homechefs", label: "Home Chefs", icon: ChefHat },
+  { path: "/admin/delivery-partners", label: "Delivery Partners", icon: Bike },
+  { path: "/admin/users", label: "User Management", icon: Users },
+  { path: "/admin/orders", label: "Order Management", icon: ShoppingBag },
+  { path: "/admin/payouts", label: "Payouts & Earnings", icon: CreditCard },
 
   {
     label: "Inventory",

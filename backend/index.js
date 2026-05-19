@@ -5,6 +5,7 @@ require('dotenv').config();
 const path = require('path');
 const authRouter = require('./src/routes/auth');
 const superadminRouter = require('./src/routes/superadmin');
+const dashboardRouter = require('./src/routes/dashboard');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -15,6 +16,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use('/api/auth', authRouter);
 app.use('/api/superadmin', superadminRouter);
+app.use('/api/dashboard', dashboardRouter);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });

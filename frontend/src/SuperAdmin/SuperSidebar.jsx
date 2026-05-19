@@ -21,7 +21,8 @@ import { useAuth } from "../PrivateRouter/AuthContext";
 
 const navItems = [
   { path: "/superadmin", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  
+  { path: "/superadmin/restaurants", label: "Restaurants", icon: Store },
+ 
   { path: "/superadmin/franchises", label: "Franchise Owners", icon: Landmark },
   { path: "/superadmin/commissions", label: "Commissions", icon: Percent },
   { path: "/superadmin/banners", label: "Banner Management", icon: Image },
