@@ -155,7 +155,13 @@ const SuperDashboard = () => {
       value: cards.totalRestaurants || 0,
       gradient: "linear-gradient(135deg,#03120f 0%,#0B1120 100%)",
       iconBg: "#06B6D4"
-    }
+    },
+     {
+          label: "Pending Approvals", icon: Clock, positive: false, trend: "Review",
+          value: cards?.pendingApprovals || 0,
+          gradient: "linear-gradient(135deg,#2e0d05 0%,#0B1120 100%)",
+          iconBg: "#EF4444"
+        }
   ];
 
   return (

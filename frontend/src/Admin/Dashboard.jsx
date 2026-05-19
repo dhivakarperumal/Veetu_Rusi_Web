@@ -62,7 +62,7 @@ const ChartTooltip = ({ active, payload, label }) => {
 // ─── Stat Card ────────────────────────────────────────────────────────────────
 const StatCard = ({ icon: Icon, label, value, trend, positive, gradient, iconBg, delay }) => (
   <div
-    className="relative overflow-hidden rounded-3xl p-6 shadow-xl hover:-translate-y-1 transition-all duration-300 group"
+    className="relative overflow-hidden rounded-3xl p-6 border border-white/5 shadow-xl hover:-translate-y-1 transition-all duration-300 group"
     style={{ background: gradient, animationDelay: `${delay}ms` }}
   >
     <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full opacity-20 blur-2xl" style={{ background: iconBg }} />
@@ -73,16 +73,16 @@ const StatCard = ({ icon: Icon, label, value, trend, positive, gradient, iconBg,
       </div>
       <span className={`flex items-center gap-1 text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider border ${
         positive
-          ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
-          : "bg-amber-500/10 text-amber-500 border-amber-500/20"
+          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+          : "bg-amber-500/10 text-amber-400 border-amber-500/20"
       }`}>
         {positive ? <ArrowUpRight className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
         {trend}
       </span>
     </div>
 
-    <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.18em] leading-none mb-2 relative z-10">{label}</p>
-    <h3 className="text-3xl font-black text-slate-800 tracking-tight relative z-10">{value}</h3>
+    <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.18em] leading-none mb-2 relative z-10">{label}</p>
+    <h3 className="text-3xl font-black text-white tracking-tight relative z-10">{value}</h3>
   </div>
 );
 
@@ -135,38 +135,38 @@ const Dashboard = () => {
     {
       label: "Total Orders", icon: ShoppingBag, positive: true, trend: "+8.2%",
       value: cards?.totalOrders || 0,
-      gradient: "linear-gradient(135deg,#f8fafc 0%,#ffffff 100%)",
+      gradient: "linear-gradient(135deg,#05162e 0%,#0B1120 100%)",
       iconBg: "#3B82F6"
     },
     {
       label: "Total Users", icon: Users, positive: true, trend: "+15.1%",
       value: cards?.totalUsers || 0,
-      gradient: "linear-gradient(135deg,#f8fafc 0%,#ffffff 100%)",
+      gradient: "linear-gradient(135deg,#1f052e 0%,#0B1120 100%)",
       iconBg: "#8B5CF6"
     },
     {
       label: "Restaurants", icon: Store, positive: true, trend: "+4.3%",
       value: cards?.totalRestaurants || 0,
-      gradient: "linear-gradient(135deg,#f8fafc 0%,#ffffff 100%)",
-      iconBg: "#10B981"
+      gradient: "linear-gradient(135deg,#03120f 0%,#0B1120 100%)",
+      iconBg: "#06B6D4"
     },
     {
       label: "Home Chefs", icon: ChefHat, positive: true, trend: "+6.8%",
       value: cards?.totalHomeChefs || 0,
-      gradient: "linear-gradient(135deg,#f8fafc 0%,#ffffff 100%)",
+      gradient: "linear-gradient(135deg,#2e0516 0%,#0B1120 100%)",
       iconBg: "#EC4899"
     },
     {
       label: "Delivery Partners", icon: Bike, positive: true, trend: "+2.1%",
       value: cards?.totalDeliveryPartners || 0,
-      gradient: "linear-gradient(135deg,#f8fafc 0%,#ffffff 100%)",
-      iconBg: "#06B6D4"
+      gradient: "linear-gradient(135deg,#2e1a05 0%,#0B1120 100%)",
+      iconBg: "#F59E0B"
     },
     {
       label: "Pending Approvals", icon: Clock, positive: false, trend: "Review",
       value: cards?.pendingApprovals || 0,
-      gradient: "linear-gradient(135deg,#f8fafc 0%,#ffffff 100%)",
-      iconBg: "#F97316"
+      gradient: "linear-gradient(135deg,#2e0d05 0%,#0B1120 100%)",
+      iconBg: "#EF4444"
     }
   ];
 
