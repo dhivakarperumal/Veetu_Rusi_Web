@@ -313,7 +313,7 @@ const Header = ({ onMenuClick }) => {
               {getPageTitle()}
             </h1>
             <p className="hidden sm:block text-[10px] text-blue-600 font-bold uppercase tracking-[0.2em] mt-1 opacity-70">
-              Palace Artisan Admin
+              Veetu Rusi Artisan Admin
             </p>
           </div>
         </div>

@@ -13,10 +13,10 @@ const Loader = () => {
 
       <div className="mt-12 text-center animate-in fade-in slide-in-from-bottom-4 duration-1000">
         <h1 className="text-4xl font-black tracking-[0.3em] bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-400 to-blue-400 animate-gradient-x">
-          SAREE WORLD
+          VEETU RUSI
         </h1>
         <p className="text-[10px] text-blue-400 font-bold uppercase tracking-[0.4em] mt-3 opacity-60">
-          Luxury Artisan Collection
+          Traditional Home Taste
         </p>
       </div>
 

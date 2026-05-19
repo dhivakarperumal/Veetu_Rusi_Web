@@ -103,7 +103,7 @@ const navClass = ({ isActive }) =>
           <Link to="/" className="flex items-center gap-2">
             <img
               src={logo}
-              alt="Saree Palace"
+              alt="Veetu Rusi"
               className="h-10 md:h-18 object-contain"
             />
 

@@ -97,7 +97,7 @@ function Login() {
         </div>
 
         <p className="text-center text-muted mb-6 text-sm">
-          Login to explore our premium saree collection
+          Login to explore our traditional home taste collection
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
