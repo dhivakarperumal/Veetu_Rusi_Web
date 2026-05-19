@@ -83,13 +83,97 @@ async function createDatabaseAndTables() {
       fssai_number VARCHAR(100),
       mobile VARCHAR(50) NOT NULL,
       email VARCHAR(255) NOT NULL UNIQUE,
-      address TEXT NOT NULL,
+      address TEXT,
       status VARCHAR(50) NOT NULL DEFAULT 'Pending',
+      
+      restaurant_type VARCHAR(100) DEFAULT 'Both',
+      cuisine_type VARCHAR(255) DEFAULT 'Multi Cuisine',
+      description TEXT,
+      opening_date DATE,
+      logo_url VARCHAR(255),
+      banner_url VARCHAR(255),
+      gallery_urls TEXT,
+      
+      alt_mobile VARCHAR(50),
+      whatsapp_number VARCHAR(50),
+      website_url VARCHAR(255),
+      customer_support VARCHAR(50),
+      
+      door_number VARCHAR(50),
+      street_name VARCHAR(255),
+      area_name VARCHAR(255),
+      landmark VARCHAR(255),
+      city VARCHAR(150),
+      district VARCHAR(150),
+      state VARCHAR(150),
+      pincode VARCHAR(20),
+      latitude VARCHAR(50),
+      longitude VARCHAR(50),
+      map_link TEXT,
+      
+      opening_time VARCHAR(50),
+      closing_time VARCHAR(50),
+      working_days VARCHAR(255),
+      holiday_details TEXT,
+      is_24_hours TINYINT(1) DEFAULT 0,
+      peak_hours VARCHAR(255),
+      
+      username VARCHAR(255),
+      password VARCHAR(255),
+      role VARCHAR(50) DEFAULT 'Restaurant Admin',
+      otp_verified TINYINT(1) DEFAULT 0,
+      email_verified TINYINT(1) DEFAULT 0,
+      
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
   console.log('Restaurants table created or already exists');
+
+  const [restColumns] = await connection.execute(
+    "SELECT COUNT(*) AS count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'restaurants' AND COLUMN_NAME = 'restaurant_type'",
+    [DB_NAME]
+  );
+
+  if (restColumns[0].count === 0) {
+    await connection.execute(`
+      ALTER TABLE \`restaurants\`
+      ADD COLUMN \`restaurant_type\` VARCHAR(100) DEFAULT 'Both',
+      ADD COLUMN \`cuisine_type\` VARCHAR(255) DEFAULT 'Multi Cuisine',
+      ADD COLUMN \`description\` TEXT,
+      ADD COLUMN \`opening_date\` DATE,
+      ADD COLUMN \`logo_url\` VARCHAR(255),
+      ADD COLUMN \`banner_url\` VARCHAR(255),
+      ADD COLUMN \`gallery_urls\` TEXT,
+      ADD COLUMN \`alt_mobile\` VARCHAR(50),
+      ADD COLUMN \`whatsapp_number\` VARCHAR(50),
+      ADD COLUMN \`website_url\` VARCHAR(255),
+      ADD COLUMN \`customer_support\` VARCHAR(50),
+      ADD COLUMN \`door_number\` VARCHAR(50),
+      ADD COLUMN \`street_name\` VARCHAR(255),
+      ADD COLUMN \`area_name\` VARCHAR(255),
+      ADD COLUMN \`landmark\` VARCHAR(255),
+      ADD COLUMN \`city\` VARCHAR(150),
+      ADD COLUMN \`district\` VARCHAR(150),
+      ADD COLUMN \`state\` VARCHAR(150),
+      ADD COLUMN \`pincode\` VARCHAR(20),
+      ADD COLUMN \`latitude\` VARCHAR(50),
+      ADD COLUMN \`longitude\` VARCHAR(50),
+      ADD COLUMN \`map_link\` TEXT,
+      ADD COLUMN \`opening_time\` VARCHAR(50),
+      ADD COLUMN \`closing_time\` VARCHAR(50),
+      ADD COLUMN \`working_days\` VARCHAR(255),
+      ADD COLUMN \`holiday_details\` TEXT,
+      ADD COLUMN \`is_24_hours\` TINYINT(1) DEFAULT 0,
+      ADD COLUMN \`peak_hours\` VARCHAR(255),
+      ADD COLUMN \`username\` VARCHAR(255),
+      ADD COLUMN \`password\` VARCHAR(255),
+      ADD COLUMN \`role\` VARCHAR(50) DEFAULT 'Restaurant Admin',
+      ADD COLUMN \`otp_verified\` TINYINT(1) DEFAULT 0,
+      ADD COLUMN \`email_verified\` TINYINT(1) DEFAULT 0
+    `);
+    console.log('Added all new fields to the existing restaurants table');
+  }
 
   await connection.execute(`
     CREATE TABLE IF NOT EXISTS \`home_chefs\` (

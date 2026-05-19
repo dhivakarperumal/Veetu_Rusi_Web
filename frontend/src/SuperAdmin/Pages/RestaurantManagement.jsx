@@ -1,7 +1,21 @@
 import React, { useEffect, useState } from "react";
 import api from "../../api";
 import { toast } from "react-hot-toast";
-import { Search, Filter, Trash2, Check, X, ShieldAlert, Eye } from "lucide-react";
+import { Search, Filter, Trash2, Check, X, ShieldAlert, Eye, Plus, Edit2 } from "lucide-react";
+
+const emptyForm = {
+  name: "",
+  owner_name: "",
+  email: "",
+  mobile: "",
+  address: "",
+  gst_number: "",
+  fssai_number: "",
+  status: "Pending",
+  username: "",
+  password: "",
+  confirmPassword: "",
+};
 
 const RestaurantManagement = () => {
   const [restaurants, setRestaurants] = useState([]);
@@ -9,12 +23,18 @@ const RestaurantManagement = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
-  const [selectedRest, setSelectedRest] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  useEffect(() => {
-    fetchRestaurants();
-  }, []);
+  // View Details Modal
+  const [selectedRest, setSelectedRest] = useState(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+
+  // Add / Edit Popup Modal
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingRest, setEditingRest] = useState(null);
+  const [form, setForm] = useState(emptyForm);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => { fetchRestaurants(); }, []);
 
   const fetchRestaurants = async () => {
     try {
@@ -22,7 +42,7 @@ const RestaurantManagement = () => {
       const res = await api.get("/superadmin/restaurants");
       setRestaurants(res.data);
       setFilteredRestaurants(res.data);
-    } catch (error) {
+    } catch {
       toast.error("Failed to load restaurants.");
     } finally {
       setLoading(false);
@@ -35,33 +55,73 @@ const RestaurantManagement = () => {
       const lower = search.toLowerCase();
       result = result.filter(
         (r) =>
-          r.name.toLowerCase().includes(lower) ||
-          r.owner_name.toLowerCase().includes(lower) ||
-          r.email.toLowerCase().includes(lower)
+          r.name?.toLowerCase().includes(lower) ||
+          r.owner_name?.toLowerCase().includes(lower) ||
+          r.email?.toLowerCase().includes(lower)
       );
     }
-    if (statusFilter !== "All") {
-      result = result.filter((r) => r.status === statusFilter);
-    }
+    if (statusFilter !== "All") result = result.filter((r) => r.status === statusFilter);
     setFilteredRestaurants(result);
   }, [search, statusFilter, restaurants]);
 
+  const openAddModal = () => {
+    setEditingRest(null);
+    setForm(emptyForm);
+    setIsFormOpen(true);
+  };
+
+  const openEditModal = (rest) => {
+    setEditingRest(rest);
+    setForm({
+      name: rest.name || "",
+      owner_name: rest.owner_name || "",
+      email: rest.email || "",
+      mobile: rest.mobile || "",
+      address: rest.address || "",
+      gst_number: rest.gst_number || "",
+      fssai_number: rest.fssai_number || "",
+      status: rest.status || "Pending",
+      username: rest.username || "",
+      password: "",
+      confirmPassword: "",
+    });
+    setIsFormOpen(true);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!editingRest && form.password !== form.confirmPassword) {
+      toast.error("Passwords do not match.");
+      return;
+    }
+    try {
+      setSaving(true);
+      if (editingRest) {
+        await api.put(`/superadmin/restaurants/${editingRest.id}`, form);
+        toast.success("Restaurant updated successfully.");
+      } else {
+        await api.post("/superadmin/restaurants", form);
+        toast.success("Restaurant registered successfully.");
+      }
+      setIsFormOpen(false);
+      fetchRestaurants();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to save restaurant.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleStatusChange = async (id, newStatus) => {
     try {
-      // Fetch details first to modify
       const target = restaurants.find((r) => r.id === id);
       if (!target) return;
-      await api.put(`/superadmin/restaurants/${id}`, {
-        ...target,
-        status: newStatus
-      });
-      toast.success(`Restaurant status updated to ${newStatus}`);
+      await api.put(`/superadmin/restaurants/${id}`, { ...target, status: newStatus });
+      toast.success(`Status updated to ${newStatus}`);
       fetchRestaurants();
-      if (selectedRest?.id === id) {
-        setSelectedRest((prev) => ({ ...prev, status: newStatus }));
-      }
-    } catch (error) {
-      toast.error("Failed to change restaurant status.");
+      if (selectedRest?.id === id) setSelectedRest((prev) => ({ ...prev, status: newStatus }));
+    } catch {
+      toast.error("Failed to change status.");
     }
   };
 
@@ -69,15 +129,21 @@ const RestaurantManagement = () => {
     if (!window.confirm("Are you sure you want to delete this restaurant?")) return;
     try {
       await api.delete(`/superadmin/restaurants/${id}`);
-      toast.success("Restaurant removed successfully.");
+      toast.success("Restaurant removed.");
       fetchRestaurants();
-    } catch (error) {
+      if (selectedRest?.id === id) { setSelectedRest(null); setIsDetailOpen(false); }
+    } catch {
       toast.error("Failed to delete restaurant.");
     }
   };
 
+  const inp = "w-full px-4 py-2.5 bg-[#070b13]/60 border border-white/10 rounded-xl outline-none font-medium text-white text-sm focus:border-emerald-500/40 transition-all placeholder:text-white/20";
+  const lbl = "text-[10px] text-white/40 font-bold uppercase tracking-wider block mb-1";
+
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
+
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-black text-white tracking-tight uppercase italic">Restaurant Management</h2>
@@ -85,6 +151,12 @@ const RestaurantManagement = () => {
             Approve/Reject restaurants, verify GST/FSSAI compliance and manage outlets
           </p>
         </div>
+        <button
+          onClick={openAddModal}
+          className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-emerald-900/30 transition active:scale-95 self-start sm:self-auto flex-shrink-0"
+        >
+          <Plus className="w-4 h-4" /> Add Restaurant
+        </button>
       </div>
 
       {/* Filter and Search Bar */}
@@ -120,7 +192,7 @@ const RestaurantManagement = () => {
       {loading ? (
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-16 bg-white/5 rounded-2xl animate-pulse"></div>
+            <div key={i} className="h-16 bg-white/5 rounded-2xl animate-pulse" />
           ))}
         </div>
       ) : (
@@ -148,29 +220,31 @@ const RestaurantManagement = () => {
                     <td className="px-6 py-5 text-sm font-bold text-white/60">{rest.owner_name}</td>
                     <td className="px-6 py-5 text-sm font-bold text-white/60">{rest.gst_number || "N/A"}</td>
                     <td className="px-6 py-5">
-                      <span
-                        className={`text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider ${
-                          rest.status === "Approved"
-                            ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                            : rest.status === "Pending"
-                            ? "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
-                            : "bg-red-500/10 text-red-400 border border-red-500/20"
-                        }`}
-                      >
+                      <span className={`text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider ${
+                        rest.status === "Approved"
+                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                          : rest.status === "Pending"
+                          ? "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
+                          : "bg-red-500/10 text-red-400 border border-red-500/20"
+                      }`}>
                         {rest.status}
                       </span>
                     </td>
                     <td className="px-6 py-5">
                       <div className="flex items-center justify-center gap-2">
                         <button
-                          onClick={() => {
-                            setSelectedRest(rest);
-                            setIsModalOpen(true);
-                          }}
+                          onClick={() => { setSelectedRest(rest); setIsDetailOpen(true); }}
                           className="p-2 hover:bg-white/10 text-white/70 hover:text-white rounded-xl transition"
                           title="View Details"
                         >
                           <Eye className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => openEditModal(rest)}
+                          className="p-2 hover:bg-blue-500/10 text-blue-400 rounded-xl transition"
+                          title="Edit Restaurant"
+                        >
+                          <Edit2 className="w-4 h-4" />
                         </button>
                         {rest.status !== "Approved" && (
                           <button
@@ -214,16 +288,21 @@ const RestaurantManagement = () => {
         </div>
       )}
 
-      {/* Details Modal */}
-      {isModalOpen && selectedRest && (
+      {/* ===== VIEW DETAILS MODAL ===== */}
+      {isDetailOpen && selectedRest && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={() => setIsModalOpen(false)}></div>
+          <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm" onClick={() => setIsDetailOpen(false)} />
           <div className="bg-[#0B1120] border border-white/5 w-full max-w-lg rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300">
-            <div className="bg-[#1B4D22] p-8 text-white">
-              <h3 className="text-xl font-black uppercase italic tracking-tight">{selectedRest.name}</h3>
-              <p className="text-xs text-emerald-400 font-bold uppercase tracking-widest mt-1">Restaurant Details</p>
+            <div className="bg-[#1B4D22] p-8 text-white flex items-start justify-between">
+              <div>
+                <h3 className="text-xl font-black uppercase italic tracking-tight">{selectedRest.name}</h3>
+                <p className="text-xs text-emerald-400 font-bold uppercase tracking-widest mt-1">Restaurant Details</p>
+              </div>
+              <button onClick={() => setIsDetailOpen(false)} className="p-1.5 text-white/50 hover:text-white transition">
+                <X className="w-5 h-5" />
+              </button>
             </div>
-            <div className="p-8 space-y-6 text-white overflow-y-auto max-h-[60vh]">
+            <div className="p-8 space-y-6 text-white overflow-y-auto max-h-[55vh]">
               <div className="grid grid-cols-2 gap-6">
                 <div>
                   <p className="text-[10px] text-white/40 font-bold uppercase">Owner Name</p>
@@ -231,7 +310,7 @@ const RestaurantManagement = () => {
                 </div>
                 <div>
                   <p className="text-[10px] text-white/40 font-bold uppercase">Contact Number</p>
-                  <p className="text-sm font-black mt-0.5">{selectedRest.mobile}</p>
+                  <p className="text-sm font-black mt-0.5">{selectedRest.mobile || "N/A"}</p>
                 </div>
                 <div>
                   <p className="text-[10px] text-white/40 font-bold uppercase">Email Address</p>
@@ -251,40 +330,158 @@ const RestaurantManagement = () => {
                 </div>
                 <div className="col-span-2">
                   <p className="text-[10px] text-white/40 font-bold uppercase">Outlet Address</p>
-                  <p className="text-sm font-bold mt-0.5 text-white/80">{selectedRest.address}</p>
+                  <p className="text-sm font-bold mt-0.5 text-white/80">{selectedRest.address || "Not Provided"}</p>
                 </div>
               </div>
             </div>
-            <div className="p-8 border-t border-white/5 bg-[#070b13]/40 flex gap-3">
+            <div className="p-6 border-t border-white/5 bg-[#070b13]/40 flex gap-3">
               {selectedRest.status !== "Approved" && (
                 <button
-                  onClick={() => {
-                    handleStatusChange(selectedRest.id, "Approved");
-                    setIsModalOpen(false);
-                  }}
+                  onClick={() => { handleStatusChange(selectedRest.id, "Approved"); setIsDetailOpen(false); }}
                   className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl transition active:scale-95"
                 >
-                  Approve Restaurant
+                  Approve
                 </button>
               )}
               {selectedRest.status === "Pending" && (
                 <button
-                  onClick={() => {
-                    handleStatusChange(selectedRest.id, "Rejected");
-                    setIsModalOpen(false);
-                  }}
+                  onClick={() => { handleStatusChange(selectedRest.id, "Rejected"); setIsDetailOpen(false); }}
                   className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl transition active:scale-95"
                 >
-                  Reject Application
+                  Reject
                 </button>
               )}
               <button
-                onClick={() => setIsModalOpen(false)}
+                onClick={() => setIsDetailOpen(false)}
                 className="px-6 py-3 bg-white/5 hover:bg-white/10 text-white font-black text-xs uppercase tracking-widest rounded-2xl transition"
               >
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== ADD / EDIT POPUP MODAL ===== */}
+      {isFormOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm" onClick={() => setIsFormOpen(false)} />
+          <div className="bg-[#0B1120] border border-white/8 w-full max-w-2xl rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[92vh]">
+
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-[#1B4D22] to-emerald-800 p-7 text-white flex items-center justify-between flex-shrink-0">
+              <div>
+                <h3 className="text-lg font-black uppercase italic tracking-tight">
+                  {editingRest ? "Edit Restaurant" : "Register New Restaurant"}
+                </h3>
+                <p className="text-xs text-emerald-300/70 font-bold uppercase tracking-widest mt-0.5">
+                  {editingRest ? "Update outlet information" : "Fill in the details to add a new outlet"}
+                </p>
+              </div>
+              <button onClick={() => setIsFormOpen(false)} className="p-2 text-white/50 hover:text-white hover:bg-white/10 rounded-xl transition">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Form */}
+            <form onSubmit={handleSubmit} className="overflow-y-auto flex-1 p-7 space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                <div className="space-y-1">
+                  <label className={lbl}>Restaurant Name *</label>
+                  <input type="text" required placeholder="e.g. Grandma's Kitchen" value={form.name}
+                    onChange={e => setForm({ ...form, name: e.target.value })} className={inp} />
+                </div>
+
+                <div className="space-y-1">
+                  <label className={lbl}>Owner Name *</label>
+                  <input type="text" required placeholder="e.g. John Doe" value={form.owner_name}
+                    onChange={e => setForm({ ...form, owner_name: e.target.value })} className={inp} />
+                </div>
+
+                <div className="space-y-1">
+                  <label className={lbl}>Email Address *</label>
+                  <input type="email" required placeholder="owner@example.com" value={form.email}
+                    onChange={e => setForm({ ...form, email: e.target.value })} className={inp} />
+                </div>
+
+                <div className="space-y-1">
+                  <label className={lbl}>Mobile Number *</label>
+                  <input type="text" required placeholder="9876543210" value={form.mobile}
+                    onChange={e => setForm({ ...form, mobile: e.target.value })} className={inp} />
+                </div>
+
+                <div className="space-y-1">
+                  <label className={lbl}>GST Number</label>
+                  <input type="text" placeholder="22AAAAA0000A1Z5" value={form.gst_number}
+                    onChange={e => setForm({ ...form, gst_number: e.target.value })} className={inp} />
+                </div>
+
+                <div className="space-y-1">
+                  <label className={lbl}>FSSAI License</label>
+                  <input type="text" placeholder="12345678901234" value={form.fssai_number}
+                    onChange={e => setForm({ ...form, fssai_number: e.target.value })} className={inp} />
+                </div>
+
+                <div className="space-y-1 sm:col-span-2">
+                  <label className={lbl}>Address</label>
+                  <input type="text" placeholder="Full outlet address" value={form.address}
+                    onChange={e => setForm({ ...form, address: e.target.value })} className={inp} />
+                </div>
+
+                <div className="space-y-1">
+                  <label className={lbl}>Status</label>
+                  <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}
+                    className={inp + " cursor-pointer"}>
+                    <option value="Pending">Pending</option>
+                    <option value="Approved">Approved</option>
+                    <option value="Suspended">Suspended</option>
+                    <option value="Rejected">Rejected</option>
+                  </select>
+                </div>
+
+                {!editingRest && (
+                  <div className="space-y-1">
+                    <label className={lbl}>Username *</label>
+                    <input type="text" required placeholder="Login username" value={form.username}
+                      onChange={e => setForm({ ...form, username: e.target.value })} className={inp} />
+                  </div>
+                )}
+
+                {!editingRest && (
+                  <>
+                    <div className="space-y-1">
+                      <label className={lbl}>Password *</label>
+                      <input type="password" required placeholder="Set password" value={form.password}
+                        onChange={e => setForm({ ...form, password: e.target.value })} className={inp} />
+                    </div>
+                    <div className="space-y-1">
+                      <label className={lbl}>Confirm Password *</label>
+                      <input type="password" required placeholder="Repeat password" value={form.confirmPassword}
+                        onChange={e => setForm({ ...form, confirmPassword: e.target.value })} className={inp} />
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="flex-1 py-3.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-lg shadow-emerald-900/30 transition active:scale-95"
+                >
+                  {saving ? "Saving..." : editingRest ? "Update Restaurant" : "Register Restaurant"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsFormOpen(false)}
+                  className="px-6 py-3.5 bg-white/5 hover:bg-white/10 text-white font-black text-xs uppercase tracking-widest rounded-2xl transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

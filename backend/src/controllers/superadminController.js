@@ -147,10 +147,34 @@ exports.getRestaurants = async (req, res) => {
 
 exports.createRestaurant = async (req, res) => {
   try {
-    const { name, owner_name, gst_number, fssai_number, mobile, email, address } = req.body;
+    const {
+      name, owner_name, gst_number, fssai_number, mobile, email, address, status,
+      restaurant_type, cuisine_type, description, opening_date, logo_url, banner_url, gallery_urls,
+      alt_mobile, whatsapp_number, website_url, customer_support,
+      door_number, street_name, area_name, landmark, city, district, state, pincode, latitude, longitude, map_link,
+      opening_time, closing_time, working_days, holiday_details, is_24_hours, peak_hours,
+      username, password, role, otp_verified, email_verified
+    } = req.body;
+
+    const hashedPw = password ? hashPassword(password) : null;
+
     const [result] = await pool.execute(
-      "INSERT INTO restaurants (name, owner_name, gst_number, fssai_number, mobile, email, address, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'Pending')",
-      [name, owner_name, gst_number || null, fssai_number || null, mobile, email, address]
+      `INSERT INTO restaurants (
+        name, owner_name, gst_number, fssai_number, mobile, email, address, status,
+        restaurant_type, cuisine_type, description, opening_date, logo_url, banner_url, gallery_urls,
+        alt_mobile, whatsapp_number, website_url, customer_support,
+        door_number, street_name, area_name, landmark, city, district, state, pincode, latitude, longitude, map_link,
+        opening_time, closing_time, working_days, holiday_details, is_24_hours, peak_hours,
+        username, password, role, otp_verified, email_verified
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        name, owner_name, gst_number || null, fssai_number || null, mobile, email, address || null, status || 'Pending',
+        restaurant_type || 'Both', cuisine_type || 'Multi Cuisine', description || null, opening_date || null, logo_url || null, banner_url || null, gallery_urls || null,
+        alt_mobile || null, whatsapp_number || null, website_url || null, customer_support || null,
+        door_number || null, street_name || null, area_name || null, landmark || null, city || null, district || null, state || null, pincode || null, latitude || null, longitude || null, map_link || null,
+        opening_time || null, closing_time || null, working_days || null, holiday_details || null, is_24_hours !== undefined ? (is_24_hours ? 1 : 0) : 0, peak_hours || null,
+        username || null, hashedPw, role || 'Restaurant Admin', otp_verified !== undefined ? (otp_verified ? 1 : 0) : 0, email_verified !== undefined ? (email_verified ? 1 : 0) : 0
+      ]
     );
     res.status(201).json({ message: 'Restaurant created successfully.', id: result.insertId });
   } catch (error) {
@@ -161,11 +185,41 @@ exports.createRestaurant = async (req, res) => {
 exports.updateRestaurant = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, owner_name, gst_number, fssai_number, mobile, email, address, status } = req.body;
-    await pool.execute(
-      "UPDATE restaurants SET name = ?, owner_name = ?, gst_number = ?, fssai_number = ?, mobile = ?, email = ?, address = ?, status = ? WHERE id = ?",
-      [name, owner_name, gst_number, fssai_number, mobile, email, address, status, id]
-    );
+    const {
+      name, owner_name, gst_number, fssai_number, mobile, email, address, status,
+      restaurant_type, cuisine_type, description, opening_date, logo_url, banner_url, gallery_urls,
+      alt_mobile, whatsapp_number, website_url, customer_support,
+      door_number, street_name, area_name, landmark, city, district, state, pincode, latitude, longitude, map_link,
+      opening_time, closing_time, working_days, holiday_details, is_24_hours, peak_hours,
+      username, password, role, otp_verified, email_verified
+    } = req.body;
+
+    let query = `UPDATE restaurants SET 
+      name = ?, owner_name = ?, gst_number = ?, fssai_number = ?, mobile = ?, email = ?, address = ?, status = ?,
+      restaurant_type = ?, cuisine_type = ?, description = ?, opening_date = ?, logo_url = ?, banner_url = ?, gallery_urls = ?,
+      alt_mobile = ?, whatsapp_number = ?, website_url = ?, customer_support = ?,
+      door_number = ?, street_name = ?, area_name = ?, landmark = ?, city = ?, district = ?, state = ?, pincode = ?, latitude = ?, longitude = ?, map_link = ?,
+      opening_time = ?, closing_time = ?, working_days = ?, holiday_details = ?, is_24_hours = ?, peak_hours = ?,
+      username = ?, role = ?, otp_verified = ?, email_verified = ?`;
+    
+    let params = [
+      name, owner_name, gst_number, fssai_number, mobile, email, address, status,
+      restaurant_type, cuisine_type, description, opening_date, logo_url, banner_url, gallery_urls,
+      alt_mobile, whatsapp_number, website_url, customer_support,
+      door_number, street_name, area_name, landmark, city, district, state, pincode, latitude, longitude, map_link,
+      opening_time, closing_time, working_days, holiday_details, is_24_hours !== undefined ? (is_24_hours ? 1 : 0) : 0, peak_hours,
+      username, role, otp_verified !== undefined ? (otp_verified ? 1 : 0) : 0, email_verified !== undefined ? (email_verified ? 1 : 0) : 0
+    ];
+
+    if (password) {
+      query += `, password = ?`;
+      params.push(hashPassword(password));
+    }
+
+    query += ` WHERE id = ?`;
+    params.push(id);
+
+    await pool.execute(query, params);
     res.json({ message: 'Restaurant updated successfully.' });
   } catch (error) {
     res.status(500).json({ message: 'Error updating restaurant.', error: error.message });

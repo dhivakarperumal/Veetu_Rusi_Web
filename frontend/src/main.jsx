@@ -56,7 +56,8 @@ const ErrorPage = React.lazy(() => import("./Admin/Pages/ErrorPage.jsx"));
 // Lazy Load SuperAdmin Components
 const SuperAdminPanel = React.lazy(() => import("./SuperAdmin/SuperAdminPanel.jsx"));
 const SuperDashboard = React.lazy(() => import("./SuperAdmin/SuperDashboard.jsx"));
-const RestaurantManagement = React.lazy(() => import("./Admin/Pages/RestaurantManagement.jsx"));
+const RestaurantManagement = React.lazy(() => import("./SuperAdmin/Pages/RestaurantManagement.jsx"));
+const AdminRestaurantManagement = React.lazy(() => import("./Admin/Pages/RestaurantManagement.jsx"));
 const HomeChefManagement = React.lazy(() => import("./Admin/Pages/HomeChefManagement.jsx"));
 const DeliveryPartnerManagement = React.lazy(() => import("./Admin/Pages/DeliveryPartnerManagement.jsx"));
 const UserManagement = React.lazy(() => import("./Admin/Pages/UserManagement.jsx"));
@@ -129,7 +130,7 @@ const router = createBrowserRouter([
     errorElement: <ErrorPage />,
     children: [
       { index: true, element: <Dashboard /> },
-      { path: "restaurants", element: <RestaurantManagement /> },
+      { path: "restaurants", element: <AdminRestaurantManagement /> },
       { path: "homechefs", element: <HomeChefManagement /> },
       { path: "delivery-partners", element: <DeliveryPartnerManagement /> },
       { path: "users", element: <UserManagement /> },
