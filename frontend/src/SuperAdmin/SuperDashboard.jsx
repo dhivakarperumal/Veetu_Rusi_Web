@@ -27,9 +27,9 @@ const FALLBACK = {
       { date: "Fri", orders: 30 }, { date: "Sat", orders: 45 }, { date: "Sun", orders: 35 }
     ],
     revenueAnalytics: [
-      { name: "Jan", revenue: 45000 }, { name: "Feb", revenue: 58000 },
-      { name: "Mar", revenue: 64000 }, { name: "Apr", revenue: 78000 },
-      { name: "May", revenue: 92000 }, { name: "Jun", revenue: 110000 }
+      { name: "Jan", revenue: 45000, commission: 8500 }, { name: "Feb", revenue: 58000, commission: 11000 },
+      { name: "Mar", revenue: 64000, commission: 13000 }, { name: "Apr", revenue: 78000, commission: 16500 },
+      { name: "May", revenue: 92000, commission: 19500 }, { name: "Jun", revenue: 110000, commission: 25000 }
     ],
     userGrowth: [
       { name: "Wk 1", customers: 150, chefs: 10, partners: 20 },
@@ -40,6 +40,11 @@ const FALLBACK = {
     ordersByStatus: [
       { status: "Delivered", count: 0 }, { status: "Pending", count: 0 },
       { status: "Cancelled", count: 0 }
+    ],
+    franchiseGrowth: [
+      { name: "Jan", franchises: 12 }, { name: "Feb", franchises: 18 },
+      { name: "Mar", franchises: 24 }, { name: "Apr", franchises: 35 },
+      { name: "May", franchises: 48 }, { name: "Jun", franchises: 60 }
     ]
   }
 };
@@ -55,7 +60,10 @@ const ChartTooltip = ({ active, payload, label }) => {
       {payload.map((p, i) => (
         <p key={i} className="font-bold flex items-center gap-2">
           <span className="w-2 h-2 rounded-full inline-block" style={{ background: p.color }} />
-          {p.name}: <span className="text-emerald-400 font-black ml-1">{typeof p.value === "number" && p.name?.toLowerCase().includes("revenue") ? `₹${p.value.toLocaleString()}` : p.value}</span>
+          {p.name}: <span className="text-emerald-400 font-black ml-1">
+            {typeof p.value === "number" && (p.name?.toLowerCase().includes("revenue") || p.name?.toLowerCase().includes("commission"))
+              ? `₹${p.value.toLocaleString()}` : p.value}
+          </span>
         </p>
       ))}
     </div>
@@ -214,13 +222,13 @@ const SuperDashboard = () => {
             { label: "Commissions", icon: Percent, path: "/superadmin/commissions", gradient: "linear-gradient(135deg,#05162e 0%,#0B1120 100%)", iconBg: "#3B82F6" },
             { label: "Banners", icon: Image, path: "/superadmin/banners", gradient: "linear-gradient(135deg,#1f052e 0%,#0B1120 100%)", iconBg: "#8B5CF6" },
           ].map((item, i) => (
-            <Link key={i} to={item.path} 
+            <Link key={i} to={item.path}
               className="relative overflow-hidden group flex items-center gap-4 p-5 rounded-3xl border border-white/5 shadow-xl hover:-translate-y-1 transition-all duration-300"
               style={{ background: item.gradient }}
             >
               {/* Glow blob */}
               <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full opacity-20 blur-2xl transition-opacity group-hover:opacity-40" style={{ background: item.iconBg }} />
-              
+
               <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg relative z-10" style={{ background: item.iconBg }}>
                 <item.icon className="w-5 h-5 text-white" strokeWidth={2.5} />
               </div>
@@ -234,7 +242,54 @@ const SuperDashboard = () => {
         </div>
       </div>
 
-      {/* ── Charts removed as per user request ──────────────────── */}
+      {/* ── Analytics Charts ──────────────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+        {/* Revenue & Commission Area Chart */}
+        <ChartCard title="Platform Earnings" subtitle="Revenue vs Commissions" icon={TrendingUp} iconColor="text-emerald-500">
+          <div style={{ width: '100%', height: '256px' }}>
+            <ResponsiveContainer width="99%" height={256}>
+              <AreaChart data={charts?.revenueAnalytics || FALLBACK.charts.revenueAnalytics}>
+                <defs>
+                  <linearGradient id="revGradSA" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="comGradSA" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
+                <XAxis dataKey="name" stroke="#64748b" tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} tickLine={false} />
+                <YAxis stroke="#64748b" tick={{ fill: '#94a3b8', fontSize: 10 }} tickLine={false} tickFormatter={v => `₹${(v/1000).toFixed(0)}k`} />
+                <Tooltip content={<ChartTooltip />} />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: 10, paddingTop: 10, color: "#94a3b8" }} />
+                <Area type="monotone" dataKey="revenue" name="Total Revenue" stroke="#3B82F6" strokeWidth={2.5} fill="url(#revGradSA)" dot={false} />
+                <Area type="monotone" dataKey="commission" name="Our Commission" stroke="#10B981" strokeWidth={2.5} fill="url(#comGradSA)" dot={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </ChartCard>
+
+        {/* Franchise Owners Bar Chart */}
+        <ChartCard title="Franchise Network" subtitle="Active Franchises by Month" icon={Landmark} iconColor="text-teal-500">
+          <div style={{ width: '100%', height: '256px' }}>
+            <ResponsiveContainer width="99%" height={256}>
+              <BarChart data={charts?.franchiseGrowth || FALLBACK.charts.franchiseGrowth} barSize={28}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
+                <XAxis dataKey="name" stroke="#64748b" tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} tickLine={false} />
+                <YAxis stroke="#64748b" tick={{ fill: '#94a3b8', fontSize: 10 }} tickLine={false} />
+                <Tooltip content={<ChartTooltip />} />
+                <Bar dataKey="franchises" name="Franchises" radius={[6, 6, 0, 0]}>
+                  {(charts?.franchiseGrowth || FALLBACK.charts.franchiseGrowth).map((_, i, arr) => (
+                    <Cell key={i} fill={i === arr.length - 1 ? "#14B8A6" : "#0D9488"} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </ChartCard>
+      </div>
     </div>
   );
 };
