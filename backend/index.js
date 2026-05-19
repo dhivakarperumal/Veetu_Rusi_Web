@@ -1,16 +1,20 @@
-﻿const express = require('express');
+const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
+const path = require('path');
 const authRouter = require('./src/routes/auth');
+const superadminRouter = require('./src/routes/superadmin');
 
 const app = express();
 const port = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use('/api/auth', authRouter);
+app.use('/api/superadmin', superadminRouter);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });

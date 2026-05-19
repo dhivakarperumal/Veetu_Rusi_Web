@@ -72,6 +72,191 @@ async function createDatabaseAndTables() {
     console.log('Added phone column to existing users table');
   }
 
+  // SuperAdmin Tables
+  await connection.execute(`
+    CREATE TABLE IF NOT EXISTS \`restaurants\` (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      restaurant_id CHAR(36) NOT NULL UNIQUE DEFAULT (UUID()),
+      name VARCHAR(255) NOT NULL,
+      owner_name VARCHAR(255) NOT NULL,
+      gst_number VARCHAR(100),
+      fssai_number VARCHAR(100),
+      mobile VARCHAR(50) NOT NULL,
+      email VARCHAR(255) NOT NULL UNIQUE,
+      address TEXT NOT NULL,
+      status VARCHAR(50) NOT NULL DEFAULT 'Pending',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+  console.log('Restaurants table created or already exists');
+
+  await connection.execute(`
+    CREATE TABLE IF NOT EXISTS \`home_chefs\` (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      chef_id CHAR(36) NOT NULL UNIQUE DEFAULT (UUID()),
+      name VARCHAR(255) NOT NULL,
+      mobile VARCHAR(50) NOT NULL,
+      email VARCHAR(255) NOT NULL UNIQUE,
+      address TEXT NOT NULL,
+      fssai_number VARCHAR(100),
+      aadhaar_url VARCHAR(255),
+      pan_url VARCHAR(255),
+      status VARCHAR(50) NOT NULL DEFAULT 'Pending',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+  console.log('Home Chefs table created or already exists');
+
+  await connection.execute(`
+    CREATE TABLE IF NOT EXISTS \`delivery_partners\` (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      partner_id CHAR(36) NOT NULL UNIQUE DEFAULT (UUID()),
+      name VARCHAR(255) NOT NULL,
+      mobile VARCHAR(50) NOT NULL,
+      vehicle_type VARCHAR(100) NOT NULL,
+      vehicle_number VARCHAR(100) NOT NULL,
+      license_number VARCHAR(100) NOT NULL,
+      aadhaar_number VARCHAR(100) NOT NULL,
+      total_deliveries INT DEFAULT 0,
+      earnings DECIMAL(10,2) DEFAULT 0.00,
+      status VARCHAR(50) NOT NULL DEFAULT 'Pending',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+  console.log('Delivery Partners table created or already exists');
+
+  await connection.execute(`
+    CREATE TABLE IF NOT EXISTS \`orders\` (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      order_id VARCHAR(100) NOT NULL UNIQUE,
+      customer_name VARCHAR(255) NOT NULL,
+      restaurant_or_chef VARCHAR(255) NOT NULL,
+      delivery_partner VARCHAR(255),
+      amount DECIMAL(10,2) NOT NULL,
+      payment_method VARCHAR(50) NOT NULL DEFAULT 'COD',
+      status VARCHAR(50) NOT NULL DEFAULT 'Pending',
+      ordered_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+  console.log('Orders table created or already exists');
+
+  await connection.execute(`
+    CREATE TABLE IF NOT EXISTS \`payouts\` (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_name VARCHAR(255) NOT NULL,
+      role VARCHAR(50) NOT NULL,
+      total_earnings DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+      pending_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+      paid_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+      transaction_id VARCHAR(255),
+      payment_status VARCHAR(50) NOT NULL DEFAULT 'Pending',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+  console.log('Payouts table created or already exists');
+
+  await connection.execute(`
+    CREATE TABLE IF NOT EXISTS \`franchise_owners\` (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      franchise_id CHAR(36) NOT NULL UNIQUE DEFAULT (UUID()),
+      franchise_name VARCHAR(255) NOT NULL,
+      owner_name VARCHAR(255) NOT NULL,
+      mobile VARCHAR(50) NOT NULL,
+      email VARCHAR(255) NOT NULL UNIQUE,
+      city VARCHAR(100) NOT NULL,
+      state VARCHAR(100) NOT NULL,
+      commission_percentage DECIMAL(5,2) NOT NULL DEFAULT 10.00,
+      status VARCHAR(50) NOT NULL DEFAULT 'Active',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+  console.log('Franchise Owners table created or already exists');
+
+  await connection.execute(`
+    CREATE TABLE IF NOT EXISTS \`commissions\` (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      type VARCHAR(100) NOT NULL UNIQUE,
+      commission_value DECIMAL(10,2) NOT NULL,
+      is_percentage TINYINT(1) NOT NULL DEFAULT 1,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+  console.log('Commissions table created or already exists');
+
+  await connection.execute(`
+    CREATE TABLE IF NOT EXISTS \`banners\` (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      banner_title VARCHAR(255) NOT NULL,
+      banner_image VARCHAR(255) NOT NULL,
+      redirect_url VARCHAR(255),
+      start_date DATE,
+      end_date DATE,
+      status VARCHAR(50) NOT NULL DEFAULT 'Active',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+  console.log('Banners table created or already exists');
+
+  await connection.execute(`
+    CREATE TABLE IF NOT EXISTS \`notifications\` (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      type VARCHAR(50) NOT NULL,
+      title VARCHAR(255) NOT NULL,
+      message TEXT NOT NULL,
+      status VARCHAR(50) NOT NULL DEFAULT 'Unread',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+  console.log('Notifications table created or already exists');
+
+  // Seed default SuperAdmin data
+  await connection.execute(`
+    INSERT INTO \`commissions\` (type, commission_value, is_percentage)
+    VALUES 
+      ('Restaurant', 15.00, 1),
+      ('Home Chef', 10.00, 1),
+      ('Delivery Partner', 5.00, 1),
+      ('Franchise', 2.50, 1)
+    ON DUPLICATE KEY UPDATE commission_value = VALUES(commission_value);
+  `);
+
+  await connection.execute(`
+    INSERT INTO \`restaurants\` (name, owner_name, gst_number, fssai_number, mobile, email, address, status)
+    VALUES 
+      ('Annapoorna Veg', 'Ramachandran', '33AAAAA1111A1Z1', '12345678901234', '9876543211', 'annapoorna@gmail.com', 'Coimbatore, Tamil Nadu', 'Approved'),
+      ('Sree Gupta Bhavan', 'Gupta Lal', '33BBBBB2222B2Z2', '12345678905555', '9876543212', 'gupta@gmail.com', 'Chennai, Tamil Nadu', 'Pending')
+    ON DUPLICATE KEY UPDATE name = VALUES(name);
+  `);
+
+  await connection.execute(`
+    INSERT INTO \`home_chefs\` (name, mobile, email, address, fssai_number, status)
+    VALUES 
+      ('Saraswathis Kitchen', '9876543213', 'saraswathi@gmail.com', 'Madurai, Tamil Nadu', '22345678901234', 'Approved'),
+      ('Kavithas Homemade Biryani', '9876543214', 'kavitha@gmail.com', 'Salem, Tamil Nadu', '22345678905555', 'Pending')
+    ON DUPLICATE KEY UPDATE name = VALUES(name);
+  `);
+
+  await connection.execute(`
+    INSERT INTO \`delivery_partners\` (name, mobile, vehicle_type, vehicle_number, license_number, aadhaar_number, status)
+    VALUES 
+      ('Karthik Kumar', '9876543215', 'Bike', 'TN-37-AB-1234', 'DL-1234567', '1234-5678-9012', 'Approved'),
+      ('Suresh Raina', '9876543216', 'Bike', 'TN-01-XY-9876', 'DL-7654321', '9876-5432-1098', 'Pending')
+    ON DUPLICATE KEY UPDATE name = VALUES(name);
+  `);
+
+  await connection.execute(`
+    INSERT INTO \`orders\` (order_id, customer_name, restaurant_or_chef, delivery_partner, amount, payment_method, status)
+    VALUES 
+      ('VR-1001', 'Dhivakar P', 'Annapoorna Veg', 'Karthik Kumar', 450.00, 'UPI', 'Delivered'),
+      ('VR-1002', 'Nisha R', 'Saraswathis Kitchen', 'Suresh Raina', 320.00, 'COD', 'Accepted')
+    ON DUPLICATE KEY UPDATE customer_name = VALUES(customer_name);
+  `);
+
+
   const adminEmail = 'admin@gmail.com';
   const adminPassword = 'admin@123';
   const hashedPassword = hashPassword(adminPassword);
