@@ -67,7 +67,7 @@ exports.login = async (req, res) => {
 
     const hashedPassword = hashPassword(password);
     const [users] = await pool.execute(
-      'SELECT id, user_id, name, email, phone, role FROM `users` WHERE (email = ? OR name = ?) AND password = ?',
+      'SELECT id, user_id, name, email, phone, role, active FROM `users` WHERE (email = ? OR name = ?) AND password = ?',
       [identifier, identifier, hashedPassword]
     );
 
@@ -76,6 +76,10 @@ exports.login = async (req, res) => {
     }
 
     const user = users[0];
+    if (user.active === 0 || user.active === '0' || !user.active) {
+      return res.status(403).json({ message: 'Your account is deactivated. Please contact support.' });
+    }
+
     const token = createToken(user);
 
     return res.status(200).json({ message: 'Login successful', user, token });
@@ -92,11 +96,14 @@ exports.googleLogin = async (req, res) => {
       return res.status(400).json({ message: 'Google login requires name and email.' });
     }
 
-    const [existing] = await pool.execute('SELECT id, user_id, name, email, phone, role FROM `users` WHERE email = ?', [email]);
+    const [existing] = await pool.execute('SELECT id, user_id, name, email, phone, role, active FROM `users` WHERE email = ?', [email]);
     let user;
 
     if (existing.length > 0) {
       user = existing[0];
+      if (user.active === 0 || user.active === '0' || !user.active) {
+        return res.status(403).json({ message: 'Your account is deactivated. Please contact support.' });
+      }
     } else {
       const [result] = await pool.execute(
         'INSERT INTO `users` (name, email, phone, password, role) VALUES (?, ?, ?, ?, ?)',

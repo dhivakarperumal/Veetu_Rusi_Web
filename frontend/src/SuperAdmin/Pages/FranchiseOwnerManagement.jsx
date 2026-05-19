@@ -126,6 +126,31 @@ const FranchiseOwnerManagement = () => {
     setIsModalOpen(true);
   };
 
+  const handleToggleStatus = async (franchise) => {
+    const nextStatus = franchise.status === "Active" ? "Inactive" : "Active";
+    if (nextStatus === "Active" && !franchise.franch_user_id) {
+      handleApprove(franchise);
+      return;
+    }
+    try {
+      const updatedForm = {
+        franchise_name: franchise.franchise_name,
+        owner_name: franchise.owner_name,
+        mobile: franchise.mobile,
+        email: franchise.email,
+        city: franchise.city,
+        state: franchise.state,
+        commission_percentage: franchise.commission_percentage,
+        status: nextStatus
+      };
+      await api.put(`/superadmin/franchises/${franchise.id}`, updatedForm);
+      toast.success(`Franchise status updated to ${nextStatus}.`);
+      fetchFranchises();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to toggle status.");
+    }
+  };
+
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this franchise owner?")) return;
     try {
@@ -308,7 +333,11 @@ const FranchiseOwnerManagement = () => {
                       </span>
                     </td>
                     {/* Status */}
-                    <td className="px-5 py-4">
+                    <td 
+                      className="px-5 py-4 cursor-pointer select-none" 
+                      onDoubleClick={() => handleToggleStatus(f)}
+                      title="Double-click to toggle status"
+                    >
                       <div className="space-y-1">
                         <span className={`inline-block text-[9px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider ${
                           f.status === "Active"
@@ -317,9 +346,6 @@ const FranchiseOwnerManagement = () => {
                             ? "bg-red-50 text-red-700 border border-red-200/50"
                             : "bg-amber-50 text-amber-700 border border-amber-200/50"
                         }`}>{f.status}</span>
-                        {f.franch_user_id && (
-                          <p className="text-[9px] text-slate-400 font-mono">{f.franch_user_id.slice(0, 8)}…</p>
-                        )}
                       </div>
                     </td>
                     {/* Actions */}
@@ -385,13 +411,17 @@ const FranchiseOwnerManagement = () => {
                     </div>
                   </div>
                   
-                  <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black tracking-wide uppercase ${
-                    f.status === "Active"
-                      ? "bg-emerald-50 text-emerald-700"
-                      : f.status === "Inactive"
-                      ? "bg-rose-50 text-rose-700"
-                      : "bg-amber-50 text-amber-700"
-                  }`}>
+                  <span 
+                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black tracking-wide uppercase cursor-pointer select-none ${
+                      f.status === "Active"
+                        ? "bg-emerald-50 text-emerald-700"
+                        : f.status === "Inactive"
+                        ? "bg-rose-50 text-rose-700"
+                        : "bg-amber-50 text-amber-700"
+                    }`}
+                    onDoubleClick={() => handleToggleStatus(f)}
+                    title="Double-click to toggle status"
+                  >
                     <span className={`w-1.5 h-1.5 rounded-full ${
                       f.status === "Active" ? "bg-emerald-500" : f.status === "Inactive" ? "bg-rose-500" : "bg-amber-500"
                     }`} />

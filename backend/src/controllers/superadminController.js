@@ -438,6 +438,11 @@ exports.updateFranchise = async (req, res) => {
       "UPDATE franchise_owners SET franchise_name = ?, owner_name = ?, mobile = ?, email = ?, city = ?, state = ?, commission_percentage = ?, status = ? WHERE id = ?",
       [franchise_name, owner_name, mobile, email, city, state, commission_percentage, status, id]
     );
+    
+    // Sync status to associated user's active field
+    const isActive = status === 'Active' ? 1 : 0;
+    await pool.execute("UPDATE users SET active = ? WHERE email = ?", [isActive, email]);
+
     res.json({ message: 'Franchise updated successfully.' });
   } catch (error) {
     res.status(500).json({ message: 'Error updating franchise.', error: error.message });
@@ -447,6 +452,13 @@ exports.updateFranchise = async (req, res) => {
 exports.deleteFranchise = async (req, res) => {
   try {
     const { id } = req.params;
+    
+    // Deactivate associated user account before deletion
+    const [rows] = await pool.execute("SELECT email FROM franchise_owners WHERE id = ?", [id]);
+    if (rows && rows.length > 0) {
+      await pool.execute("UPDATE users SET active = 0, role = 'user' WHERE email = ?", [rows[0].email]);
+    }
+
     await pool.execute("DELETE FROM franchise_owners WHERE id = ?", [id]);
     res.json({ message: 'Franchise owner deleted.' });
   } catch (error) {
