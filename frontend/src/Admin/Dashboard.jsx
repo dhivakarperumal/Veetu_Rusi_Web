@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import api from "../api";
 import { toast, Toaster } from "react-hot-toast";
 import {
-  Users, ChefHat, Bike, ShoppingBag, Clock, TrendingUp, TrendingDown, ArrowUpRight
+  Users, Store, ChefHat, Bike, ShoppingBag, Clock, TrendingUp, TrendingDown, ArrowUpRight
 } from "lucide-react";
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line,
@@ -13,7 +13,7 @@ import {
 // ─── Fallback chart data ──────────────────────────────────────────────────────
 const FALLBACK = {
   cards: {
-    totalUsers: 0, totalHomeChefs: 0,
+    totalUsers: 0, totalRestaurants: 0, totalHomeChefs: 0,
     totalDeliveryPartners: 0, totalOrders: 0,
     pendingApprovals: 0
   },
@@ -145,6 +145,12 @@ const Dashboard = () => {
       iconBg: "#8B5CF6"
     },
     {
+      label: "Restaurants", icon: Store, positive: true, trend: "+4.3%",
+      value: cards?.totalRestaurants || 0,
+      gradient: "linear-gradient(135deg,#f8fafc 0%,#ffffff 100%)",
+      iconBg: "#10B981"
+    },
+    {
       label: "Home Chefs", icon: ChefHat, positive: true, trend: "+6.8%",
       value: cards?.totalHomeChefs || 0,
       gradient: "linear-gradient(135deg,#f8fafc 0%,#ffffff 100%)",
@@ -169,7 +175,7 @@ const Dashboard = () => {
       <Toaster position="top-right" />
 
       {/* ── Stat Cards ──────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
         {statsCards.map((c, i) => (
           <StatCard key={i} delay={i * 60} {...c} />
         ))}

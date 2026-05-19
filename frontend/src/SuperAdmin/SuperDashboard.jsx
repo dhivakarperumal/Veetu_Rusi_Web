@@ -73,11 +73,10 @@ const StatCard = ({ icon: Icon, label, value, trend, positive, gradient, iconBg,
       <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg" style={{ background: iconBg }}>
         <Icon className="w-5 h-5 text-white" strokeWidth={2.5} />
       </div>
-      <span className={`flex items-center gap-1 text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider border ${
-        positive
+      <span className={`flex items-center gap-1 text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider border ${positive
           ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
           : "bg-amber-500/10 text-amber-400 border-amber-500/20"
-      }`}>
+        }`}>
         {positive ? <ArrowUpRight className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
         {trend}
       </span>
@@ -150,6 +149,12 @@ const SuperDashboard = () => {
       value: cards.activeFranchises,
       gradient: "linear-gradient(135deg,#01140f 0%,#0B1120 100%)",
       iconBg: "#14B8A6"
+    },
+    {
+      label: "Restaurants", icon: Store, positive: true, trend: "+8.5%",
+      value: cards.totalRestaurants || 0,
+      gradient: "linear-gradient(135deg,#03120f 0%,#0B1120 100%)",
+      iconBg: "#06B6D4"
     }
   ];
 

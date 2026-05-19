@@ -28,7 +28,7 @@ const navItems = [
   { path: "/superadmin/banners", label: "Banner Management", icon: Image },
   { path: "/superadmin/notifications", label: "Notifications", icon: Bell },
   { path: "/superadmin/reports", label: "Reports & Analytics", icon: BarChart3 },
-  { path: "/", label: "Back to Website", icon: Home }
+  { path: "/", label: "Back to Website", icon: Home, exact: true }
 ];
 
 const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
@@ -37,10 +37,10 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
 
   const isActiveRoute = (item) => {
     const currentPath = location.pathname;
-    if (item.exact) {
+    if (item.exact || item.path === "/") {
       return currentPath === item.path;
     }
-    return currentPath.startsWith(item.path);
+    return currentPath === item.path || currentPath.startsWith(item.path + "/");
   };
 
   return (
