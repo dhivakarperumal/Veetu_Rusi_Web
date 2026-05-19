@@ -163,6 +163,7 @@ async function createDatabaseAndTables() {
     CREATE TABLE IF NOT EXISTS \`franchise_owners\` (
       id INT AUTO_INCREMENT PRIMARY KEY,
       franchise_id CHAR(36) NOT NULL UNIQUE DEFAULT (UUID()),
+      franch_user_id CHAR(36) DEFAULT NULL,
       franchise_name VARCHAR(255) NOT NULL,
       owner_name VARCHAR(255) NOT NULL,
       mobile VARCHAR(50) NOT NULL,
@@ -170,7 +171,7 @@ async function createDatabaseAndTables() {
       city VARCHAR(100) NOT NULL,
       state VARCHAR(100) NOT NULL,
       commission_percentage DECIMAL(5,2) NOT NULL DEFAULT 10.00,
-      status VARCHAR(50) NOT NULL DEFAULT 'Active',
+      status VARCHAR(50) NOT NULL DEFAULT 'Pending',
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);

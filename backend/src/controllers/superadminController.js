@@ -1,4 +1,9 @@
 const pool = require('../config/db');
+const crypto = require('crypto');
+
+function hashPassword(password) {
+  return crypto.createHash('sha256').update(password).digest('hex');
+}
 
 // ==================== DASHBOARD ANALYTICS ====================
 exports.getDashboardStats = async (req, res) => {
@@ -316,7 +321,10 @@ exports.createPayout = async (req, res) => {
 // ==================== FRANCHISE OWNER MANAGEMENT ====================
 exports.getFranchises = async (req, res) => {
   try {
-    const [rows] = await pool.execute("SELECT * FROM franchise_owners ORDER BY created_at DESC");
+    // Safe migrations for new columns
+    try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS franch_user_id CHAR(36) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS login_password VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+    const [rows] = await pool.execute("SELECT id, franchise_id, franch_user_id, franchise_name, owner_name, mobile, email, city, state, commission_percentage, status, created_at FROM franchise_owners ORDER BY created_at DESC");
     res.json(rows);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving franchise owners.', error: error.message });
@@ -325,14 +333,100 @@ exports.getFranchises = async (req, res) => {
 
 exports.createFranchise = async (req, res) => {
   try {
-    const { franchise_name, owner_name, mobile, email, city, state, commission_percentage } = req.body;
+    const { franchise_name, owner_name, mobile, email, city, state, commission_percentage, status, password } = req.body;
+    // Hash password if provided, else store null (will be auto-generated at approval)
+    const hashedPw = password ? hashPassword(password) : null;
+    const plainPw  = password || null;
     const [result] = await pool.execute(
-      "INSERT INTO franchise_owners (franchise_name, owner_name, mobile, email, city, state, commission_percentage, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'Active')",
-      [franchise_name, owner_name, mobile, email, city, state, commission_percentage || 10.00]
+      "INSERT INTO franchise_owners (franchise_name, owner_name, mobile, email, city, state, commission_percentage, status, login_password) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [franchise_name, owner_name, mobile, email, city, state, commission_percentage || 10.00, status || 'Pending', hashedPw]
     );
-    res.status(201).json({ message: 'Franchise owner registered.', id: result.insertId });
+    res.status(201).json({
+      message: 'Franchise owner registered. Click Approve to create login credentials.',
+      id: result.insertId,
+      // Return the plain password so the frontend can pre-fill credentials modal
+      password: plainPw
+    });
   } catch (error) {
     res.status(500).json({ message: 'Error registering franchise.', error: error.message });
+  }
+};
+
+exports.approveFranchise = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Get franchise details (include login_password)
+    const [rows] = await pool.execute('SELECT * FROM franchise_owners WHERE id = ?', [id]);
+    if (!rows.length) return res.status(404).json({ message: 'Franchise not found.' });
+    const franchise = rows[0];
+
+    // If already approved and linked, return info
+    if (franchise.status === 'Active' && franchise.franch_user_id) {
+      return res.json({
+        message: 'Franchise already approved.',
+        alreadyApproved: true,
+        franch_user_id: franchise.franch_user_id,
+        email: franchise.email,
+        owner_name: franchise.owner_name,
+        franchise_name: franchise.franchise_name
+      });
+    }
+
+    // Determine password to use
+    let hashedPw = null;
+    let plainPassword = null;
+
+    if (req.body && req.body.password) {
+      plainPassword = req.body.password;
+      hashedPw = hashPassword(plainPassword);
+    } else if (franchise.login_password) {
+      hashedPw = franchise.login_password;
+    } else {
+      // Auto-generate: FirstName@last4digits
+      const mobileLast4 = (franchise.mobile || '0000').slice(-4);
+      plainPassword = `${franchise.owner_name.split(' ')[0]}@${mobileLast4}`;
+      hashedPw = hashPassword(plainPassword);
+    }
+
+    // Check if a user with this email already exists
+    const [existing] = await pool.execute('SELECT id, user_id FROM users WHERE email = ?', [franchise.email]);
+    let userId;
+
+    if (existing.length > 0) {
+      userId = existing[0].user_id;
+      // Update role + password
+      await pool.execute(
+        "UPDATE users SET role = 'admin', active = 1, password = ? WHERE email = ?",
+        [hashedPw, franchise.email]
+      );
+    } else {
+      const [newUser] = await pool.execute(
+        "INSERT INTO users (name, email, phone, password, role, active) VALUES (?, ?, ?, ?, 'admin', 1)",
+        [franchise.owner_name, franchise.email, franchise.mobile, hashedPw]
+      );
+      const [created] = await pool.execute('SELECT user_id FROM users WHERE id = ?', [newUser.insertId]);
+      userId = created[0].user_id;
+    }
+
+    // Update franchise: Active + link UUID + update login_password
+    await pool.execute(
+      "UPDATE franchise_owners SET status = 'Active', franch_user_id = ?, login_password = ? WHERE id = ?",
+      [userId, hashedPw, id]
+    );
+
+    return res.json({
+      message: 'Franchise approved and login credentials created successfully.',
+      franch_user_id: userId,
+      email: franchise.email,
+      password: plainPassword, // null means password was set at registration (not re-exposed)
+      passwordWasPreset: !!franchise.login_password,
+      owner_name: franchise.owner_name,
+      franchise_name: franchise.franchise_name
+    });
+  } catch (error) {
+    console.error('Approve franchise error:', error);
+    res.status(500).json({ message: 'Error approving franchise.', error: error.message });
   }
 };
 

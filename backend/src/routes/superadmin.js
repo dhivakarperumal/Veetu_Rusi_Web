@@ -54,6 +54,7 @@ router.post('/payouts', controller.createPayout);
 // Franchise Owner Management
 router.get('/franchises', controller.getFranchises);
 router.post('/franchises', controller.createFranchise);
+router.patch('/franchises/approve/:id', controller.approveFranchise);
 router.put('/franchises/:id', controller.updateFranchise);
 router.delete('/franchises/:id', controller.deleteFranchise);
 
