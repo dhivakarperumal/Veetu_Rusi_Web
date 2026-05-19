@@ -25,17 +25,17 @@ const Header = () => {
 
                 <span className="flex items-center gap-2">
                   <Tag size={16} />
-                  Flat 30% OFF on Silk Sarees
+                  Flat 30% OFF on Traditional Masalas
                 </span>
 
                 <span className="flex items-center gap-2">
                   <Truck size={16} />
-                  Free Shipping on Orders Above ₹999
+                  Free Delivery on Orders Above ₹499
                 </span>
 
                 <span className="flex items-center gap-2">
                   <ShoppingBag size={16} />
-                  New Wedding Collection Available Now
+                  Fresh Homemade Meals Delivered Daily
                 </span>
 
               </div>

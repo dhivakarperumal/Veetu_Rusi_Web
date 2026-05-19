@@ -8,17 +8,17 @@ body {
 @theme {
 
   /* Brand Colors */
-  --color-primary: #240046;
-  --color-primary-light: #3c096c;
-  --color-primary-dark: #10002b;
+  --color-primary: #1B4D22;
+  --color-primary-light: #2D7D39;
+  --color-primary-dark: #0E2A14;
 
   /* Secondary */
-  --color-secondary: #7b2cbf;
-  --color-secondary-light: #9d4edd;
-  --color-secondary-dark: #5a189a;
+  --color-secondary: #9E5330;
+  --color-secondary-light: #BD7755;
+  --color-secondary-dark: #743618;
 
   /* Accent */
-  --color-accent: #ff8500;
+  --color-accent: #E58B24;
 
   /* Success / Green */
   --color-success: #16a34a;

@@ -13,18 +13,26 @@ import "swiper/css/pagination";
 
 const defaultSlides = [
     {
-        title: "GULPOSH",
-        subtitle: "Luxury Saree Collection",
-        description: "Experience the elegance of traditional craftsmanship.",
-        image: "/Hero/download.jpg",
+        title: "VEETU RUSI",
+        subtitle: "Authentic Home Cooked Feast",
+        description: "Freshly prepared South Indian delicacies made with 100% natural ingredients.",
+        image: "/Hero/1.png",
         mobile_image: "/Hero/download.jpg",
         link: "/shop"
     },
     {
-        title: "ROYAL SAREES",
-        subtitle: "Timeless Traditional Elegance",
-        description: "A heritage of beauty in every fold.",
-        image: "/Hero/images.jpg",
+        title: "TRADITIONAL TASTE",
+        subtitle: "Healthy & Hygienic Preparation",
+        description: "Savor the nostalgic aroma of recipes handed down through generations.",
+        image: "/Hero/2.png",
+        mobile_image: "/Hero/images.jpg",
+        link: "/shop"
+    },
+    {
+        title: "FRESH & HOMEMADE",
+        subtitle: "No Added Preservatives",
+        description: "Pure, wholesome, and delicious meals delivered directly to your doorstep.",
+        image: "/Hero/3.png",
         mobile_image: "/Hero/images.jpg",
         link: "/shop"
     }
