@@ -229,7 +229,7 @@ const SuperDashboard = () => {
         {/* Revenue Area Chart */}
         <ChartCard title="Revenue Trends" subtitle="Monthly platform earnings" icon={TrendingUp} iconColor="text-emerald-400">
           <div style={{ width: '100%', height: '256px' }}>
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="99%" height={256}>
               <AreaChart data={charts.revenueAnalytics}>
                 <defs>
                   <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
@@ -250,7 +250,7 @@ const SuperDashboard = () => {
         {/* Daily Orders Bar Chart */}
         <ChartCard title="Daily Orders" subtitle="Orders placed this week" icon={ShoppingBag} iconColor="text-blue-400">
           <div style={{ width: '100%', height: '256px' }}>
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="99%" height={256}>
               <BarChart data={charts.dailyOrders} barSize={22}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
                 <XAxis dataKey="date" stroke="#ffffff30" tick={{ fontSize: 10, fontWeight: 700 }} tickLine={false} />
@@ -269,7 +269,7 @@ const SuperDashboard = () => {
         {/* User Growth Line Chart */}
         <ChartCard title="User Acquisition" subtitle="Customers, chefs & partners by week" icon={Users} iconColor="text-purple-400">
           <div style={{ width: '100%', height: '256px' }}>
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="99%" height={256}>
               <LineChart data={charts.userGrowth}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
                 <XAxis dataKey="name" stroke="#ffffff30" tick={{ fontSize: 10, fontWeight: 700 }} tickLine={false} />
