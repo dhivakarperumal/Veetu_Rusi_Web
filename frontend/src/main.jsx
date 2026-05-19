@@ -77,6 +77,52 @@ const router = createBrowserRouter([
   { path: "/login", element: <Login /> },
   { path: "/register", element: <Register /> },
   {
+    path: "/superadmin",
+    element: (
+      <PrivateRoute allowedRoles={["superadmin"]}>
+        <AdminProvider>
+          <AdminPanel />
+        </AdminProvider>
+      </PrivateRoute>
+    ),
+    errorElement: <ErrorPage />,
+    children: [
+      { index: true, element: <Dashboard /> },
+      // Products
+      { path: "products/all", element: <AllProducts /> },
+      { path: "products/add", element: <AddProducts /> },
+      { path: "products/edit/:id", element: <AddProducts /> },
+      { path: "products/category", element: <Category /> },
+      { path: "products/stock", element: <StockDetails /> },
+      { path: "products/stock/add", element: <AddStock /> },
+      { path: "products/:id", element: <ProductDetail /> },
+      // Orders
+      { path: "orders/create", element: <CreateOrder /> },
+      { path: "orders/new", element: <Orders statusFilter="Order Placed" /> },
+      { path: "orders/all", element: <Orders statusFilter="All" /> },
+      { path: "orders/delivery", element: <Orders statusFilter="Delivered" /> },
+      { path: "orders/cancelled", element: <Orders statusFilter="Cancelled" /> },
+      { path: "orders/:id", element: <OrderDetail /> },
+      // Others
+      { path: "users/all", element: <Users initialTab="All" /> },
+      { path: "users/new", element: <Users initialTab="New" /> },
+      // Marketing & Support
+
+      // Finance
+      { path: "billing", element: <Billing /> },
+      { path: "dealers", element: <Dealers /> },
+      { path: "dealers/add", element: <AddDealer /> },
+      { path: "invoices/add", element: <AddInvoice /> },
+      { path: "reviews", element: <Reviews /> },
+      { path: "reports", element: <Reports /> },
+      { path: "videos", element: <VideoManagement /> },
+      { path: "banners", element: <BannerManagement /> },
+      { path: "settings", element: <Settings /> },
+      { path: "profile", element: <Profile /> },
+    ],
+  },
+
+  {
     path: "/admin",
     element: (
       <PrivateRoute allowedRoles={["admin"]}>
