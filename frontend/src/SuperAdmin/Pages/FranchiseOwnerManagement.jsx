@@ -183,7 +183,7 @@ const FranchiseOwnerManagement = () => {
         </div>
         <button
           onClick={() => { resetForm(); setIsModalOpen(true); }}
-          className="flex items-center justify-center gap-2 bg-[#1B4D22] hover:bg-[#153b1a] text-white px-5 py-3 rounded-xl font-black text-xs uppercase tracking-widest shadow-md hover:shadow-lg transition active:scale-95 self-start sm:self-auto"
+          className="flex items-center justify-center gap-2 bg-[#1B4D22] hover:bg-[#153b1a] text-white px-6 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-md hover:shadow-lg transition active:scale-95 self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" /> Add Franchise
         </button>
@@ -281,18 +281,18 @@ const FranchiseOwnerManagement = () => {
       {loading ? (
         <div className="space-y-4">{[1, 2, 3].map(i => <div key={i} className="h-16 bg-slate-100 rounded-xl animate-pulse" />)}</div>
       ) : viewMode === "table" ? (
-        <div className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm animate-in fade-in duration-200">
+        <div className="bg-white rounded-2xl overflow-hidden shadow-sm animate-in fade-in duration-200">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-700">
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em] w-16 text-center">S.No</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Franchise</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Owner</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Territory</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Commission</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Status</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em] text-right">Actions</th>
+                  <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em] w-16 text-center">S.No</th>
+                  <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Franchise</th>
+                  <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Owner</th>
+                  <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Territory</th>
+                  <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Commission</th>
+                  <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Status</th>
+                  <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em] text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
