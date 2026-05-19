@@ -21,15 +21,10 @@ import { useAuth } from "../PrivateRouter/AuthContext";
 
 const navItems = [
   { path: "/superadmin", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { path: "/superadmin/restaurants", label: "Restaurants", icon: Store },
-  // { path: "/superadmin/homechefs", label: "Home Chefs", icon: ChefHat },
-  // { path: "/superadmin/delivery-partners", label: "Delivery Partners", icon: Bike },
-  // { path: "/superadmin/users", label: "User Management", icon: Users },
-  // { path: "/superadmin/orders", label: "Order Management", icon: ShoppingBag },
-  // { path: "/superadmin/payouts", label: "Payouts & Earnings", icon: CreditCard },
+  
   { path: "/superadmin/franchises", label: "Franchise Owners", icon: Landmark },
   { path: "/superadmin/commissions", label: "Commissions", icon: Percent },
-  // { path: "/superadmin/banners", label: "Banner Management", icon: Image },
+  { path: "/superadmin/banners", label: "Banner Management", icon: Image },
   { path: "/superadmin/notifications", label: "Notifications", icon: Bell },
   { path: "/superadmin/reports", label: "Reports & Analytics", icon: BarChart3 },
   { path: "/", label: "Back to Website", icon: Home }
