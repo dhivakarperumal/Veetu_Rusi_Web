@@ -309,6 +309,15 @@ const navClass = ({ isActive }) =>
                       My Account
                     </Link>
 
+                    {user.role === "superadmin" && (
+                      <Link
+                        to="superadmin"
+                        className="block px-4 py-3 text-sm hover:bg-gray-100"
+                        onClick={() => setUserMenu(false)}
+                      >
+                        Super Admin Panel
+                      </Link>
+                    )}
                     {user.role === "admin" && (
                       <Link
                         to="admin"

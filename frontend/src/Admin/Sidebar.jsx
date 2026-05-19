@@ -76,6 +76,16 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
   const location = useLocation();
   const [openMenu, setOpenMenu] = useState(null);
 
+  const prefix = location.pathname.startsWith("/superadmin") ? "/superadmin" : "/admin";
+
+  const getDynamicPath = (path) => {
+    if (!path) return path;
+    if (path.startsWith("/admin")) {
+      return path.replace("/admin", prefix);
+    }
+    return path;
+  };
+
   /* ================= ACTIVE ROUTE MAP ================= */
   const activeRouteMap = {
     "/admin/products": ["/admin/products/all", "/admin/products/add", "/admin/products/category"],
@@ -86,22 +96,24 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
   /* ================= HELPERS & LOGIC ================= */
   const isActiveRoute = (item) => {
     const currentPath = location.pathname;
+    const itemPath = getDynamicPath(item.path);
 
     // 1. Strict exact match for root routes to prevent Dashboard/BackHome overlap
-    if (item.path === "/" || item.path === "/admin" || item.exact) {
-      return currentPath === item.path;
+    if (itemPath === "/" || itemPath === prefix || item.exact) {
+      return currentPath === itemPath;
     }
 
     // 2. Dropdown parent check: check if any child is perfectly active or a sub-path
     if (item.children) {
-      return item.children.some(child =>
-        currentPath === child.path || currentPath.startsWith(child.path + "/")
-      );
+      return item.children.some(child => {
+        const childPath = getDynamicPath(child.path);
+        return currentPath === childPath || currentPath.startsWith(childPath + "/");
+      });
     }
 
     // 3. Normal item check: match exact or match as a parent path (with boundary)
-    if (item.path) {
-      return currentPath === item.path || currentPath.startsWith(item.path + "/");
+    if (itemPath) {
+      return currentPath === itemPath || currentPath.startsWith(itemPath + "/");
     }
 
     return false;
@@ -204,16 +216,17 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                     >
                       {item.children.map((sub) => {
                         const SubIcon = sub.icon;
-                        const isActive = location.pathname === sub.path;
+                        const subPath = getDynamicPath(sub.path);
+                        const isActive = location.pathname === subPath;
 
                         return (
                           <NavLink
                             key={sub.path}
-                            to={sub.path}
+                            to={subPath}
                             onClick={() => isOpen && onClose()}
                             className={`
                               flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold transition-all
-                              ${(location.pathname === sub.path || (sub.path !== "/admin" && location.pathname.startsWith(sub.path)))
+                              ${(location.pathname === subPath || (subPath !== prefix && location.pathname.startsWith(subPath)))
                                 ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
                                 : "text-white/40 hover:text-white hover:bg-white/5"
                               }
@@ -232,11 +245,12 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
 
             /* ===== NORMAL ITEM ===== */
             const isActive = isActiveRoute(item);
+            const itemPath = getDynamicPath(item.path);
 
             return (
               <NavLink
                 key={item.path}
-                to={item.path}
+                to={itemPath}
                 end={item.exact}
                 onClick={() => {
                   setOpenMenu(null);

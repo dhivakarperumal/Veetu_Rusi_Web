@@ -30,7 +30,9 @@ function Login() {
       login(res.data.user, res.data.token);
       toast.success("Login successful!");
 
-      if (res.data.user.role === "admin") {
+      if (res.data.user.role === "superadmin") {
+        navigate("/superadmin");
+      } else if (res.data.user.role === "admin") {
         navigate("/admin");
       } else {
         navigate("/");
@@ -62,7 +64,9 @@ function Login() {
 
       toast.success("Google Login Successful!");
 
-      if (res.data.user.role === "admin") {
+      if (res.data.user.role === "superadmin") {
+        navigate("/superadmin");
+      } else if (res.data.user.role === "admin") {
         navigate("/admin");
       } else {
         navigate("/");

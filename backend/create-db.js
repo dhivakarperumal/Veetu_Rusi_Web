@@ -1,4 +1,4 @@
-﻿const mysql = require('mysql2/promise');
+const mysql = require('mysql2/promise');
 const crypto = require('crypto');
 require('dotenv').config();
 
@@ -86,8 +86,24 @@ async function createDatabaseAndTables() {
         updated_at = CURRENT_TIMESTAMP`,
     ['Admin', adminEmail, hashedPassword, 'admin']
   );
-
   console.log(`Admin user created or updated: ${adminEmail}`);
+
+  const superadminEmail = 'superadmin@gmail.com';
+  const superadminPassword = 'superadmin@123';
+  const hashedSuperPassword = hashPassword(superadminPassword);
+
+  await connection.execute(
+    `INSERT INTO \`users\` (name, email, password, role)
+      VALUES (?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE
+        name = VALUES(name),
+        password = VALUES(password),
+        role = VALUES(role),
+        updated_at = CURRENT_TIMESTAMP`,
+    ['SuperAdmin', superadminEmail, hashedSuperPassword, 'superadmin']
+  );
+  console.log(`SuperAdmin user created or updated: ${superadminEmail}`);
+
   await connection.end();
 }
 

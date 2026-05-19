@@ -77,6 +77,15 @@ const Header = ({ onMenuClick }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const prefix = location.pathname.startsWith("/superadmin") ? "/superadmin" : "/admin";
+  const getDynamicPath = (path) => {
+    if (!path) return path;
+    if (path.startsWith("/admin")) {
+      return path.replace("/admin", prefix);
+    }
+    return path;
+  };
+
   useEffect(() => {
     if (showSearch && searchInputRef.current) {
       setTimeout(() => searchInputRef.current?.focus(), 350); // wait for animation
@@ -84,9 +93,13 @@ const Header = ({ onMenuClick }) => {
   }, [showSearch]);
 
   const getPageTitle = () => {
-    if (pageTitles[location.pathname]) return pageTitles[location.pathname];
+    const normalizedPath = location.pathname.startsWith("/superadmin")
+      ? location.pathname.replace("/superadmin", "/admin")
+      : location.pathname;
+
+    if (pageTitles[normalizedPath]) return pageTitles[normalizedPath];
     for (const [path, title] of Object.entries(pageTitles)) {
-      if (location.pathname.startsWith(path + "/")) return title;
+      if (normalizedPath.startsWith(path + "/")) return title;
     }
     return "Dashboard";
   };
@@ -186,7 +199,7 @@ const Header = ({ onMenuClick }) => {
   };
 
   const handleSearchResultClick = (orderId) => {
-    navigate(`/admin/orders/${orderId}`);
+    navigate(getDynamicPath(`/admin/orders/${orderId}`));
     setSearchQuery("");
     setSearchResults([]);
     setShowSearchResults(false);
@@ -263,7 +276,7 @@ const Header = ({ onMenuClick }) => {
   }, []);
 
   const handleNotificationClick = (orderId) => {
-    navigate(`/admin/orders/${orderId}`);
+    navigate(getDynamicPath(`/admin/orders/${orderId}`));
     setShowNotifications(false);
   };
 
@@ -429,7 +442,7 @@ const Header = ({ onMenuClick }) => {
                       return (
                         <button
                           key={product.id}
-                          onClick={() => { navigate('/admin/products/stock'); setShowLowStock(false); }}
+                          onClick={() => { navigate(getDynamicPath('/admin/products/stock')); setShowLowStock(false); }}
                           className="w-full px-4 py-3 flex items-center gap-3 hover:bg-amber-50/40 transition-all text-left group"
                         >
                           {/* Product image */}
@@ -460,7 +473,7 @@ const Header = ({ onMenuClick }) => {
                   </div>
 
                   <Link
-                    to="/admin/products/stock"
+                    to={getDynamicPath("/admin/products/stock")}
                     onClick={() => setShowLowStock(false)}
                     className="block w-full py-3.5 text-center text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] bg-amber-50/60 hover:bg-amber-50 transition-colors border-t border-slate-50"
                   >
@@ -590,7 +603,7 @@ const Header = ({ onMenuClick }) => {
 
                   {(notifications.today?.length > 0 || notifications.earlier?.length > 0) && (
                     <Link
-                      to="/admin/orders/new"
+                      to={getDynamicPath("/admin/orders/new")}
                       onClick={() => setShowNotifications(false)}
                       className="block w-full py-4 text-center text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] bg-blue-50/50 hover:bg-blue-50 transition-colors border-t border-slate-50"
                     >
@@ -644,7 +657,7 @@ const Header = ({ onMenuClick }) => {
                   </div>
 
                   <Link
-                    to="/admin/profile"
+                    to={getDynamicPath("/admin/profile")}
                     className="flex items-center gap-3 px-3 py-2.5 
                     rounded-xl hover:bg-blue-50 hover:text-blue-600
                     text-sm text-slate-600 transition font-bold"
