@@ -21,6 +21,7 @@ const FranchiseOwnerManagement = () => {
   const [editingFranchise, setEditingFranchise] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [viewDetailsFranchise, setViewDetailsFranchise] = useState(null);
+  const [activeDetailTab, setActiveDetailTab] = useState("franchise");
 
   // Approve modal: holds the franchise being approved + password input
   const [approveModal, setApproveModal] = useState(null); // { franchise } | null
@@ -184,6 +185,212 @@ const FranchiseOwnerManagement = () => {
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
+
+  if (viewDetailsFranchise) {
+    return (
+      <div className="space-y-6 animate-in fade-in duration-300">
+        {/* Header with Back button */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <button
+            onClick={() => setViewDetailsFranchise(null)}
+            className="flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest text-slate-500 hover:text-slate-800 bg-white border border-slate-200 hover:border-slate-300 px-5 py-3 rounded-xl transition shadow-sm active:scale-95 self-start"
+          >
+            ← Back to List
+          </button>
+          
+          <div className="flex items-center gap-2 self-end sm:self-auto">
+            <button
+              onClick={() => {
+                const f = viewDetailsFranchise;
+                setViewDetailsFranchise(null);
+                handleEdit(f);
+              }}
+              className="flex items-center gap-1.5 px-4 py-2.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest transition active:scale-95 shadow-sm"
+            >
+              <Edit2 className="w-4 h-4" /> Edit Details
+            </button>
+            <button
+              onClick={() => {
+                const id = viewDetailsFranchise.id;
+                setViewDetailsFranchise(null);
+                handleDelete(id);
+              }}
+              className="flex items-center gap-1.5 px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-[10px] font-black uppercase tracking-widest transition active:scale-95 shadow-sm"
+            >
+              <Trash2 className="w-4 h-4" /> Delete Owner
+            </button>
+          </div>
+        </div>
+
+        {/* Full Details Content */}
+        <div className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm p-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-6 border-b border-slate-100 gap-4 mb-6">
+            <div>
+              <h2 className="text-2xl font-black text-slate-800 tracking-tight">{viewDetailsFranchise.franchise_name}</h2>
+              <div className="flex items-center gap-1.5 mt-2">
+                <MapPin className="w-4 h-4 text-rose-500" />
+                <span className="text-sm text-slate-500 font-semibold">{viewDetailsFranchise.city}, {viewDetailsFranchise.state}</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className={`text-[10px] font-black px-3 py-1.5 rounded-lg uppercase tracking-wider ${
+                viewDetailsFranchise.status === "Active"
+                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200/50"
+                  : viewDetailsFranchise.status === "Inactive"
+                  ? "bg-red-50 text-red-700 border border-red-200/50"
+                  : "bg-amber-50 text-amber-700 border border-amber-200/50"
+              }`}>{viewDetailsFranchise.status}</span>
+              <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/50 px-3 py-1.5 rounded-lg">
+                {viewDetailsFranchise.commission_percentage}% Commission
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-col md:flex-row gap-8">
+            {/* Left Side: Tabs */}
+            <div className="w-full md:w-64 flex-shrink-0 flex flex-col gap-2 border-r border-slate-100 pr-6">
+              <button
+                onClick={() => setActiveDetailTab("franchise")}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all text-left ${
+                  activeDetailTab === "franchise"
+                    ? "bg-[#1B4D22] text-white shadow-sm shadow-[#1B4D22]/20"
+                    : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+                }`}
+              >
+                <Landmark className="w-4 h-4" />
+                Franchise Info
+              </button>
+              <button
+                onClick={() => setActiveDetailTab("owner")}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all text-left ${
+                  activeDetailTab === "owner"
+                    ? "bg-[#1B4D22] text-white shadow-sm shadow-[#1B4D22]/20"
+                    : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+                }`}
+              >
+                <UserCheck className="w-4 h-4" />
+                Owner Profile
+              </button>
+              <button
+                onClick={() => setActiveDetailTab("credentials")}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all text-left ${
+                  activeDetailTab === "credentials"
+                    ? "bg-[#1B4D22] text-white shadow-sm shadow-[#1B4D22]/20"
+                    : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+                }`}
+              >
+                <KeyRound className="w-4 h-4" />
+                Credentials & Access
+              </button>
+            </div>
+
+            {/* Right Side: Tab Details Content */}
+            <div className="flex-1 min-w-0">
+              {activeDetailTab === "franchise" && (
+                <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                  <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest border-b border-slate-100 pb-2">Franchise Information</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 text-sm">
+                    <div className="space-y-1">
+                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block">Franchise Name</span>
+                      <span className="text-sm font-bold text-slate-800">{viewDetailsFranchise.franchise_name}</span>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block">Commission Rate</span>
+                      <span className="inline-flex items-center text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/50 px-2.5 py-1 rounded-md mt-0.5">
+                        {viewDetailsFranchise.commission_percentage}%
+                      </span>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block">Territory Location</span>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <MapPin className="w-4 h-4 text-rose-500 animate-bounce" />
+                        <span className="text-sm font-bold text-slate-800">{viewDetailsFranchise.city}, {viewDetailsFranchise.state}</span>
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block">Registration Date</span>
+                      <span className="text-sm font-bold text-slate-800">{new Date(viewDetailsFranchise.created_at).toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeDetailTab === "owner" && (
+                <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                  <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest border-b border-slate-100 pb-2">Owner Profile Details</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 text-sm">
+                    <div className="space-y-1">
+                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block">Owner Name</span>
+                      <span className="text-sm font-bold text-slate-800">{viewDetailsFranchise.owner_name}</span>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block">Email Address</span>
+                      <span className="text-sm font-bold text-slate-800">{viewDetailsFranchise.email}</span>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block">Mobile Phone</span>
+                      <span className="text-sm font-bold text-slate-800">{viewDetailsFranchise.mobile}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeDetailTab === "credentials" && (
+                <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                  <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest border-b border-slate-100 pb-2">System Credentials & Access</h3>
+                  {viewDetailsFranchise.franch_user_id ? (
+                    <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-6 space-y-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center text-teal-600 border border-teal-100 flex-shrink-0">
+                          <UserCheck className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-black text-slate-800 uppercase tracking-tight">Access Role: Admin</p>
+                          <code className="text-xs text-slate-500 font-mono mt-0.5 block truncate max-w-xs md:max-w-md">{viewDetailsFranchise.franch_user_id}</code>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 justify-end">
+                        <button
+                          onClick={() => copy(viewDetailsFranchise.franch_user_id)}
+                          className="flex items-center gap-1.5 px-4 py-2.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-black uppercase tracking-wider transition active:scale-95 shadow-sm"
+                        >
+                          <Copy className="w-3.5 h-3.5" /> Copy UUID
+                        </button>
+                        <button
+                          onClick={() => setCredModal({ email: viewDetailsFranchise.email, password: null, owner_name: viewDetailsFranchise.owner_name, franchise_name: viewDetailsFranchise.franchise_name, franch_user_id: viewDetailsFranchise.franch_user_id })}
+                          className="flex items-center gap-1.5 px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition active:scale-95 shadow-sm"
+                        >
+                          <KeyRound className="w-3.5 h-3.5" /> View Logins
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-amber-50 border border-amber-100 rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-amber-100/50 flex items-center justify-center text-amber-600 border border-amber-200/50 flex-shrink-0">
+                          <Clock className="w-5 h-5 animate-pulse" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-black text-amber-800 uppercase tracking-tight">Pending Activation & Approval</p>
+                          <p className="text-xs text-amber-600/80 font-bold mt-0.5">This franchise does not have user login credentials set up yet.</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleApprove(viewDetailsFranchise)}
+                        className="px-5 py-3 bg-[#1B4D22] hover:bg-[#153b1a] text-white rounded-xl text-xs font-black uppercase tracking-widest transition active:scale-95 shadow-md hover:shadow-lg self-end sm:self-auto flex-shrink-0"
+                      >
+                        Approve & Create Account
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -384,6 +591,9 @@ const FranchiseOwnerManagement = () => {
                             <KeyRound className="w-4 h-4" />
                           </button>
                         )}
+                        <button onClick={() => setViewDetailsFranchise(f)} className="p-2 hover:bg-slate-100 text-slate-500 hover:text-slate-800 rounded-lg transition" title="View Details">
+                          <Eye className="w-4 h-4" />
+                        </button>
                         <button onClick={() => handleEdit(f)} className="p-2 hover:bg-slate-100 text-slate-500 hover:text-slate-800 rounded-lg transition" title="Edit">
                           <Edit2 className="w-4 h-4" />
                         </button>
@@ -505,6 +715,13 @@ const FranchiseOwnerManagement = () => {
                   </div>
 
                   <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setViewDetailsFranchise(f)}
+                      className="p-2 hover:bg-slate-200 text-slate-500 hover:text-slate-800 rounded-lg transition"
+                      title="View Franchise Details"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
                     <button
                       onClick={() => handleEdit(f)}
                       className="p-2 hover:bg-slate-200 text-slate-500 hover:text-slate-800 rounded-lg transition"
@@ -796,6 +1013,8 @@ const FranchiseOwnerManagement = () => {
         </div>,
         document.body
       )}
+
+
     </div>
   );
 };

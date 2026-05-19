@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import api from "../../api";
 import { toast } from "react-hot-toast";
-import { Search, Filter, Trash2, Check, X, ShieldAlert, Eye } from "lucide-react";
+import { Search, Filter, Trash2, Check, X, ShieldAlert, Eye, ArrowLeft, Landmark, UserCheck, FileText, MapPin, Clock } from "lucide-react";
 
 const RestaurantManagement = () => {
   const [restaurants, setRestaurants] = useState([]);
@@ -10,6 +10,7 @@ const RestaurantManagement = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [selectedRest, setSelectedRest] = useState(null);
+  const [activeDetailTab, setActiveDetailTab] = useState("outlet");
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
