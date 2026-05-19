@@ -3,8 +3,10 @@ import api from "../api";
 import { toast } from "react-hot-toast";
 import {
   Users, Store, ChefHat, Bike, ShoppingBag, DollarSign,
-  Clock, Landmark, TrendingUp, TrendingDown, ArrowUpRight
+  Clock, Landmark, TrendingUp, TrendingDown, ArrowUpRight,
+  Percent, Image
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -74,8 +76,8 @@ const StatCard = ({ icon: Icon, label, value, trend, positive, gradient, iconBg,
         <Icon className="w-5 h-5 text-white" strokeWidth={2.5} />
       </div>
       <span className={`flex items-center gap-1 text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider border ${positive
-          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-          : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+        : "bg-amber-500/10 text-amber-400 border-amber-500/20"
         }`}>
         {positive ? <ArrowUpRight className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
         {trend}
@@ -156,12 +158,12 @@ const SuperDashboard = () => {
       gradient: "linear-gradient(135deg,#03120f 0%,#0B1120 100%)",
       iconBg: "#06B6D4"
     },
-     {
-          label: "Pending Approvals", icon: Clock, positive: false, trend: "Review",
-          value: cards?.pendingApprovals || 0,
-          gradient: "linear-gradient(135deg,#2e0d05 0%,#0B1120 100%)",
-          iconBg: "#EF4444"
-        }
+    {
+      label: "Pending Approvals", icon: Clock, positive: false, trend: "Review",
+      value: cards?.pendingApprovals || 0,
+      gradient: "linear-gradient(135deg,#2e0d05 0%,#0B1120 100%)",
+      iconBg: "#EF4444"
+    }
   ];
 
   return (
@@ -197,6 +199,39 @@ const SuperDashboard = () => {
         {statsCards.map((c, i) => (
           <StatCard key={i} delay={i * 60} {...c} />
         ))}
+      </div>
+
+      {/* ── Quick Access ──────────────────────────────────────────── */}
+      <div>
+        <h2 className="text-sm font-black text-white uppercase tracking-tight mb-4 flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_#10B981]" />
+          Quick Actions
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            { label: "Restaurants", icon: Store, path: "/superadmin/restaurants", gradient: "linear-gradient(135deg,#052e16 0%,#0B1120 100%)", iconBg: "#10B981" },
+            { label: "Franchises", icon: Landmark, path: "/superadmin/franchises", gradient: "linear-gradient(135deg,#01140f 0%,#0B1120 100%)", iconBg: "#14B8A6" },
+            { label: "Commissions", icon: Percent, path: "/superadmin/commissions", gradient: "linear-gradient(135deg,#05162e 0%,#0B1120 100%)", iconBg: "#3B82F6" },
+            { label: "Banners", icon: Image, path: "/superadmin/banners", gradient: "linear-gradient(135deg,#1f052e 0%,#0B1120 100%)", iconBg: "#8B5CF6" },
+          ].map((item, i) => (
+            <Link key={i} to={item.path} 
+              className="relative overflow-hidden group flex items-center gap-4 p-5 rounded-3xl border border-white/5 shadow-xl hover:-translate-y-1 transition-all duration-300"
+              style={{ background: item.gradient }}
+            >
+              {/* Glow blob */}
+              <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full opacity-20 blur-2xl transition-opacity group-hover:opacity-40" style={{ background: item.iconBg }} />
+              
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg relative z-10" style={{ background: item.iconBg }}>
+                <item.icon className="w-5 h-5 text-white" strokeWidth={2.5} />
+              </div>
+              <div className="relative z-10 flex-1">
+                <span className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em] block mb-0.5">Manage</span>
+                <span className="text-sm font-black text-white uppercase tracking-tight">{item.label}</span>
+              </div>
+              <ArrowUpRight className="w-5 h-5 text-white/20 group-hover:text-white transition-colors relative z-10" />
+            </Link>
+          ))}
+        </div>
       </div>
 
       {/* ── Charts removed as per user request ──────────────────── */}
