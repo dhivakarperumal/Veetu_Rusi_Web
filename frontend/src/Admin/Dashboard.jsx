@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import api from "../api";
 import { toast, Toaster } from "react-hot-toast";
 import {
-  Users, Store, ChefHat, Bike, ShoppingBag, Clock, TrendingUp, TrendingDown, ArrowUpRight
+  Users, Store, ChefHat, Bike, ShoppingBag, Clock, TrendingUp, TrendingDown, ArrowUpRight, DollarSign, Landmark, Package, XCircle
 } from "lucide-react";
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line,
@@ -133,6 +133,12 @@ const Dashboard = () => {
 
   const statsCards = [
     {
+      label: "Total Revenue", icon: DollarSign, positive: true, trend: "+12.4%",
+      value: `₹${Number(cards?.totalRevenue || 0).toLocaleString()}`,
+      gradient: "linear-gradient(135deg,#052e16 0%,#0B1120 100%)",
+      iconBg: "#10B981"
+    },
+    {
       label: "Total Orders", icon: ShoppingBag, positive: true, trend: "+8.2%",
       value: cards?.totalOrders || 0,
       gradient: "linear-gradient(135deg,#05162e 0%,#0B1120 100%)",
@@ -163,8 +169,14 @@ const Dashboard = () => {
       iconBg: "#F59E0B"
     },
     {
-      label: "Pending Approvals", icon: Clock, positive: false, trend: "Review",
-      value: cards?.pendingApprovals || 0,
+      label: "Products", icon: Package, positive: true, trend: "In Stock",
+      value: cards?.totalProducts || 0,
+      gradient: "linear-gradient(135deg,#01140f 0%,#0B1120 100%)",
+      iconBg: "#14B8A6"
+    },
+    {
+      label: "Cancelled Orders", icon: XCircle, positive: false, trend: "Alert",
+      value: cards?.cancelledOrders || 0,
       gradient: "linear-gradient(135deg,#2e0d05 0%,#0B1120 100%)",
       iconBg: "#EF4444"
     }
@@ -175,7 +187,7 @@ const Dashboard = () => {
       <Toaster position="top-right" />
 
       {/* ── Stat Cards ──────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {statsCards.map((c, i) => (
           <StatCard key={i} delay={i * 60} {...c} />
         ))}
