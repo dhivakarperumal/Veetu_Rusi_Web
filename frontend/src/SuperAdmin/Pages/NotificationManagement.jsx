@@ -72,11 +72,11 @@ const NotificationManagement = () => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-700">
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Notification Title</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Message Content</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Channel</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Status</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Dispatched Date</th>
+                  <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Notification Title</th>
+                  <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Message Content</th>
+                  <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Channel</th>
+                  <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Status</th>
+                  <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Dispatched Date</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">

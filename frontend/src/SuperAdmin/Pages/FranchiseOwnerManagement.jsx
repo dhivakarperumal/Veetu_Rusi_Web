@@ -8,6 +8,8 @@ import {
   List, LayoutGrid
 } from "lucide-react";
 
+const ITEMS_PER_PAGE = 8;
+
 const FranchiseOwnerManagement = () => {
   const [franchises, setFranchises] = useState([]);
   const [filteredFranchises, setFilteredFranchises] = useState([]);
@@ -17,6 +19,8 @@ const FranchiseOwnerManagement = () => {
   const [viewMode, setViewMode] = useState("table");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingFranchise, setEditingFranchise] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [viewDetailsFranchise, setViewDetailsFranchise] = useState(null);
 
   // Approve modal: holds the franchise being approved + password input
   const [approveModal, setApproveModal] = useState(null); // { franchise } | null
@@ -62,6 +66,7 @@ const FranchiseOwnerManagement = () => {
     }
 
     setFilteredFranchises(filtered);
+    setCurrentPage(1);
   }, [search, statusFilter, franchises]);
 
   const handleSubmit = async (e) => {
@@ -173,6 +178,12 @@ const FranchiseOwnerManagement = () => {
   const activeCount = franchises.filter(f => f.status === "Active").length;
   const pendingCount = franchises.filter(f => f.status === "Pending").length;
   const inactiveCount = franchises.filter(f => f.status === "Inactive").length;
+
+  const totalPages = Math.ceil(filteredFranchises.length / ITEMS_PER_PAGE);
+  const paginatedFranchises = filteredFranchises.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -296,11 +307,11 @@ const FranchiseOwnerManagement = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredFranchises.map((f, index) => (
+                {paginatedFranchises.map((f, index) => (
                   <tr key={f.id} className="hover:bg-slate-50/50 transition-colors">
                     {/* S.No */}
                     <td className="px-6 py-4 text-xs font-bold text-slate-500 text-center">
-                      {index + 1}
+                      {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
                     </td>
                     {/* Franchise */}
                     <td className="px-5 py-4">
@@ -397,7 +408,7 @@ const FranchiseOwnerManagement = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-200">
-          {filteredFranchises.map(f => {
+          {paginatedFranchises.map(f => {
             const initials = f.owner_name ? f.owner_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'FO';
             return (
               <div key={f.id} className="bg-white border border-slate-100 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between overflow-hidden">
@@ -519,6 +530,44 @@ const FranchiseOwnerManagement = () => {
               <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">No franchise owners registered yet</p>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 mt-2">
+          <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">
+            Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, filteredFranchises.length)} of {filteredFranchises.length} entries
+          </p>
+          <div className="flex items-center gap-1 self-end sm:self-auto">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-800 bg-white border border-slate-200 hover:border-slate-300 rounded-xl disabled:opacity-40 disabled:hover:text-slate-500 disabled:hover:border-slate-200 transition disabled:cursor-not-allowed shadow-sm"
+            >
+              Prev
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={`w-9 h-9 text-[10px] font-black rounded-xl transition ${
+                  currentPage === page
+                    ? "bg-[#1B4D22] text-white shadow-sm shadow-[#1B4D22]/20"
+                    : "text-slate-500 hover:text-slate-800 bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50/50"
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-800 bg-white border border-slate-200 hover:border-slate-300 rounded-xl disabled:opacity-40 disabled:hover:text-slate-500 disabled:hover:border-slate-200 transition disabled:cursor-not-allowed shadow-sm"
+            >
+              Next
+            </button>
+          </div>
         </div>
       )}
 
