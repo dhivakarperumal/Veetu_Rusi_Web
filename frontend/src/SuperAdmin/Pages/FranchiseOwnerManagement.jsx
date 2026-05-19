@@ -167,35 +167,35 @@ const FranchiseOwnerManagement = () => {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
         {/* Total Card */}
-        <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-600 border border-slate-100">
+        <div className="bg-white border border-slate-100 border-l-4 border-l-slate-400 p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 border border-slate-100 flex-shrink-0">
             <Landmark className="w-5 h-5" />
           </div>
           <div>
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Total Franchises</p>
-            <h4 className="text-xl font-black text-slate-800 mt-1">{totalCount}</h4>
+            <h4 className="text-2xl font-black text-slate-800 mt-1 tracking-tight">{totalCount}</h4>
           </div>
         </div>
 
         {/* Active Card */}
-        <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 border border-emerald-100/50">
+        <div className="bg-white border border-slate-100 border-l-4 border-l-emerald-500 p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 border border-emerald-100/50 flex-shrink-0">
             <CheckCircle className="w-5 h-5" />
           </div>
           <div>
             <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest">Active Owners</p>
-            <h4 className="text-xl font-black text-slate-800 mt-1">{activeCount}</h4>
+            <h4 className="text-2xl font-black text-slate-800 mt-1 tracking-tight">{activeCount}</h4>
           </div>
         </div>
 
         {/* Inactive Card */}
-        <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 border border-amber-100/50">
+        <div className="bg-white border border-slate-100 border-l-4 border-l-amber-500 p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 border border-amber-100/50 flex-shrink-0">
             <X className="w-5 h-5" />
           </div>
           <div>
             <p className="text-[10px] text-amber-600 font-bold uppercase tracking-widest">Pending & Inactive</p>
-            <h4 className="text-xl font-black text-slate-800 mt-1">{pendingCount + inactiveCount}</h4>
+            <h4 className="text-2xl font-black text-slate-800 mt-1 tracking-tight">{pendingCount + inactiveCount}</h4>
           </div>
         </div>
       </div>
@@ -261,6 +261,7 @@ const FranchiseOwnerManagement = () => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-700">
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em] w-16 text-center">S.No</th>
                   <th className="px-6 py-4 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Franchise</th>
                   <th className="px-6 py-4 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Owner</th>
                   <th className="px-6 py-4 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Territory</th>
@@ -270,8 +271,12 @@ const FranchiseOwnerManagement = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredFranchises.map(f => (
+                {filteredFranchises.map((f, index) => (
                   <tr key={f.id} className="hover:bg-slate-50/50 transition-colors">
+                    {/* S.No */}
+                    <td className="px-6 py-4 text-xs font-bold text-slate-500 text-center">
+                      {index + 1}
+                    </td>
                     {/* Franchise */}
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
@@ -354,7 +359,7 @@ const FranchiseOwnerManagement = () => {
                 ))}
                 {filteredFranchises.length === 0 && (
                   <tr>
-                    <td colSpan="6" className="px-6 py-16 text-center">
+                    <td colSpan="7" className="px-6 py-16 text-center">
                       <Landmark className="w-10 h-10 text-slate-300 mx-auto mb-3" />
                       <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">No franchise owners registered yet</p>
                     </td>
@@ -369,103 +374,111 @@ const FranchiseOwnerManagement = () => {
           {filteredFranchises.map(f => {
             const initials = f.owner_name ? f.owner_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'FO';
             return (
-              <div key={f.id} className="group bg-white border border-slate-200/60 rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden">
-                {/* Card Header (Branch Name & Status) */}
-                <div className="bg-slate-50/80 border-b border-slate-100 p-5 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-white shadow-sm shadow-emerald-600/20">
-                      <Landmark className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-black text-slate-800 tracking-tight group-hover:text-[#1B4D22] transition-colors">{f.franchise_name}</h4>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{f.city}, {f.state}</p>
+              <div key={f.id} className="bg-white border border-slate-100 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between overflow-hidden">
+                {/* Header: Title and Status */}
+                <div className="p-6 pb-4 border-b border-slate-100 flex items-start justify-between gap-3">
+                  <div>
+                    <h4 className="text-base font-bold text-slate-800 tracking-tight">{f.franchise_name}</h4>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <MapPin className="w-3.5 h-3.5 text-rose-500" />
+                      <span className="text-xs text-slate-500 font-semibold">{f.city}, {f.state}</span>
                     </div>
                   </div>
-                  <span className={`inline-block text-[9px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider ${
+                  
+                  <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black tracking-wide uppercase ${
                     f.status === "Active"
-                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200/50"
+                      ? "bg-emerald-50 text-emerald-700"
                       : f.status === "Inactive"
-                      ? "bg-red-50 text-red-700 border border-red-200/50"
-                      : "bg-amber-50 text-amber-700 border border-amber-200/50"
-                  }`}>{f.status}</span>
+                      ? "bg-rose-50 text-rose-700"
+                      : "bg-amber-50 text-amber-700"
+                  }`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${
+                      f.status === "Active" ? "bg-emerald-500" : f.status === "Inactive" ? "bg-rose-500" : "bg-amber-500"
+                    }`} />
+                    {f.status}
+                  </span>
                 </div>
 
-                {/* Card Body */}
-                <div className="p-5 space-y-4 flex-1">
-                  {/* Owner Row */}
-                  <div className="flex items-center gap-3 bg-slate-50/50 rounded-xl p-3 border border-slate-100/50">
-                    <div className="w-10 h-10 rounded-full bg-emerald-100/70 border border-emerald-200/40 flex items-center justify-center text-emerald-800 text-xs font-black">
+                {/* Details Section */}
+                <div className="p-6 space-y-4 flex-1">
+                  {/* Owner Info */}
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-700 text-xs font-bold border border-slate-200/50">
                       {initials}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Owner</p>
-                      <p className="text-xs font-black text-slate-800 truncate">{f.owner_name}</p>
-                      <p className="text-[10px] text-slate-500 font-bold truncate">{f.mobile} • {f.email}</p>
+                    <div>
+                      <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Owner</p>
+                      <p className="text-sm font-bold text-slate-800 mt-0.5">{f.owner_name}</p>
                     </div>
                   </div>
 
-                  {/* Details Grid */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-slate-50/30 rounded-xl p-3 border border-slate-100/50">
-                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Commission</p>
+                  {/* Contact & Business Info */}
+                  <div className="grid grid-cols-2 gap-y-4 gap-x-2 pt-4 border-t border-slate-100">
+                    <div>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Mobile Number</p>
+                      <p className="text-xs font-semibold text-slate-700 mt-1">{f.mobile}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Email Address</p>
+                      <p className="text-xs font-semibold text-slate-700 mt-1 truncate" title={f.email}>{f.email}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Commission Rate</p>
                       <p className="text-sm font-black text-emerald-700 mt-0.5">{f.commission_percentage}%</p>
                     </div>
-                    <div className="bg-slate-50/30 rounded-xl p-3 border border-slate-100/50">
-                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Territory</p>
-                      <p className="text-xs font-bold text-slate-600 mt-1 flex items-center gap-1">
-                        <MapPin className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />
-                        <span className="truncate">{f.city}</span>
-                      </p>
+                    <div>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Account Status</p>
+                      {f.franch_user_id ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] text-teal-700 font-bold bg-teal-50 border border-teal-200/20 px-2 py-0.5 rounded-md mt-1">
+                          Linked
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[10px] text-amber-700 font-bold bg-amber-50 border border-amber-200/20 px-2 py-0.5 rounded-md mt-1">
+                          Not Setup
+                        </span>
+                      )}
                     </div>
                   </div>
+                </div>
 
-                  {/* Credentials Setup status / Link */}
-                  {f.franch_user_id ? (
-                    <div className="flex items-center justify-between gap-2 bg-teal-50/40 rounded-xl p-3 border border-teal-100/30">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[9px] text-teal-700 font-black uppercase tracking-widest">Admin Account</p>
-                        <p className="text-[10px] text-slate-600 font-mono mt-0.5 truncate">{f.franch_user_id}</p>
-                      </div>
-                      <button
-                        onClick={() => setCredModal({ email: f.email, password: null, owner_name: f.owner_name, franchise_name: f.franchise_name, franch_user_id: f.franch_user_id })}
-                        className="flex items-center gap-1 px-2.5 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-[9px] font-black uppercase tracking-wider transition shadow-sm active:scale-95 flex-shrink-0"
-                      >
-                        <KeyRound className="w-3 h-3" /> Credentials
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-between gap-2 bg-amber-50/30 rounded-xl p-3 border border-amber-100/30">
-                      <div>
-                        <p className="text-[9px] text-amber-700 font-black uppercase tracking-widest">Credentials Setup</p>
-                        <p className="text-[10px] text-slate-500 mt-0.5">Approval Required</p>
-                      </div>
+                {/* Footer Controls */}
+                <div className="bg-slate-50/70 p-4 border-t border-slate-100 flex items-center justify-between gap-3 mt-auto">
+                  <div className="flex items-center gap-2">
+                    {/* Approve Button */}
+                    {!f.franch_user_id ? (
                       <button
                         onClick={() => handleApprove(f)}
                         disabled={approvingId === f.id}
-                        className="flex items-center gap-1 px-3 py-1.5 bg-[#1B4D22] hover:bg-[#153b1a] text-white rounded-lg text-[9px] font-black uppercase tracking-wider transition disabled:opacity-50 active:scale-95 shadow-sm"
+                        className="flex items-center gap-1.5 px-3 py-2 bg-[#1B4D22] hover:bg-[#153b1a] text-white rounded-lg text-[10px] font-black uppercase tracking-wider transition active:scale-95 disabled:opacity-50"
                       >
-                        <UserCheck className="w-3 h-3" /> Approve
+                        <UserCheck className="w-3.5 h-3.5" /> Approve
                       </button>
-                    </div>
-                  )}
-                </div>
+                    ) : (
+                      <button
+                        onClick={() => setCredModal({ email: f.email, password: null, owner_name: f.owner_name, franchise_name: f.franchise_name, franch_user_id: f.franch_user_id })}
+                        className="flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-[10px] font-black uppercase tracking-wider transition active:scale-95 shadow-sm"
+                      >
+                        <KeyRound className="w-3.5 h-3.5" /> Credentials
+                      </button>
+                    )}
+                  </div>
 
-                {/* Card Footer Actions */}
-                <div className="bg-slate-50/40 px-5 py-3 border-t border-slate-100 flex items-center justify-end gap-2 mt-auto">
-                  <button 
-                    onClick={() => handleEdit(f)} 
-                    className="p-1.5 hover:bg-slate-100 text-slate-500 hover:text-slate-800 rounded-lg transition"
-                    title="Edit Franchise Details"
-                  >
-                    <Edit2 className="w-3.5 h-3.5" />
-                  </button>
-                  <button 
-                    onClick={() => handleDelete(f.id)} 
-                    className="p-1.5 hover:bg-red-50 text-red-500 hover:text-red-700 rounded-lg transition"
-                    title="Delete Franchise"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => handleEdit(f)}
+                      className="p-2 hover:bg-slate-200 text-slate-500 hover:text-slate-800 rounded-lg transition"
+                      title="Edit Owner Details"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(f.id)}
+                      className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition"
+                      title="Delete Franchise"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             );
