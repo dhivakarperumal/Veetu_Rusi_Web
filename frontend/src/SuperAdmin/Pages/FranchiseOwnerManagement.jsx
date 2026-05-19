@@ -142,6 +142,8 @@ const FranchiseOwnerManagement = () => {
 
   const copy = (text) => { navigator.clipboard.writeText(text); toast.success("Copied!"); };
 
+  const inputCls = "w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-medium text-slate-800 text-sm focus:bg-white focus:border-emerald-600/40 transition-all";
+
   const totalCount = franchises.length;
   const activeCount = franchises.filter(f => f.status === "Active").length;
   const pendingCount = franchises.filter(f => f.status === "Pending").length;
@@ -152,7 +154,7 @@ const FranchiseOwnerManagement = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black text-slate-800 tracking-tight uppercase italic">Franchise Owners</h2>
+         
         </div>
         <button
           onClick={() => { resetForm(); setIsModalOpen(true); }}
@@ -364,98 +366,110 @@ const FranchiseOwnerManagement = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-200">
-          {filteredFranchises.map(f => (
-            <div key={f.id} className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between space-y-5">
-              {/* Card Top */}
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 border border-emerald-100/50">
-                    <Landmark className="w-5 h-5" />
+          {filteredFranchises.map(f => {
+            const initials = f.owner_name ? f.owner_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'FO';
+            return (
+              <div key={f.id} className="group bg-white border border-slate-200/60 rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden">
+                {/* Card Header (Branch Name & Status) */}
+                <div className="bg-slate-50/80 border-b border-slate-100 p-5 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-white shadow-sm shadow-emerald-600/20">
+                      <Landmark className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-black text-slate-800 tracking-tight group-hover:text-[#1B4D22] transition-colors">{f.franchise_name}</h4>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{f.city}, {f.state}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-slate-800 line-clamp-1">{f.franchise_name}</h4>
-                    <p className="text-xs text-slate-400 font-semibold">{f.email}</p>
-                  </div>
-                </div>
-                <span className={`inline-block text-[9px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider ${
-                  f.status === "Active"
-                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200/50"
-                    : f.status === "Inactive"
-                    ? "bg-red-50 text-red-700 border border-red-200/50"
-                    : "bg-amber-50 text-amber-700 border border-amber-200/50"
-                }`}>{f.status}</span>
-              </div>
-
-              {/* Owner and Territory info */}
-              <div className="space-y-3 pt-1 border-t border-slate-50">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Owner</p>
-                    <p className="text-xs font-bold text-slate-700 mt-0.5">{f.owner_name}</p>
-                    <p className="text-[10px] text-slate-400 font-semibold">{f.mobile}</p>
-                  </div>
-                  <div>
-                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Territory</p>
-                    <p className="text-xs font-bold text-slate-600 mt-0.5 flex items-center gap-1">
-                      <MapPin className="w-3 h-3 text-rose-500 flex-shrink-0" />
-                      <span className="truncate">{f.city}, {f.state}</span>
-                    </p>
-                  </div>
+                  <span className={`inline-block text-[9px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider ${
+                    f.status === "Active"
+                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200/50"
+                      : f.status === "Inactive"
+                      ? "bg-red-50 text-red-700 border border-red-200/50"
+                      : "bg-amber-50 text-amber-700 border border-amber-200/50"
+                  }`}>{f.status}</span>
                 </div>
 
-                <div className="flex items-center justify-between gap-2 bg-slate-50/70 rounded-xl p-3 border border-slate-100">
-                  <div>
-                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Commission Rate</p>
-                    <p className="text-xs font-black text-emerald-700 mt-0.5">{f.commission_percentage}%</p>
+                {/* Card Body */}
+                <div className="p-5 space-y-4 flex-1">
+                  {/* Owner Row */}
+                  <div className="flex items-center gap-3 bg-slate-50/50 rounded-xl p-3 border border-slate-100/50">
+                    <div className="w-10 h-10 rounded-full bg-emerald-100/70 border border-emerald-200/40 flex items-center justify-center text-emerald-800 text-xs font-black">
+                      {initials}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Owner</p>
+                      <p className="text-xs font-black text-slate-800 truncate">{f.owner_name}</p>
+                      <p className="text-[10px] text-slate-500 font-bold truncate">{f.mobile} • {f.email}</p>
+                    </div>
                   </div>
-                  {f.franch_user_id && (
-                    <div className="text-right">
-                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Account ID</p>
-                      <p className="text-[10px] text-slate-500 font-mono mt-0.5">{f.franch_user_id.slice(0, 8)}…</p>
+
+                  {/* Details Grid */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-slate-50/30 rounded-xl p-3 border border-slate-100/50">
+                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Commission</p>
+                      <p className="text-sm font-black text-emerald-700 mt-0.5">{f.commission_percentage}%</p>
+                    </div>
+                    <div className="bg-slate-50/30 rounded-xl p-3 border border-slate-100/50">
+                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Territory</p>
+                      <p className="text-xs font-bold text-slate-600 mt-1 flex items-center gap-1">
+                        <MapPin className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />
+                        <span className="truncate">{f.city}</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Credentials Setup status / Link */}
+                  {f.franch_user_id ? (
+                    <div className="flex items-center justify-between gap-2 bg-teal-50/40 rounded-xl p-3 border border-teal-100/30">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[9px] text-teal-700 font-black uppercase tracking-widest">Admin Account</p>
+                        <p className="text-[10px] text-slate-600 font-mono mt-0.5 truncate">{f.franch_user_id}</p>
+                      </div>
+                      <button
+                        onClick={() => setCredModal({ email: f.email, password: null, owner_name: f.owner_name, franchise_name: f.franchise_name, franch_user_id: f.franch_user_id })}
+                        className="flex items-center gap-1 px-2.5 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-[9px] font-black uppercase tracking-wider transition shadow-sm active:scale-95 flex-shrink-0"
+                      >
+                        <KeyRound className="w-3 h-3" /> Credentials
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between gap-2 bg-amber-50/30 rounded-xl p-3 border border-amber-100/30">
+                      <div>
+                        <p className="text-[9px] text-amber-700 font-black uppercase tracking-widest">Credentials Setup</p>
+                        <p className="text-[10px] text-slate-500 mt-0.5">Approval Required</p>
+                      </div>
+                      <button
+                        onClick={() => handleApprove(f)}
+                        disabled={approvingId === f.id}
+                        className="flex items-center gap-1 px-3 py-1.5 bg-[#1B4D22] hover:bg-[#153b1a] text-white rounded-lg text-[9px] font-black uppercase tracking-wider transition disabled:opacity-50 active:scale-95 shadow-sm"
+                      >
+                        <UserCheck className="w-3 h-3" /> Approve
+                      </button>
                     </div>
                   )}
                 </div>
-              </div>
 
-              {/* Card Footer Actions */}
-              <div className="flex items-center justify-between gap-3 pt-2 border-t border-slate-50 mt-auto">
-                <div className="flex items-center gap-2">
-                  {/* Approve button */}
-                  {(!f.franch_user_id || f.status !== "Active") && (
-                    <button
-                      onClick={() => handleApprove(f)}
-                      disabled={approvingId === f.id}
-                      className="flex items-center gap-1 px-3 py-2 bg-[#1B4D22] hover:bg-[#153b1a] text-white rounded-lg text-[10px] font-black uppercase tracking-wider transition disabled:opacity-50"
-                    >
-                      <UserCheck className="w-3.5 h-3.5" />
-                      {approvingId === f.id ? "…" : "Approve"}
-                    </button>
-                  )}
-
-                  {/* Credentials button if linked */}
-                  {f.franch_user_id && (
-                    <button
-                      onClick={() => setCredModal({ email: f.email, password: null, owner_name: f.owner_name, franchise_name: f.franchise_name, franch_user_id: f.franch_user_id })}
-                      className="flex items-center gap-1.5 px-3 py-2 bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200/30 rounded-lg text-[10px] font-black uppercase tracking-wider transition"
-                      title="View Credentials"
-                    >
-                      <KeyRound className="w-3.5 h-3.5" />
-                      Credentials
-                    </button>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-1.5">
-                  <button onClick={() => handleEdit(f)} className="p-2 hover:bg-slate-100 text-slate-500 hover:text-slate-800 rounded-lg transition" title="Edit">
-                    <Edit2 className="w-4 h-4" />
+                {/* Card Footer Actions */}
+                <div className="bg-slate-50/40 px-5 py-3 border-t border-slate-100 flex items-center justify-end gap-2 mt-auto">
+                  <button 
+                    onClick={() => handleEdit(f)} 
+                    className="p-1.5 hover:bg-slate-100 text-slate-500 hover:text-slate-800 rounded-lg transition"
+                    title="Edit Franchise Details"
+                  >
+                    <Edit2 className="w-3.5 h-3.5" />
                   </button>
-                  <button onClick={() => handleDelete(f.id)} className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition" title="Delete">
-                    <Trash2 className="w-4 h-4" />
+                  <button 
+                    onClick={() => handleDelete(f.id)} 
+                    className="p-1.5 hover:bg-red-50 text-red-500 hover:text-red-700 rounded-lg transition"
+                    title="Delete Franchise"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
           {filteredFranchises.length === 0 && (
             <div className="col-span-full bg-white border border-slate-100 rounded-2xl py-16 text-center">
               <Landmark className="w-10 h-10 text-slate-300 mx-auto mb-3" />
