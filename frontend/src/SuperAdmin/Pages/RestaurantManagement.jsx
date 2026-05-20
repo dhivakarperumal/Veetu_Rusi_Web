@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import api from "../../api";
 import { toast } from "react-hot-toast";
-import { Search, Filter, Trash2, Check, X, ShieldAlert, Eye, Plus, Edit2, List, LayoutGrid, MapPin } from "lucide-react";
+import { Search, Filter, Trash2, Check, X, ShieldAlert, Eye, Plus, Edit2, List, LayoutGrid, MapPin, Store, CheckCircle, Clock } from "lucide-react";
 
 const emptyForm = {
   restaurant_id: "",
@@ -246,18 +246,35 @@ const RestaurantManagement = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="bg-white rounded-[2rem] border border-slate-200 p-6 shadow-sm transition hover:shadow-md">
-          <p className="text-[10px] uppercase tracking-[0.35em] font-black text-slate-400">Total Outlets</p>
-          <h3 className="text-3xl font-black text-slate-900 mt-3">{restaurants.length}</h3>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <div className="bg-white border border-slate-100 border-l-4 border-l-slate-400 p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 border border-slate-100 flex-shrink-0">
+            <Store className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Total Outlets</p>
+            <h4 className="text-2xl font-black text-slate-800 mt-1 tracking-tight">{restaurants.length}</h4>
+          </div>
         </div>
-        <div className="bg-white rounded-[2rem] border border-slate-200 p-6 shadow-sm transition hover:shadow-md">
-          <p className="text-[10px] uppercase tracking-[0.35em] font-black text-emerald-500">Approved Outlets</p>
-          <h3 className="text-3xl font-black text-slate-900 mt-3">{approvedCount}</h3>
+
+        <div className="bg-white border border-slate-100 border-l-4 border-l-emerald-500 p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 border border-emerald-100/50 flex-shrink-0">
+            <CheckCircle className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest">Approved Outlets</p>
+            <h4 className="text-2xl font-black text-slate-800 mt-1 tracking-tight">{approvedCount}</h4>
+          </div>
         </div>
-        <div className="bg-white rounded-[2rem] border border-slate-200 p-6 shadow-sm transition hover:shadow-md">
-          <p className="text-[10px] uppercase tracking-[0.35em] font-black text-amber-500">Pending & Suspended</p>
-          <h3 className="text-3xl font-black text-slate-900 mt-3">{pendingCount + suspendedCount}</h3>
+
+        <div className="bg-white border border-slate-100 border-l-4 border-l-amber-500 p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 border border-amber-100/50 flex-shrink-0">
+            <Clock className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-[10px] text-amber-600 font-bold uppercase tracking-widest">Pending & Suspended</p>
+            <h4 className="text-2xl font-black text-slate-800 mt-1 tracking-tight">{pendingCount + suspendedCount}</h4>
+          </div>
         </div>
       </div>
 
