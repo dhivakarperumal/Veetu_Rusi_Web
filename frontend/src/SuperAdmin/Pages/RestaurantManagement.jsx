@@ -73,6 +73,7 @@ const RestaurantManagement = () => {
   const [editingRest, setEditingRest] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [activeFormTab, setActiveFormTab] = useState("basic");
 
   useEffect(() => { fetchRestaurants(); }, []);
 
@@ -108,11 +109,13 @@ const RestaurantManagement = () => {
   const openAddModal = () => {
     setEditingRest(null);
     setForm(emptyForm);
+    setActiveFormTab("basic");
     setIsFormOpen(true);
   };
 
   const openEditModal = (rest) => {
     setEditingRest(rest);
+    setActiveFormTab("basic");
     setForm({
       restaurant_id: rest.restaurant_id || "",
       name: rest.name || "",
@@ -561,7 +564,7 @@ const RestaurantManagement = () => {
 
       {/* ===== VIEW DETAILS MODAL ===== */}
       {isDetailOpen && selectedRest && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm" onClick={() => setIsDetailOpen(false)} />
           <div className="bg-[#0B1120] border border-white/5 w-full max-w-lg rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300">
             <div className="bg-[#1B4D22] p-8 text-white flex items-start justify-between">
@@ -635,7 +638,7 @@ const RestaurantManagement = () => {
 
       {/* ===== ADD / EDIT POPUP MODAL ===== */}
       {isFormOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 mt-4 sm:mt-0">
           <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm" onClick={() => setIsFormOpen(false)} />
           <div className="bg-[#0B1120] border border-white/8 w-full max-w-2xl rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[92vh]">
 
@@ -655,11 +658,38 @@ const RestaurantManagement = () => {
             </div>
 
                     {/* Modal Form */}
-            <form onSubmit={handleSubmit} className="overflow-y-auto flex-1 p-7 space-y-5">
-              <div className="space-y-5">
-                <div className="bg-slate-950/50 p-4 rounded-3xl border border-white/10">
-                  <p className="text-xs text-emerald-300 uppercase tracking-[0.25em] font-black mb-4">Basic Restaurant Information</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+              {/* Tabs */}
+              <div className="flex overflow-x-auto border-b border-white/10 shrink-0 custom-scrollbar">
+                {[
+                  { id: "basic", label: "Basic Info" },
+                  { id: "contact", label: "Contact" },
+                  { id: "address", label: "Address" },
+                  { id: "login", label: "Login & Auth" },
+                  { id: "timing", label: "Timing" },
+                  { id: "kyc", label: "KYC & Docs" },
+                ].map(tab => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveFormTab(tab.id)}
+                    className={`whitespace-nowrap px-6 py-4 text-[10px] font-black uppercase tracking-widest transition-all duration-200 ${
+                      activeFormTab === tab.id
+                        ? "text-emerald-400 border-b-[3px] border-emerald-500 bg-white/5"
+                        : "text-white/40 hover:text-white/80 hover:bg-white/5 border-b-[3px] border-transparent"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="overflow-y-auto flex-1 p-7">
+                <div className="space-y-5">
+                  {activeFormTab === "basic" && (
+                  <div className="bg-slate-950/50 p-6 rounded-3xl border border-white/10 animate-in fade-in zoom-in-95 duration-200">
+                    <p className="text-xs text-emerald-300 uppercase tracking-[0.25em] font-black mb-5">Basic Restaurant Information</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {editingRest && (
                       <div className="space-y-1 sm:col-span-2">
                         <label className={lbl}>Restaurant ID</label>
@@ -723,9 +753,11 @@ const RestaurantManagement = () => {
                     </div>
                   </div>
                 </div>
+                )}
 
-                <div className="bg-slate-950/50 p-4 rounded-3xl border border-white/10">
-                  <p className="text-xs text-emerald-300 uppercase tracking-[0.25em] font-black mb-4">Contact Information</p>
+                {activeFormTab === "contact" && (
+                <div className="bg-slate-950/50 p-6 rounded-3xl border border-white/10 animate-in fade-in zoom-in-95 duration-200">
+                  <p className="text-xs text-emerald-300 uppercase tracking-[0.25em] font-black mb-5">Contact Information</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <label className={lbl}>Mobile Number *</label>
@@ -759,9 +791,11 @@ const RestaurantManagement = () => {
                     </div>
                   </div>
                 </div>
+                )}
 
-                <div className="bg-slate-950/50 p-4 rounded-3xl border border-white/10">
-                  <p className="text-xs text-emerald-300 uppercase tracking-[0.25em] font-black mb-4">Address Details</p>
+                {activeFormTab === "address" && (
+                <div className="bg-slate-950/50 p-6 rounded-3xl border border-white/10 animate-in fade-in zoom-in-95 duration-200">
+                  <p className="text-xs text-emerald-300 uppercase tracking-[0.25em] font-black mb-5">Address Details</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <label className={lbl}>Door Number</label>
@@ -820,9 +854,11 @@ const RestaurantManagement = () => {
                     </div>
                   </div>
                 </div>
+                )}
 
-                <div className="bg-slate-950/50 p-4 rounded-3xl border border-white/10">
-                  <p className="text-xs text-emerald-300 uppercase tracking-[0.25em] font-black mb-4">Login & Verification</p>
+                {activeFormTab === "login" && (
+                <div className="bg-slate-950/50 p-6 rounded-3xl border border-white/10 animate-in fade-in zoom-in-95 duration-200">
+                  <p className="text-xs text-emerald-300 uppercase tracking-[0.25em] font-black mb-5">Login & Verification</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {!editingRest && (
                       <div className="space-y-1">
@@ -887,9 +923,11 @@ const RestaurantManagement = () => {
                     </div>
                   </div>
                 </div>
+                )}
 
-                <div className="bg-slate-950/50 p-4 rounded-3xl border border-white/10">
-                  <p className="text-xs text-emerald-300 uppercase tracking-[0.25em] font-black mb-4">Restaurant Timing</p>
+                {activeFormTab === "timing" && (
+                <div className="bg-slate-950/50 p-6 rounded-3xl border border-white/10 animate-in fade-in zoom-in-95 duration-200">
+                  <p className="text-xs text-emerald-300 uppercase tracking-[0.25em] font-black mb-5">Restaurant Timing</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <label className={lbl}>Opening Time</label>
@@ -925,9 +963,11 @@ const RestaurantManagement = () => {
                     </div>
                   </div>
                 </div>
+                )}
 
-                <div className="bg-slate-950/50 p-4 rounded-3xl border border-white/10">
-                  <p className="text-xs text-emerald-300 uppercase tracking-[0.25em] font-black mb-4">KYC & Verification Documents</p>
+                {activeFormTab === "kyc" && (
+                <div className="bg-slate-950/50 p-6 rounded-3xl border border-white/10 animate-in fade-in zoom-in-95 duration-200">
+                  <p className="text-xs text-emerald-300 uppercase tracking-[0.25em] font-black mb-5">KYC & Verification Documents</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <label className={lbl}>Owner Aadhaar Card URL</label>
@@ -966,10 +1006,12 @@ const RestaurantManagement = () => {
                     </div>
                   </div>
                 </div>
+                )}
+              </div>
               </div>
 
               {/* Actions */}
-              <div className="flex gap-3 pt-2">
+              <div className="flex gap-3 p-7 pt-5 border-t border-white/10 shrink-0 bg-slate-950/30">
                 <button
                   type="submit"
                   disabled={saving}
