@@ -153,7 +153,8 @@ exports.createRestaurant = async (req, res) => {
       alt_mobile, whatsapp_number, website_url, customer_support,
       door_number, street_name, area_name, landmark, city, district, state, pincode, latitude, longitude, map_link,
       opening_time, closing_time, working_days, holiday_details, is_24_hours, peak_hours,
-      username, password, role, otp_verified, email_verified
+      username, password, role, otp_verified, email_verified, verification_status,
+      aadhaar_url, pan_url, gst_certificate_url, shop_license_url, restaurant_photos_urls, kitchen_photos_urls, signature_url
     } = req.body;
 
     const hashedPw = password ? hashPassword(password) : null;
@@ -173,7 +174,8 @@ exports.createRestaurant = async (req, res) => {
         alt_mobile || null, whatsapp_number || null, website_url || null, customer_support || null,
         door_number || null, street_name || null, area_name || null, landmark || null, city || null, district || null, state || null, pincode || null, latitude || null, longitude || null, map_link || null,
         opening_time || null, closing_time || null, working_days || null, holiday_details || null, is_24_hours !== undefined ? (is_24_hours ? 1 : 0) : 0, peak_hours || null,
-        username || null, hashedPw, role || 'Restaurant Admin', otp_verified !== undefined ? (otp_verified ? 1 : 0) : 0, email_verified !== undefined ? (email_verified ? 1 : 0) : 0
+        username || null, hashedPw, role || 'Restaurant Admin', otp_verified !== undefined ? (otp_verified ? 1 : 0) : 0, email_verified !== undefined ? (email_verified ? 1 : 0) : 0,
+        verification_status || 'Pending', aadhaar_url || null, pan_url || null, gst_certificate_url || null, shop_license_url || null, restaurant_photos_urls || null, kitchen_photos_urls || null, signature_url || null
       ]
     );
     res.status(201).json({ message: 'Restaurant created successfully.', id: result.insertId });
@@ -191,7 +193,8 @@ exports.updateRestaurant = async (req, res) => {
       alt_mobile, whatsapp_number, website_url, customer_support,
       door_number, street_name, area_name, landmark, city, district, state, pincode, latitude, longitude, map_link,
       opening_time, closing_time, working_days, holiday_details, is_24_hours, peak_hours,
-      username, password, role, otp_verified, email_verified
+      username, password, role, otp_verified, email_verified, verification_status,
+      aadhaar_url, pan_url, gst_certificate_url, shop_license_url, restaurant_photos_urls, kitchen_photos_urls, signature_url
     } = req.body;
 
     let query = `UPDATE restaurants SET 
@@ -200,7 +203,7 @@ exports.updateRestaurant = async (req, res) => {
       alt_mobile = ?, whatsapp_number = ?, website_url = ?, customer_support = ?,
       door_number = ?, street_name = ?, area_name = ?, landmark = ?, city = ?, district = ?, state = ?, pincode = ?, latitude = ?, longitude = ?, map_link = ?,
       opening_time = ?, closing_time = ?, working_days = ?, holiday_details = ?, is_24_hours = ?, peak_hours = ?,
-      username = ?, role = ?, otp_verified = ?, email_verified = ?`;
+      username = ?, role = ?, otp_verified = ?, email_verified = ?, verification_status = ?, aadhaar_url = ?, pan_url = ?, gst_certificate_url = ?, shop_license_url = ?, restaurant_photos_urls = ?, kitchen_photos_urls = ?, signature_url = ?`;
     
     let params = [
       name, owner_name, gst_number, fssai_number, mobile, email, address, status,
@@ -208,7 +211,8 @@ exports.updateRestaurant = async (req, res) => {
       alt_mobile, whatsapp_number, website_url, customer_support,
       door_number, street_name, area_name, landmark, city, district, state, pincode, latitude, longitude, map_link,
       opening_time, closing_time, working_days, holiday_details, is_24_hours !== undefined ? (is_24_hours ? 1 : 0) : 0, peak_hours,
-      username, role, otp_verified !== undefined ? (otp_verified ? 1 : 0) : 0, email_verified !== undefined ? (email_verified ? 1 : 0) : 0
+      username, role, otp_verified !== undefined ? (otp_verified ? 1 : 0) : 0, email_verified !== undefined ? (email_verified ? 1 : 0) : 0,
+      verification_status || 'Pending', aadhaar_url || null, pan_url || null, gst_certificate_url || null, shop_license_url || null, restaurant_photos_urls || null, kitchen_photos_urls || null, signature_url || null
     ];
 
     if (password) {

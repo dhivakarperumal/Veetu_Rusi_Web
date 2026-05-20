@@ -123,6 +123,14 @@ async function createDatabaseAndTables() {
       role VARCHAR(50) DEFAULT 'Restaurant Admin',
       otp_verified TINYINT(1) DEFAULT 0,
       email_verified TINYINT(1) DEFAULT 0,
+      verification_status VARCHAR(50) DEFAULT 'Pending',
+      aadhaar_url VARCHAR(255),
+      pan_url VARCHAR(255),
+      gst_certificate_url VARCHAR(255),
+      shop_license_url VARCHAR(255),
+      restaurant_photos_urls TEXT,
+      kitchen_photos_urls TEXT,
+      signature_url VARCHAR(255),
       
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -170,7 +178,15 @@ async function createDatabaseAndTables() {
       ADD COLUMN \`password\` VARCHAR(255),
       ADD COLUMN \`role\` VARCHAR(50) DEFAULT 'Restaurant Admin',
       ADD COLUMN \`otp_verified\` TINYINT(1) DEFAULT 0,
-      ADD COLUMN \`email_verified\` TINYINT(1) DEFAULT 0
+      ADD COLUMN `email_verified` TINYINT(1) DEFAULT 0,
+      ADD COLUMN `verification_status` VARCHAR(50) DEFAULT 'Pending',
+      ADD COLUMN `aadhaar_url` VARCHAR(255),
+      ADD COLUMN `pan_url` VARCHAR(255),
+      ADD COLUMN `gst_certificate_url` VARCHAR(255),
+      ADD COLUMN `shop_license_url` VARCHAR(255),
+      ADD COLUMN `restaurant_photos_urls` TEXT,
+      ADD COLUMN `kitchen_photos_urls` TEXT,
+      ADD COLUMN `signature_url` VARCHAR(255)
     `);
     console.log('Added all new fields to the existing restaurants table');
   }
