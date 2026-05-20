@@ -361,10 +361,10 @@ const HomeChefManagement = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black text-white tracking-tight uppercase italic">Home Chef Management</h2>
+          {/* <h2 className="text-2xl font-black text-white tracking-tight uppercase italic">Home Chef Management</h2>
           <p className="text-xs text-white/40 font-bold uppercase tracking-widest mt-1">
             Approve applications, inspect documents, and manage home chef accounts
-          </p>
+          </p> */}
         </div>
         <button
           onClick={openAddModal}
@@ -488,59 +488,59 @@ const HomeChefManagement = () => {
           ))}
         </div>
       ) : viewMode === "table" ? (
-         <div className="bg-white rounded-2xl overflow-hidden shadow-sm animate-in fade-in duration-200">
+         <div className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm animate-in fade-in duration-200">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-white/5 bg-[#070b13]/30">
-                  <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Chef Info</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Kitchen Name</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Cuisine</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Mobile</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Status</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em] text-center">Actions</th>
+                <tr className="bg-slate-700 border-b border-slate-200">
+                  <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em]">Chef Info</th>
+                  <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em]">Kitchen Name</th>
+                  <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em]">Cuisine</th>
+                  <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em]">Mobile</th>
+                  <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em]">Status</th>
+                  <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em] text-center">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
-                {filteredChefs.map((chef) => (
-                  <tr key={chef.id} className="hover:bg-white/5 transition-colors">
-                    <td className="px-6 py-5">
+              <tbody className="divide-y divide-slate-100">
+                {filteredChefs.map((chef, index) => (
+                  <tr key={chef.id} className="hover:bg-slate-50/70 transition-colors">
+                    <td className="px-5 py-4">
                       <div>
-                        <h4 className="text-sm font-black text-white">{chef.name}</h4>
-                        <p className="text-xs text-white/40 font-semibold">{chef.email}</p>
+                        <h4 className="text-sm font-bold text-slate-800">{chef.name}</h4>
+                        <p className="text-xs text-slate-400 font-medium">{chef.email}</p>
                       </div>
                     </td>
-                    <td className="px-6 py-5 text-sm font-bold text-white/60">{chef.kitchen_name || "N/A"}</td>
-                    <td className="px-6 py-5 text-sm font-bold text-white/60">{chef.cuisine_type || "N/A"}</td>
-                    <td className="px-6 py-5 text-sm font-bold text-white/60">{chef.mobile}</td>
-                    <td className="px-6 py-5">
+                    <td className="px-5 py-4 text-sm font-semibold text-slate-600">{chef.kitchen_name || "N/A"}</td>
+                    <td className="px-5 py-4 text-sm font-semibold text-slate-600">{chef.cuisine_type || "N/A"}</td>
+                    <td className="px-5 py-4 text-sm font-semibold text-slate-600">{chef.mobile}</td>
+                    <td className="px-5 py-4">
                       <span
-                        className={`text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider ${
+                        className={`text-[9px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider ${
                           chef.status === "Approved"
-                            ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                             : chef.status === "Pending"
-                            ? "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
-                            : "bg-red-500/10 text-red-400 border border-red-500/20"
+                            ? "bg-amber-50 text-amber-700 border border-amber-200"
+                            : "bg-red-50 text-red-700 border border-red-200"
                         }`}
                       >
                         {chef.status}
                       </span>
                     </td>
-                    <td className="px-6 py-5">
-                      <div className="flex items-center justify-center gap-2">
+                    <td className="px-5 py-4">
+                      <div className="flex items-center justify-center gap-1">
                         <button
                           onClick={() => {
                             setSelectedChef(chef);
                             setIsDetailOpen(true);
                           }}
-                          className="p-2 hover:bg-white/10 text-white/70 hover:text-white rounded-xl transition"
+                          className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-lg transition"
                           title="View Details"
                         >
                           <Eye className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => openEditModal(chef)}
-                          className="p-2 hover:bg-white/10 text-white/70 hover:text-white rounded-xl transition"
+                          className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-lg transition"
                           title="Edit Chef"
                         >
                           <Edit2 className="w-4 h-4" />
@@ -548,7 +548,7 @@ const HomeChefManagement = () => {
                         {chef.status !== "Approved" && (
                           <button
                             onClick={() => handleStatusChange(chef.id, "Approved")}
-                            className="p-2 hover:bg-emerald-500/10 text-emerald-400 rounded-xl transition"
+                            className="p-1.5 hover:bg-emerald-50 text-emerald-500 hover:text-emerald-700 rounded-lg transition"
                             title="Approve Chef"
                           >
                             <Check className="w-4 h-4" />
@@ -557,7 +557,7 @@ const HomeChefManagement = () => {
                         {chef.status === "Approved" && (
                           <button
                             onClick={() => handleStatusChange(chef.id, "Suspended")}
-                            className="p-2 hover:bg-amber-500/10 text-amber-400 rounded-xl transition"
+                            className="p-1.5 hover:bg-amber-50 text-amber-500 hover:text-amber-700 rounded-lg transition"
                             title="Suspend Chef"
                           >
                             <ShieldAlert className="w-4 h-4" />
@@ -565,7 +565,7 @@ const HomeChefManagement = () => {
                         )}
                         <button
                           onClick={() => handleDelete(chef.id)}
-                          className="p-2 hover:bg-red-500/10 text-red-400 rounded-xl transition"
+                          className="p-1.5 hover:bg-red-50 text-red-400 hover:text-red-600 rounded-lg transition"
                           title="Delete Chef"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -576,7 +576,7 @@ const HomeChefManagement = () => {
                 ))}
                 {filteredChefs.length === 0 && (
                   <tr>
-                    <td colSpan="6" className="px-6 py-8 text-center text-xs text-white/30 italic">
+                    <td colSpan="6" className="px-6 py-8 text-center text-xs text-slate-400 italic">
                       No home chefs match your criteria.
                     </td>
                   </tr>
@@ -586,44 +586,46 @@ const HomeChefManagement = () => {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {filteredChefs.map((chef) => (
-            <div key={chef.id} className="bg-[#0B1120]/40 backdrop-blur-md border border-white/5 p-6 rounded-[2rem] flex flex-col justify-between shadow-lg hover:shadow-2xl transition">
+            <div key={chef.id} className="bg-white border border-slate-100 p-5 rounded-2xl flex flex-col justify-between shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
               <div className="space-y-4">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h4 className="text-lg font-black">{chef.name}</h4>
-                    <p className="text-xs text-white/40">{chef.kitchen_name || "No Kitchen Details"}</p>
+                    <h4 className="text-base font-black text-slate-800">{chef.name}</h4>
+                    <p className="text-xs text-slate-400 font-medium mt-0.5">{chef.kitchen_name || "No Kitchen Details"}</p>
                   </div>
-                  <span className={`text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider ${
-                    chef.status === "Approved" ? "bg-emerald-500/10 text-emerald-400" : "bg-yellow-500/10 text-yellow-400"
+                  <span className={`text-[9px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider ${
+                    chef.status === "Approved" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
+                    chef.status === "Pending" ? "bg-amber-50 text-amber-700 border border-amber-200" :
+                    "bg-red-50 text-red-700 border border-red-200"
                   }`}>
                     {chef.status}
                   </span>
                 </div>
-                <div className="space-y-2 text-xs text-white/60">
-                  <p><strong>Mobile:</strong> {chef.mobile}</p>
-                  <p><strong>Email:</strong> {chef.email}</p>
-                  <p><strong>Cuisine:</strong> {chef.cuisine_type || "N/A"}</p>
+                <div className="space-y-1.5 text-xs text-slate-500">
+                  <p><strong className="text-slate-600">Mobile:</strong> {chef.mobile}</p>
+                  <p><strong className="text-slate-600">Email:</strong> {chef.email}</p>
+                  <p><strong className="text-slate-600">Cuisine:</strong> {chef.cuisine_type || "N/A"}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 mt-6 pt-4 border-t border-white/5">
+              <div className="flex items-center gap-2 mt-5 pt-4 border-t border-slate-100">
                 <button
                   onClick={() => { setSelectedChef(chef); setIsDetailOpen(true); }}
-                  className="flex-1 py-2 bg-white/5 hover:bg-white/10 rounded-xl font-bold text-xs uppercase tracking-wider transition text-center"
+                  className="flex-1 py-2 bg-slate-50 hover:bg-slate-100 rounded-xl font-bold text-xs uppercase tracking-wider text-slate-600 hover:text-slate-800 transition text-center border border-slate-200"
                 >
                   Details
                 </button>
                 <button
                   onClick={() => openEditModal(chef)}
-                  className="p-2 bg-white/5 hover:bg-white/10 rounded-xl transition"
+                  className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-xl transition border border-slate-200"
                   title="Edit"
                 >
                   <Edit2 className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => handleDelete(chef.id)}
-                  className="p-2 hover:bg-red-500/10 text-red-400 rounded-xl transition"
+                  className="p-2 bg-slate-50 hover:bg-red-50 text-red-400 hover:text-red-600 rounded-xl transition border border-slate-200"
                   title="Delete"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -632,7 +634,7 @@ const HomeChefManagement = () => {
             </div>
           ))}
           {filteredChefs.length === 0 && (
-            <p className="col-span-full text-center text-xs text-white/30 italic py-8">
+            <p className="col-span-full text-center text-xs text-slate-400 italic py-8">
               No home chefs match your criteria.
             </p>
           )}
