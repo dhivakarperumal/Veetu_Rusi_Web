@@ -10,6 +10,34 @@ import {
 
 const ITEMS_PER_PAGE = 8;
 
+const emptyForm = {
+  // Basic Details
+  franchise_name: "", owner_name: "", logo_url: "", banner_url: "",
+  business_registration_number: "", gst_number: "", pan_number: "",
+  start_date: "", expiry_date: "", status: "Pending",
+  
+  // Contact Details
+  mobile: "", alt_mobile: "", whatsapp_number: "", email: "",
+  website_url: "", emergency_contact_number: "",
+  
+  // Address Details
+  door_number: "", street_name: "", area: "", landmark: "",
+  city: "", district: "", state: "", pincode: "", latitude: "",
+  longitude: "", map_link: "",
+  
+  // Login Details
+  username: "", password: "", confirmPassword: "", role: "Franchise Admin",
+  otp_verified: false, email_verified: false, login_status: "Active",
+  
+  // KYC Documents
+  aadhaar_url: "", pan_url: "", gst_certificate_url: "",
+  fssai_license_url: "", shop_license_url: "", vehicle_rc_url: "",
+  driving_license_url: "", bank_passbook_url: "", signature_url: "",
+  
+  // Other existing
+  commission_percentage: "10.00"
+};
+
 const FranchiseOwnerManagement = () => {
   const [franchises, setFranchises] = useState([]);
   const [filteredFranchises, setFilteredFranchises] = useState([]);
@@ -33,10 +61,8 @@ const FranchiseOwnerManagement = () => {
   const [credModal, setCredModal] = useState(null); // { email, password, owner_name, franchise_name, franch_user_id }
   const [showPw, setShowPw] = useState(false);
 
-  const [form, setForm] = useState({
-    franchise_name: "", owner_name: "", mobile: "", email: "",
-    city: "", state: "", commission_percentage: "10.00", status: "Pending"
-  });
+  const [form, setForm] = useState(emptyForm);
+  const [activeFormTab, setActiveFormTab] = useState("basic");
 
   useEffect(() => { fetchFranchises(); }, []);
 
@@ -72,12 +98,31 @@ const FranchiseOwnerManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!editingFranchise && form.password !== form.confirmPassword) {
+      toast.error("Passwords do not match.");
+      return;
+    }
     try {
+      const formData = new FormData();
+      Object.keys(form).forEach(key => {
+        if (form[key] instanceof FileList || Array.isArray(form[key])) {
+          for (let i = 0; i < form[key].length; i++) {
+            formData.append(key, form[key][i]);
+          }
+        } else if (form[key] !== null && form[key] !== undefined) {
+          formData.append(key, form[key]);
+        }
+      });
+
       if (editingFranchise) {
-        await api.put(`/superadmin/franchises/${editingFranchise.id}`, form);
+        await api.put(`/superadmin/franchises/${editingFranchise.id}`, formData, {
+          headers: { "Content-Type": "multipart/form-data" }
+        });
         toast.success("Franchise updated.");
       } else {
-        await api.post("/superadmin/franchises", form);
+        await api.post("/superadmin/franchises", formData, {
+          headers: { "Content-Type": "multipart/form-data" }
+        });
         toast.success("Franchise registered. Click Approve to create login credentials.");
       }
       setIsModalOpen(false);
@@ -119,16 +164,8 @@ const FranchiseOwnerManagement = () => {
 
   const handleEdit = (franchise) => {
     setEditingFranchise(franchise);
-    setForm({
-      franchise_name: franchise.franchise_name,
-      owner_name: franchise.owner_name,
-      mobile: franchise.mobile,
-      email: franchise.email,
-      city: franchise.city,
-      state: franchise.state,
-      commission_percentage: franchise.commission_percentage,
-      status: franchise.status
-    });
+    setForm({ ...emptyForm, ...franchise, confirmPassword: "" });
+    setActiveFormTab("basic");
     setIsModalOpen(true);
   };
 
@@ -168,7 +205,8 @@ const FranchiseOwnerManagement = () => {
 
   const resetForm = () => {
     setEditingFranchise(null);
-    setForm({ franchise_name: "", owner_name: "", mobile: "", email: "", city: "", state: "", commission_percentage: "10.00", status: "Pending" });
+    setForm(emptyForm);
+    setActiveFormTab("basic");
   };
 
   const copy = (text) => { navigator.clipboard.writeText(text); toast.success("Copied!"); };
@@ -792,58 +830,296 @@ const FranchiseOwnerManagement = () => {
       {isModalOpen && createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
-          <form onSubmit={handleSubmit} className="bg-white border border-slate-100 w-full max-w-lg rounded-2xl shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300">
-            <div className="bg-[#1B4D22] p-8 text-white">
-              <h3 className="text-xl font-black uppercase italic tracking-tight">
-                {editingFranchise ? "Edit Franchise" : "Register New Franchise"}
-              </h3>
-              <p className="text-xs text-emerald-300 font-bold uppercase tracking-widest mt-1">Configure owner and territory details</p>
-            </div>
-            <div className="p-8 space-y-5 overflow-y-auto max-h-[60vh]">
+          <form onSubmit={handleSubmit} className="bg-white border border-slate-100 w-full max-w-3xl rounded-3xl shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[92vh]">
+            <div className="bg-[#1B4D22] p-7 text-white flex items-center justify-between flex-shrink-0">
               <div>
-                <label className="text-[10px] text-slate-400 font-bold uppercase block mb-2">Franchise Name / Branch</label>
-                <input type="text" required value={form.franchise_name} onChange={e => setForm({ ...form, franchise_name: e.target.value })} placeholder="e.g. Veetu Rusi Coimbatore" className={inputCls} />
+                <h3 className="text-lg font-black uppercase italic tracking-tight">
+                  {editingFranchise ? "Edit Franchise" : "Register New Franchise"}
+                </h3>
+                <p className="text-xs text-emerald-300 font-bold uppercase tracking-widest mt-0.5">Configure owner and territory details</p>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[10px] text-slate-400 font-bold uppercase block mb-2">Owner Name</label>
-                  <input type="text" required value={form.owner_name} onChange={e => setForm({ ...form, owner_name: e.target.value })} placeholder="Ram Kumar" className={inputCls} />
-                </div>
-                <div>
-                  <label className="text-[10px] text-slate-400 font-bold uppercase block mb-2">Mobile Number</label>
-                  <input type="text" required value={form.mobile} onChange={e => setForm({ ...form, mobile: e.target.value })} placeholder="9876543210" className={inputCls} />
-                </div>
-              </div>
-              <div>
-                <label className="text-[10px] text-slate-400 font-bold uppercase block mb-2">Email Address</label>
-                <input type="email" required value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="ram@veeturusi.com" className={inputCls} />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[10px] text-slate-400 font-bold uppercase block mb-2">City</label>
-                  <input type="text" required value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} placeholder="Coimbatore" className={inputCls} />
-                </div>
-                <div>
-                  <label className="text-[10px] text-slate-400 font-bold uppercase block mb-2">State</label>
-                  <input type="text" required value={form.state} onChange={e => setForm({ ...form, state: e.target.value })} placeholder="Tamil Nadu" className={inputCls} />
-                </div>
-                <div>
-                  <label className="text-[10px] text-slate-400 font-bold uppercase block mb-2">Commission (%)</label>
-                  <input type="number" step="0.01" required value={form.commission_percentage} onChange={e => setForm({ ...form, commission_percentage: e.target.value })} className={inputCls} />
-                </div>
-                <div>
-                  <label className="text-[10px] text-slate-400 font-bold uppercase block mb-2">Status</label>
-                  <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })} className={inputCls + " cursor-pointer"}>
-                    <option value="Pending">Pending</option>
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                  </select>
-                </div>
+              <button type="button" onClick={() => setIsModalOpen(false)} className="p-2 text-white/50 hover:text-white transition">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="flex overflow-x-auto border-b border-slate-100 shrink-0 custom-scrollbar bg-slate-50">
+                {[
+                  { id: "basic", label: "Basic Info" },
+                  { id: "contact", label: "Contact" },
+                  { id: "address", label: "Address" },
+                  { id: "login", label: "Login & Auth" },
+                  { id: "kyc", label: "KYC & Docs" },
+                ].map(tab => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveFormTab(tab.id)}
+                    className={`whitespace-nowrap px-6 py-4 text-[10px] font-black uppercase tracking-widest transition-all duration-200 ${
+                      activeFormTab === tab.id
+                        ? "text-[#1B4D22] border-b-[3px] border-[#1B4D22] bg-white shadow-sm"
+                        : "text-slate-400 hover:text-slate-600 hover:bg-slate-100 border-b-[3px] border-transparent"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+            </div>
+            
+            <div className="overflow-y-auto flex-1 p-7 bg-slate-50/50">
+              <div className="space-y-5">
+              
+                {/* Basic Info */}
+                {activeFormTab === "basic" && (
+                  <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm animate-in fade-in zoom-in-95 duration-200">
+                    <p className="text-xs text-[#1B4D22] uppercase tracking-[0.25em] font-black mb-5">Basic Details</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Franchise Name */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Franchise Name / Branch *</label>
+                        <input type="text" required value={form.franchise_name} onChange={e => setForm({ ...form, franchise_name: e.target.value })} placeholder="e.g. Veetu Rusi Coimbatore" className={inputCls} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Owner Name *</label>
+                        <input type="text" required value={form.owner_name} onChange={e => setForm({ ...form, owner_name: e.target.value })} placeholder="Ram Kumar" className={inputCls} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Franchise Logo</label>
+                        <input type="file" accept="image/*" onChange={e => setForm({ ...form, logo_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Franchise Banner Image</label>
+                        <input type="file" accept="image/*" onChange={e => setForm({ ...form, banner_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Business Reg. Number</label>
+                        <input type="text" value={form.business_registration_number} onChange={e => setForm({ ...form, business_registration_number: e.target.value })} placeholder="REG-12345" className={inputCls} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">GST Number</label>
+                        <input type="text" value={form.gst_number} onChange={e => setForm({ ...form, gst_number: e.target.value })} placeholder="GSTIN..." className={inputCls} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">PAN Number</label>
+                        <input type="text" value={form.pan_number} onChange={e => setForm({ ...form, pan_number: e.target.value })} placeholder="PAN..." className={inputCls} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Commission (%) *</label>
+                        <input type="number" step="0.01" required value={form.commission_percentage} onChange={e => setForm({ ...form, commission_percentage: e.target.value })} className={inputCls} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Start Date</label>
+                        <input type="date" value={form.start_date} onChange={e => setForm({ ...form, start_date: e.target.value })} className={inputCls} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Expiry Date</label>
+                        <input type="date" value={form.expiry_date} onChange={e => setForm({ ...form, expiry_date: e.target.value })} className={inputCls} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Status</label>
+                        <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })} className={inputCls}>
+                          <option value="Pending">Pending</option>
+                          <option value="Active">Active</option>
+                          <option value="Inactive">Inactive</option>
+                          <option value="Suspended">Suspended</option>
+                          <option value="Closed">Closed</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Contact Details */}
+                {activeFormTab === "contact" && (
+                  <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm animate-in fade-in zoom-in-95 duration-200">
+                    <p className="text-xs text-[#1B4D22] uppercase tracking-[0.25em] font-black mb-5">Contact Details</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Mobile Number *</label>
+                        <input type="text" required value={form.mobile} onChange={e => setForm({ ...form, mobile: e.target.value })} placeholder="9876543210" className={inputCls} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Alternate Mobile</label>
+                        <input type="text" value={form.alt_mobile} onChange={e => setForm({ ...form, alt_mobile: e.target.value })} placeholder="Optional" className={inputCls} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">WhatsApp Number</label>
+                        <input type="text" value={form.whatsapp_number} onChange={e => setForm({ ...form, whatsapp_number: e.target.value })} placeholder="Optional" className={inputCls} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Email Address *</label>
+                        <input type="email" required value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="ram@example.com" className={inputCls} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Emergency Contact</label>
+                        <input type="text" value={form.emergency_contact_number} onChange={e => setForm({ ...form, emergency_contact_number: e.target.value })} placeholder="Optional" className={inputCls} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Website URL</label>
+                        <input type="url" value={form.website_url} onChange={e => setForm({ ...form, website_url: e.target.value })} placeholder="https://..." className={inputCls} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Address Details */}
+                {activeFormTab === "address" && (
+                  <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm animate-in fade-in zoom-in-95 duration-200">
+                    <p className="text-xs text-[#1B4D22] uppercase tracking-[0.25em] font-black mb-5">Address Details</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Door Number</label>
+                        <input type="text" value={form.door_number} onChange={e => setForm({ ...form, door_number: e.target.value })} placeholder="e.g. 12/4" className={inputCls} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Street Name</label>
+                        <input type="text" value={form.street_name} onChange={e => setForm({ ...form, street_name: e.target.value })} placeholder="Main Street" className={inputCls} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Area / Locality</label>
+                        <input type="text" value={form.area} onChange={e => setForm({ ...form, area: e.target.value })} placeholder="RS Puram" className={inputCls} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Landmark</label>
+                        <input type="text" value={form.landmark} onChange={e => setForm({ ...form, landmark: e.target.value })} placeholder="Near Park" className={inputCls} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">City *</label>
+                        <input type="text" required value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} placeholder="Coimbatore" className={inputCls} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">District</label>
+                        <input type="text" value={form.district} onChange={e => setForm({ ...form, district: e.target.value })} placeholder="Coimbatore" className={inputCls} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">State *</label>
+                        <input type="text" required value={form.state} onChange={e => setForm({ ...form, state: e.target.value })} placeholder="Tamil Nadu" className={inputCls} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Pincode</label>
+                        <input type="text" value={form.pincode} onChange={e => setForm({ ...form, pincode: e.target.value })} placeholder="641001" className={inputCls} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Latitude</label>
+                        <input type="text" value={form.latitude} onChange={e => setForm({ ...form, latitude: e.target.value })} placeholder="11.0168" className={inputCls} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Longitude</label>
+                        <input type="text" value={form.longitude} onChange={e => setForm({ ...form, longitude: e.target.value })} placeholder="76.9558" className={inputCls} />
+                      </div>
+                      <div className="space-y-1 sm:col-span-2">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Google Map Link</label>
+                        <input type="url" value={form.map_link} onChange={e => setForm({ ...form, map_link: e.target.value })} placeholder="https://maps.app.goo.gl/..." className={inputCls} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Login & Auth */}
+                {activeFormTab === "login" && (
+                  <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm animate-in fade-in zoom-in-95 duration-200">
+                    <p className="text-xs text-[#1B4D22] uppercase tracking-[0.25em] font-black mb-5">Login & Authentication</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {!editingFranchise && (
+                        <>
+                          <div className="space-y-1">
+                            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Username (Email)</label>
+                            <input type="text" value={form.username} onChange={e => setForm({ ...form, username: e.target.value })} placeholder="admin@franchise.com" className={inputCls} />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Password</label>
+                            <input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder="••••••••" className={inputCls} />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Confirm Password</label>
+                            <input type="password" value={form.confirmPassword} onChange={e => setForm({ ...form, confirmPassword: e.target.value })} placeholder="••••••••" className={inputCls} />
+                          </div>
+                        </>
+                      )}
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Role</label>
+                        <select value={form.role} onChange={e => setForm({ ...form, role: e.target.value })} className={inputCls}>
+                          <option value="Franchise Admin">Franchise Admin</option>
+                          <option value="Franchise Manager">Franchise Manager</option>
+                          <option value="Staff">Staff</option>
+                        </select>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">OTP Verified</label>
+                        <select value={form.otp_verified ? "Yes" : "No"} onChange={e => setForm({ ...form, otp_verified: e.target.value === "Yes" })} className={inputCls}>
+                          <option value="No">No</option>
+                          <option value="Yes">Yes</option>
+                        </select>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Email Verified</label>
+                        <select value={form.email_verified ? "Yes" : "No"} onChange={e => setForm({ ...form, email_verified: e.target.value === "Yes" })} className={inputCls}>
+                          <option value="No">No</option>
+                          <option value="Yes">Yes</option>
+                        </select>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Login Status</label>
+                        <select value={form.login_status} onChange={e => setForm({ ...form, login_status: e.target.value })} className={inputCls}>
+                          <option value="Active">Active</option>
+                          <option value="Inactive">Inactive</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* KYC & Docs */}
+                {activeFormTab === "kyc" && (
+                  <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm animate-in fade-in zoom-in-95 duration-200">
+                    <p className="text-xs text-[#1B4D22] uppercase tracking-[0.25em] font-black mb-5">KYC & Verification Documents</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Aadhaar Card</label>
+                        <input type="file" accept="image/*,.pdf" onChange={e => setForm({ ...form, aadhaar_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">PAN Card</label>
+                        <input type="file" accept="image/*,.pdf" onChange={e => setForm({ ...form, pan_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">GST Certificate</label>
+                        <input type="file" accept="image/*,.pdf" onChange={e => setForm({ ...form, gst_certificate_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">FSSAI License</label>
+                        <input type="file" accept="image/*,.pdf" onChange={e => setForm({ ...form, fssai_license_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Shop License</label>
+                        <input type="file" accept="image/*,.pdf" onChange={e => setForm({ ...form, shop_license_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Vehicle RC</label>
+                        <input type="file" accept="image/*,.pdf" onChange={e => setForm({ ...form, vehicle_rc_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Driving License</label>
+                        <input type="file" accept="image/*,.pdf" onChange={e => setForm({ ...form, driving_license_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Bank Passbook</label>
+                        <input type="file" accept="image/*,.pdf" onChange={e => setForm({ ...form, bank_passbook_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Signature Image</label>
+                        <input type="file" accept="image/*" onChange={e => setForm({ ...form, signature_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
               </div>
             </div>
-            <div className="p-6 border-t border-slate-100 bg-slate-50/70 flex gap-3">
+            
+            <div className="p-6 border-t border-slate-100 bg-white flex gap-3 shrink-0">
               <button type="submit" className="flex-1 py-3 bg-[#1B4D22] hover:bg-[#153b1a] text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-md transition active:scale-95">
-                {editingFranchise ? "Update" : "Register Franchise"}
+                {editingFranchise ? "Update Franchise" : "Register Franchise"}
               </button>
               <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-black text-xs uppercase tracking-widest rounded-xl transition">
                 Cancel

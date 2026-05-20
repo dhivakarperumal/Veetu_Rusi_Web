@@ -252,14 +252,11 @@ const RestaurantManagement = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black text-white tracking-tight uppercase italic">Restaurant Management</h2>
-          <p className="text-xs text-white/40 font-bold uppercase tracking-widest mt-1">
-            Approve/Reject restaurants, verify GST/FSSAI compliance and manage outlets
-          </p>
+         
         </div>
         <button
           onClick={openAddModal}
-          className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-emerald-900/30 transition active:scale-95 self-start sm:self-auto flex-shrink-0"
+          className="flex items-center justify-center gap-2 bg-[#1B4D22] hover:bg-[#153b1a] text-white px-6 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-md hover:shadow-lg transition active:scale-95 self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" /> Add Restaurant
         </button>
