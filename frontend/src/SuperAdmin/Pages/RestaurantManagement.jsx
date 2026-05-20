@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import api from "../../api";
 import { toast } from "react-hot-toast";
 import { Search, Filter, Trash2, Check, X, ShieldAlert, Eye, Plus, Edit2, List, LayoutGrid, MapPin, Store, CheckCircle, Clock } from "lucide-react";
@@ -579,7 +580,7 @@ const RestaurantManagement = () => {
       )}
 
       {/* ===== VIEW DETAILS MODAL ===== */}
-      {isDetailOpen && selectedRest && (
+      {isDetailOpen && selectedRest && createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsDetailOpen(false)} />
           <div className="bg-white border border-slate-100 w-full max-w-lg rounded-3xl shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300">
@@ -649,11 +650,12 @@ const RestaurantManagement = () => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ===== ADD / EDIT POPUP MODAL ===== */}
-      {isFormOpen && (
+      {isFormOpen && createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 mt-4 sm:mt-0">
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsFormOpen(false)} />
           <div className="bg-white border border-slate-100 w-full max-w-3xl rounded-3xl shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[92vh]">
@@ -1045,7 +1047,8 @@ const RestaurantManagement = () => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
