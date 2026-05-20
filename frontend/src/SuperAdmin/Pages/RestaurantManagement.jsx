@@ -179,11 +179,27 @@ const RestaurantManagement = () => {
     }
     try {
       setSaving(true);
+
+      const formData = new FormData();
+      Object.keys(form).forEach(key => {
+        if (form[key] instanceof FileList || Array.isArray(form[key])) {
+          for (let i = 0; i < form[key].length; i++) {
+            formData.append(key, form[key][i]);
+          }
+        } else if (form[key] !== null && form[key] !== undefined && form[key] !== "") {
+          formData.append(key, form[key]);
+        }
+      });
+
       if (editingRest) {
-        await api.put(`/superadmin/restaurants/${editingRest.id}`, form);
+        await api.put(`/superadmin/restaurants/${editingRest.id}`, formData, {
+          headers: { "Content-Type": "multipart/form-data" }
+        });
         toast.success("Restaurant updated successfully.");
       } else {
-        await api.post("/superadmin/restaurants", form);
+        await api.post("/superadmin/restaurants", formData, {
+          headers: { "Content-Type": "multipart/form-data" }
+        });
         toast.success("Restaurant registered successfully.");
       }
       setIsFormOpen(false);
@@ -226,8 +242,8 @@ const RestaurantManagement = () => {
   const pendingCount = restaurants.filter((r) => r.status === "Pending").length;
   const suspendedCount = restaurants.filter((r) => ["Suspended", "Rejected"].includes(r.status)).length;
 
-  const inp = "w-full px-4 py-2.5 bg-[#070b13]/60 border border-white/10 rounded-xl outline-none font-medium text-white text-sm focus:border-emerald-500/40 transition-all placeholder:text-white/20";
-  const lbl = "text-[10px] text-white/40 font-bold uppercase tracking-wider block mb-1";
+  const inp = "w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none font-medium text-slate-800 text-sm focus:bg-white focus:border-[#1B4D22]/40 transition-all placeholder:text-slate-400";
+  const lbl = "text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1";
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -565,54 +581,54 @@ const RestaurantManagement = () => {
       {/* ===== VIEW DETAILS MODAL ===== */}
       {isDetailOpen && selectedRest && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm" onClick={() => setIsDetailOpen(false)} />
-          <div className="bg-[#0B1120] border border-white/5 w-full max-w-lg rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsDetailOpen(false)} />
+          <div className="bg-white border border-slate-100 w-full max-w-lg rounded-3xl shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300">
             <div className="bg-[#1B4D22] p-8 text-white flex items-start justify-between">
               <div>
                 <h3 className="text-xl font-black uppercase italic tracking-tight">{selectedRest.name}</h3>
-                <p className="text-xs text-emerald-400 font-bold uppercase tracking-widest mt-1">Restaurant Details</p>
+                <p className="text-xs text-emerald-300 font-bold uppercase tracking-widest mt-1">Restaurant Details</p>
               </div>
               <button onClick={() => setIsDetailOpen(false)} className="p-1.5 text-white/50 hover:text-white transition">
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="p-8 space-y-6 text-white overflow-y-auto max-h-[55vh]">
+            <div className="p-8 space-y-6 text-slate-800 overflow-y-auto max-h-[55vh]">
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <p className="text-[10px] text-white/40 font-bold uppercase">Owner Name</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase">Owner Name</p>
                   <p className="text-sm font-black mt-0.5">{selectedRest.owner_name}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] text-white/40 font-bold uppercase">Contact Number</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase">Contact Number</p>
                   <p className="text-sm font-black mt-0.5">{selectedRest.mobile || "N/A"}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] text-white/40 font-bold uppercase">Email Address</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase">Email Address</p>
                   <p className="text-sm font-black mt-0.5">{selectedRest.email}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] text-white/40 font-bold uppercase">GST Number</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase">GST Number</p>
                   <p className="text-sm font-black mt-0.5">{selectedRest.gst_number || "Not Provided"}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] text-white/40 font-bold uppercase">FSSAI License</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase">FSSAI License</p>
                   <p className="text-sm font-black mt-0.5">{selectedRest.fssai_number || "Not Provided"}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] text-white/40 font-bold uppercase">Status</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase">Status</p>
                   <p className="text-sm font-black mt-0.5">{selectedRest.status}</p>
                 </div>
                 <div className="col-span-2">
-                  <p className="text-[10px] text-white/40 font-bold uppercase">Outlet Address</p>
-                  <p className="text-sm font-bold mt-0.5 text-white/80">{selectedRest.address || "Not Provided"}</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase">Outlet Address</p>
+                  <p className="text-sm font-bold mt-0.5 text-slate-600">{selectedRest.address || "Not Provided"}</p>
                 </div>
               </div>
             </div>
-            <div className="p-6 border-t border-white/5 bg-[#070b13]/40 flex gap-3">
+            <div className="p-6 border-t border-slate-100 bg-slate-50 flex gap-3">
               {selectedRest.status !== "Approved" && (
                 <button
                   onClick={() => { handleStatusChange(selectedRest.id, "Approved"); setIsDetailOpen(false); }}
-                  className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl transition active:scale-95"
+                  className="flex-1 py-3 bg-[#1B4D22] hover:bg-[#153b1a] text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-md transition active:scale-95"
                 >
                   Approve
                 </button>
@@ -620,14 +636,14 @@ const RestaurantManagement = () => {
               {selectedRest.status === "Pending" && (
                 <button
                   onClick={() => { handleStatusChange(selectedRest.id, "Rejected"); setIsDetailOpen(false); }}
-                  className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl transition active:scale-95"
+                  className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-md transition active:scale-95"
                 >
                   Reject
                 </button>
               )}
               <button
                 onClick={() => setIsDetailOpen(false)}
-                className="px-6 py-3 bg-white/5 hover:bg-white/10 text-white font-black text-xs uppercase tracking-widest rounded-2xl transition"
+                className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-black text-xs uppercase tracking-widest rounded-xl transition"
               >
                 Close
               </button>
@@ -639,28 +655,28 @@ const RestaurantManagement = () => {
       {/* ===== ADD / EDIT POPUP MODAL ===== */}
       {isFormOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 mt-4 sm:mt-0">
-          <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm" onClick={() => setIsFormOpen(false)} />
-          <div className="bg-[#0B1120] border border-white/8 w-full max-w-2xl rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[92vh]">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsFormOpen(false)} />
+          <div className="bg-white border border-slate-100 w-full max-w-3xl rounded-3xl shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[92vh]">
 
             {/* Modal Header */}
-            <div className="bg-gradient-to-r from-[#1B4D22] to-emerald-800 p-7 text-white flex items-center justify-between flex-shrink-0">
+            <div className="bg-[#1B4D22] p-7 text-white flex items-center justify-between flex-shrink-0">
               <div>
                 <h3 className="text-lg font-black uppercase italic tracking-tight">
                   {editingRest ? "Edit Restaurant" : "Register New Restaurant"}
                 </h3>
-                <p className="text-xs text-emerald-300/70 font-bold uppercase tracking-widest mt-0.5">
+                <p className="text-xs text-emerald-300 font-bold uppercase tracking-widest mt-0.5">
                   {editingRest ? "Update outlet information" : "Fill in the details to add a new outlet"}
                 </p>
               </div>
-              <button onClick={() => setIsFormOpen(false)} className="p-2 text-white/50 hover:text-white hover:bg-white/10 rounded-xl transition">
+              <button onClick={() => setIsFormOpen(false)} className="p-2 text-white/50 hover:text-white transition">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-                    {/* Modal Form */}
+            {/* Modal Form */}
             <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
               {/* Tabs */}
-              <div className="flex overflow-x-auto border-b border-white/10 shrink-0 custom-scrollbar">
+              <div className="flex overflow-x-auto border-b border-slate-100 shrink-0 custom-scrollbar bg-slate-50">
                 {[
                   { id: "basic", label: "Basic Info" },
                   { id: "contact", label: "Contact" },
@@ -675,8 +691,8 @@ const RestaurantManagement = () => {
                     onClick={() => setActiveFormTab(tab.id)}
                     className={`whitespace-nowrap px-6 py-4 text-[10px] font-black uppercase tracking-widest transition-all duration-200 ${
                       activeFormTab === tab.id
-                        ? "text-emerald-400 border-b-[3px] border-emerald-500 bg-white/5"
-                        : "text-white/40 hover:text-white/80 hover:bg-white/5 border-b-[3px] border-transparent"
+                        ? "text-[#1B4D22] border-b-[3px] border-[#1B4D22] bg-white shadow-sm"
+                        : "text-slate-400 hover:text-slate-600 hover:bg-slate-100 border-b-[3px] border-transparent"
                     }`}
                   >
                     {tab.label}
@@ -684,11 +700,11 @@ const RestaurantManagement = () => {
                 ))}
               </div>
 
-              <div className="overflow-y-auto flex-1 p-7">
+              <div className="overflow-y-auto flex-1 p-7 bg-slate-50/50">
                 <div className="space-y-5">
                   {activeFormTab === "basic" && (
-                  <div className="bg-slate-950/50 p-6 rounded-3xl border border-white/10 animate-in fade-in zoom-in-95 duration-200">
-                    <p className="text-xs text-emerald-300 uppercase tracking-[0.25em] font-black mb-5">Basic Restaurant Information</p>
+                  <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm animate-in fade-in zoom-in-95 duration-200">
+                    <p className="text-xs text-[#1B4D22] uppercase tracking-[0.25em] font-black mb-5">Basic Restaurant Information</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {editingRest && (
                       <div className="space-y-1 sm:col-span-2">
@@ -737,27 +753,27 @@ const RestaurantManagement = () => {
                         onChange={e => setForm({ ...form, opening_date: e.target.value })} className={inp} />
                     </div>
                     <div className="space-y-1">
-                      <label className={lbl}>Restaurant Logo URL</label>
-                      <input type="url" placeholder="https://example.com/logo.png" value={form.logo_url}
-                        onChange={e => setForm({ ...form, logo_url: e.target.value })} className={inp} />
+                      <label className={lbl}>Restaurant Logo</label>
+                      <input type="file" accept="image/*"
+                        onChange={e => setForm({ ...form, logo_url: e.target.files[0] })} className={inp + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-400 hover:file:bg-emerald-500/30"} />
                     </div>
                     <div className="space-y-1">
-                      <label className={lbl}>Restaurant Banner URL</label>
-                      <input type="url" placeholder="https://example.com/banner.png" value={form.banner_url}
-                        onChange={e => setForm({ ...form, banner_url: e.target.value })} className={inp} />
+                      <label className={lbl}>Restaurant Banner</label>
+                      <input type="file" accept="image/*"
+                        onChange={e => setForm({ ...form, banner_url: e.target.files[0] })} className={inp + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-400 hover:file:bg-emerald-500/30"} />
                     </div>
                     <div className="space-y-1 sm:col-span-2">
-                      <label className={lbl}>Gallery Image URLs</label>
-                      <textarea rows="2" placeholder="Comma-separated image URLs" value={form.gallery_urls}
-                        onChange={e => setForm({ ...form, gallery_urls: e.target.value })} className={inp} />
+                      <label className={lbl}>Gallery Images</label>
+                      <input type="file" accept="image/*" multiple
+                        onChange={e => setForm({ ...form, gallery_urls: e.target.files })} className={inp + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-400 hover:file:bg-emerald-500/30"} />
                     </div>
                   </div>
                 </div>
                 )}
 
                 {activeFormTab === "contact" && (
-                <div className="bg-slate-950/50 p-6 rounded-3xl border border-white/10 animate-in fade-in zoom-in-95 duration-200">
-                  <p className="text-xs text-emerald-300 uppercase tracking-[0.25em] font-black mb-5">Contact Information</p>
+                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm animate-in fade-in zoom-in-95 duration-200">
+                  <p className="text-xs text-[#1B4D22] uppercase tracking-[0.25em] font-black mb-5">Contact Information</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <label className={lbl}>Mobile Number *</label>
@@ -794,8 +810,8 @@ const RestaurantManagement = () => {
                 )}
 
                 {activeFormTab === "address" && (
-                <div className="bg-slate-950/50 p-6 rounded-3xl border border-white/10 animate-in fade-in zoom-in-95 duration-200">
-                  <p className="text-xs text-emerald-300 uppercase tracking-[0.25em] font-black mb-5">Address Details</p>
+                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm animate-in fade-in zoom-in-95 duration-200">
+                  <p className="text-xs text-[#1B4D22] uppercase tracking-[0.25em] font-black mb-5">Address Details</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <label className={lbl}>Door Number</label>
@@ -857,8 +873,8 @@ const RestaurantManagement = () => {
                 )}
 
                 {activeFormTab === "login" && (
-                <div className="bg-slate-950/50 p-6 rounded-3xl border border-white/10 animate-in fade-in zoom-in-95 duration-200">
-                  <p className="text-xs text-emerald-300 uppercase tracking-[0.25em] font-black mb-5">Login & Verification</p>
+                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm animate-in fade-in zoom-in-95 duration-200">
+                  <p className="text-xs text-[#1B4D22] uppercase tracking-[0.25em] font-black mb-5">Login & Verification</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {!editingRest && (
                       <div className="space-y-1">
@@ -926,8 +942,8 @@ const RestaurantManagement = () => {
                 )}
 
                 {activeFormTab === "timing" && (
-                <div className="bg-slate-950/50 p-6 rounded-3xl border border-white/10 animate-in fade-in zoom-in-95 duration-200">
-                  <p className="text-xs text-emerald-300 uppercase tracking-[0.25em] font-black mb-5">Restaurant Timing</p>
+                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm animate-in fade-in zoom-in-95 duration-200">
+                  <p className="text-xs text-[#1B4D22] uppercase tracking-[0.25em] font-black mb-5">Restaurant Timing</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <label className={lbl}>Opening Time</label>
@@ -966,43 +982,43 @@ const RestaurantManagement = () => {
                 )}
 
                 {activeFormTab === "kyc" && (
-                <div className="bg-slate-950/50 p-6 rounded-3xl border border-white/10 animate-in fade-in zoom-in-95 duration-200">
-                  <p className="text-xs text-emerald-300 uppercase tracking-[0.25em] font-black mb-5">KYC & Verification Documents</p>
+                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm animate-in fade-in zoom-in-95 duration-200">
+                  <p className="text-xs text-[#1B4D22] uppercase tracking-[0.25em] font-black mb-5">KYC & Verification Documents</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <label className={lbl}>Owner Aadhaar Card URL</label>
-                      <input type="url" placeholder="Aadhaar image URL" value={form.aadhaar_url}
-                        onChange={e => setForm({ ...form, aadhaar_url: e.target.value })} className={inp} />
+                      <label className={lbl}>Owner Aadhaar Card</label>
+                      <input type="file" accept="image/*,.pdf"
+                        onChange={e => setForm({ ...form, aadhaar_url: e.target.files[0] })} className={inp + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-400 hover:file:bg-emerald-500/30"} />
                     </div>
                     <div className="space-y-1">
-                      <label className={lbl}>PAN Card URL</label>
-                      <input type="url" placeholder="PAN image URL" value={form.pan_url}
-                        onChange={e => setForm({ ...form, pan_url: e.target.value })} className={inp} />
+                      <label className={lbl}>PAN Card</label>
+                      <input type="file" accept="image/*,.pdf"
+                        onChange={e => setForm({ ...form, pan_url: e.target.files[0] })} className={inp + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-400 hover:file:bg-emerald-500/30"} />
                     </div>
                     <div className="space-y-1">
-                      <label className={lbl}>GST Certificate URL</label>
-                      <input type="url" placeholder="GST certificate URL" value={form.gst_certificate_url}
-                        onChange={e => setForm({ ...form, gst_certificate_url: e.target.value })} className={inp} />
+                      <label className={lbl}>GST Certificate</label>
+                      <input type="file" accept="image/*,.pdf"
+                        onChange={e => setForm({ ...form, gst_certificate_url: e.target.files[0] })} className={inp + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-400 hover:file:bg-emerald-500/30"} />
                     </div>
                     <div className="space-y-1">
-                      <label className={lbl}>Shop License URL</label>
-                      <input type="url" placeholder="Shop license URL" value={form.shop_license_url}
-                        onChange={e => setForm({ ...form, shop_license_url: e.target.value })} className={inp} />
+                      <label className={lbl}>Shop License</label>
+                      <input type="file" accept="image/*,.pdf"
+                        onChange={e => setForm({ ...form, shop_license_url: e.target.files[0] })} className={inp + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-400 hover:file:bg-emerald-500/30"} />
                     </div>
                     <div className="space-y-1 sm:col-span-2">
-                      <label className={lbl}>Restaurant Photos URLs</label>
-                      <textarea rows="2" placeholder="Comma-separated restaurant photo URLs" value={form.restaurant_photos_urls}
-                        onChange={e => setForm({ ...form, restaurant_photos_urls: e.target.value })} className={inp} />
+                      <label className={lbl}>Restaurant Photos</label>
+                      <input type="file" accept="image/*" multiple
+                        onChange={e => setForm({ ...form, restaurant_photos_urls: e.target.files })} className={inp + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-400 hover:file:bg-emerald-500/30"} />
                     </div>
                     <div className="space-y-1 sm:col-span-2">
-                      <label className={lbl}>Kitchen Photos URLs</label>
-                      <textarea rows="2" placeholder="Comma-separated kitchen photo URLs" value={form.kitchen_photos_urls}
-                        onChange={e => setForm({ ...form, kitchen_photos_urls: e.target.value })} className={inp} />
+                      <label className={lbl}>Kitchen Photos</label>
+                      <input type="file" accept="image/*" multiple
+                        onChange={e => setForm({ ...form, kitchen_photos_urls: e.target.files })} className={inp + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-400 hover:file:bg-emerald-500/30"} />
                     </div>
                     <div className="space-y-1 sm:col-span-2">
-                      <label className={lbl}>Signature Image URL</label>
-                      <input type="url" placeholder="Signature image URL" value={form.signature_url}
-                        onChange={e => setForm({ ...form, signature_url: e.target.value })} className={inp} />
+                      <label className={lbl}>Signature Image</label>
+                      <input type="file" accept="image/*"
+                        onChange={e => setForm({ ...form, signature_url: e.target.files[0] })} className={inp + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-400 hover:file:bg-emerald-500/30"} />
                     </div>
                   </div>
                 </div>
@@ -1011,18 +1027,18 @@ const RestaurantManagement = () => {
               </div>
 
               {/* Actions */}
-              <div className="flex gap-3 p-7 pt-5 border-t border-white/10 shrink-0 bg-slate-950/30">
+              <div className="flex gap-3 p-6 border-t border-slate-100 bg-white shrink-0">
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex-1 py-3.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-lg shadow-emerald-900/30 transition active:scale-95"
+                  className="flex-1 py-3 bg-[#1B4D22] hover:bg-[#153b1a] disabled:opacity-60 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-md transition active:scale-95"
                 >
                   {saving ? "Saving..." : editingRest ? "Update Restaurant" : "Register Restaurant"}
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsFormOpen(false)}
-                  className="px-6 py-3.5 bg-white/5 hover:bg-white/10 text-white font-black text-xs uppercase tracking-widest rounded-2xl transition"
+                  className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-black text-xs uppercase tracking-widest rounded-xl transition"
                 >
                   Cancel
                 </button>
