@@ -33,7 +33,7 @@ import { useAuth } from "../PrivateRouter/AuthContext";
 /* ================= NAV ITEMS ================= */
 const navItems = [
   { path: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { path: "/admin/restaurants", label: "Restaurants", icon: Store },
+  // { path: "/admin/restaurants", label: "Restaurants", icon: Store },
   { path: "/admin/homechefs", label: "Home Chefs", icon: ChefHat },
   { path: "/admin/delivery-partners", label: "Delivery Partners", icon: Bike },
   { path: "/admin/users", label: "User Management", icon: Users },

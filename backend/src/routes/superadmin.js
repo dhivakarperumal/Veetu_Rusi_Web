@@ -12,16 +12,22 @@ router.use(requireRole(['superadmin', 'admin']));
 router.get('/dashboard-stats', controller.getDashboardStats);
 
 // Home Chef Management
+const homechefUploadFields = upload.fields([
+  { name: 'profile_photo', maxCount: 1 },
+  { name: 'cover_banner', maxCount: 1 },
+  { name: 'kitchen_photos', maxCount: 10 },
+  { name: 'kitchen_videos', maxCount: 5 },
+  { name: 'aadhaar_front_url', maxCount: 1 },
+  { name: 'aadhaar_back_url', maxCount: 1 },
+  { name: 'pan_card_url', maxCount: 1 },
+  { name: 'fssai_certificate_url', maxCount: 1 },
+  { name: 'gst_certificate_url', maxCount: 1 },
+  { name: 'signature_url', maxCount: 1 },
+  { name: 'selfie_verification_url', maxCount: 1 }
+]);
 router.get('/homechefs', controller.getHomeChefs);
-router.post(
-  '/homechefs', 
-  upload.fields([
-    { name: 'aadhaar_doc', maxCount: 1 }, 
-    { name: 'pan_doc', maxCount: 1 }
-  ]), 
-  controller.createHomeChef
-);
-router.put('/homechefs/:id', controller.updateHomeChef);
+router.post('/homechefs', homechefUploadFields, controller.createHomeChef);
+router.put('/homechefs/:id', homechefUploadFields, controller.updateHomeChef);
 router.patch('/homechefs/status/:id', controller.patchHomeChefStatus);
 router.delete('/homechefs/:id', controller.deleteHomeChef);
 

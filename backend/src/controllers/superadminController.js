@@ -86,14 +86,81 @@ exports.getHomeChefs = async (req, res) => {
 
 exports.createHomeChef = async (req, res) => {
   try {
-    const { name, mobile, email, address, fssai_number } = req.body;
-    const aadhaar_url = req.files && req.files.aadhaar_doc ? req.files.aadhaar_doc[0].filename : null;
-    const pan_url = req.files && req.files.pan_doc ? req.files.pan_doc[0].filename : null;
+    const {
+      chef_unique_code, name, father_husband_name, gender, date_of_birth, age,
+      mobile, alt_mobile, whatsapp_number, email, emergency_contact,
+      door_number, street_name, area_name, landmark, city, district, state, pincode,
+      latitude, longitude, map_link, kitchen_name, kitchen_address, kitchen_type,
+      seating_available, dining_available, takeaway_available, delivery_available,
+      specialty_food, cuisine_type, signature_dish, veg_nonveg, experience_years,
+      cooking_style, preparation_time, daily_order_capacity, available_days,
+      opening_time, closing_time, holiday_schedule, busy_hours, instant_order, pre_order,
+      aadhaar_number, pan_number, fssai_number, gst_number, bank_account_number,
+      ifsc_code, account_holder_name, upi_id, username, password, otp_verified,
+      email_verified, login_status, verification_status, approval_status,
+      rejection_reason, block_reason, address
+    } = req.body;
+
+    const profile_photo = req.files && req.files.profile_photo ? req.files.profile_photo[0].filename : null;
+    const cover_banner = req.files && req.files.cover_banner ? req.files.cover_banner[0].filename : null;
+    const aadhaar_front_url = req.files && req.files.aadhaar_front_url ? req.files.aadhaar_front_url[0].filename : null;
+    const aadhaar_back_url = req.files && req.files.aadhaar_back_url ? req.files.aadhaar_back_url[0].filename : null;
+    const pan_card_url = req.files && req.files.pan_card_url ? req.files.pan_card_url[0].filename : null;
+    const fssai_certificate_url = req.files && req.files.fssai_certificate_url ? req.files.fssai_certificate_url[0].filename : null;
+    const gst_certificate_url = req.files && req.files.gst_certificate_url ? req.files.gst_certificate_url[0].filename : null;
+    const signature_url = req.files && req.files.signature_url ? req.files.signature_url[0].filename : null;
+    const selfie_verification_url = req.files && req.files.selfie_verification_url ? req.files.selfie_verification_url[0].filename : null;
+    
+    const kitchen_photos = req.files && req.files.kitchen_photos ? req.files.kitchen_photos.map(f => f.filename).join(',') : null;
+    const kitchen_videos = req.files && req.files.kitchen_videos ? req.files.kitchen_videos.map(f => f.filename).join(',') : null;
+
+    const fullAddress = address || [door_number, street_name, area_name, landmark, city, district, state, pincode].filter(Boolean).join(', ') || null;
+    const hashedPw = password ? hashPassword(password) : null;
 
     const [result] = await pool.execute(
-      "INSERT INTO home_chefs (name, mobile, email, address, fssai_number, aadhaar_url, pan_url, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'Pending')",
-      [name, mobile, email, address, fssai_number || null, aadhaar_url, pan_url]
+      `INSERT INTO home_chefs (
+        chef_unique_code, name, father_husband_name, gender, date_of_birth, age,
+        mobile, alt_mobile, whatsapp_number, email, emergency_contact,
+        door_number, street_name, area_name, landmark, city, district, state, pincode,
+        latitude, longitude, map_link, kitchen_name, kitchen_address, kitchen_type,
+        seating_available, dining_available, takeaway_available, delivery_available,
+        specialty_food, cuisine_type, signature_dish, veg_nonveg, experience_years,
+        cooking_style, preparation_time, daily_order_capacity, available_days,
+        opening_time, closing_time, holiday_schedule, busy_hours, instant_order, pre_order,
+        aadhaar_number, pan_number, fssai_number, gst_number, bank_account_number,
+        ifsc_code, account_holder_name, upi_id, username, password, otp_verified,
+        email_verified, login_status, verification_status, approval_status, status,
+        rejection_reason, block_reason, address,
+        profile_photo, cover_banner, aadhaar_front_url, aadhaar_back_url, pan_card_url,
+        fssai_certificate_url, gst_certificate_url, signature_url, selfie_verification_url,
+        kitchen_photos, kitchen_videos
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        chef_unique_code || null, name, father_husband_name || null, gender || null, date_of_birth || null, age ? parseInt(age) : null,
+        mobile, alt_mobile || null, whatsapp_number || null, email, emergency_contact || null,
+        door_number || null, street_name || null, area_name || null, landmark || null, city || null, district || null, state || null, pincode || null,
+        latitude || null, longitude || null, map_link || null, kitchen_name || null, kitchen_address || null, kitchen_type || 'Home Kitchen',
+        seating_available === 'true' || seating_available === true ? 1 : 0,
+        dining_available === 'true' || dining_available === true ? 1 : 0,
+        takeaway_available === 'true' || takeaway_available === true ? 1 : 0,
+        delivery_available === 'true' || delivery_available === true ? 1 : 0,
+        specialty_food || null, cuisine_type || 'South Indian', signature_dish || null, veg_nonveg || 'Veg', experience_years ? parseInt(experience_years) : null,
+        cooking_style || null, preparation_time || null, daily_order_capacity ? parseInt(daily_order_capacity) : null, available_days || null,
+        opening_time || null, closing_time || null, holiday_schedule || null, busy_hours || null,
+        instant_order === 'true' || instant_order === true ? 1 : 0,
+        pre_order === 'true' || pre_order === true ? 1 : 0,
+        aadhaar_number || null, pan_number || null, fssai_number || null, gst_number || null, bank_account_number || null,
+        ifsc_code || null, account_holder_name || null, upi_id || null, username || null, hashedPw,
+        otp_verified === 'true' || otp_verified === true ? 1 : 0,
+        email_verified === 'true' || email_verified === true ? 1 : 0,
+        login_status || 'Active', verification_status || 'Pending', approval_status || 'Pending', approval_status || 'Pending',
+        rejection_reason || null, block_reason || null, fullAddress,
+        profile_photo, cover_banner, aadhaar_front_url, aadhaar_back_url, pan_card_url,
+        fssai_certificate_url, gst_certificate_url, signature_url, selfie_verification_url,
+        kitchen_photos, kitchen_videos
+      ]
     );
+
     res.status(201).json({ message: 'Home chef application submitted.', id: result.insertId });
   } catch (error) {
     res.status(500).json({ message: 'Error creating home chef.', error: error.message });
@@ -103,11 +170,93 @@ exports.createHomeChef = async (req, res) => {
 exports.updateHomeChef = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, mobile, email, address, fssai_number, status } = req.body;
-    await pool.execute(
-      "UPDATE home_chefs SET name = ?, mobile = ?, email = ?, address = ?, fssai_number = ?, status = ? WHERE id = ?",
-      [name, mobile, email, address, fssai_number, status, id]
-    );
+    const {
+      chef_unique_code, name, father_husband_name, gender, date_of_birth, age,
+      mobile, alt_mobile, whatsapp_number, email, emergency_contact,
+      door_number, street_name, area_name, landmark, city, district, state, pincode,
+      latitude, longitude, map_link, kitchen_name, kitchen_address, kitchen_type,
+      seating_available, dining_available, takeaway_available, delivery_available,
+      specialty_food, cuisine_type, signature_dish, veg_nonveg, experience_years,
+      cooking_style, preparation_time, daily_order_capacity, available_days,
+      opening_time, closing_time, holiday_schedule, busy_hours, instant_order, pre_order,
+      aadhaar_number, pan_number, fssai_number, gst_number, bank_account_number,
+      ifsc_code, account_holder_name, upi_id, username, password, otp_verified,
+      email_verified, login_status, verification_status, approval_status,
+      rejection_reason, block_reason, address
+    } = req.body;
+
+    const profile_photo = req.files && req.files.profile_photo ? req.files.profile_photo[0].filename : null;
+    const cover_banner = req.files && req.files.cover_banner ? req.files.cover_banner[0].filename : null;
+    const aadhaar_front_url = req.files && req.files.aadhaar_front_url ? req.files.aadhaar_front_url[0].filename : null;
+    const aadhaar_back_url = req.files && req.files.aadhaar_back_url ? req.files.aadhaar_back_url[0].filename : null;
+    const pan_card_url = req.files && req.files.pan_card_url ? req.files.pan_card_url[0].filename : null;
+    const fssai_certificate_url = req.files && req.files.fssai_certificate_url ? req.files.fssai_certificate_url[0].filename : null;
+    const gst_certificate_url = req.files && req.files.gst_certificate_url ? req.files.gst_certificate_url[0].filename : null;
+    const signature_url = req.files && req.files.signature_url ? req.files.signature_url[0].filename : null;
+    const selfie_verification_url = req.files && req.files.selfie_verification_url ? req.files.selfie_verification_url[0].filename : null;
+    
+    const kitchen_photos = req.files && req.files.kitchen_photos ? req.files.kitchen_photos.map(f => f.filename).join(',') : null;
+    const kitchen_videos = req.files && req.files.kitchen_videos ? req.files.kitchen_videos.map(f => f.filename).join(',') : null;
+
+    const fullAddress = address || [door_number, street_name, area_name, landmark, city, district, state, pincode].filter(Boolean).join(', ') || null;
+
+    let query = `UPDATE home_chefs SET 
+      chef_unique_code = ?, name = ?, father_husband_name = ?, gender = ?, date_of_birth = ?, age = ?,
+      mobile = ?, alt_mobile = ?, whatsapp_number = ?, email = ?, emergency_contact = ?,
+      door_number = ?, street_name = ?, area_name = ?, landmark = ?, city = ?, district = ?, state = ?, pincode = ?,
+      latitude = ?, longitude = ?, map_link = ?, kitchen_name = ?, kitchen_address = ?, kitchen_type = ?,
+      seating_available = ?, dining_available = ?, takeaway_available = ?, delivery_available = ?,
+      specialty_food = ?, cuisine_type = ?, signature_dish = ?, veg_nonveg = ?, experience_years = ?,
+      cooking_style = ?, preparation_time = ?, daily_order_capacity = ?, available_days = ?,
+      opening_time = ?, closing_time = ?, holiday_schedule = ?, busy_hours = ?, instant_order = ?, pre_order = ?,
+      aadhaar_number = ?, pan_number = ?, fssai_number = ?, gst_number = ?, bank_account_number = ?,
+      ifsc_code = ?, account_holder_name = ?, upi_id = ?, username = ?, otp_verified = ?,
+      email_verified = ?, login_status = ?, verification_status = ?, approval_status = ?, status = ?,
+      rejection_reason = ?, block_reason = ?, address = ?`;
+
+    let params = [
+      chef_unique_code || null, name, father_husband_name || null, gender || null, date_of_birth || null, age ? parseInt(age) : null,
+      mobile, alt_mobile || null, whatsapp_number || null, email, emergency_contact || null,
+      door_number || null, street_name || null, area_name || null, landmark || null, city || null, district || null, state || null, pincode || null,
+      latitude || null, longitude || null, map_link || null, kitchen_name || null, kitchen_address || null, kitchen_type || 'Home Kitchen',
+      seating_available === 'true' || seating_available === true ? 1 : 0,
+      dining_available === 'true' || dining_available === true ? 1 : 0,
+      takeaway_available === 'true' || takeaway_available === true ? 1 : 0,
+      delivery_available === 'true' || delivery_available === true ? 1 : 0,
+      specialty_food || null, cuisine_type || 'South Indian', signature_dish || null, veg_nonveg || 'Veg', experience_years ? parseInt(experience_years) : null,
+      cooking_style || null, preparation_time || null, daily_order_capacity ? parseInt(daily_order_capacity) : null, available_days || null,
+      opening_time || null, closing_time || null, holiday_schedule || null, busy_hours || null,
+      instant_order === 'true' || instant_order === true ? 1 : 0,
+      pre_order === 'true' || pre_order === true ? 1 : 0,
+      aadhaar_number || null, pan_number || null, fssai_number || null, gst_number || null, bank_account_number || null,
+      ifsc_code || null, account_holder_name || null, upi_id || null, username || null,
+      otp_verified === 'true' || otp_verified === true ? 1 : 0,
+      email_verified === 'true' || email_verified === true ? 1 : 0,
+      login_status || 'Active', verification_status || 'Pending', approval_status || 'Pending', approval_status || 'Pending',
+      rejection_reason || null, block_reason || null, fullAddress
+    ];
+
+    if (profile_photo) { query += `, profile_photo = ?`; params.push(profile_photo); }
+    if (cover_banner) { query += `, cover_banner = ?`; params.push(cover_banner); }
+    if (aadhaar_front_url) { query += `, aadhaar_front_url = ?`; params.push(aadhaar_front_url); }
+    if (aadhaar_back_url) { query += `, aadhaar_back_url = ?`; params.push(aadhaar_back_url); }
+    if (pan_card_url) { query += `, pan_card_url = ?`; params.push(pan_card_url); }
+    if (fssai_certificate_url) { query += `, fssai_certificate_url = ?`; params.push(fssai_certificate_url); }
+    if (gst_certificate_url) { query += `, gst_certificate_url = ?`; params.push(gst_certificate_url); }
+    if (signature_url) { query += `, signature_url = ?`; params.push(signature_url); }
+    if (selfie_verification_url) { query += `, selfie_verification_url = ?`; params.push(selfie_verification_url); }
+    if (kitchen_photos) { query += `, kitchen_photos = ?`; params.push(kitchen_photos); }
+    if (kitchen_videos) { query += `, kitchen_videos = ?`; params.push(kitchen_videos); }
+
+    if (password) {
+      query += `, password = ?`;
+      params.push(hashPassword(password));
+    }
+
+    query += ` WHERE id = ?`;
+    params.push(id);
+
+    await pool.execute(query, params);
     res.json({ message: 'Home chef updated successfully.' });
   } catch (error) {
     res.status(500).json({ message: 'Error updating home chef.', error: error.message });
