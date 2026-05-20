@@ -115,14 +115,10 @@ const FranchiseOwnerManagement = () => {
       });
 
       if (editingFranchise) {
-        await api.put(`/superadmin/franchises/${editingFranchise.id}`, formData, {
-          headers: { "Content-Type": "multipart/form-data" }
-        });
+        await api.put(`/superadmin/franchises/${editingFranchise.id}`, formData);
         toast.success("Franchise updated.");
       } else {
-        await api.post("/superadmin/franchises", formData, {
-          headers: { "Content-Type": "multipart/form-data" }
-        });
+        await api.post("/superadmin/franchises", formData);
         toast.success("Franchise registered. Click Approve to create login credentials.");
       }
       setIsModalOpen(false);

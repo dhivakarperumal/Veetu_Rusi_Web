@@ -26,9 +26,21 @@ router.patch('/homechefs/status/:id', controller.patchHomeChefStatus);
 router.delete('/homechefs/:id', controller.deleteHomeChef);
 
 // Restaurant Management
+const restaurantUploadFields = upload.fields([
+  { name: 'logo_url', maxCount: 1 },
+  { name: 'banner_url', maxCount: 1 },
+  { name: 'gallery_urls', maxCount: 10 },
+  { name: 'aadhaar_url', maxCount: 1 },
+  { name: 'pan_url', maxCount: 1 },
+  { name: 'gst_certificate_url', maxCount: 1 },
+  { name: 'shop_license_url', maxCount: 1 },
+  { name: 'restaurant_photos_urls', maxCount: 10 },
+  { name: 'kitchen_photos_urls', maxCount: 10 },
+  { name: 'signature_url', maxCount: 1 }
+]);
 router.get('/restaurants', controller.getRestaurants);
-router.post('/restaurants', controller.createRestaurant);
-router.put('/restaurants/:id', controller.updateRestaurant);
+router.post('/restaurants', restaurantUploadFields, controller.createRestaurant);
+router.put('/restaurants/:id', restaurantUploadFields, controller.updateRestaurant);
 router.delete('/restaurants/:id', controller.deleteRestaurant);
 
 // Delivery Partner Management
@@ -52,10 +64,23 @@ router.get('/payouts', controller.getPayouts);
 router.post('/payouts', controller.createPayout);
 
 // Franchise Owner Management
+const franchiseUploadFields = upload.fields([
+  { name: 'logo_url', maxCount: 1 },
+  { name: 'banner_url', maxCount: 1 },
+  { name: 'aadhaar_url', maxCount: 1 },
+  { name: 'pan_url', maxCount: 1 },
+  { name: 'gst_certificate_url', maxCount: 1 },
+  { name: 'fssai_license_url', maxCount: 1 },
+  { name: 'shop_license_url', maxCount: 1 },
+  { name: 'vehicle_rc_url', maxCount: 1 },
+  { name: 'driving_license_url', maxCount: 1 },
+  { name: 'bank_passbook_url', maxCount: 1 },
+  { name: 'signature_url', maxCount: 1 }
+]);
 router.get('/franchises', controller.getFranchises);
-router.post('/franchises', controller.createFranchise);
+router.post('/franchises', franchiseUploadFields, controller.createFranchise);
 router.patch('/franchises/approve/:id', controller.approveFranchise);
-router.put('/franchises/:id', controller.updateFranchise);
+router.put('/franchises/:id', franchiseUploadFields, controller.updateFranchise);
 router.delete('/franchises/:id', controller.deleteFranchise);
 
 // Commission Management

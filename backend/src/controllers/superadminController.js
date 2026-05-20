@@ -149,13 +149,26 @@ exports.createRestaurant = async (req, res) => {
   try {
     const {
       name, owner_name, gst_number, fssai_number, mobile, email, address, status,
-      restaurant_type, cuisine_type, description, opening_date, logo_url, banner_url, gallery_urls,
+      restaurant_type, cuisine_type, description, opening_date,
       alt_mobile, whatsapp_number, website_url, customer_support,
       door_number, street_name, area_name, landmark, city, district, state, pincode, latitude, longitude, map_link,
       opening_time, closing_time, working_days, holiday_details, is_24_hours, peak_hours,
-      username, password, role, otp_verified, email_verified, verification_status,
-      aadhaar_url, pan_url, gst_certificate_url, shop_license_url, restaurant_photos_urls, kitchen_photos_urls, signature_url
+      username, password, role, otp_verified, email_verified, verification_status
     } = req.body;
+
+    const logo_url = req.files && req.files.logo_url ? req.files.logo_url[0].filename : null;
+    const banner_url = req.files && req.files.banner_url ? req.files.banner_url[0].filename : null;
+    const aadhaar_url = req.files && req.files.aadhaar_url ? req.files.aadhaar_url[0].filename : null;
+    const pan_url = req.files && req.files.pan_url ? req.files.pan_url[0].filename : null;
+    const gst_certificate_url = req.files && req.files.gst_certificate_url ? req.files.gst_certificate_url[0].filename : null;
+    const shop_license_url = req.files && req.files.shop_license_url ? req.files.shop_license_url[0].filename : null;
+    const signature_url = req.files && req.files.signature_url ? req.files.signature_url[0].filename : null;
+    const gallery_urls = req.files && req.files.gallery_urls ? req.files.gallery_urls.map(f => f.filename).join(',') : null;
+    const restaurant_photos_urls = req.files && req.files.restaurant_photos_urls ? req.files.restaurant_photos_urls.map(f => f.filename).join(',') : null;
+    const kitchen_photos_urls = req.files && req.files.kitchen_photos_urls ? req.files.kitchen_photos_urls.map(f => f.filename).join(',') : null;
+
+    // Auto-generate address from individual fields if not provided
+    const fullAddress = address || [door_number, street_name, area_name, landmark, city, district, state, pincode].filter(Boolean).join(', ') || null;
 
     const hashedPw = password ? hashPassword(password) : null;
 
@@ -166,10 +179,11 @@ exports.createRestaurant = async (req, res) => {
         alt_mobile, whatsapp_number, website_url, customer_support,
         door_number, street_name, area_name, landmark, city, district, state, pincode, latitude, longitude, map_link,
         opening_time, closing_time, working_days, holiday_details, is_24_hours, peak_hours,
-        username, password, role, otp_verified, email_verified
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        username, password, role, otp_verified, email_verified,
+        verification_status, aadhaar_url, pan_url, gst_certificate_url, shop_license_url, restaurant_photos_urls, kitchen_photos_urls, signature_url
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        name, owner_name, gst_number || null, fssai_number || null, mobile, email, address || null, status || 'Pending',
+        name, owner_name, gst_number || null, fssai_number || null, mobile, email, fullAddress, status || 'Pending',
         restaurant_type || 'Both', cuisine_type || 'Multi Cuisine', description || null, opening_date || null, logo_url || null, banner_url || null, gallery_urls || null,
         alt_mobile || null, whatsapp_number || null, website_url || null, customer_support || null,
         door_number || null, street_name || null, area_name || null, landmark || null, city || null, district || null, state || null, pincode || null, latitude || null, longitude || null, map_link || null,
@@ -189,31 +203,52 @@ exports.updateRestaurant = async (req, res) => {
     const { id } = req.params;
     const {
       name, owner_name, gst_number, fssai_number, mobile, email, address, status,
-      restaurant_type, cuisine_type, description, opening_date, logo_url, banner_url, gallery_urls,
+      restaurant_type, cuisine_type, description, opening_date,
       alt_mobile, whatsapp_number, website_url, customer_support,
       door_number, street_name, area_name, landmark, city, district, state, pincode, latitude, longitude, map_link,
       opening_time, closing_time, working_days, holiday_details, is_24_hours, peak_hours,
-      username, password, role, otp_verified, email_verified, verification_status,
-      aadhaar_url, pan_url, gst_certificate_url, shop_license_url, restaurant_photos_urls, kitchen_photos_urls, signature_url
+      username, password, role, otp_verified, email_verified, verification_status
     } = req.body;
+
+    const logo_url = req.files && req.files.logo_url ? req.files.logo_url[0].filename : null;
+    const banner_url = req.files && req.files.banner_url ? req.files.banner_url[0].filename : null;
+    const aadhaar_url = req.files && req.files.aadhaar_url ? req.files.aadhaar_url[0].filename : null;
+    const pan_url = req.files && req.files.pan_url ? req.files.pan_url[0].filename : null;
+    const gst_certificate_url = req.files && req.files.gst_certificate_url ? req.files.gst_certificate_url[0].filename : null;
+    const shop_license_url = req.files && req.files.shop_license_url ? req.files.shop_license_url[0].filename : null;
+    const signature_url = req.files && req.files.signature_url ? req.files.signature_url[0].filename : null;
+    const gallery_urls = req.files && req.files.gallery_urls ? req.files.gallery_urls.map(f => f.filename).join(',') : null;
+    const restaurant_photos_urls = req.files && req.files.restaurant_photos_urls ? req.files.restaurant_photos_urls.map(f => f.filename).join(',') : null;
+    const kitchen_photos_urls = req.files && req.files.kitchen_photos_urls ? req.files.kitchen_photos_urls.map(f => f.filename).join(',') : null;
 
     let query = `UPDATE restaurants SET 
       name = ?, owner_name = ?, gst_number = ?, fssai_number = ?, mobile = ?, email = ?, address = ?, status = ?,
-      restaurant_type = ?, cuisine_type = ?, description = ?, opening_date = ?, logo_url = ?, banner_url = ?, gallery_urls = ?,
+      restaurant_type = ?, cuisine_type = ?, description = ?, opening_date = ?,
       alt_mobile = ?, whatsapp_number = ?, website_url = ?, customer_support = ?,
       door_number = ?, street_name = ?, area_name = ?, landmark = ?, city = ?, district = ?, state = ?, pincode = ?, latitude = ?, longitude = ?, map_link = ?,
       opening_time = ?, closing_time = ?, working_days = ?, holiday_details = ?, is_24_hours = ?, peak_hours = ?,
-      username = ?, role = ?, otp_verified = ?, email_verified = ?, verification_status = ?, aadhaar_url = ?, pan_url = ?, gst_certificate_url = ?, shop_license_url = ?, restaurant_photos_urls = ?, kitchen_photos_urls = ?, signature_url = ?`;
+      username = ?, role = ?, otp_verified = ?, email_verified = ?, verification_status = ?`;
     
     let params = [
       name, owner_name, gst_number, fssai_number, mobile, email, address, status,
-      restaurant_type, cuisine_type, description, opening_date, logo_url, banner_url, gallery_urls,
+      restaurant_type, cuisine_type, description, opening_date,
       alt_mobile, whatsapp_number, website_url, customer_support,
       door_number, street_name, area_name, landmark, city, district, state, pincode, latitude, longitude, map_link,
       opening_time, closing_time, working_days, holiday_details, is_24_hours !== undefined ? (is_24_hours ? 1 : 0) : 0, peak_hours,
       username, role, otp_verified !== undefined ? (otp_verified ? 1 : 0) : 0, email_verified !== undefined ? (email_verified ? 1 : 0) : 0,
-      verification_status || 'Pending', aadhaar_url || null, pan_url || null, gst_certificate_url || null, shop_license_url || null, restaurant_photos_urls || null, kitchen_photos_urls || null, signature_url || null
+      verification_status || 'Pending'
     ];
+
+    if (logo_url) { query += `, logo_url = ?`; params.push(logo_url); }
+    if (banner_url) { query += `, banner_url = ?`; params.push(banner_url); }
+    if (gallery_urls) { query += `, gallery_urls = ?`; params.push(gallery_urls); }
+    if (aadhaar_url) { query += `, aadhaar_url = ?`; params.push(aadhaar_url); }
+    if (pan_url) { query += `, pan_url = ?`; params.push(pan_url); }
+    if (gst_certificate_url) { query += `, gst_certificate_url = ?`; params.push(gst_certificate_url); }
+    if (shop_license_url) { query += `, shop_license_url = ?`; params.push(shop_license_url); }
+    if (restaurant_photos_urls) { query += `, restaurant_photos_urls = ?`; params.push(restaurant_photos_urls); }
+    if (kitchen_photos_urls) { query += `, kitchen_photos_urls = ?`; params.push(kitchen_photos_urls); }
+    if (signature_url) { query += `, signature_url = ?`; params.push(signature_url); }
 
     if (password) {
       query += `, password = ?`;
@@ -391,18 +426,51 @@ exports.getFranchises = async (req, res) => {
 
 exports.createFranchise = async (req, res) => {
   try {
-    const { franchise_name, owner_name, mobile, email, city, state, commission_percentage, status, password } = req.body;
+    const { 
+      franchise_name, owner_name, mobile, email, city, state, commission_percentage, status, password,
+      business_registration_number, gst_number, pan_number, start_date, expiry_date,
+      alt_mobile, whatsapp_number, website_url, emergency_contact_number,
+      door_number, street_name, area, landmark, district, pincode, latitude, longitude, map_link,
+      username, role, otp_verified, email_verified, login_status
+    } = req.body;
+
+    const logo_url = req.files && req.files.logo_url ? req.files.logo_url[0].filename : null;
+    const banner_url = req.files && req.files.banner_url ? req.files.banner_url[0].filename : null;
+    const aadhaar_url = req.files && req.files.aadhaar_url ? req.files.aadhaar_url[0].filename : null;
+    const pan_url = req.files && req.files.pan_url ? req.files.pan_url[0].filename : null;
+    const gst_certificate_url = req.files && req.files.gst_certificate_url ? req.files.gst_certificate_url[0].filename : null;
+    const fssai_license_url = req.files && req.files.fssai_license_url ? req.files.fssai_license_url[0].filename : null;
+    const shop_license_url = req.files && req.files.shop_license_url ? req.files.shop_license_url[0].filename : null;
+    const vehicle_rc_url = req.files && req.files.vehicle_rc_url ? req.files.vehicle_rc_url[0].filename : null;
+    const driving_license_url = req.files && req.files.driving_license_url ? req.files.driving_license_url[0].filename : null;
+    const bank_passbook_url = req.files && req.files.bank_passbook_url ? req.files.bank_passbook_url[0].filename : null;
+    const signature_url = req.files && req.files.signature_url ? req.files.signature_url[0].filename : null;
+
     // Hash password if provided, else store null (will be auto-generated at approval)
     const hashedPw = password ? hashPassword(password) : null;
     const plainPw  = password || null;
+
     const [result] = await pool.execute(
-      "INSERT INTO franchise_owners (franchise_name, owner_name, mobile, email, city, state, commission_percentage, status, login_password) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-      [franchise_name, owner_name, mobile, email, city, state, commission_percentage || 10.00, status || 'Pending', hashedPw]
+      `INSERT INTO franchise_owners (
+        franchise_name, owner_name, mobile, email, city, state, commission_percentage, status, login_password,
+        business_registration_number, gst_number, pan_number, start_date, expiry_date,
+        alt_mobile, whatsapp_number, website_url, emergency_contact_number,
+        door_number, street_name, area, landmark, district, pincode, latitude, longitude, map_link,
+        username, role, otp_verified, email_verified, login_status,
+        logo_url, banner_url, aadhaar_url, pan_url, gst_certificate_url, fssai_license_url, shop_license_url, vehicle_rc_url, driving_license_url, bank_passbook_url, signature_url
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        franchise_name, owner_name, mobile, email, city, state, commission_percentage || 10.00, status || 'Pending', hashedPw,
+        business_registration_number || null, gst_number || null, pan_number || null, start_date || null, expiry_date || null,
+        alt_mobile || null, whatsapp_number || null, website_url || null, emergency_contact_number || null,
+        door_number || null, street_name || null, area || null, landmark || null, district || null, pincode || null, latitude || null, longitude || null, map_link || null,
+        username || null, role || 'Franchise Admin', otp_verified !== undefined ? (otp_verified ? 1 : 0) : 0, email_verified !== undefined ? (email_verified ? 1 : 0) : 0, login_status || 'Active',
+        logo_url, banner_url, aadhaar_url, pan_url, gst_certificate_url, fssai_license_url, shop_license_url, vehicle_rc_url, driving_license_url, bank_passbook_url, signature_url
+      ]
     );
     res.status(201).json({
       message: 'Franchise owner registered. Click Approve to create login credentials.',
       id: result.insertId,
-      // Return the plain password so the frontend can pre-fill credentials modal
       password: plainPw
     });
   } catch (error) {
@@ -491,11 +559,57 @@ exports.approveFranchise = async (req, res) => {
 exports.updateFranchise = async (req, res) => {
   try {
     const { id } = req.params;
-    const { franchise_name, owner_name, mobile, email, city, state, commission_percentage, status } = req.body;
-    await pool.execute(
-      "UPDATE franchise_owners SET franchise_name = ?, owner_name = ?, mobile = ?, email = ?, city = ?, state = ?, commission_percentage = ?, status = ? WHERE id = ?",
-      [franchise_name, owner_name, mobile, email, city, state, commission_percentage, status, id]
-    );
+    const { 
+      franchise_name, owner_name, mobile, email, city, state, commission_percentage, status,
+      business_registration_number, gst_number, pan_number, start_date, expiry_date,
+      alt_mobile, whatsapp_number, website_url, emergency_contact_number,
+      door_number, street_name, area, landmark, district, pincode, latitude, longitude, map_link,
+      username, role, otp_verified, email_verified, login_status
+    } = req.body;
+
+    const logo_url = req.files && req.files.logo_url ? req.files.logo_url[0].filename : null;
+    const banner_url = req.files && req.files.banner_url ? req.files.banner_url[0].filename : null;
+    const aadhaar_url = req.files && req.files.aadhaar_url ? req.files.aadhaar_url[0].filename : null;
+    const pan_url = req.files && req.files.pan_url ? req.files.pan_url[0].filename : null;
+    const gst_certificate_url = req.files && req.files.gst_certificate_url ? req.files.gst_certificate_url[0].filename : null;
+    const fssai_license_url = req.files && req.files.fssai_license_url ? req.files.fssai_license_url[0].filename : null;
+    const shop_license_url = req.files && req.files.shop_license_url ? req.files.shop_license_url[0].filename : null;
+    const vehicle_rc_url = req.files && req.files.vehicle_rc_url ? req.files.vehicle_rc_url[0].filename : null;
+    const driving_license_url = req.files && req.files.driving_license_url ? req.files.driving_license_url[0].filename : null;
+    const bank_passbook_url = req.files && req.files.bank_passbook_url ? req.files.bank_passbook_url[0].filename : null;
+    const signature_url = req.files && req.files.signature_url ? req.files.signature_url[0].filename : null;
+
+    let query = `UPDATE franchise_owners SET 
+      franchise_name = ?, owner_name = ?, mobile = ?, email = ?, city = ?, state = ?, commission_percentage = ?, status = ?,
+      business_registration_number = ?, gst_number = ?, pan_number = ?, start_date = ?, expiry_date = ?,
+      alt_mobile = ?, whatsapp_number = ?, website_url = ?, emergency_contact_number = ?,
+      door_number = ?, street_name = ?, area = ?, landmark = ?, district = ?, pincode = ?, latitude = ?, longitude = ?, map_link = ?,
+      username = ?, role = ?, otp_verified = ?, email_verified = ?, login_status = ?`;
+
+    let params = [
+      franchise_name, owner_name, mobile, email, city, state, commission_percentage, status,
+      business_registration_number || null, gst_number || null, pan_number || null, start_date || null, expiry_date || null,
+      alt_mobile || null, whatsapp_number || null, website_url || null, emergency_contact_number || null,
+      door_number || null, street_name || null, area || null, landmark || null, district || null, pincode || null, latitude || null, longitude || null, map_link || null,
+      username || null, role || 'Franchise Admin', otp_verified !== undefined ? (otp_verified ? 1 : 0) : 0, email_verified !== undefined ? (email_verified ? 1 : 0) : 0, login_status || 'Active'
+    ];
+
+    if (logo_url) { query += `, logo_url = ?`; params.push(logo_url); }
+    if (banner_url) { query += `, banner_url = ?`; params.push(banner_url); }
+    if (aadhaar_url) { query += `, aadhaar_url = ?`; params.push(aadhaar_url); }
+    if (pan_url) { query += `, pan_url = ?`; params.push(pan_url); }
+    if (gst_certificate_url) { query += `, gst_certificate_url = ?`; params.push(gst_certificate_url); }
+    if (fssai_license_url) { query += `, fssai_license_url = ?`; params.push(fssai_license_url); }
+    if (shop_license_url) { query += `, shop_license_url = ?`; params.push(shop_license_url); }
+    if (vehicle_rc_url) { query += `, vehicle_rc_url = ?`; params.push(vehicle_rc_url); }
+    if (driving_license_url) { query += `, driving_license_url = ?`; params.push(driving_license_url); }
+    if (bank_passbook_url) { query += `, bank_passbook_url = ?`; params.push(bank_passbook_url); }
+    if (signature_url) { query += `, signature_url = ?`; params.push(signature_url); }
+
+    query += ` WHERE id = ?`;
+    params.push(id);
+
+    await pool.execute(query, params);
     
     // Sync status to associated user's active field
     const isActive = status === 'Active' ? 1 : 0;

@@ -139,7 +139,7 @@ async function createDatabaseAndTables() {
   console.log('Restaurants table created or already exists');
 
   const [restColumns] = await connection.execute(
-    "SELECT COUNT(*) AS count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'restaurants' AND COLUMN_NAME = 'restaurant_type'",
+    "SELECT COUNT(*) AS count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'restaurants' AND COLUMN_NAME = 'verification_status'",
     [DB_NAME]
   );
 
@@ -178,15 +178,15 @@ async function createDatabaseAndTables() {
       ADD COLUMN \`password\` VARCHAR(255),
       ADD COLUMN \`role\` VARCHAR(50) DEFAULT 'Restaurant Admin',
       ADD COLUMN \`otp_verified\` TINYINT(1) DEFAULT 0,
-      ADD COLUMN `email_verified` TINYINT(1) DEFAULT 0,
-      ADD COLUMN `verification_status` VARCHAR(50) DEFAULT 'Pending',
-      ADD COLUMN `aadhaar_url` VARCHAR(255),
-      ADD COLUMN `pan_url` VARCHAR(255),
-      ADD COLUMN `gst_certificate_url` VARCHAR(255),
-      ADD COLUMN `shop_license_url` VARCHAR(255),
-      ADD COLUMN `restaurant_photos_urls` TEXT,
-      ADD COLUMN `kitchen_photos_urls` TEXT,
-      ADD COLUMN `signature_url` VARCHAR(255)
+      ADD COLUMN \`email_verified\` TINYINT(1) DEFAULT 0,
+      ADD COLUMN \`verification_status\` VARCHAR(50) DEFAULT 'Pending',
+      ADD COLUMN \`aadhaar_url\` VARCHAR(255),
+      ADD COLUMN \`pan_url\` VARCHAR(255),
+      ADD COLUMN \`gst_certificate_url\` VARCHAR(255),
+      ADD COLUMN \`shop_license_url\` VARCHAR(255),
+      ADD COLUMN \`restaurant_photos_urls\` TEXT,
+      ADD COLUMN \`kitchen_photos_urls\` TEXT,
+      ADD COLUMN \`signature_url\` VARCHAR(255)
     `);
     console.log('Added all new fields to the existing restaurants table');
   }
@@ -276,6 +276,52 @@ async function createDatabaseAndTables() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
   console.log('Franchise Owners table created or already exists');
+
+  const [franColumns] = await connection.execute(
+    "SELECT COUNT(*) AS count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'franchise_owners' AND COLUMN_NAME = 'logo_url'",
+    [DB_NAME]
+  );
+
+  if (franColumns[0].count === 0) {
+    await connection.execute(`
+      ALTER TABLE \`franchise_owners\`
+      ADD COLUMN \`logo_url\` VARCHAR(255),
+      ADD COLUMN \`banner_url\` VARCHAR(255),
+      ADD COLUMN \`business_registration_number\` VARCHAR(100),
+      ADD COLUMN \`gst_number\` VARCHAR(100),
+      ADD COLUMN \`pan_number\` VARCHAR(100),
+      ADD COLUMN \`start_date\` DATE,
+      ADD COLUMN \`expiry_date\` DATE,
+      ADD COLUMN \`alt_mobile\` VARCHAR(50),
+      ADD COLUMN \`whatsapp_number\` VARCHAR(50),
+      ADD COLUMN \`website_url\` VARCHAR(255),
+      ADD COLUMN \`emergency_contact_number\` VARCHAR(50),
+      ADD COLUMN \`door_number\` VARCHAR(50),
+      ADD COLUMN \`street_name\` VARCHAR(255),
+      ADD COLUMN \`area\` VARCHAR(255),
+      ADD COLUMN \`landmark\` VARCHAR(255),
+      ADD COLUMN \`district\` VARCHAR(150),
+      ADD COLUMN \`pincode\` VARCHAR(20),
+      ADD COLUMN \`latitude\` VARCHAR(50),
+      ADD COLUMN \`longitude\` VARCHAR(50),
+      ADD COLUMN \`map_link\` TEXT,
+      ADD COLUMN \`username\` VARCHAR(255),
+      ADD COLUMN \`role\` VARCHAR(50) DEFAULT 'Franchise Admin',
+      ADD COLUMN \`otp_verified\` TINYINT(1) DEFAULT 0,
+      ADD COLUMN \`email_verified\` TINYINT(1) DEFAULT 0,
+      ADD COLUMN \`login_status\` VARCHAR(50) DEFAULT 'Active',
+      ADD COLUMN \`aadhaar_url\` VARCHAR(255),
+      ADD COLUMN \`pan_url\` VARCHAR(255),
+      ADD COLUMN \`gst_certificate_url\` VARCHAR(255),
+      ADD COLUMN \`fssai_license_url\` VARCHAR(255),
+      ADD COLUMN \`shop_license_url\` VARCHAR(255),
+      ADD COLUMN \`vehicle_rc_url\` VARCHAR(255),
+      ADD COLUMN \`driving_license_url\` VARCHAR(255),
+      ADD COLUMN \`bank_passbook_url\` VARCHAR(255),
+      ADD COLUMN \`signature_url\` VARCHAR(255)
+    `);
+    console.log('Added all new fields to the existing franchise_owners table');
+  }
 
   await connection.execute(`
     CREATE TABLE IF NOT EXISTS \`commissions\` (

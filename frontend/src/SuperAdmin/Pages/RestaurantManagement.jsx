@@ -187,21 +187,17 @@ const RestaurantManagement = () => {
           for (let i = 0; i < form[key].length; i++) {
             formData.append(key, form[key][i]);
           }
-        } else if (form[key] !== null && form[key] !== undefined && form[key] !== "") {
+        } else if (form[key] !== null && form[key] !== undefined) {
           formData.append(key, form[key]);
         }
       });
 
       if (editingRest) {
-        await api.put(`/superadmin/restaurants/${editingRest.id}`, formData, {
-          headers: { "Content-Type": "multipart/form-data" }
-        });
+        await api.put(`/superadmin/restaurants/${editingRest.id}`, formData);
         toast.success("Restaurant updated successfully.");
       } else {
-        await api.post("/superadmin/restaurants", formData, {
-          headers: { "Content-Type": "multipart/form-data" }
-        });
-        toast.success("Restaurant registered successfully.");
+        await api.post("/superadmin/restaurants", formData);
+        toast.success("Restaurant created successfully.");
       }
       setIsFormOpen(false);
       setForm(emptyForm);
