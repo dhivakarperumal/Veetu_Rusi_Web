@@ -73,28 +73,34 @@ function Login() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden bg-slate-900 font-sans">
-      {/* Blurred background image layer */}
+    <div className="relative min-h-screen flex items-center justify-center p-4 sm:p-8 overflow-hidden bg-teal-50 font-sans">
+      {/* Brighter background layer */}
       <div 
-        className="absolute inset-0 bg-cover bg-center opacity-30 blur-sm scale-110"
-        style={{ backgroundImage: "url('https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1920&q=80')" }}
+        className="absolute inset-0 bg-cover bg-center opacity-60 blur-[20px] scale-110"
+        style={{ backgroundImage: "url('https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=1920&q=80')" }}
       ></div>
-      <div className="absolute inset-0 bg-[#278679]/70 mix-blend-multiply"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-teal-100/60 to-emerald-50/80"></div>
 
-      {/* Main Card */}
-      <div className="relative z-10 w-full max-w-[850px] h-[520px] bg-white rounded shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] overflow-hidden flex">
+      {/* Main Card - Increased Size */}
+      <div className="relative z-10 w-full max-w-[1000px] min-h-[600px] bg-white rounded-3xl shadow-[0_20px_60px_-15px_rgba(20,184,166,0.3)] overflow-hidden flex transform transition-all hover:shadow-[0_25px_60px_-15px_rgba(20,184,166,0.4)]">
         
-        {/* Left Image Section (Background of the card) */}
+        {/* Left Image Section - Brighter and more vibrant */}
         <div 
           className="absolute inset-0 w-full h-full bg-cover bg-center hidden md:block"
-          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1000&q=80')" }}
+          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=1200&q=80')" }}
         >
-          {/* Teal Overlay matching the design */}
-          <div className="absolute inset-0 bg-[#278679]/80 mix-blend-multiply"></div>
+          {/* Subtle warm overlay to make food pop */}
+          <div className="absolute inset-0 bg-gradient-to-t from-teal-900/60 via-teal-800/20 to-transparent"></div>
+          
+          {/* Decorative text on image */}
+          <div className="absolute bottom-12 left-12 right-[55%] text-white">
+            <h1 className="text-4xl font-bold mb-3 drop-shadow-lg">Veetu Rusi</h1>
+            <p className="text-teal-50 text-lg font-medium drop-shadow-md">Experience the authentic taste of home in every bite.</p>
+          </div>
         </div>
 
-        {/* SVG Wave Background (Visible only on desktop) */}
-        <svg className="absolute inset-0 h-full w-full hidden md:block" preserveAspectRatio="none" viewBox="0 0 100 100">
+        {/* SVG Wave Background */}
+        <svg className="absolute inset-0 h-full w-full hidden md:block drop-shadow-2xl" preserveAspectRatio="none" viewBox="0 0 100 100">
           <path d="M 45,0 C 25,40 75,60 50,100 L 100,100 L 100,0 Z" fill="white" />
         </svg>
 
@@ -102,86 +108,98 @@ function Login() {
         <div className="absolute inset-0 bg-white md:hidden"></div>
 
         {/* Right Form Section */}
-        <div className="relative z-10 w-full md:w-[50%] md:ml-auto h-full flex flex-col justify-center px-8 md:px-10">
+        <div className="relative z-10 w-full md:w-[50%] md:ml-auto h-full flex flex-col justify-center px-8 md:px-12 py-10">
           
-          <div className="text-center mb-8">
-            <h2 className="text-[2.2rem] font-normal text-gray-700 mb-1 tracking-wide">Welcome</h2>
-            <p className="text-gray-400 text-[13px]">Log in to your account to continue</p>
+          <div className="mb-10">
+            <h2 className="text-4xl font-bold text-gray-800 mb-2 tracking-tight">Welcome Back</h2>
+            <p className="text-gray-500 text-base font-medium">Log in to your account to continue</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Email Field */}
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <User className="h-[18px] w-[18px] text-gray-400" />
+          <form onSubmit={handleSubmit} className="space-y-6">
+            
+            {/* Email Field with Label */}
+            <div className="space-y-2">
+              <label className="block text-sm font-bold text-gray-700 ml-1">Email Address</label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none transition-colors group-focus-within:text-teal-500 text-gray-400">
+                  <User className="h-5 w-5" />
+                </div>
+                <input
+                  name="identifier"
+                  type="text"
+                  placeholder="e.g. awesome@user.com"
+                  onChange={handleChange}
+                  className="w-full pl-12 pr-5 py-3.5 rounded-2xl border border-gray-200 bg-gray-50 text-gray-800 text-base placeholder-gray-400 focus:outline-none focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-50 transition-all shadow-sm"
+                  required
+                />
               </div>
-              <input
-                name="identifier"
-                type="text"
-                placeholder="awesome@user.com"
-                onChange={handleChange}
-                className="w-full pl-11 pr-4 py-[10px] rounded-full border border-gray-200 text-gray-700 text-sm placeholder-gray-400 focus:outline-none focus:border-[#3cd5b8] focus:ring-1 focus:ring-[#3cd5b8] transition-colors"
-                required
-              />
             </div>
 
-            {/* Password Field */}
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <Lock className="h-[18px] w-[18px] text-gray-400" />
+            {/* Password Field with Label */}
+            <div className="space-y-2">
+              <div className="flex justify-between items-center ml-1">
+                 <label className="block text-sm font-bold text-gray-700">Password</label>
+                 <Link to="/forgot-password" className="text-sm text-teal-600 hover:text-teal-700 font-bold hover:underline transition-colors">
+                  Forgot password?
+                 </Link>
               </div>
-              <input
-                type={showPassword ? "text" : "password"}
-                name="password"
-                placeholder="••••••••••••••••"
-                onChange={handleChange}
-                className="w-full pl-11 pr-11 py-[10px] rounded-full border border-gray-200 text-gray-700 text-sm placeholder-gray-400 focus:outline-none focus:border-[#3cd5b8] focus:ring-1 focus:ring-[#3cd5b8] transition-colors tracking-widest"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
-              >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            </div>
-
-            <div className="flex justify-end pt-1">
-              <Link to="/forgot-password" className="text-[11px] text-gray-400 hover:text-[#3cd5b8] transition-colors underline-offset-2">
-                Forgot your password?
-              </Link>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none transition-colors group-focus-within:text-teal-500 text-gray-400">
+                  <Lock className="h-5 w-5" />
+                </div>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  placeholder="Enter your password"
+                  onChange={handleChange}
+                  className="w-full pl-12 pr-12 py-3.5 rounded-2xl border border-gray-200 bg-gray-50 text-gray-800 text-base placeholder-gray-400 focus:outline-none focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-50 transition-all shadow-sm"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-5 flex items-center text-gray-400 hover:text-teal-500 focus:outline-none transition-colors"
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
             </div>
 
             <button
               type="submit"
-              className="w-full max-w-[140px] mx-auto block py-2 mt-4 rounded-full text-white text-[15px] bg-[#3cd5b8] hover:bg-[#34bc9f] transition-colors"
+              className="w-full max-w-xs mx-auto block py-3.5 mt-4 rounded-2xl text-white font-bold text-lg bg-teal-500 hover:bg-teal-400 active:scale-[0.98] transition-all shadow-[0_8px_20px_-6px_rgba(20,184,166,0.5)] hover:shadow-[0_12px_20px_-6px_rgba(20,184,166,0.6)]"
             >
               Log In
             </button>
 
-            <p className="text-center text-[13px] text-gray-400 mt-6">
+            <p className="text-center text-base text-gray-500 mt-6 font-medium">
               Don't have an account?{" "}
-              <Link to="/register" className="text-[#c2c2c2] hover:text-[#3cd5b8] underline underline-offset-2 transition-colors">
+              <Link to="/register" className="text-teal-600 font-bold hover:text-teal-500 hover:underline underline-offset-4 transition-colors">
                 Sign up!
               </Link>
             </p>
 
             {/* Social Icons & Google Login */}
-            <div className="mt-8 flex flex-col items-center space-y-5">
-              <div className="flex justify-center space-x-6 text-[#b5b5b5]">
-                <a href="#" className="hover:text-gray-500 transition-colors"><FaFacebookF className="h-5 w-5" /></a>
-                <a href="#" className="hover:text-gray-500 transition-colors"><FaTwitter className="h-5 w-5" /></a>
-                <a href="#" className="hover:text-gray-500 transition-colors"><FaLinkedinIn className="h-5 w-5" /></a>
+            <div className="mt-10 flex flex-col items-center space-y-6">
+              <div className="flex items-center w-full max-w-xs gap-4">
+                 <div className="flex-1 h-px bg-gray-200"></div>
+                 <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Or login with</span>
+                 <div className="flex-1 h-px bg-gray-200"></div>
+              </div>
+
+              <div className="flex justify-center space-x-6 text-gray-400">
+                <a href="#" className="hover:text-blue-600 transition-colors transform hover:scale-110"><FaFacebookF className="h-6 w-6" /></a>
+                <a href="#" className="hover:text-sky-500 transition-colors transform hover:scale-110"><FaTwitter className="h-6 w-6" /></a>
+                <a href="#" className="hover:text-blue-700 transition-colors transform hover:scale-110"><FaLinkedinIn className="h-6 w-6" /></a>
               </div>
               
-              <div className="flex justify-center w-full max-w-[200px] overflow-hidden rounded-full border border-gray-200">
+              <div className="flex justify-center w-full overflow-hidden rounded-2xl shadow-sm transition-transform hover:scale-[1.02]">
                 <GoogleLogin
                   onSuccess={handleSuccess}
                   onError={() => console.log("Login Failed")}
                   theme="outline"
-                  size="medium"
-                  shape="pill"
+                  size="large"
+                  width="300"
                 />
               </div>
             </div>
