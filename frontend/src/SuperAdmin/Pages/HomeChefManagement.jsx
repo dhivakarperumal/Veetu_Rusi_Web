@@ -210,84 +210,97 @@ const HomeChefManagement = () => {
 
       {/* Details Modal */}
       {isModalOpen && selectedChef && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={() => setIsModalOpen(false)}></div>
-          <div className="bg-[#0B1120] border border-white/5 w-full max-w-lg rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300">
-            <div className="bg-[#1B4D22] p-8 text-white">
-              <h3 className="text-xl font-black uppercase italic tracking-tight">{selectedChef.name}</h3>
-              <p className="text-xs text-emerald-400 font-bold uppercase tracking-widest mt-1">Home Chef Details</p>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsModalOpen(false)}></div>
+          <div className="bg-white border border-slate-100 w-full max-w-lg rounded-3xl shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[92vh]">
+            <div className="bg-[#1B4D22] p-7 text-white flex items-center justify-between flex-shrink-0">
+              <div>
+                <h3 className="text-lg font-black uppercase italic tracking-tight">{selectedChef.name}</h3>
+                <p className="text-xs text-emerald-300 font-bold uppercase tracking-widest mt-0.5">Home Chef Details</p>
+              </div>
+              <button type="button" onClick={() => setIsModalOpen(false)} className="p-2 text-white/50 hover:text-white transition">
+                <X className="w-5 h-5" />
+              </button>
             </div>
-            <div className="p-8 space-y-6 text-white overflow-y-auto max-h-[60vh]">
-              <div className="grid grid-cols-2 gap-6">
+            
+            <div className="p-7 space-y-6 text-slate-800 overflow-y-auto bg-slate-50/50 flex-1">
+              <div className="grid grid-cols-2 gap-6 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm animate-in fade-in zoom-in-95 duration-200">
                 <div>
-                  <p className="text-[10px] text-white/40 font-bold uppercase">Mobile Number</p>
-                  <p className="text-sm font-black mt-0.5">{selectedChef.mobile}</p>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Mobile Number</p>
+                  <p className="text-sm font-black mt-0.5 text-slate-800">{selectedChef.mobile}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] text-white/40 font-bold uppercase">Email Address</p>
-                  <p className="text-sm font-black mt-0.5">{selectedChef.email}</p>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Email Address</p>
+                  <p className="text-sm font-black mt-0.5 text-slate-800">{selectedChef.email}</p>
                 </div>
                 <div className="col-span-2">
-                  <p className="text-[10px] text-white/40 font-bold uppercase">Pickup Address</p>
-                  <p className="text-sm font-bold mt-0.5 text-white/80">{selectedChef.address}</p>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Pickup Address</p>
+                  <p className="text-sm font-bold mt-0.5 text-slate-700">{selectedChef.address}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] text-white/40 font-bold uppercase">FSSAI License Number</p>
-                  <p className="text-sm font-black mt-0.5">{selectedChef.fssai_number || "Not Provided"}</p>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">FSSAI License Number</p>
+                  <p className="text-sm font-black mt-0.5 text-slate-800">{selectedChef.fssai_number || "Not Provided"}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] text-white/40 font-bold uppercase">Application Status</p>
-                  <p className="text-sm font-black mt-0.5">{selectedChef.status}</p>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Application Status</p>
+                  <p className={`inline-block px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider mt-1 ${
+                    selectedChef.status === "Approved"
+                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200/50"
+                      : selectedChef.status === "Pending"
+                      ? "bg-amber-50 text-amber-700 border border-amber-200/50"
+                      : "bg-red-50 text-red-700 border border-red-200/50"
+                  }`}>{selectedChef.status}</p>
                 </div>
               </div>
 
               {/* Documents */}
-              <div className="border-t border-white/5 pt-6 space-y-4">
-                <h4 className="text-xs font-black uppercase tracking-widest text-emerald-400">Uploaded Documents</h4>
+              <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm animate-in fade-in zoom-in-95 duration-200">
+                <h4 className="text-xs font-black uppercase tracking-widest text-[#1B4D22] mb-5">Uploaded Documents</h4>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-[#070b13] p-4 rounded-2xl border border-white/5 flex flex-col items-center justify-between text-center gap-3">
-                    <p className="text-[10px] font-black uppercase text-white/50">Aadhaar Card</p>
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex flex-col items-center justify-between text-center gap-3">
+                    <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Aadhaar Card</p>
                     {selectedChef.aadhaar_url ? (
                       <a
                         href={`${import.meta.env.VITE_API_URL}/../uploads/homechefs/${selectedChef.aadhaar_url}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-xl font-bold transition uppercase"
+                        className="text-[10px] bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-black transition uppercase tracking-wider shadow-sm active:scale-95"
                       >
                         View File
                       </a>
                     ) : (
-                      <p className="text-xs text-white/20 italic">No Upload</p>
+                      <p className="text-xs text-slate-400 italic">No Upload</p>
                     )}
                   </div>
-                  <div className="bg-[#070b13] p-4 rounded-2xl border border-white/5 flex flex-col items-center justify-between text-center gap-3">
-                    <p className="text-[10px] font-black uppercase text-white/50">PAN Card</p>
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex flex-col items-center justify-between text-center gap-3">
+                    <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest">PAN Card</p>
                     {selectedChef.pan_url ? (
                       <a
                         href={`${import.meta.env.VITE_API_URL}/../uploads/homechefs/${selectedChef.pan_url}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-xl font-bold transition uppercase"
+                        className="text-[10px] bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-black transition uppercase tracking-wider shadow-sm active:scale-95"
                       >
                         View File
                       </a>
                     ) : (
-                      <p className="text-xs text-white/20 italic">No Upload</p>
+                      <p className="text-xs text-slate-400 italic">No Upload</p>
                     )}
                   </div>
                 </div>
               </div>
             </div>
-            <div className="p-8 border-t border-white/5 bg-[#070b13]/40 flex gap-3">
+            
+            <div className="p-6 border-t border-slate-100 bg-white flex gap-3 shrink-0">
               {selectedChef.status !== "Approved" && (
                 <button
                   onClick={() => {
                     handleStatusChange(selectedChef.id, "Approved");
                     setIsModalOpen(false);
                   }}
-                  className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl transition active:scale-95"
+                  className="flex-1 py-3 bg-[#1B4D22] hover:bg-[#153b1a] text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-md transition active:scale-95"
                 >
-                  Approve Application
+                  Approve
                 </button>
               )}
               {selectedChef.status === "Pending" && (
@@ -296,14 +309,14 @@ const HomeChefManagement = () => {
                     handleStatusChange(selectedChef.id, "Rejected");
                     setIsModalOpen(false);
                   }}
-                  className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl transition active:scale-95"
+                  className="flex-1 py-3 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-black text-xs uppercase tracking-widest rounded-xl shadow-sm transition active:scale-95"
                 >
-                  Reject Application
+                  Reject
                 </button>
               )}
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="px-6 py-3 bg-white/5 hover:bg-white/10 text-white font-black text-xs uppercase tracking-widest rounded-2xl transition"
+                className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-black text-xs uppercase tracking-widest rounded-xl transition"
               >
                 Close
               </button>
