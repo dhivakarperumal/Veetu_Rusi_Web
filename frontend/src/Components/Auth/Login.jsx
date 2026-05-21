@@ -73,13 +73,12 @@ function Login() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center p-4 sm:p-8 overflow-hidden bg-teal-50 font-sans">
-      {/* Brighter background layer */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center opacity-60 blur-[20px] scale-110"
-        style={{ backgroundImage: "url('https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=1920&q=80')" }}
-      ></div>
-      <div className="absolute inset-0 bg-gradient-to-br from-teal-100/60 to-emerald-50/80"></div>
+    <div className="relative min-h-screen flex items-center justify-center p-4 sm:p-8 overflow-hidden font-sans" style={{ background: 'linear-gradient(135deg, #0E2A14 0%, #1B4D22 50%, #0E2A14 100%)' }}>
+      {/* Subtle pattern overlay */}
+      <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
+      {/* Glow orbs */}
+      <div className="absolute top-[-10%] left-[-5%] w-[500px] h-[500px] bg-teal-500/10 rounded-full blur-[120px]"></div>
+      <div className="absolute bottom-[-10%] right-[-5%] w-[500px] h-[500px] bg-emerald-400/10 rounded-full blur-[120px]"></div>
 
       {/* Main Card - Increased Size */}
       <div className="relative z-10 w-full max-w-[1000px] min-h-[600px] bg-white rounded-3xl shadow-[0_20px_60px_-15px_rgba(20,184,166,0.3)] overflow-hidden flex transform transition-all hover:shadow-[0_25px_60px_-15px_rgba(20,184,166,0.4)]">
