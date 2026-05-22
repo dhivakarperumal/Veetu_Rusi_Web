@@ -552,6 +552,9 @@ const HomeChefManagement = () => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-700 border-b border-slate-200">
+                  <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em] text-center w-16">
+                    S.No
+                  </th>
                   <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em]">
                     Chef Info
                   </th>
@@ -578,6 +581,9 @@ const HomeChefManagement = () => {
                     key={chef.id}
                     className="hover:bg-slate-50/70 transition-colors"
                   >
+                    <td className="px-5 py-4 text-center text-sm font-black text-slate-400">
+                      {index + 1}
+                    </td>
                     <td className="px-5 py-4">
                       <div>
                         <h4 className="text-sm font-bold text-slate-800">
@@ -665,7 +671,7 @@ const HomeChefManagement = () => {
                 {filteredChefs.length === 0 && (
                   <tr>
                     <td
-                      colSpan="6"
+                      colSpan="7"
                       className="px-6 py-8 text-center text-xs text-slate-400 italic"
                     >
                       No home chefs match your criteria.
