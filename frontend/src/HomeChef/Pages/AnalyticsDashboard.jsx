@@ -107,7 +107,7 @@ const AnalyticsDashboard = () => {
           return (
             <div
               key={idx}
-              className={`bg-gradient-to-br ${colorMap[stat.color]} rounded-2xl p-6 border`}
+              className={`bg-linear-to-br ${colorMap[stat.color]} rounded-2xl p-6 border`}
             >
               <div className="flex items-start justify-between mb-4">
                 <Icon className={`w-8 h-8 ${iconColorMap[stat.color]}`} />

@@ -69,7 +69,7 @@ const DailyMenuManagement = () => {
   return (
     <div className="space-y-6 pb-12">
       <div>
-        <h1 className="text-3xl font-black text-slate-900">Daily Menu Management</h1>
+        <h1 className="text-3xl font-black text-slate-900">Daily Menu</h1>
         <p className="text-sm text-gray-500 mt-1">
           Plan your daily menu for breakfast, lunch, dinner, and snacks
         </p>

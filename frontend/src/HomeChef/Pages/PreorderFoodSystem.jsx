@@ -73,7 +73,7 @@ const PreorderFoodSystem = () => {
   return (
     <div className="space-y-6 pb-12">
       <div>
-        <h1 className="text-3xl font-black text-slate-900">Preorder Food System</h1>
+        <h1 className="text-3xl font-black text-slate-900">Preorders</h1>
         <p className="text-sm text-gray-500 mt-1">
           Manage customer preorders and track preparation
         </p>

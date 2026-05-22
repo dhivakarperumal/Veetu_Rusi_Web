@@ -71,16 +71,14 @@ const InstagramYouTubeIntegration = () => {
   return (
     <div className="space-y-6 pb-12">
       <div>
-        <h1 className="text-3xl font-black text-slate-900">
-          Social Media Integration
-        </h1>
+        <h1 className="text-3xl font-black text-slate-900">Social Media</h1>
         <p className="text-sm text-gray-500 mt-1">
           Connect your Instagram and YouTube accounts to promote your food
         </p>
       </div>
 
       {/* Instagram Section */}
-      <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl shadow-lg p-8">
+      <div className="bg-linear-to-br from-purple-50 to-pink-50 rounded-2xl shadow-lg p-8">
         <div className="flex items-center gap-3 mb-6">
           <Camera className="w-8 h-8 text-pink-600" />
           <h2 className="text-2xl font-bold text-slate-900">Instagram</h2>
@@ -135,7 +133,7 @@ const InstagramYouTubeIntegration = () => {
       </div>
 
       {/* YouTube Section */}
-      <div className="bg-gradient-to-br from-red-50 to-orange-50 rounded-2xl shadow-lg p-8">
+      <div className="bg-linear-to-br from-red-50 to-orange-50 rounded-2xl shadow-lg p-8">
         <div className="flex items-center gap-3 mb-6">
           <Video className="w-8 h-8 text-red-600" />
           <h2 className="text-2xl font-bold text-slate-900">YouTube</h2>

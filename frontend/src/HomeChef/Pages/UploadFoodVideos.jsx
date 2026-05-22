@@ -72,9 +72,7 @@ const UploadFoodVideos = () => {
   return (
     <div className="space-y-6 pb-12">
       <div>
-        <h1 className="text-3xl font-black text-slate-900">
-          Upload Food Preparation Videos
-        </h1>
+        <h1 className="text-3xl font-black text-slate-900">Food Videos</h1>
         <p className="text-sm text-gray-500 mt-1">
           Share your cooking process and engage with customers
         </p>

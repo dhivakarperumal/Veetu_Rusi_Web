@@ -123,7 +123,7 @@ const DeliveryLimitSettings = () => {
         ) : (
           <div className="space-y-6">
             <div className="grid grid-cols-3 gap-4">
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-6">
+              <div className="bg-linear-to-br from-blue-50 to-blue-100 rounded-lg p-6">
                 <p className="text-xs font-bold text-blue-600 uppercase">
                   Delivery Radius
                 </p>
@@ -132,7 +132,7 @@ const DeliveryLimitSettings = () => {
                 </p>
               </div>
 
-              <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-6">
+              <div className="bg-linear-to-br from-green-50 to-green-100 rounded-lg p-6">
                 <p className="text-xs font-bold text-green-600 uppercase">
                   Delivery Charge
                 </p>
@@ -141,7 +141,7 @@ const DeliveryLimitSettings = () => {
                 </p>
               </div>
 
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-6">
+              <div className="bg-linear-to-br from-purple-50 to-purple-100 rounded-lg p-6">
                 <p className="text-xs font-bold text-purple-600 uppercase">
                   Free Above
                 </p>

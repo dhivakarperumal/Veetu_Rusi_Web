@@ -60,7 +60,7 @@ const MealSlotManagement = () => {
   return (
     <div className="space-y-6 pb-12">
       <div>
-        <h1 className="text-3xl font-black text-slate-900">Meal Slot Management</h1>
+        <h1 className="text-3xl font-black text-slate-900">Meal Slots</h1>
         <p className="text-sm text-gray-500 mt-1">
           Create and manage meal delivery slots
         </p>
