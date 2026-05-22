@@ -145,8 +145,33 @@ exports.createProduct = async (req, res) => {
             });
         }
 
-        // Determine product code and insert product
+        // Determine product code and load home chef metadata
         const finalProductCode = product_code || await generateNextProductCode();
+
+        const [homeChefs] = await pool.execute(
+            `SELECT hc.*, u.user_id AS chef_user_id
+            FROM home_chefs hc
+            LEFT JOIN users u ON (u.email = hc.email OR u.phone = hc.mobile)
+            WHERE hc.chef_id = ?`,
+            [chef_id]
+        );
+
+        if (homeChefs.length === 0) {
+            return res.status(400).json({
+                message: 'Home chef not found for the provided chef_id'
+            });
+        }
+
+        const homeChef = homeChefs[0];
+        const finalChefUserId = homeChef.chef_user_id || null;
+        const finalChefName = homeChef.name || chef_name || null;
+        const finalChefPhone = homeChef.mobile || chef_phone || null;
+        const finalChefEmail = homeChef.email || chef_email || null;
+        const finalCreatedByUserId = homeChef.created_by_user_id || created_by_user_id || null;
+        const finalCreatedByName = homeChef.created_by_name || created_by_name || null;
+        const finalCreatedByEmail = homeChef.created_by_email || created_by_email || null;
+        const finalCreatedByPhone = homeChef.created_by_phone || created_by_phone || null;
+        const finalFranchiseId = franchise_id || null;
 
         const params = [
             name, description, category, product_type || 'Cooked Food', subcategory || null,
@@ -158,17 +183,16 @@ exports.createProduct = async (req, res) => {
             prep_time || null, ingredients || null, spice_level || 'Medium',
             shelf_life_days || null, net_weight || null, package_count || null,
             packaging_type || 'Pouch', manufacture_date || null,
-            variants ? JSON.stringify(variants) : null, chef_id, chef_name || null,
-            chef_phone || null, chef_email || null, created_by_user_id || null,
-            created_by_email || null, created_by_name || null, created_by_phone || null,
-            franchise_id || null
+            variants ? JSON.stringify(variants) : null, chef_id, finalChefUserId,
+            finalChefName, finalChefPhone, finalChefEmail, finalCreatedByUserId,
+            finalCreatedByEmail, finalCreatedByName, finalCreatedByPhone, finalFranchiseId
         ];
 
         const columns = `name, description, category, product_type, subcategory, mrp, offer, offer_price,
             product_code, total_stock, rating, status, material, nutrition_info, storage_instructions,
             presentation_style, portion_format, service_type, packaging_notes, dietary_tag, heat_profile,
             serving_size, prep_time, ingredients, spice_level, shelf_life_days, net_weight, package_count,
-            packaging_type, manufacture_date, variants, chef_id, chef_name, chef_phone, chef_email,
+            packaging_type, manufacture_date, variants, chef_id, chef_user_id, chef_name, chef_phone, chef_email,
             created_by_user_id, created_by_email, created_by_name, created_by_phone, franchise_id`;
 
         const placeholders = params.map(() => '?').join(', ');

@@ -37,6 +37,7 @@ const createProductsTable = async () => {
             manufacture_date DATE,
             variants LONGTEXT,
             chef_id VARCHAR(255) NOT NULL,
+            chef_user_id VARCHAR(255),
             chef_name VARCHAR(255),
             chef_phone VARCHAR(20),
             chef_email VARCHAR(255),
@@ -55,6 +56,7 @@ const createProductsTable = async () => {
         `;
 
         await pool.execute(createTableSQL);
+        await pool.execute('ALTER TABLE products ADD COLUMN IF NOT EXISTS chef_user_id VARCHAR(255)');
         console.log('✓ Products table created or already exists');
     } catch (error) {
         console.error('✗ Error creating products table:', error.message);
