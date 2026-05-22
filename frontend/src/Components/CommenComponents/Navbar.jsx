@@ -327,6 +327,15 @@ const navClass = ({ isActive }) =>
                         Admin Panel
                       </Link>
                     )}
+                    {user.role === "chef" && (
+                      <Link
+                        to="chef"
+                        className="block px-4 py-3 text-sm hover:bg-gray-100"
+                        onClick={() => setUserMenu(false)}
+                      >
+                        Home Chef Panel
+                      </Link>
+                    )}
 
                     <button
                       onClick={() => setLogoutConfirm(true)}
