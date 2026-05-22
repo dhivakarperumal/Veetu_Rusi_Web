@@ -145,7 +145,7 @@ const ChefSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
             <div className="overflow-hidden">
               <h1 className="text-md font-black text-white tracking-tighter uppercase leading-none">Veetu Rusi</h1>
               <p className="text-[9px] text-blue-400 font-bold tracking-widest uppercase opacity-70 mt-1">
-                Artisan Admin
+                Home Chef Portal
               </p>
             </div>
           )}
