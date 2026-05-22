@@ -25,72 +25,46 @@ import {
   ChefHat,
   Bike,
   ShoppingBag,
-  CreditCard
+  CreditCard,
+  BookOpen,
+  Upload,
+  Share2,
+  Calendar,
+  Clock,
+  TrendingUp,
+  Wallet
 } from "lucide-react";
 
 import { useAuth } from "../PrivateRouter/AuthContext";
 
 /* ================= NAV ITEMS ================= */
 const navItems = [
-  { path: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  // { path: "/admin/restaurants", label: "Restaurants", icon: Store },
-  { path: "/admin/homechefs", label: "Home Chefs", icon: ChefHat },
-  { path: "/admin/delivery-partners", label: "Delivery Partners", icon: Bike },
-  { path: "/admin/users", label: "User Management", icon: Users },
-  { path: "/admin/orders", label: "Order Management", icon: ShoppingBag },
-  { path: "/admin/payouts", label: "Payouts & Earnings", icon: CreditCard },
-
-  {
-    label: "Inventory",
-    icon: Package,
-    children: [
-      { path: "/admin/products/all", label: "All Products", icon: List },
-      { path: "/admin/products/add", label: "Add Product", icon: PlusCircle },
-      { path: "/admin/products/category", label: "Categories", icon: Layers },
-      { path: "/admin/products/stock", label: "Stock Details", icon: Archive },
-    ],
-  },
-
-  {
-    label: "Orders",
-    icon: ShoppingCart,
-    children: [
-
-      { path: "/admin/orders/new", label: "New Orders", icon: List },
-      { path: "/admin/orders/all", label: "All Orders", icon: Archive },
-      { path: "/admin/orders/delivery", label: "Delivery Orders", icon: Truck },
-      { path: "/admin/orders/cancelled", label: "Cancelled Orders", icon: XCircle },
-
-    ],
-  },
-
-  { path: "/admin/orders/create", label: "Billing", icon: PlusCircle },
-  { path: "/admin/users/all", label: "Customers", icon: Users },
-  {
-    label: "Dealers",
-    icon: Handshake,
-    children: [
-      { path: "/admin/dealers", label: "Dealers List", icon: List },
-      { path: "/admin/invoices/add", label: "New Invoice", icon: PlusCircle },
-    ],
-  },
-  { path: "/admin/banners", label: "Promotion Banners", icon: Image },
-  { path: "/admin/videos", label: "Showcase Videos", icon: Video },
-  { path: "/admin/reviews", label: "Customer Reviews", icon: MessageSquare },
-  { path: "/admin/reports", label: "Reports", icon: BarChart3 },
+  { path: "/chef/analytics", label: "Analytics Dashboard", icon: TrendingUp, exact: true },
+  // { path: "/chef", label: "Dashboard", icon: LayoutDashboard },
+  { path: "/chef/add-products", label: "Add Products", icon: PlusCircle },
+  { path: "/chef/recipes", label: "Recipe Details", icon: BookOpen },
+  { path: "/chef/upload-videos", label: "Food Videos", icon: Upload },
+  { path: "/chef/social-media", label: "Social Media", icon: Share2 },
+  { path: "/chef/daily-menu", label: "Daily Menu", icon: Calendar },
+  { path: "/chef/meal-slots", label: "Meal Slots", icon: Clock },
+  { path: "/chef/preorders", label: "Preorders", icon: ShoppingCart },
+  { path: "/chef/delivery-settings", label: "Delivery Settings", icon: Truck },
+  
+  { path: "/chef/earnings", label: "Wallet & Earnings", icon: Wallet },
+  { path: "/chef/orders", label: "Orders", icon: ShoppingBag },
   { path: "/", label: "Back Home", icon: Home },
 ];
 
 /* ================= SIDEBAR ================= */
-const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
+const ChefSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
   const { profileName } = useAuth();
   const location = useLocation();
   const [openMenu, setOpenMenu] = useState(null);
 
   const prefix = location.pathname.startsWith("/superadmin")
     ? "/superadmin"
-    : location.pathname.startsWith("/homechef")
-    ? "/homechef"
+    : location.pathname.startsWith("/chef")
+    ? "/chef"
     : "/admin";
 
   const getDynamicPath = (path) => {
@@ -102,11 +76,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
   };
 
   /* ================= ACTIVE ROUTE MAP ================= */
-  const activeRouteMap = {
-    "/admin/products": ["/admin/products/all", "/admin/products/add", "/admin/products/category"],
-    "/admin/orders": ["/admin/orders/all", "/admin/orders/new", "/admin/orders/create", "/admin/orders/delivery", "/admin/orders/cancelled"],
-    "/admin/users": ["/admin/users/all"],
-  };
+  const activeRouteMap = {};
 
   /* ================= HELPERS & LOGIC ================= */
   const isActiveRoute = (item) => {
@@ -175,7 +145,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
             <div className="overflow-hidden">
               <h1 className="text-md font-black text-white tracking-tighter uppercase leading-none">Veetu Rusi</h1>
               <p className="text-[9px] text-blue-400 font-bold tracking-widest uppercase opacity-70 mt-1">
-                Artisan Admin
+                Home Chef Portal
               </p>
             </div>
           )}
@@ -324,4 +294,4 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
   );
 };
 
-export default Sidebar;
+export default ChefSidebar;
