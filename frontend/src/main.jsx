@@ -64,6 +64,16 @@ const UserManagement = React.lazy(() => import("./Admin/Pages/UserManagement.jsx
 const HomeChefPanel = React.lazy(() => import("./HomeChef/AdminPanel.jsx"));
 const HomeChefDashboard = React.lazy(() => import("./HomeChef/Dashboard.jsx"));
 const HomeChefPageManagement = React.lazy(() => import("./HomeChef/Pages/HomeChefManagement.jsx"));
+const ChefAddProducts = React.lazy(() => import("./HomeChef/Pages/AddProducts.jsx"));
+const RecipeDetails = React.lazy(() => import("./HomeChef/Pages/RecipeDetails.jsx"));
+const UploadFoodVideos = React.lazy(() => import("./HomeChef/Pages/UploadFoodVideos.jsx"));
+const InstagramYouTubeIntegration = React.lazy(() => import("./HomeChef/Pages/InstagramYouTubeIntegration.jsx"));
+const DailyMenuManagement = React.lazy(() => import("./HomeChef/Pages/DailyMenuManagement.jsx"));
+const MealSlotManagement = React.lazy(() => import("./HomeChef/Pages/MealSlotManagement.jsx"));
+const PreorderFoodSystem = React.lazy(() => import("./HomeChef/Pages/PreorderFoodSystem.jsx"));
+const DeliveryLimitSettings = React.lazy(() => import("./HomeChef/Pages/DeliveryLimitSettings.jsx"));
+const AnalyticsDashboard = React.lazy(() => import("./HomeChef/Pages/AnalyticsDashboard.jsx"));
+const WalletAndEarnings = React.lazy(() => import("./HomeChef/Pages/WalletAndEarnings.jsx"));
 const OrderManagement = React.lazy(() => import("./Admin/Pages/OrderManagement.jsx"));
 const PayoutManagement = React.lazy(() => import("./Admin/Pages/PayoutManagement.jsx"));
 const FranchiseOwnerManagement = React.lazy(() => import("./SuperAdmin/Pages/FranchiseOwnerManagement.jsx"));
@@ -122,9 +132,9 @@ const router = createBrowserRouter([
   },
 
   {
-    path: "/homechef",
+    path: "/chef",
     element: (
-      <PrivateRoute allowedRoles={["homechef"]}>
+      <PrivateRoute allowedRoles={["chef"]}>
         <AdminProvider>
           <HomeChefPanel />
         </AdminProvider>
@@ -133,11 +143,17 @@ const router = createBrowserRouter([
     errorElement: <ErrorPage />,
     children: [
       { index: true, element: <HomeChefDashboard /> },
-      { path: "homechefs", element: <HomeChefPageManagement /> },
-      { path: "delivery-partners", element: <DeliveryPartnerManagement /> },
-      { path: "users", element: <UserManagement /> },
+      { path: "add-products", element: <ChefAddProducts /> },
+      { path: "recipes", element: <RecipeDetails /> },
+      { path: "upload-videos", element: <UploadFoodVideos /> },
+      { path: "social-media", element: <InstagramYouTubeIntegration /> },
+      { path: "daily-menu", element: <DailyMenuManagement /> },
+      { path: "meal-slots", element: <MealSlotManagement /> },
+      { path: "preorders", element: <PreorderFoodSystem /> },
+      { path: "delivery-settings", element: <DeliveryLimitSettings /> },
+      { path: "analytics", element: <AnalyticsDashboard /> },
+      { path: "earnings", element: <WalletAndEarnings /> },
       { path: "orders", element: <OrderManagement /> },
-      { path: "payouts", element: <PayoutManagement /> },
     ],
   },
 

@@ -25,59 +25,32 @@ import {
   ChefHat,
   Bike,
   ShoppingBag,
-  CreditCard
+  CreditCard,
+  BookOpen,
+  Upload,
+  Instagram,
+  Calendar,
+  Clock,
+  TrendingUp,
+  Wallet
 } from "lucide-react";
 
 import { useAuth } from "../PrivateRouter/AuthContext";
 
 /* ================= NAV ITEMS ================= */
 const navItems = [
-  { path: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  // { path: "/admin/restaurants", label: "Restaurants", icon: Store },
-  { path: "/admin/homechefs", label: "Home Chefs", icon: ChefHat },
-  { path: "/admin/delivery-partners", label: "Delivery Partners", icon: Bike },
-  { path: "/admin/users", label: "User Management", icon: Users },
-  { path: "/admin/orders", label: "Order Management", icon: ShoppingBag },
-  { path: "/admin/payouts", label: "Payouts & Earnings", icon: CreditCard },
-
-  {
-    label: "Inventory",
-    icon: Package,
-    children: [
-      { path: "/admin/products/all", label: "All Products", icon: List },
-      { path: "/admin/products/add", label: "Add Product", icon: PlusCircle },
-      { path: "/admin/products/category", label: "Categories", icon: Layers },
-      { path: "/admin/products/stock", label: "Stock Details", icon: Archive },
-    ],
-  },
-
-  {
-    label: "Orders",
-    icon: ShoppingCart,
-    children: [
-
-      { path: "/admin/orders/new", label: "New Orders", icon: List },
-      { path: "/admin/orders/all", label: "All Orders", icon: Archive },
-      { path: "/admin/orders/delivery", label: "Delivery Orders", icon: Truck },
-      { path: "/admin/orders/cancelled", label: "Cancelled Orders", icon: XCircle },
-
-    ],
-  },
-
-  { path: "/admin/orders/create", label: "Billing", icon: PlusCircle },
-  { path: "/admin/users/all", label: "Customers", icon: Users },
-  {
-    label: "Dealers",
-    icon: Handshake,
-    children: [
-      { path: "/admin/dealers", label: "Dealers List", icon: List },
-      { path: "/admin/invoices/add", label: "New Invoice", icon: PlusCircle },
-    ],
-  },
-  { path: "/admin/banners", label: "Promotion Banners", icon: Image },
-  { path: "/admin/videos", label: "Showcase Videos", icon: Video },
-  { path: "/admin/reviews", label: "Customer Reviews", icon: MessageSquare },
-  { path: "/admin/reports", label: "Reports", icon: BarChart3 },
+  { path: "/homechef", label: "Dashboard", icon: LayoutDashboard, exact: true },
+  { path: "/homechef/add-products", label: "Add Products", icon: PlusCircle },
+  { path: "/homechef/recipes", label: "Recipe Details", icon: BookOpen },
+  { path: "/homechef/upload-videos", label: "Food Videos", icon: Upload },
+  { path: "/homechef/social-media", label: "Social Media", icon: Instagram },
+  { path: "/homechef/daily-menu", label: "Daily Menu", icon: Calendar },
+  { path: "/homechef/meal-slots", label: "Meal Slots", icon: Clock },
+  { path: "/homechef/preorders", label: "Preorders", icon: ShoppingCart },
+  { path: "/homechef/delivery-settings", label: "Delivery Settings", icon: Truck },
+  { path: "/homechef/analytics", label: "Analytics", icon: TrendingUp },
+  { path: "/homechef/earnings", label: "Wallet & Earnings", icon: Wallet },
+  { path: "/homechef/orders", label: "Orders", icon: ShoppingBag },
   { path: "/", label: "Back Home", icon: Home },
 ];
 
@@ -102,11 +75,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
   };
 
   /* ================= ACTIVE ROUTE MAP ================= */
-  const activeRouteMap = {
-    "/admin/products": ["/admin/products/all", "/admin/products/add", "/admin/products/category"],
-    "/admin/orders": ["/admin/orders/all", "/admin/orders/new", "/admin/orders/create", "/admin/orders/delivery", "/admin/orders/cancelled"],
-    "/admin/users": ["/admin/users/all"],
-  };
+  const activeRouteMap = {};
 
   /* ================= HELPERS & LOGIC ================= */
   const isActiveRoute = (item) => {
