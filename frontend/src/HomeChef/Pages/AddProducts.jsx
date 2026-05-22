@@ -25,7 +25,7 @@ import { toast, Toaster } from "react-hot-toast";
 import imageCompression from "browser-image-compression";
 
 // Helper: Color to Name Utility
-const boutiqueColors = [
+const tagColors = [
     { name: "Pure Red", hex: "#FF0000" },
     { name: "Crimson", hex: "#DC143C" },
     { name: "Deep Maroon", hex: "#800000" },
@@ -68,9 +68,9 @@ const getNearestColorName = (hex) => {
     const b1 = parseInt(hex.substring(4, 6), 16);
 
     let minDistance = Infinity;
-    let nearestName = "Custom Shade";
+    let nearestName = "Custom Tag";
 
-    boutiqueColors.forEach(color => {
+    tagColors.forEach(color => {
         const h = color.hex.replace("#", "");
         const r2 = parseInt(h.substring(0, 2), 16);
         const g2 = parseInt(h.substring(2, 4), 16);
@@ -104,7 +104,8 @@ const AddProducts = () => {
     const [formData, setFormData] = useState({
         name: "",
         description: "",
-        category: "Saree",
+        category: "Cooked Food",
+        product_type: "Cooked Food", // Cooked Food | Masala / Pre-cooked
         subcategory: "",
         mrp: "",
         offer: "",
@@ -114,20 +115,23 @@ const AddProducts = () => {
         rating: "5",
         status: "Active",
         material: "",
-        wash_care: "Dry Clean Only",
-        // Traditional Wear Specs
-        saree_length: "5.5 Meters",
-        blouse_length: "0.8 Meters",
-        top_length: "",
-        bottom_length: "",
-        dupatta_length: "",
-        gown_length: "",
-        sleeve_type: "",
-        neck_type: "",
-        fit_type: "",
-        work_type: "Embroidered",
-        zari_color: "Gold Zari",
-        age: "",
+        nutrition_info: "",
+        storage_instructions: "Keep Refrigerated",
+        presentation_style: "",
+        portion_format: "",
+        service_type: "",
+        packaging_notes: "",
+        dietary_tag: "",
+        heat_profile: "",
+        serving_size: "",
+        prep_time: "",
+        ingredients: "",
+        spice_level: "Medium",
+        shelf_life_days: "",
+        net_weight: "",
+        package_count: "",
+        packaging_type: "Pouch",
+        manufacture_date: "",
     });
 
     const [variants, setVariants] = useState([
@@ -168,16 +172,9 @@ const AddProducts = () => {
         }
     }, [variants, isStockManuallyEdited]);
 
-    // Size Logic based on Category
+    // Portion size logic for chef products
     const getSizesByCategory = () => {
-        switch (formData.category) {
-            case "Saree": return ["Free Size"];
-            case "Lehenga":
-            case "Salwar":
-            case "Gown": return ["XS", "S", "M", "L", "XL", "XXL"];
-            case "Material": return ["Free Size"];
-            default: return [];
-        }
+        return ["Single", "Half", "Family", "Party", "250g", "500g", "1kg"];
     };
 
     const sizeOptions = getSizesByCategory();
@@ -197,7 +194,7 @@ const AddProducts = () => {
                         setFormData({
                             name: p.name || "",
                             description: p.description || "",
-                            category: p.category || "Saree",
+                            category: p.category || "Cooked Food",
                             subcategory: p.subcategory || "",
                             mrp: p.mrp?.toString() || "",
                             offer: p.offer?.toString() || "",
@@ -207,19 +204,23 @@ const AddProducts = () => {
                             rating: p.rating?.toString() || "5",
                             status: p.status || "Active",
                             material: p.material || "",
-                            wash_care: p.wash_care || "Dry Clean Only",
-                            saree_length: p.saree_length || "",
-                            blouse_length: p.blouse_length || "",
-                            top_length: p.top_length || "",
-                            bottom_length: p.bottom_length || "",
-                            dupatta_length: p.dupatta_length || "",
-                            gown_length: p.gown_length || "",
-                            sleeve_type: p.sleeve_type || "",
-                            neck_type: p.neck_type || "",
-                            fit_type: p.fit_type || "",
-                            work_type: p.work_type || "",
-                            zari_color: p.zari_color || "",
-                            age: p.age || "",
+                            nutrition_info: p.nutrition_info || "",
+                            storage_instructions: p.storage_instructions || "Keep Refrigerated",
+                            presentation_style: p.presentation_style || "",
+                            portion_format: p.portion_format || "",
+                            service_type: p.service_type || "",
+                            packaging_notes: p.packaging_notes || "",
+                            dietary_tag: p.dietary_tag || "",
+                            heat_profile: p.heat_profile || "",
+                            serving_size: p.serving_size || "",
+                            prep_time: p.prep_time || "",
+                            ingredients: p.ingredients || "",
+                            spice_level: p.spice_level || "Medium",
+                            shelf_life_days: p.shelf_life_days || "",
+                            net_weight: p.net_weight || "",
+                            package_count: p.package_count || "",
+                            packaging_type: p.packaging_type || "Pouch",
+                            manufacture_date: p.manufacture_date || "",
                         });
                         if (p.variants) setVariants(Array.isArray(p.variants) ? p.variants : JSON.parse(p.variants));
                     } catch (e) {
@@ -232,11 +233,11 @@ const AddProducts = () => {
                         api.get("/categories"),
                         api.get("/products/latest-code")
                     ]);
-                    
+
                     setCategories(Array.isArray(catRes.data) ? catRes.data : []);
                     setFormData(prev => ({
                         ...prev,
-                        category: Array.isArray(catRes.data) && catRes.data[0]?.name ? catRes.data[0].name : "Saree",
+                        category: Array.isArray(catRes.data) && catRes.data[0]?.name ? catRes.data[0].name : "Cooked Food",
                         product_code: codeRes.data.latestCode || "SP001"
                     }));
                     setFetching(false);
@@ -332,7 +333,7 @@ const AddProducts = () => {
 
             // Limit to 5 images per variant for performance
             if ((variants[vIndex].images?.length || 0) + files.length > 5) {
-                toast.error("Boutique limit: Max 5 images per shade.");
+                toast.error("Max 5 images per variant.");
                 return;
             }
 
@@ -351,9 +352,9 @@ const AddProducts = () => {
             const updated = [...variants];
             updated[vIndex].images = [...(updated[vIndex].images || []), ...imagesArray];
             setVariants(updated);
-            toast.success(`Success! ${files.length} boutique images added.`);
+            toast.success(`Success! ${files.length} variation images added.`);
         } catch (error) {
-            toast.error("Upload failed.");
+            toast.error("Image upload failed.");
         }
     };
 
@@ -371,15 +372,30 @@ const AddProducts = () => {
             return;
         }
 
+        // Type-specific validation
+        if (formData.product_type === "Cooked Food") {
+            if (!formData.serving_size || !formData.prep_time || !formData.ingredients || !formData.shelf_life_days) {
+                toast.error("Please fill all required Cooked Food fields (serving size, prep time, ingredients, shelf life).");
+                return;
+            }
+        }
+
+        if (formData.product_type === "Masala/Pre-cooked") {
+            if (!formData.net_weight || !formData.ingredients || !formData.packaging_type || !formData.shelf_life_days) {
+                toast.error("Please fill all required Masala / Pre-cooked fields (net weight, ingredients, packaging, expiry).");
+                return;
+            }
+        }
+
         setLoading(true);
         try {
             const finalData = { ...formData, variants };
             if (isEdit) {
                 await api.put(`/products/${id}`, finalData);
-                toast.success("Artisan masterpiece updated!");
+                toast.success("Dish updated successfully!");
             } else {
                 await api.post("/products", finalData);
-                toast.success("Artisan piece listed successfully!");
+                toast.success("Dish added to your menu successfully!");
             }
             setTimeout(() => navigate("/admin/products/all"), 1500);
         } catch (error) {
@@ -392,7 +408,7 @@ const AddProducts = () => {
     if (fetching) return (
         <div className="flex flex-col items-center justify-center py-20">
             <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin mb-4"></div>
-            <p className="text-gray-500 font-bold">Fetching boutique details...</p>
+            <p className="text-gray-500 font-bold">Fetching menu details...</p>
         </div>
     );
     return (
@@ -411,8 +427,8 @@ const AddProducts = () => {
                 </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 space-y-8">
+            <form onSubmit={handleSubmit} className="w-full">
+                <div className="space-y-8">
                     {/* Primary Categorization & Identity */}
                     <div className="bg-white p-6 sm:p-10 rounded-[2.5rem] border border-gray-100 shadow-sm relative overflow-hidden group">
                         <div className="absolute -top-10 -right-10 p-8 opacity-[0.03] text-blue-600">
@@ -422,8 +438,8 @@ const AddProducts = () => {
                         <div className="relative z-10 space-y-8">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <span className="p-2.5 bg-blue-50 text-blue-600 rounded-xl"><FiLayers size={20} /></span>
-                                    <h2 className="text-2xl font-black text-slate-800 tracking-tight">Product Foundation</h2>
+                                    <span className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl"><FiLayers size={20} /></span>
+                                    <h2 className="text-2xl font-black text-slate-800 tracking-tight">Dish Details</h2>
                                 </div>
                                 <div className="flex items-center gap-2 p-3 bg-blue-50/50 rounded-2xl border border-blue-100">
                                     <FiHash className="text-blue-600" />
@@ -433,15 +449,22 @@ const AddProducts = () => {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div className="space-y-4">
-                                    <label className="text-[10px] sm:text-xs  font-black text-gray-400 uppercase tracking-widest ml-1">Main Collection Category *</label>
-                                    <select name="category" value={formData.category} onChange={handleFormChange} className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-[1.5rem] outline-none focus:bg-white focus:border-blue-500/20 transition-all text-base font-black text-slate-800 shadow-inner cursor-pointer appearance-none">
-                                        {categories.map(cat => <option key={cat.id} value={cat.name}>{cat.name}</option>)}
+                                    <label className="text-[10px] sm:text-xs  font-black text-gray-400 uppercase tracking-widest ml-1">Food Category *</label>
+                                    <select name="category" value={formData.category} onChange={handleFormChange} className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-3xl outline-none focus:bg-white focus:border-emerald-500/20 transition-all text-base font-black text-slate-800 shadow-inner cursor-pointer appearance-none">
+                                        {categories.length > 0 ? categories.map(cat => <option key={cat.id} value={cat.name}>{cat.name}</option>) : (
+                                            <>
+                                                <option>Cooked Food</option>
+                                                <option>Masala / Pre-cooked</option>
+                                                <option>Snacks</option>
+                                                <option>Beverages</option>
+                                            </>
+                                        )}
                                     </select>
                                 </div>
 
                                 <div className="space-y-4">
-                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-1.5"><FiStar className="text-amber-500" /> Boutique Rating</label>
-                                    <select name="rating" value={formData.rating} onChange={handleFormChange} className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-[1.5rem] outline-none focus:bg-white focus:border-blue-500/20 transition-all text-base font-black text-slate-800 shadow-inner cursor-pointer appearance-none">
+                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-1.5"><FiStar className="text-amber-500" /> Chef Rating</label>
+                                    <select name="rating" value={formData.rating} onChange={handleFormChange} className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-3xl outline-none focus:bg-white focus:border-blue-500/20 transition-all text-base font-black text-slate-800 shadow-inner cursor-pointer appearance-none">
                                         <option value="1">1 Star </option>
                                         <option value="2">2 Stars</option>
                                         <option value="3">3 Stars</option>
@@ -452,34 +475,108 @@ const AddProducts = () => {
                             </div>
 
                             <div className="space-y-4">
-                                <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Age Group (Optional)</label>
+                                <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Cuisine Type (Optional)</label>
                                 <select
-                                    name="age"
-                                    value={formData.age}
-                                    onChange={handleFormChange}
-                                    className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-[1.5rem] outline-none focus:bg-white focus:border-blue-500/20 transition-all text-base font-bold text-slate-800 shadow-inner cursor-pointer appearance-none"
+                                    name="cuisine"
+                                    value={formData.cuisine || ""}
+                                    onChange={e => setFormData(prev => ({ ...prev, cuisine: e.target.value }))}
+                                    className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-3xl outline-none focus:bg-white focus:border-emerald-500/20 transition-all text-base font-bold text-slate-800 shadow-inner cursor-pointer appearance-none"
                                 >
-                                    <option value="">Select Age Group</option>
-                                    <option value="Infant (0–1)">Infant (0–1)</option>
-                                    <option value="Toddler (1–3)">Toddler (1–3)</option>
-                                    <option value="Kids (3–5)">Kids (3–5)</option>
-                                    <option value="Kids (5–7)">Kids (5–7)</option>
-                                    <option value="Kids (7–10)">Kids (7–10)</option>
-                                    <option value="Teen (10–15)">Teen (10–15)</option>
-                                    <option value="Teen (15–20)">Teen (15–20)</option>
-                                    <option value="Adult (20+)">Adult (20+)</option>
+                                    <option value="">Select Cuisine</option>
+                                    <option>North Indian</option>
+                                    <option>South Indian</option>
+                                    <option>Chinese</option>
+                                    <option>Continental</option>
+                                    <option>Indian Fusion</option>
                                 </select>
                             </div>
 
                             <div className="space-y-4">
-                                <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Creation Name *</label>
-                                <input type="text" name="name" value={formData.name} onChange={handleFormChange} placeholder="e.g. Handwoven Banarasi Silk" className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-[1.5rem] outline-none focus:bg-white focus:border-blue-500/20 transition-all text-base font-bold text-slate-800 shadow-inner" required />
+                                <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Dish Name *</label>
+                                <input type="text" name="name" value={formData.name} onChange={handleFormChange} placeholder="e.g. Hyderabadi Biryani" className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-3xl outline-none focus:bg-white focus:border-emerald-500/20 transition-all text-base font-bold text-slate-800 shadow-inner" required />
                             </div>
 
                             <div className="space-y-4">
-                                <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">The Craft Story</label>
-                                <textarea name="description" value={formData.description} onChange={handleFormChange} rows="3" placeholder="Describe the heritage..." className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-[1.5rem] outline-none focus:bg-white focus:border-blue-500/20 transition-all text-sm font-medium text-gray-600 shadow-inner resize-none" />
+                                <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Dish Description</label>
+                                <textarea name="description" value={formData.description} onChange={handleFormChange} rows="3" placeholder="Describe the dish, flavors and serving suggestions..." className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-3xl outline-none focus:bg-white focus:border-emerald-500/20 transition-all text-sm font-medium text-gray-600 shadow-inner resize-none" />
                             </div>
+
+                            {/* Product Type Selector for HomeChef */}
+                            <div className="space-y-4">
+                                <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Product Type *</label>
+                                <select name="product_type" value={formData.product_type} onChange={handleFormChange} className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-3xl outline-none focus:bg-white focus:border-emerald-500/20 transition-all text-base font-black text-slate-800 shadow-inner cursor-pointer appearance-none">
+                                    <option value="Cooked Food">Cooked Food</option>
+                                    <option value="Masala/Pre-cooked">Masala / Pre-cooked</option>
+                                </select>
+                            </div>
+
+                            {/* Type-specific fields */}
+                            {formData.product_type === "Cooked Food" ? (
+                                <div className="space-y-6 bg-emerald-50/30 p-6 rounded-2xl">
+                                    <h3 className="text-sm font-black text-emerald-700">Cooked Food Details</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-gray-600">Serving Size *</label>
+                                            <input type="text" name="serving_size" value={formData.serving_size} onChange={handleFormChange} placeholder="e.g., 250g / 1 plate" className="w-full px-4 py-3 rounded-lg bg-white border" required />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-gray-600">Preparation Time *</label>
+                                            <input type="text" name="prep_time" value={formData.prep_time} onChange={handleFormChange} placeholder="e.g., 20 mins" className="w-full px-4 py-3 rounded-lg bg-white border" required />
+                                        </div>
+                                        <div className="space-y-2 md:col-span-2">
+                                            <label className="text-xs font-bold text-gray-600">Ingredients *</label>
+                                            <textarea name="ingredients" value={formData.ingredients} onChange={handleFormChange} rows="3" placeholder="List main ingredients" className="w-full px-4 py-3 rounded-lg bg-white border" required />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-gray-600">Spice Level</label>
+                                            <select name="spice_level" value={formData.spice_level} onChange={handleFormChange} className="w-full px-4 py-3 rounded-lg bg-white border">
+                                                <option>Low</option>
+                                                <option>Medium</option>
+                                                <option>High</option>
+                                            </select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-gray-600">Shelf Life (days) *</label>
+                                            <input type="number" name="shelf_life_days" value={formData.shelf_life_days} onChange={handleFormChange} placeholder="e.g., 2" className="w-full px-4 py-3 rounded-lg bg-white border" required />
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="space-y-6 bg-yellow-50/30 p-6 rounded-2xl">
+                                    <h3 className="text-sm font-black text-amber-700">Masala / Pre-cooked Details</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-gray-600">Net Weight (g) *</label>
+                                            <input type="text" name="net_weight" value={formData.net_weight} onChange={handleFormChange} placeholder="e.g., 200" className="w-full px-4 py-3 rounded-lg bg-white border" required />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-gray-600">Package Count</label>
+                                            <input type="number" name="package_count" value={formData.package_count} onChange={handleFormChange} placeholder="e.g., 1" className="w-full px-4 py-3 rounded-lg bg-white border" />
+                                        </div>
+                                        <div className="space-y-2 md:col-span-2">
+                                            <label className="text-xs font-bold text-gray-600">Ingredients *</label>
+                                            <textarea name="ingredients" value={formData.ingredients} onChange={handleFormChange} rows="3" placeholder="List ingredients and allergens" className="w-full px-4 py-3 rounded-lg bg-white border" required />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-gray-600">Packaging Type *</label>
+                                            <select name="packaging_type" value={formData.packaging_type} onChange={handleFormChange} className="w-full px-4 py-3 rounded-lg bg-white border">
+                                                <option>Pouch</option>
+                                                <option>Jar</option>
+                                                <option>Box</option>
+                                                <option>Packet</option>
+                                            </select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-gray-600">Expiry (days) *</label>
+                                            <input type="number" name="shelf_life_days" value={formData.shelf_life_days} onChange={handleFormChange} placeholder="e.g., 180" className="w-full px-4 py-3 rounded-lg bg-white border" required />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-gray-600">Manufacture Date</label>
+                                            <input type="date" name="manufacture_date" value={formData.manufacture_date} onChange={handleFormChange} className="w-full px-4 py-3 rounded-lg bg-white border" />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -492,17 +589,14 @@ const AddProducts = () => {
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <span className="p-2.5 bg-white/5 text-gray-900 rounded-xl"><FaRupeeSign size={20} /></span>
-                                    <h2 className="text-2xl font-black text-gray-900 tracking-tight">Premium Commercials</h2>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                                    <h2 className="text-2xl font-black text-gray-900 tracking-tight">Pricing & Stock</h2>
                                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse delay-75"></span>
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                                 <div className="space-y-3">
-                                    <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Market MRP *</label>
+                                    <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Menu Price *</label>
                                     <div className="relative">
                                         <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-900 font-black text-lg">₹</span>
                                         <input type="number" name="mrp" value={formData.mrp} onChange={handleFormChange} className="w-full pl-10 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-[1.2rem] outline-none focus:bg-white focus:border-blue-500/20 transition-all text-xl font-black text-slate-900" required />
@@ -516,7 +610,7 @@ const AddProducts = () => {
                                     </div>
                                 </div>
                                 <div className="space-y-3">
-                                    <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Offer Price</label>
+                                    <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Final Price</label>
                                     <div className="relative">
                                         <span className="absolute left-5 top-1/2 -translate-y-1/2 text-emerald-500 font-black text-lg">₹</span>
                                         <input type="number" value={formData.offer_price} readOnly className="w-full pl-10 pr-4 py-4 bg-emerald-50/50 border border-emerald-100 rounded-[1.2rem] text-xl font-black text-emerald-600 cursor-not-allowed" />
@@ -524,7 +618,7 @@ const AddProducts = () => {
                                 </div>
                                 <div className="space-y-3 relative group">
                                     <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1 flex items-center justify-between">
-                                        Total Stock
+                                        Available Stock
                                         {isStockManuallyEdited && (
                                             <button onClick={resetStockCalculation} className="text-[8px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full hover:bg-blue-500 transition-colors uppercase tracking-widest">Auto Set</button>
                                         )}
@@ -538,41 +632,40 @@ const AddProducts = () => {
                         </div>
                     </div>
 
-                    {/* Vitals & Specs */}
+                    {/* Ingredients & Nutrition */}
                     <div className="bg-white p-6 sm:p-10 rounded-[2.5rem] border border-gray-100 shadow-sm relative overflow-hidden group">
-                        <div className="absolute -bottom-10 -right-10 p-8 opacity-[0.03] text-indigo-600">
+                        <div className="absolute -bottom-10 -right-10 p-8 opacity-[0.03] text-green-600">
                             <FiScissors size={200} />
                         </div>
                         <div className="relative z-10 space-y-8">
                             <div className="flex items-center gap-3">
-                                <span className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl"><FiMaximize size={20} /></span>
-                                <h2 className="text-2xl font-black text-slate-800 tracking-tight">Vitals & Artisanship</h2>
+                                <span className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl"><FiMaximize size={20} /></span>
+                                <h2 className="text-2xl font-black text-slate-800 tracking-tight">Ingredients & Nutrition</h2>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Core Fabric</label>
-                                    <input type="text" name="material" value={formData.material} onChange={handleFormChange} placeholder="Mulberry Silk" className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800" />
+                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Primary Ingredients</label>
+                                    <input type="text" name="material" value={formData.material} onChange={handleFormChange} placeholder="e.g. Basmati Rice, Chicken" className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800" />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Embroidery/Work</label>
-                                    <input type="text" name="work_type" value={formData.work_type} onChange={handleFormChange} placeholder="Zardozi" className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800" />
+                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Nutrition / Dietary Info</label>
+                                    <input type="text" name="nutrition_info" value={formData.nutrition_info} onChange={handleFormChange} placeholder="e.g. 550 kcal, High Protein" className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800" />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-1.5"><FiDroplet className="text-blue-500" /> Caring Instructions</label>
-                                    <select name="wash_care" value={formData.wash_care} onChange={handleFormChange} className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 cursor-pointer">
-                                        <option value="Dry Clean Only">Dry Clean Only</option>
-                                        <option value="Mild Hand Wash">Mild Hand Wash</option>
-                                        <option value="Cold Machine Wash">Cold Machine Wash</option>
-                                        <option value="Petrol Wash Specialized">Petrol Wash Specialized</option>
-                                        <option value="No Bleach, Line Dry">No Bleach, Line Dry</option>
+                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-1.5"><FiDroplet className="text-emerald-500" /> Storage Instructions</label>
+                                    <select name="storage_instructions" value={formData.storage_instructions} onChange={handleFormChange} className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 cursor-pointer">
+                                        <option value="Keep Refrigerated">Keep Refrigerated</option>
+                                        <option value="Room Temperature">Room Temperature</option>
+                                        <option value="Keep Frozen">Keep Frozen</option>
+                                        <option value="Consume Within">Consume Within</option>
                                     </select>
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Gallery Tier</label>
+                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Category Subtype</label>
                                     <select name="subcategory" value={formData.subcategory} onChange={handleFormChange} className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 cursor-pointer disabled:opacity-30" disabled={subcategories.length === 0}>
-                                        <option value="">Default Boutique</option>
+                                        <option value="">Default</option>
                                         {subcategories.map((sub, i) => <option key={i} value={sub}>{sub}</option>)}
                                     </select>
                                 </div>
@@ -580,142 +673,95 @@ const AddProducts = () => {
                         </div>
                     </div>
 
-                    {/* Size & Fit Section */}
-                    <div className="bg-white p-6 sm:p-10 rounded-[2.5rem] border border-gray-100 shadow-sm relative overflow-hidden group">
+                    {/* Serving Guidelines */}
+                    {/* <div className="bg-white p-6 sm:p-10 rounded-[2.5rem] border border-gray-100 shadow-sm relative overflow-hidden group">
                         <div className="absolute -bottom-10 -right-10 p-8 opacity-[0.03] text-emerald-600">
                             <FiMaximize size={200} />
                         </div>
                         <div className="relative z-10 space-y-8">
                             <div className="flex items-center gap-3">
                                 <span className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl"><FiMaximize size={20} /></span>
-                                <h2 className="text-2xl font-black text-slate-800 tracking-tight">Size & Fit</h2>
+                                <h2 className="text-2xl font-black text-slate-800 tracking-tight">Serving Guidelines</h2>
                             </div>
 
-                            {formData.category === "Saree" && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Saree Length</label>
-                                        <input
-                                            type="text"
-                                            name="saree_length"
-                                            value={formData.saree_length}
-                                            onChange={handleFormChange}
-                                            placeholder="e.g. 5.5 Meters"
-                                            className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Blouse Length</label>
-                                        <input
-                                            type="text"
-                                            name="blouse_length"
-                                            value={formData.blouse_length}
-                                            onChange={handleFormChange}
-                                            placeholder="e.g. 0.8 Meters"
-                                            className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
-                                        />
-                                    </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Presentation Style</label>
+                                    <input
+                                        type="text"
+                                        name="presentation_style"
+                                        value={formData.presentation_style}
+                                        onChange={handleFormChange}
+                                        placeholder="e.g. Plated, Boxed, Tray"
+                                        className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
+                                    />
                                 </div>
-                            )}
-
-                            {(formData.category === "Lehenga" ||
-                                formData.category === "Salwar" ||
-                                formData.category === "Material") && (
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Top / Lehenga Length</label>
-                                            <input
-                                                type="text"
-                                                name="top_length"
-                                                value={formData.top_length}
-                                                onChange={handleFormChange}
-                                                placeholder="Length"
-                                                className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Bottom Length</label>
-                                            <input
-                                                type="text"
-                                                name="bottom_length"
-                                                value={formData.bottom_length}
-                                                onChange={handleFormChange}
-                                                placeholder="Length"
-                                                className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Dupatta Length</label>
-                                            <input
-                                                type="text"
-                                                name="dupatta_length"
-                                                value={formData.dupatta_length}
-                                                onChange={handleFormChange}
-                                                placeholder="Length"
-                                                className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
-                                            />
-                                        </div>
-                                    </div>
-                                )}
-
-                            {formData.category === "Gown" && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Gown Length</label>
-                                        <input
-                                            type="text"
-                                            name="gown_length"
-                                            value={formData.gown_length}
-                                            onChange={handleFormChange}
-                                            placeholder="Length"
-                                            className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Sleeve Type</label>
-                                        <input
-                                            type="text"
-                                            name="sleeve_type"
-                                            value={formData.sleeve_type}
-                                            onChange={handleFormChange}
-                                            placeholder="Full Sleeve / Half Sleeve"
-                                            className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Neck Type</label>
-                                        <input
-                                            type="text"
-                                            name="neck_type"
-                                            value={formData.neck_type}
-                                            onChange={handleFormChange}
-                                            placeholder="V-Neck / Round Neck"
-                                            className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Fit Type</label>
-                                        <input
-                                            type="text"
-                                            name="fit_type"
-                                            value={formData.fit_type}
-                                            onChange={handleFormChange}
-                                            placeholder="Regular Fit / Slim Fit"
-                                            className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
-                                        />
-                                    </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Portion Format</label>
+                                    <input
+                                        type="text"
+                                        name="portion_format"
+                                        value={formData.portion_format}
+                                        onChange={handleFormChange}
+                                        placeholder="e.g. Single, Half, Family"
+                                        className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
+                                    />
                                 </div>
-                            )}
+                                <div className="space-y-2">
+                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Service Type</label>
+                                    <input
+                                        type="text"
+                                        name="service_type"
+                                        value={formData.service_type}
+                                        onChange={handleFormChange}
+                                        placeholder="e.g. Delivery, Dine-in, Takeaway"
+                                        className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Packaging Notes</label>
+                                    <input
+                                        type="text"
+                                        name="packaging_notes"
+                                        value={formData.packaging_notes}
+                                        onChange={handleFormChange}
+                                        placeholder="e.g. Sealed tray, Vacuum pack"
+                                        className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Dietary Tag</label>
+                                    <input
+                                        type="text"
+                                        name="dietary_tag"
+                                        value={formData.dietary_tag}
+                                        onChange={handleFormChange}
+                                        placeholder="e.g. Veg, Non-Veg, Vegan"
+                                        className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Heat Profile</label>
+                                    <input
+                                        type="text"
+                                        name="heat_profile"
+                                        value={formData.heat_profile}
+                                        onChange={handleFormChange}
+                                        placeholder="e.g. Mild, Medium, Spicy"
+                                        className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
+                                    />
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                    </div> */}
                 </div>
 
                 {/* Inventory Manager */}
-                <div className="space-y-8">
-                    <div className="flex items-center justify-between sticky top-[100px] z-20 bg-gray-50/90 backdrop-blur-md p-3 rounded-2xl border border-gray-100 shadow-sm">
+                {/* <div className="space-y-8">
+                    <div className="flex items-center justify-between sticky top-25 z-20 bg-gray-50/90 backdrop-blur-md p-3 rounded-2xl border border-gray-100 shadow-sm">
                         <div className="flex items-center gap-2">
                             <FiBox className="text-orange-500" />
-                            <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">Shade & Inventory</h3>
+                            <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">Portion & Inventory</h3>
                         </div>
                         <button type="button" onClick={addVariant} className="bg-slate-900 text-white p-2 rounded-xl active:scale-90 transition-all shadow-lg hover:bg-black"><FiPlus /></button>
                     </div>
@@ -740,7 +786,7 @@ const AddProducts = () => {
                                             <select
                                                 value={v.colorName}
                                                 onChange={(e) => {
-                                                    const selected = boutiqueColors.find(bc => bc.name === e.target.value);
+                                                    const selected = tagColors.find(bc => bc.name === e.target.value);
                                                     if (selected) {
                                                         handleVariantChange(vIndex, "color", selected.hex);
                                                         handleVariantChange(vIndex, "colorName", selected.name);
@@ -750,34 +796,58 @@ const AddProducts = () => {
                                                 }}
                                                 className="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-xl text-xs font-black text-slate-800 outline-none focus:bg-white focus:border-blue-500/30 transition-all uppercase tracking-widest shadow-inner cursor-pointer"
                                             >
-                                                <option value="">Select Boutique Shade</option>
-                                                {boutiqueColors.map(bc => <option key={bc.hex} value={bc.name}>{bc.name}</option>)}
-                                                {v.colorName && !boutiqueColors.find(bc => bc.name === v.colorName) && <option value={v.colorName}>{v.colorName}</option>}
+                                                <option value="">Select Serving Tag</option>
+                                                {tagColors.map(bc => <option key={bc.hex} value={bc.name}>{bc.name}</option>)}
+                                                {v.colorName && !tagColors.find(bc => bc.name === v.colorName) && <option value={v.colorName}>{v.colorName}</option>}
                                             </select>
                                         </div>
                                     </div>
-                                    <p className="text-[8px] font-bold text-gray-400 uppercase tracking-tight ml-1">Selected Hex: <span className="text-blue-500 font-black">{v.color}</span></p>
+                                    <p className="text-[8px] font-bold text-gray-400 uppercase tracking-tight ml-1">Selected Tag Color: <span className="text-blue-500 font-black">{v.color}</span></p>
                                 </div>
                                 <button type="button" onClick={() => removeVariant(vIndex)} className="text-gray-200 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"><FiTrash2 size={16} /></button>
                             </div>
 
-                            {/* Inventory per Shade */}
                             <div className="space-y-4 pt-2 border-t border-gray-50">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Shade Stock Management</label>
-                                <div className="flex flex-wrap gap-1.5">
-                                    {sizeOptions.map(sz => (
-                                        <button key={sz} type="button" onClick={() => toggleSize(vIndex, sz)} className={`px-3 py-2 rounded-xl text-[9px] font-black tracking-tighter transition-all ${v.selectedSizes.includes(sz) ? 'bg-blue-600 text-white shadow-xl scale-105' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}>{sz}</button>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
+                                    Portion Stock Management
+                                </label>
+
+                                <div className="flex flex-wrap gap-2">
+                                    {sizeOptions.map(size => (
+                                        <button
+                                            key={size}
+                                            type="button"
+                                            onClick={() => toggleSize(vIndex, size)}
+                                            className={`px-3 py-2 rounded-xl text-xs font-bold ${v.selectedSizes.includes(size)
+                                                    ? "bg-blue-500 text-white"
+                                                    : "bg-gray-100 text-gray-700"
+                                                }`}
+                                        >
+                                            {size}
+                                        </button>
                                     ))}
                                 </div>
+
                                 {v.selectedSizes.length > 0 && (
                                     <div className="grid grid-cols-2 gap-2 pt-2 animate-in fade-in slide-in-from-top-1">
                                         {v.selectedSizes.map(sz => (
-                                            <div key={sz} className="bg-slate-50 border border-slate-100 p-2 rounded-xl flex items-center justify-between">
+                                            <div
+                                                key={sz}
+                                                className="bg-slate-50 border border-slate-100 p-2 rounded-xl flex items-center justify-between"
+                                            >
                                                 <div>
-                                                    <p className="text-[7px] font-black text-slate-400 uppercase leading-none mb-1">{sz}</p>
-                                                    <input type="number" value={v.sizesStock[sz]} onChange={(e) => handleStockChange(vIndex, sz, e.target.value)} className="w-full bg-transparent border-none ouline-none p-0 text-sm font-black text-slate-800 focus:ring-0 leading-none" />
+                                                    <p className="text-[7px] font-black text-slate-400 uppercase leading-none mb-1">
+                                                        {sz}
+                                                    </p>
+                                                    <input
+                                                        type="number"
+                                                        value={v.sizesStock[sz]}
+                                                        onChange={(e) =>
+                                                            handleStockChange(vIndex, sz, e.target.value)
+                                                        }
+                                                        className="w-full bg-transparent border-none outline-none p-0 text-sm font-black text-slate-800"
+                                                    />
                                                 </div>
-                                                <div className="w-1.5 h-1.5 rounded-full bg-blue-400/50"></div>
                                             </div>
                                         ))}
                                     </div>
@@ -786,23 +856,21 @@ const AddProducts = () => {
 
                             <div className="grid grid-cols-2 gap-2">
                                 {v.images.slice(0, 5).map((img, iIndex) => (
-                                    <div key={iIndex} className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 shadow-inner group/img">
+                                    <div key={iIndex} className="relative aspect-3/4 rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 shadow-inner group/img">
                                         <img src={img} alt="V" className="w-full h-full object-cover group-hover/img:scale-110 transition-transform duration-1000" />
                                         <button type="button" onClick={() => removeVariantImage(vIndex, iIndex)} className="absolute inset-0 bg-red-600/60 text-white flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity"><FiTrash2 size={16} /></button>
                                     </div>
                                 ))}
                                 {v.images.length < 5 && (
-                                    <label className="flex flex-col items-center justify-center aspect-[3/4] rounded-2xl border-2 border-dashed border-gray-100 bg-gray-50/50 cursor-pointer hover:bg-white hover:border-blue-500 group/label transition-all shadow-inner">
+                                    <label className="flex flex-col items-center justify-center aspect-3/4 rounded-2xl border-2 border-dashed border-gray-100 bg-gray-50/50 cursor-pointer hover:bg-white hover:border-blue-500 group/label transition-all shadow-inner">
                                         <FiUploadCloud size={24} className="text-gray-300 group-hover/label:text-blue-500 transition-colors scale-125" />
                                         <input type="file" multiple className="hidden" accept="image/*" onChange={(e) => handleVariantImageUpload(vIndex, e)} />
                                     </label>
                                 )}
                             </div>
-
-
                         </div>
                     ))}
-                </div>
+                </div> */}
 
                 {/* Bottom Global Action Button */}
                 <div className="lg:col-span-3 pt-10 pb-20 border-t border-gray-100 mt-10">
@@ -822,7 +890,7 @@ const AddProducts = () => {
                                     <div className="p-2 bg-white/10 rounded-xl group-hover:bg-blue-500 transition-colors">
                                         <FiSave className="text-2xl" />
                                     </div>
-                                    <span>{isEdit ? 'Update Product' : 'Add Products'}</span>
+                                    <span>{isEdit ? 'Update Dish' : 'Add Dish'}</span>
                                     <FiPlus className="text-white/40 group-hover:text-white transition-colors" />
                                 </>
                             )}
