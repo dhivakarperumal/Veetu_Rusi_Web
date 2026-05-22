@@ -195,6 +195,12 @@ async function createDatabaseAndTables() {
     CREATE TABLE IF NOT EXISTS \`home_chefs\` (
       id INT AUTO_INCREMENT PRIMARY KEY,
       chef_id CHAR(36) NOT NULL UNIQUE DEFAULT (UUID()),
+      chef_unique_code VARCHAR(100) UNIQUE DEFAULT NULL,
+      created_by_id INT DEFAULT NULL,
+      created_by_user_id CHAR(36) DEFAULT NULL,
+      created_by_name VARCHAR(255) DEFAULT NULL,
+      created_by_email VARCHAR(255) DEFAULT NULL,
+      created_by_phone VARCHAR(50) DEFAULT NULL,
       name VARCHAR(255) NOT NULL,
       mobile VARCHAR(50) NOT NULL,
       email VARCHAR(255) NOT NULL UNIQUE,
@@ -208,6 +214,29 @@ async function createDatabaseAndTables() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
   console.log('Home Chefs table created or already exists');
+
+  // Add chef_unique_code column if it doesn't exist
+  try {
+    const [codeColumns] = await connection.execute(
+      "SELECT COUNT(*) AS count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'home_chefs' AND COLUMN_NAME = 'chef_unique_code'",
+      [DB_NAME]
+    );
+    if (codeColumns[0].count === 0) {
+      await connection.execute(`
+        ALTER TABLE \`home_chefs\`
+        ADD COLUMN \`chef_unique_code\` VARCHAR(100) NOT NULL UNIQUE DEFAULT NULL
+      `);
+      console.log('Added chef_unique_code column to home_chefs table');
+    }
+  } catch (err) {
+    console.log('chef_unique_code column already exists');
+  }
+
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `created_by_id` INT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `created_by_user_id` CHAR(36) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `created_by_name` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `created_by_email` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `created_by_phone` VARCHAR(50) DEFAULT NULL");
 
   await connection.execute(`
     CREATE TABLE IF NOT EXISTS \`delivery_partners\` (
@@ -379,13 +408,28 @@ async function createDatabaseAndTables() {
     ON DUPLICATE KEY UPDATE name = VALUES(name);
   `);
 
+  // Function to generate unique chef code
+  function generateChefUniqueCode() {
+    const timestamp = Date.now().toString(36);
+    const randomPart = Math.random().toString(36).substring(2, 8).toUpperCase();
+    return `CHEF-${timestamp}-${randomPart}`;
+  }
+
+  // Insert home chefs with auto-generated unique codes
+  const chefCode1 = generateChefUniqueCode();
+  const chefCode2 = generateChefUniqueCode();
+
   await connection.execute(`
-    INSERT INTO \`home_chefs\` (name, mobile, email, address, fssai_number, status)
+    INSERT INTO \`home_chefs\` (name, mobile, email, address, fssai_number, chef_unique_code, status)
     VALUES 
-      ('Saraswathis Kitchen', '9876543213', 'saraswathi@gmail.com', 'Madurai, Tamil Nadu', '22345678901234', 'Approved'),
-      ('Kavithas Homemade Biryani', '9876543214', 'kavitha@gmail.com', 'Salem, Tamil Nadu', '22345678905555', 'Pending')
+      ('Anandhi Rao', '9876543213', 'anandhi.rao@gmail.com', '42 Green Park Lane, Madurai, Tamil Nadu 625001', '22345678901234', ?, 'Approved'),
+      ('Kavitha Sharma', '9876543214', 'kavitha.sharma@gmail.com', '15 Silk Street, Salem, Tamil Nadu 636001', '22345678905555', ?, 'Pending')
     ON DUPLICATE KEY UPDATE name = VALUES(name);
-  `);
+  `, [chefCode1, chefCode2]);
+  
+  console.log('Home Chefs created with auto-generated codes:');
+  console.log(`Chef 1 - Anandhi Rao: ${chefCode1}`);
+  console.log(`Chef 2 - Kavitha Sharma: ${chefCode2}`);
 
   await connection.execute(`
     INSERT INTO \`delivery_partners\` (name, mobile, vehicle_type, vehicle_number, license_number, aadhaar_number, status)

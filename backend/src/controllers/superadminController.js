@@ -101,6 +101,50 @@ exports.createHomeChef = async (req, res) => {
       rejection_reason, block_reason, address
     } = req.body;
 
+    const createdById = req.user?.id || null;
+    const createdByUserId = req.user?.user_id || null;
+    const createdByName = req.user?.name || null;
+    const createdByEmail = req.user?.email || null;
+    const createdByPhone = req.user?.phone || null;
+
+    // Auto-generate chef_unique_code if not provided
+    function generateChefUniqueCode() {
+      const timestamp = Date.now().toString(36);
+      const randomPart = Math.random().toString(36).substring(2, 8).toUpperCase();
+      return `CHEF-${timestamp}-${randomPart}`;
+    }
+    const generatedChefCode = chef_unique_code || generateChefUniqueCode();
+
+    // Auto-calculate age from date_of_birth
+    function calculateAgeFromDOB(dob) {
+      if (!dob) return null;
+      const birthDate = new Date(dob);
+      const today = new Date();
+      let calculatedAge = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        calculatedAge--;
+      }
+      
+      return calculatedAge > 0 ? calculatedAge : null;
+    }
+    const calculatedAge = calculateAgeFromDOB(date_of_birth);
+
+    // Auto-calculate age from date_of_birth for updates
+    function calculateAgeFromDOB(dob) {
+      if (!dob) return null;
+      const birthDate = new Date(dob);
+      const today = new Date();
+      let calculatedAge = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        calculatedAge--;
+      }
+      return calculatedAge > 0 ? calculatedAge : null;
+    }
+    const calculatedAgeForUpdate = calculateAgeFromDOB(date_of_birth);
+
     const profile_photo = req.files && req.files.profile_photo ? req.files.profile_photo[0].filename : null;
     const cover_banner = req.files && req.files.cover_banner ? req.files.cover_banner[0].filename : null;
     const aadhaar_front_url = req.files && req.files.aadhaar_front_url ? req.files.aadhaar_front_url[0].filename : null;
@@ -119,45 +163,108 @@ exports.createHomeChef = async (req, res) => {
 
     const [result] = await pool.execute(
       `INSERT INTO home_chefs (
-        chef_unique_code, name, father_husband_name, gender, date_of_birth, age,
-        mobile, alt_mobile, whatsapp_number, email, emergency_contact,
+        name, mobile, email, address, fssai_number, aadhaar_url, pan_url, status,
+        chef_unique_code, created_by_id, created_by_user_id, created_by_name, created_by_email, created_by_phone,
+        father_husband_name, gender, date_of_birth, age,
+        profile_photo, cover_banner, alt_mobile, whatsapp_number, emergency_contact,
         door_number, street_name, area_name, landmark, city, district, state, pincode,
         latitude, longitude, map_link, kitchen_name, kitchen_address, kitchen_type,
-        seating_available, dining_available, takeaway_available, delivery_available,
+        kitchen_photos, kitchen_videos, seating_available, dining_available, takeaway_available, delivery_available,
         specialty_food, cuisine_type, signature_dish, veg_nonveg, experience_years,
         cooking_style, preparation_time, daily_order_capacity, available_days,
         opening_time, closing_time, holiday_schedule, busy_hours, instant_order, pre_order,
-        aadhaar_number, pan_number, fssai_number, gst_number, bank_account_number,
+        aadhaar_number, pan_number, gst_number, bank_account_number,
         ifsc_code, account_holder_name, upi_id, username, password, otp_verified,
-        email_verified, login_status, verification_status, approval_status, status,
-        rejection_reason, block_reason, address,
-        profile_photo, cover_banner, aadhaar_front_url, aadhaar_back_url, pan_card_url,
-        fssai_certificate_url, gst_certificate_url, signature_url, selfie_verification_url,
-        kitchen_photos, kitchen_videos
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        email_verified, last_login, device_details, login_status, verification_status, approval_status,
+        approved_by_admin, approval_date, rejection_reason, block_reason,
+        aadhaar_front_url, aadhaar_back_url, pan_card_url, fssai_certificate_url, gst_certificate_url, signature_url, selfie_verification_url
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        chef_unique_code || null, name, father_husband_name || null, gender || null, date_of_birth || null, age ? parseInt(age) : null,
-        mobile, alt_mobile || null, whatsapp_number || null, email, emergency_contact || null,
-        door_number || null, street_name || null, area_name || null, landmark || null, city || null, district || null, state || null, pincode || null,
-        latitude || null, longitude || null, map_link || null, kitchen_name || null, kitchen_address || null, kitchen_type || 'Home Kitchen',
+        name,
+        mobile,
+        email,
+        fullAddress,
+        fssai_number || null,
+        null, // aadhaar_url
+        null, // pan_url
+        approval_status || 'Pending', // status
+        generatedChefCode,
+        createdById,
+        createdByUserId,
+        createdByName,
+        createdByEmail,
+        createdByPhone,
+        father_husband_name || null,
+        gender || null,
+        date_of_birth || null,
+        calculatedAge !== null ? calculatedAge : (age ? parseInt(age) : null),
+        profile_photo,
+        cover_banner,
+        alt_mobile || null,
+        whatsapp_number || null,
+        emergency_contact || null,
+        door_number || null,
+        street_name || null,
+        area_name || null,
+        landmark || null,
+        city || null,
+        district || null,
+        state || null,
+        pincode || null,
+        latitude || null,
+        longitude || null,
+        map_link || null,
+        kitchen_name || null,
+        kitchen_address || null,
+        kitchen_type || 'Home Kitchen',
+        kitchen_photos,
+        kitchen_videos,
         seating_available === 'true' || seating_available === true ? 1 : 0,
         dining_available === 'true' || dining_available === true ? 1 : 0,
         takeaway_available === 'true' || takeaway_available === true ? 1 : 0,
         delivery_available === 'true' || delivery_available === true ? 1 : 0,
-        specialty_food || null, cuisine_type || 'South Indian', signature_dish || null, veg_nonveg || 'Veg', experience_years ? parseInt(experience_years) : null,
-        cooking_style || null, preparation_time || null, daily_order_capacity ? parseInt(daily_order_capacity) : null, available_days || null,
-        opening_time || null, closing_time || null, holiday_schedule || null, busy_hours || null,
+        specialty_food || null,
+        cuisine_type || 'South Indian',
+        signature_dish || null,
+        veg_nonveg || 'Veg',
+        experience_years ? parseInt(experience_years) : null,
+        cooking_style || null,
+        preparation_time || null,
+        daily_order_capacity ? parseInt(daily_order_capacity) : null,
+        available_days || null,
+        opening_time || null,
+        closing_time || null,
+        holiday_schedule || null,
+        busy_hours || null,
         instant_order === 'true' || instant_order === true ? 1 : 0,
         pre_order === 'true' || pre_order === true ? 1 : 0,
-        aadhaar_number || null, pan_number || null, fssai_number || null, gst_number || null, bank_account_number || null,
-        ifsc_code || null, account_holder_name || null, upi_id || null, username || null, hashedPw,
+        aadhaar_number || null,
+        pan_number || null,
+        gst_number || null,
+        bank_account_number || null,
+        ifsc_code || null,
+        account_holder_name || null,
+        upi_id || null,
+        username || null,
+        hashedPw,
         otp_verified === 'true' || otp_verified === true ? 1 : 0,
         email_verified === 'true' || email_verified === true ? 1 : 0,
-        login_status || 'Active', verification_status || 'Pending', approval_status || 'Pending', approval_status || 'Pending',
-        rejection_reason || null, block_reason || null, fullAddress,
-        profile_photo, cover_banner, aadhaar_front_url, aadhaar_back_url, pan_card_url,
-        fssai_certificate_url, gst_certificate_url, signature_url, selfie_verification_url,
-        kitchen_photos, kitchen_videos
+        null, // last_login
+        null, // device_details
+        login_status || 'Active',
+        verification_status || 'Pending',
+        approval_status || 'Pending',
+        null, // approved_by_admin
+        null, // approval_date
+        rejection_reason || null,
+        block_reason || null,
+        aadhaar_front_url,
+        aadhaar_back_url,
+        pan_card_url,
+        fssai_certificate_url,
+        gst_certificate_url,
+        signature_url,
+        selfie_verification_url
       ]
     );
 
@@ -215,7 +322,7 @@ exports.updateHomeChef = async (req, res) => {
       rejection_reason = ?, block_reason = ?, address = ?`;
 
     let params = [
-      chef_unique_code || null, name, father_husband_name || null, gender || null, date_of_birth || null, age ? parseInt(age) : null,
+      chef_unique_code || null, name, father_husband_name || null, gender || null, date_of_birth || null, calculatedAgeForUpdate !== null ? calculatedAgeForUpdate : (age ? parseInt(age) : null),
       mobile, alt_mobile || null, whatsapp_number || null, email, emergency_contact || null,
       door_number || null, street_name || null, area_name || null, landmark || null, city || null, district || null, state || null, pincode || null,
       latitude || null, longitude || null, map_link || null, kitchen_name || null, kitchen_address || null, kitchen_type || 'Home Kitchen',
