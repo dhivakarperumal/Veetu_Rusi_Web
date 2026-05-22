@@ -87,7 +87,11 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
   const location = useLocation();
   const [openMenu, setOpenMenu] = useState(null);
 
-  const prefix = location.pathname.startsWith("/superadmin") ? "/superadmin" : "/admin";
+  const prefix = location.pathname.startsWith("/superadmin")
+    ? "/superadmin"
+    : location.pathname.startsWith("/homechef")
+    ? "/homechef"
+    : "/admin";
 
   const getDynamicPath = (path) => {
     if (!path) return path;
