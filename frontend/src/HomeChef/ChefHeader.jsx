@@ -14,6 +14,7 @@ import {
   X,
   AlertTriangle,
   TrendingDown,
+  ChefHat,
 } from "lucide-react";
 
 import { useAuth } from "../PrivateRouter/AuthContext";
