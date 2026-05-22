@@ -105,6 +105,7 @@ const AddProducts = () => {
         name: "",
         description: "",
         category: "Saree",
+        product_type: "Cooked Food", // Cooked Food | Masala / Pre-cooked
         subcategory: "",
         mrp: "",
         offer: "",
@@ -128,6 +129,16 @@ const AddProducts = () => {
         work_type: "Embroidered",
         zari_color: "Gold Zari",
         age: "",
+        // HomeChef product fields
+        serving_size: "",
+        prep_time: "",
+        ingredients: "",
+        spice_level: "Medium",
+        shelf_life_days: "",
+        net_weight: "",
+        package_count: "",
+        packaging_type: "Pouch",
+        manufacture_date: "",
     });
 
     const [variants, setVariants] = useState([
@@ -371,6 +382,21 @@ const AddProducts = () => {
             return;
         }
 
+        // Type-specific validation
+        if (formData.product_type === "Cooked Food") {
+            if (!formData.serving_size || !formData.prep_time || !formData.ingredients || !formData.shelf_life_days) {
+                toast.error("Please fill all required Cooked Food fields (serving size, prep time, ingredients, shelf life).");
+                return;
+            }
+        }
+
+        if (formData.product_type === "Masala/Pre-cooked") {
+            if (!formData.net_weight || !formData.ingredients || !formData.packaging_type || !formData.shelf_life_days) {
+                toast.error("Please fill all required Masala / Pre-cooked fields (net weight, ingredients, packaging, expiry).");
+                return;
+            }
+        }
+
         setLoading(true);
         try {
             const finalData = { ...formData, variants };
@@ -480,6 +506,83 @@ const AddProducts = () => {
                                 <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">The Craft Story</label>
                                 <textarea name="description" value={formData.description} onChange={handleFormChange} rows="3" placeholder="Describe the heritage..." className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-[1.5rem] outline-none focus:bg-white focus:border-blue-500/20 transition-all text-sm font-medium text-gray-600 shadow-inner resize-none" />
                             </div>
+
+                            {/* Product Type Selector for HomeChef */}
+                            <div className="space-y-4">
+                                <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Product Type *</label>
+                                <select name="product_type" value={formData.product_type} onChange={handleFormChange} className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-[1.5rem] outline-none focus:bg-white focus:border-emerald-500/20 transition-all text-base font-black text-slate-800 shadow-inner cursor-pointer appearance-none">
+                                    <option value="Cooked Food">Cooked Food</option>
+                                    <option value="Masala/Pre-cooked">Masala / Pre-cooked</option>
+                                </select>
+                            </div>
+
+                            {/* Type-specific fields */}
+                            {formData.product_type === "Cooked Food" ? (
+                                <div className="space-y-6 bg-emerald-50/30 p-6 rounded-2xl">
+                                    <h3 className="text-sm font-black text-emerald-700">Cooked Food Details</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-gray-600">Serving Size *</label>
+                                            <input type="text" name="serving_size" value={formData.serving_size} onChange={handleFormChange} placeholder="e.g., 250g / 1 plate" className="w-full px-4 py-3 rounded-lg bg-white border" required />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-gray-600">Preparation Time *</label>
+                                            <input type="text" name="prep_time" value={formData.prep_time} onChange={handleFormChange} placeholder="e.g., 20 mins" className="w-full px-4 py-3 rounded-lg bg-white border" required />
+                                        </div>
+                                        <div className="space-y-2 md:col-span-2">
+                                            <label className="text-xs font-bold text-gray-600">Ingredients *</label>
+                                            <textarea name="ingredients" value={formData.ingredients} onChange={handleFormChange} rows="3" placeholder="List main ingredients" className="w-full px-4 py-3 rounded-lg bg-white border" required />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-gray-600">Spice Level</label>
+                                            <select name="spice_level" value={formData.spice_level} onChange={handleFormChange} className="w-full px-4 py-3 rounded-lg bg-white border">
+                                                <option>Low</option>
+                                                <option>Medium</option>
+                                                <option>High</option>
+                                            </select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-gray-600">Shelf Life (days) *</label>
+                                            <input type="number" name="shelf_life_days" value={formData.shelf_life_days} onChange={handleFormChange} placeholder="e.g., 2" className="w-full px-4 py-3 rounded-lg bg-white border" required />
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="space-y-6 bg-yellow-50/30 p-6 rounded-2xl">
+                                    <h3 className="text-sm font-black text-amber-700">Masala / Pre-cooked Details</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-gray-600">Net Weight (g) *</label>
+                                            <input type="text" name="net_weight" value={formData.net_weight} onChange={handleFormChange} placeholder="e.g., 200" className="w-full px-4 py-3 rounded-lg bg-white border" required />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-gray-600">Package Count</label>
+                                            <input type="number" name="package_count" value={formData.package_count} onChange={handleFormChange} placeholder="e.g., 1" className="w-full px-4 py-3 rounded-lg bg-white border" />
+                                        </div>
+                                        <div className="space-y-2 md:col-span-2">
+                                            <label className="text-xs font-bold text-gray-600">Ingredients *</label>
+                                            <textarea name="ingredients" value={formData.ingredients} onChange={handleFormChange} rows="3" placeholder="List ingredients and allergens" className="w-full px-4 py-3 rounded-lg bg-white border" required />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-gray-600">Packaging Type *</label>
+                                            <select name="packaging_type" value={formData.packaging_type} onChange={handleFormChange} className="w-full px-4 py-3 rounded-lg bg-white border">
+                                                <option>Pouch</option>
+                                                <option>Jar</option>
+                                                <option>Box</option>
+                                                <option>Packet</option>
+                                            </select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-gray-600">Expiry (days) *</label>
+                                            <input type="number" name="shelf_life_days" value={formData.shelf_life_days} onChange={handleFormChange} placeholder="e.g., 180" className="w-full px-4 py-3 rounded-lg bg-white border" required />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-gray-600">Manufacture Date</label>
+                                            <input type="date" name="manufacture_date" value={formData.manufacture_date} onChange={handleFormChange} className="w-full px-4 py-3 rounded-lg bg-white border" />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
 
