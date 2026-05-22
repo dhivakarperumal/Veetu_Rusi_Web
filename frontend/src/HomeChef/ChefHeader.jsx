@@ -47,7 +47,7 @@ const pageTitles = {
   "/admin/settings/profile": "Profile",
 };
 
-const Header = ({ onMenuClick }) => {
+const ChefHeader = ({ onMenuClick }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
@@ -691,4 +691,4 @@ const Header = ({ onMenuClick }) => {
   );
 };
 
-export default Header;
+export default ChefHeader;

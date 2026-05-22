@@ -61,8 +61,8 @@ const AdminRestaurantManagement = React.lazy(() => import("./Admin/Pages/Restaur
 const HomeChefManagement = React.lazy(() => import("./Admin/Pages/HomeChefManagement.jsx"));
 const DeliveryPartnerManagement = React.lazy(() => import("./Admin/Pages/DeliveryPartnerManagement.jsx"));
 const UserManagement = React.lazy(() => import("./Admin/Pages/UserManagement.jsx"));
-const HomeChefPanel = React.lazy(() => import("./HomeChef/AdminPanel.jsx"));
-const HomeChefDashboard = React.lazy(() => import("./HomeChef/Dashboard.jsx"));
+const HomeChefPanel = React.lazy(() => import("./HomeChef/ChefPanel.jsx"));
+const HomeChefDashboard = React.lazy(() => import("./HomeChef/ChefDashboard.jsx"));
 const HomeChefPageManagement = React.lazy(() => import("./HomeChef/Pages/HomeChefManagement.jsx"));
 const ChefAddProducts = React.lazy(() => import("./HomeChef/Pages/AddProducts.jsx"));
 const RecipeDetails = React.lazy(() => import("./HomeChef/Pages/RecipeDetails.jsx"));

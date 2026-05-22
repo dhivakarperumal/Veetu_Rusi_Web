@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
-import Sidebar from "./Sidebar";
-import Header from "./Header";
+import ChefSidebar from "./ChefSidebar";
+import ChefHeader from "./ChefHeader";
 
 const AdminLayout = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -25,7 +25,7 @@ const AdminLayout = () => {
         <div className="admin-root flex min-h-screen bg-gray-50 text-slate-900">
 
             {/* Sidebar */}
-            <Sidebar
+            <ChefSidebar
                 isOpen={sidebarOpen}
                 onClose={() => setSidebarOpen(false)}
                 collapsed={sidebarCollapsed}
@@ -41,7 +41,7 @@ const AdminLayout = () => {
         `}
             >
                 {/* Header */}
-                <Header onMenuClick={() => setSidebarOpen(true)} />
+                <ChefHeader onMenuClick={() => setSidebarOpen(true)} />
 
                 {/* Page Content */}
                 <main className="flex-1 p-4 sm:p-5 lg:p-6 overflow-y-auto">

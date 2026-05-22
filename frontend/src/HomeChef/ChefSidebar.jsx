@@ -39,7 +39,8 @@ import { useAuth } from "../PrivateRouter/AuthContext";
 
 /* ================= NAV ITEMS ================= */
 const navItems = [
-  { path: "/chef", label: "Dashboard", icon: LayoutDashboard, exact: true },
+  { path: "/chef/analytics", label: "Analytics Dashboard", icon: TrendingUp, exact: true },
+  // { path: "/chef", label: "Dashboard", icon: LayoutDashboard },
   { path: "/chef/add-products", label: "Add Products", icon: PlusCircle },
   { path: "/chef/recipes", label: "Recipe Details", icon: BookOpen },
   { path: "/chef/upload-videos", label: "Food Videos", icon: Upload },
@@ -48,22 +49,22 @@ const navItems = [
   { path: "/chef/meal-slots", label: "Meal Slots", icon: Clock },
   { path: "/chef/preorders", label: "Preorders", icon: ShoppingCart },
   { path: "/chef/delivery-settings", label: "Delivery Settings", icon: Truck },
-  { path: "/chef/analytics", label: "Analytics", icon: TrendingUp },
+  
   { path: "/chef/earnings", label: "Wallet & Earnings", icon: Wallet },
   { path: "/chef/orders", label: "Orders", icon: ShoppingBag },
   { path: "/", label: "Back Home", icon: Home },
 ];
 
 /* ================= SIDEBAR ================= */
-const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
+const ChefSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
   const { profileName } = useAuth();
   const location = useLocation();
   const [openMenu, setOpenMenu] = useState(null);
 
   const prefix = location.pathname.startsWith("/superadmin")
     ? "/superadmin"
-    : location.pathname.startsWith("/homechef")
-    ? "/homechef"
+    : location.pathname.startsWith("/chef")
+    ? "/chef"
     : "/admin";
 
   const getDynamicPath = (path) => {
@@ -293,4 +294,4 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
   );
 };
 
-export default Sidebar;
+export default ChefSidebar;
