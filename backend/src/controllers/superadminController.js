@@ -585,12 +585,50 @@ exports.getDeliveryPartners = async (req, res) => {
 
 exports.createDeliveryPartner = async (req, res) => {
   try {
-    const { name, mobile, vehicle_type, vehicle_number, license_number, aadhaar_number } = req.body;
+    const b = req.body;
+
+    // Auto-generate delivery_partner_code: DP-YYYYMMDD-XXXXX
+    const now = new Date();
+    const datePart = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+    const randomPart = String(Math.floor(10000 + Math.random() * 90000));
+    const delivery_partner_code = b.delivery_partner_code || `DP-${datePart}-${randomPart}`;
+
+    const hashedPw = b.password ? hashPassword(b.password) : null;
+
     const [result] = await pool.execute(
-      "INSERT INTO delivery_partners (name, mobile, vehicle_type, vehicle_number, license_number, aadhaar_number, status) VALUES (?, ?, ?, ?, ?, ?, 'Pending')",
-      [name, mobile, vehicle_type, vehicle_number, license_number, aadhaar_number]
+      `INSERT INTO delivery_partners (
+        delivery_partner_code, name, father_husband_name, gender, date_of_birth, age, profile_photo, cover_photo, marital_status, blood_group,
+        mobile, alt_mobile, whatsapp_number, email, emergency_contact,
+        door_number, street_name, area_name, landmark, city, district, state, pincode, country, latitude, longitude, map_link,
+        username, password, otp_verified, email_verified, device_id, login_status, account_status,
+        vehicle_type, vehicle_brand, vehicle_model, vehicle_color, vehicle_number, rc_book_number, insurance_number, insurance_expiry_date, pollution_certificate_number,
+        vehicle_front_photo, vehicle_back_photo, rc_book_image, insurance_document_image,
+        license_number, license_holder_name, license_expiry_date, license_front_image, license_back_image, driving_experience,
+        aadhaar_number, pan_number, aadhaar_front_url, aadhaar_back_url, pan_card_url, selfie_verification_url, police_verification_certificate, background_verification_status, kyc_verification_status,
+        bank_name, account_holder_name, bank_account_number, ifsc_code, branch_name, upi_id,
+        wallet_balance, pending_earnings, earnings, daily_earnings, weekly_earnings, monthly_earnings, incentive_amount, bonus_amount,
+        online_status, availability_schedule, working_days, shift_timing, current_location, break_time_status,
+        assigned_delivery_area, delivery_radius, preferred_delivery_zone, city_coverage, area_coverage, zone_status,
+        status
+      ) VALUES (${Array(89).fill('?').join(', ')})`,
+      [
+        delivery_partner_code, b.name || null, b.father_husband_name || null, b.gender || 'Male', b.date_of_birth || null, b.age || null, b.profile_photo || null, b.cover_photo || null, b.marital_status || 'Single', b.blood_group || null,
+        b.mobile || null, b.alt_mobile || null, b.whatsapp_number || null, b.email || null, b.emergency_contact || null,
+        b.door_number || null, b.street_name || null, b.area_name || null, b.landmark || null, b.city || null, b.district || null, b.state || null, b.pincode || null, b.country || 'India', b.latitude || null, b.longitude || null, b.map_link || null,
+        b.username || null, hashedPw, b.otp_verified ? 1 : 0, b.email_verified ? 1 : 0, b.device_id || null, b.login_status || 'Active', b.account_status || 'Pending',
+        b.vehicle_type || null, b.vehicle_brand || null, b.vehicle_model || null, b.vehicle_color || null, b.vehicle_number || null, b.rc_book_number || null, b.insurance_number || null, b.insurance_expiry_date || null, b.pollution_certificate_number || null,
+        b.vehicle_front_photo || null, b.vehicle_back_photo || null, b.rc_book_image || null, b.insurance_document_image || null,
+        b.license_number || null, b.license_holder_name || null, b.license_expiry_date || null, b.license_front_image || null, b.license_back_image || null, b.driving_experience || null,
+        b.aadhaar_number || null, b.pan_number || null, b.aadhaar_front_url || null, b.aadhaar_back_url || null, b.pan_card_url || null, b.selfie_verification_url || null, b.police_verification_certificate || null, b.background_verification_status || 'Pending', b.kyc_verification_status || 'Pending',
+        b.bank_name || null, b.account_holder_name || null, b.bank_account_number || null, b.ifsc_code || null, b.branch_name || null, b.upi_id || null,
+        b.wallet_balance || 0, b.pending_earnings || 0, b.total_earnings || b.earnings || 0, b.daily_earnings || 0, b.weekly_earnings || 0, b.monthly_earnings || 0, b.incentive_amount || 0, b.bonus_amount || 0,
+        b.online_status || 'Offline', b.availability_schedule || null, b.working_days || null, b.shift_timing || null, b.current_location || null, b.break_time_status || null,
+        b.assigned_delivery_area || null, b.delivery_radius || null, b.preferred_delivery_zone || null, b.city_coverage || null, b.area_coverage || null, b.zone_status || 'Active',
+        b.status || 'Pending'
+      ]
     );
-    res.status(201).json({ message: 'Delivery partner registered.', id: result.insertId });
+    await syncUserForEntity('delivery_partners', result.insertId, 'delivery');
+    res.status(201).json({ message: 'Delivery partner registered.', id: result.insertId, delivery_partner_code });
   } catch (error) {
     res.status(500).json({ message: 'Error registering delivery partner.', error: error.message });
   }
@@ -599,11 +637,47 @@ exports.createDeliveryPartner = async (req, res) => {
 exports.updateDeliveryPartner = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, mobile, vehicle_type, vehicle_number, license_number, aadhaar_number, status, earnings, total_deliveries } = req.body;
-    await pool.execute(
-      "UPDATE delivery_partners SET name = ?, mobile = ?, vehicle_type = ?, vehicle_number = ?, license_number = ?, aadhaar_number = ?, status = ?, earnings = ?, total_deliveries = ? WHERE id = ?",
-      [name, mobile, vehicle_type, vehicle_number, license_number, aadhaar_number, status, earnings || 0.00, total_deliveries || 0, id]
-    );
+    const b = req.body;
+
+    let query = `UPDATE delivery_partners SET
+      name = ?, father_husband_name = ?, gender = ?, date_of_birth = ?, age = ?, marital_status = ?, blood_group = ?,
+      mobile = ?, alt_mobile = ?, whatsapp_number = ?, email = ?, emergency_contact = ?,
+      door_number = ?, street_name = ?, area_name = ?, landmark = ?, city = ?, district = ?, state = ?, pincode = ?, country = ?, latitude = ?, longitude = ?, map_link = ?,
+      username = ?, otp_verified = ?, email_verified = ?, device_id = ?, login_status = ?, account_status = ?,
+      vehicle_type = ?, vehicle_brand = ?, vehicle_model = ?, vehicle_color = ?, vehicle_number = ?, rc_book_number = ?, insurance_number = ?, insurance_expiry_date = ?, pollution_certificate_number = ?,
+      license_number = ?, license_holder_name = ?, license_expiry_date = ?, driving_experience = ?,
+      aadhaar_number = ?, pan_number = ?, background_verification_status = ?, kyc_verification_status = ?,
+      bank_name = ?, account_holder_name = ?, bank_account_number = ?, ifsc_code = ?, branch_name = ?, upi_id = ?,
+      wallet_balance = ?, pending_earnings = ?, earnings = ?, daily_earnings = ?, weekly_earnings = ?, monthly_earnings = ?, incentive_amount = ?, bonus_amount = ?, total_deliveries = ?,
+      online_status = ?, availability_schedule = ?, working_days = ?, shift_timing = ?, current_location = ?, break_time_status = ?,
+      assigned_delivery_area = ?, delivery_radius = ?, preferred_delivery_zone = ?, city_coverage = ?, area_coverage = ?, zone_status = ?,
+      status = ?`;
+
+    let params = [
+      b.name || null, b.father_husband_name || null, b.gender || 'Male', b.date_of_birth || null, b.age || null, b.marital_status || 'Single', b.blood_group || null,
+      b.mobile || null, b.alt_mobile || null, b.whatsapp_number || null, b.email || null, b.emergency_contact || null,
+      b.door_number || null, b.street_name || null, b.area_name || null, b.landmark || null, b.city || null, b.district || null, b.state || null, b.pincode || null, b.country || 'India', b.latitude || null, b.longitude || null, b.map_link || null,
+      b.username || null, b.otp_verified ? 1 : 0, b.email_verified ? 1 : 0, b.device_id || null, b.login_status || 'Active', b.account_status || 'Pending',
+      b.vehicle_type || null, b.vehicle_brand || null, b.vehicle_model || null, b.vehicle_color || null, b.vehicle_number || null, b.rc_book_number || null, b.insurance_number || null, b.insurance_expiry_date || null, b.pollution_certificate_number || null,
+      b.license_number || null, b.license_holder_name || null, b.license_expiry_date || null, b.driving_experience || null,
+      b.aadhaar_number || null, b.pan_number || null, b.background_verification_status || 'Pending', b.kyc_verification_status || 'Pending',
+      b.bank_name || null, b.account_holder_name || null, b.bank_account_number || null, b.ifsc_code || null, b.branch_name || null, b.upi_id || null,
+      b.wallet_balance || 0, b.pending_earnings || 0, b.total_earnings || b.earnings || 0, b.daily_earnings || 0, b.weekly_earnings || 0, b.monthly_earnings || 0, b.incentive_amount || 0, b.bonus_amount || 0, b.total_deliveries || 0,
+      b.online_status || 'Offline', b.availability_schedule || null, b.working_days || null, b.shift_timing || null, b.current_location || null, b.break_time_status || null,
+      b.assigned_delivery_area || null, b.delivery_radius || null, b.preferred_delivery_zone || null, b.city_coverage || null, b.area_coverage || null, b.zone_status || 'Active',
+      b.status || 'Pending'
+    ];
+
+    if (b.password) {
+      query += `, password = ?`;
+      params.push(hashPassword(b.password));
+    }
+
+    query += ` WHERE id = ?`;
+    params.push(id);
+
+    await pool.execute(query, params);
+    await syncUserForEntity('delivery_partners', id, 'delivery');
     res.json({ message: 'Delivery partner profile updated.' });
   } catch (error) {
     res.status(500).json({ message: 'Error updating delivery partner.', error: error.message });
