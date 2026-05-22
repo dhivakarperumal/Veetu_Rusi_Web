@@ -1,5 +1,41 @@
 const pool = require('../config/db');
 
+const parseJsonField = (value) => {
+    if (value === null || value === undefined) return null;
+    if (typeof value === 'object') return value;
+
+    try {
+        return JSON.parse(value);
+    } catch {
+        return value;
+    }
+};
+
+const serializeJsonField = (value) => {
+    if (value === null || value === undefined) return null;
+    if (typeof value === 'string') {
+        try {
+            JSON.parse(value);
+            return value;
+        } catch {
+            return JSON.stringify(value);
+        }
+    }
+    return JSON.stringify(value);
+};
+
+const generateNextProductCode = async () => {
+    const [products] = await pool.execute(
+        'SELECT product_code FROM products WHERE product_code LIKE "SP%" ORDER BY id DESC LIMIT 1'
+    );
+    if (products.length === 0) return 'SP001';
+
+    const lastCode = products[0].product_code || '';
+    const numeric = parseInt(lastCode.replace(/^SP/i, ''), 10);
+    const nextNumber = Number.isInteger(numeric) ? numeric + 1 : 1;
+    return `SP${String(nextNumber).padStart(3, '0')}`;
+};
+
 // Get all products (with filters)
 exports.getAllProducts = async (req, res) => {
     try {
@@ -23,7 +59,12 @@ exports.getAllProducts = async (req, res) => {
         query += ' ORDER BY created_at DESC';
 
         const [products] = await pool.execute(query, params);
-        res.json(products);
+        const normalizedProducts = products.map((product) => ({
+            ...product,
+            variants: parseJsonField(product.variants)
+        }));
+
+        res.json(normalizedProducts);
     } catch (error) {
         console.error('Error fetching products:', error);
         res.status(500).json({ message: 'Failed to fetch products', error: error.message });
@@ -40,7 +81,11 @@ exports.getProductById = async (req, res) => {
             return res.status(404).json({ message: 'Product not found' });
         }
 
-        res.json(products[0]);
+        const product = products[0];
+        res.json({
+            ...product,
+            variants: parseJsonField(product.variants)
+        });
     } catch (error) {
         console.error('Error fetching product:', error);
         res.status(500).json({ message: 'Failed to fetch product', error: error.message });
@@ -100,7 +145,9 @@ exports.createProduct = async (req, res) => {
             });
         }
 
-        // Insert product
+        // Determine product code and insert product
+        const finalProductCode = product_code || await generateNextProductCode();
+
         const [result] = await pool.execute(
             `INSERT INTO products (
                 name, description, category, product_type, subcategory, mrp, offer, offer_price,
@@ -113,7 +160,7 @@ exports.createProduct = async (req, res) => {
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
             [
                 name, description, category, product_type || 'Cooked Food', subcategory || null,
-                mrp, offer || 0, offer_price || mrp, product_code || null, total_stock || 0,
+                mrp, offer || 0, offer_price || mrp, finalProductCode, total_stock || 0,
                 rating || 5, status || 'Active', material || null, nutrition_info || null,
                 storage_instructions || 'Keep Refrigerated', presentation_style || null,
                 portion_format || null, service_type || null, packaging_notes || null,
@@ -131,7 +178,7 @@ exports.createProduct = async (req, res) => {
         res.status(201).json({
             message: 'Product created successfully',
             id: result.insertId,
-            product_code: product_code || `SP${result.insertId}`
+            product_code: finalProductCode
         });
     } catch (error) {
         console.error('Error creating product:', error);
@@ -174,7 +221,7 @@ exports.updateProduct = async (req, res) => {
                 product_code, total_stock, rating, status, material, nutrition_info, storage_instructions,
                 presentation_style, portion_format, service_type, packaging_notes, dietary_tag, heat_profile,
                 serving_size, prep_time, ingredients, spice_level, shelf_life_days, net_weight, package_count,
-                packaging_type, manufacture_date, variants ? JSON.stringify(variants) : null, id
+                packaging_type, manufacture_date, serializeJsonField(variants), id
             ]
         );
 

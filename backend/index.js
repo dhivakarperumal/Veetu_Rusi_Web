@@ -25,17 +25,24 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-const server = app.listen(port, async () => {
-  console.log(`Backend listening on http://localhost:${port}`);
-  
-  // Run migrations
-  await createProductsTable();
-});
+const startServer = async () => {
+  try {
+    await createProductsTable();
+    const server = app.listen(port, () => {
+      console.log(`Backend listening on http://localhost:${port}`);
+    });
 
-server.on('error', (err) => {
-  if (err.code === 'EADDRINUSE') {
-    console.error(`Port ${port} is already in use. Please stop the process using it or set a different PORT in .env.`);
+    server.on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        console.error(`Port ${port} is already in use. Please stop the process using it or set a different PORT in .env.`);
+        process.exit(1);
+      }
+      throw err;
+    });
+  } catch (error) {
+    console.error('Failed to start backend:', error);
     process.exit(1);
   }
-  throw err;
-});
+};
+
+startServer();
