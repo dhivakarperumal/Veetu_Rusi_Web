@@ -609,7 +609,30 @@ exports.deleteRestaurant = async (req, res) => {
 // ==================== DELIVERY PARTNER MANAGEMENT ====================
 exports.getDeliveryPartners = async (req, res) => {
   try {
-    const [rows] = await pool.execute("SELECT * FROM delivery_partners ORDER BY created_at DESC");
+    const currentUserId = req.user?.user_id || null;
+    let rows;
+
+    if (req.user?.role !== 'superadmin') {
+      if (currentUserId) {
+        const [filtered] = await pool.execute(
+          "SELECT * FROM delivery_partners WHERE created_by_user_id = ? OR created_by_id = ? ORDER BY created_at DESC",
+          [currentUserId, req.user.id]
+        );
+        rows = filtered;
+      } else if (req.user?.id) {
+        const [filtered] = await pool.execute(
+          "SELECT * FROM delivery_partners WHERE created_by_id = ? ORDER BY created_at DESC",
+          [req.user.id]
+        );
+        rows = filtered;
+      } else {
+        rows = [];
+      }
+    } else {
+      const [all] = await pool.execute("SELECT * FROM delivery_partners ORDER BY created_at DESC");
+      rows = all;
+    }
+
     res.json(rows);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving delivery partners.', error: error.message });
