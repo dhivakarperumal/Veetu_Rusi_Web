@@ -14,40 +14,28 @@ import {
   X,
   AlertTriangle,
   TrendingDown,
+  ChefHat,
 } from "lucide-react";
 
 import { useAuth } from "../PrivateRouter/AuthContext";
 
 const pageTitles = {
-  "/admin": "Dashboard",
-  "/admin/products/all": "All Products",
-  "/admin/products/add": "Add Product",
-  "/admin/products/edit": "Edit Product",
-  "/admin/products/category": "Categories",
-  "/admin/products/stock": "Stock Details",
-  "/admin/products/stock/add": "Add Stock",
-  "/admin/products": "Inventory",
-  "/admin/orders/create": "Billing",
-  "/admin/orders/new": "New Orders",
-  "/admin/orders/all": "All Orders",
-  "/admin/orders/delivery": "Delivery Orders",
-  "/admin/orders/cancelled": "Cancelled Orders",
-  "/admin/orders": "Orders",
-  "/admin/users/all": "Users",
-  "/admin/users/new": "New Users",
-  "/admin/users": "Users",
-  "/admin/billing": "Billing",
-  "/admin/dealers": "Dealers",
-  "/admin/dealers/add": "Add Dealer",
-  "/admin/invoices/add": "Add Invoice",
-  "/admin/reviews": "Reviews",
-  "/admin/reports": "Reports",
-  "/admin/settings": "Settings",
-  "/admin/profile": "Profile",
-  "/admin/settings/profile": "Profile",
+  "/chef": "Chef Dashboard",
+  "/chef/analytics": "Analytics Dashboard",
+  "/chef/add-products": "Add Products",
+  "/chef/recipes": "Recipe Details",
+  "/chef/upload-videos": "Food Videos",
+  "/chef/social-media": "Social Media",
+  "/chef/daily-menu": "Daily Menu",
+  "/chef/meal-slots": "Meal Slots",
+  "/chef/preorders": "Preorders",
+  "/chef/delivery-settings": "Delivery Settings",
+  "/chef/earnings": "Wallet & Earnings",
+  "/chef/orders": "Orders",
+  "/chef/profile": "Profile",
 };
 
-const Header = ({ onMenuClick }) => {
+const ChefHeader = ({ onMenuClick }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
@@ -77,7 +65,11 @@ const Header = ({ onMenuClick }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const prefix = location.pathname.startsWith("/superadmin") ? "/superadmin" : "/admin";
+  const prefix = location.pathname.startsWith("/superadmin")
+    ? "/superadmin"
+    : location.pathname.startsWith("/chef")
+    ? "/chef"
+    : "/admin";
   const getDynamicPath = (path) => {
     if (!path) return path;
     if (path.startsWith("/admin")) {
@@ -290,7 +282,7 @@ const Header = ({ onMenuClick }) => {
 
   return (
     <header className="sticky top-0 z-30 
-      bg-gradient-to-r from-white via-white to-blue-50/30 backdrop-blur-md
+      bg-linear-to-r from-white via-white to-blue-50/30 backdrop-blur-md
       border-b border-slate-200/60
       shadow-[0_4px_30px_rgba(0,0,0,0.04)]">
 
@@ -312,8 +304,8 @@ const Header = ({ onMenuClick }) => {
               text-slate-800 tracking-tight truncate leading-none">
               {getPageTitle()}
             </h1>
-            <p className="hidden sm:block text-[10px] text-blue-600 font-bold uppercase tracking-[0.2em] mt-1 opacity-70">
-              Veetu Rusi Artisan Admin
+            <p className="hidden sm:block text-[10px] text-emerald-600 font-bold uppercase tracking-[0.2em] mt-1 opacity-70">
+              Veetu Rusi Chef Portal
             </p>
           </div>
         </div>
@@ -332,8 +324,8 @@ const Header = ({ onMenuClick }) => {
                   value={searchQuery}
                   onChange={handleSearchInput}
                   onFocus={() => searchQuery && setShowSearchResults(true)}
-                  placeholder="Order ID, name, phone..."
-                  className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-8 py-3 text-sm focus:outline-none focus:ring-3 focus:ring-gray-500/10 focus:border-gray-300 text-slate-700 transition-all"
+                  placeholder="Search recipes, orders, customers..."
+                  className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-8 py-3 text-sm focus:outline-none focus:ring-3 focus:ring-emerald-500/10 focus:border-emerald-300 text-slate-700 transition-all"
                 />
                 {searchQuery && (
                   <button onClick={clearSearch} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700">
@@ -343,11 +335,11 @@ const Header = ({ onMenuClick }) => {
 
                 {/* Search Results Dropdown */}
                 {showSearchResults && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-100 rounded-2xl shadow-2xl z-[200] overflow-hidden">
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-100 rounded-2xl shadow-2xl z-200 overflow-hidden">
                     {searchLoading ? (
                       <div className="px-4 py-3 text-xs text-slate-400 font-bold">Searching...</div>
                     ) : searchResults.length > 0 ? (
-                      <div className="divide-y divide-slate-50 max-h-[320px] overflow-y-auto">
+                      <div className="divide-y divide-slate-50 max-h-80 overflow-y-auto">
                         <div className="px-4 py-2 bg-slate-50">
                           <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{searchResults.length} Result{searchResults.length > 1 ? 's' : ''} found</p>
                         </div>
@@ -407,10 +399,10 @@ const Header = ({ onMenuClick }) => {
             <button
               onClick={() => { setShowLowStock(p => !p); setShowNotifications(false); }}
               className={`relative p-2 rounded-xl transition-all active:scale-95 border
-              ${showLowStock ? 'bg-amber-50 text-amber-600 border-amber-200 shadow-md' : 'bg-white text-slate-500 hover:bg-amber-50 hover:text-amber-500 border-slate-200 shadow-sm'}`}
-              title="Low Stock Alerts"
+              ${showLowStock ? 'bg-emerald-50 text-emerald-600 border-emerald-200 shadow-md' : 'bg-white text-slate-500 hover:bg-emerald-50 hover:text-emerald-500 border-slate-200 shadow-sm'}`}
+              title="Menu Alerts"
             >
-              <AlertTriangle className="w-5 h-5" />
+              <ChefHat className="w-5 h-5" />
               {lowStockItems.length > 0 && (
                 <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[9px] font-bold text-white ring-2 ring-white">
                   {lowStockItems.length > 9 ? '9+' : lowStockItems.length}
@@ -422,17 +414,17 @@ const Header = ({ onMenuClick }) => {
               <div className="absolute right-0 mt-4 w-80 bg-white border border-slate-100 rounded-2xl shadow-2xl z-50 overflow-hidden">
 
                   {/* Header */}
-                  <div className="px-5 py-4 border-b border-slate-50 flex items-center justify-between bg-amber-50">
+                  <div className="px-5 py-4 border-b border-slate-50 flex items-center justify-between bg-emerald-50">
                     <div className="flex items-center gap-2">
-                      <AlertTriangle className="w-4 h-4 text-amber-500" />
-                      <h3 className="text-sm font-black text-slate-800 uppercase tracking-tight">Low Stock</h3>
+                      <ChefHat className="w-4 h-4 text-emerald-500" />
+                      <h3 className="text-sm font-black text-slate-800 uppercase tracking-tight">Menu Alerts</h3>
                     </div>
-                    <span className="text-[10px] font-black bg-amber-100 text-amber-700 px-2.5 py-1 rounded-lg uppercase">
+                    <span className="text-[10px] font-black bg-emerald-100 text-emerald-700 px-2.5 py-0.5 rounded-lg uppercase">
                       {lowStockItems.length} Alert{lowStockItems.length !== 1 ? 's' : ''}
                     </span>
                   </div>
 
-                  <div className="max-h-[400px] overflow-y-auto divide-y divide-slate-50">
+                  <div className="max-h-100 overflow-y-auto divide-y divide-slate-50">
                     {lowStockItems.length > 0 ? lowStockItems.map(product => {
                       const stock = parseInt(product.total_stock ?? product.stock ?? 0);
                       const isOut = stock <= 0;
@@ -466,8 +458,8 @@ const Header = ({ onMenuClick }) => {
                       );
                     }) : (
                       <div className="px-6 py-10 text-center">
-                        <Package className="mx-auto w-10 h-10 opacity-10 mb-3" />
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">All stock healthy</p>
+                        <ChefHat className="mx-auto w-10 h-10 opacity-10 mb-3" />
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No menu alerts</p>
                       </div>
                     )}
                   </div>
@@ -475,9 +467,9 @@ const Header = ({ onMenuClick }) => {
                   <Link
                     to={getDynamicPath("/admin/products/stock")}
                     onClick={() => setShowLowStock(false)}
-                    className="block w-full py-3.5 text-center text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] bg-amber-50/60 hover:bg-amber-50 transition-colors border-t border-slate-50"
+                    className="block w-full py-3.5 text-center text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] bg-emerald-50/60 hover:bg-emerald-50 transition-colors border-t border-slate-50"
                   >
-                    View Full Stock Report →
+                    View Menu Report →
                   </Link>
                 </div>
             )}
@@ -506,14 +498,14 @@ const Header = ({ onMenuClick }) => {
 
                   <div className="px-5 py-4 border-b border-slate-50 flex items-center justify-between bg-white sticky top-0">
                     <h3 className="text-sm font-black text-slate-800 uppercase tracking-tight">
-                      New Orders
+                      Chef Orders
                     </h3>
-                    <span className="text-[10px] font-black bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg uppercase">
+                    <span className="text-[10px] font-black bg-emerald-50 text-emerald-600 px-2.5 py-1 rounded-lg uppercase">
                       {(notifications.today?.length || 0) + (notifications.earlier?.length || 0)} Pending
                     </span>
                   </div>
 
-                  <div className="max-h-[450px] overflow-y-auto custom-scrollbar">
+                  <div className="max-h-112.5 overflow-y-auto custom-scrollbar">
                     {notifications.today?.length > 0 || notifications.earlier?.length > 0 ? (
                       <div className="divide-y divide-slate-50">
                         {/* Today Section */}
@@ -605,9 +597,9 @@ const Header = ({ onMenuClick }) => {
                     <Link
                       to={getDynamicPath("/admin/orders/new")}
                       onClick={() => setShowNotifications(false)}
-                      className="block w-full py-4 text-center text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] bg-blue-50/50 hover:bg-blue-50 transition-colors border-t border-slate-50"
+                      className="block w-full py-4 text-center text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] bg-emerald-50/50 hover:bg-emerald-50 transition-colors border-t border-slate-50"
                     >
-                      View All Manifests
+                      View All Orders
                     </Link>
                   )}
                 </div>
@@ -691,4 +683,4 @@ const Header = ({ onMenuClick }) => {
   );
 };
 
-export default Header;
+export default ChefHeader;
