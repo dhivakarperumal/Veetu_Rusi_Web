@@ -150,38 +150,33 @@ exports.createProduct = async (req, res) => {
         let homeChef = null;
         let finalChefId = chef_id;
 
-        if (!finalChefId && req.user && req.user.role === 'chef') {
+        const candidateChefId = chef_id || req.user?.user_id || req.user?.id || null;
+        const candidateEmail = req.user?.email || null;
+        const candidatePhone = req.user?.phone || null;
+
+        if (candidateChefId || candidateEmail || candidatePhone) {
             const [homeChefs] = await pool.execute(
                 `SELECT hc.*, u.user_id AS chef_user_id
                 FROM home_chefs hc
                 LEFT JOIN users u ON (u.email = hc.email OR u.phone = hc.mobile)
-                WHERE u.user_id = ? OR hc.email = ? OR hc.mobile = ?
+                WHERE hc.chef_id = ?
+                   OR hc.email = ?
+                   OR hc.mobile = ?
+                   OR u.user_id = ?
+                   OR u.id = ?
                 LIMIT 1`,
-                [req.user.user_id, req.user.email, req.user.phone]
+                [candidateChefId, candidateEmail, candidatePhone, candidateChefId, candidateChefId]
             );
+
             if (homeChefs.length > 0) {
                 homeChef = homeChefs[0];
                 finalChefId = homeChef.chef_id;
             }
         }
 
-        if (finalChefId) {
-            const [homeChefs] = await pool.execute(
-                `SELECT hc.*, u.user_id AS chef_user_id
-                FROM home_chefs hc
-                LEFT JOIN users u ON (u.email = hc.email OR u.phone = hc.mobile)
-                WHERE hc.chef_id = ?
-                LIMIT 1`,
-                [finalChefId]
-            );
-            if (homeChefs.length > 0) {
-                homeChef = homeChefs[0];
-            }
-        }
-
         if (!homeChef) {
             return res.status(400).json({
-                message: 'Home chef not found for the provided chef_id'
+                message: 'Home chef not found. Send a valid chef_id or use a logged-in chef account.'
             });
         }
         const finalChefUserId = homeChef.chef_user_id || null;
