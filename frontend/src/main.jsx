@@ -122,9 +122,9 @@ const router = createBrowserRouter([
   },
 
   {
-    path: "/homechef",
+    path: "/chef",
     element: (
-      <PrivateRoute allowedRoles={["homechef"]}>
+      <PrivateRoute allowedRoles={["chef"]}>
         <AdminProvider>
           <HomeChefPanel />
         </AdminProvider>
