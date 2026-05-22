@@ -25,7 +25,7 @@ import { toast, Toaster } from "react-hot-toast";
 import imageCompression from "browser-image-compression";
 
 // Helper: Color to Name Utility
-const boutiqueColors = [
+const tagColors = [
     { name: "Pure Red", hex: "#FF0000" },
     { name: "Crimson", hex: "#DC143C" },
     { name: "Deep Maroon", hex: "#800000" },
@@ -68,9 +68,9 @@ const getNearestColorName = (hex) => {
     const b1 = parseInt(hex.substring(4, 6), 16);
 
     let minDistance = Infinity;
-    let nearestName = "Custom Shade";
+    let nearestName = "Custom Tag";
 
-    boutiqueColors.forEach(color => {
+    tagColors.forEach(color => {
         const h = color.hex.replace("#", "");
         const r2 = parseInt(h.substring(0, 2), 16);
         const g2 = parseInt(h.substring(2, 4), 16);
@@ -104,7 +104,7 @@ const AddProducts = () => {
     const [formData, setFormData] = useState({
         name: "",
         description: "",
-        category: "Saree",
+        category: "Cooked Food",
         product_type: "Cooked Food", // Cooked Food | Masala / Pre-cooked
         subcategory: "",
         mrp: "",
@@ -115,21 +115,14 @@ const AddProducts = () => {
         rating: "5",
         status: "Active",
         material: "",
-        wash_care: "Dry Clean Only",
-        // Traditional Wear Specs
-        saree_length: "5.5 Meters",
-        blouse_length: "0.8 Meters",
-        top_length: "",
-        bottom_length: "",
-        dupatta_length: "",
-        gown_length: "",
-        sleeve_type: "",
-        neck_type: "",
-        fit_type: "",
-        work_type: "Embroidered",
-        zari_color: "Gold Zari",
-        age: "",
-        // HomeChef product fields
+        nutrition_info: "",
+        storage_instructions: "Keep Refrigerated",
+        presentation_style: "",
+        portion_format: "",
+        service_type: "",
+        packaging_notes: "",
+        dietary_tag: "",
+        heat_profile: "",
         serving_size: "",
         prep_time: "",
         ingredients: "",
@@ -179,21 +172,9 @@ const AddProducts = () => {
         }
     }, [variants, isStockManuallyEdited]);
 
-    // Size Logic based on Category
+    // Portion size logic for chef products
     const getSizesByCategory = () => {
-        // For food products, return portion/pack size options
-        const cat = (formData.category || '').toLowerCase();
-        if (cat.includes('cooked') || cat.includes('masala') || cat.includes('snack') || cat.includes('beverage')) {
-            return ["Single", "Half", "Family", "Party", "250g", "500g", "1kg"];
-        }
-        switch (formData.category) {
-            case "Saree": return ["Free Size"];
-            case "Lehenga":
-            case "Salwar":
-            case "Gown": return ["XS", "S", "M", "L", "XL", "XXL"];
-            case "Material": return ["Free Size"];
-            default: return [];
-        }
+        return ["Single", "Half", "Family", "Party", "250g", "500g", "1kg"];
     };
 
     const sizeOptions = getSizesByCategory();
@@ -213,7 +194,7 @@ const AddProducts = () => {
                         setFormData({
                             name: p.name || "",
                             description: p.description || "",
-                            category: p.category || "Saree",
+                            category: p.category || "Cooked Food",
                             subcategory: p.subcategory || "",
                             mrp: p.mrp?.toString() || "",
                             offer: p.offer?.toString() || "",
@@ -223,19 +204,23 @@ const AddProducts = () => {
                             rating: p.rating?.toString() || "5",
                             status: p.status || "Active",
                             material: p.material || "",
-                            wash_care: p.wash_care || "Dry Clean Only",
-                            saree_length: p.saree_length || "",
-                            blouse_length: p.blouse_length || "",
-                            top_length: p.top_length || "",
-                            bottom_length: p.bottom_length || "",
-                            dupatta_length: p.dupatta_length || "",
-                            gown_length: p.gown_length || "",
-                            sleeve_type: p.sleeve_type || "",
-                            neck_type: p.neck_type || "",
-                            fit_type: p.fit_type || "",
-                            work_type: p.work_type || "",
-                            zari_color: p.zari_color || "",
-                            age: p.age || "",
+                            nutrition_info: p.nutrition_info || "",
+                            storage_instructions: p.storage_instructions || "Keep Refrigerated",
+                            presentation_style: p.presentation_style || "",
+                            portion_format: p.portion_format || "",
+                            service_type: p.service_type || "",
+                            packaging_notes: p.packaging_notes || "",
+                            dietary_tag: p.dietary_tag || "",
+                            heat_profile: p.heat_profile || "",
+                            serving_size: p.serving_size || "",
+                            prep_time: p.prep_time || "",
+                            ingredients: p.ingredients || "",
+                            spice_level: p.spice_level || "Medium",
+                            shelf_life_days: p.shelf_life_days || "",
+                            net_weight: p.net_weight || "",
+                            package_count: p.package_count || "",
+                            packaging_type: p.packaging_type || "Pouch",
+                            manufacture_date: p.manufacture_date || "",
                         });
                         if (p.variants) setVariants(Array.isArray(p.variants) ? p.variants : JSON.parse(p.variants));
                     } catch (e) {
@@ -252,7 +237,7 @@ const AddProducts = () => {
                     setCategories(Array.isArray(catRes.data) ? catRes.data : []);
                     setFormData(prev => ({
                         ...prev,
-                        category: Array.isArray(catRes.data) && catRes.data[0]?.name ? catRes.data[0].name : "Saree",
+                        category: Array.isArray(catRes.data) && catRes.data[0]?.name ? catRes.data[0].name : "Cooked Food",
                         product_code: codeRes.data.latestCode || "SP001"
                     }));
                     setFetching(false);
@@ -348,7 +333,7 @@ const AddProducts = () => {
 
             // Limit to 5 images per variant for performance
             if ((variants[vIndex].images?.length || 0) + files.length > 5) {
-                toast.error("Boutique limit: Max 5 images per shade.");
+                toast.error("Max 5 images per variant.");
                 return;
             }
 
@@ -423,7 +408,7 @@ const AddProducts = () => {
     if (fetching) return (
         <div className="flex flex-col items-center justify-center py-20">
             <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin mb-4"></div>
-            <p className="text-gray-500 font-bold">Fetching boutique details...</p>
+            <p className="text-gray-500 font-bold">Fetching menu details...</p>
         </div>
     );
     return (
@@ -442,8 +427,8 @@ const AddProducts = () => {
                 </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 space-y-8">
+            <form onSubmit={handleSubmit} className="w-full">
+                <div className="space-y-8">
                     {/* Primary Categorization & Identity */}
                     <div className="bg-white p-6 sm:p-10 rounded-[2.5rem] border border-gray-100 shadow-sm relative overflow-hidden group">
                         <div className="absolute -top-10 -right-10 p-8 opacity-[0.03] text-blue-600">
@@ -665,11 +650,11 @@ const AddProducts = () => {
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Nutrition / Dietary Info</label>
-                                    <input type="text" name="work_type" value={formData.work_type} onChange={handleFormChange} placeholder="e.g. 550 kcal, High Protein" className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800" />
+                                    <input type="text" name="nutrition_info" value={formData.nutrition_info} onChange={handleFormChange} placeholder="e.g. 550 kcal, High Protein" className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800" />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-1.5"><FiDroplet className="text-emerald-500" /> Storage Instructions</label>
-                                    <select name="wash_care" value={formData.wash_care} onChange={handleFormChange} className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 cursor-pointer">
+                                    <select name="storage_instructions" value={formData.storage_instructions} onChange={handleFormChange} className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 cursor-pointer">
                                         <option value="Keep Refrigerated">Keep Refrigerated</option>
                                         <option value="Room Temperature">Room Temperature</option>
                                         <option value="Keep Frozen">Keep Frozen</option>
@@ -689,7 +674,7 @@ const AddProducts = () => {
                     </div>
 
                     {/* Serving Guidelines */}
-                    <div className="bg-white p-6 sm:p-10 rounded-[2.5rem] border border-gray-100 shadow-sm relative overflow-hidden group">
+                    {/* <div className="bg-white p-6 sm:p-10 rounded-[2.5rem] border border-gray-100 shadow-sm relative overflow-hidden group">
                         <div className="absolute -bottom-10 -right-10 p-8 opacity-[0.03] text-emerald-600">
                             <FiMaximize size={200} />
                         </div>
@@ -704,8 +689,8 @@ const AddProducts = () => {
                                     <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Presentation Style</label>
                                     <input
                                         type="text"
-                                        name="top_length"
-                                        value={formData.top_length}
+                                        name="presentation_style"
+                                        value={formData.presentation_style}
                                         onChange={handleFormChange}
                                         placeholder="e.g. Plated, Boxed, Tray"
                                         className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
@@ -715,8 +700,8 @@ const AddProducts = () => {
                                     <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Portion Format</label>
                                     <input
                                         type="text"
-                                        name="bottom_length"
-                                        value={formData.bottom_length}
+                                        name="portion_format"
+                                        value={formData.portion_format}
                                         onChange={handleFormChange}
                                         placeholder="e.g. Single, Half, Family"
                                         className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
@@ -726,8 +711,8 @@ const AddProducts = () => {
                                     <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Service Type</label>
                                     <input
                                         type="text"
-                                        name="dupatta_length"
-                                        value={formData.dupatta_length}
+                                        name="service_type"
+                                        value={formData.service_type}
                                         onChange={handleFormChange}
                                         placeholder="e.g. Delivery, Dine-in, Takeaway"
                                         className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
@@ -737,8 +722,8 @@ const AddProducts = () => {
                                     <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Packaging Notes</label>
                                     <input
                                         type="text"
-                                        name="gown_length"
-                                        value={formData.gown_length}
+                                        name="packaging_notes"
+                                        value={formData.packaging_notes}
                                         onChange={handleFormChange}
                                         placeholder="e.g. Sealed tray, Vacuum pack"
                                         className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
@@ -748,8 +733,8 @@ const AddProducts = () => {
                                     <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Dietary Tag</label>
                                     <input
                                         type="text"
-                                        name="sleeve_type"
-                                        value={formData.sleeve_type}
+                                        name="dietary_tag"
+                                        value={formData.dietary_tag}
                                         onChange={handleFormChange}
                                         placeholder="e.g. Veg, Non-Veg, Vegan"
                                         className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
@@ -759,8 +744,8 @@ const AddProducts = () => {
                                     <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Heat Profile</label>
                                     <input
                                         type="text"
-                                        name="neck_type"
-                                        value={formData.neck_type}
+                                        name="heat_profile"
+                                        value={formData.heat_profile}
                                         onChange={handleFormChange}
                                         placeholder="e.g. Mild, Medium, Spicy"
                                         className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
@@ -768,11 +753,11 @@ const AddProducts = () => {
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </div> */}
                 </div>
 
                 {/* Inventory Manager */}
-                <div className="space-y-8">
+                {/* <div className="space-y-8">
                     <div className="flex items-center justify-between sticky top-25 z-20 bg-gray-50/90 backdrop-blur-md p-3 rounded-2xl border border-gray-100 shadow-sm">
                         <div className="flex items-center gap-2">
                             <FiBox className="text-orange-500" />
@@ -801,7 +786,7 @@ const AddProducts = () => {
                                             <select
                                                 value={v.colorName}
                                                 onChange={(e) => {
-                                                    const selected = boutiqueColors.find(bc => bc.name === e.target.value);
+                                                    const selected = tagColors.find(bc => bc.name === e.target.value);
                                                     if (selected) {
                                                         handleVariantChange(vIndex, "color", selected.hex);
                                                         handleVariantChange(vIndex, "colorName", selected.name);
@@ -812,8 +797,8 @@ const AddProducts = () => {
                                                 className="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-xl text-xs font-black text-slate-800 outline-none focus:bg-white focus:border-blue-500/30 transition-all uppercase tracking-widest shadow-inner cursor-pointer"
                                             >
                                                 <option value="">Select Serving Tag</option>
-                                                {boutiqueColors.map(bc => <option key={bc.hex} value={bc.name}>{bc.name}</option>)}
-                                                {v.colorName && !boutiqueColors.find(bc => bc.name === v.colorName) && <option value={v.colorName}>{v.colorName}</option>}
+                                                {tagColors.map(bc => <option key={bc.hex} value={bc.name}>{bc.name}</option>)}
+                                                {v.colorName && !tagColors.find(bc => bc.name === v.colorName) && <option value={v.colorName}>{v.colorName}</option>}
                                             </select>
                                         </div>
                                     </div>
@@ -822,7 +807,6 @@ const AddProducts = () => {
                                 <button type="button" onClick={() => removeVariant(vIndex)} className="text-gray-200 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"><FiTrash2 size={16} /></button>
                             </div>
 
-                            {/* Inventory per Portion */}
                             <div className="space-y-4 pt-2 border-t border-gray-50">
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
                                     Portion Stock Management
@@ -884,11 +868,9 @@ const AddProducts = () => {
                                     </label>
                                 )}
                             </div>
-
-
                         </div>
                     ))}
-                </div>
+                </div> */}
 
                 {/* Bottom Global Action Button */}
                 <div className="lg:col-span-3 pt-10 pb-20 border-t border-gray-100 mt-10">
