@@ -5,6 +5,43 @@ function hashPassword(password) {
   return crypto.createHash('sha256').update(password).digest('hex');
 }
 
+async function syncUserForEntity(tableName, id, role) {
+  try {
+    const [rows] = await pool.execute(`SELECT * FROM ${tableName} WHERE id = ?`, [id]);
+    if (!rows.length) return;
+    const entity = rows[0];
+    const status = entity.status;
+    const name = entity.owner_name || entity.name || 'User';
+    const email = entity.email;
+    const mobile = entity.mobile;
+    let password = entity.password;
+
+    if (!password) {
+      const plain = `${name.split(' ')[0]}@${(mobile || '0000').slice(-4)}`;
+      password = hashPassword(plain);
+    }
+
+    if (status === 'Approved' || status === 'Active') {
+      const [existing] = await pool.execute("SELECT id FROM users WHERE email = ?", [email]);
+      if (existing.length === 0) {
+        await pool.execute(
+          "INSERT INTO users (name, email, phone, password, role, active) VALUES (?, ?, ?, ?, ?, 1)",
+          [name, email, mobile, password, role]
+        );
+      } else {
+        await pool.execute(
+          "UPDATE users SET active = 1, role = ?, password = ?, name = ?, phone = ? WHERE email = ?",
+          [role, password, name, mobile, email]
+        );
+      }
+    } else if (status === 'Suspended' || status === 'Rejected' || status === 'Inactive') {
+      await pool.execute("UPDATE users SET active = 0 WHERE email = ?", [email]);
+    }
+  } catch (err) {
+    console.error(`Error syncing user for ${tableName}:`, err);
+  }
+}
+
 // ==================== DASHBOARD ANALYTICS ====================
 exports.getDashboardStats = async (req, res) => {
   try {
@@ -268,6 +305,7 @@ exports.createHomeChef = async (req, res) => {
       ]
     );
 
+    await syncUserForEntity('home_chefs', result.insertId, 'chef');
     res.status(201).json({ message: 'Home chef application submitted.', id: result.insertId });
   } catch (error) {
     res.status(500).json({ message: 'Error creating home chef.', error: error.message });
@@ -364,6 +402,7 @@ exports.updateHomeChef = async (req, res) => {
     params.push(id);
 
     await pool.execute(query, params);
+    await syncUserForEntity('home_chefs', id, 'chef');
     res.json({ message: 'Home chef updated successfully.' });
   } catch (error) {
     res.status(500).json({ message: 'Error updating home chef.', error: error.message });
@@ -375,6 +414,7 @@ exports.patchHomeChefStatus = async (req, res) => {
     const { id } = req.params;
     const { status } = req.body; // e.g. Approved, Suspended, Rejected
     await pool.execute("UPDATE home_chefs SET status = ? WHERE id = ?", [status, id]);
+    await syncUserForEntity('home_chefs', id, 'chef');
     res.json({ message: `Home chef status changed to ${status}.` });
   } catch (error) {
     res.status(500).json({ message: 'Error updating home chef status.', error: error.message });
@@ -448,6 +488,7 @@ exports.createRestaurant = async (req, res) => {
         verification_status || 'Pending', aadhaar_url || null, pan_url || null, gst_certificate_url || null, shop_license_url || null, restaurant_photos_urls || null, kitchen_photos_urls || null, signature_url || null
       ]
     );
+    await syncUserForEntity('restaurants', result.insertId, 'restaurant');
     res.status(201).json({ message: 'Restaurant created successfully.', id: result.insertId });
   } catch (error) {
     res.status(500).json({ message: 'Error creating restaurant.', error: error.message });
@@ -515,6 +556,7 @@ exports.updateRestaurant = async (req, res) => {
     params.push(id);
 
     await pool.execute(query, params);
+    await syncUserForEntity('restaurants', id, 'restaurant');
     res.json({ message: 'Restaurant updated successfully.' });
   } catch (error) {
     res.status(500).json({ message: 'Error updating restaurant.', error: error.message });
