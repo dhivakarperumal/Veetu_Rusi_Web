@@ -504,6 +504,7 @@ const FranchiseOwnerManagement = () => {
                       <table className="w-full text-left border-collapse">
                         <thead>
                           <tr className="bg-slate-700 text-slate-100 text-[10px] uppercase tracking-[0.2em] font-black">
+                            <th className="px-5 py-4 text-center">S.No</th>
                             <th className="px-5 py-4">Chef Name</th>
                             <th className="px-5 py-4">Mobile</th>
                             <th className="px-5 py-4">Email</th>
@@ -512,8 +513,9 @@ const FranchiseOwnerManagement = () => {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                          {linkedHomeChefs.map(chef => (
+                          {linkedHomeChefs.map((chef, index) => (
                             <tr key={chef.id} className="hover:bg-slate-50 transition-colors">
+                              <td className="px-5 py-4 text-xs font-bold text-slate-500 text-center">{index + 1}</td>
                               <td className="px-5 py-4 align-top">
                                 <div className="text-sm font-bold text-slate-800">{chef.name || chef.owner_name || "Unnamed Chef"}</div>
                                 <div className="text-xs text-slate-500">{chef.city ? `${chef.city}, ${chef.state}` : "—"}</div>
@@ -549,6 +551,7 @@ const FranchiseOwnerManagement = () => {
                       <table className="w-full text-left border-collapse">
                         <thead>
                           <tr className="bg-slate-700 text-slate-100 text-[10px] uppercase tracking-[0.2em] font-black">
+                            <th className="px-5 py-4 text-center">S.No</th>
                             <th className="px-5 py-4">Partner Name</th>
                             <th className="px-5 py-4">Mobile</th>
                             <th className="px-5 py-4">Email</th>
@@ -557,8 +560,9 @@ const FranchiseOwnerManagement = () => {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                          {linkedDeliveryPartners.map(partner => (
+                          {linkedDeliveryPartners.map((partner, index) => (
                             <tr key={partner.id} className="hover:bg-slate-50 transition-colors">
+                              <td className="px-5 py-4 text-xs font-bold text-slate-500 text-center">{index + 1}</td>
                               <td className="px-5 py-4 align-top">
                                 <div className="text-sm font-bold text-slate-800">{partner.name || "Unnamed Partner"}</div>
                                 <div className="text-xs text-slate-500">{partner.city ? `${partner.city}, ${partner.state}` : "—"}</div>
