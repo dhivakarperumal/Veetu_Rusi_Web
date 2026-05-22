@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import api from "../../api";
 import { toast } from "react-hot-toast";
 import {
   Search, Plus, Trash2, Edit2, Landmark, MapPin,
   CheckCircle, Copy, Eye, EyeOff, UserCheck, KeyRound, X,
-  List, LayoutGrid
+  Clock, List, LayoutGrid
 } from "lucide-react";
 
 const ITEMS_PER_PAGE = 8;
@@ -50,6 +50,10 @@ const FranchiseOwnerManagement = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [viewDetailsFranchise, setViewDetailsFranchise] = useState(null);
   const [activeDetailTab, setActiveDetailTab] = useState("franchise");
+  const [linkedHomeChefCount, setLinkedHomeChefCount] = useState(0);
+  const [linkedDeliveryPartnerCount, setLinkedDeliveryPartnerCount] = useState(0);
+  const [linkedHomeChefs, setLinkedHomeChefs] = useState([]);
+  const [linkedDeliveryPartners, setLinkedDeliveryPartners] = useState([]);
 
   // Approve modal: holds the franchise being approved + password input
   const [approveModal, setApproveModal] = useState(null); // { franchise } | null
@@ -64,8 +68,6 @@ const FranchiseOwnerManagement = () => {
   const [form, setForm] = useState(emptyForm);
   const [activeFormTab, setActiveFormTab] = useState("basic");
 
-  useEffect(() => { fetchFranchises(); }, []);
-
   const fetchFranchises = async () => {
     try {
       setLoading(true);
@@ -76,6 +78,43 @@ const FranchiseOwnerManagement = () => {
     finally { setLoading(false); }
   };
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { fetchFranchises(); }, []);
+
+  const fetchLinkedEntityCounts = async (franchise) => {
+    if (!franchise) return;
+    try {
+      const [homeChefRes, deliveryRes] = await Promise.all([
+        api.get("/superadmin/homechefs"),
+        api.get("/superadmin/delivery-partners")
+      ]);
+
+      const matcher = (item) =>
+        item.created_by_user_id === franchise.franch_user_id;
+
+      const homeChefs = homeChefRes.data.filter(matcher);
+      const deliveryPartners = deliveryRes.data.filter(matcher);
+
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setLinkedHomeChefs(homeChefs);
+      setLinkedDeliveryPartners(deliveryPartners);
+      setLinkedHomeChefCount(homeChefs.length);
+      setLinkedDeliveryPartnerCount(deliveryPartners.length);
+    } catch {
+      setLinkedHomeChefCount(0);
+      setLinkedDeliveryPartnerCount(0);
+    }
+  };
+
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    if (viewDetailsFranchise) {
+      fetchLinkedEntityCounts(viewDetailsFranchise);
+    }
+  }, [viewDetailsFranchise]);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     let filtered = franchises;
 
@@ -95,6 +134,7 @@ const FranchiseOwnerManagement = () => {
     setFilteredFranchises(filtered);
     setCurrentPage(1);
   }, [search, statusFilter, franchises]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -265,6 +305,20 @@ const FranchiseOwnerManagement = () => {
                 <MapPin className="w-4 h-4 text-rose-500" />
                 <span className="text-sm text-slate-500 font-semibold">{viewDetailsFranchise.city}, {viewDetailsFranchise.state}</span>
               </div>
+              <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs uppercase tracking-[0.24em] font-black text-slate-500">
+                <div className="bg-slate-100 border border-slate-200 rounded-2xl px-3 py-2 text-slate-700">
+                  User ID
+                  <div className="mt-1 text-[12px] font-bold text-slate-900 truncate">{viewDetailsFranchise.franch_user_id || viewDetailsFranchise.id}</div>
+                </div>
+                <div className="bg-slate-100 border border-slate-200 rounded-2xl px-3 py-2 text-slate-700">
+                  Home Chefs
+                  <div className="mt-1 text-[12px] font-bold text-slate-900">{linkedHomeChefCount}</div>
+                </div>
+                <div className="bg-slate-100 border border-slate-200 rounded-2xl px-3 py-2 text-slate-700">
+                  Delivery Partners
+                  <div className="mt-1 text-[12px] font-bold text-slate-900">{linkedDeliveryPartnerCount}</div>
+                </div>
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <span className={`text-[10px] font-black px-3 py-1.5 rounded-lg uppercase tracking-wider ${
@@ -304,6 +358,28 @@ const FranchiseOwnerManagement = () => {
               >
                 <UserCheck className="w-4 h-4" />
                 Owner Profile
+              </button>
+              <button
+                onClick={() => setActiveDetailTab("homechefs")}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all text-left ${
+                  activeDetailTab === "homechefs"
+                    ? "bg-[#1B4D22] text-white shadow-sm shadow-[#1B4D22]/20"
+                    : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+                }`}
+              >
+                <List className="w-4 h-4" />
+                Home Chefs
+              </button>
+              <button
+                onClick={() => setActiveDetailTab("deliverypartners")}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all text-left ${
+                  activeDetailTab === "deliverypartners"
+                    ? "bg-[#1B4D22] text-white shadow-sm shadow-[#1B4D22]/20"
+                    : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+                }`}
+              >
+                <MapPin className="w-4 h-4" />
+                Delivery Partners
               </button>
               <button
                 onClick={() => setActiveDetailTab("credentials")}
@@ -417,6 +493,88 @@ const FranchiseOwnerManagement = () => {
                       </button>
                     </div>
                   )}
+                </div>
+              )}
+
+              {activeDetailTab === "homechefs" && (
+                <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                  <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest border-b border-slate-100 pb-2">Linked Home Chefs</h3>
+                  <div className="grid grid-cols-1 gap-4">
+                    {linkedHomeChefs.length > 0 ? (
+                      linkedHomeChefs.map(chef => (
+                        <div key={chef.id} className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+                          <div className="flex items-center justify-between gap-4">
+                            <div>
+                              <p className="text-xs text-slate-400 uppercase tracking-[0.2em] font-bold">Chef Name</p>
+                              <p className="text-sm font-bold text-slate-800 mt-1">{chef.name || chef.owner_name || "Unnamed Chef"}</p>
+                            </div>
+                            <span className={`text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider ${
+                              chef.status === "Active" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+                            }`}>{chef.status || "Pending"}</span>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4 text-xs text-slate-500">
+                            <div>
+                              <p className="font-bold text-slate-800">Mobile</p>
+                              <p>{chef.mobile || "—"}</p>
+                            </div>
+                            <div>
+                              <p className="font-bold text-slate-800">Email</p>
+                              <p className="truncate" title={chef.email}>{chef.email || "—"}</p>
+                            </div>
+                            <div>
+                              <p className="font-bold text-slate-800">Chef Code</p>
+                              <p>{chef.chef_unique_code || chef.chef_id || "—"}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 text-slate-600">
+                        No home chefs are currently linked to this franchise.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {activeDetailTab === "deliverypartners" && (
+                <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                  <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest border-b border-slate-100 pb-2">Linked Delivery Partners</h3>
+                  <div className="grid grid-cols-1 gap-4">
+                    {linkedDeliveryPartners.length > 0 ? (
+                      linkedDeliveryPartners.map(partner => (
+                        <div key={partner.id} className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+                          <div className="flex items-center justify-between gap-4">
+                            <div>
+                              <p className="text-xs text-slate-400 uppercase tracking-[0.2em] font-bold">Partner Name</p>
+                              <p className="text-sm font-bold text-slate-800 mt-1">{partner.name || "Unnamed Partner"}</p>
+                            </div>
+                            <span className={`text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider ${
+                              partner.status === "Active" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+                            }`}>{partner.status || "Pending"}</span>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4 text-xs text-slate-500">
+                            <div>
+                              <p className="font-bold text-slate-800">Mobile</p>
+                              <p>{partner.mobile || "—"}</p>
+                            </div>
+                            <div>
+                              <p className="font-bold text-slate-800">Email</p>
+                              <p className="truncate" title={partner.email}>{partner.email || "—"}</p>
+                            </div>
+                            <div>
+                              <p className="font-bold text-slate-800">Vehicle</p>
+                              <p>{partner.vehicle_number || partner.vehicle_type || "—"}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 text-slate-600">
+                        No delivery partners are currently linked to this franchise.
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
