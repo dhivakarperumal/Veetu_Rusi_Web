@@ -321,15 +321,35 @@ const FranchiseOwnerManagement = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-            <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm">
-              <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Home Chefs</p>
-              <p className="text-4xl font-black text-slate-900 mt-4">{linkedHomeChefCount}</p>
-              <p className="mt-2 text-xs text-slate-500">Total linked home chefs for this franchise.</p>
+            <div className="relative overflow-hidden rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-slate-100 p-6 shadow-lg shadow-emerald-100/40">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.28em] text-emerald-700/70">Home Chefs</p>
+                  <p className="text-5xl font-black text-slate-900 mt-4">{linkedHomeChefCount}</p>
+                  <p className="mt-3 text-xs leading-5 text-slate-500 max-w-xs">
+                    Total linked home chefs for this franchise.
+                  </p>
+                </div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-3xl bg-white text-emerald-700 shadow-sm border border-emerald-200">
+                  <UserCheck className="w-6 h-6" />
+                </div>
+              </div>
+              <div className="pointer-events-none absolute -right-10 -top-8 text-[6rem] text-emerald-200 opacity-20">+</div>
             </div>
-            <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm">
-              <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Delivery Partners</p>
-              <p className="text-4xl font-black text-slate-900 mt-4">{linkedDeliveryPartnerCount}</p>
-              <p className="mt-2 text-xs text-slate-500">Total linked delivery partners for this franchise.</p>
+            <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-sky-50 via-white to-slate-100 p-6 shadow-lg shadow-slate-200/40">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.28em] text-slate-500">Delivery Partners</p>
+                  <p className="text-5xl font-black text-slate-900 mt-4">{linkedDeliveryPartnerCount}</p>
+                  <p className="mt-3 text-xs leading-5 text-slate-500 max-w-xs">
+                    Total linked delivery partners for this franchise.
+                  </p>
+                </div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-3xl bg-white text-slate-700 shadow-sm border border-slate-200">
+                  <MapPin className="w-6 h-6" />
+                </div>
+              </div>
+              <div className="pointer-events-none absolute -right-10 -top-8 text-[6rem] text-slate-200 opacity-20">•</div>
             </div>
           </div>
 
