@@ -181,6 +181,11 @@ const AddProducts = () => {
 
     // Size Logic based on Category
     const getSizesByCategory = () => {
+        // For food products, return portion/pack size options
+        const cat = (formData.category || '').toLowerCase();
+        if (cat.includes('cooked') || cat.includes('masala') || cat.includes('snack') || cat.includes('beverage')) {
+            return ["Single", "Half", "Family", "Party", "250g", "500g", "1kg"];
+        }
         switch (formData.category) {
             case "Saree": return ["Free Size"];
             case "Lehenga":
@@ -448,8 +453,8 @@ const AddProducts = () => {
                         <div className="relative z-10 space-y-8">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <span className="p-2.5 bg-blue-50 text-blue-600 rounded-xl"><FiLayers size={20} /></span>
-                                    <h2 className="text-2xl font-black text-slate-800 tracking-tight">Product Foundation</h2>
+                                    <span className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl"><FiLayers size={20} /></span>
+                                    <h2 className="text-2xl font-black text-slate-800 tracking-tight">Dish Details</h2>
                                 </div>
                                 <div className="flex items-center gap-2 p-3 bg-blue-50/50 rounded-2xl border border-blue-100">
                                     <FiHash className="text-blue-600" />
@@ -459,14 +464,21 @@ const AddProducts = () => {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div className="space-y-4">
-                                    <label className="text-[10px] sm:text-xs  font-black text-gray-400 uppercase tracking-widest ml-1">Main Collection Category *</label>
-                                    <select name="category" value={formData.category} onChange={handleFormChange} className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-[1.5rem] outline-none focus:bg-white focus:border-blue-500/20 transition-all text-base font-black text-slate-800 shadow-inner cursor-pointer appearance-none">
-                                        {categories.map(cat => <option key={cat.id} value={cat.name}>{cat.name}</option>)}
+                                    <label className="text-[10px] sm:text-xs  font-black text-gray-400 uppercase tracking-widest ml-1">Food Category *</label>
+                                    <select name="category" value={formData.category} onChange={handleFormChange} className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-3xl outline-none focus:bg-white focus:border-emerald-500/20 transition-all text-base font-black text-slate-800 shadow-inner cursor-pointer appearance-none">
+                                        {categories.length > 0 ? categories.map(cat => <option key={cat.id} value={cat.name}>{cat.name}</option>) : (
+                                            <>
+                                                <option>Cooked Food</option>
+                                                <option>Masala / Pre-cooked</option>
+                                                <option>Snacks</option>
+                                                <option>Beverages</option>
+                                            </>
+                                        )}
                                     </select>
                                 </div>
 
                                 <div className="space-y-4">
-                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-1.5"><FiStar className="text-amber-500" /> Boutique Rating</label>
+                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-1.5"><FiStar className="text-amber-500" /> Chef Rating</label>
                                     <select name="rating" value={formData.rating} onChange={handleFormChange} className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-[1.5rem] outline-none focus:bg-white focus:border-blue-500/20 transition-all text-base font-black text-slate-800 shadow-inner cursor-pointer appearance-none">
                                         <option value="1">1 Star </option>
                                         <option value="2">2 Stars</option>
@@ -478,33 +490,30 @@ const AddProducts = () => {
                             </div>
 
                             <div className="space-y-4">
-                                <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Age Group (Optional)</label>
+                                <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Cuisine Type (Optional)</label>
                                 <select
-                                    name="age"
-                                    value={formData.age}
-                                    onChange={handleFormChange}
-                                    className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-[1.5rem] outline-none focus:bg-white focus:border-blue-500/20 transition-all text-base font-bold text-slate-800 shadow-inner cursor-pointer appearance-none"
+                                    name="cuisine"
+                                    value={formData.cuisine || ""}
+                                    onChange={e => setFormData(prev => ({ ...prev, cuisine: e.target.value }))}
+                                    className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-3xl outline-none focus:bg-white focus:border-emerald-500/20 transition-all text-base font-bold text-slate-800 shadow-inner cursor-pointer appearance-none"
                                 >
-                                    <option value="">Select Age Group</option>
-                                    <option value="Infant (0–1)">Infant (0–1)</option>
-                                    <option value="Toddler (1–3)">Toddler (1–3)</option>
-                                    <option value="Kids (3–5)">Kids (3–5)</option>
-                                    <option value="Kids (5–7)">Kids (5–7)</option>
-                                    <option value="Kids (7–10)">Kids (7–10)</option>
-                                    <option value="Teen (10–15)">Teen (10–15)</option>
-                                    <option value="Teen (15–20)">Teen (15–20)</option>
-                                    <option value="Adult (20+)">Adult (20+)</option>
+                                    <option value="">Select Cuisine</option>
+                                    <option>North Indian</option>
+                                    <option>South Indian</option>
+                                    <option>Chinese</option>
+                                    <option>Continental</option>
+                                    <option>Indian Fusion</option>
                                 </select>
                             </div>
 
                             <div className="space-y-4">
-                                <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Creation Name *</label>
-                                <input type="text" name="name" value={formData.name} onChange={handleFormChange} placeholder="e.g. Handwoven Banarasi Silk" className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-[1.5rem] outline-none focus:bg-white focus:border-blue-500/20 transition-all text-base font-bold text-slate-800 shadow-inner" required />
+                                <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Dish Name *</label>
+                                <input type="text" name="name" value={formData.name} onChange={handleFormChange} placeholder="e.g. Hyderabadi Biryani" className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-3xl outline-none focus:bg-white focus:border-emerald-500/20 transition-all text-base font-bold text-slate-800 shadow-inner" required />
                             </div>
 
                             <div className="space-y-4">
-                                <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">The Craft Story</label>
-                                <textarea name="description" value={formData.description} onChange={handleFormChange} rows="3" placeholder="Describe the heritage..." className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-[1.5rem] outline-none focus:bg-white focus:border-blue-500/20 transition-all text-sm font-medium text-gray-600 shadow-inner resize-none" />
+                                <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Dish Description</label>
+                                <textarea name="description" value={formData.description} onChange={handleFormChange} rows="3" placeholder="Describe the dish, flavors and serving suggestions..." className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-3xl outline-none focus:bg-white focus:border-emerald-500/20 transition-all text-sm font-medium text-gray-600 shadow-inner resize-none" />
                             </div>
 
                             {/* Product Type Selector for HomeChef */}
