@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const productController = require('../controllers/productController');
+const { attachUser } = require('../middleware/authMiddleware');
 
 // Get all products with filters
 router.get('/', productController.getAllProducts);
@@ -15,7 +16,7 @@ router.get('/latest-code', productController.getLatestProductCode);
 router.get('/:id', productController.getProductById);
 
 // Create product
-router.post('/', productController.createProduct);
+router.post('/', attachUser, productController.createProduct);
 
 // Update product
 router.put('/:id', productController.updateProduct);

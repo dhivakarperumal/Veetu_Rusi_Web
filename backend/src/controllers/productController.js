@@ -139,30 +139,51 @@ exports.createProduct = async (req, res) => {
         } = req.body;
 
         // Validation
-        if (!name || !category || !mrp || !chef_id) {
+        if (!name || !category || !mrp) {
             return res.status(400).json({
-                message: 'Required fields: name, category, mrp, chef_id'
+                message: 'Required fields: name, category, mrp'
             });
         }
 
         // Determine product code and load home chef metadata
         const finalProductCode = product_code || await generateNextProductCode();
+        let homeChef = null;
+        let finalChefId = chef_id;
 
-        const [homeChefs] = await pool.execute(
-            `SELECT hc.*, u.user_id AS chef_user_id
-            FROM home_chefs hc
-            LEFT JOIN users u ON (u.email = hc.email OR u.phone = hc.mobile)
-            WHERE hc.chef_id = ?`,
-            [chef_id]
-        );
+        if (!finalChefId && req.user && req.user.role === 'chef') {
+            const [homeChefs] = await pool.execute(
+                `SELECT hc.*, u.user_id AS chef_user_id
+                FROM home_chefs hc
+                LEFT JOIN users u ON (u.email = hc.email OR u.phone = hc.mobile)
+                WHERE u.user_id = ? OR hc.email = ? OR hc.mobile = ?
+                LIMIT 1`,
+                [req.user.user_id, req.user.email, req.user.phone]
+            );
+            if (homeChefs.length > 0) {
+                homeChef = homeChefs[0];
+                finalChefId = homeChef.chef_id;
+            }
+        }
 
-        if (homeChefs.length === 0) {
+        if (finalChefId) {
+            const [homeChefs] = await pool.execute(
+                `SELECT hc.*, u.user_id AS chef_user_id
+                FROM home_chefs hc
+                LEFT JOIN users u ON (u.email = hc.email OR u.phone = hc.mobile)
+                WHERE hc.chef_id = ?
+                LIMIT 1`,
+                [finalChefId]
+            );
+            if (homeChefs.length > 0) {
+                homeChef = homeChefs[0];
+            }
+        }
+
+        if (!homeChef) {
             return res.status(400).json({
                 message: 'Home chef not found for the provided chef_id'
             });
         }
-
-        const homeChef = homeChefs[0];
         const finalChefUserId = homeChef.chef_user_id || null;
         const finalChefName = homeChef.name || chef_name || null;
         const finalChefPhone = homeChef.mobile || chef_phone || null;
@@ -183,7 +204,7 @@ exports.createProduct = async (req, res) => {
             prep_time || null, ingredients || null, spice_level || 'Medium',
             shelf_life_days || null, net_weight || null, package_count || null,
             packaging_type || 'Pouch', manufacture_date || null,
-            variants ? JSON.stringify(variants) : null, chef_id, finalChefUserId,
+            variants ? JSON.stringify(variants) : null, finalChefId, finalChefUserId,
             finalChefName, finalChefPhone, finalChefEmail, finalCreatedByUserId,
             finalCreatedByEmail, finalCreatedByName, finalCreatedByPhone, finalFranchiseId
         ];
