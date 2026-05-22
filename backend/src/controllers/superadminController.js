@@ -5,6 +5,53 @@ function hashPassword(password) {
   return crypto.createHash('sha256').update(password).digest('hex');
 }
 
+async function syncUserForEntity(tableName, id, role) {
+  try {
+    const [rows] = await pool.execute(`SELECT * FROM ${tableName} WHERE id = ?`, [id]);
+    if (!rows.length) return null;
+    const entity = rows[0];
+    const status = entity.status;
+    const name = entity.owner_name || entity.name || 'User';
+    const email = entity.email;
+    const mobile = entity.mobile;
+    let password = entity.password;
+    let plainPassword = null;
+
+    if (!password) {
+      plainPassword = `${name.split(' ')[0]}@${(mobile || '0000').slice(-4)}`;
+      password = hashPassword(plainPassword);
+    }
+
+    // normalize role names
+    let userRole = role;
+    if (role === 'delivery' || role === 'delivery_boy') userRole = 'delivery_boy';
+
+    if (status === 'Approved' || status === 'Active') {
+      const [existing] = await pool.execute("SELECT id FROM users WHERE email = ?", [email]);
+      if (existing.length === 0) {
+        const [ins] = await pool.execute(
+          "INSERT INTO users (name, email, phone, password, role, active) VALUES (?, ?, ?, ?, ?, 1)",
+          [name, email, mobile, password, userRole]
+        );
+        return { created: true, user: { id: ins.insertId, name, email, phone: mobile, role: userRole }, plainPassword };
+      } else {
+        await pool.execute(
+          "UPDATE users SET active = 1, role = ?, password = ?, name = ?, phone = ? WHERE email = ?",
+          [userRole, password, name, mobile, email]
+        );
+        return { updated: true };
+      }
+    } else if (status === 'Suspended' || status === 'Rejected' || status === 'Inactive') {
+      await pool.execute("UPDATE users SET active = 0 WHERE email = ?", [email]);
+      return { deactivated: true };
+    }
+    return null;
+  } catch (err) {
+    console.error(`Error syncing user for ${tableName}:`, err);
+    return null;
+  }
+}
+
 // ==================== DASHBOARD ANALYTICS ====================
 exports.getDashboardStats = async (req, res) => {
   try {
@@ -77,7 +124,30 @@ exports.getDashboardStats = async (req, res) => {
 // ==================== HOME CHEF MANAGEMENT ====================
 exports.getHomeChefs = async (req, res) => {
   try {
-    const [rows] = await pool.execute("SELECT * FROM home_chefs ORDER BY created_at DESC");
+    const currentUserId = req.user?.user_id || null;
+    let rows;
+
+    if (req.user?.role !== 'superadmin') {
+      if (currentUserId) {
+        const [filtered] = await pool.execute(
+          "SELECT * FROM home_chefs WHERE created_by_user_id = ? OR created_by_id = ? ORDER BY created_at DESC",
+          [currentUserId, req.user.id]
+        );
+        rows = filtered;
+      } else if (req.user.id) {
+        const [filtered] = await pool.execute(
+          "SELECT * FROM home_chefs WHERE created_by_id = ? ORDER BY created_at DESC",
+          [req.user.id]
+        );
+        rows = filtered;
+      } else {
+        rows = [];
+      }
+    } else {
+      const [all] = await pool.execute("SELECT * FROM home_chefs ORDER BY created_at DESC");
+      rows = all;
+    }
+
     res.json(rows);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving home chefs.', error: error.message });
@@ -101,6 +171,50 @@ exports.createHomeChef = async (req, res) => {
       rejection_reason, block_reason, address
     } = req.body;
 
+    const createdById = req.user?.id || null;
+    const createdByUserId = req.user?.user_id || null;
+    const createdByName = req.user?.name || null;
+    const createdByEmail = req.user?.email || null;
+    const createdByPhone = req.user?.phone || null;
+
+    // Auto-generate chef_unique_code if not provided
+    function generateChefUniqueCode() {
+      const timestamp = Date.now().toString(36);
+      const randomPart = Math.random().toString(36).substring(2, 8).toUpperCase();
+      return `CHEF-${timestamp}-${randomPart}`;
+    }
+    const generatedChefCode = chef_unique_code || generateChefUniqueCode();
+
+    // Auto-calculate age from date_of_birth
+    function calculateAgeFromDOB(dob) {
+      if (!dob) return null;
+      const birthDate = new Date(dob);
+      const today = new Date();
+      let calculatedAge = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        calculatedAge--;
+      }
+      
+      return calculatedAge > 0 ? calculatedAge : null;
+    }
+    const calculatedAge = calculateAgeFromDOB(date_of_birth);
+
+    // Auto-calculate age from date_of_birth for updates
+    function calculateAgeFromDOB(dob) {
+      if (!dob) return null;
+      const birthDate = new Date(dob);
+      const today = new Date();
+      let calculatedAge = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        calculatedAge--;
+      }
+      return calculatedAge > 0 ? calculatedAge : null;
+    }
+    const calculatedAgeForUpdate = calculateAgeFromDOB(date_of_birth);
+
     const profile_photo = req.files && req.files.profile_photo ? req.files.profile_photo[0].filename : null;
     const cover_banner = req.files && req.files.cover_banner ? req.files.cover_banner[0].filename : null;
     const aadhaar_front_url = req.files && req.files.aadhaar_front_url ? req.files.aadhaar_front_url[0].filename : null;
@@ -119,48 +233,112 @@ exports.createHomeChef = async (req, res) => {
 
     const [result] = await pool.execute(
       `INSERT INTO home_chefs (
-        chef_unique_code, name, father_husband_name, gender, date_of_birth, age,
-        mobile, alt_mobile, whatsapp_number, email, emergency_contact,
+        name, mobile, email, address, fssai_number, aadhaar_url, pan_url, status,
+        chef_unique_code, created_by_id, created_by_user_id, created_by_name, created_by_email, created_by_phone,
+        father_husband_name, gender, date_of_birth, age,
+        profile_photo, cover_banner, alt_mobile, whatsapp_number, emergency_contact,
         door_number, street_name, area_name, landmark, city, district, state, pincode,
         latitude, longitude, map_link, kitchen_name, kitchen_address, kitchen_type,
-        seating_available, dining_available, takeaway_available, delivery_available,
+        kitchen_photos, kitchen_videos, seating_available, dining_available, takeaway_available, delivery_available,
         specialty_food, cuisine_type, signature_dish, veg_nonveg, experience_years,
         cooking_style, preparation_time, daily_order_capacity, available_days,
         opening_time, closing_time, holiday_schedule, busy_hours, instant_order, pre_order,
-        aadhaar_number, pan_number, fssai_number, gst_number, bank_account_number,
+        aadhaar_number, pan_number, gst_number, bank_account_number,
         ifsc_code, account_holder_name, upi_id, username, password, otp_verified,
-        email_verified, login_status, verification_status, approval_status, status,
-        rejection_reason, block_reason, address,
-        profile_photo, cover_banner, aadhaar_front_url, aadhaar_back_url, pan_card_url,
-        fssai_certificate_url, gst_certificate_url, signature_url, selfie_verification_url,
-        kitchen_photos, kitchen_videos
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        email_verified, last_login, device_details, login_status, verification_status, approval_status,
+        approved_by_admin, approval_date, rejection_reason, block_reason,
+        aadhaar_front_url, aadhaar_back_url, pan_card_url, fssai_certificate_url, gst_certificate_url, signature_url, selfie_verification_url
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        chef_unique_code || null, name, father_husband_name || null, gender || null, date_of_birth || null, age ? parseInt(age) : null,
-        mobile, alt_mobile || null, whatsapp_number || null, email, emergency_contact || null,
-        door_number || null, street_name || null, area_name || null, landmark || null, city || null, district || null, state || null, pincode || null,
-        latitude || null, longitude || null, map_link || null, kitchen_name || null, kitchen_address || null, kitchen_type || 'Home Kitchen',
+        name,
+        mobile,
+        email,
+        fullAddress,
+        fssai_number || null,
+        null, // aadhaar_url
+        null, // pan_url
+        approval_status || 'Pending', // status
+        generatedChefCode,
+        createdById,
+        createdByUserId,
+        createdByName,
+        createdByEmail,
+        createdByPhone,
+        father_husband_name || null,
+        gender || null,
+        date_of_birth || null,
+        calculatedAge !== null ? calculatedAge : (age ? parseInt(age) : null),
+        profile_photo,
+        cover_banner,
+        alt_mobile || null,
+        whatsapp_number || null,
+        emergency_contact || null,
+        door_number || null,
+        street_name || null,
+        area_name || null,
+        landmark || null,
+        city || null,
+        district || null,
+        state || null,
+        pincode || null,
+        latitude || null,
+        longitude || null,
+        map_link || null,
+        kitchen_name || null,
+        kitchen_address || null,
+        kitchen_type || 'Home Kitchen',
+        kitchen_photos,
+        kitchen_videos,
         seating_available === 'true' || seating_available === true ? 1 : 0,
         dining_available === 'true' || dining_available === true ? 1 : 0,
         takeaway_available === 'true' || takeaway_available === true ? 1 : 0,
         delivery_available === 'true' || delivery_available === true ? 1 : 0,
-        specialty_food || null, cuisine_type || 'South Indian', signature_dish || null, veg_nonveg || 'Veg', experience_years ? parseInt(experience_years) : null,
-        cooking_style || null, preparation_time || null, daily_order_capacity ? parseInt(daily_order_capacity) : null, available_days || null,
-        opening_time || null, closing_time || null, holiday_schedule || null, busy_hours || null,
+        specialty_food || null,
+        cuisine_type || 'South Indian',
+        signature_dish || null,
+        veg_nonveg || 'Veg',
+        experience_years ? parseInt(experience_years) : null,
+        cooking_style || null,
+        preparation_time || null,
+        daily_order_capacity ? parseInt(daily_order_capacity) : null,
+        available_days || null,
+        opening_time || null,
+        closing_time || null,
+        holiday_schedule || null,
+        busy_hours || null,
         instant_order === 'true' || instant_order === true ? 1 : 0,
         pre_order === 'true' || pre_order === true ? 1 : 0,
-        aadhaar_number || null, pan_number || null, fssai_number || null, gst_number || null, bank_account_number || null,
-        ifsc_code || null, account_holder_name || null, upi_id || null, username || null, hashedPw,
+        aadhaar_number || null,
+        pan_number || null,
+        gst_number || null,
+        bank_account_number || null,
+        ifsc_code || null,
+        account_holder_name || null,
+        upi_id || null,
+        username || null,
+        hashedPw,
         otp_verified === 'true' || otp_verified === true ? 1 : 0,
         email_verified === 'true' || email_verified === true ? 1 : 0,
-        login_status || 'Active', verification_status || 'Pending', approval_status || 'Pending', approval_status || 'Pending',
-        rejection_reason || null, block_reason || null, fullAddress,
-        profile_photo, cover_banner, aadhaar_front_url, aadhaar_back_url, pan_card_url,
-        fssai_certificate_url, gst_certificate_url, signature_url, selfie_verification_url,
-        kitchen_photos, kitchen_videos
+        null, // last_login
+        null, // device_details
+        login_status || 'Active',
+        verification_status || 'Pending',
+        approval_status || 'Pending',
+        null, // approved_by_admin
+        null, // approval_date
+        rejection_reason || null,
+        block_reason || null,
+        aadhaar_front_url,
+        aadhaar_back_url,
+        pan_card_url,
+        fssai_certificate_url,
+        gst_certificate_url,
+        signature_url,
+        selfie_verification_url
       ]
     );
 
+    await syncUserForEntity('home_chefs', result.insertId, 'chef');
     res.status(201).json({ message: 'Home chef application submitted.', id: result.insertId });
   } catch (error) {
     res.status(500).json({ message: 'Error creating home chef.', error: error.message });
@@ -215,7 +393,7 @@ exports.updateHomeChef = async (req, res) => {
       rejection_reason = ?, block_reason = ?, address = ?`;
 
     let params = [
-      chef_unique_code || null, name, father_husband_name || null, gender || null, date_of_birth || null, age ? parseInt(age) : null,
+      chef_unique_code || null, name, father_husband_name || null, gender || null, date_of_birth || null, calculatedAgeForUpdate !== null ? calculatedAgeForUpdate : (age ? parseInt(age) : null),
       mobile, alt_mobile || null, whatsapp_number || null, email, emergency_contact || null,
       door_number || null, street_name || null, area_name || null, landmark || null, city || null, district || null, state || null, pincode || null,
       latitude || null, longitude || null, map_link || null, kitchen_name || null, kitchen_address || null, kitchen_type || 'Home Kitchen',
@@ -257,6 +435,7 @@ exports.updateHomeChef = async (req, res) => {
     params.push(id);
 
     await pool.execute(query, params);
+    await syncUserForEntity('home_chefs', id, 'chef');
     res.json({ message: 'Home chef updated successfully.' });
   } catch (error) {
     res.status(500).json({ message: 'Error updating home chef.', error: error.message });
@@ -268,6 +447,7 @@ exports.patchHomeChefStatus = async (req, res) => {
     const { id } = req.params;
     const { status } = req.body; // e.g. Approved, Suspended, Rejected
     await pool.execute("UPDATE home_chefs SET status = ? WHERE id = ?", [status, id]);
+    await syncUserForEntity('home_chefs', id, 'chef');
     res.json({ message: `Home chef status changed to ${status}.` });
   } catch (error) {
     res.status(500).json({ message: 'Error updating home chef status.', error: error.message });
@@ -341,6 +521,7 @@ exports.createRestaurant = async (req, res) => {
         verification_status || 'Pending', aadhaar_url || null, pan_url || null, gst_certificate_url || null, shop_license_url || null, restaurant_photos_urls || null, kitchen_photos_urls || null, signature_url || null
       ]
     );
+    await syncUserForEntity('restaurants', result.insertId, 'restaurant');
     res.status(201).json({ message: 'Restaurant created successfully.', id: result.insertId });
   } catch (error) {
     res.status(500).json({ message: 'Error creating restaurant.', error: error.message });
@@ -408,6 +589,7 @@ exports.updateRestaurant = async (req, res) => {
     params.push(id);
 
     await pool.execute(query, params);
+    await syncUserForEntity('restaurants', id, 'restaurant');
     res.json({ message: 'Restaurant updated successfully.' });
   } catch (error) {
     res.status(500).json({ message: 'Error updating restaurant.', error: error.message });
@@ -427,7 +609,30 @@ exports.deleteRestaurant = async (req, res) => {
 // ==================== DELIVERY PARTNER MANAGEMENT ====================
 exports.getDeliveryPartners = async (req, res) => {
   try {
-    const [rows] = await pool.execute("SELECT * FROM delivery_partners ORDER BY created_at DESC");
+    const currentUserId = req.user?.user_id || null;
+    let rows;
+
+    if (req.user?.role !== 'superadmin') {
+      if (currentUserId) {
+        const [filtered] = await pool.execute(
+          "SELECT * FROM delivery_partners WHERE created_by_user_id = ? OR created_by_id = ? ORDER BY created_at DESC",
+          [currentUserId, req.user.id]
+        );
+        rows = filtered;
+      } else if (req.user?.id) {
+        const [filtered] = await pool.execute(
+          "SELECT * FROM delivery_partners WHERE created_by_id = ? ORDER BY created_at DESC",
+          [req.user.id]
+        );
+        rows = filtered;
+      } else {
+        rows = [];
+      }
+    } else {
+      const [all] = await pool.execute("SELECT * FROM delivery_partners ORDER BY created_at DESC");
+      rows = all;
+    }
+
     res.json(rows);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving delivery partners.', error: error.message });
@@ -436,12 +641,86 @@ exports.getDeliveryPartners = async (req, res) => {
 
 exports.createDeliveryPartner = async (req, res) => {
   try {
-    const { name, mobile, vehicle_type, vehicle_number, license_number, aadhaar_number } = req.body;
-    const [result] = await pool.execute(
-      "INSERT INTO delivery_partners (name, mobile, vehicle_type, vehicle_number, license_number, aadhaar_number, status) VALUES (?, ?, ?, ?, ?, ?, 'Pending')",
-      [name, mobile, vehicle_type, vehicle_number, license_number, aadhaar_number]
-    );
-    res.status(201).json({ message: 'Delivery partner registered.', id: result.insertId });
+    const b = { ...(req.body || {}) };
+
+    // Basic validation
+    if (!b.name || !b.mobile) {
+      return res.status(400).json({ message: 'Name and mobile are required to create a delivery partner.' });
+    }
+
+    // If files were uploaded via multer, map their filenames into the body fields
+    if (req.files) {
+      const fileFields = [
+        'profile_photo','cover_photo','aadhaar_front_url','aadhaar_back_url','pan_card_url','selfie_verification_url','police_verification_certificate',
+        'vehicle_front_photo','vehicle_back_photo','rc_book_image','insurance_document_image','license_front_image','license_back_image'
+      ];
+      fileFields.forEach((f) => {
+        if (req.files[f] && req.files[f][0]) {
+          b[f] = req.files[f][0].filename;
+        }
+      });
+    }
+
+    // Auto-generate delivery_partner_code: DP-YYYYMMDD-XXXXX
+    const now = new Date();
+    const datePart = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+    const randomPart = String(Math.floor(10000 + Math.random() * 90000));
+    const delivery_partner_code = b.delivery_partner_code || `DP-${datePart}-${randomPart}`;
+
+    const hashedPw = b.password ? hashPassword(b.password) : null;
+
+    // Attach current user info (created_by) when available
+    let created_by_id = null, created_by_user_id = null, created_by_name = null, created_by_email = null, created_by_phone = null;
+    if (req.user && req.user.id) {
+      const [uRows] = await pool.execute('SELECT id, user_id, name, email, phone FROM users WHERE id = ?', [req.user.id]);
+      if (uRows.length) {
+        const cu = uRows[0];
+        created_by_id = cu.id;
+        created_by_user_id = cu.user_id || null;
+        created_by_name = cu.name || null;
+        created_by_email = cu.email || null;
+        created_by_phone = cu.phone || null;
+      }
+    }
+
+    const params = [
+      delivery_partner_code, b.name || null, b.father_husband_name || null, b.gender || 'Male', b.date_of_birth || null, b.age || null, b.profile_photo || null, b.cover_photo || null, b.marital_status || 'Single', b.blood_group || null,
+      b.mobile || null, b.alt_mobile || null, b.whatsapp_number || null, b.email || null, b.emergency_contact || null,
+      b.door_number || null, b.street_name || null, b.area_name || null, b.landmark || null, b.city || null, b.district || null, b.state || null, b.pincode || null, b.country || 'India', b.latitude || null, b.longitude || null, b.map_link || null,
+      b.username || null, hashedPw, b.otp_verified ? 1 : 0, b.email_verified ? 1 : 0, b.device_id || null, b.login_status || 'Active', b.account_status || 'Pending',
+      b.vehicle_type || null, b.vehicle_brand || null, b.vehicle_model || null, b.vehicle_color || null, b.vehicle_number || null, b.rc_book_number || null, b.insurance_number || null, b.insurance_expiry_date || null, b.pollution_certificate_number || null,
+      b.vehicle_front_photo || null, b.vehicle_back_photo || null, b.rc_book_image || null, b.insurance_document_image || null,
+      b.license_number || null, b.license_holder_name || null, b.license_expiry_date || null, b.license_front_image || null, b.license_back_image || null, b.driving_experience || null,
+      b.aadhaar_number || null, b.pan_number || null, b.aadhaar_front_url || null, b.aadhaar_back_url || null, b.pan_card_url || null, b.selfie_verification_url || null, b.police_verification_certificate || null, b.background_verification_status || 'Pending', b.kyc_verification_status || 'Pending',
+      b.bank_name || null, b.account_holder_name || null, b.bank_account_number || null, b.ifsc_code || null, b.branch_name || null, b.upi_id || null,
+      b.wallet_balance || 0, b.pending_earnings || 0, b.total_earnings || b.earnings || 0, b.daily_earnings || 0, b.weekly_earnings || 0, b.monthly_earnings || 0, b.incentive_amount || 0, b.bonus_amount || 0,
+      b.online_status || 'Offline', b.availability_schedule || null, b.working_days || null, b.shift_timing || null, b.current_location || null, b.break_time_status || null,
+      b.assigned_delivery_area || null, b.delivery_radius || null, b.preferred_delivery_zone || null, b.city_coverage || null, b.area_coverage || null, b.zone_status || 'Active',
+      // created_by fields
+      created_by_id, created_by_user_id, created_by_name, created_by_email, created_by_phone,
+      b.status || 'Pending'
+    ];
+
+    const placeholders = params.map(() => '?').join(', ');
+    const cols = `delivery_partner_code, name, father_husband_name, gender, date_of_birth, age, profile_photo, cover_photo, marital_status, blood_group,
+        mobile, alt_mobile, whatsapp_number, email, emergency_contact,
+        door_number, street_name, area_name, landmark, city, district, state, pincode, country, latitude, longitude, map_link,
+        username, password, otp_verified, email_verified, device_id, login_status, account_status,
+        vehicle_type, vehicle_brand, vehicle_model, vehicle_color, vehicle_number, rc_book_number, insurance_number, insurance_expiry_date, pollution_certificate_number,
+        vehicle_front_photo, vehicle_back_photo, rc_book_image, insurance_document_image,
+        license_number, license_holder_name, license_expiry_date, license_front_image, license_back_image, driving_experience,
+        aadhaar_number, pan_number, aadhaar_front_url, aadhaar_back_url, pan_card_url, selfie_verification_url, police_verification_certificate, background_verification_status, kyc_verification_status,
+        bank_name, account_holder_name, bank_account_number, ifsc_code, branch_name, upi_id,
+        wallet_balance, pending_earnings, total_earnings, daily_earnings, weekly_earnings, monthly_earnings, incentive_amount, bonus_amount,
+        online_status, availability_schedule, working_days, shift_timing, current_location, break_time_status,
+        assigned_delivery_area, delivery_radius, preferred_delivery_zone, city_coverage, area_coverage, zone_status,
+        created_by_id, created_by_user_id, created_by_name, created_by_email, created_by_phone,
+        status`;
+
+    const [result] = await pool.execute(`INSERT INTO delivery_partners (${cols}) VALUES (${placeholders})`, params);
+    // sync user only if record status requires it (syncUserForEntity will noop otherwise)
+    await syncUserForEntity('delivery_partners', result.insertId, 'delivery_boy');
+    res.status(201).json({ message: 'Delivery partner registered.', id: result.insertId, delivery_partner_code });
   } catch (error) {
     res.status(500).json({ message: 'Error registering delivery partner.', error: error.message });
   }
@@ -450,12 +729,52 @@ exports.createDeliveryPartner = async (req, res) => {
 exports.updateDeliveryPartner = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, mobile, vehicle_type, vehicle_number, license_number, aadhaar_number, status, earnings, total_deliveries } = req.body;
-    await pool.execute(
-      "UPDATE delivery_partners SET name = ?, mobile = ?, vehicle_type = ?, vehicle_number = ?, license_number = ?, aadhaar_number = ?, status = ?, earnings = ?, total_deliveries = ? WHERE id = ?",
-      [name, mobile, vehicle_type, vehicle_number, license_number, aadhaar_number, status, earnings || 0.00, total_deliveries || 0, id]
-    );
-    res.json({ message: 'Delivery partner profile updated.' });
+    const b = req.body;
+
+    let query = `UPDATE delivery_partners SET
+      name = ?, father_husband_name = ?, gender = ?, date_of_birth = ?, age = ?, marital_status = ?, blood_group = ?,
+      mobile = ?, alt_mobile = ?, whatsapp_number = ?, email = ?, emergency_contact = ?,
+      door_number = ?, street_name = ?, area_name = ?, landmark = ?, city = ?, district = ?, state = ?, pincode = ?, country = ?, latitude = ?, longitude = ?, map_link = ?,
+      username = ?, otp_verified = ?, email_verified = ?, device_id = ?, login_status = ?, account_status = ?,
+      vehicle_type = ?, vehicle_brand = ?, vehicle_model = ?, vehicle_color = ?, vehicle_number = ?, rc_book_number = ?, insurance_number = ?, insurance_expiry_date = ?, pollution_certificate_number = ?,
+      license_number = ?, license_holder_name = ?, license_expiry_date = ?, driving_experience = ?,
+      aadhaar_number = ?, pan_number = ?, background_verification_status = ?, kyc_verification_status = ?,
+      bank_name = ?, account_holder_name = ?, bank_account_number = ?, ifsc_code = ?, branch_name = ?, upi_id = ?,
+      wallet_balance = ?, pending_earnings = ?, total_earnings = ?, daily_earnings = ?, weekly_earnings = ?, monthly_earnings = ?, incentive_amount = ?, bonus_amount = ?, total_deliveries = ?,
+      online_status = ?, availability_schedule = ?, working_days = ?, shift_timing = ?, current_location = ?, break_time_status = ?,
+      assigned_delivery_area = ?, delivery_radius = ?, preferred_delivery_zone = ?, city_coverage = ?, area_coverage = ?, zone_status = ?,
+      status = ?`;
+
+    let params = [
+      b.name || null, b.father_husband_name || null, b.gender || 'Male', b.date_of_birth || null, b.age || null, b.marital_status || 'Single', b.blood_group || null,
+      b.mobile || null, b.alt_mobile || null, b.whatsapp_number || null, b.email || null, b.emergency_contact || null,
+      b.door_number || null, b.street_name || null, b.area_name || null, b.landmark || null, b.city || null, b.district || null, b.state || null, b.pincode || null, b.country || 'India', b.latitude || null, b.longitude || null, b.map_link || null,
+      b.username || null, b.otp_verified ? 1 : 0, b.email_verified ? 1 : 0, b.device_id || null, b.login_status || 'Active', b.account_status || 'Pending',
+      b.vehicle_type || null, b.vehicle_brand || null, b.vehicle_model || null, b.vehicle_color || null, b.vehicle_number || null, b.rc_book_number || null, b.insurance_number || null, b.insurance_expiry_date || null, b.pollution_certificate_number || null,
+      b.license_number || null, b.license_holder_name || null, b.license_expiry_date || null, b.driving_experience || null,
+      b.aadhaar_number || null, b.pan_number || null, b.background_verification_status || 'Pending', b.kyc_verification_status || 'Pending',
+      b.bank_name || null, b.account_holder_name || null, b.bank_account_number || null, b.ifsc_code || null, b.branch_name || null, b.upi_id || null,
+      b.wallet_balance || 0, b.pending_earnings || 0, b.total_earnings || b.earnings || 0, b.daily_earnings || 0, b.weekly_earnings || 0, b.monthly_earnings || 0, b.incentive_amount || 0, b.bonus_amount || 0, b.total_deliveries || 0,
+      b.online_status || 'Offline', b.availability_schedule || null, b.working_days || null, b.shift_timing || null, b.current_location || null, b.break_time_status || null,
+      b.assigned_delivery_area || null, b.delivery_radius || null, b.preferred_delivery_zone || null, b.city_coverage || null, b.area_coverage || null, b.zone_status || 'Active',
+      b.status || 'Pending'
+    ];
+
+    if (b.password) {
+      query += `, password = ?`;
+      params.push(hashPassword(b.password));
+    }
+
+    query += ` WHERE id = ?`;
+    params.push(id);
+
+    await pool.execute(query, params);
+    const syncResult = await syncUserForEntity('delivery_partners', id, 'delivery_boy');
+    if (syncResult && syncResult.created) {
+      res.json({ message: 'Delivery partner profile updated and user created.', user: syncResult.user, password: syncResult.plainPassword });
+    } else {
+      res.json({ message: 'Delivery partner profile updated.' });
+    }
   } catch (error) {
     res.status(500).json({ message: 'Error updating delivery partner.', error: error.message });
   }

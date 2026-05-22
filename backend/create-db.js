@@ -195,6 +195,12 @@ async function createDatabaseAndTables() {
     CREATE TABLE IF NOT EXISTS \`home_chefs\` (
       id INT AUTO_INCREMENT PRIMARY KEY,
       chef_id CHAR(36) NOT NULL UNIQUE DEFAULT (UUID()),
+      chef_unique_code VARCHAR(100) UNIQUE DEFAULT NULL,
+      created_by_id INT DEFAULT NULL,
+      created_by_user_id CHAR(36) DEFAULT NULL,
+      created_by_name VARCHAR(255) DEFAULT NULL,
+      created_by_email VARCHAR(255) DEFAULT NULL,
+      created_by_phone VARCHAR(50) DEFAULT NULL,
       name VARCHAR(255) NOT NULL,
       mobile VARCHAR(50) NOT NULL,
       email VARCHAR(255) NOT NULL UNIQUE,
@@ -208,6 +214,29 @@ async function createDatabaseAndTables() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
   console.log('Home Chefs table created or already exists');
+
+  // Add chef_unique_code column if it doesn't exist
+  try {
+    const [codeColumns] = await connection.execute(
+      "SELECT COUNT(*) AS count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'home_chefs' AND COLUMN_NAME = 'chef_unique_code'",
+      [DB_NAME]
+    );
+    if (codeColumns[0].count === 0) {
+      await connection.execute(`
+        ALTER TABLE \`home_chefs\`
+        ADD COLUMN \`chef_unique_code\` VARCHAR(100) NOT NULL UNIQUE DEFAULT NULL
+      `);
+      console.log('Added chef_unique_code column to home_chefs table');
+    }
+  } catch (err) {
+    console.log('chef_unique_code column already exists');
+  }
+
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `created_by_id` INT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `created_by_user_id` CHAR(36) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `created_by_name` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `created_by_email` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `created_by_phone` VARCHAR(50) DEFAULT NULL");
 
   await connection.execute(`
     CREATE TABLE IF NOT EXISTS \`delivery_partners\` (
@@ -227,6 +256,90 @@ async function createDatabaseAndTables() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
   console.log('Delivery Partners table created or already exists');
+
+  // Ensure legacy or older DBs have the newer columns used by the application
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `delivery_partner_code` VARCHAR(100)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `father_husband_name` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `gender` VARCHAR(50) DEFAULT 'Male'");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `date_of_birth` DATE DEFAULT NULL");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `age` INT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `profile_photo` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `cover_photo` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `marital_status` VARCHAR(50) DEFAULT 'Single'");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `blood_group` VARCHAR(10)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `alt_mobile` VARCHAR(50)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `whatsapp_number` VARCHAR(50)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `emergency_contact` VARCHAR(50)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `door_number` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `street_name` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `area_name` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `landmark` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `city` VARCHAR(100)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `district` VARCHAR(100)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `state` VARCHAR(100)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `pincode` VARCHAR(20)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `country` VARCHAR(100) DEFAULT 'India'");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `latitude` VARCHAR(50)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `longitude` VARCHAR(50)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `map_link` VARCHAR(512)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `username` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `password` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `otp_verified` TINYINT(1) DEFAULT 0");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `email_verified` TINYINT(1) DEFAULT 0");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `device_id` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `login_status` VARCHAR(50) DEFAULT 'Active'");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `account_status` VARCHAR(50) DEFAULT 'Pending'");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `rc_book_number` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `insurance_number` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `insurance_expiry_date` DATE DEFAULT NULL");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `pollution_certificate_number` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `vehicle_front_photo` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `vehicle_back_photo` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `rc_book_image` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `insurance_document_image` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `license_holder_name` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `license_expiry_date` DATE DEFAULT NULL");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `license_front_image` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `license_back_image` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `driving_experience` VARCHAR(50)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `aadhaar_front_url` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `aadhaar_back_url` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `pan_card_url` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `selfie_verification_url` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `police_verification_certificate` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `background_verification_status` VARCHAR(50) DEFAULT 'Pending'");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `kyc_verification_status` VARCHAR(50) DEFAULT 'Pending'");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `bank_name` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `account_holder_name` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `bank_account_number` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `ifsc_code` VARCHAR(50)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `branch_name` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `upi_id` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `wallet_balance` DECIMAL(10,2) DEFAULT 0.00");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `pending_earnings` DECIMAL(10,2) DEFAULT 0.00");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `total_earnings` DECIMAL(10,2) DEFAULT 0.00");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `daily_earnings` DECIMAL(10,2) DEFAULT 0.00");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `weekly_earnings` DECIMAL(10,2) DEFAULT 0.00");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `monthly_earnings` DECIMAL(10,2) DEFAULT 0.00");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `incentive_amount` DECIMAL(10,2) DEFAULT 0.00");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `bonus_amount` DECIMAL(10,2) DEFAULT 0.00");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `online_status` VARCHAR(50) DEFAULT 'Offline'");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `availability_schedule` TEXT");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `working_days` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `shift_timing` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `current_location` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `break_time_status` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `assigned_delivery_area` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `delivery_radius` DECIMAL(8,2) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `preferred_delivery_zone` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `city_coverage` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `area_coverage` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `zone_status` VARCHAR(50) DEFAULT 'Active'");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `created_by_id` INT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `created_by_user_id` CHAR(36) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `created_by_name` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `created_by_email` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `created_by_phone` VARCHAR(50) DEFAULT NULL");
 
   await connection.execute(`
     CREATE TABLE IF NOT EXISTS \`orders\` (
@@ -379,13 +492,28 @@ async function createDatabaseAndTables() {
     ON DUPLICATE KEY UPDATE name = VALUES(name);
   `);
 
+  // Function to generate unique chef code
+  function generateChefUniqueCode() {
+    const timestamp = Date.now().toString(36);
+    const randomPart = Math.random().toString(36).substring(2, 8).toUpperCase();
+    return `CHEF-${timestamp}-${randomPart}`;
+  }
+
+  // Insert home chefs with auto-generated unique codes
+  const chefCode1 = generateChefUniqueCode();
+  const chefCode2 = generateChefUniqueCode();
+
   await connection.execute(`
-    INSERT INTO \`home_chefs\` (name, mobile, email, address, fssai_number, status)
+    INSERT INTO \`home_chefs\` (name, mobile, email, address, fssai_number, chef_unique_code, status)
     VALUES 
-      ('Saraswathis Kitchen', '9876543213', 'saraswathi@gmail.com', 'Madurai, Tamil Nadu', '22345678901234', 'Approved'),
-      ('Kavithas Homemade Biryani', '9876543214', 'kavitha@gmail.com', 'Salem, Tamil Nadu', '22345678905555', 'Pending')
+      ('Anandhi Rao', '9876543213', 'anandhi.rao@gmail.com', '42 Green Park Lane, Madurai, Tamil Nadu 625001', '22345678901234', ?, 'Approved'),
+      ('Kavitha Sharma', '9876543214', 'kavitha.sharma@gmail.com', '15 Silk Street, Salem, Tamil Nadu 636001', '22345678905555', ?, 'Pending')
     ON DUPLICATE KEY UPDATE name = VALUES(name);
-  `);
+  `, [chefCode1, chefCode2]);
+  
+  console.log('Home Chefs created with auto-generated codes:');
+  console.log(`Chef 1 - Anandhi Rao: ${chefCode1}`);
+  console.log(`Chef 2 - Kavitha Sharma: ${chefCode2}`);
 
   await connection.execute(`
     INSERT INTO \`delivery_partners\` (name, mobile, vehicle_type, vehicle_number, license_number, aadhaar_number, status)

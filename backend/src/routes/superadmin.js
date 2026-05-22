@@ -50,9 +50,25 @@ router.put('/restaurants/:id', restaurantUploadFields, controller.updateRestaura
 router.delete('/restaurants/:id', controller.deleteRestaurant);
 
 // Delivery Partner Management
+const deliveryUploadFields = upload.fields([
+  { name: 'profile_photo', maxCount: 1 },
+  { name: 'cover_photo', maxCount: 1 },
+  { name: 'aadhaar_front_url', maxCount: 1 },
+  { name: 'aadhaar_back_url', maxCount: 1 },
+  { name: 'pan_card_url', maxCount: 1 },
+  { name: 'selfie_verification_url', maxCount: 1 },
+  { name: 'police_verification_certificate', maxCount: 1 },
+  { name: 'vehicle_front_photo', maxCount: 1 },
+  { name: 'vehicle_back_photo', maxCount: 1 },
+  { name: 'rc_book_image', maxCount: 1 },
+  { name: 'insurance_document_image', maxCount: 1 },
+  { name: 'license_front_image', maxCount: 1 },
+  { name: 'license_back_image', maxCount: 1 }
+]);
+
 router.get('/delivery-partners', controller.getDeliveryPartners);
-router.post('/delivery-partners', controller.createDeliveryPartner);
-router.put('/delivery-partners/:id', controller.updateDeliveryPartner);
+router.post('/delivery-partners', deliveryUploadFields, controller.createDeliveryPartner);
+router.put('/delivery-partners/:id', deliveryUploadFields, controller.updateDeliveryPartner);
 router.delete('/delivery-partners/:id', controller.deleteDeliveryPartner);
 
 // User Management
