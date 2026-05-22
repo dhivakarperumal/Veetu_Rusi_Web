@@ -148,31 +148,34 @@ exports.createProduct = async (req, res) => {
         // Determine product code and insert product
         const finalProductCode = product_code || await generateNextProductCode();
 
+        const params = [
+            name, description, category, product_type || 'Cooked Food', subcategory || null,
+            mrp, offer || 0, offer_price || mrp, finalProductCode, total_stock || 0,
+            rating || 5, status || 'Active', material || null, nutrition_info || null,
+            storage_instructions || 'Keep Refrigerated', presentation_style || null,
+            portion_format || null, service_type || null, packaging_notes || null,
+            dietary_tag || null, heat_profile || null, serving_size || null,
+            prep_time || null, ingredients || null, spice_level || 'Medium',
+            shelf_life_days || null, net_weight || null, package_count || null,
+            packaging_type || 'Pouch', manufacture_date || null,
+            variants ? JSON.stringify(variants) : null, chef_id, chef_name || null,
+            chef_phone || null, chef_email || null, created_by_user_id || null,
+            created_by_email || null, created_by_name || null, created_by_phone || null,
+            franchise_id || null
+        ];
+
+        const columns = `name, description, category, product_type, subcategory, mrp, offer, offer_price,
+            product_code, total_stock, rating, status, material, nutrition_info, storage_instructions,
+            presentation_style, portion_format, service_type, packaging_notes, dietary_tag, heat_profile,
+            serving_size, prep_time, ingredients, spice_level, shelf_life_days, net_weight, package_count,
+            packaging_type, manufacture_date, variants, chef_id, chef_name, chef_phone, chef_email,
+            created_by_user_id, created_by_email, created_by_name, created_by_phone, franchise_id`;
+
+        const placeholders = params.map(() => '?').join(', ');
+
         const [result] = await pool.execute(
-            `INSERT INTO products (
-                name, description, category, product_type, subcategory, mrp, offer, offer_price,
-                product_code, total_stock, rating, status, material, nutrition_info, storage_instructions,
-                presentation_style, portion_format, service_type, packaging_notes, dietary_tag, heat_profile,
-                serving_size, prep_time, ingredients, spice_level, shelf_life_days, net_weight, package_count,
-                packaging_type, manufacture_date, variants, chef_id, chef_name, chef_phone, chef_email,
-                created_by_user_id, created_by_email, created_by_name, created_by_phone, franchise_id,
-                created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-            [
-                name, description, category, product_type || 'Cooked Food', subcategory || null,
-                mrp, offer || 0, offer_price || mrp, finalProductCode, total_stock || 0,
-                rating || 5, status || 'Active', material || null, nutrition_info || null,
-                storage_instructions || 'Keep Refrigerated', presentation_style || null,
-                portion_format || null, service_type || null, packaging_notes || null,
-                dietary_tag || null, heat_profile || null, serving_size || null,
-                prep_time || null, ingredients || null, spice_level || 'Medium',
-                shelf_life_days || null, net_weight || null, package_count || null,
-                packaging_type || 'Pouch', manufacture_date || null,
-                variants ? JSON.stringify(variants) : null, chef_id, chef_name || null,
-                chef_phone || null, chef_email || null, created_by_user_id || null,
-                created_by_email || null, created_by_name || null, created_by_phone || null,
-                franchise_id || null
-            ]
+            `INSERT INTO products (${columns}) VALUES (${placeholders})`,
+            params
         );
 
         res.status(201).json({
