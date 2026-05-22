@@ -8,37 +8,47 @@ function hashPassword(password) {
 async function syncUserForEntity(tableName, id, role) {
   try {
     const [rows] = await pool.execute(`SELECT * FROM ${tableName} WHERE id = ?`, [id]);
-    if (!rows.length) return;
+    if (!rows.length) return null;
     const entity = rows[0];
     const status = entity.status;
     const name = entity.owner_name || entity.name || 'User';
     const email = entity.email;
     const mobile = entity.mobile;
     let password = entity.password;
+    let plainPassword = null;
 
     if (!password) {
-      const plain = `${name.split(' ')[0]}@${(mobile || '0000').slice(-4)}`;
-      password = hashPassword(plain);
+      plainPassword = `${name.split(' ')[0]}@${(mobile || '0000').slice(-4)}`;
+      password = hashPassword(plainPassword);
     }
+
+    // normalize role names
+    let userRole = role;
+    if (role === 'delivery' || role === 'delivery_boy') userRole = 'delivery_boy';
 
     if (status === 'Approved' || status === 'Active') {
       const [existing] = await pool.execute("SELECT id FROM users WHERE email = ?", [email]);
       if (existing.length === 0) {
-        await pool.execute(
+        const [ins] = await pool.execute(
           "INSERT INTO users (name, email, phone, password, role, active) VALUES (?, ?, ?, ?, ?, 1)",
-          [name, email, mobile, password, role]
+          [name, email, mobile, password, userRole]
         );
+        return { created: true, user: { id: ins.insertId, name, email, phone: mobile, role: userRole }, plainPassword };
       } else {
         await pool.execute(
           "UPDATE users SET active = 1, role = ?, password = ?, name = ?, phone = ? WHERE email = ?",
-          [role, password, name, mobile, email]
+          [userRole, password, name, mobile, email]
         );
+        return { updated: true };
       }
     } else if (status === 'Suspended' || status === 'Rejected' || status === 'Inactive') {
       await pool.execute("UPDATE users SET active = 0 WHERE email = ?", [email]);
+      return { deactivated: true };
     }
+    return null;
   } catch (err) {
     console.error(`Error syncing user for ${tableName}:`, err);
+    return null;
   }
 }
 
@@ -585,7 +595,25 @@ exports.getDeliveryPartners = async (req, res) => {
 
 exports.createDeliveryPartner = async (req, res) => {
   try {
-    const b = req.body;
+    const b = { ...(req.body || {}) };
+
+    // Basic validation
+    if (!b.name || !b.mobile) {
+      return res.status(400).json({ message: 'Name and mobile are required to create a delivery partner.' });
+    }
+
+    // If files were uploaded via multer, map their filenames into the body fields
+    if (req.files) {
+      const fileFields = [
+        'profile_photo','cover_photo','aadhaar_front_url','aadhaar_back_url','pan_card_url','selfie_verification_url','police_verification_certificate',
+        'vehicle_front_photo','vehicle_back_photo','rc_book_image','insurance_document_image','license_front_image','license_back_image'
+      ];
+      fileFields.forEach((f) => {
+        if (req.files[f] && req.files[f][0]) {
+          b[f] = req.files[f][0].filename;
+        }
+      });
+    }
 
     // Auto-generate delivery_partner_code: DP-YYYYMMDD-XXXXX
     const now = new Date();
@@ -595,9 +623,40 @@ exports.createDeliveryPartner = async (req, res) => {
 
     const hashedPw = b.password ? hashPassword(b.password) : null;
 
-    const [result] = await pool.execute(
-      `INSERT INTO delivery_partners (
-        delivery_partner_code, name, father_husband_name, gender, date_of_birth, age, profile_photo, cover_photo, marital_status, blood_group,
+    // Attach current user info (created_by) when available
+    let created_by_id = null, created_by_user_id = null, created_by_name = null, created_by_email = null, created_by_phone = null;
+    if (req.user && req.user.id) {
+      const [uRows] = await pool.execute('SELECT id, user_id, name, email, phone FROM users WHERE id = ?', [req.user.id]);
+      if (uRows.length) {
+        const cu = uRows[0];
+        created_by_id = cu.id;
+        created_by_user_id = cu.user_id || null;
+        created_by_name = cu.name || null;
+        created_by_email = cu.email || null;
+        created_by_phone = cu.phone || null;
+      }
+    }
+
+    const params = [
+      delivery_partner_code, b.name || null, b.father_husband_name || null, b.gender || 'Male', b.date_of_birth || null, b.age || null, b.profile_photo || null, b.cover_photo || null, b.marital_status || 'Single', b.blood_group || null,
+      b.mobile || null, b.alt_mobile || null, b.whatsapp_number || null, b.email || null, b.emergency_contact || null,
+      b.door_number || null, b.street_name || null, b.area_name || null, b.landmark || null, b.city || null, b.district || null, b.state || null, b.pincode || null, b.country || 'India', b.latitude || null, b.longitude || null, b.map_link || null,
+      b.username || null, hashedPw, b.otp_verified ? 1 : 0, b.email_verified ? 1 : 0, b.device_id || null, b.login_status || 'Active', b.account_status || 'Pending',
+      b.vehicle_type || null, b.vehicle_brand || null, b.vehicle_model || null, b.vehicle_color || null, b.vehicle_number || null, b.rc_book_number || null, b.insurance_number || null, b.insurance_expiry_date || null, b.pollution_certificate_number || null,
+      b.vehicle_front_photo || null, b.vehicle_back_photo || null, b.rc_book_image || null, b.insurance_document_image || null,
+      b.license_number || null, b.license_holder_name || null, b.license_expiry_date || null, b.license_front_image || null, b.license_back_image || null, b.driving_experience || null,
+      b.aadhaar_number || null, b.pan_number || null, b.aadhaar_front_url || null, b.aadhaar_back_url || null, b.pan_card_url || null, b.selfie_verification_url || null, b.police_verification_certificate || null, b.background_verification_status || 'Pending', b.kyc_verification_status || 'Pending',
+      b.bank_name || null, b.account_holder_name || null, b.bank_account_number || null, b.ifsc_code || null, b.branch_name || null, b.upi_id || null,
+      b.wallet_balance || 0, b.pending_earnings || 0, b.total_earnings || b.earnings || 0, b.daily_earnings || 0, b.weekly_earnings || 0, b.monthly_earnings || 0, b.incentive_amount || 0, b.bonus_amount || 0,
+      b.online_status || 'Offline', b.availability_schedule || null, b.working_days || null, b.shift_timing || null, b.current_location || null, b.break_time_status || null,
+      b.assigned_delivery_area || null, b.delivery_radius || null, b.preferred_delivery_zone || null, b.city_coverage || null, b.area_coverage || null, b.zone_status || 'Active',
+      // created_by fields
+      created_by_id, created_by_user_id, created_by_name, created_by_email, created_by_phone,
+      b.status || 'Pending'
+    ];
+
+    const placeholders = params.map(() => '?').join(', ');
+    const cols = `delivery_partner_code, name, father_husband_name, gender, date_of_birth, age, profile_photo, cover_photo, marital_status, blood_group,
         mobile, alt_mobile, whatsapp_number, email, emergency_contact,
         door_number, street_name, area_name, landmark, city, district, state, pincode, country, latitude, longitude, map_link,
         username, password, otp_verified, email_verified, device_id, login_status, account_status,
@@ -606,28 +665,15 @@ exports.createDeliveryPartner = async (req, res) => {
         license_number, license_holder_name, license_expiry_date, license_front_image, license_back_image, driving_experience,
         aadhaar_number, pan_number, aadhaar_front_url, aadhaar_back_url, pan_card_url, selfie_verification_url, police_verification_certificate, background_verification_status, kyc_verification_status,
         bank_name, account_holder_name, bank_account_number, ifsc_code, branch_name, upi_id,
-        wallet_balance, pending_earnings, earnings, daily_earnings, weekly_earnings, monthly_earnings, incentive_amount, bonus_amount,
+        wallet_balance, pending_earnings, total_earnings, daily_earnings, weekly_earnings, monthly_earnings, incentive_amount, bonus_amount,
         online_status, availability_schedule, working_days, shift_timing, current_location, break_time_status,
         assigned_delivery_area, delivery_radius, preferred_delivery_zone, city_coverage, area_coverage, zone_status,
-        status
-      ) VALUES (${Array(89).fill('?').join(', ')})`,
-      [
-        delivery_partner_code, b.name || null, b.father_husband_name || null, b.gender || 'Male', b.date_of_birth || null, b.age || null, b.profile_photo || null, b.cover_photo || null, b.marital_status || 'Single', b.blood_group || null,
-        b.mobile || null, b.alt_mobile || null, b.whatsapp_number || null, b.email || null, b.emergency_contact || null,
-        b.door_number || null, b.street_name || null, b.area_name || null, b.landmark || null, b.city || null, b.district || null, b.state || null, b.pincode || null, b.country || 'India', b.latitude || null, b.longitude || null, b.map_link || null,
-        b.username || null, hashedPw, b.otp_verified ? 1 : 0, b.email_verified ? 1 : 0, b.device_id || null, b.login_status || 'Active', b.account_status || 'Pending',
-        b.vehicle_type || null, b.vehicle_brand || null, b.vehicle_model || null, b.vehicle_color || null, b.vehicle_number || null, b.rc_book_number || null, b.insurance_number || null, b.insurance_expiry_date || null, b.pollution_certificate_number || null,
-        b.vehicle_front_photo || null, b.vehicle_back_photo || null, b.rc_book_image || null, b.insurance_document_image || null,
-        b.license_number || null, b.license_holder_name || null, b.license_expiry_date || null, b.license_front_image || null, b.license_back_image || null, b.driving_experience || null,
-        b.aadhaar_number || null, b.pan_number || null, b.aadhaar_front_url || null, b.aadhaar_back_url || null, b.pan_card_url || null, b.selfie_verification_url || null, b.police_verification_certificate || null, b.background_verification_status || 'Pending', b.kyc_verification_status || 'Pending',
-        b.bank_name || null, b.account_holder_name || null, b.bank_account_number || null, b.ifsc_code || null, b.branch_name || null, b.upi_id || null,
-        b.wallet_balance || 0, b.pending_earnings || 0, b.total_earnings || b.earnings || 0, b.daily_earnings || 0, b.weekly_earnings || 0, b.monthly_earnings || 0, b.incentive_amount || 0, b.bonus_amount || 0,
-        b.online_status || 'Offline', b.availability_schedule || null, b.working_days || null, b.shift_timing || null, b.current_location || null, b.break_time_status || null,
-        b.assigned_delivery_area || null, b.delivery_radius || null, b.preferred_delivery_zone || null, b.city_coverage || null, b.area_coverage || null, b.zone_status || 'Active',
-        b.status || 'Pending'
-      ]
-    );
-    await syncUserForEntity('delivery_partners', result.insertId, 'delivery');
+        created_by_id, created_by_user_id, created_by_name, created_by_email, created_by_phone,
+        status`;
+
+    const [result] = await pool.execute(`INSERT INTO delivery_partners (${cols}) VALUES (${placeholders})`, params);
+    // sync user only if record status requires it (syncUserForEntity will noop otherwise)
+    await syncUserForEntity('delivery_partners', result.insertId, 'delivery_boy');
     res.status(201).json({ message: 'Delivery partner registered.', id: result.insertId, delivery_partner_code });
   } catch (error) {
     res.status(500).json({ message: 'Error registering delivery partner.', error: error.message });
@@ -648,7 +694,7 @@ exports.updateDeliveryPartner = async (req, res) => {
       license_number = ?, license_holder_name = ?, license_expiry_date = ?, driving_experience = ?,
       aadhaar_number = ?, pan_number = ?, background_verification_status = ?, kyc_verification_status = ?,
       bank_name = ?, account_holder_name = ?, bank_account_number = ?, ifsc_code = ?, branch_name = ?, upi_id = ?,
-      wallet_balance = ?, pending_earnings = ?, earnings = ?, daily_earnings = ?, weekly_earnings = ?, monthly_earnings = ?, incentive_amount = ?, bonus_amount = ?, total_deliveries = ?,
+      wallet_balance = ?, pending_earnings = ?, total_earnings = ?, daily_earnings = ?, weekly_earnings = ?, monthly_earnings = ?, incentive_amount = ?, bonus_amount = ?, total_deliveries = ?,
       online_status = ?, availability_schedule = ?, working_days = ?, shift_timing = ?, current_location = ?, break_time_status = ?,
       assigned_delivery_area = ?, delivery_radius = ?, preferred_delivery_zone = ?, city_coverage = ?, area_coverage = ?, zone_status = ?,
       status = ?`;
@@ -677,8 +723,12 @@ exports.updateDeliveryPartner = async (req, res) => {
     params.push(id);
 
     await pool.execute(query, params);
-    await syncUserForEntity('delivery_partners', id, 'delivery');
-    res.json({ message: 'Delivery partner profile updated.' });
+    const syncResult = await syncUserForEntity('delivery_partners', id, 'delivery_boy');
+    if (syncResult && syncResult.created) {
+      res.json({ message: 'Delivery partner profile updated and user created.', user: syncResult.user, password: syncResult.plainPassword });
+    } else {
+      res.json({ message: 'Delivery partner profile updated.' });
+    }
   } catch (error) {
     res.status(500).json({ message: 'Error updating delivery partner.', error: error.message });
   }
