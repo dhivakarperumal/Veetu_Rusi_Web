@@ -281,7 +281,7 @@ const ChefHeader = ({ onMenuClick }) => {
 
   return (
     <header className="sticky top-0 z-30 
-      bg-gradient-to-r from-white via-white to-blue-50/30 backdrop-blur-md
+      bg-linear-to-r from-white via-white to-blue-50/30 backdrop-blur-md
       border-b border-slate-200/60
       shadow-[0_4px_30px_rgba(0,0,0,0.04)]">
 
@@ -334,11 +334,11 @@ const ChefHeader = ({ onMenuClick }) => {
 
                 {/* Search Results Dropdown */}
                 {showSearchResults && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-100 rounded-2xl shadow-2xl z-[200] overflow-hidden">
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-100 rounded-2xl shadow-2xl z-200 overflow-hidden">
                     {searchLoading ? (
                       <div className="px-4 py-3 text-xs text-slate-400 font-bold">Searching...</div>
                     ) : searchResults.length > 0 ? (
-                      <div className="divide-y divide-slate-50 max-h-[320px] overflow-y-auto">
+                      <div className="divide-y divide-slate-50 max-h-80 overflow-y-auto">
                         <div className="px-4 py-2 bg-slate-50">
                           <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{searchResults.length} Result{searchResults.length > 1 ? 's' : ''} found</p>
                         </div>
@@ -423,7 +423,7 @@ const ChefHeader = ({ onMenuClick }) => {
                     </span>
                   </div>
 
-                  <div className="max-h-[400px] overflow-y-auto divide-y divide-slate-50">
+                  <div className="max-h-100 overflow-y-auto divide-y divide-slate-50">
                     {lowStockItems.length > 0 ? lowStockItems.map(product => {
                       const stock = parseInt(product.total_stock ?? product.stock ?? 0);
                       const isOut = stock <= 0;
@@ -504,7 +504,7 @@ const ChefHeader = ({ onMenuClick }) => {
                     </span>
                   </div>
 
-                  <div className="max-h-[450px] overflow-y-auto custom-scrollbar">
+                  <div className="max-h-112.5 overflow-y-auto custom-scrollbar">
                     {notifications.today?.length > 0 || notifications.earlier?.length > 0 ? (
                       <div className="divide-y divide-slate-50">
                         {/* Today Section */}
