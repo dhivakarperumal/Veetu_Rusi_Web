@@ -61,6 +61,9 @@ const AdminRestaurantManagement = React.lazy(() => import("./Admin/Pages/Restaur
 const HomeChefManagement = React.lazy(() => import("./Admin/Pages/HomeChefManagement.jsx"));
 const DeliveryPartnerManagement = React.lazy(() => import("./Admin/Pages/DeliveryPartnerManagement.jsx"));
 const UserManagement = React.lazy(() => import("./Admin/Pages/UserManagement.jsx"));
+const HomeChefPanel = React.lazy(() => import("./HomeChef/AdminPanel.jsx"));
+const HomeChefDashboard = React.lazy(() => import("./HomeChef/Dashboard.jsx"));
+const HomeChefPageManagement = React.lazy(() => import("./HomeChef/Pages/HomeChefManagement.jsx"));
 const OrderManagement = React.lazy(() => import("./Admin/Pages/OrderManagement.jsx"));
 const PayoutManagement = React.lazy(() => import("./Admin/Pages/PayoutManagement.jsx"));
 const FranchiseOwnerManagement = React.lazy(() => import("./SuperAdmin/Pages/FranchiseOwnerManagement.jsx"));
@@ -115,6 +118,26 @@ const router = createBrowserRouter([
       { path: "banners", element: <SuperBannerManagement /> },
       { path: "notifications", element: <NotificationManagement /> },
       { path: "reports", element: <ReportsAnalytics /> },
+    ],
+  },
+
+  {
+    path: "/homechef",
+    element: (
+      <PrivateRoute allowedRoles={["homechef"]}>
+        <AdminProvider>
+          <HomeChefPanel />
+        </AdminProvider>
+      </PrivateRoute>
+    ),
+    errorElement: <ErrorPage />,
+    children: [
+      { index: true, element: <HomeChefDashboard /> },
+      { path: "homechefs", element: <HomeChefPageManagement /> },
+      { path: "delivery-partners", element: <DeliveryPartnerManagement /> },
+      { path: "users", element: <UserManagement /> },
+      { path: "orders", element: <OrderManagement /> },
+      { path: "payouts", element: <PayoutManagement /> },
     ],
   },
 
