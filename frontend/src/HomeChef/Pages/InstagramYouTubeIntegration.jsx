@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Instagram, Youtube, Trash2 } from "lucide-react";
+import { Camera, Youtube, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 
 const InstagramYouTubeIntegration = () => {
@@ -82,7 +82,7 @@ const InstagramYouTubeIntegration = () => {
       {/* Instagram Section */}
       <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl shadow-lg p-8">
         <div className="flex items-center gap-3 mb-6">
-          <Instagram className="w-8 h-8 text-pink-600" />
+          <Camera className="w-8 h-8 text-pink-600" />
           <h2 className="text-2xl font-bold text-slate-900">Instagram</h2>
         </div>
 
