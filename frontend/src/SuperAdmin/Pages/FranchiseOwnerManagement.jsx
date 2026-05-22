@@ -305,20 +305,6 @@ const FranchiseOwnerManagement = () => {
                 <MapPin className="w-4 h-4 text-rose-500" />
                 <span className="text-sm text-slate-500 font-semibold">{viewDetailsFranchise.city}, {viewDetailsFranchise.state}</span>
               </div>
-              <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs uppercase tracking-[0.24em] font-black text-slate-500">
-                <div className="bg-slate-100 border border-slate-200 rounded-2xl px-3 py-2 text-slate-700">
-                  User ID
-                  <div className="mt-1 text-[12px] font-bold text-slate-900 truncate">{viewDetailsFranchise.franch_user_id || viewDetailsFranchise.id}</div>
-                </div>
-                <div className="bg-slate-100 border border-slate-200 rounded-2xl px-3 py-2 text-slate-700">
-                  Home Chefs
-                  <div className="mt-1 text-[12px] font-bold text-slate-900">{linkedHomeChefCount}</div>
-                </div>
-                <div className="bg-slate-100 border border-slate-200 rounded-2xl px-3 py-2 text-slate-700">
-                  Delivery Partners
-                  <div className="mt-1 text-[12px] font-bold text-slate-900">{linkedDeliveryPartnerCount}</div>
-                </div>
-              </div>
             </div>
             <div className="flex items-center gap-3">
               <span className={`text-[10px] font-black px-3 py-1.5 rounded-lg uppercase tracking-wider ${
@@ -331,6 +317,19 @@ const FranchiseOwnerManagement = () => {
               <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/50 px-3 py-1.5 rounded-lg">
                 {viewDetailsFranchise.commission_percentage}% Commission
               </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+            <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm">
+              <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Home Chefs</p>
+              <p className="text-4xl font-black text-slate-900 mt-4">{linkedHomeChefCount}</p>
+              <p className="mt-2 text-xs text-slate-500">Total linked home chefs for this franchise.</p>
+            </div>
+            <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm">
+              <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Delivery Partners</p>
+              <p className="text-4xl font-black text-slate-900 mt-4">{linkedDeliveryPartnerCount}</p>
+              <p className="mt-2 text-xs text-slate-500">Total linked delivery partners for this franchise.</p>
             </div>
           </div>
 
