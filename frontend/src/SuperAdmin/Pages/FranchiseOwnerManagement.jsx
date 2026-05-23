@@ -26,7 +26,7 @@ const emptyForm = {
   
   // Login Details
   username: "", password: "", confirmPassword: "", role: "Franchise Admin",
-  otp_verified: false, email_verified: false, login_status: "Active",
+  login_status: "Active",
   
   // KYC Documents
   aadhaar_url: "", pan_url: "", gst_certificate_url: "",
@@ -1126,10 +1126,7 @@ const FranchiseOwnerManagement = () => {
                         <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Alternate Mobile</label>
                         <input type="text" value={form.alt_mobile} onChange={e => setForm({ ...form, alt_mobile: e.target.value })} placeholder="Optional" className={inputCls} />
                       </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Email Address *</label>
-                        <input type="email" required value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="ram@example.com" className={inputCls} />
-                      </div>
+                    
                     </div>
                   </div>
                 )}
@@ -1195,44 +1192,34 @@ const FranchiseOwnerManagement = () => {
                       {!editingFranchise && (
                         <>
                           <div className="space-y-1">
-                            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Username (Email)</label>
-                            <input type="text" value={form.username} onChange={e => setForm({ ...form, username: e.target.value })} placeholder="admin@franchise.com" className={inputCls} />
+                            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Username</label>
+                            <input type="text" required value={form.username} onChange={e => setForm({ ...form, username: e.target.value })} placeholder="franchise_admin" className={inputCls} />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Email</label>
+                            <input type="email" required value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="admin@franchise.com" className={inputCls} />
                           </div>
                           <div className="space-y-1">
                             <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Password</label>
-                            <input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder="••••••••" className={inputCls} />
+                            <input type="password" required value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder="••••••••" className={inputCls} />
                           </div>
                           <div className="space-y-1">
                             <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Confirm Password</label>
-                            <input type="password" value={form.confirmPassword} onChange={e => setForm({ ...form, confirmPassword: e.target.value })} placeholder="••••••••" className={inputCls} />
+                            <input type="password" required value={form.confirmPassword} onChange={e => setForm({ ...form, confirmPassword: e.target.value })} placeholder="••••••••" className={inputCls} />
                           </div>
                         </>
                       )}
                       <div className="space-y-1">
                         <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Role</label>
-                        <select value={form.role} onChange={e => setForm({ ...form, role: e.target.value })} className={inputCls}>
+                        <select required value={form.role} onChange={e => setForm({ ...form, role: e.target.value })} className={inputCls}>
                           <option value="Franchise Admin">Franchise Admin</option>
                           <option value="Franchise Manager">Franchise Manager</option>
                           <option value="Staff">Staff</option>
                         </select>
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">OTP Verified</label>
-                        <select value={form.otp_verified ? "Yes" : "No"} onChange={e => setForm({ ...form, otp_verified: e.target.value === "Yes" })} className={inputCls}>
-                          <option value="No">No</option>
-                          <option value="Yes">Yes</option>
-                        </select>
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Email Verified</label>
-                        <select value={form.email_verified ? "Yes" : "No"} onChange={e => setForm({ ...form, email_verified: e.target.value === "Yes" })} className={inputCls}>
-                          <option value="No">No</option>
-                          <option value="Yes">Yes</option>
-                        </select>
-                      </div>
-                      <div className="space-y-1">
                         <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Login Status</label>
-                        <select value={form.login_status} onChange={e => setForm({ ...form, login_status: e.target.value })} className={inputCls}>
+                        <select required value={form.login_status} onChange={e => setForm({ ...form, login_status: e.target.value })} className={inputCls}>
                           <option value="Active">Active</option>
                           <option value="Inactive">Inactive</option>
                         </select>
