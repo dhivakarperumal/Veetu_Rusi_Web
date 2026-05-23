@@ -2,7 +2,6 @@ import React from "react";
 import { useLocation } from "react-router-dom";
 
 const pageTitles = {
-  "/chef": "Chef Dashboard",
   "/chef/analytics": "Analytics Dashboard",
   "/chef/add-products": "Add Products",
   "/chef/recipes": "Recipe Details",
@@ -25,7 +24,7 @@ const HomeChefDashboard = () => {
     for (const [p, t] of Object.entries(pageTitles)) {
       if (path.startsWith(p + "/")) return t;
     }
-    return "Chef Dashboard";
+    return "Analytics Dashboard";
   };
 
   return (

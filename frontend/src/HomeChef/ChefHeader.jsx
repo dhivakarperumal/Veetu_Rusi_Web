@@ -20,8 +20,7 @@ import {
 import { useAuth } from "../PrivateRouter/AuthContext";
 
 const pageTitles = {
-  "/chef": "Chef Dashboard",
-  "/chef/analytics": "Analytics Dashboard",
+  "/chef": "Dashboard",
   "/chef/add-products": "Add Products",
   "/chef/recipes": "Recipe Details",
   "/chef/upload-videos": "Food Videos",
