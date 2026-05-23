@@ -181,16 +181,23 @@ const AddProducts = () => {
 
     useEffect(() => {
         const fetchEssentialData = async () => {
-            try {
-                if (isEdit) {
-                    const [catRes, editRes] = await Promise.all([
-                        api.get("/categories"),
-                        api.get(`/products/${id}`)
-                    ]);
+            setFetching(true);
+            if (isEdit) {
+                // Fetch categories and the product independently so one failure doesn't block the other
+                const [catsResult, productResult] = await Promise.allSettled([
+                    api.get("/categories"),
+                    api.get(`/products/${id}`)
+                ]);
 
-                    setCategories(Array.isArray(catRes.data) ? catRes.data : []);
+                if (catsResult.status === 'fulfilled') {
+                    setCategories(Array.isArray(catsResult.value.data) ? catsResult.value.data : []);
+                } else {
+                    console.warn('Failed to load categories', catsResult.reason);
+                }
+
+                if (productResult.status === 'fulfilled') {
+                    const p = productResult.value.data;
                     try {
-                        const p = editRes.data;
                         setFormData({
                             name: p.name || "",
                             description: p.description || "",
@@ -224,28 +231,41 @@ const AddProducts = () => {
                         });
                         if (p.variants) setVariants(Array.isArray(p.variants) ? p.variants : JSON.parse(p.variants));
                     } catch (e) {
-                        toast.error("Failed to fetch product details.");
-                    } finally {
-                        setFetching(false);
+                        console.error('Failed to parse product variants or set form data', e);
+                        toast.error("Failed to load product details.");
                     }
                 } else {
-                    const [catRes, codeRes] = await Promise.all([
-                        api.get("/categories"),
-                        api.get("/products/latest-code")
-                    ]);
-
-                    setCategories(Array.isArray(catRes.data) ? catRes.data : []);
-                    setFormData(prev => ({
-                        ...prev,
-                        category: Array.isArray(catRes.data) && catRes.data[0]?.name ? catRes.data[0].name : "Cooked Food",
-                        product_code: codeRes.data.latestCode || "SP001"
-                    }));
-                    setFetching(false);
+                    console.warn('Failed to load product for edit', productResult.reason);
+                    toast.error('Failed to load product for editing');
                 }
-            } catch (error) {
-                console.error("Error fetching data:", error);
+
                 setFetching(false);
+                return;
             }
+
+            // Not editing: load categories and latest code
+            const [catsResult, codeResult] = await Promise.allSettled([
+                api.get("/categories"),
+                api.get("/products/latest-code")
+            ]);
+
+            if (catsResult.status === 'fulfilled') {
+                setCategories(Array.isArray(catsResult.value.data) ? catsResult.value.data : []);
+                setFormData(prev => ({
+                    ...prev,
+                    category: Array.isArray(catsResult.value.data) && catsResult.value.data[0]?.name ? catsResult.value.data[0].name : "Cooked Food",
+                }));
+            } else {
+                console.warn('Failed to load categories', catsResult.reason);
+            }
+
+            if (codeResult.status === 'fulfilled') {
+                setFormData(prev => ({ ...prev, product_code: codeResult.value.data.latestCode || 'SP001' }));
+            } else {
+                console.warn('Failed to load latest product code', codeResult.reason);
+            }
+
+            setFetching(false);
         };
         fetchEssentialData();
     }, [id, isEdit]);
@@ -389,21 +409,40 @@ const AddProducts = () => {
 
         setLoading(true);
         try {
-            // Get user and chef information from localStorage
+            // Get user and chef information from auth/profile and localStorage
             const userData = JSON.parse(localStorage.getItem("user") || "{}");
-            const chef_id = userData.chef_id || userData.id;
-            
+            // Try to fetch the full chef profile to obtain franchise/created-by metadata
+            let homeChef = null;
+            try {
+                const profileRes = await api.get('/auth/profile');
+                homeChef = profileRes.data?.homeChef || null;
+            } catch (e) {
+                // ignore - we'll fallback to user data
+                console.warn('Could not fetch chef profile for metadata fallback', e?.response?.data || e);
+            }
+
+            const chefUserId = userData.user_id || userData.id || null; // the chef's user_id label
+            const chefId = homeChef?.chef_id || userData.chef_id || userData.id || null; // internal chef_id
+
+            // Franchise / created-by should come from the homeChef record user_id / franchise_user_id)
+            const franchiseUserId = homeChef?.created_by_user_id || homeChef?.franchise_user_id || null;
+            const createdByUserId = franchiseUserId || userData.id || null;
+
             const finalData = {
                 ...formData,
                 variants,
-                chef_id: chef_id,
+                // chef identifiers
+                chef_id: chefId,
+                chef_user_id: chefUserId,
                 chef_name: userData.name || userData.username || "",
                 chef_phone: userData.phone || "",
                 chef_email: userData.email || "",
-                created_by_user_id: userData.id || chef_id,
-                created_by_email: userData.email || "",
-                created_by_name: userData.name || userData.username || "",
-                created_by_phone: userData.phone || ""
+                // franchise / created-by identifiers
+                franchise_user_id: franchiseUserId,
+                created_by_user_id: createdByUserId,
+                created_by_email: homeChef?.created_by_email || userData.email || "",
+                created_by_name: homeChef?.created_by_name || userData.name || userData.username || "",
+                created_by_phone: homeChef?.created_by_phone || userData.phone || ""
             };
 
             if (isEdit) {
