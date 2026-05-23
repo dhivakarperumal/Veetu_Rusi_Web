@@ -39,7 +39,8 @@ import { useAuth } from "../PrivateRouter/AuthContext";
 
 /* ================= NAV ITEMS ================= */
 const navItems = [
-  { path: "/chef/analytics", label: "Analytics Dashboard", icon: TrendingUp, exact: true },
+  { path: "/chef", label: "Dashboard", icon: TrendingUp, exact: true },
+  // { path: "/chef/profile", label: "Profile", icon: Users },
   // { path: "/chef", label: "Dashboard", icon: LayoutDashboard },
   { path: "/chef/add-products", label: "Add Products", icon: PlusCircle },
   { path: "/chef/recipes", label: "Recipe Details", icon: BookOpen },

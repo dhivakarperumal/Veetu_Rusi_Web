@@ -21,6 +21,26 @@ exports.verifyToken = (req, res, next) => {
   }
 };
 
+exports.attachUser = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  if (!authHeader) {
+    return next();
+  }
+
+  const token = authHeader.split(' ')[1];
+  if (!token) {
+    return next();
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+  } catch (error) {
+    // Ignore invalid token for optional auth attachment
+  }
+  next();
+};
+
 exports.requireRole = (roles) => {
   return (req, res, next) => {
     if (!req.user || !roles.includes(req.user.role)) {

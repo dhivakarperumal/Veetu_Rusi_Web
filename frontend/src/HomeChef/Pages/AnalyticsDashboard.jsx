@@ -86,7 +86,7 @@ const AnalyticsDashboard = () => {
     <div className="space-y-6 pb-12">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-black text-slate-900">Analytics Dashboard</h1>
+          <h1 className="text-3xl font-black text-slate-900"> Dashboard</h1>
           <p className="text-sm text-gray-500 mt-1">Track your food business performance</p>
         </div>
         <select

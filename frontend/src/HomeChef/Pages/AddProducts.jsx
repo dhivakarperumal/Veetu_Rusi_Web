@@ -389,7 +389,23 @@ const AddProducts = () => {
 
         setLoading(true);
         try {
-            const finalData = { ...formData, variants };
+            // Get user and chef information from localStorage
+            const userData = JSON.parse(localStorage.getItem("user") || "{}");
+            const chef_id = userData.chef_id || userData.id;
+            
+            const finalData = {
+                ...formData,
+                variants,
+                chef_id: chef_id,
+                chef_name: userData.name || userData.username || "",
+                chef_phone: userData.phone || "",
+                chef_email: userData.email || "",
+                created_by_user_id: userData.id || chef_id,
+                created_by_email: userData.email || "",
+                created_by_name: userData.name || userData.username || "",
+                created_by_phone: userData.phone || ""
+            };
+
             if (isEdit) {
                 await api.put(`/products/${id}`, finalData);
                 toast.success("Dish updated successfully!");
@@ -397,7 +413,7 @@ const AddProducts = () => {
                 await api.post("/products", finalData);
                 toast.success("Dish added to your menu successfully!");
             }
-            setTimeout(() => navigate("/admin/products/all"), 1500);
+            setTimeout(() => navigate("/chef/products"), 1500);
         } catch (error) {
             console.error("Submit error:", error);
             toast.error(error.response?.data?.message || "Operation failed.");
