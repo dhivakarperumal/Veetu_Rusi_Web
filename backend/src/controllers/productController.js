@@ -47,6 +47,11 @@ exports.getAllProducts = async (req, res) => {
             query += ' AND chef_id = ?';
             params.push(chef_id);
         }
+        // Allow filtering by chef_user_id (home chef's user id)
+        if (req.query.chef_user_id) {
+            query += ' AND chef_user_id = ?';
+            params.push(req.query.chef_user_id);
+        }
         if (category) {
             query += ' AND category = ?';
             params.push(category);
@@ -128,10 +133,12 @@ exports.createProduct = async (req, res) => {
             manufacture_date,
             variants,
             chef_id,
+            chef_user_id,
             chef_name,
             chef_phone,
             chef_email,
             created_by_user_id,
+            franchise_user_id,
             created_by_email,
             created_by_name,
             created_by_phone,
@@ -179,11 +186,11 @@ exports.createProduct = async (req, res) => {
                 message: 'Home chef not found. Send a valid chef_id or use a logged-in chef account.'
             });
         }
-        const finalChefUserId = homeChef.chef_user_id || req.user?.id || null;
+        const finalChefUserId = chef_user_id || homeChef?.chef_user_id || req.user?.id || null;
         const finalChefName = homeChef.name || chef_name || null;
         const finalChefPhone = homeChef.mobile || chef_phone || null;
         const finalChefEmail = homeChef.email || chef_email || null;
-        const finalFranchiseUserId = homeChef.franchise_user_id || homeChef.created_by_id || null;
+        const finalFranchiseUserId = franchise_user_id || franchise_id || homeChef?.franchise_user_id || homeChef?.created_by_id || created_by_user_id || req.user?.user_id || req.user?.id || null;
         const finalFranchiseName = homeChef.created_by_name || null;
         const finalFranchiseEmail = homeChef.created_by_email || null;
         const finalFranchisePhone = homeChef.created_by_phone || null;
