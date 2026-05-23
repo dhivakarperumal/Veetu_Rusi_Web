@@ -181,16 +181,23 @@ const AddProducts = () => {
 
     useEffect(() => {
         const fetchEssentialData = async () => {
-            try {
-                if (isEdit) {
-                    const [catRes, editRes] = await Promise.all([
-                        api.get("/categories"),
-                        api.get(`/products/${id}`)
-                    ]);
+            setFetching(true);
+            if (isEdit) {
+                // Fetch categories and the product independently so one failure doesn't block the other
+                const [catsResult, productResult] = await Promise.allSettled([
+                    api.get("/categories"),
+                    api.get(`/products/${id}`)
+                ]);
 
-                    setCategories(Array.isArray(catRes.data) ? catRes.data : []);
+                if (catsResult.status === 'fulfilled') {
+                    setCategories(Array.isArray(catsResult.value.data) ? catsResult.value.data : []);
+                } else {
+                    console.warn('Failed to load categories', catsResult.reason);
+                }
+
+                if (productResult.status === 'fulfilled') {
+                    const p = productResult.value.data;
                     try {
-                        const p = editRes.data;
                         setFormData({
                             name: p.name || "",
                             description: p.description || "",
@@ -224,28 +231,41 @@ const AddProducts = () => {
                         });
                         if (p.variants) setVariants(Array.isArray(p.variants) ? p.variants : JSON.parse(p.variants));
                     } catch (e) {
-                        toast.error("Failed to fetch product details.");
-                    } finally {
-                        setFetching(false);
+                        console.error('Failed to parse product variants or set form data', e);
+                        toast.error("Failed to load product details.");
                     }
                 } else {
-                    const [catRes, codeRes] = await Promise.all([
-                        api.get("/categories"),
-                        api.get("/products/latest-code")
-                    ]);
-
-                    setCategories(Array.isArray(catRes.data) ? catRes.data : []);
-                    setFormData(prev => ({
-                        ...prev,
-                        category: Array.isArray(catRes.data) && catRes.data[0]?.name ? catRes.data[0].name : "Cooked Food",
-                        product_code: codeRes.data.latestCode || "SP001"
-                    }));
-                    setFetching(false);
+                    console.warn('Failed to load product for edit', productResult.reason);
+                    toast.error('Failed to load product for editing');
                 }
-            } catch (error) {
-                console.error("Error fetching data:", error);
+
                 setFetching(false);
+                return;
             }
+
+            // Not editing: load categories and latest code
+            const [catsResult, codeResult] = await Promise.allSettled([
+                api.get("/categories"),
+                api.get("/products/latest-code")
+            ]);
+
+            if (catsResult.status === 'fulfilled') {
+                setCategories(Array.isArray(catsResult.value.data) ? catsResult.value.data : []);
+                setFormData(prev => ({
+                    ...prev,
+                    category: Array.isArray(catsResult.value.data) && catsResult.value.data[0]?.name ? catsResult.value.data[0].name : "Cooked Food",
+                }));
+            } else {
+                console.warn('Failed to load categories', catsResult.reason);
+            }
+
+            if (codeResult.status === 'fulfilled') {
+                setFormData(prev => ({ ...prev, product_code: codeResult.value.data.latestCode || 'SP001' }));
+            } else {
+                console.warn('Failed to load latest product code', codeResult.reason);
+            }
+
+            setFetching(false);
         };
         fetchEssentialData();
     }, [id, isEdit]);
