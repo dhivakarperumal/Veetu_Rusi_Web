@@ -885,7 +885,7 @@ exports.getFranchises = async (req, res) => {
     // Safe migrations for new columns
     try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS franch_user_id CHAR(36) DEFAULT NULL"); } catch (_) {}
     try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS login_password VARCHAR(255) DEFAULT NULL"); } catch (_) {}
-    const [rows] = await pool.execute("SELECT id, franchise_id, franch_user_id, franchise_name, owner_name, mobile, email, city, state, commission_percentage, status, created_at, login_password IS NOT NULL AS password_preset FROM franchise_owners ORDER BY created_at DESC");
+    const [rows] = await pool.execute("SELECT id, franchise_id, franch_user_id, franchise_name, owner_name, mobile, email, city, state, commission_percentage, status, territory_pincodes, created_at, login_password IS NOT NULL AS password_preset FROM franchise_owners ORDER BY created_at DESC");
     res.json(rows);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving franchise owners.', error: error.message });
@@ -898,6 +898,7 @@ exports.createFranchise = async (req, res) => {
       franchise_name, owner_name, mobile, email, city, state, commission_percentage, status, password,
       business_registration_number, gst_number, pan_number, start_date, expiry_date,
       alt_mobile, whatsapp_number, website_url, emergency_contact_number,
+      territory_pincodes,
       door_number, street_name, area, landmark, district, pincode, latitude, longitude, map_link,
       username, role, otp_verified, email_verified, login_status
     } = req.body;
@@ -931,7 +932,7 @@ exports.createFranchise = async (req, res) => {
         franchise_name, owner_name, mobile, email, city, state, commission_percentage || 10.00, status || 'Pending', hashedPw,
         business_registration_number || null, gst_number || null, pan_number || null, start_date || null, expiry_date || null,
         alt_mobile || null, whatsapp_number || null, website_url || null, emergency_contact_number || null,
-        door_number || null, street_name || null, area || null, landmark || null, district || null, pincode || null, latitude || null, longitude || null, map_link || null,
+        door_number || null, street_name || null, area || null, landmark || null, district || null, territory_pincodes || null, pincode || null, latitude || null, longitude || null, map_link || null,
         username || null, role || 'Franchise Admin', otp_verified !== undefined ? (otp_verified ? 1 : 0) : 0, email_verified !== undefined ? (email_verified ? 1 : 0) : 0, login_status || 'Active',
         logo_url, banner_url, aadhaar_url, pan_url, gst_certificate_url, fssai_license_url, shop_license_url, vehicle_rc_url, driving_license_url, bank_passbook_url, signature_url
       ]
@@ -1031,6 +1032,7 @@ exports.updateFranchise = async (req, res) => {
       franchise_name, owner_name, mobile, email, city, state, commission_percentage, status,
       business_registration_number, gst_number, pan_number, start_date, expiry_date,
       alt_mobile, whatsapp_number, website_url, emergency_contact_number,
+      territory_pincodes,
       door_number, street_name, area, landmark, district, pincode, latitude, longitude, map_link,
       username, role, otp_verified, email_verified, login_status
     } = req.body;
@@ -1051,14 +1053,14 @@ exports.updateFranchise = async (req, res) => {
       franchise_name = ?, owner_name = ?, mobile = ?, email = ?, city = ?, state = ?, commission_percentage = ?, status = ?,
       business_registration_number = ?, gst_number = ?, pan_number = ?, start_date = ?, expiry_date = ?,
       alt_mobile = ?, whatsapp_number = ?, website_url = ?, emergency_contact_number = ?,
-      door_number = ?, street_name = ?, area = ?, landmark = ?, district = ?, pincode = ?, latitude = ?, longitude = ?, map_link = ?,
+      door_number = ?, street_name = ?, area = ?, landmark = ?, district = ?, territory_pincodes = ?, pincode = ?, latitude = ?, longitude = ?, map_link = ?,
       username = ?, role = ?, otp_verified = ?, email_verified = ?, login_status = ?`;
 
     let params = [
       franchise_name, owner_name, mobile, email, city, state, commission_percentage, status,
       business_registration_number || null, gst_number || null, pan_number || null, start_date || null, expiry_date || null,
       alt_mobile || null, whatsapp_number || null, website_url || null, emergency_contact_number || null,
-      door_number || null, street_name || null, area || null, landmark || null, district || null, pincode || null, latitude || null, longitude || null, map_link || null,
+      door_number || null, street_name || null, area || null, landmark || null, district || null, territory_pincodes || null, pincode || null, latitude || null, longitude || null, map_link || null,
       username || null, role || 'Franchise Admin', otp_verified !== undefined ? (otp_verified ? 1 : 0) : 0, email_verified !== undefined ? (email_verified ? 1 : 0) : 0, login_status || 'Active'
     ];
 

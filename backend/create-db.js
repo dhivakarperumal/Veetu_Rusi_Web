@@ -385,6 +385,7 @@ async function createDatabaseAndTables() {
       state VARCHAR(100) NOT NULL,
       commission_percentage DECIMAL(5,2) NOT NULL DEFAULT 10.00,
       status VARCHAR(50) NOT NULL DEFAULT 'Pending',
+      territory_pincodes TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
@@ -414,6 +415,7 @@ async function createDatabaseAndTables() {
       ADD COLUMN \`area\` VARCHAR(255),
       ADD COLUMN \`landmark\` VARCHAR(255),
       ADD COLUMN \`district\` VARCHAR(150),
+      ADD COLUMN \`territory_pincodes\` TEXT,
       ADD COLUMN \`pincode\` VARCHAR(20),
       ADD COLUMN \`latitude\` VARCHAR(50),
       ADD COLUMN \`longitude\` VARCHAR(50),
@@ -434,6 +436,16 @@ async function createDatabaseAndTables() {
       ADD COLUMN \`signature_url\` VARCHAR(255)
     `);
     console.log('Added all new fields to the existing franchise_owners table');
+  }
+
+  const [territoryColumns] = await connection.execute(
+    "SELECT COUNT(*) AS count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'franchise_owners' AND COLUMN_NAME = 'territory_pincodes'",
+    [DB_NAME]
+  );
+
+  if (territoryColumns[0].count === 0) {
+    await connection.execute(`ALTER TABLE \`franchise_owners\` ADD COLUMN \`territory_pincodes\` TEXT`);
+    console.log('Added territory_pincodes column to franchise_owners table');
   }
 
   await connection.execute(`
@@ -567,7 +579,11 @@ async function createDatabaseAndTables() {
   await connection.end();
 }
 
-createDatabaseAndTables().catch((error) => {
-  console.error('Database setup failed:', error);
-  process.exit(1);
-});
+if (require.main === module) {
+  createDatabaseAndTables().catch((error) => {
+    console.error('Database setup failed:', error);
+    process.exit(1);
+  });
+}
+
+module.exports = createDatabaseAndTables;

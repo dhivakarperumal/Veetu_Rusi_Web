@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
+const initDb = require('./create-db');
 
 const path = require('path');
 const authRouter = require('./src/routes/auth');
@@ -20,6 +21,23 @@ app.use('/api/dashboard', dashboardRouter);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
+});
+
+initDb().then(() => {
+  const server = app.listen(port, () => {
+    console.log(`Backend listening on http://localhost:${port}`);
+  });
+
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`Port ${port} is already in use. Please stop the process using it or set a different PORT in .env.`);
+      process.exit(1);
+    }
+    throw err;
+  });
+}).catch((err) => {
+  console.error('Database initialization failed:', err);
+  process.exit(1);
 });
 
 // Image generation proxy - do not expose your OpenAI key in frontend
@@ -55,14 +73,3 @@ app.post('/api/generate-image', async (req, res) => {
   }
 });
 
-const server = app.listen(port, () => {
-  console.log(`Backend listening on http://localhost:${port}`);
-});
-
-server.on('error', (err) => {
-  if (err.code === 'EADDRINUSE') {
-    console.error(`Port ${port} is already in use. Please stop the process using it or set a different PORT in .env.`);
-    process.exit(1);
-  }
-  throw err;
-});

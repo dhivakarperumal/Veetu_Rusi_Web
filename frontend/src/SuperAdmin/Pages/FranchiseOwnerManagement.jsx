@@ -17,7 +17,7 @@ const emptyForm = {
   start_date: "", expiry_date: "", status: "Pending",
   
   // Contact Details
-  mobile: "", alt_mobile: "", email: "", territory_pincodes: [""],
+  mobile: "", alt_mobile: "", email: "", territory_pincodes: [],
   
   // Address Details
   door_number: "", street_name: "", area: "", landmark: "",
@@ -65,6 +65,7 @@ const FranchiseOwnerManagement = () => {
   const [showPw, setShowPw] = useState(false);
 
   const [form, setForm] = useState(emptyForm);
+  const [pincodeEntry, setPincodeEntry] = useState("");
   const [activeFormTab, setActiveFormTab] = useState("basic");
 
   const fetchFranchises = async () => {
@@ -208,10 +209,31 @@ const FranchiseOwnerManagement = () => {
     setEditingFranchise(franchise);
     const territory_pincodes = typeof franchise.territory_pincodes === "string"
       ? franchise.territory_pincodes.split(/\s*,\s*/).filter(Boolean)
-      : franchise.territory_pincodes || [""];
+      : franchise.territory_pincodes || [];
     setForm({ ...emptyForm, ...franchise, territory_pincodes, confirmPassword: "" });
+    setPincodeEntry("");
     setActiveFormTab("basic");
     setIsModalOpen(true);
+  };
+
+  const addTerritoryPincode = () => {
+    const value = pincodeEntry.trim();
+    if (!value) return;
+    if (!/^\d{6}$/.test(value)) {
+      toast.error("Enter a valid 6-digit pincode.");
+      return;
+    }
+    if (form.territory_pincodes.includes(value)) {
+      toast.error("Pincode already added.");
+      return;
+    }
+    setForm({ ...form, territory_pincodes: [...form.territory_pincodes, value] });
+    setPincodeEntry("");
+  };
+
+  const removeTerritoryPincode = (index) => {
+    const updatedPins = form.territory_pincodes.filter((_, i) => i !== index);
+    setForm({ ...form, territory_pincodes: updatedPins });
   };
 
   const handleToggleStatus = async (franchise) => {
@@ -1136,10 +1158,44 @@ const FranchiseOwnerManagement = () => {
                         <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Alternate Mobile</label>
                         <input type="text" value={form.alt_mobile} onChange={e => setForm({ ...form, alt_mobile: e.target.value })} placeholder="Optional" className={inputCls} />
                       </div>
-                      <div className="space-y-1 sm:col-span-2">
+                      <div className="space-y-3 sm:col-span-2">
                         <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Pincodes</label>
-                        <input type="text" value={form.territory_pincodes} onChange={e => setForm({ ...form, territory_pincodes: e.target.value })} placeholder="641001, 641002, 641003" className={inputCls} />
-                        <p className="text-[10px] text-slate-400">Enter one or more pincodes separated by commas.</p>
+                        <div className="grid grid-cols-[1fr_auto] gap-2">
+                          <input
+                            type="text"
+                            value={pincodeEntry}
+                            onChange={e => setPincodeEntry(e.target.value)}
+                            onKeyDown={e => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                addTerritoryPincode();
+                              }
+                            }}
+                            placeholder="Enter pincode and press + or Enter"
+                            className={inputCls}
+                          />
+                          <button
+                            type="button"
+                            onClick={addTerritoryPincode}
+                            className="inline-flex items-center justify-center px-4 rounded-xl bg-[#1B4D22] text-white font-black uppercase tracking-widest text-xs transition hover:bg-emerald-700"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        </div>
+                        {form.territory_pincodes.length > 0 ? (
+                          <div className="flex flex-wrap gap-2 mt-3">
+                            {form.territory_pincodes.map((pin, idx) => (
+                              <span key={`${pin}-${idx}`} className="inline-flex items-center gap-2 px-3 py-2 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold">
+                                {pin}
+                                <button type="button" onClick={() => removeTerritoryPincode(idx)} className="text-slate-500 hover:text-rose-600 transition">
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-[10px] text-slate-400">No pincodes added yet. Add one using the plus button.</p>
+                        )}
                       </div>
                     </div>
                   </div>
