@@ -932,24 +932,54 @@ exports.createFranchise = async (req, res) => {
     const hashedPw = password ? hashPassword(password) : null;
     const plainPw  = password || null;
 
-    const [result] = await pool.execute(
-      `INSERT INTO franchise_owners (
-        franchise_name, owner_name, mobile, email, city, state, commission_percentage, status, login_password,
-        business_registration_number, gst_number, pan_number, start_date, expiry_date,
-        alt_mobile, whatsapp_number, website_url, emergency_contact_number,
-        door_number, street_name, area, landmark, district, pincode, latitude, longitude, map_link,
-        username, role, otp_verified, email_verified, login_status,
-        logo_url, banner_url, aadhaar_url, pan_url, gst_certificate_url, fssai_license_url, shop_license_url, vehicle_rc_url, driving_license_url, bank_passbook_url, signature_url
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        franchise_name, owner_name, mobile, email, city, state, commission_percentage || 10.00, status || 'Pending', hashedPw,
-        business_registration_number || null, gst_number || null, pan_number || null, start_date || null, expiry_date || null,
-        alt_mobile || null, whatsapp_number || null, website_url || null, emergency_contact_number || null,
-        door_number || null, street_name || null, area || null, landmark || null, district || null, territory_pincodes || null, pincode || null, latitude || null, longitude || null, map_link || null,
-        username || null, role || 'Franchise Admin', otp_verified !== undefined ? (otp_verified ? 1 : 0) : 0, email_verified !== undefined ? (email_verified ? 1 : 0) : 0, login_status || 'Active',
-        logo_url, banner_url, aadhaar_url, pan_url, gst_certificate_url, fssai_license_url, shop_license_url, vehicle_rc_url, driving_license_url, bank_passbook_url, signature_url
-      ]
-    );
+    const insertData = {
+      franchise_name,
+      owner_name,
+      mobile,
+      email,
+      city,
+      state,
+      commission_percentage: commission_percentage || 10.00,
+      status: status || 'Pending',
+      login_password: hashedPw,
+      business_registration_number: business_registration_number || null,
+      gst_number: gst_number || null,
+      pan_number: pan_number || null,
+      start_date: start_date || null,
+      expiry_date: expiry_date || null,
+      alt_mobile: alt_mobile || null,
+      whatsapp_number: whatsapp_number || null,
+      website_url: website_url || null,
+      emergency_contact_number: emergency_contact_number || null,
+      door_number: door_number || null,
+      street_name: street_name || null,
+      area: area || null,
+      landmark: landmark || null,
+      district: district || null,
+      territory_pincodes: territory_pincodes || null,
+      pincode: pincode || null,
+      latitude: latitude || null,
+      longitude: longitude || null,
+      map_link: map_link || null,
+      username: username || null,
+      role: role || 'Franchise Admin',
+      otp_verified: otp_verified !== undefined ? (otp_verified ? 1 : 0) : 0,
+      email_verified: email_verified !== undefined ? (email_verified ? 1 : 0) : 0,
+      login_status: login_status || 'Active',
+      logo_url,
+      banner_url,
+      aadhaar_url,
+      pan_url,
+      gst_certificate_url,
+      fssai_license_url,
+      shop_license_url,
+      vehicle_rc_url,
+      driving_license_url,
+      bank_passbook_url,
+      signature_url
+    };
+
+    const [result] = await pool.query("INSERT INTO franchise_owners SET ?", insertData);
     res.status(201).json({
       message: 'Franchise owner registered. Click Approve to create login credentials.',
       id: result.insertId,

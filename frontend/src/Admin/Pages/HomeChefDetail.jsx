@@ -97,27 +97,35 @@ const HomeChefDetail = () => {
         </div>
       </div>
 
-      <div className="rounded-3xl border border-slate-800 bg-slate-950 p-4">
-        <div className="flex flex-wrap gap-3">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id)}
-              className={`rounded-full px-4 py-2 text-xs font-black uppercase tracking-wider transition ${
-                activeTab === tab.id
-                  ? "bg-emerald-700 text-white shadow-sm"
-                  : "bg-slate-900 text-slate-300 hover:bg-slate-800"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
+      <div className="grid grid-cols-1 xl:grid-cols-[260px_minmax(0,1fr)] gap-6">
+        <aside className="rounded-3xl border border-slate-800 bg-slate-950 p-4">
+          <div className="space-y-5">
+            <div className="rounded-3xl border border-slate-800 bg-slate-900 p-4">
+              <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Sections</p>
+              <h2 className="mt-3 text-xl font-black text-white">Chef Details</h2>
+            </div>
+            <div className="space-y-3">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`w-full rounded-3xl px-4 py-3 text-left text-sm font-black uppercase tracking-[0.18em] transition ${
+                    activeTab === tab.id
+                      ? "bg-emerald-700 text-white shadow-sm"
+                      : "bg-slate-900 text-slate-300 hover:bg-slate-800"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </aside>
 
-      {activeTab === "overview" && (
-        <>
+        <main className="space-y-6">
+          {activeTab === "overview" && (
+            <>
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
             <div className="space-y-4 rounded-3xl border border-slate-800 bg-slate-950 p-6 shadow-sm">
               <h2 className="text-sm uppercase tracking-[0.24em] text-slate-400">Contact Info</h2>
@@ -357,6 +365,8 @@ const HomeChefDetail = () => {
           </div>
         </div>
       )}
+        </main>
+      </div>
     </div>
   );
 };
