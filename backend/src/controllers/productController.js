@@ -189,6 +189,12 @@ exports.createProduct = async (req, res) => {
         const finalFranchisePhone = homeChef.created_by_phone || null;
         const finalFranchiseId = franchise_id || null;
 
+        // Created-by metadata: prefer explicit body values, fall back to authenticated user
+        const finalCreatedByUserId = created_by_user_id || req.user?.user_id || req.user?.id || null;
+        const finalCreatedByEmail = created_by_email || req.user?.email || null;
+        const finalCreatedByName = created_by_name || req.user?.name || null;
+        const finalCreatedByPhone = created_by_phone || req.user?.phone || null;
+
         const params = [
             name, description, category, product_type || 'Cooked Food', subcategory || null,
             mrp, offer || 0, offer_price || mrp, finalProductCode, total_stock || 0,
