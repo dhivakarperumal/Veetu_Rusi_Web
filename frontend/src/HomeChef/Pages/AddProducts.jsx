@@ -389,21 +389,40 @@ const AddProducts = () => {
 
         setLoading(true);
         try {
-            // Get user and chef information from localStorage
+            // Get user and chef information from auth/profile and localStorage
             const userData = JSON.parse(localStorage.getItem("user") || "{}");
-            const chef_id = userData.chef_id || userData.id;
-            
+            // Try to fetch the full chef profile to obtain franchise/created-by metadata
+            let homeChef = null;
+            try {
+                const profileRes = await api.get('/auth/profile');
+                homeChef = profileRes.data?.homeChef || null;
+            } catch (e) {
+                // ignore - we'll fallback to user data
+                console.warn('Could not fetch chef profile for metadata fallback', e?.response?.data || e);
+            }
+
+            const chefUserId = userData.user_id || userData.id || null; // the chef's user_id label
+            const chefId = homeChef?.chef_id || userData.chef_id || userData.id || null; // internal chef_id
+
+            // Franchise / created-by should come from the homeChef record user_id / franchise_user_id)
+            const franchiseUserId = homeChef?.created_by_user_id || homeChef?.franchise_user_id || null;
+            const createdByUserId = franchiseUserId || userData.id || null;
+
             const finalData = {
                 ...formData,
                 variants,
-                chef_id: chef_id,
+                // chef identifiers
+                chef_id: chefId,
+                chef_user_id: chefUserId,
                 chef_name: userData.name || userData.username || "",
                 chef_phone: userData.phone || "",
                 chef_email: userData.email || "",
-                created_by_user_id: userData.id || chef_id,
-                created_by_email: userData.email || "",
-                created_by_name: userData.name || userData.username || "",
-                created_by_phone: userData.phone || ""
+                // franchise / created-by identifiers
+                franchise_user_id: franchiseUserId,
+                created_by_user_id: createdByUserId,
+                created_by_email: homeChef?.created_by_email || userData.email || "",
+                created_by_name: homeChef?.created_by_name || userData.name || userData.username || "",
+                created_by_phone: homeChef?.created_by_phone || userData.phone || ""
             };
 
             if (isEdit) {
