@@ -156,7 +156,7 @@ exports.createProduct = async (req, res) => {
 
         if (candidateChefId || candidateEmail || candidatePhone) {
             const [homeChefs] = await pool.execute(
-                `SELECT hc.*, u.user_id AS chef_user_id
+                `SELECT hc.*, u.id AS chef_user_id, hc.created_by_id AS franchise_user_id
                 FROM home_chefs hc
                 LEFT JOIN users u ON (u.email = hc.email OR u.phone = hc.mobile)
                 WHERE hc.chef_id = ?
@@ -179,14 +179,14 @@ exports.createProduct = async (req, res) => {
                 message: 'Home chef not found. Send a valid chef_id or use a logged-in chef account.'
             });
         }
-        const finalChefUserId = homeChef.chef_user_id || null;
+        const finalChefUserId = homeChef.chef_user_id || req.user?.id || null;
         const finalChefName = homeChef.name || chef_name || null;
         const finalChefPhone = homeChef.mobile || chef_phone || null;
         const finalChefEmail = homeChef.email || chef_email || null;
-        const finalCreatedByUserId = homeChef.created_by_user_id || created_by_user_id || null;
-        const finalCreatedByName = homeChef.created_by_name || created_by_name || null;
-        const finalCreatedByEmail = homeChef.created_by_email || created_by_email || null;
-        const finalCreatedByPhone = homeChef.created_by_phone || created_by_phone || null;
+        const finalFranchiseUserId = homeChef.franchise_user_id || homeChef.created_by_id || null;
+        const finalFranchiseName = homeChef.created_by_name || null;
+        const finalFranchiseEmail = homeChef.created_by_email || null;
+        const finalFranchisePhone = homeChef.created_by_phone || null;
         const finalFranchiseId = franchise_id || null;
 
         const params = [
@@ -200,7 +200,8 @@ exports.createProduct = async (req, res) => {
             shelf_life_days || null, net_weight || null, package_count || null,
             packaging_type || 'Pouch', manufacture_date || null,
             variants ? JSON.stringify(variants) : null, finalChefId, finalChefUserId,
-            finalChefName, finalChefPhone, finalChefEmail, finalCreatedByUserId,
+            finalChefName, finalChefPhone, finalChefEmail, finalFranchiseUserId,
+            finalFranchiseName, finalFranchiseEmail, finalFranchisePhone, finalCreatedByUserId,
             finalCreatedByEmail, finalCreatedByName, finalCreatedByPhone, finalFranchiseId
         ];
 
@@ -209,7 +210,7 @@ exports.createProduct = async (req, res) => {
             presentation_style, portion_format, service_type, packaging_notes, dietary_tag, heat_profile,
             serving_size, prep_time, ingredients, spice_level, shelf_life_days, net_weight, package_count,
             packaging_type, manufacture_date, variants, chef_id, chef_user_id, chef_name, chef_phone, chef_email,
-            created_by_user_id, created_by_email, created_by_name, created_by_phone, franchise_id`;
+            franchise_user_id, franchise_name, franchise_email, franchise_phone, created_by_user_id, created_by_email, created_by_name, created_by_phone, franchise_id`;
 
         const placeholders = params.map(() => '?').join(', ');
 
