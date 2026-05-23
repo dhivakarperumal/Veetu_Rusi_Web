@@ -26,6 +26,7 @@ const homechefUploadFields = upload.fields([
   { name: 'selfie_verification_url', maxCount: 1 }
 ]);
 router.get('/homechefs', controller.getHomeChefs);
+router.get('/homechefs/:id', controller.getHomeChefById);
 router.post('/homechefs', homechefUploadFields, controller.createHomeChef);
 router.put('/homechefs/:id', homechefUploadFields, controller.updateHomeChef);
 router.patch('/homechefs/status/:id', controller.patchHomeChefStatus);

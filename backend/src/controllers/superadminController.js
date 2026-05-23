@@ -154,6 +154,19 @@ exports.getHomeChefs = async (req, res) => {
   }
 };
 
+exports.getHomeChefById = async (req, res) => {
+  try {
+    const chefId = req.params.id;
+    const [rows] = await pool.execute('SELECT * FROM home_chefs WHERE id = ?', [chefId]);
+    if (!rows.length) {
+      return res.status(404).json({ message: 'Home chef not found.' });
+    }
+    res.json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving home chef details.', error: error.message });
+  }
+};
+
 exports.createHomeChef = async (req, res) => {
   try {
     const {
