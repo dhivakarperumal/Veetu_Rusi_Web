@@ -147,6 +147,7 @@ const router = createBrowserRouter([
       { index: true, element: <HomeChefDashboard /> },
       { path: "profile", element: <ChefProfile /> },
       { path: "add-products", element: <ChefAddProducts /> },
+      { path: "add-products/:id", element: <ChefAddProducts /> },
       { path: "products", element: <ChefProducts /> },
       { path: "recipes", element: <RecipeDetails /> },
       { path: "upload-videos", element: <UploadFoodVideos /> },

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../PrivateRouter/AuthContext';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import api from '../../api';
 import { toast } from 'react-hot-toast';
 import { 
@@ -26,6 +26,8 @@ const MyProducts = () => {
   const [currentProduct, setCurrentProduct] = useState(null);
   const [newStock, setNewStock] = useState('');
   const [updatingStock, setUpdatingStock] = useState(false);
+  const [viewingProduct, setViewingProduct] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -48,13 +50,21 @@ const MyProducts = () => {
 
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this product? This action cannot be undone.')) return;
+    setDeleting(true);
     try {
       await api.delete(`/products/${id}`);
       setProducts(products.filter(p => p.id !== id));
       toast.success('Product deleted successfully');
     } catch (err) {
-      toast.error('Failed to delete product');
+      console.error('Delete error:', err);
+      toast.error(err.response?.data?.message || 'Failed to delete product');
+    } finally {
+      setDeleting(false);
     }
+  };
+
+  const handleEdit = (id) => {
+    navigate(`/chef/add-products/${id}`);
   };
 
   const handleStockUpdate = async (e) => {
@@ -309,19 +319,27 @@ const MyProducts = () => {
                       </td>
                       <td className="px-8 py-6 text-right">
                         <div className="flex items-center justify-end gap-3">
-                          <Link
-                            to={`/chef/add-products/${product.id}`}
+                          <button
+                            onClick={() => setViewingProduct(product)}
+                            className="p-3 border border-gray-200 text-gray-500 rounded-xl hover:bg-emerald-500 hover:text-white transition-all"
+                            title="View Details"
+                          >
+                            <FiEye size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleEdit(product.id)}
                             className="p-3 border border-gray-200 text-gray-500 rounded-xl hover:bg-blue-500 hover:text-white transition-all"
                             title="Edit"
                           >
                             <FiEdit2 size={16} />
-                          </Link>
+                          </button>
                           <button
                             onClick={() => handleDelete(product.id)}
-                            className="p-3 border border-gray-200 text-gray-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"
+                            disabled={deleting}
+                            className="p-3 border border-gray-200 text-gray-500 rounded-xl hover:bg-red-500 hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Delete"
                           >
-                            <FiTrash2 size={16} />
+                            {deleting ? <div className="w-4 h-4 border-2 border-red-500/30 border-t-red-500 rounded-full animate-spin" /> : <FiTrash2 size={16} />}
                           </button>
                         </div>
                       </td>
@@ -370,15 +388,22 @@ const MyProducts = () => {
                     <span className="text-[10px] font-black text-gray-400">Stock: {product.total_stock ?? 0}</span>
                   </div>
                   <div className="flex gap-3">
-                    <Link
-                      to={`/chef/add-products/${product.id}`}
+                    <button
+                      onClick={() => setViewingProduct(product)}
+                      className="flex-1 p-2 bg-emerald-50 border border-emerald-100 text-emerald-600 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-emerald-100 transition-all text-center"
+                    >
+                      View
+                    </button>
+                    <button
+                      onClick={() => handleEdit(product.id)}
                       className="flex-1 p-2 bg-blue-50 border border-blue-100 text-blue-600 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-blue-100 transition-all text-center"
                     >
                       Edit
-                    </Link>
+                    </button>
                     <button
                       onClick={() => handleDelete(product.id)}
-                      className="flex-1 p-2 bg-rose-50 border border-rose-100 text-rose-600 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-rose-100 transition-all"
+                      disabled={deleting}
+                      className="flex-1 p-2 bg-rose-50 border border-rose-100 text-rose-600 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-rose-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Delete
                     </button>
@@ -448,6 +473,131 @@ const MyProducts = () => {
                 Cancel
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Product Details Modal */}
+      {viewingProduct && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 overflow-y-auto">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setViewingProduct(null)}></div>
+          <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl relative z-20 overflow-hidden animate-in zoom-in-95 duration-300 my-8">
+            {/* Header with Image */}
+            <div className="relative bg-gradient-to-br from-slate-900 to-slate-800 aspect-video overflow-hidden">
+              <img
+                src={getProductImage(viewingProduct)}
+                alt={viewingProduct.name}
+                className="w-full h-full object-cover"
+              />
+              <button
+                onClick={() => setViewingProduct(null)}
+                className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 text-white rounded-lg backdrop-blur transition-all z-10"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-900 to-transparent p-6 text-white">
+                <h2 className="text-3xl font-black uppercase tracking-tight">{viewingProduct.name}</h2>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-8 space-y-6 max-h-96 overflow-y-auto">
+              {/* Basic Info */}
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Product Code</p>
+                  <p className="text-lg font-black text-slate-800">{viewingProduct.product_code || `PRD-${viewingProduct.id}`}</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Category</p>
+                  <p className="text-lg font-black text-slate-800">{viewingProduct.category || 'Uncategorized'}</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</p>
+                  <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border inline-block ${getStatusStyle(viewingProduct.status)}`}>
+                    {viewingProduct.status}
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">SKU</p>
+                  <p className="text-lg font-black text-slate-800">{viewingProduct.sku || 'N/A'}</p>
+                </div>
+              </div>
+
+              {/* Pricing */}
+              <div className="border-t border-gray-100 pt-6 grid grid-cols-3 gap-4">
+                <div className="space-y-2 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                  <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">MRP</p>
+                  <p className="text-2xl font-black text-slate-800">₹{parseFloat(viewingProduct.mrp || 0).toLocaleString()}</p>
+                </div>
+                <div className="space-y-2 p-4 bg-emerald-50 rounded-xl border border-emerald-100">
+                  <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Offer Price</p>
+                  <p className="text-2xl font-black text-slate-800">₹{parseFloat(viewingProduct.offer_price || viewingProduct.mrp || 0).toLocaleString()}</p>
+                </div>
+                <div className="space-y-2 p-4 bg-amber-50 rounded-xl border border-amber-100">
+                  <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest">Discount</p>
+                  <p className="text-2xl font-black text-slate-800">
+                    {viewingProduct.mrp && viewingProduct.offer_price 
+                      ? Math.round(((viewingProduct.mrp - viewingProduct.offer_price) / viewingProduct.mrp) * 100) 
+                      : 0}%
+                  </p>
+                </div>
+              </div>
+
+              {/* Stock & Inventory */}
+              <div className="border-t border-gray-100 pt-6 grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Stock</p>
+                  <p className="text-2xl font-black text-slate-800">{viewingProduct.total_stock || 0} Units</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Minimum Stock</p>
+                  <p className="text-2xl font-black text-slate-800">{viewingProduct.minimum_stock || 0} Units</p>
+                </div>
+              </div>
+
+              {/* Description */}
+              {viewingProduct.description && (
+                <div className="border-t border-gray-100 pt-6 space-y-2">
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Description</p>
+                  <p className="text-sm text-slate-700 leading-relaxed">{viewingProduct.description}</p>
+                </div>
+              )}
+
+              {/* Additional Details */}
+              <div className="border-t border-gray-100 pt-6 space-y-3">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Additional Information</p>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                    <p className="text-[10px] text-gray-500 font-bold">Created Date</p>
+                    <p className="font-black text-slate-800 text-xs mt-1">{new Date(viewingProduct.created_at).toLocaleDateString()}</p>
+                  </div>
+                  <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                    <p className="text-[10px] text-gray-500 font-bold">Last Updated</p>
+                    <p className="font-black text-slate-800 text-xs mt-1">{new Date(viewingProduct.updated_at).toLocaleDateString()}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer Actions */}
+            <div className="border-t border-gray-100 p-8 bg-gray-50 flex gap-3">
+              <button
+                onClick={() => {
+                  setViewingProduct(null);
+                  handleEdit(viewingProduct.id);
+                }}
+                className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black uppercase tracking-widest text-xs transition-all active:scale-95 flex items-center justify-center gap-2"
+              >
+                <FiEdit2 size={16} /> Edit Product
+              </button>
+              <button
+                onClick={() => setViewingProduct(null)}
+                className="flex-1 py-3 border-2 border-gray-200 hover:border-gray-300 text-slate-800 rounded-xl font-black uppercase tracking-widest text-xs transition-all"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
