@@ -89,6 +89,27 @@ exports.login = async (req, res) => {
   }
 };
 
+exports.profile = async (req, res) => {
+  try {
+    const { email, role } = req.user;
+    const response = {
+      user: req.user,
+    };
+
+    if (role === 'chef') {
+      const [rows] = await pool.execute('SELECT * FROM home_chefs WHERE email = ? LIMIT 1', [email]);
+      if (rows.length > 0) {
+        response.homeChef = rows[0];
+      }
+    }
+
+    return res.status(200).json(response);
+  } catch (error) {
+    console.error('Profile error:', error);
+    return res.status(500).json({ message: 'Server error while fetching profile.' });
+  }
+};
+
 exports.googleLogin = async (req, res) => {
   try {
     const { name, email, picture, googleId } = req.body;

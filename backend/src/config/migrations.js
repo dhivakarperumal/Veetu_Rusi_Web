@@ -45,6 +45,10 @@ const createProductsTable = async () => {
             created_by_email VARCHAR(255),
             created_by_name VARCHAR(255),
             created_by_phone VARCHAR(20),
+            franchise_user_id VARCHAR(255),
+            franchise_name VARCHAR(255),
+            franchise_email VARCHAR(255),
+            franchise_phone VARCHAR(20),
             franchise_id VARCHAR(255),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -57,6 +61,10 @@ const createProductsTable = async () => {
 
         await pool.execute(createTableSQL);
         await pool.execute('ALTER TABLE products ADD COLUMN IF NOT EXISTS chef_user_id VARCHAR(255)');
+        await pool.execute('ALTER TABLE products ADD COLUMN IF NOT EXISTS franchise_user_id VARCHAR(255)');
+        await pool.execute('ALTER TABLE products ADD COLUMN IF NOT EXISTS franchise_name VARCHAR(255)');
+        await pool.execute('ALTER TABLE products ADD COLUMN IF NOT EXISTS franchise_email VARCHAR(255)');
+        await pool.execute('ALTER TABLE products ADD COLUMN IF NOT EXISTS franchise_phone VARCHAR(20)');
         console.log('✓ Products table created or already exists');
     } catch (error) {
         console.error('✗ Error creating products table:', error.message);
