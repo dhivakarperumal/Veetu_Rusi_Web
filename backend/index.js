@@ -26,7 +26,13 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-initDb().then(() => {
+initDb().then(async () => {
+  try {
+    await createProductsTable();
+  } catch (err) {
+    console.error('Migration error:', err.message || err);
+  }
+
   const server = app.listen(port, () => {
     console.log(`Backend listening on http://localhost:${port}`);
   });
@@ -76,19 +82,3 @@ app.post('/api/generate-image', async (req, res) => {
   }
 });
 
-const server = app.listen(port, async () => {
-  console.log(`Backend listening on http://localhost:${port}`);
-  try {
-    await createProductsTable();
-  } catch (err) {
-    console.error('Migration error:', err.message || err);
-  }
-});
-
-server.on('error', (err) => {
-  if (err.code === 'EADDRINUSE') {
-    console.error(`Port ${port} is already in use. Please stop the process using it or set a different PORT in .env.`);
-    process.exit(1);
-  }
-  throw err;
-});
