@@ -7,6 +7,7 @@ const authRouter = require('./src/routes/auth');
 const superadminRouter = require('./src/routes/superadmin');
 const dashboardRouter = require('./src/routes/dashboard');
 const productsRouter = require('./src/routes/products');
+const { createProductsTable } = require('./src/config/migrations');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -57,8 +58,13 @@ app.post('/api/generate-image', async (req, res) => {
   }
 });
 
-const server = app.listen(port, () => {
+const server = app.listen(port, async () => {
   console.log(`Backend listening on http://localhost:${port}`);
+  try {
+    await createProductsTable();
+  } catch (err) {
+    console.error('Migration error:', err.message || err);
+  }
 });
 
 server.on('error', (err) => {

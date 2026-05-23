@@ -196,7 +196,7 @@ exports.createProduct = async (req, res) => {
         const finalCreatedByPhone = created_by_phone || req.user?.phone || null;
 
         const params = [
-            name, description, category, product_type || 'Cooked Food', subcategory || null,
+            name, description || null, category, product_type || 'Cooked Food', subcategory || null,
             mrp, offer || 0, offer_price || mrp, finalProductCode, total_stock || 0,
             rating || 5, status || 'Active', material || null, nutrition_info || null,
             storage_instructions || 'Keep Refrigerated', presentation_style || null,

@@ -60,11 +60,12 @@ const createProductsTable = async () => {
         `;
 
         await pool.execute(createTableSQL);
-        await pool.execute('ALTER TABLE products ADD COLUMN IF NOT EXISTS chef_user_id VARCHAR(255)');
-        await pool.execute('ALTER TABLE products ADD COLUMN IF NOT EXISTS franchise_user_id VARCHAR(255)');
-        await pool.execute('ALTER TABLE products ADD COLUMN IF NOT EXISTS franchise_name VARCHAR(255)');
-        await pool.execute('ALTER TABLE products ADD COLUMN IF NOT EXISTS franchise_email VARCHAR(255)');
-        await pool.execute('ALTER TABLE products ADD COLUMN IF NOT EXISTS franchise_phone VARCHAR(20)');
+        // Ensure optional columns exist (use individual try/catch for compatibility with older MySQL)
+        try { await pool.execute('ALTER TABLE products ADD COLUMN chef_user_id VARCHAR(255)'); } catch (e) { /* ignore if exists */ }
+        try { await pool.execute('ALTER TABLE products ADD COLUMN franchise_user_id VARCHAR(255)'); } catch (e) { /* ignore if exists */ }
+        try { await pool.execute('ALTER TABLE products ADD COLUMN franchise_name VARCHAR(255)'); } catch (e) { /* ignore if exists */ }
+        try { await pool.execute('ALTER TABLE products ADD COLUMN franchise_email VARCHAR(255)'); } catch (e) { /* ignore if exists */ }
+        try { await pool.execute('ALTER TABLE products ADD COLUMN franchise_phone VARCHAR(20)'); } catch (e) { /* ignore if exists */ }
         console.log('✓ Products table created or already exists');
     } catch (error) {
         console.error('✗ Error creating products table:', error.message);
