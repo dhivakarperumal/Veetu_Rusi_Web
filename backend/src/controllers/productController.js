@@ -226,10 +226,12 @@ exports.createProduct = async (req, res) => {
             franchise_user_id, franchise_name, franchise_email, franchise_phone, created_by_user_id, created_by_email, created_by_name, created_by_phone, franchise_id`;
 
         const placeholders = params.map(() => '?').join(', ');
+        // Sanitize undefined -> null for insert params as well
+        const insertParams = params.map(v => v === undefined ? null : v);
 
         const [result] = await pool.execute(
             `INSERT INTO products (${columns}) VALUES (${placeholders})`,
-            params
+            insertParams
         );
 
         res.status(201).json({
@@ -265,8 +267,7 @@ exports.updateProduct = async (req, res) => {
         }
 
         // Update product
-        await pool.execute(
-            `UPDATE products SET
+        const updateQuery = `UPDATE products SET
                 name = ?, description = ?, category = ?, product_type = ?, subcategory = ?,
                 mrp = ?, offer = ?, offer_price = ?, product_code = ?, total_stock = ?,
                 rating = ?, status = ?, material = ?, nutrition_info = ?, storage_instructions = ?,
@@ -278,20 +279,24 @@ exports.updateProduct = async (req, res) => {
                 franchise_user_id = ?, franchise_name = ?, franchise_email = ?, franchise_phone = ?,
                 created_by_user_id = ?, created_by_email = ?, created_by_name = ?, created_by_phone = ?,
                 franchise_id = ?, updated_at = NOW()
-            WHERE id = ?`,
-            [
-                name, description, category, product_type, subcategory, mrp, offer, offer_price,
-                product_code, total_stock, rating, status, material, nutrition_info, storage_instructions,
-                presentation_style, portion_format, service_type, packaging_notes, dietary_tag, heat_profile,
-                serving_size, prep_time, ingredients, spice_level, shelf_life_days, net_weight, package_count,
-                packaging_type, manufacture_date, serializeJsonField(variants),
-                chef_id, chef_user_id, chef_name, chef_phone, chef_email,
-                franchise_user_id, franchise_name, franchise_email, franchise_phone,
-                created_by_user_id, created_by_email, created_by_name, created_by_phone,
-                franchise_id,
-                id
-            ]
-        );
+            WHERE id = ?`;
+        const params = [
+            name, description, category, product_type, subcategory, mrp, offer, offer_price,
+            product_code, total_stock, rating, status, material, nutrition_info, storage_instructions,
+            presentation_style, portion_format, service_type, packaging_notes, dietary_tag, heat_profile,
+            serving_size, prep_time, ingredients, spice_level, shelf_life_days, net_weight, package_count,
+            packaging_type, manufacture_date, serializeJsonField(variants),
+            chef_id, chef_user_id, chef_name, chef_phone, chef_email,
+            franchise_user_id, franchise_name, franchise_email, franchise_phone,
+            created_by_user_id, created_by_email, created_by_name, created_by_phone,
+            franchise_id,
+            id
+        ];
+
+        // Sanitize undefined -> null to satisfy mysql2 parameter binding
+        const sanitized = params.map(v => v === undefined ? null : v);
+
+        await pool.execute(updateQuery, sanitized);
 
         res.json({ message: 'Product updated successfully' });
     } catch (error) {
