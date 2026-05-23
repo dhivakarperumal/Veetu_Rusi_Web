@@ -885,7 +885,7 @@ exports.getFranchises = async (req, res) => {
     // Safe migrations for new columns
     try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS franch_user_id CHAR(36) DEFAULT NULL"); } catch (_) {}
     try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS login_password VARCHAR(255) DEFAULT NULL"); } catch (_) {}
-    const [rows] = await pool.execute("SELECT id, franchise_id, franch_user_id, franchise_name, owner_name, mobile, email, city, state, commission_percentage, status, created_at FROM franchise_owners ORDER BY created_at DESC");
+    const [rows] = await pool.execute("SELECT id, franchise_id, franch_user_id, franchise_name, owner_name, mobile, email, city, state, commission_percentage, status, created_at, login_password IS NOT NULL AS password_preset FROM franchise_owners ORDER BY created_at DESC");
     res.json(rows);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving franchise owners.', error: error.message });

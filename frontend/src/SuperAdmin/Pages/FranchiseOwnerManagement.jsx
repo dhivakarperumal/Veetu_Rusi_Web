@@ -17,7 +17,7 @@ const emptyForm = {
   start_date: "", expiry_date: "", status: "Pending",
   
   // Contact Details
-  mobile: "", alt_mobile: "", email: "",
+  mobile: "", alt_mobile: "", email: "", territory_pincodes: [""],
   
   // Address Details
   door_number: "", street_name: "", area: "", landmark: "",
@@ -142,14 +142,20 @@ const FranchiseOwnerManagement = () => {
       return;
     }
     try {
+      const submitForm = {
+        ...form,
+        territory_pincodes: Array.isArray(form.territory_pincodes)
+          ? form.territory_pincodes.filter(Boolean).join(", ")
+          : form.territory_pincodes
+      };
       const formData = new FormData();
-      Object.keys(form).forEach(key => {
-        if (form[key] instanceof FileList || Array.isArray(form[key])) {
-          for (let i = 0; i < form[key].length; i++) {
-            formData.append(key, form[key][i]);
+      Object.keys(submitForm).forEach(key => {
+        if (submitForm[key] instanceof FileList || Array.isArray(submitForm[key])) {
+          for (let i = 0; i < submitForm[key].length; i++) {
+            formData.append(key, submitForm[key][i]);
           }
-        } else if (form[key] !== null && form[key] !== undefined) {
-          formData.append(key, form[key]);
+        } else if (submitForm[key] !== null && submitForm[key] !== undefined) {
+          formData.append(key, submitForm[key]);
         }
       });
 
@@ -177,11 +183,12 @@ const FranchiseOwnerManagement = () => {
 
   // Step 2: submit with password
   const confirmApprove = async () => {
-    if (!approvePw.trim()) { toast.error("Please enter a password."); return; }
     const franchise = approveModal.franchise;
+    if (!approvePw.trim() && !franchise.password_preset) { toast.error("Please enter a password."); return; }
     setApprovingId(franchise.id);
     try {
-      const res = await api.patch(`/superadmin/franchises/approve/${franchise.id}`, { password: approvePw });
+      const payload = approvePw.trim() ? { password: approvePw } : {};
+      const res = await api.patch(`/superadmin/franchises/approve/${franchise.id}`, payload);
       const data = res.data;
       setApproveModal(null);
       if (data.alreadyApproved) {
@@ -199,7 +206,10 @@ const FranchiseOwnerManagement = () => {
 
   const handleEdit = (franchise) => {
     setEditingFranchise(franchise);
-    setForm({ ...emptyForm, ...franchise, confirmPassword: "" });
+    const territory_pincodes = typeof franchise.territory_pincodes === "string"
+      ? franchise.territory_pincodes.split(/\s*,\s*/).filter(Boolean)
+      : franchise.territory_pincodes || [""];
+    setForm({ ...emptyForm, ...franchise, territory_pincodes, confirmPassword: "" });
     setActiveFormTab("basic");
     setIsModalOpen(true);
   };
@@ -1126,7 +1136,11 @@ const FranchiseOwnerManagement = () => {
                         <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Alternate Mobile</label>
                         <input type="text" value={form.alt_mobile} onChange={e => setForm({ ...form, alt_mobile: e.target.value })} placeholder="Optional" className={inputCls} />
                       </div>
-                    
+                      <div className="space-y-1 sm:col-span-2">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Pincodes</label>
+                        <input type="text" value={form.territory_pincodes} onChange={e => setForm({ ...form, territory_pincodes: e.target.value })} placeholder="641001, 641002, 641003" className={inputCls} />
+                        <p className="text-[10px] text-slate-400">Enter one or more pincodes separated by commas.</p>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -1313,14 +1327,14 @@ const FranchiseOwnerManagement = () => {
                 <div className="px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm text-slate-700 font-mono">{approveModal.franchise.email}</div>
               </div>
               <div>
-                <label className="text-[10px] text-slate-400 font-bold uppercase block mb-2">Password <span className="text-red-500">*</span></label>
+                <label className="text-[10px] text-slate-400 font-bold uppercase block mb-2">Password {approveModal.franchise.password_preset ? "(leave blank to use registration password)" : <span className="text-red-500">*</span>}</label>
                 <div className="relative">
                   <input
                     type={showApprovePw ? "text" : "password"}
                     value={approvePw}
                     onChange={e => setApprovePw(e.target.value)}
                     onKeyDown={e => e.key === "Enter" && confirmApprove()}
-                    placeholder="Enter password for this franchise admin"
+                    placeholder={approveModal.franchise.password_preset ? "Leave empty to reuse registration password" : "Enter password"}
                     autoFocus
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-medium text-slate-800 text-sm focus:bg-white focus:border-emerald-600/40 pr-12 transition-all"
                   />
