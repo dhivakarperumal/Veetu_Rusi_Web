@@ -17,8 +17,7 @@ const emptyForm = {
   start_date: "", expiry_date: "", status: "Pending",
   
   // Contact Details
-  mobile: "", alt_mobile: "", whatsapp_number: "", email: "",
-  website_url: "", emergency_contact_number: "",
+  mobile: "", alt_mobile: "", email: "",
   
   // Address Details
   door_number: "", street_name: "", area: "", landmark: "",
@@ -1128,20 +1127,8 @@ const FranchiseOwnerManagement = () => {
                         <input type="text" value={form.alt_mobile} onChange={e => setForm({ ...form, alt_mobile: e.target.value })} placeholder="Optional" className={inputCls} />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">WhatsApp Number</label>
-                        <input type="text" value={form.whatsapp_number} onChange={e => setForm({ ...form, whatsapp_number: e.target.value })} placeholder="Optional" className={inputCls} />
-                      </div>
-                      <div className="space-y-1">
                         <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Email Address *</label>
                         <input type="email" required value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="ram@example.com" className={inputCls} />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Emergency Contact</label>
-                        <input type="text" value={form.emergency_contact_number} onChange={e => setForm({ ...form, emergency_contact_number: e.target.value })} placeholder="Optional" className={inputCls} />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Website URL</label>
-                        <input type="url" value={form.website_url} onChange={e => setForm({ ...form, website_url: e.target.value })} placeholder="https://..." className={inputCls} />
                       </div>
                     </div>
                   </div>
