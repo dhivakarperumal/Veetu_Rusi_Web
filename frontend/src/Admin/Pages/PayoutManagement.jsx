@@ -9,7 +9,21 @@ const PayoutManagement = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState("All");
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const totalPaidAmount = payouts.reduce(
+    (sum, payout) => sum + (parseFloat(payout.paid_amount) || 0),
+    0,
+  );
+  const totalPendingAmount = payouts.reduce(
+    (sum, payout) => sum + (parseFloat(payout.pending_amount) || 0),
+    0,
+  );
+  const totalEarningsAmount = payouts.reduce(
+    (sum, payout) => sum + (parseFloat(payout.total_earnings) || 0),
+    0,
+  );
 
   // New Payout form state
   const [newPayout, setNewPayout] = useState({
@@ -52,8 +66,11 @@ const PayoutManagement = () => {
     if (roleFilter !== "All") {
       result = result.filter((p) => p.role === roleFilter);
     }
+    if (statusFilter !== "All") {
+      result = result.filter((p) => p.payment_status === statusFilter);
+    }
     setFilteredPayouts(result);
-  }, [search, roleFilter, payouts]);
+  }, [search, roleFilter, statusFilter, payouts]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -94,6 +111,24 @@ const PayoutManagement = () => {
         </button>
       </div>
 
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="rounded-3xl bg-[#0B1120]/80 border border-white/10 p-5 shadow-inner">
+          <p className="text-[10px] uppercase tracking-[0.24em] text-white/40 font-black">Total Payouts</p>
+          <p className="mt-4 text-3xl font-black text-white">{payouts.length}</p>
+          <p className="mt-2 text-xs text-white/40">Logged payout records</p>
+        </div>
+        <div className="rounded-3xl bg-[#0B1120]/80 border border-white/10 p-5 shadow-inner">
+          <p className="text-[10px] uppercase tracking-[0.24em] text-white/40 font-black">Total Paid</p>
+          <p className="mt-4 text-3xl font-black text-emerald-300">₹{totalPaidAmount.toLocaleString()}</p>
+          <p className="mt-2 text-xs text-white/40">Amount disbursed</p>
+        </div>
+        <div className="rounded-3xl bg-[#0B1120]/80 border border-white/10 p-5 shadow-inner">
+          <p className="text-[10px] uppercase tracking-[0.24em] text-white/40 font-black">Total Pending</p>
+          <p className="mt-4 text-3xl font-black text-amber-300">₹{totalPendingAmount.toLocaleString()}</p>
+          <p className="mt-2 text-xs text-white/40">Amount awaiting settlement</p>
+        </div>
+      </div>
+
       {/* Filter and Search Bar */}
       <div className="flex flex-col md:flex-row gap-4 bg-[#0B1120]/40 backdrop-blur-md border border-white/5 p-4 rounded-3xl">
         <div className="relative flex-1">
@@ -106,18 +141,31 @@ const PayoutManagement = () => {
             className="w-full pl-11 pr-4 py-3 bg-[#070b13]/60 border border-white/5 rounded-2xl outline-none font-medium text-white text-sm focus:border-emerald-500/30 transition-all"
           />
         </div>
-        <div className="flex gap-3">
-          <div className="relative">
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+          <div className="relative w-full sm:w-auto">
             <select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
-              className="appearance-none pl-4 pr-10 py-3 bg-[#070b13]/60 border border-white/5 rounded-2xl outline-none font-medium text-white text-sm focus:border-emerald-500/30 transition-all cursor-pointer"
+              className="appearance-none pl-4 pr-10 py-3 w-full bg-[#070b13]/60 border border-white/5 rounded-2xl outline-none font-medium text-white text-sm focus:border-emerald-500/30 transition-all cursor-pointer"
             >
               <option value="All">All Roles</option>
               <option value="Restaurant">Restaurant</option>
               <option value="Home Chef">Home Chef</option>
               <option value="Delivery Partner">Delivery Partner</option>
               <option value="Franchise">Franchise</option>
+            </select>
+            <Filter className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 pointer-events-none" />
+          </div>
+          <div className="relative w-full sm:w-auto">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="appearance-none pl-4 pr-10 py-3 w-full bg-[#070b13]/60 border border-white/5 rounded-2xl outline-none font-medium text-white text-sm focus:border-emerald-500/30 transition-all cursor-pointer"
+            >
+              <option value="All">All Statuses</option>
+              <option value="Paid">Paid</option>
+              <option value="Pending">Pending</option>
+              <option value="Failed">Failed</option>
             </select>
             <Filter className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 pointer-events-none" />
           </div>
@@ -134,9 +182,9 @@ const PayoutManagement = () => {
       ) : (
         <div className="bg-[#0B1120]/40 backdrop-blur-md border border-white/5 rounded-[2.5rem] overflow-hidden shadow-xl">
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b border-white/5 bg-[#070b13]/30">
+            <table className="w-full min-w-[980px] text-left">
+              <thead className="bg-[#070b13]/30 text-white/80">
+                <tr className="border-b border-white/5">
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Payee</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Role</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Total Earnings</th>
