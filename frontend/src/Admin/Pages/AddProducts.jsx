@@ -1,837 +1,871 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
-    FiArrowLeft,
-    FiSave,
-    FiTag,
-    FiBox,
-    FiLayers,
-    FiImage,
-    FiUploadCloud,
-    FiTrash2,
-    FiInfo,
-    FiMaximize,
-    FiScissors,
-    FiPlus,
-    FiDroplet,
-    FiPercent,
-    FiActivity,
-    FiStar,
-    FiHash
-} from "react-icons/fi";
-import { FaRupeeSign } from "react-icons/fa";
-import { useNavigate, useParams } from "react-router-dom";
+  FaPlus,
+  FaTrash,
+  FaCheckCircle,
+  FaFileAlt,
+  FaBoxOpen,
+  FaLayerGroup,
+  FaSearch,
+  FaEdit,
+  FaEye,
+  FaHeartbeat,
+} from "react-icons/fa";
+import { MdKeyboardArrowDown } from "react-icons/md";
+import { toast } from "react-hot-toast";
 import api from "../../api";
-import { toast, Toaster } from "react-hot-toast";
+import JsBarcode from "jsbarcode";
 import imageCompression from "browser-image-compression";
 
-// Helper: Color to Name Utility
-const boutiqueColors = [
-    { name: "Pure Red", hex: "#FF0000" },
-    { name: "Crimson", hex: "#DC143C" },
-    { name: "Deep Maroon", hex: "#800000" },
-    { name: "Rose Pink", hex: "#FFC0CB" },
-    { name: "Hot Pink", hex: "#FF69B4" },
-    { name: "Magenta", hex: "#FF00FF" },
-    { name: "Royal Purple", hex: "#800080" },
-    { name: "Violet", hex: "#EE82EE" },
-    { name: "Indigo", hex: "#4B0082" },
-    { name: "Navy Blue", hex: "#000080" },
-    { name: "Royal Blue", hex: "#4169E1" },
-    { name: "Sky Blue", hex: "#87CEEB" },
-    { name: "Teal", hex: "#008080" },
-    { name: "Cyan", hex: "#00FFFF" },
-    { name: "Emerald Green", hex: "#50C878" },
-    { name: "Forest Green", hex: "#228B22" },
-    { name: "Olive Green", hex: "#808000" },
-    { name: "Lime Green", hex: "#32CD32" },
-    { name: "Golden Yellow", hex: "#FFD700" },
-    { name: "Mustard", hex: "#FFDB58" },
-    { name: "Bright Orange", hex: "#FFA500" },
-    { name: "Coral", hex: "#FF7F50" },
-    { name: "Peach", hex: "#FFDAB9" },
-    { name: "Beige", hex: "#F5F5DC" },
-    { name: "Cream", hex: "#FFFDD0" },
-    { name: "Pure White", hex: "#FFFFFF" },
-    { name: "Jet Black", hex: "#000000" },
-    { name: "Steel Grey", hex: "#808080" },
-    { name: "Silver Tone", hex: "#C0C0C0" },
-    { name: "Chocolate Brown", hex: "#8B4513" },
-    { name: "Copper", hex: "#B87333" },
-    { name: "Terracotta", hex: "#E2725B" },
-    { name: "Turquoise", hex: "#40E0D0" }
-];
+const Products = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const editItem = location.state?.editItem;
 
-const getNearestColorName = (hex) => {
-    hex = hex.replace("#", "");
-    const r1 = parseInt(hex.substring(0, 2), 16);
-    const g1 = parseInt(hex.substring(2, 4), 16);
-    const b1 = parseInt(hex.substring(4, 6), 16);
+  const [activeTab, setActiveTab] = useState(editItem?.type === "combo" ? "combo" : "single");
+  const [categories, setCategories] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [combos, setCombos] = useState([]);
+  const [loadingList, setLoadingList] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
-    let minDistance = Infinity;
-    let nearestName = "Custom Shade";
+  const fetchData = async () => {
+    setLoadingList(true);
+    try {
+      const [catRes, prodRes, comboRes] = await Promise.all([
+        api.get("/categories"),
+        api.get("/products"),
+        api.get("/combos"),
+      ]);
+      const categoriesData = Array.isArray(catRes.data)
+        ? catRes.data
+        : Array.isArray(catRes.data?.categories)
+        ? catRes.data.categories
+        : [];
+      setCategories(categoriesData);
+      setProducts(Array.isArray(prodRes.data) ? prodRes.data : []);
+      setCombos(Array.isArray(comboRes.data) ? comboRes.data : []);
+    } catch (err) {
+      console.error("Category fetch failed:", err?.response?.data || err.message || err);
+      toast.error("Failed to load dashboard data");
+    } finally {
+      setLoadingList(false);
+    }
+  };
 
-    boutiqueColors.forEach(color => {
-        const h = color.hex.replace("#", "");
-        const r2 = parseInt(h.substring(0, 2), 16);
-        const g2 = parseInt(h.substring(2, 4), 16);
-        const b2 = parseInt(h.substring(4, 6), 16);
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-        const distance = Math.sqrt(
-            Math.pow(r2 - r1, 2) +
-            Math.pow(g2 - g1, 2) +
-            Math.pow(b2 - b1, 2)
-        );
+  const handleDelete = async (id, type) => {
+    if (!window.confirm("Are you sure you want to delete this?")) return;
+    try {
+      const endpoint = type === "single" ? "/products" : "/combos";
+      await api.delete(`${endpoint}/${id}`);
+      toast.success("Deleted successfully");
+      fetchData();
+    } catch (err) {
+      toast.error("Delete failed");
+    }
+  };
 
-        if (distance < minDistance) {
-            minDistance = distance;
-            nearestName = color.name;
-        }
-    });
+  const filteredItems = (activeTab === "single" ? products : combos).filter(
+    (item) =>
+      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.productId.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-    return nearestName;
+  return (
+    <div className="w-full p-4 md:p-10 mt-0 min-h-screen bg-transparent animate-in fade-in duration-700">
+      {/* Header & Tabs */}
+      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-12 gap-8 bg-white/40 backdrop-blur-md p-8 rounded-[3rem] border border-white/60 shadow-xl shadow-gray-100">
+        <div className="flex-1">
+          <div className="flex items-center gap-4">
+            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-100 transition-all duration-500 ${activeTab === "single" ? "bg-gradient-to-tr from-emerald-600 to-green-400 rotate-0" : "bg-gradient-to-tr from-amber-600 to-orange-400 rotate-12"}`}>
+              {activeTab === "single" ? <FaBoxOpen size={24} /> : <FaLayerGroup size={24} />}
+            </div>
+            <div>
+              <h1 className="text-xl font-black text-gray-900 tracking-tight leading-none">
+                {activeTab === "single" ? "Single Product" : "Combo Pack"} <span className="text-gray-400 font-medium tracking-normal text-md">Studio</span>
+              </h1>
+              <p className="text-sm font-black text-emerald-600 uppercase tracking-[0.2em] mt-2 flex items-center gap-2">
+                <span className="w-8 h-1 bg-emerald-500 rounded-full"></span>
+                Inventory Master Control
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex bg-gray-200/50 p-2 rounded-[2rem] shadow-inner backdrop-blur-sm border border-white/50">
+          <button
+            onClick={() => setActiveTab("single")}
+            className={`flex items-center gap-3 px-10 py-4 rounded-[1.5rem] transition-all duration-500 font-black uppercase tracking-widest text-xs ${activeTab === "single" ? "bg-white text-emerald-700 shadow-xl scale-105 border border-emerald-100" : "text-gray-500 hover:text-emerald-600"}`}
+          >
+            <FaBoxOpen className={activeTab === "single" ? "animate-bounce" : ""} /> Single
+          </button>
+          <button
+            onClick={() => setActiveTab("combo")}
+            className={`flex items-center gap-3 px-10 py-4 rounded-[1.5rem] transition-all duration-500 font-black uppercase tracking-widest text-xs ${activeTab === "combo" ? "bg-white text-amber-700 shadow-xl scale-105 border border-amber-100" : "text-gray-500 hover:text-amber-600"}`}
+          >
+            <FaLayerGroup className={activeTab === "combo" ? "animate-bounce" : ""} /> Combo
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-12">
+        {/* Forms Section */}
+        <div className="animate-in slide-in-from-bottom-8 duration-700">
+          {activeTab === "single" ? (
+            <SingleProductForm 
+              categories={categories} 
+              onSuccess={() => { 
+                fetchData(); 
+                navigate('/adminpanel/all-products');
+              }} 
+              products={products} 
+              editItem={editItem} 
+            />
+          ) : (
+            <ComboProductForm 
+              categories={categories} 
+              onSuccess={() => { 
+                fetchData(); 
+                navigate('/adminpanel/all-products');
+              }} 
+              combos={combos} 
+              products={products} 
+              editItem={editItem} 
+            />
+          )}
+        </div>
+
+      </div>
+    </div>
+  );
 };
 
-const AddProducts = () => {
-    const { id } = useParams();
-    const isEdit = !!id;
-    const navigate = useNavigate();
-    const [categories, setCategories] = useState([]);
-    const [subcategories, setSubcategories] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [fetching, setFetching] = useState(isEdit);
+const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
+  const [form, setForm] = useState({
+    productId: "",
+    name: "",
+    description: "",
+    healthBenefits: [""],
+    category: "",
+    images: [],
+    variants: [{ weight: "", mrp: "", offerPercent: "", offerPrice: "" }],
+    totalStock: "0",
+    totalWeight: 0,
+    barcode: "",
+    barcodeValue: "",
+    rating: 5,
+    status: "Active",
+  });
+  const [loading, setLoading] = useState(false);
+  const [manualWeight, setManualWeight] = useState(false);
+  const barcodeRef = useRef();
 
-    // Main State
-    const [formData, setFormData] = useState({
-        name: "",
-        description: "",
-        category: "Saree",
-        subcategory: "",
-        mrp: "",
-        offer: "",
-        offer_price: "",
-        product_code: "",
-        total_stock: "0",
-        rating: "5",
-        status: "Active",
-        material: "",
-        wash_care: "Dry Clean Only",
-        // Traditional Wear Specs
-        saree_length: "5.5 Meters",
-        blouse_length: "0.8 Meters",
-        top_length: "",
-        bottom_length: "",
-        dupatta_length: "",
-        gown_length: "",
-        sleeve_type: "",
-        neck_type: "",
-        fit_type: "",
-        work_type: "Embroidered",
-        zari_color: "Gold Zari",
-        age: "",
-    });
+  const safeParse = (data) => {
+    if (!data) return [];
+    if (Array.isArray(data)) return data;
+    try { return JSON.parse(data); } catch { return []; }
+  };
 
-    const [variants, setVariants] = useState([
-        {
-            color: "#3b82f6",
-            colorName: "",
-            images: [],
-            selectedSizes: [],
-            sizesStock: {}
-        }
-    ]);
+  useEffect(() => {
+    if (editItem) {
+      setForm({
+        ...editItem,
+        healthBenefits: safeParse(editItem.healthBenefits).length ? safeParse(editItem.healthBenefits) : [""],
+        variants: safeParse(editItem.variants),
+        images: safeParse(editItem.images),
+        barcodeValue: editItem.barcodeValue || editItem.productId
+      });
+    } else {
+      const maxId = products.reduce((max, p) => {
+        const match = p.productId?.match(/\d+/);
+        const num = match ? parseInt(match[0]) : 0;
+        return Math.max(max, num);
+      }, 0);
+      setForm((prev) => ({
+        ...prev,
+        productId: `PR${String(maxId + 1).padStart(3, "0")}`,
+        name: "", description: "", healthBenefits: [""], images: [], variants: [{ weight: "", mrp: "", offerPercent: "", offerPrice: "" }], totalStock: "0",
+        barcodeValue: "", barcode: "", status: "Active"
+      }));
+    }
+  }, [editItem, products]);
 
-    // Track if total stock was manually edited
-    const [isStockManuallyEdited, setIsStockManuallyEdited] = useState(false);
+  useEffect(() => {
+    if (manualWeight) return; // user is manually controlling weight
+    const totalW = form.variants.reduce((sum, v) => {
+      const wStr = String(v.weight || "").toLowerCase();
+      const val = parseFloat(wStr) || 0;
+      const factor = wStr.includes("kg") ? 1000 : 1;
+      return sum + (val * factor);
+    }, 0);
 
-    // 1. Auto-calculate Offer Price whenever MRP or Offer % changes
-    useEffect(() => {
-        const mrpValue = parseFloat(formData.mrp) || 0;
-        const offerValue = parseFloat(formData.offer) || 0;
-        if (mrpValue > 0) {
-            const calculatedPrice = mrpValue - (mrpValue * (offerValue / 100));
-            setFormData(prev => ({ ...prev, offer_price: Math.round(calculatedPrice).toString() }));
-        } else {
-            setFormData(prev => ({ ...prev, offer_price: "0" }));
-        }
-    }, [formData.mrp, formData.offer]);
+    if (String(totalW) !== form.totalStock || totalW !== form.totalWeight) {
+      setForm(prev => ({ ...prev, totalStock: String(totalW), totalWeight: totalW }));
+    }
+  }, [form.variants, manualWeight]);
 
-    // 2. Auto-calculate Total Stock whenever variants or sizesStock change
-    useEffect(() => {
-        if (!isStockManuallyEdited) {
-            let total = 0;
-            variants.forEach(variant => {
-                Object.values(variant.sizesStock || {}).forEach(qty => {
-                    total += parseInt(qty) || 0;
-                });
+  useEffect(() => {
+    if (form.productId && barcodeRef.current) {
+      const code = form.barcodeValue || form.productId;
+      try {
+        JsBarcode(barcodeRef.current, code, { format: "CODE128", lineColor: "#10b981", width: 2, height: 40, displayValue: true });
+        const svgData = new XMLSerializer().serializeToString(barcodeRef.current);
+        const base64Data = `data:image/svg+xml;base64,${btoa(svgData)}`;
+        if (form.barcode !== base64Data) setForm((prev) => ({ ...prev, barcode: base64Data, barcodeValue: code }));
+      } catch (e) { }
+    }
+  }, [form.productId, form.barcodeValue]);
+
+  const handleImageUpload = async (e) => {
+    const rawFiles = Array.from(e.target.files);
+    try {
+      toast.loading("Compressing...", { id: "up-p" });
+      const base64 = await Promise.all(
+        rawFiles.map((file) =>
+          imageCompression(file, { maxSizeMB: 0.2, maxWidthOrHeight: 800, useWebWorker: true }).then((blob) => {
+            return new Promise((res) => {
+              const r = new FileReader(); r.onloadend = () => res(r.result); r.readAsDataURL(blob);
             });
-            setFormData(prev => ({ ...prev, total_stock: total.toString() }));
-        }
-    }, [variants, isStockManuallyEdited]);
+          }),
+        ),
+      );
+      setForm((prev) => ({ ...prev, images: [...prev.images, ...base64] }));
+      toast.success("Ready!", { id: "up-p" });
+    } catch { toast.error("Fail", { id: "up-p" }); }
+    finally { e.target.value = ""; }
+  };
 
-    // Size Logic based on Category
-    const getSizesByCategory = () => {
-        switch (formData.category) {
-            case "Saree": return ["Free Size"];
-            case "Lehenga":
-            case "Salwar":
-            case "Gown": return ["XS", "S", "M", "L", "XL", "XXL"];
-            case "Material": return ["Free Size"];
-            default: return [];
-        }
-    };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      if (editItem) {
+        await api.put(`/products/${editItem.id}`, form);
+        toast.success("Inventory Pulse Updated");
+      } else {
+        await api.post("/products", form);
+        toast.success("Product Registered Successfully");
+      }
+      onSuccess();
+    } catch { toast.error("Studio Sync Failed"); }
+    setLoading(false);
+  };
 
-    const sizeOptions = getSizesByCategory();
-
-    useEffect(() => {
-        const fetchEssentialData = async () => {
-            try {
-                if (isEdit) {
-                    const [catRes, editRes] = await Promise.all([
-                        api.get("/categories"),
-                        api.get(`/products/${id}`)
-                    ]);
-
-                    setCategories(Array.isArray(catRes.data) ? catRes.data : []);
-                    try {
-                        const p = editRes.data;
-                        setFormData({
-                            name: p.name || "",
-                            description: p.description || "",
-                            category: p.category || "Saree",
-                            subcategory: p.subcategory || "",
-                            mrp: p.mrp?.toString() || "",
-                            offer: p.offer?.toString() || "",
-                            offer_price: p.offer_price?.toString() || "",
-                            product_code: p.product_code || "",
-                            total_stock: p.total_stock?.toString() || "0",
-                            rating: p.rating?.toString() || "5",
-                            status: p.status || "Active",
-                            material: p.material || "",
-                            wash_care: p.wash_care || "Dry Clean Only",
-                            saree_length: p.saree_length || "",
-                            blouse_length: p.blouse_length || "",
-                            top_length: p.top_length || "",
-                            bottom_length: p.bottom_length || "",
-                            dupatta_length: p.dupatta_length || "",
-                            gown_length: p.gown_length || "",
-                            sleeve_type: p.sleeve_type || "",
-                            neck_type: p.neck_type || "",
-                            fit_type: p.fit_type || "",
-                            work_type: p.work_type || "",
-                            zari_color: p.zari_color || "",
-                            age: p.age || "",
-                        });
-                        if (p.variants) setVariants(Array.isArray(p.variants) ? p.variants : JSON.parse(p.variants));
-                    } catch (e) {
-                        toast.error("Failed to fetch product details.");
-                    } finally {
-                        setFetching(false);
-                    }
-                } else {
-                    const [catRes, codeRes] = await Promise.all([
-                        api.get("/categories"),
-                        api.get("/products/latest-code")
-                    ]);
-                    
-                    setCategories(Array.isArray(catRes.data) ? catRes.data : []);
-                    setFormData(prev => ({
-                        ...prev,
-                        category: Array.isArray(catRes.data) && catRes.data[0]?.name ? catRes.data[0].name : "Saree",
-                        product_code: codeRes.data.latestCode || "SP001"
-                    }));
-                    setFetching(false);
-                }
-            } catch (error) {
-                console.error("Error fetching data:", error);
-                setFetching(false);
-            }
-        };
-        fetchEssentialData();
-    }, [id, isEdit]);
-
-    // Update Subcategories when Category changes
-    useEffect(() => {
-        const selectedCat = categories.find(c => c.name === formData.category);
-        if (selectedCat && selectedCat.subcategory) {
-            setSubcategories(selectedCat.subcategory);
-            // Only auto-select first subcat if it's currently empty
-            if (!formData.subcategory) {
-                setFormData(prev => ({ ...prev, subcategory: selectedCat.subcategory[0] || "" }));
-            }
-        } else {
-            setSubcategories([]);
-            if (!isEdit) setFormData(prev => ({ ...prev, subcategory: "" }));
-        }
-    }, [formData.category, categories, isEdit]);
-
-    const handleFormChange = (e) => {
-        const { name, value } = e.target;
-        if (name === "total_stock") setIsStockManuallyEdited(true);
-        setFormData(prev => ({ ...prev, [name]: value }));
-    };
-
-    // Reset stock to auto-calculate
-    const resetStockCalculation = () => {
-        setIsStockManuallyEdited(false);
-    };
-
-    // Variant Operations
-    const addVariant = () => {
-        const sizes = getSizesByCategory();
-        const initialVariant = {
-            color: "#3b82f6",
-            colorName: "",
-            images: [],
-            selectedSizes: sizes.length === 1 ? [sizes[0]] : [],
-            sizesStock: sizes.length === 1 ? { [sizes[0]]: 0 } : {}
-        };
-        setVariants([...variants, initialVariant]);
-    };
-
-    const removeVariant = (index) => {
-        if (variants.length > 1) setVariants(variants.filter((_, i) => i !== index));
-    };
-
-    const handleVariantChange = (index, field, value) => {
-        const updated = [...variants];
-        const newVariant = { ...updated[index], [field]: value };
-
-        // Auto-set colorName if color is updated
-        if (field === "color") {
-            newVariant.colorName = getNearestColorName(value);
-        }
-
-        updated[index] = newVariant;
-        setVariants(updated);
-    };
-
-    const toggleSize = (vIndex, size) => {
-        const updated = [...variants];
-        const selected = updated[vIndex].selectedSizes || [];
-        if (selected.includes(size)) {
-            updated[vIndex].selectedSizes = selected.filter(s => s !== size);
-            delete updated[vIndex].sizesStock[size];
-        } else {
-            updated[vIndex].selectedSizes = [...selected, size];
-            if (!updated[vIndex].sizesStock) updated[vIndex].sizesStock = {};
-            updated[vIndex].sizesStock[size] = 0; // Default stock 0
-        }
-        setVariants(updated);
-    };
-
-    const handleStockChange = (vIndex, size, value) => {
-        const updated = [...variants];
-        if (!updated[vIndex].sizesStock) updated[vIndex].sizesStock = {};
-        updated[vIndex].sizesStock[size] = parseInt(value) || 0;
-        setVariants(updated);
-    };
-
-    const handleVariantImageUpload = async (vIndex, e) => {
-        try {
-            const files = Array.from(e.target.files);
-
-            // Limit to 5 images per variant for performance
-            if ((variants[vIndex].images?.length || 0) + files.length > 5) {
-                toast.error("Boutique limit: Max 5 images per shade.");
-                return;
-            }
-
-            const imagesArray = await Promise.all(
-                files.map(async (file) => {
-                    // Stricter compression to fit in database packet limits
-                    const options = {
-                        maxSizeMB: 0.5, // Aim for ~200KB per image max
-                        maxWidthOrHeight: 1000,
-                        useWebWorker: true
-                    };
-                    const compressed = await imageCompression(file, options);
-                    return imageCompression.getDataUrlFromFile(compressed);
-                })
-            );
-            const updated = [...variants];
-            updated[vIndex].images = [...(updated[vIndex].images || []), ...imagesArray];
-            setVariants(updated);
-            toast.success(`Success! ${files.length} boutique images added.`);
-        } catch (error) {
-            toast.error("Upload failed.");
-        }
-    };
-
-    const removeVariantImage = (vIndex, imgIndex) => {
-        const updated = [...variants];
-        updated[vIndex].images = updated[vIndex].images.filter((_, i) => i !== imgIndex);
-        setVariants(updated);
-    };
-
-    const handleSubmit = async (e) => {
-        if (e) e.preventDefault();
-
-        if (!formData.name || !formData.category || !formData.mrp) {
-            toast.error("Please fill in the essentials.");
-            return;
-        }
-
-        setLoading(true);
-        try {
-            const finalData = { ...formData, variants };
-            if (isEdit) {
-                await api.put(`/products/${id}`, finalData);
-                toast.success("Artisan masterpiece updated!");
-            } else {
-                await api.post("/products", finalData);
-                toast.success("Artisan piece listed successfully!");
-            }
-            setTimeout(() => navigate("/admin/products/all"), 1500);
-        } catch (error) {
-            console.error("Submit error:", error);
-            toast.error(error.response?.data?.message || "Operation failed.");
-            setLoading(false);
-        }
-    };
-
-    if (fetching) return (
-        <div className="flex flex-col items-center justify-center py-20">
-            <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin mb-4"></div>
-            <p className="text-gray-500 font-bold">Fetching boutique details...</p>
+  return (
+    <div className="bg-white rounded-[4rem] shadow-2xl overflow-hidden border border-emerald-100 ring-1 ring-emerald-50">
+      <div className="bg-gradient-to-r from-emerald-600 via-emerald-500 to-green-400 p-10 text-white relative overflow-hidden">
+        <div className="absolute right-0 top-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl"></div>
+        <div className="relative z-10 flex items-center justify-between">
+          <div><h2 className="text-xl font-black uppercase tracking-tight">Product Studio</h2><p className="opacity-90 font-medium mt-1 text-emerald-50 uppercase tracking-[0.2em] text-xs"> Fresh Inventory Entry</p></div>
+          <div className="bg-white/20 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/30"><span className="font-black tracking-widest text-sm">{form.productId}</span></div>
         </div>
-    );
-    return (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
-
-
-            {/* Premium Sticky Header Overlay */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-2">
-                <div className="flex items-center gap-3 sm:gap-4">
-                    <button onClick={() => navigate(-1)} className="p-3 bg-white border border-gray-100 rounded-2xl text-gray-400 hover:text-blue-600 transition-all shadow-sm active:scale-95 shadow-blue-500/5">
-                        <FiArrowLeft size={20} />
-                    </button>
-                    <div>
-
-                    </div>
+      </div>
+      <form onSubmit={handleSubmit} className="p-10 space-y-10">
+        <div className="space-y-12">
+          {/* Identity Section - Full Width */}
+          <div className="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-xl shadow-gray-50/50">
+            <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight mb-8 flex items-center gap-3"><div className="w-2 h-8 bg-emerald-500 rounded-full"></div> Identity & Details</h3>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+              <div className="space-y-6">
+                <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Product Title *</label><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required className="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 outline-none font-bold text-gray-900 shadow-sm" placeholder="e.g. Premium Roasted Almonds" /></div>
+                <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Composition / Description *</label><textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required rows="3" className="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 outline-none transition-all resize-none font-medium text-gray-700 leading-relaxed shadow-sm" placeholder="Describe quality, origin, benefits..." /></div>
+              </div>
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-6">
+                  <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Category *</label><select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} required className="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 outline-none font-black text-emerald-800 shadow-sm"><option value="">Select Category</option>{categories.length ? categories.map((c) => { const label = c.name || c.cname || c.catId || `Category ${c.id}`; const value = c.catId || c.name || c.cname || c.id; return (<option key={c.id || value} value={value}>{label}</option>); }) : <option disabled>No categories available</option>}</select></div>
+                  <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Status *</label><select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 outline-none font-black text-emerald-800 shadow-sm"><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div>
                 </div>
+                <div>
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1 flex items-center gap-2">
+                      Total Weight
+                      <span className={`text-[8px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider ${manualWeight ? 'bg-orange-100 text-orange-500' : 'bg-emerald-100 text-emerald-600'}`}>
+                        {manualWeight ? 'Manual' : 'Auto'}
+                      </span>
+                    </label>
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="number"
+                        value={form.totalWeight}
+                        onChange={(e) => { setManualWeight(true); setForm({ ...form, totalWeight: Number(e.target.value) }); }}
+                        className={`w-full rounded-2xl px-6 py-4 font-black border-2 shadow-sm outline-none transition-all ${
+                          manualWeight
+                            ? 'bg-orange-50 border-orange-300 text-orange-700 focus:border-orange-500'
+                            : 'bg-emerald-50 border-emerald-100 text-emerald-700 focus:border-emerald-400'
+                        }`}
+                        placeholder="Enter grams"
+                      />
+                      {manualWeight && (
+                        <button
+                          type="button"
+                          title="Reset to Auto"
+                          onClick={() => { setManualWeight(false); }}
+                          className="flex-shrink-0 w-11 h-11 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl flex items-center justify-center shadow-md transition-all"
+                        >↺</button>
+                      )}
+                    </div>
+                    <p className="text-[9px] text-gray-400 font-medium ml-1 mt-1">{manualWeight ? 'Type to override · click ↺ to sync from variants' : 'Auto-summed from variant weights'}</p>
+                  </div>
+                {/* <div className="bg-emerald-50/30 p-6 rounded-[2rem] border border-emerald-100">
+                  <h4 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-4 flex items-center gap-2">Studio Status Radar</h4>
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden"><div className="h-full bg-emerald-500 w-[60%] animate-pulse"></div></div>
+                    <span className="text-[10px] font-black text-emerald-700">60% COMPLETE</span>
+                  </div>
+                </div> */}
+              </div>
+            </div>
+          </div>
+
+          {/* Registry & Ranges - Full Width Spanning */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            <div className="bg-emerald-50/50 p-8 rounded-[3rem] border border-emerald-100 shadow-xl shadow-emerald-50/20">
+              <div className="flex justify-between items-center mb-8"><div><h3 className="text-xl font-black text-emerald-900 uppercase tracking-tight">Digital Registry</h3><div className="w-12 h-1.5 bg-emerald-500 mt-1 rounded-full"></div></div><div className="px-5 py-3 bg-white rounded-2xl border border-emerald-200 font-black text-emerald-700 shadow-sm">{form.productId}</div></div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <div className="space-y-4"><label className="text-[10px] font-black text-emerald-600 uppercase tracking-widest ml-1 block">SKU Code / Barcode</label><input value={form.barcodeValue} onChange={(e) => setForm({ ...form, barcodeValue: e.target.value })} className="w-full bg-white border-2 border-emerald-100 focus:border-emerald-500 rounded-2xl px-6 py-4 outline-none font-bold shadow-sm" placeholder="System Default" /></div>
+                <div className="bg-white p-8 rounded-[2rem] border-2 border-dashed border-emerald-200 flex flex-col items-center justify-center gap-2 shadow-inner"><svg className="absolute -left-[9999px]" ref={barcodeRef}></svg>{form.barcode ? <img src={form.barcode} alt="bc" className="h-24 w-full object-contain" /> : <div className="animate-pulse text-[10px] text-emerald-300 font-black uppercase">Generating...</div>}</div>
+              </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 space-y-8">
-                    {/* Primary Categorization & Identity */}
-                    <div className="bg-white p-6 sm:p-10 rounded-[2.5rem] border border-gray-100 shadow-sm relative overflow-hidden group">
-                        <div className="absolute -top-10 -right-10 p-8 opacity-[0.03] text-blue-600">
-                            <FiLayers size={200} />
-                        </div>
-
-                        <div className="relative z-10 space-y-8">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <span className="p-2.5 bg-blue-50 text-blue-600 rounded-xl"><FiLayers size={20} /></span>
-                                    <h2 className="text-2xl font-black text-slate-800 tracking-tight">Product Foundation</h2>
-                                </div>
-                                <div className="flex items-center gap-2 p-3 bg-blue-50/50 rounded-2xl border border-blue-100">
-                                    <FiHash className="text-blue-600" />
-                                    <span className="text-sm font-black text-blue-600 tracking-widest">{formData.product_code || 'Generating...'}</span>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div className="space-y-4">
-                                    <label className="text-[10px] sm:text-xs  font-black text-gray-400 uppercase tracking-widest ml-1">Main Collection Category *</label>
-                                    <select name="category" value={formData.category} onChange={handleFormChange} className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-[1.5rem] outline-none focus:bg-white focus:border-blue-500/20 transition-all text-base font-black text-slate-800 shadow-inner cursor-pointer appearance-none">
-                                        {categories.map(cat => <option key={cat.id} value={cat.name}>{cat.name}</option>)}
-                                    </select>
-                                </div>
-
-                                <div className="space-y-4">
-                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-1.5"><FiStar className="text-amber-500" /> Boutique Rating</label>
-                                    <select name="rating" value={formData.rating} onChange={handleFormChange} className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-[1.5rem] outline-none focus:bg-white focus:border-blue-500/20 transition-all text-base font-black text-slate-800 shadow-inner cursor-pointer appearance-none">
-                                        <option value="1">1 Star </option>
-                                        <option value="2">2 Stars</option>
-                                        <option value="3">3 Stars</option>
-                                        <option value="4">4 Stars</option>
-                                        <option value="5">5 Stars (Excellent)</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="space-y-4">
-                                <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Age Group (Optional)</label>
-                                <select
-                                    name="age"
-                                    value={formData.age}
-                                    onChange={handleFormChange}
-                                    className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-[1.5rem] outline-none focus:bg-white focus:border-blue-500/20 transition-all text-base font-bold text-slate-800 shadow-inner cursor-pointer appearance-none"
-                                >
-                                    <option value="">Select Age Group</option>
-                                    <option value="Infant (0–1)">Infant (0–1)</option>
-                                    <option value="Toddler (1–3)">Toddler (1–3)</option>
-                                    <option value="Kids (3–5)">Kids (3–5)</option>
-                                    <option value="Kids (5–7)">Kids (5–7)</option>
-                                    <option value="Kids (7–10)">Kids (7–10)</option>
-                                    <option value="Teen (10–15)">Teen (10–15)</option>
-                                    <option value="Teen (15–20)">Teen (15–20)</option>
-                                    <option value="Adult (20+)">Adult (20+)</option>
-                                </select>
-                            </div>
-
-                            <div className="space-y-4">
-                                <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Creation Name *</label>
-                                <input type="text" name="name" value={formData.name} onChange={handleFormChange} placeholder="e.g. Handwoven Banarasi Silk" className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-[1.5rem] outline-none focus:bg-white focus:border-blue-500/20 transition-all text-base font-bold text-slate-800 shadow-inner" required />
-                            </div>
-
-                            <div className="space-y-4">
-                                <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">The Craft Story</label>
-                                <textarea name="description" value={formData.description} onChange={handleFormChange} rows="3" placeholder="Describe the heritage..." className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-[1.5rem] outline-none focus:bg-white focus:border-blue-500/20 transition-all text-sm font-medium text-gray-600 shadow-inner resize-none" />
-                            </div>
-                        </div>
+            <div className="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-xl shadow-gray-50/50">
+              <div className="flex justify-between items-center mb-8"><h3 className="text-xl font-black text-gray-900 uppercase tracking-tight flex items-center gap-3"><div className="w-2 h-8 bg-orange-400 rounded-full"></div> Sales Variants</h3><button type="button" onClick={() => setForm((p) => ({ ...p, variants: [...p.variants, { weight: "", mrp: "", offerPercent: "", offerPrice: "" }] }))} className="bg-emerald-600 text-white px-6 py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl hover:bg-emerald-700 transition-all flex items-center gap-2">Expand Range</button></div>
+              <div className="space-y-6">
+                {form.variants.map((v, i) => (
+                  <div key={i} className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-gray-50/50 p-5 rounded-3xl border border-gray-100 items-end">
+                    <div><label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Weight</label><input placeholder="250g" value={v.weight} onChange={(e) => { const u = [...form.variants]; u[i].weight = e.target.value; setForm({ ...form, variants: u }); }} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-xs font-bold shadow-sm" /></div>
+                    <div><label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">MRP (₹)</label><input type="number" placeholder="500" value={v.mrp} onChange={(e) => { const u = [...form.variants]; u[i].mrp = e.target.value; u[i].offerPrice = Math.round(Number(e.target.value) - (Number(e.target.value) * Number(u[i].offerPercent)) / 100); setForm({ ...form, variants: u }); }} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-xs font-bold text-emerald-700 shadow-sm" /></div>
+                    <div><label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Discount %</label><input type="number" placeholder="10" value={v.offerPercent} onChange={(e) => { const u = [...form.variants]; u[i].offerPercent = e.target.value; u[i].offerPrice = Math.round(Number(u[i].mrp) - (Number(u[i].mrp) * Number(e.target.value)) / 100); setForm({ ...form, variants: u }); }} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-xs font-bold text-orange-600 shadow-sm" /></div>
+                    <div className="flex items-end gap-2">
+                      <div className="flex-1"><label className="text-[10px] font-black text-emerald-600 uppercase tracking-widest block mb-1.5 ml-1">Final Price</label><div className="bg-emerald-100 px-4 py-3 rounded-xl font-black text-emerald-800 text-[11px] shadow-inner text-center">₹{v.offerPrice || 0}</div></div>
+                      {form.variants.length > 1 && (
+                        <button type="button" onClick={() => setForm((p) => ({ ...p, variants: p.variants.filter((_, idx) => idx !== i) }))} className="w-9 h-9 flex-shrink-0 bg-red-50 hover:bg-red-500 text-red-400 hover:text-white rounded-xl flex items-center justify-center transition-all duration-200 shadow-sm mb-0.5"><FaTrash size={11} /></button>
+                      )}
                     </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
 
-                    {/* Industrial Pricing & Stock */}
-                    <div className="bg-white p-8 sm:p-10 rounded-[3rem] shadow-2xl space-y-8 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 p-8 opacity-5 text-gray-900 group-hover:scale-110 transition-transform">
-                            <FaRupeeSign size={150} />
-                        </div>
-                        <div className="relative z-10 space-y-8">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <span className="p-2.5 bg-white/5 text-gray-900 rounded-xl"><FaRupeeSign size={20} /></span>
-                                    <h2 className="text-2xl font-black text-gray-900 tracking-tight">Premium Commercials</h2>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-                                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse delay-75"></span>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                                <div className="space-y-3">
-                                    <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Market MRP *</label>
-                                    <div className="relative">
-                                        <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-900 font-black text-lg">₹</span>
-                                        <input type="number" name="mrp" value={formData.mrp} onChange={handleFormChange} className="w-full pl-10 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-[1.2rem] outline-none focus:bg-white focus:border-blue-500/20 transition-all text-xl font-black text-slate-900" required />
-                                    </div>
-                                </div>
-                                <div className="space-y-3">
-                                    <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Offer (%)</label>
-                                    <div className="relative">
-                                        <FiPercent className="absolute left-5 top-1/2 -translate-y-1/2 text-amber-500 font-black" />
-                                        <input type="number" name="offer" value={formData.offer} onChange={handleFormChange} className="w-full pl-10 pr-4 py-4 bg-amber-50/50 border border-amber-100 rounded-[1.2rem] outline-none focus:bg-white focus:border-amber-500/20 transition-all text-xl font-black text-amber-600" />
-                                    </div>
-                                </div>
-                                <div className="space-y-3">
-                                    <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Offer Price</label>
-                                    <div className="relative">
-                                        <span className="absolute left-5 top-1/2 -translate-y-1/2 text-emerald-500 font-black text-lg">₹</span>
-                                        <input type="number" value={formData.offer_price} readOnly className="w-full pl-10 pr-4 py-4 bg-emerald-50/50 border border-emerald-100 rounded-[1.2rem] text-xl font-black text-emerald-600 cursor-not-allowed" />
-                                    </div>
-                                </div>
-                                <div className="space-y-3 relative group">
-                                    <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1 flex items-center justify-between">
-                                        Total Stock
-                                        {isStockManuallyEdited && (
-                                            <button onClick={resetStockCalculation} className="text-[8px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full hover:bg-blue-500 transition-colors uppercase tracking-widest">Auto Set</button>
-                                        )}
-                                    </label>
-                                    <div className="relative">
-                                        <FiActivity className={`absolute left-5 top-1/2 -translate-y-1/2 ${isStockManuallyEdited ? 'text-amber-500' : 'text-blue-500'}`} />
-                                        <input type="number" name="total_stock" value={formData.total_stock} onChange={handleFormChange} className={`w-full pl-10 pr-4 py-4 bg-blue-50/50 border border-blue-100 rounded-[1.2rem] outline-none transition-all text-xl font-black ${isStockManuallyEdited ? 'text-amber-500 border-amber-500/30' : 'text-blue-600'}`} />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Vitals & Specs */}
-                    <div className="bg-white p-6 sm:p-10 rounded-[2.5rem] border border-gray-100 shadow-sm relative overflow-hidden group">
-                        <div className="absolute -bottom-10 -right-10 p-8 opacity-[0.03] text-indigo-600">
-                            <FiScissors size={200} />
-                        </div>
-                        <div className="relative z-10 space-y-8">
-                            <div className="flex items-center gap-3">
-                                <span className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl"><FiMaximize size={20} /></span>
-                                <h2 className="text-2xl font-black text-slate-800 tracking-tight">Vitals & Artisanship</h2>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                <div className="space-y-2">
-                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Core Fabric</label>
-                                    <input type="text" name="material" value={formData.material} onChange={handleFormChange} placeholder="Mulberry Silk" className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Embroidery/Work</label>
-                                    <input type="text" name="work_type" value={formData.work_type} onChange={handleFormChange} placeholder="Zardozi" className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-1.5"><FiDroplet className="text-blue-500" /> Caring Instructions</label>
-                                    <select name="wash_care" value={formData.wash_care} onChange={handleFormChange} className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 cursor-pointer">
-                                        <option value="Dry Clean Only">Dry Clean Only</option>
-                                        <option value="Mild Hand Wash">Mild Hand Wash</option>
-                                        <option value="Cold Machine Wash">Cold Machine Wash</option>
-                                        <option value="Petrol Wash Specialized">Petrol Wash Specialized</option>
-                                        <option value="No Bleach, Line Dry">No Bleach, Line Dry</option>
-                                    </select>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Gallery Tier</label>
-                                    <select name="subcategory" value={formData.subcategory} onChange={handleFormChange} className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 cursor-pointer disabled:opacity-30" disabled={subcategories.length === 0}>
-                                        <option value="">Default Boutique</option>
-                                        {subcategories.map((sub, i) => <option key={i} value={sub}>{sub}</option>)}
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Size & Fit Section */}
-                    <div className="bg-white p-6 sm:p-10 rounded-[2.5rem] border border-gray-100 shadow-sm relative overflow-hidden group">
-                        <div className="absolute -bottom-10 -right-10 p-8 opacity-[0.03] text-emerald-600">
-                            <FiMaximize size={200} />
-                        </div>
-                        <div className="relative z-10 space-y-8">
-                            <div className="flex items-center gap-3">
-                                <span className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl"><FiMaximize size={20} /></span>
-                                <h2 className="text-2xl font-black text-slate-800 tracking-tight">Size & Fit</h2>
-                            </div>
-
-                            {formData.category === "Saree" && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Saree Length</label>
-                                        <input
-                                            type="text"
-                                            name="saree_length"
-                                            value={formData.saree_length}
-                                            onChange={handleFormChange}
-                                            placeholder="e.g. 5.5 Meters"
-                                            className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Blouse Length</label>
-                                        <input
-                                            type="text"
-                                            name="blouse_length"
-                                            value={formData.blouse_length}
-                                            onChange={handleFormChange}
-                                            placeholder="e.g. 0.8 Meters"
-                                            className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
-                                        />
-                                    </div>
-                                </div>
-                            )}
-
-                            {(formData.category === "Lehenga" ||
-                                formData.category === "Salwar" ||
-                                formData.category === "Material") && (
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Top / Lehenga Length</label>
-                                            <input
-                                                type="text"
-                                                name="top_length"
-                                                value={formData.top_length}
-                                                onChange={handleFormChange}
-                                                placeholder="Length"
-                                                className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Bottom Length</label>
-                                            <input
-                                                type="text"
-                                                name="bottom_length"
-                                                value={formData.bottom_length}
-                                                onChange={handleFormChange}
-                                                placeholder="Length"
-                                                className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Dupatta Length</label>
-                                            <input
-                                                type="text"
-                                                name="dupatta_length"
-                                                value={formData.dupatta_length}
-                                                onChange={handleFormChange}
-                                                placeholder="Length"
-                                                className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
-                                            />
-                                        </div>
-                                    </div>
-                                )}
-
-                            {formData.category === "Gown" && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Gown Length</label>
-                                        <input
-                                            type="text"
-                                            name="gown_length"
-                                            value={formData.gown_length}
-                                            onChange={handleFormChange}
-                                            placeholder="Length"
-                                            className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Sleeve Type</label>
-                                        <input
-                                            type="text"
-                                            name="sleeve_type"
-                                            value={formData.sleeve_type}
-                                            onChange={handleFormChange}
-                                            placeholder="Full Sleeve / Half Sleeve"
-                                            className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Neck Type</label>
-                                        <input
-                                            type="text"
-                                            name="neck_type"
-                                            value={formData.neck_type}
-                                            onChange={handleFormChange}
-                                            placeholder="V-Neck / Round Neck"
-                                            className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Fit Type</label>
-                                        <input
-                                            type="text"
-                                            name="fit_type"
-                                            value={formData.fit_type}
-                                            onChange={handleFormChange}
-                                            placeholder="Regular Fit / Slim Fit"
-                                            className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
-                                        />
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+          {/* Visual & Health Grid - Full Width Spanning */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            <div className="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-xl shadow-gray-50/50">
+              <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight mb-8 flex items-center gap-3"><div className="w-2 h-8 bg-blue-500 rounded-full"></div> Visual Assets</h3>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="relative aspect-square border-4 border-dashed border-gray-100 rounded-3xl flex flex-col items-center justify-center gap-2 hover:border-emerald-200 hover:bg-emerald-50/20 transition-all cursor-pointer group">
+                  <input type="file" multiple onChange={handleImageUpload} className="absolute inset-0 opacity-0 cursor-pointer" /><FaPlus className="text-emerald-500 group-hover:scale-125 transition-transform" /><span className="text-[9px] font-black text-gray-400 uppercase">Add Photo</span>
                 </div>
+                {form.images.map((img, i) => (
+                  <div key={i} className="relative aspect-square group rounded-[1.5rem] overflow-hidden border shadow-sm ring-2 ring-white hover:ring-emerald-500 transition-all">
+                    <img src={img} className="w-full h-full object-cover" alt="p" /><button type="button" onClick={() => setForm((p) => ({ ...p, images: p.images.filter((_, idx) => idx !== i) }))} className="absolute inset-0 bg-red-600/90 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><FaTrash /></button>
+                  </div>
+                ))}
+              </div>
+            </div>
 
-                {/* Inventory Manager */}
-                <div className="space-y-8">
-                    <div className="flex items-center justify-between sticky top-[100px] z-20 bg-gray-50/90 backdrop-blur-md p-3 rounded-2xl border border-gray-100 shadow-sm">
-                        <div className="flex items-center gap-2">
-                            <FiBox className="text-orange-500" />
-                            <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">Shade & Inventory</h3>
-                        </div>
-                        <button type="button" onClick={addVariant} className="bg-slate-900 text-white p-2 rounded-xl active:scale-90 transition-all shadow-lg hover:bg-black"><FiPlus /></button>
+            <div className="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-xl shadow-gray-50/50 flex flex-col">
+              <div className="flex justify-between items-center mb-8">
+                <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight flex items-center gap-3"><div className="w-2 h-8 bg-emerald-500 rounded-full"></div> Health Analysis Points</h3>
+                <button type="button" onClick={() => setForm({ ...form, healthBenefits: [...form.healthBenefits, ""] })} className="bg-emerald-500 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-lg flex items-center gap-2"><FaPlus size={10} /> Add Point</button>
+              </div>
+              <div className="space-y-4 overflow-y-auto max-h-[250px] pr-2 scrollbar-thin scrollbar-thumb-emerald-100">
+                {form.healthBenefits.map((benefit, idx) => (
+                  <div key={idx} className="flex gap-3 group">
+                    <div className="flex-1 relative">
+                      <FaHeartbeat className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-200 group-focus-within:text-emerald-500 transition-colors" />
+                      <input
+                        value={benefit}
+                        onChange={(e) => {
+                          const newBenefits = [...form.healthBenefits];
+                          newBenefits[idx] = e.target.value;
+                          setForm({ ...form, healthBenefits: newBenefits });
+                        }}
+                        className="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-xl pl-12 pr-6 py-3 outline-none font-bold text-sm text-gray-800 transition-all shadow-inner"
+                        placeholder="e.g. Rich in Omega-3 Fatty Acids"
+                      />
                     </div>
-
-                    {variants.map((v, vIndex) => (
-                        <div key={vIndex} className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6 relative group animate-in zoom-in-95 duration-500">
-                            <div className="flex items-center justify-between">
-                                <div className="flex flex-col gap-2">
-                                    <div className="flex items-center gap-3">
-                                        <div className="relative group/color">
-                                            <input
-                                                type="color"
-                                                value={v.color}
-                                                onChange={(e) => handleVariantChange(vIndex, "color", e.target.value)}
-                                                className="w-10 h-10 rounded-full border-2 border-white shadow-md cursor-pointer transition-transform group-hover/color:scale-110"
-                                            />
-                                            <div className="absolute -top-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-100">
-                                                <div className="w-2 h-2 rounded-full border border-gray-200" style={{ backgroundColor: v.color }}></div>
-                                            </div>
-                                        </div>
-                                        <div className="flex-1">
-                                            <select
-                                                value={v.colorName}
-                                                onChange={(e) => {
-                                                    const selected = boutiqueColors.find(bc => bc.name === e.target.value);
-                                                    if (selected) {
-                                                        handleVariantChange(vIndex, "color", selected.hex);
-                                                        handleVariantChange(vIndex, "colorName", selected.name);
-                                                    } else {
-                                                        handleVariantChange(vIndex, "colorName", e.target.value);
-                                                    }
-                                                }}
-                                                className="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-xl text-xs font-black text-slate-800 outline-none focus:bg-white focus:border-blue-500/30 transition-all uppercase tracking-widest shadow-inner cursor-pointer"
-                                            >
-                                                <option value="">Select Boutique Shade</option>
-                                                {boutiqueColors.map(bc => <option key={bc.hex} value={bc.name}>{bc.name}</option>)}
-                                                {v.colorName && !boutiqueColors.find(bc => bc.name === v.colorName) && <option value={v.colorName}>{v.colorName}</option>}
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <p className="text-[8px] font-bold text-gray-400 uppercase tracking-tight ml-1">Selected Hex: <span className="text-blue-500 font-black">{v.color}</span></p>
-                                </div>
-                                <button type="button" onClick={() => removeVariant(vIndex)} className="text-gray-200 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"><FiTrash2 size={16} /></button>
-                            </div>
-
-                            {/* Inventory per Shade */}
-                            <div className="space-y-4 pt-2 border-t border-gray-50">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Shade Stock Management</label>
-                                <div className="flex flex-wrap gap-1.5">
-                                    {sizeOptions.map(sz => (
-                                        <button key={sz} type="button" onClick={() => toggleSize(vIndex, sz)} className={`px-3 py-2 rounded-xl text-[9px] font-black tracking-tighter transition-all ${v.selectedSizes.includes(sz) ? 'bg-blue-600 text-white shadow-xl scale-105' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}>{sz}</button>
-                                    ))}
-                                </div>
-                                {v.selectedSizes.length > 0 && (
-                                    <div className="grid grid-cols-2 gap-2 pt-2 animate-in fade-in slide-in-from-top-1">
-                                        {v.selectedSizes.map(sz => (
-                                            <div key={sz} className="bg-slate-50 border border-slate-100 p-2 rounded-xl flex items-center justify-between">
-                                                <div>
-                                                    <p className="text-[7px] font-black text-slate-400 uppercase leading-none mb-1">{sz}</p>
-                                                    <input type="number" value={v.sizesStock[sz]} onChange={(e) => handleStockChange(vIndex, sz, e.target.value)} className="w-full bg-transparent border-none ouline-none p-0 text-sm font-black text-slate-800 focus:ring-0 leading-none" />
-                                                </div>
-                                                <div className="w-1.5 h-1.5 rounded-full bg-blue-400/50"></div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-2">
-                                {v.images.slice(0, 5).map((img, iIndex) => (
-                                    <div key={iIndex} className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 shadow-inner group/img">
-                                        <img src={img} alt="V" className="w-full h-full object-cover group-hover/img:scale-110 transition-transform duration-1000" />
-                                        <button type="button" onClick={() => removeVariantImage(vIndex, iIndex)} className="absolute inset-0 bg-red-600/60 text-white flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity"><FiTrash2 size={16} /></button>
-                                    </div>
-                                ))}
-                                {v.images.length < 5 && (
-                                    <label className="flex flex-col items-center justify-center aspect-[3/4] rounded-2xl border-2 border-dashed border-gray-100 bg-gray-50/50 cursor-pointer hover:bg-white hover:border-blue-500 group/label transition-all shadow-inner">
-                                        <FiUploadCloud size={24} className="text-gray-300 group-hover/label:text-blue-500 transition-colors scale-125" />
-                                        <input type="file" multiple className="hidden" accept="image/*" onChange={(e) => handleVariantImageUpload(vIndex, e)} />
-                                    </label>
-                                )}
-                            </div>
-
-
-                        </div>
-                    ))}
-                </div>
-
-                {/* Bottom Global Action Button */}
-                <div className="lg:col-span-3 pt-10 pb-20 border-t border-gray-100 mt-10">
-                    <div className="flex items-center justify-end">
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="flex items-center justify-center gap-4 bg-slate-900 border-4 border-white hover:bg-black disabled:bg-slate-400 disabled:cursor-not-allowed text-white py-4 px-10 rounded-[2.5rem] text-xl font-black shadow-2xl shadow-slate-200 transition-all active:scale-95 group"
-                        >
-                            {loading ? (
-                                <div className="flex items-center gap-3">
-                                    <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                                    <span className="text-sm font-bold animate-pulse">Processing Masterpiece...</span>
-                                </div>
-                            ) : (
-                                <>
-                                    <div className="p-2 bg-white/10 rounded-xl group-hover:bg-blue-500 transition-colors">
-                                        <FiSave className="text-2xl" />
-                                    </div>
-                                    <span>{isEdit ? 'Update Product' : 'Add Products'}</span>
-                                    <FiPlus className="text-white/40 group-hover:text-white transition-colors" />
-                                </>
-                            )}
-                        </button>
-                    </div>
-                </div>
-            </form>
+                    {form.healthBenefits.length > 1 && (
+                      <button type="button" onClick={() => setForm({ ...form, healthBenefits: form.healthBenefits.filter((_, i) => i !== idx) })} className="p-3 bg-red-50 text-red-300 hover:text-red-500 rounded-xl transition-all">
+                        <FaTrash size={12} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
-    );
+        <div className="pt-10 flex justify-end border-t border-gray-100">
+          <button type="submit" disabled={loading} className="bg-gradient-to-tr from-emerald-600 to-green-400 px-20 py-5 rounded-3xl text-white font-black text-xl shadow-2xl hover:scale-105 active:scale-95 transition-all"> {loading ? (editItem ? "Updating Master Registry..." : "Saving Master Registry...") : (editItem ? "Update Product Details" : "Save Product Details")}</button>
+        </div>
+      </form>
+    </div>
+  );
 };
 
-export default AddProducts;
+const ComboProductForm = ({ categories, onSuccess, combos, products, editItem }) => {
+  const [form, setForm] = useState({
+    productId: "",
+    name: "",
+    description: "",
+    healthBenefits: [""],
+    category: "Combo Packs",
+    images: [],
+    comboItems: [{ name: "", weight: "", image: "" }],
+    comboDetails: { mrp: "", offerPercent: "", offerPrice: "", totalWeight: 0 },
+    totalStock: "0",
+    totalWeight: 0,
+    barcode: "",
+    barcodeValue: "",
+    rating: 5,
+    status: "Active",
+  });
+  const [loading, setLoading] = useState(false);
+  const [manualWeight, setManualWeight] = useState(false);
+  const [manualStock, setManualStock] = useState(false);
+  const barcodeRef = useRef();
+
+  const safeParse = (data) => {
+    if (!data) return [];
+    if (Array.isArray(data)) return data;
+    try { return JSON.parse(data); } catch { return []; }
+  };
+
+  useEffect(() => {
+    if (editItem) {
+      const parsedDetails = typeof editItem.comboDetails === 'string' 
+        ? JSON.parse(editItem.comboDetails || '{}') 
+        : editItem.comboDetails;
+      setForm({
+        ...editItem,
+        healthBenefits: safeParse(editItem.healthBenefits).length ? safeParse(editItem.healthBenefits) : [""],
+        images: safeParse(editItem.images),
+        comboItems: safeParse(editItem.comboItems),
+        comboDetails: parsedDetails,
+        // Restore totalWeight from comboDetails if available
+        totalWeight: Number(parsedDetails?.totalWeight || editItem.totalWeight || 0),
+        barcodeValue: editItem.barcodeValue || editItem.productId
+      });
+    } else {
+      const maxId = combos.reduce((max, c) => {
+        const match = c.productId?.match(/\d+/);
+        const num = match ? parseInt(match[0]) : 0;
+        return Math.max(max, num);
+      }, 0);
+      setForm((prev) => ({
+        ...prev,
+        productId: `KPR${String(maxId + 1).padStart(3, "0")}`,
+        name: "", description: "", healthBenefits: [""], images: [], totalStock: "0", comboItems: [{ name: "", weight: "", image: "" }], comboDetails: { mrp: "", offerPercent: "", offerPrice: "" }, status: "Active"
+      }));
+    }
+  }, [editItem, combos]);
+
+  useEffect(() => {
+    if (manualWeight) return;
+
+    const totalW = form.comboItems.reduce((sum, item) => {
+      const wStr = String(item.weight || "").toLowerCase().trim();
+      const val = parseFloat(wStr) || 0;
+      const factor = wStr.includes("kg") ? 1000 : 1;
+      return sum + (val * factor);
+    }, 0);
+
+    // Always update via functional updater — avoids stale closure of form.totalWeight
+    setForm(prev => {
+      if (prev.totalWeight === totalW && (manualStock || prev.totalStock === String(totalW))) return prev; 
+      return {
+        ...prev,
+        totalWeight: totalW,
+        comboDetails: { ...prev.comboDetails, totalWeight: totalW },
+        totalStock: manualStock ? prev.totalStock : String(totalW),
+      };
+    });
+  }, [form.comboItems, manualWeight]);
+
+  useEffect(() => {
+    if (form.productId && barcodeRef.current) {
+      const code = form.barcodeValue || form.productId;
+      try {
+        JsBarcode(barcodeRef.current, code, { format: "CODE128", lineColor: "#ea580c", width: 2, height: 40, displayValue: true });
+        const svgData = new XMLSerializer().serializeToString(barcodeRef.current);
+        const base64Data = `data:image/svg+xml;base64,${btoa(svgData)}`;
+        if (form.barcode !== base64Data) setForm((prev) => ({ ...prev, barcode: base64Data, barcodeValue: code }));
+      } catch (e) { }
+    }
+  }, [form.productId, form.barcodeValue]);
+
+  const handleImageUpload = async (e) => {
+    const rawFiles = Array.from(e.target.files);
+    try {
+      toast.loading("Uploading...", { id: "up-c" });
+      const base64 = await Promise.all(
+        rawFiles.map((file) =>
+          imageCompression(file, { maxSizeMB: 0.2, maxWidthOrHeight: 800, useWebWorker: true }).then((blob) => {
+            return new Promise((res) => {
+              const r = new FileReader(); r.onloadend = () => res(r.result); r.readAsDataURL(blob);
+            });
+          }),
+        ),
+      );
+      setForm((prev) => ({ ...prev, images: [...prev.images, ...base64] }));
+      toast.success("Ready!", { id: "up-c" });
+    } catch { toast.error("Fail", { id: "up-c" }); }
+    finally { e.target.value = ""; }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      // Force-merge totalWeight into comboDetails at submit time.
+      // This is necessary because the useEffect that writes it into comboDetails
+      // is async and may not have flushed before the user clicks submit.
+      const submitData = {
+        ...form,
+        comboDetails: {
+          ...form.comboDetails,
+          totalWeight: form.totalWeight,   // always include the correct value
+          offerPrice: form.comboDetails.offerPrice || 0,
+          mrp: form.comboDetails.mrp || 0,
+        },
+      };
+
+      if (editItem) {
+        await api.put(`/combos/${editItem.id}`, submitData);
+        toast.success("Combo Registry Updated");
+      } else {
+        await api.post("/combos", submitData);
+        toast.success("Pack Registered");
+      }
+      onSuccess();
+    } catch { toast.error("Submission Failure"); }
+    setLoading(false);
+  };
+
+  return (
+    <div className="bg-white rounded-[4rem] shadow-2xl overflow-hidden border border-amber-100 ring-1 ring-amber-50">
+      <div className="bg-gradient-to-r from-amber-600 via-amber-500 to-orange-400 p-10 text-white relative overflow-hidden">
+        <div className="absolute right-0 top-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl"></div>
+        <div className="relative z-10 flex items-center justify-between">
+          <div><h2 className="text-3xl font-black uppercase tracking-tight">Combo Studio</h2><p className="opacity-90 font-medium mt-1 text-amber-50 uppercase tracking-[0.2em] text-xs">Premium Pack Creation</p></div>
+          <div className="bg-white/20 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/30"><span className="font-black tracking-widest text-sm">{form.productId}</span></div>
+        </div>
+      </div>
+      <form onSubmit={handleSubmit} className="p-10 space-y-10">
+        <div className="space-y-12">
+          {/* Pack Identity - Full Width */}
+          <div className="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-xl shadow-gray-50/50">
+            <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight mb-8 flex items-center gap-3"><div className="w-2 h-8 bg-amber-500 rounded-full"></div> Pack Identity & Scope</h3>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+              <div className="space-y-6">
+                <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Combo Pack Name *</label><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required className="w-full bg-gray-50 border-2 border-transparent focus:border-amber-500 rounded-2xl px-6 py-4 font-bold text-gray-900 shadow-sm" placeholder="e.g. Healthy Morning Combo" /></div>
+                <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Description *</label><textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required rows="4" className="w-full bg-gray-50 border-2 border-transparent focus:border-amber-500 rounded-2xl px-6 py-4 outline-none resize-none font-medium text-gray-700 shadow-sm" placeholder="Describe pack contents..." /></div>
+              </div>
+              <div className="space-y-6">
+                <div className="bg-white p-6 rounded-[2rem] border border-dashed border-amber-200 shadow-inner flex flex-col items-center justify-center relative group min-h-[160px]">
+                  <div className="absolute top-4 left-6"><span className="text-[10px] font-black text-amber-500 uppercase tracking-[0.2em]">Pack Barcode</span></div>
+                  <div className="mt-4"><svg ref={barcodeRef}></svg></div>
+                  <p className="mt-3 text-[9px] font-bold text-gray-400 font-mono tracking-widest">{form.productId}</p>
+                </div>
+                <div className="bg-amber-50/30 p-6 rounded-[2rem] border border-amber-100">
+                  <h4 className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-4">Combo Strategy Registry</h4>
+                  <div className="flex gap-4 mb-4">
+                    <div className="flex-1 bg-white p-3 rounded-xl border border-amber-100 text-center shadow-sm"><p className="text-[9px] font-black text-gray-400 uppercase">Items</p><p className="text-xl font-black text-amber-600">{form.comboItems.length}</p></div>
+                    <div className="flex-1 bg-white p-3 rounded-xl border border-amber-100 text-center shadow-sm">
+                      <p className="text-[9px] font-black text-gray-400 uppercase">Total Weight</p>
+                      <p className="text-sm font-black text-amber-600">{form.totalWeight >= 1000 ? (form.totalWeight / 1000).toFixed(2) + "kg" : form.totalWeight + "g"}</p>
+                    </div>
+                  </div>
+                  {/* Weight breakdown per item */}
+                  {form.comboItems.some(item => item.weight) && (
+                    <div className="bg-white rounded-xl border border-amber-100 p-3 mb-3">
+                      <p className="text-[9px] font-black text-amber-600 uppercase tracking-widest mb-2">Weight Breakdown</p>
+                      <div className="space-y-1">
+                        {form.comboItems.map((item, idx) => {
+                          if (!item.weight) return null;
+                          const wStr = String(item.weight).toLowerCase();
+                          const val = parseFloat(wStr) || 0;
+                          const inGrams = wStr.includes("kg") ? val * 1000 : val;
+                          return (
+                            <div key={idx} className="flex justify-between text-[10px]">
+                              <span className="text-gray-500 truncate max-w-[120px]">{item.name || `Item ${idx+1}`}</span>
+                              <span className="font-black text-amber-700">{item.weight} = {inGrams}g</span>
+                            </div>
+                          );
+                        })}
+                        <div className="border-t border-dashed border-amber-200 mt-1 pt-1 flex justify-between text-[10px]">
+                          <span className="font-black text-amber-900">Total</span>
+                          <span className="font-black text-amber-900">{form.totalWeight}g {form.totalWeight >= 1000 ? `(${(form.totalWeight/1000).toFixed(2)}kg)` : ""}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Status *</label><select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="w-full bg-gray-50 border-2 border-transparent focus:border-amber-500 rounded-2xl px-4 py-2.5 outline-none font-black text-amber-800 shadow-sm text-sm"><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div>
+                    <div className="hidden"></div>
+                  </div>
+                  <div>
+                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                      Total Weight
+                      <span className={`text-[8px] px-2 py-0.5 rounded-full font-black uppercase ${manualWeight ? 'bg-orange-100 text-orange-500' : 'bg-amber-100 text-amber-600'}`}>
+                        {manualWeight ? 'Manual' : 'Auto'}
+                      </span>
+                    </label>
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="number"
+                        value={form.totalWeight}
+                        onChange={(e) => { 
+                          const val = Number(e.target.value);
+                          setManualWeight(true); 
+                          setForm({ 
+                            ...form, 
+                            totalWeight: val,
+                            // Keep comboDetails in sync so DB receives the override
+                            comboDetails: { ...form.comboDetails, totalWeight: val },
+                          }); 
+                        }}
+                        className={`w-full rounded-xl px-4 py-2.5 font-black border-2 shadow-sm outline-none transition-all text-sm ${
+                          manualWeight
+                            ? 'bg-orange-50 border-orange-300 text-orange-700 focus:border-orange-400'
+                            : 'bg-white border-amber-100 text-amber-700 focus:border-amber-400'
+                        }`}
+                        placeholder="Enter grams"
+                      />
+                      {manualWeight && (
+                        <button
+                          type="button"
+                          title="Reset to Auto"
+                          onClick={() => setManualWeight(false)}
+                          className="flex-shrink-0 w-9 h-9 bg-amber-500 hover:bg-amber-600 text-white rounded-xl flex items-center justify-center shadow-md transition-all text-sm"
+                        >↺</button>
+                      )}
+                    </div>
+                    <p className="text-[8px] text-gray-400 font-medium mt-1">{manualWeight ? 'Overriding · click ↺ to sync from items' : 'Auto-summed from combo items'}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            <div className="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-xl shadow-gray-50/50">
+              <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight mb-8 flex items-center gap-3"><div className="w-2 h-8 bg-orange-500 rounded-full"></div> Pack Photography</h3>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="relative aspect-square border-4 border-dashed border-gray-100 rounded-3xl flex flex-col items-center justify-center gap-2 hover:border-amber-200 hover:bg-amber-50/20 transition-all cursor-pointer group">
+                  <input type="file" multiple onChange={handleImageUpload} className="absolute inset-0 opacity-0" /><FaPlus className="text-amber-500 group-hover:scale-125 transition-transform" /><span className="text-[9px] font-black text-gray-400 uppercase">Upload</span>
+                </div>
+                {form.images.map((img, i) => (
+                  <div key={i} className="relative aspect-square group rounded-[1.5rem] overflow-hidden border shadow-sm ring-4 ring-white hover:ring-amber-500 transition-all">
+                    <img src={img} className="w-full h-full object-cover" alt="p" /><button type="button" onClick={() => setForm((p) => ({ ...p, images: p.images.filter((_, idx) => idx !== i) }))} className="absolute inset-0 bg-red-600/90 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><FaTrash /></button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-xl shadow-gray-50/50 flex flex-col">
+              <div className="flex justify-between items-center mb-8">
+                <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight flex items-center gap-3"><div className="w-2 h-8 bg-amber-500 rounded-full"></div> Health Analysis Points</h3>
+                <button type="button" onClick={() => setForm({ ...form, healthBenefits: [...form.healthBenefits, ""] })} className="bg-amber-500 text-white px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-600 transition-all shadow-lg flex items-center gap-2">Add Point</button>
+              </div>
+              <div className="space-y-4 overflow-y-auto max-h-[250px] pr-2 scrollbar-thin scrollbar-thumb-amber-100">
+                {form.healthBenefits.map((benefit, idx) => (
+                  <div key={idx} className="flex gap-3 group">
+                    <input
+                      value={benefit}
+                      onChange={(e) => {
+                        const newBenefits = [...form.healthBenefits];
+                        newBenefits[idx] = e.target.value;
+                        setForm({ ...form, healthBenefits: newBenefits });
+                      }}
+                      className="flex-1 bg-gray-50 border-2 border-transparent focus:border-amber-500 rounded-xl px-5 py-3 outline-none font-bold text-sm text-gray-800 transition-all shadow-inner"
+                      placeholder="e.g. Immunity Support Factor"
+                    />
+                    {form.healthBenefits.length > 1 && (
+                      <button type="button" onClick={() => setForm({ ...form, healthBenefits: form.healthBenefits.filter((_, i) => i !== idx) })} className="p-3 bg-red-50 text-red-300 hover:text-red-500 rounded-xl transition-all">
+                        <FaTrash size={12} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            <div className="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-xl shadow-gray-50/50 flex flex-col">
+              <div className="flex justify-between items-center mb-10"><h3 className="text-xl font-black text-gray-900 uppercase tracking-tight flex items-center gap-3"><div className="w-2 h-8 bg-blue-500 rounded-full"></div> Included Range</h3><button type="button" onClick={() => setForm((p) => ({ ...p, comboItems: [...p.comboItems, { name: "", weight: "" }] }))} className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-black uppercase tracking-widest text-[9px] shadow-lg hover:bg-blue-700 transition-all flex items-center gap-2"><FaPlus size={10} /> Add Item</button></div>
+              <div className="space-y-4">
+                {form.comboItems.map((item, i) => (
+                  <div key={i} className="grid grid-cols-[auto_1fr_auto_auto] gap-4 items-center bg-gray-50/50 p-5 rounded-3xl border border-gray-100 hover:bg-white hover:border-blue-100 transition-all group shadow-sm">
+                    <div className="relative w-14 h-14 bg-white rounded-xl overflow-hidden border border-gray-100 flex-shrink-0 group/img">
+                      {item.image ? (
+                        <img src={item.image} alt="p" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-200"><FaBoxOpen size={16} /></div>
+                      )}
+                      <label className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+                        <input 
+                          type="file" 
+                          className="hidden" 
+                          onChange={async (e) => {
+                            const file = e.target.files[0];
+                            if(!file) return;
+                            try {
+                              const compressed = await imageCompression(file, { maxSizeMB: 0.05, maxWidthOrHeight: 300, useWebWorker: true });
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                const u = [...form.comboItems];
+                                u[i].image = reader.result;
+                                setForm({ ...form, comboItems: u });
+                              };
+                              reader.readAsDataURL(compressed);
+                            } catch (err) { toast.error("Upload failed"); }
+                            finally { e.target.value = ""; }
+                          }}
+                        />
+                        <FaEdit className="text-white text-xs" />
+                      </label>
+                    </div>
+                    <div className="flex-1 relative">
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Item Identity</label>
+                      <div className="relative">
+                        <select 
+                          value={item.name} 
+                          onChange={(e) => { 
+                            const val = e.target.value;
+                            const u = [...form.comboItems]; 
+                            const matchedProd = products.find(p => p.name === val);
+                            if (matchedProd) {
+                              const variants = typeof matchedProd.variants === 'string' ? JSON.parse(matchedProd.variants || '[]') : matchedProd.variants;
+                              const images = typeof matchedProd.images === 'string' ? JSON.parse(matchedProd.images || '[]') : matchedProd.images;
+                              u[i].name = matchedProd.name;
+                              u[i].weight = variants[0]?.weight || "";
+                              u[i].image = images[0] || "";
+                            } else {
+                              u[i].name = val;
+                            }
+                            setForm({ ...form, comboItems: u }); 
+                          }} 
+                          className="w-full outline-none font-black bg-transparent text-gray-900 border-none p-0 focus:ring-0 cursor-pointer text-xs appearance-none pr-6"
+                        >
+                          <option value="">Choose Existing Product</option>
+                          {products.map((p) => (
+                            <option key={p.id} value={p.name}>
+                              {p.name} — {p.productId}
+                            </option>
+                          ))}
+                          <option value="custom">-- Custom Item --</option>
+                        </select>
+                        <MdKeyboardArrowDown className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                      </div>
+                    </div>
+                    <div className="w-30 border-l border-gray-100 pl-5 flex flex-col">
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Weight</label>
+                      {(() => {
+                        const matchedProd = products.find(p => p.name === item.name);
+                        const variants = matchedProd ? (typeof matchedProd.variants === 'string' ? JSON.parse(matchedProd.variants || '[]') : (matchedProd.variants || [])) : [];
+                        
+                        if (variants.length > 0) {
+                          return (
+                            <div className="relative">
+                              <select 
+                                value={item.weight}
+                                onChange={(e) => {
+                                  const u = [...form.comboItems];
+                                  u[i].weight = e.target.value;
+                                  setForm({ ...form, comboItems: u });
+                                }}
+                                className="w-full outline-none text-blue-600 font-black bg-transparent border-none p-0 focus:ring-0 cursor-pointer text-xs appearance-none pr-6"
+                              >
+                                {!item.weight && <option value="">Select</option>}
+                                {variants.map((v, idx) => (
+                                  <option key={idx} value={v.weight}>{v.weight}</option>
+                                ))}
+                              </select>
+                              <MdKeyboardArrowDown className="absolute right-0 top-1/2 -translate-y-1/2 text-blue-400 pointer-events-none" size={14} />
+                            </div>
+                          );
+                        }
+                        
+                        return (
+                          <input 
+                            placeholder="Weight" 
+                            value={item.weight} 
+                            onChange={(e) => { 
+                              const u = [...form.comboItems]; 
+                              u[i].weight = e.target.value; 
+                              setForm({ ...form, comboItems: u }); 
+                            }} 
+                            className="w-full outline-none text-blue-600 font-black bg-transparent border-none p-0 focus:ring-0 text-xs placeholder:text-gray-300"
+                          />
+                        );
+                      })()}
+                    </div>
+                    <button 
+                      type="button" 
+                      onClick={() => setForm((p) => ({ ...p, comboItems: p.comboItems.filter((_, idx) => idx !== i) }))} 
+                      className="p-3 text-red-200 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                    >
+                      <FaTrash size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="bg-amber-50/50 p-8 rounded-[3rem] border border-amber-100 shadow-xl overflow-hidden relative">
+              <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-white/40 rounded-full blur-3xl"></div>
+              <div className="relative z-10">
+                <div className="mb-10"><h3 className="text-xl font-black text-amber-900 uppercase tracking-tight">Financial Summary</h3><div className="w-12 h-1.5 bg-amber-500 mt-1 rounded-full"></div></div>
+                <div className="space-y-8">
+                  {/* Total Stock Field (Grams -> KG) */}
+                  <div>
+                    <label className="text-[10px] font-black text-amber-700 uppercase tracking-widest mb-2 block ml-1">
+                      Inventory Level (Grams) *
+                    </label>
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="e.g. 1000"
+                        value={form.totalStock}
+                        onChange={(e) => {
+                          setManualStock(true);
+                          setForm({ ...form, totalStock: e.target.value });
+                        }}
+                        className={`w-full border-2 rounded-2xl px-6 py-4 font-black shadow-sm transition-all ${
+                          manualStock ? 'bg-orange-50 border-orange-300 text-orange-900' : 'bg-white border-transparent text-amber-900 focus:border-amber-500'
+                        }`}
+                        required
+                      />
+                    </div>
+                    <p className="text-[9px] text-gray-400 font-medium ml-1 mt-1">
+                      {manualStock ? "Manual weight entry" : "Auto-calculated from combo items"}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-8">
+                    <div><label className="text-[10px] font-black text-amber-700 uppercase tracking-widest mb-2 block ml-1">Market MRP (₹)</label><input type="number" placeholder="e.g. 1500" value={form.comboDetails.mrp} onChange={(e) => { const u = { ...form.comboDetails }; u.mrp = e.target.value; u.offerPrice = Math.round(Number(u.mrp) - (Number(u.mrp) * Number(u.offerPercent)) / 100); setForm({ ...form, comboDetails: u }); }} className="w-full bg-white border-2 border-transparent focus:border-amber-500 rounded-2xl px-6 py-4 font-black shadow-sm" /></div>
+                    <div><label className="text-[10px] font-black text-amber-700 uppercase tracking-widest mb-2 block ml-1">Special Discount %</label><input type="number" placeholder="e.g. 15" value={form.comboDetails.offerPercent} onChange={(e) => { const u = { ...form.comboDetails }; u.offerPercent = e.target.value; u.offerPrice = Math.round(Number(u.mrp) - (Number(u.mrp) * Number(u.offerPercent)) / 100); setForm({ ...form, comboDetails: u }); }} className="w-full bg-white border-2 border-transparent focus:border-amber-500 rounded-2xl px-6 py-4 font-black shadow-sm" /></div>
+                  </div>
+                  <div className="bg-gradient-to-br from-white to-amber-50 p-8 rounded-[2.5rem] border-2 border-amber-200 shadow-2xl relative group">
+                    <label className="text-[11px] font-black text-amber-600 uppercase tracking-[0.25em] mb-2 block">Premium Strategy Price</label>
+                    <div className="text-5xl font-black text-amber-900 flex items-baseline gap-2 transition-transform group-hover:scale-105 duration-500"><span className="text-2xl font-medium opacity-50">₹</span>{form.comboDetails.offerPrice || 0}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="pt-10 flex justify-end">
+          <button type="submit" disabled={loading} className="bg-gradient-to-tr from-amber-600 to-orange-400 px-24 py-5 rounded-[2rem] text-white font-black text-xl shadow-2xl hover:scale-105 active:scale-95 transition-all"> {loading ? (editItem ? "Updating Entry..." : "Executing Entry...") : (editItem ? "Update Premium Combo" : "Finalize Premium Combo")}</button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
+export default Products;

@@ -1,5 +1,7 @@
 const mysql = require('mysql2/promise');
 const crypto = require('crypto');
+const fs = require('fs').promises;
+const path = require('path');
 require('dotenv').config();
 
 const DB_HOST = process.env.DB_HOST || 'localhost';
@@ -237,6 +239,46 @@ async function createDatabaseAndTables() {
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `created_by_name` VARCHAR(255) DEFAULT NULL");
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `created_by_email` VARCHAR(255) DEFAULT NULL");
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `created_by_phone` VARCHAR(50) DEFAULT NULL");
+
+  await connection.execute(`
+    CREATE TABLE IF NOT EXISTS \`categories\` (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      catId VARCHAR(50) NOT NULL UNIQUE,
+      name VARCHAR(255) NOT NULL,
+      description TEXT,
+      subcategory LONGTEXT,
+      images LONGTEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+  console.log('Categories table created or already exists');
+
+  try {
+    const [categoryCount] = await connection.execute('SELECT COUNT(*) AS count FROM categories');
+    if (categoryCount[0].count === 0) {
+      const categoriesPath = path.join(__dirname, 'src', 'data', 'categories.json');
+      const raw = await fs.readFile(categoriesPath, 'utf8');
+      const categoriesData = JSON.parse(raw);
+      if (Array.isArray(categoriesData) && categoriesData.length > 0) {
+        for (const category of categoriesData) {
+          await connection.execute(
+            'INSERT INTO categories (catId, name, description, subcategory, images) VALUES (?, ?, ?, ?, ?)',
+            [
+              category.catId || `CAT${category.id}`,
+              category.name || category.cname || '',
+              category.description || null,
+              JSON.stringify(category.subcategory || []),
+              JSON.stringify(category.images || [])
+            ]
+          );
+        }
+        console.log('Seeded categories into database from JSON data');
+      }
+    }
+  } catch (seedError) {
+    console.warn('Could not seed categories:', seedError.message || seedError);
+  }
 
   await connection.execute(`
     CREATE TABLE IF NOT EXISTS \`delivery_partners\` (

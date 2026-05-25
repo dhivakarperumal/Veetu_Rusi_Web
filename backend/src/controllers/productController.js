@@ -345,34 +345,19 @@ exports.getLatestProductCode = async (req, res) => {
     }
 };
 
-const fs = require('fs').promises;
-const path = require('path');
-
-const categoriesFile = path.join(__dirname, '..', 'data', 'categories.json');
-
-async function readCategories() {
-    try {
-        const raw = await fs.readFile(categoriesFile, 'utf8');
-        return JSON.parse(raw);
-    } catch (err) {
-        console.error('Failed to read categories file:', err);
-        return [];
-    }
-}
-
-async function writeCategories(list) {
-    try {
-        await fs.writeFile(categoriesFile, JSON.stringify(list, null, 2), 'utf8');
-    } catch (err) {
-        console.error('Failed to write categories file:', err);
-        throw err;
-    }
-}
-
-// Get categories from JSON store
+// Get categories from database
 exports.getCategories = async (req, res) => {
     try {
-        const categories = await readCategories();
+        const [rows] = await pool.execute(
+            'SELECT id, catId, name, description, subcategory, images FROM categories ORDER BY id DESC'
+        );
+
+        const categories = rows.map((row) => ({
+            ...row,
+            subcategory: parseJsonField(row.subcategory) || [],
+            images: parseJsonField(row.images) || []
+        }));
+
         res.json(categories);
     } catch (error) {
         console.error('Error fetching categories:', error);
@@ -380,34 +365,65 @@ exports.getCategories = async (req, res) => {
     }
 };
 
-// Create a new category
+// Create a new category in database
 exports.createCategory = async (req, res) => {
     try {
         const { catId, name, description = '', subcategory = [], images = [] } = req.body;
         if (!catId || !name) return res.status(400).json({ message: 'catId and name are required' });
 
-        const categories = await readCategories();
-        const nextId = categories.length > 0 ? Math.max(...categories.map(c => c.id)) + 1 : 1;
-        const newCat = { id: nextId, catId, name, description, subcategory, images };
-        categories.unshift(newCat);
-        await writeCategories(categories);
-        res.status(201).json({ id: newCat.id });
+        await pool.execute(
+            'INSERT INTO categories (catId, name, description, subcategory, images) VALUES (?, ?, ?, ?, ?)',
+            [catId, name, description, JSON.stringify(subcategory), JSON.stringify(images)]
+        );
+
+        res.status(201).json({ message: 'Category created successfully' });
     } catch (err) {
         console.error('Failed to create category:', err);
         res.status(500).json({ message: 'Failed to create category', error: err.message });
     }
 };
 
-// Update existing category by catId
+// Update existing category by catId or id
 exports.updateCategory = async (req, res) => {
     try {
         const catId = req.params.catId;
         const updates = req.body;
-        const categories = await readCategories();
-        const idx = categories.findIndex(c => c.catId === catId || String(c.id) === String(catId));
-        if (idx === -1) return res.status(404).json({ message: 'Category not found' });
-        categories[idx] = { ...categories[idx], ...updates };
-        await writeCategories(categories);
+        const fields = [];
+        const params = [];
+
+        if (updates.catId) {
+            fields.push('catId = ?');
+            params.push(updates.catId);
+        }
+        if (updates.name) {
+            fields.push('name = ?');
+            params.push(updates.name);
+        }
+        if (updates.description !== undefined) {
+            fields.push('description = ?');
+            params.push(updates.description);
+        }
+        if (updates.subcategory !== undefined) {
+            fields.push('subcategory = ?');
+            params.push(JSON.stringify(updates.subcategory));
+        }
+        if (updates.images !== undefined) {
+            fields.push('images = ?');
+            params.push(JSON.stringify(updates.images));
+        }
+
+        if (fields.length === 0) {
+            return res.status(400).json({ message: 'No fields to update' });
+        }
+
+        params.push(catId, catId);
+        const [result] = await pool.execute(
+            `UPDATE categories SET ${fields.join(', ')} WHERE catId = ? OR id = ?`,
+            params
+        );
+
+        if (result.affectedRows === 0) return res.status(404).json({ message: 'Category not found' });
+
         res.json({ message: 'Updated' });
     } catch (err) {
         console.error('Failed to update category:', err);
@@ -415,15 +431,16 @@ exports.updateCategory = async (req, res) => {
     }
 };
 
-// Delete category by catId
+// Delete category by catId or id
 exports.deleteCategory = async (req, res) => {
     try {
         const catId = req.params.catId;
-        let categories = await readCategories();
-        const before = categories.length;
-        categories = categories.filter(c => c.catId !== catId && String(c.id) !== String(catId));
-        if (categories.length === before) return res.status(404).json({ message: 'Category not found' });
-        await writeCategories(categories);
+        const [result] = await pool.execute(
+            'DELETE FROM categories WHERE catId = ? OR id = ?',
+            [catId, catId]
+        );
+
+        if (result.affectedRows === 0) return res.status(404).json({ message: 'Category not found' });
         res.json({ message: 'Deleted' });
     } catch (err) {
         console.error('Failed to delete category:', err);

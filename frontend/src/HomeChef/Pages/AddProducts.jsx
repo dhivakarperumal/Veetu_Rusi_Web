@@ -2,17 +2,11 @@ import React, { useState, useEffect } from "react";
 import {
     FiArrowLeft,
     FiSave,
-    FiTag,
     FiBox,
     FiLayers,
-    FiImage,
     FiUploadCloud,
     FiTrash2,
-    FiInfo,
-    FiMaximize,
-    FiScissors,
     FiPlus,
-    FiDroplet,
     FiPercent,
     FiActivity,
     FiStar,
@@ -21,7 +15,7 @@ import {
 import { FaRupeeSign } from "react-icons/fa";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../api";
-import { toast, Toaster } from "react-hot-toast";
+import { toast} from "react-hot-toast";
 import imageCompression from "browser-image-compression";
 
 // Helper: Color to Name Utility
@@ -131,8 +125,7 @@ const AddProducts = () => {
         net_weight: "",
         package_count: "",
         packaging_type: "Pouch",
-        manufacture_date: "",
-    });
+        manufacture_date: "" });
 
     const [variants, setVariants] = useState([
         {
@@ -153,8 +146,10 @@ const AddProducts = () => {
         const offerValue = parseFloat(formData.offer) || 0;
         if (mrpValue > 0) {
             const calculatedPrice = mrpValue - (mrpValue * (offerValue / 100));
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setFormData(prev => ({ ...prev, offer_price: Math.round(calculatedPrice).toString() }));
         } else {
+             
             setFormData(prev => ({ ...prev, offer_price: "0" }));
         }
     }, [formData.mrp, formData.offer]);
@@ -168,6 +163,7 @@ const AddProducts = () => {
                     total += parseInt(qty) || 0;
                 });
             });
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setFormData(prev => ({ ...prev, total_stock: total.toString() }));
         }
     }, [variants, isStockManuallyEdited]);
@@ -227,8 +223,7 @@ const AddProducts = () => {
                             net_weight: p.net_weight || "",
                             package_count: p.package_count || "",
                             packaging_type: p.packaging_type || "Pouch",
-                            manufacture_date: p.manufacture_date || "",
-                        });
+                            manufacture_date: p.manufacture_date || "" });
                         if (p.variants) setVariants(Array.isArray(p.variants) ? p.variants : JSON.parse(p.variants));
                     } catch (e) {
                         console.error('Failed to parse product variants or set form data', e);
@@ -253,8 +248,7 @@ const AddProducts = () => {
                 setCategories(Array.isArray(catsResult.value.data) ? catsResult.value.data : []);
                 setFormData(prev => ({
                     ...prev,
-                    category: Array.isArray(catsResult.value.data) && catsResult.value.data[0]?.name ? catsResult.value.data[0].name : "Cooked Food",
-                }));
+                    category: Array.isArray(catsResult.value.data) && catsResult.value.data[0]?.name ? catsResult.value.data[0].name : "Cooked Food" }));
             } else {
                 console.warn('Failed to load categories', catsResult.reason);
             }
@@ -274,15 +268,18 @@ const AddProducts = () => {
     useEffect(() => {
         const selectedCat = categories.find(c => c.name === formData.category);
         if (selectedCat && selectedCat.subcategory) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setSubcategories(selectedCat.subcategory);
             // Only auto-select first subcat if it's currently empty
             if (!formData.subcategory) {
+                 
                 setFormData(prev => ({ ...prev, subcategory: selectedCat.subcategory[0] || "" }));
             }
         } else {
             setSubcategories([]);
             if (!isEdit) setFormData(prev => ({ ...prev, subcategory: "" }));
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [formData.category, categories, isEdit]);
 
     const handleFormChange = (e) => {
@@ -374,6 +371,7 @@ const AddProducts = () => {
             setVariants(updated);
             toast.success(`Success! ${files.length} variation images added.`);
         } catch (error) {
+            console.error(error);
             toast.error("Image upload failed.");
         }
     };
@@ -687,128 +685,61 @@ const AddProducts = () => {
                         </div>
                     </div>
 
-                    {/* Ingredients & Nutrition */}
+                    {/* Product Details */}
                     <div className="bg-white p-6 sm:p-10 rounded-[2.5rem] border border-gray-100 shadow-sm relative overflow-hidden group">
-                        <div className="absolute -bottom-10 -right-10 p-8 opacity-[0.03] text-green-600">
-                            <FiScissors size={200} />
+                        <div className="absolute -bottom-10 -right-10 p-8 opacity-[0.03] text-indigo-600">
+                            <FiBox size={200} />
                         </div>
                         <div className="relative z-10 space-y-8">
                             <div className="flex items-center gap-3">
-                                <span className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl"><FiMaximize size={20} /></span>
-                                <h2 className="text-2xl font-black text-slate-800 tracking-tight">Ingredients & Nutrition</h2>
+                                <span className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl"><FiBox size={20} /></span>
+                                <h2 className="text-2xl font-black text-slate-800 tracking-tight">Product Details</h2>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Primary Ingredients</label>
-                                    <input type="text" name="material" value={formData.material} onChange={handleFormChange} placeholder="e.g. Basmati Rice, Chicken" className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Nutrition / Dietary Info</label>
-                                    <input type="text" name="nutrition_info" value={formData.nutrition_info} onChange={handleFormChange} placeholder="e.g. 550 kcal, High Protein" className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-1.5"><FiDroplet className="text-emerald-500" /> Storage Instructions</label>
-                                    <select name="storage_instructions" value={formData.storage_instructions} onChange={handleFormChange} className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 cursor-pointer">
-                                        <option value="Keep Refrigerated">Keep Refrigerated</option>
-                                        <option value="Room Temperature">Room Temperature</option>
-                                        <option value="Keep Frozen">Keep Frozen</option>
-                                        <option value="Consume Within">Consume Within</option>
+                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Dietary Tag</label>
+                                    <select name="dietary_tag" value={formData.dietary_tag} onChange={handleFormChange} className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 cursor-pointer">
+                                        <option value="Veg">Veg</option>
+                                        <option value="Non-Veg">Non-Veg</option>
+                                        <option value="Vegan">Vegan</option>
+                                        <option value="Contains Egg">Contains Egg</option>
                                     </select>
                                 </div>
-
                                 <div className="space-y-2">
-                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Category Subtype</label>
+                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Net Weight / Volume</label>
+                                    <input type="text" name="net_weight" value={formData.net_weight} onChange={handleFormChange} placeholder="e.g. 500g, 1L" className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Packaging Type</label>
+                                    <input type="text" name="packaging_type" value={formData.packaging_type} onChange={handleFormChange} placeholder="e.g. Packet, Bottle" className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Shelf Life (Days)</label>
+                                    <input type="number" name="shelf_life_days" value={formData.shelf_life_days} onChange={handleFormChange} placeholder="e.g. 180" className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Manufacture Date</label>
+                                    <input type="date" name="manufacture_date" value={formData.manufacture_date} onChange={handleFormChange} className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Subcategory</label>
                                     <select name="subcategory" value={formData.subcategory} onChange={handleFormChange} className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 cursor-pointer disabled:opacity-30" disabled={subcategories.length === 0}>
-                                        <option value="">Default</option>
+                                        <option value="">Select Subcategory</option>
                                         {subcategories.map((sub, i) => <option key={i} value={sub}>{sub}</option>)}
                                     </select>
                                 </div>
                             </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Ingredients</label>
+                                <textarea name="ingredients" value={formData.ingredients} onChange={handleFormChange} placeholder="List of ingredients..." className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 resize-none"></textarea>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Storage Instructions</label>
+                                <input type="text" name="storage_instructions" value={formData.storage_instructions} onChange={handleFormChange} placeholder="e.g. Keep in a cool, dry place" className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800" />
+                            </div>
                         </div>
                     </div>
-
-                    {/* Serving Guidelines */}
-                    {/* <div className="bg-white p-6 sm:p-10 rounded-[2.5rem] border border-gray-100 shadow-sm relative overflow-hidden group">
-                        <div className="absolute -bottom-10 -right-10 p-8 opacity-[0.03] text-emerald-600">
-                            <FiMaximize size={200} />
-                        </div>
-                        <div className="relative z-10 space-y-8">
-                            <div className="flex items-center gap-3">
-                                <span className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl"><FiMaximize size={20} /></span>
-                                <h2 className="text-2xl font-black text-slate-800 tracking-tight">Serving Guidelines</h2>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Presentation Style</label>
-                                    <input
-                                        type="text"
-                                        name="presentation_style"
-                                        value={formData.presentation_style}
-                                        onChange={handleFormChange}
-                                        placeholder="e.g. Plated, Boxed, Tray"
-                                        className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Portion Format</label>
-                                    <input
-                                        type="text"
-                                        name="portion_format"
-                                        value={formData.portion_format}
-                                        onChange={handleFormChange}
-                                        placeholder="e.g. Single, Half, Family"
-                                        className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Service Type</label>
-                                    <input
-                                        type="text"
-                                        name="service_type"
-                                        value={formData.service_type}
-                                        onChange={handleFormChange}
-                                        placeholder="e.g. Delivery, Dine-in, Takeaway"
-                                        className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Packaging Notes</label>
-                                    <input
-                                        type="text"
-                                        name="packaging_notes"
-                                        value={formData.packaging_notes}
-                                        onChange={handleFormChange}
-                                        placeholder="e.g. Sealed tray, Vacuum pack"
-                                        className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Dietary Tag</label>
-                                    <input
-                                        type="text"
-                                        name="dietary_tag"
-                                        value={formData.dietary_tag}
-                                        onChange={handleFormChange}
-                                        placeholder="e.g. Veg, Non-Veg, Vegan"
-                                        className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Heat Profile</label>
-                                    <input
-                                        type="text"
-                                        name="heat_profile"
-                                        value={formData.heat_profile}
-                                        onChange={handleFormChange}
-                                        placeholder="e.g. Mild, Medium, Spicy"
-                                        className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </div> */}
                 </div>
 
                 {/* Inventory Manager */}

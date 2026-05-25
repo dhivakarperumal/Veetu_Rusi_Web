@@ -314,12 +314,7 @@ const Category = () => {
 
                     {/* Add Button */}
                     <div className="flex items-center gap-3">
-                        <button
-                            onClick={handleBulkImportDefaults}
-                            className="hidden sm:inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-xl font-bold transition-all"
-                        >
-                            <FiUploadCloud className="text-lg" /> Import Defaults
-                        </button>
+                       
 
                         <button
                             onClick={openAddModal}

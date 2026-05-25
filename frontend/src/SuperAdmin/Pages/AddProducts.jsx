@@ -2,17 +2,11 @@ import React, { useState, useEffect } from "react";
 import {
     FiArrowLeft,
     FiSave,
-    FiTag,
     FiBox,
     FiLayers,
-    FiImage,
     FiUploadCloud,
     FiTrash2,
-    FiInfo,
-    FiMaximize,
-    FiScissors,
     FiPlus,
-    FiDroplet,
     FiPercent,
     FiActivity,
     FiStar,
@@ -21,7 +15,7 @@ import {
 import { FaRupeeSign } from "react-icons/fa";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../api";
-import { toast, Toaster } from "react-hot-toast";
+import { toast} from "react-hot-toast";
 import imageCompression from "browser-image-compression";
 
 // Helper: Color to Name Utility
@@ -104,7 +98,7 @@ const AddProducts = () => {
     const [formData, setFormData] = useState({
         name: "",
         description: "",
-        category: "Saree",
+        category: "Grocery",
         subcategory: "",
         mrp: "",
         offer: "",
@@ -113,22 +107,14 @@ const AddProducts = () => {
         total_stock: "0",
         rating: "5",
         status: "Active",
-        material: "",
-        wash_care: "Dry Clean Only",
-        // Traditional Wear Specs
-        saree_length: "5.5 Meters",
-        blouse_length: "0.8 Meters",
-        top_length: "",
-        bottom_length: "",
-        dupatta_length: "",
-        gown_length: "",
-        sleeve_type: "",
-        neck_type: "",
-        fit_type: "",
-        work_type: "Embroidered",
-        zari_color: "Gold Zari",
-        age: "",
-    });
+        nutrition_info: "",
+        storage_instructions: "Keep in a cool, dry place",
+        dietary_tag: "Veg",
+        ingredients: "",
+        shelf_life_days: "",
+        net_weight: "",
+        packaging_type: "Packet",
+        manufacture_date: "" });
 
     const [variants, setVariants] = useState([
         {
@@ -149,8 +135,10 @@ const AddProducts = () => {
         const offerValue = parseFloat(formData.offer) || 0;
         if (mrpValue > 0) {
             const calculatedPrice = mrpValue - (mrpValue * (offerValue / 100));
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setFormData(prev => ({ ...prev, offer_price: Math.round(calculatedPrice).toString() }));
         } else {
+             
             setFormData(prev => ({ ...prev, offer_price: "0" }));
         }
     }, [formData.mrp, formData.offer]);
@@ -164,21 +152,13 @@ const AddProducts = () => {
                     total += parseInt(qty) || 0;
                 });
             });
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setFormData(prev => ({ ...prev, total_stock: total.toString() }));
         }
     }, [variants, isStockManuallyEdited]);
 
     // Size Logic based on Category
-    const getSizesByCategory = () => {
-        switch (formData.category) {
-            case "Saree": return ["Free Size"];
-            case "Lehenga":
-            case "Salwar":
-            case "Gown": return ["XS", "S", "M", "L", "XL", "XXL"];
-            case "Material": return ["Free Size"];
-            default: return [];
-        }
-    };
+    const getSizesByCategory = () => { return ["250g", "500g", "1kg", "1L", "Standard"]; };
 
     const sizeOptions = getSizesByCategory();
 
@@ -197,7 +177,7 @@ const AddProducts = () => {
                         setFormData({
                             name: p.name || "",
                             description: p.description || "",
-                            category: p.category || "Saree",
+                            category: p.category || "Grocery",
                             subcategory: p.subcategory || "",
                             mrp: p.mrp?.toString() || "",
                             offer: p.offer?.toString() || "",
@@ -206,23 +186,17 @@ const AddProducts = () => {
                             total_stock: p.total_stock?.toString() || "0",
                             rating: p.rating?.toString() || "5",
                             status: p.status || "Active",
-                            material: p.material || "",
-                            wash_care: p.wash_care || "Dry Clean Only",
-                            saree_length: p.saree_length || "",
-                            blouse_length: p.blouse_length || "",
-                            top_length: p.top_length || "",
-                            bottom_length: p.bottom_length || "",
-                            dupatta_length: p.dupatta_length || "",
-                            gown_length: p.gown_length || "",
-                            sleeve_type: p.sleeve_type || "",
-                            neck_type: p.neck_type || "",
-                            fit_type: p.fit_type || "",
-                            work_type: p.work_type || "",
-                            zari_color: p.zari_color || "",
-                            age: p.age || "",
-                        });
+                            nutrition_info: p.nutrition_info || "",
+                            storage_instructions: p.storage_instructions || "Keep in a cool, dry place",
+                            dietary_tag: p.dietary_tag || "Veg",
+                            ingredients: p.ingredients || "",
+                            shelf_life_days: p.shelf_life_days || "",
+                            net_weight: p.net_weight || "",
+                            packaging_type: p.packaging_type || "Packet",
+                            manufacture_date: p.manufacture_date || "" });
                         if (p.variants) setVariants(Array.isArray(p.variants) ? p.variants : JSON.parse(p.variants));
                     } catch (e) {
+                        console.error(e);
                         toast.error("Failed to fetch product details.");
                     } finally {
                         setFetching(false);
@@ -236,7 +210,7 @@ const AddProducts = () => {
                     setCategories(Array.isArray(catRes.data) ? catRes.data : []);
                     setFormData(prev => ({
                         ...prev,
-                        category: Array.isArray(catRes.data) && catRes.data[0]?.name ? catRes.data[0].name : "Saree",
+                        category: Array.isArray(catRes.data) && catRes.data[0]?.name ? catRes.data[0].name : "Grocery",
                         product_code: codeRes.data.latestCode || "SP001"
                     }));
                     setFetching(false);
@@ -253,15 +227,18 @@ const AddProducts = () => {
     useEffect(() => {
         const selectedCat = categories.find(c => c.name === formData.category);
         if (selectedCat && selectedCat.subcategory) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setSubcategories(selectedCat.subcategory);
             // Only auto-select first subcat if it's currently empty
             if (!formData.subcategory) {
+                 
                 setFormData(prev => ({ ...prev, subcategory: selectedCat.subcategory[0] || "" }));
             }
         } else {
             setSubcategories([]);
             if (!isEdit) setFormData(prev => ({ ...prev, subcategory: "" }));
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [formData.category, categories, isEdit]);
 
     const handleFormChange = (e) => {
@@ -332,7 +309,7 @@ const AddProducts = () => {
 
             // Limit to 5 images per variant for performance
             if ((variants[vIndex].images?.length || 0) + files.length > 5) {
-                toast.error("Boutique limit: Max 5 images per shade.");
+                toast.error("Limit: Max 5 images per variant.");
                 return;
             }
 
@@ -351,8 +328,9 @@ const AddProducts = () => {
             const updated = [...variants];
             updated[vIndex].images = [...(updated[vIndex].images || []), ...imagesArray];
             setVariants(updated);
-            toast.success(`Success! ${files.length} boutique images added.`);
+            toast.success(`Success! ${files.length} images added.`);
         } catch (error) {
+            console.error(error);
             toast.error("Upload failed.");
         }
     };
@@ -376,10 +354,10 @@ const AddProducts = () => {
             const finalData = { ...formData, variants };
             if (isEdit) {
                 await api.put(`/products/${id}`, finalData);
-                toast.success("Artisan masterpiece updated!");
+                toast.success("Product updated!");
             } else {
                 await api.post("/products", finalData);
-                toast.success("Artisan piece listed successfully!");
+                toast.success("Product listed successfully!");
             }
             setTimeout(() => navigate("/admin/products/all"), 1500);
         } catch (error) {
@@ -392,7 +370,7 @@ const AddProducts = () => {
     if (fetching) return (
         <div className="flex flex-col items-center justify-center py-20">
             <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin mb-4"></div>
-            <p className="text-gray-500 font-bold">Fetching boutique details...</p>
+            <p className="text-gray-500 font-bold">Fetching product details...</p>
         </div>
     );
     return (
@@ -440,7 +418,7 @@ const AddProducts = () => {
                                 </div>
 
                                 <div className="space-y-4">
-                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-1.5"><FiStar className="text-amber-500" /> Boutique Rating</label>
+                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-1.5"><FiStar className="text-amber-500" /> Product Rating</label>
                                     <select name="rating" value={formData.rating} onChange={handleFormChange} className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-[1.5rem] outline-none focus:bg-white focus:border-blue-500/20 transition-all text-base font-black text-slate-800 shadow-inner cursor-pointer appearance-none">
                                         <option value="1">1 Star </option>
                                         <option value="2">2 Stars</option>
@@ -473,12 +451,12 @@ const AddProducts = () => {
 
                             <div className="space-y-4">
                                 <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Creation Name *</label>
-                                <input type="text" name="name" value={formData.name} onChange={handleFormChange} placeholder="e.g. Handwoven Banarasi Silk" className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-[1.5rem] outline-none focus:bg-white focus:border-blue-500/20 transition-all text-base font-bold text-slate-800 shadow-inner" required />
+                                <input type="text" name="name" value={formData.name} onChange={handleFormChange} placeholder="e.g. Aashirvaad Whole Wheat Atta" className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-[1.5rem] outline-none focus:bg-white focus:border-blue-500/20 transition-all text-base font-bold text-slate-800 shadow-inner" required />
                             </div>
 
                             <div className="space-y-4">
-                                <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">The Craft Story</label>
-                                <textarea name="description" value={formData.description} onChange={handleFormChange} rows="3" placeholder="Describe the heritage..." className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-[1.5rem] outline-none focus:bg-white focus:border-blue-500/20 transition-all text-sm font-medium text-gray-600 shadow-inner resize-none" />
+                                <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Product Description</label>
+                                <textarea name="description" value={formData.description} onChange={handleFormChange} rows="3" placeholder="Describe the product..." className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-[1.5rem] outline-none focus:bg-white focus:border-blue-500/20 transition-all text-sm font-medium text-gray-600 shadow-inner resize-none" />
                             </div>
                         </div>
                     </div>
@@ -538,174 +516,59 @@ const AddProducts = () => {
                         </div>
                     </div>
 
-                    {/* Vitals & Specs */}
+                    {/* Product Details */}
                     <div className="bg-white p-6 sm:p-10 rounded-[2.5rem] border border-gray-100 shadow-sm relative overflow-hidden group">
                         <div className="absolute -bottom-10 -right-10 p-8 opacity-[0.03] text-indigo-600">
-                            <FiScissors size={200} />
+                            <FiBox size={200} />
                         </div>
                         <div className="relative z-10 space-y-8">
                             <div className="flex items-center gap-3">
-                                <span className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl"><FiMaximize size={20} /></span>
-                                <h2 className="text-2xl font-black text-slate-800 tracking-tight">Vitals & Artisanship</h2>
+                                <span className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl"><FiBox size={20} /></span>
+                                <h2 className="text-2xl font-black text-slate-800 tracking-tight">Product Details</h2>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Core Fabric</label>
-                                    <input type="text" name="material" value={formData.material} onChange={handleFormChange} placeholder="Mulberry Silk" className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Embroidery/Work</label>
-                                    <input type="text" name="work_type" value={formData.work_type} onChange={handleFormChange} placeholder="Zardozi" className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-1.5"><FiDroplet className="text-blue-500" /> Caring Instructions</label>
-                                    <select name="wash_care" value={formData.wash_care} onChange={handleFormChange} className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 cursor-pointer">
-                                        <option value="Dry Clean Only">Dry Clean Only</option>
-                                        <option value="Mild Hand Wash">Mild Hand Wash</option>
-                                        <option value="Cold Machine Wash">Cold Machine Wash</option>
-                                        <option value="Petrol Wash Specialized">Petrol Wash Specialized</option>
-                                        <option value="No Bleach, Line Dry">No Bleach, Line Dry</option>
+                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Dietary Tag</label>
+                                    <select name="dietary_tag" value={formData.dietary_tag} onChange={handleFormChange} className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 cursor-pointer">
+                                        <option value="Veg">Veg</option>
+                                        <option value="Non-Veg">Non-Veg</option>
+                                        <option value="Vegan">Vegan</option>
+                                        <option value="Contains Egg">Contains Egg</option>
                                     </select>
                                 </div>
-
                                 <div className="space-y-2">
-                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Gallery Tier</label>
+                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Net Weight / Volume</label>
+                                    <input type="text" name="net_weight" value={formData.net_weight} onChange={handleFormChange} placeholder="e.g. 500g, 1L" className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Packaging Type</label>
+                                    <input type="text" name="packaging_type" value={formData.packaging_type} onChange={handleFormChange} placeholder="e.g. Packet, Bottle" className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Shelf Life (Days)</label>
+                                    <input type="number" name="shelf_life_days" value={formData.shelf_life_days} onChange={handleFormChange} placeholder="e.g. 180" className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Manufacture Date</label>
+                                    <input type="date" name="manufacture_date" value={formData.manufacture_date} onChange={handleFormChange} className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Subcategory</label>
                                     <select name="subcategory" value={formData.subcategory} onChange={handleFormChange} className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 cursor-pointer disabled:opacity-30" disabled={subcategories.length === 0}>
-                                        <option value="">Default Boutique</option>
+                                        <option value="">Select Subcategory</option>
                                         {subcategories.map((sub, i) => <option key={i} value={sub}>{sub}</option>)}
                                     </select>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-
-                    {/* Size & Fit Section */}
-                    <div className="bg-white p-6 sm:p-10 rounded-[2.5rem] border border-gray-100 shadow-sm relative overflow-hidden group">
-                        <div className="absolute -bottom-10 -right-10 p-8 opacity-[0.03] text-emerald-600">
-                            <FiMaximize size={200} />
-                        </div>
-                        <div className="relative z-10 space-y-8">
-                            <div className="flex items-center gap-3">
-                                <span className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl"><FiMaximize size={20} /></span>
-                                <h2 className="text-2xl font-black text-slate-800 tracking-tight">Size & Fit</h2>
+                            <div className="space-y-2">
+                                <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Ingredients</label>
+                                <textarea name="ingredients" value={formData.ingredients} onChange={handleFormChange} placeholder="List of ingredients..." className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 resize-none"></textarea>
                             </div>
-
-                            {formData.category === "Saree" && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Saree Length</label>
-                                        <input
-                                            type="text"
-                                            name="saree_length"
-                                            value={formData.saree_length}
-                                            onChange={handleFormChange}
-                                            placeholder="e.g. 5.5 Meters"
-                                            className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Blouse Length</label>
-                                        <input
-                                            type="text"
-                                            name="blouse_length"
-                                            value={formData.blouse_length}
-                                            onChange={handleFormChange}
-                                            placeholder="e.g. 0.8 Meters"
-                                            className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
-                                        />
-                                    </div>
-                                </div>
-                            )}
-
-                            {(formData.category === "Lehenga" ||
-                                formData.category === "Salwar" ||
-                                formData.category === "Material") && (
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Top / Lehenga Length</label>
-                                            <input
-                                                type="text"
-                                                name="top_length"
-                                                value={formData.top_length}
-                                                onChange={handleFormChange}
-                                                placeholder="Length"
-                                                className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Bottom Length</label>
-                                            <input
-                                                type="text"
-                                                name="bottom_length"
-                                                value={formData.bottom_length}
-                                                onChange={handleFormChange}
-                                                placeholder="Length"
-                                                className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Dupatta Length</label>
-                                            <input
-                                                type="text"
-                                                name="dupatta_length"
-                                                value={formData.dupatta_length}
-                                                onChange={handleFormChange}
-                                                placeholder="Length"
-                                                className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
-                                            />
-                                        </div>
-                                    </div>
-                                )}
-
-                            {formData.category === "Gown" && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Gown Length</label>
-                                        <input
-                                            type="text"
-                                            name="gown_length"
-                                            value={formData.gown_length}
-                                            onChange={handleFormChange}
-                                            placeholder="Length"
-                                            className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Sleeve Type</label>
-                                        <input
-                                            type="text"
-                                            name="sleeve_type"
-                                            value={formData.sleeve_type}
-                                            onChange={handleFormChange}
-                                            placeholder="Full Sleeve / Half Sleeve"
-                                            className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Neck Type</label>
-                                        <input
-                                            type="text"
-                                            name="neck_type"
-                                            value={formData.neck_type}
-                                            onChange={handleFormChange}
-                                            placeholder="V-Neck / Round Neck"
-                                            className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Fit Type</label>
-                                        <input
-                                            type="text"
-                                            name="fit_type"
-                                            value={formData.fit_type}
-                                            onChange={handleFormChange}
-                                            placeholder="Regular Fit / Slim Fit"
-                                            className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500/20 transition-all shadow-inner"
-                                        />
-                                    </div>
-                                </div>
-                            )}
+                            <div className="space-y-2">
+                                <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Storage Instructions</label>
+                                <input type="text" name="storage_instructions" value={formData.storage_instructions} onChange={handleFormChange} placeholder="e.g. Keep in a cool, dry place" className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800" />
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -715,7 +578,7 @@ const AddProducts = () => {
                     <div className="flex items-center justify-between sticky top-[100px] z-20 bg-gray-50/90 backdrop-blur-md p-3 rounded-2xl border border-gray-100 shadow-sm">
                         <div className="flex items-center gap-2">
                             <FiBox className="text-orange-500" />
-                            <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">Shade & Inventory</h3>
+                            <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">Variants & Inventory</h3>
                         </div>
                         <button type="button" onClick={addVariant} className="bg-slate-900 text-white p-2 rounded-xl active:scale-90 transition-all shadow-lg hover:bg-black"><FiPlus /></button>
                     </div>
