@@ -1,7 +1,21 @@
 import React, { useEffect, useState } from "react";
 import api from "../../api";
 import { toast } from "react-hot-toast";
-import { Percent, Save, Edit2, Search, List, LayoutGrid } from "lucide-react";
+import { 
+  Percent, 
+  Save, 
+  Edit2, 
+  Search, 
+  List, 
+  LayoutGrid,
+  Plus,
+  Eye,
+  Trash2,
+  Building,
+  CheckCircle2,
+  XCircle,
+  FileText
+} from "lucide-react";
 
 const CommissionManagement = () => {
   const [commissions, setCommissions] = useState([]);
@@ -11,28 +25,13 @@ const CommissionManagement = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [viewMode, setViewMode] = useState("table");
-  const [usingDummyData, setUsingDummyData] = useState(false);
 
   const fallbackCommissions = [
     {
       id: 1,
-      type: "Delivery Partner",
-      commission_value: 5.0,
-      description: "Fee collected from delivery partner transactions when the order is completed.",
-      status: "Active"
-    },
-    {
-      id: 2,
       type: "Franchise",
       commission_value: 2.5,
       description: "Fee collected from franchise transactions when the order is completed.",
-      status: "Active"
-    },
-    {
-      id: 3,
-      type: "Home Chef",
-      commission_value: 10.0,
-      description: "Fee collected from home chef transactions when the order is completed.",
       status: "Active"
     }
   ];
@@ -45,12 +44,15 @@ const CommissionManagement = () => {
     try {
       setLoading(true);
       const res = await api.get("/superadmin/commissions");
-      const data = Array.isArray(res.data) && res.data.length ? res.data : fallbackCommissions;
+      let data = Array.isArray(res.data) && res.data.length ? res.data : fallbackCommissions;
+      
+      // Only keep franchise commissions
+      data = data.filter(c => c.type && c.type.toLowerCase().includes('franchise'));
+      if (data.length === 0) data = fallbackCommissions;
+      
       setCommissions(data);
-      setUsingDummyData(!Array.isArray(res.data) || res.data.length === 0);
     } catch (error) {
       setCommissions(fallbackCommissions);
-      setUsingDummyData(true);
       toast.error("Failed to load commission settings. Showing sample data.");
     } finally {
       setLoading(false);
@@ -92,233 +94,231 @@ const CommissionManagement = () => {
   });
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
-      <div className="bg-slate-950/90 border border-slate-800/90 rounded-4xl p-4 md:p-5 shadow-xl">
-        <div className="flex flex-col lg:flex-row items-center gap-4">
-          <div className="relative flex-1 min-w-0">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search commission type or value..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-12 pr-4 py-4 rounded-[1.75rem] border border-slate-800 bg-slate-900 text-slate-100 text-sm outline-none placeholder:text-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition"
-            />
-          </div>
+    <div className="p-6 space-y-6  min-h-screen font-sans">
+      
+      {/* Top Header Section */}
+      <div className="flex justify-end mb-4">
+        <button className="flex items-center gap-2 bg-[#1b4332] hover:bg-[#143425] text-white px-5 py-2.5 rounded-lg text-sm font-bold tracking-wide transition-colors shadow-sm">
+          <Plus className="w-4 h-4" />
+          ADD COMMISSION
+        </button>
+      </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="min-w-40 px-4 py-3 rounded-[1.75rem] border border-slate-800 bg-slate-900 text-slate-100 text-xs uppercase tracking-[0.18em] focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition"
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Card 1 */}
+        <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-5 flex items-center gap-5 border-l-[6px] border-l-slate-400">
+          <div className="w-14 h-14 rounded-lg bg-slate-50 flex items-center justify-center text-slate-500">
+            <Building className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">TOTAL COMMISSIONS</p>
+            <h3 className="text-3xl font-extrabold text-slate-800">{totalRules}</h3>
+          </div>
+        </div>
+
+        {/* Card 2 */}
+        <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-5 flex items-center gap-5 border-l-[6px] border-l-emerald-500">
+          <div className="w-14 h-14 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-500">
+            <CheckCircle2 className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-1">HIGHEST RATE</p>
+            <h3 className="text-3xl font-extrabold text-slate-800">{highestRate}%</h3>
+          </div>
+        </div>
+
+        {/* Card 3 */}
+        <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-5 flex items-center gap-5 border-l-[6px] border-l-amber-500">
+          <div className="w-14 h-14 rounded-lg bg-amber-50 flex items-center justify-center text-amber-500">
+            <XCircle className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-amber-600 uppercase tracking-wider mb-1">LOWEST RATE</p>
+            <h3 className="text-3xl font-extrabold text-slate-800">{lowestRate}%</h3>
+          </div>
+        </div>
+      </div>
+
+      {/* Filters & Search */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-3 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="relative w-full md:w-[400px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search commission type or value..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
+          />
+        </div>
+        <div className="flex items-center gap-4 w-full md:w-auto">
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 uppercase tracking-wider focus:outline-none focus:border-emerald-500 transition-all cursor-pointer min-w-[160px]"
+          >
+            <option value="All">All Statuses</option>
+            <option value="Active">Active</option>
+            <option value="Pending">Pending</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+          <div className="flex bg-slate-50 rounded-lg p-1 border border-slate-200">
+            <button
+              onClick={() => setViewMode("table")}
+              className={`p-2 rounded-md transition-all ${viewMode === "table" ? "bg-white shadow-sm text-emerald-600" : "text-slate-400 hover:text-slate-600"}`}
             >
-              <option value="All">All Statuses</option>
-              <option value="Active">Active</option>
-              <option value="Pending">Pending</option>
-              <option value="Inactive">Inactive</option>
-            </select>
-
-            <div className="inline-flex rounded-[1.75rem] border border-slate-800 bg-slate-900 p-1">
-              <button
-                type="button"
-                onClick={() => setViewMode("table")}
-                className={`p-3 rounded-xl transition ${viewMode === "table" ? "bg-emerald-500/10 text-emerald-300 shadow-sm" : "text-slate-400 hover:text-white"}`}
-                title="Table view"
-              >
-                <List className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("card")}
-                className={`p-3 rounded-xl transition ${viewMode === "card" ? "bg-emerald-500/10 text-emerald-300 shadow-sm" : "text-slate-400 hover:text-white"}`}
-                title="Card view"
-              >
-                <LayoutGrid className="w-4 h-4" />
-              </button>
-            </div>
+              <List className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setViewMode("card")}
+              className={`p-2 rounded-md transition-all ${viewMode === "card" ? "bg-white shadow-sm text-emerald-600" : "text-slate-400 hover:text-slate-600"}`}
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </div>
 
-      {usingDummyData && (
-        <div className="flex justify-end">
-          <span className="inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-black uppercase tracking-[0.2em] text-amber-700 shadow-sm">
-            Demo data in use
-          </span>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="rounded-4xl bg-slate-300/80 border border-slate-200/80 p-6 shadow-lg">
-          <p className="text-[10px] text-slate-600 uppercase tracking-[0.35em] font-black mb-3">Total Rules</p>
-          <p className="text-5xl font-black text-slate-900">{totalRules}</p>
-        </div>
-        <div className="rounded-4xl bg-slate-300/80 border border-slate-200/80 p-6 shadow-lg">
-          <p className="text-[10px] text-slate-600 uppercase tracking-[0.35em] font-black mb-3">Highest Rate</p>
-          <p className="text-5xl font-black text-slate-900">{highestRate}%</p>
-        </div>
-        <div className="rounded-4xl bg-slate-300/80 border border-slate-200/80 p-6 shadow-lg">
-          <p className="text-[10px] text-slate-600 uppercase tracking-[0.35em] font-black mb-3">Lowest Rate</p>
-          <p className="text-5xl font-black text-slate-900">{lowestRate}%</p>
-        </div>
-      </div>
-
+      {/* Main Content Area */}
       {loading ? (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-20 bg-white/5 rounded-3xl animate-pulse"></div>
+            <div key={i} className="h-16 bg-white rounded-xl animate-pulse"></div>
           ))}
         </div>
       ) : viewMode === "card" ? (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          {visibleCommissions.length ? visibleCommissions.map((comm) => {
-            const isEditing = editingId === comm.id;
-            return (
-              <div key={comm.id} className="rounded-4xl border border-white/10 bg-[#0B1120]/60 p-6 shadow-xl">
-                <div className="flex items-start justify-between gap-4 mb-5">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-3xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
-                      <Percent className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-black text-white/40 uppercase tracking-[0.3em]">{comm.type} Commission</p>
-                      <p className="mt-2 text-2xl font-black text-white">{comm.commission_value}%</p>
-                    </div>
-                  </div>
-                  <span className="inline-flex items-center rounded-2xl bg-white/5 px-3 py-2 text-xs font-black uppercase tracking-[0.18em] text-white/80">
-                    {comm.status || "Active"}
-                  </span>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Card view implementation (simplified for brevity) */}
+          {visibleCommissions.map((comm) => (
+            <div key={comm.id} className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex gap-3 items-center">
+                   <div className="w-10 h-10 rounded-md bg-emerald-50 flex items-center justify-center text-emerald-600">
+                     <Percent className="w-5 h-5" />
+                   </div>
+                   <div>
+                     <h4 className="font-bold text-slate-800">{comm.type}</h4>
+                     <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase tracking-wider">{comm.status}</span>
+                   </div>
                 </div>
-                <p className="text-sm text-white/50 leading-7 mb-6">
-                  Fee collected from {comm.type.toLowerCase()} transactions when the order is completed.
-                </p>
-                {isEditing ? (
-                  <div className="space-y-3">
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={editValue}
-                      onChange={(e) => setEditValue(e.target.value)}
-                      className="w-full rounded-2xl border border-white/10 bg-[#070b13] px-4 py-3 text-white font-black outline-none"
-                    />
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => handleUpdate(comm.id)}
-                        className="flex-1 rounded-2xl bg-emerald-600 px-4 py-3 text-xs font-black uppercase tracking-widest text-white transition hover:bg-emerald-500"
-                      >
-                        <Save className="inline-block w-4 h-4 mr-2" /> Save
-                      </button>
-                      <button
-                        onClick={() => setEditingId(null)}
-                        className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs font-black uppercase tracking-widest text-white transition hover:bg-white/10"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => {
-                      setEditingId(comm.id);
-                      setEditValue(comm.commission_value);
-                    }}
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-white/5 px-4 py-3 text-xs font-black uppercase tracking-widest text-white transition hover:bg-white/10"
-                  >
-                    <Edit2 className="w-4 h-4 text-emerald-400" /> Edit Rate
-                  </button>
-                )}
+                <div className="text-right">
+                  <span className="text-2xl font-black text-slate-800">{comm.commission_value}%</span>
+                </div>
               </div>
-            );
-          }) : (
-            <div className="w-full rounded-4xl border border-white/10 bg-[#0B1120]/60 p-10 text-center text-sm text-white/60">
-              No commissions match your search.
+              <p className="text-sm text-slate-500 mb-6">{comm.description}</p>
+              <div className="flex justify-end gap-2">
+                 <button onClick={() => { setEditingId(comm.id); setEditValue(comm.commission_value); }} className="p-2 text-slate-400 hover:text-emerald-600 transition-colors bg-slate-50 rounded-lg hover:bg-emerald-50">
+                   <Edit2 className="w-4 h-4" />
+                 </button>
+              </div>
             </div>
-          )}
+          ))}
         </div>
       ) : (
-        <div className="bg-white rounded-4xl overflow-hidden shadow-xl border border-slate-200">
-          {visibleCommissions.length ? (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-180 border-collapse">
-                <thead>
-                  <tr className="bg-slate-900 text-white/70">
-                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Commission Type</th>
-                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Current Rate</th>
-                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Description</th>
-                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-center">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200">
-                  {visibleCommissions.map((comm) => {
-                    const isEditing = editingId === comm.id;
-                    return (
-                      <tr key={comm.id} className="hover:bg-slate-50 transition-colors">
-                        <td className="px-6 py-5 align-top">
-                          <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-3xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
-                              <Percent className="w-5 h-5" />
-                            </div>
-                            <div>
-                              <p className="text-sm font-black text-slate-900 uppercase tracking-tight">{comm.type} Commission</p>
-                              <p className="text-[11px] text-slate-500 uppercase tracking-[0.2em]">{comm.type}</p>
-                            </div>
+        <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-[#2a3441] text-white">
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest w-20">S.No</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest">Commission Type</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest">Rate</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest">Description</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-center">Status</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {visibleCommissions.length ? visibleCommissions.map((comm, index) => {
+                  const isEditing = editingId === comm.id;
+                  return (
+                    <tr key={comm.id} className="hover:bg-slate-50 transition-colors group">
+                      <td className="px-6 py-4">
+                        <span className="text-sm font-bold text-slate-500">{index + 1}</span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
+                            <Percent className="w-5 h-5" />
                           </div>
-                        </td>
-                        <td className="px-6 py-5 align-top">
-                          {isEditing ? (
-                            <input
-                              type="number"
-                              step="0.1"
-                              value={editValue}
-                              onChange={(e) => setEditValue(e.target.value)}
-                              className="bg-slate-50 border border-slate-300 rounded-2xl px-4 py-3 text-slate-900 font-black text-lg w-28 outline-none"
-                            />
-                          ) : (
-                            <span className="text-3xl font-black text-slate-900">{comm.commission_value}%</span>
-                          )}
-                        </td>
-                        <td className="px-6 py-5 align-top text-sm text-slate-600 leading-6">
-                          {comm.description || `Fee collected from ${comm.type.toLowerCase()} transactions when the order is completed.`}
-                        </td>
-                        <td className="px-6 py-5 align-top text-center">
-                          {isEditing ? (
-                            <div className="flex flex-col gap-3">
-                              <button
-                                onClick={() => handleUpdate(comm.id)}
-                                className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-widest rounded-2xl transition flex items-center justify-center gap-2"
-                              >
-                                <Save className="w-4 h-4" /> Save
-                              </button>
-                              <button
-                                onClick={() => setEditingId(null)}
-                                className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-900 font-black text-xs uppercase tracking-widest rounded-2xl transition"
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          ) : (
+                          <div>
+                            <p className="text-sm font-bold text-slate-800">{comm.type}</p>
+                            <p className="text-xs text-slate-400">Commission Rule</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        {isEditing ? (
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            className="w-20 px-3 py-1.5 bg-white border border-slate-300 rounded-md text-sm font-bold text-slate-800 focus:outline-none focus:border-emerald-500"
+                          />
+                        ) : (
+                          <span className="inline-flex items-center justify-center px-3 py-1 bg-emerald-50 text-emerald-600 text-sm font-bold rounded-md">
+                            {comm.commission_value}%
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4">
+                        <p className="text-sm text-slate-500 line-clamp-2 max-w-xs">{comm.description}</p>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className="inline-flex px-3 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-widest rounded-full">
+                          {comm.status || 'ACTIVE'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        {isEditing ? (
+                          <div className="flex items-center justify-center gap-2">
                             <button
+                              onClick={() => handleUpdate(comm.id)}
+                              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold uppercase tracking-wider rounded-md transition-colors"
+                            >
+                              Save
+                            </button>
+                            <button
+                              onClick={() => setEditingId(null)}
+                              className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold uppercase tracking-wider rounded-md transition-colors"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-center gap-3">
+                            <button className="text-slate-400 hover:text-emerald-600 transition-colors">
+                              <Eye className="w-5 h-5" />
+                            </button>
+                            <button 
                               onClick={() => {
                                 setEditingId(comm.id);
                                 setEditValue(comm.commission_value);
                               }}
-                              className="w-full py-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-black text-xs uppercase tracking-widest rounded-2xl transition flex items-center justify-center gap-2"
+                              className="text-slate-400 hover:text-blue-600 transition-colors"
                             >
-                              <Edit2 className="w-4 h-4" /> Edit Rate
+                              <Edit2 className="w-5 h-5" />
                             </button>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="p-10 text-center text-sm text-slate-500">
-              No commissions match your search or filter.
-            </div>
-          )}
+                            <button className="text-slate-400 hover:text-red-500 transition-colors">
+                              <Trash2 className="w-5 h-5" />
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                }) : (
+                  <tr>
+                    <td colSpan="6" className="px-6 py-10 text-center text-slate-500 text-sm">
+                      No commissions found matching your criteria.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>
@@ -326,3 +326,4 @@ const CommissionManagement = () => {
 };
 
 export default CommissionManagement;
+
