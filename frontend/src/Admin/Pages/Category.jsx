@@ -1,706 +1,473 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import api from "../../api";
-import {
-    FiPlus,
-    FiEdit2,
-    FiTrash2,
-    FiMoreVertical,
-    FiX,
-    FiImage,
-    FiUploadCloud,
-    FiSearch,
-    FiGrid,
-    FiList,
-    FiChevronLeft,
-    FiChevronRight
-} from "react-icons/fi";
 import imageCompression from "browser-image-compression";
-import { toast, Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
+import { 
+  FaEdit, 
+  FaTrash, 
+  FaPlus, 
+  FaThLarge, 
+  FaList, 
+  FaSearch, 
+  FaTimes,
+  FaImage,
+  FaFileAlt
+} from "react-icons/fa";
 
 const Category = () => {
-    // ---- Global State ----
-    const [categories, setCategories] = useState([]);
-    const [loading, setLoading] = useState(true);
+  const [category, setCategory] = useState({
+    catId: "",
+    name: "",
+    description: "",
+    images: [],
+  });
 
-    // Default categories to import
-    const defaultCategories = [
-        "Grocery",
-        "Fruits",
-        "Vegetables",
-        "Dairy Products",
-        "Bakery",
-        "Snacks",
-        "Beverages",
-        "Meat & Seafood",
-        "Frozen Foods",
-        "Personal Care",
-        "Household Items",
-        "Baby Care",
-        "Health & Wellness",
-        "Pet Care",
-        "Stationery",
-        "Kitchen Items",
-        "Festival Items",
-        "Electronics",
-    ];
+  const [editId, setEditId] = useState(null);
+  const [previewImgs, setPreviewImgs] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [viewMode, setViewMode] = useState("card"); // 'card' or 'table'
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
 
-    useEffect(() => {
-        fetchCategories();
-    }, []);
+  const generateCategoryId = (existingCategories) => {
+    if (!existingCategories || existingCategories.length === 0) return "CAT001";
+    const ids = existingCategories
+      .map((cat) => {
+        const match = cat.catId.match(/\d+/);
+        return match ? parseInt(match[0]) : 0;
+      })
+      .filter((id) => !isNaN(id));
+    const maxId = ids.length > 0 ? Math.max(...ids) : 0;
+    return `CAT${String(maxId + 1).padStart(3, "0")}`;
+  };
 
-    const fetchCategories = async () => {
-        try {
-            setLoading(true);
-            const response = await api.get("/categories");
-            setCategories(response.data);
-        } catch (error) {
-            console.error("Failed to fetch categories:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
+  const safeParse = (data) => {
+    if (!data) return [];
+    if (Array.isArray(data)) return data;
+    try {
+      const parsed = JSON.parse(data);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      return [];
+    }
+  };
 
-    // ---- View & Pagination State ----
-    const [viewMode, setViewMode] = useState("table"); // "grid" or "table"
-    const [searchQuery, setSearchQuery] = useState("");
-    const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 6;
+  const fetchCategories = async () => {
+    try {
+      const response = await api.get("/categories");
+      const sanitized = (response.data || []).map(cat => ({
+        ...cat,
+        name: cat.name || cat.cname || "",
+        description: cat.description || cat.cdescription || "",
+        images: safeParse(cat.images || cat.cimgs),
+      }));
+      setCategories(sanitized);
+    } catch (err) {
+      console.error("Error fetching categories:", err);
+      toast.error("Failed to fetch categories.");
+    }
+  };
 
-    // ---- Modal State ----
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isEditing, setIsEditing] = useState(false);
-    const [formData, setFormData] = useState({
-        catId: "",
-        name: "",
-        description: "",
-        subcategory: "",
-        images: []
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const handleImageChange = async (e) => {
+    const files = Array.from(e.target.files);
+    try {
+      const compressedFiles = await Promise.all(
+        files.map((file) =>
+          imageCompression(file, {
+            maxSizeMB: 0.2,
+            maxWidthOrHeight: 800,
+            useWebWorker: true,
+          })
+        )
+      );
+
+      const base64Images = await Promise.all(
+        compressedFiles.map(
+          (file) =>
+            new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result);
+              reader.onerror = reject;
+              reader.readAsDataURL(file);
+            })
+        )
+      );
+
+      setCategory((prev) => ({ ...prev, images: base64Images }));
+      setPreviewImgs(base64Images);
+      toast.success("Images ready!");
+    } catch (error) {
+      toast.error("Image processing failed.");
+    }
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setCategory((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setEditId(null);
+    setCategory({ catId: "", name: "", description: "", images: [] });
+    setPreviewImgs([]);
+  };
+
+  const openAddModal = () => {
+    const nextId = generateCategoryId(categories);
+    setCategory({ catId: nextId, name: "", description: "", images: [] });
+    setPreviewImgs([]);
+    setEditId(null);
+    setShowModal(true);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!category.name || !category.description || category.images.length === 0) {
+      toast.error("Please fill all fields.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      if (editId) {
+        await api.put(`/categories/${editId}`, category);
+        toast.success("Category updated!");
+      } else {
+        await api.post("/categories", category);
+        toast.success("Category added!");
+      }
+      closeModal();
+      await fetchCategories();
+    } catch (err) {
+      toast.error("Failed to save category.");
+    }
+    setLoading(false);
+  };
+
+  const handleEdit = (cat) => {
+    setCategory({
+      catId: cat.catId,
+      name: cat.name || cat.cname || "",
+      description: cat.description || cat.cdescription || "",
+      images: cat.images || cat.cimgs || [],
     });
+    setPreviewImgs(cat.images || cat.cimgs || []);
+    setEditId(cat.id);
+    setShowModal(true);
+  };
 
-    // Subcategories Multiple Input Logic
-    const [subcategories, setSubcategories] = useState([]);
-    const [subInput, setSubInput] = useState("");
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this category?")) return;
+    try {
+      await api.delete(`/categories/${id}`);
+      toast.success("Deleted.");
+      await fetchCategories();
+    } catch (err) {
+      toast.error("Delete failed.");
+    }
+  };
 
-    // ---- Derived Data (Search & Pagination) ----
-    const filteredCategories = useMemo(() => {
-        return categories.filter(cat =>
-            cat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            cat.catId.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-    }, [categories, searchQuery]);
+  const filteredCategories = categories.filter(cat => {
+    const name = (cat.name || cat.cname || "").toLowerCase();
+    const id = (cat.catId || "").toLowerCase();
+    const term = searchTerm.toLowerCase();
+    return name.includes(term) || id.includes(term);
+  });
 
-    const totalPages = Math.ceil(filteredCategories.length / itemsPerPage) || 1;
-    const currentCategories = filteredCategories.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-    );
+  const totalPages = Math.ceil(filteredCategories.length / itemsPerPage);
+  const currentItems = filteredCategories.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
-    // ---- Event Handlers ----
-    const handleSearch = (e) => {
-        setSearchQuery(e.target.value);
-        setCurrentPage(1); // Reset to first page on search
-    };
+  // Reset to page 1 on search
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
-    const handleAddSubcategory = (e) => {
-        if (e.key === 'Enter' && subInput.trim()) {
-            e.preventDefault();
-            if (!subcategories.includes(subInput.trim())) {
-                setSubcategories([...subcategories, subInput.trim()]);
-            }
-            setSubInput("");
-        }
-    };
-
-    const removeSubcategory = (subToRemove) => {
-        setSubcategories(subcategories.filter(sub => sub !== subToRemove));
-    };
-
-    const handleInputChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
-
-    // Image Upload with Compression
-    const handleImageUpload = async (e) => {
-        try {
-            const files = Array.from(e.target.files);
-
-            const imagesArray = await Promise.all(
-                files.map(async (file) => {
-                    const compressed = await imageCompression(file, {
-                        maxSizeMB: 0.2,
-                        maxWidthOrHeight: 600,
-                    });
-
-                    return imageCompression.getDataUrlFromFile(compressed);
-                })
-            );
-
-            setFormData((p) => ({
-                ...p,
-                images: [...(Array.isArray(p.images) ? p.images : []), ...imagesArray],
-            }));
-            toast.success("Images added!");
-        } catch (error) {
-            console.error("Image upload failed:", error);
-            toast.error("Image upload failed");
-        }
-    };
-
-    const removeImage = (indexToRemove) => {
-        setFormData(p => ({
-            ...p,
-            images: p.images.filter((_, idx) => idx !== indexToRemove)
-        }));
-    };
-
-    // Submitting the Form
-    const handleSaveCategory = async () => {
-        if (!formData.catId || !formData.name) return;
-
-        const newCatData = {
-            ...formData,
-            subcategory: subcategories,
-        };
-
-        try {
-            if (isEditing) {
-                await api.put(`/categories/${formData.catId}`, newCatData);
-                setCategories(categories.map(cat =>
-                    cat.catId === formData.catId ? { ...newCatData, id: cat.id } : cat
-                ));
-            } else {
-                const response = await api.post("/categories", newCatData);
-                // Add to the beginning of the list for immediate visibility
-                setCategories([{ ...newCatData, id: response.data.id }, ...categories]);
-                toast.success("Category created successfully!");
-            }
-            setIsModalOpen(false);
-            resetModalForm();
-        } catch (error) {
-            console.error("Failed to save category:", error);
-            toast.error(error.response?.data?.message || "Failed to save category.");
-        }
-    };
-
-    const handleDeleteCategory = async (catIdToDelete) => {
-        if (window.confirm("Are you sure you want to delete this category?")) {
-            try {
-                await api.delete(`/categories/${catIdToDelete}`);
-                setCategories(categories.filter(cat => cat.catId !== catIdToDelete));
-
-                // Adjust pagination if deleted last item on page
-                if (currentCategories.length === 1 && currentPage > 1) {
-                    setCurrentPage(currentPage - 1);
-                }
-            } catch (error) {
-                console.error("Failed to delete category:", error);
-                alert("Failed to delete category.");
-            }
-        }
-    };
-
-    const resetModalForm = () => {
-        setFormData({ catId: "", name: "", description: "", subcategory: "", images: [] });
-        setSubcategories([]);
-        setIsEditing(false);
-    };
-
-    const openAddModal = () => {
-        let nextId = "CAT001";
-        if (categories.length > 0) {
-            const existingIds = categories.map(c => {
-                const match = c.catId.match(/\d+/);
-                return match ? parseInt(match[0], 10) : 0;
-            });
-            const maxId = Math.max(...existingIds);
-            nextId = `CAT${String(maxId + 1).padStart(3, '0')}`;
-        }
-        resetModalForm();
-        setFormData(prev => ({ ...prev, catId: nextId }));
-        setIsModalOpen(true);
-    };
-
-    // Bulk import default categories (only missing ones)
-    const handleBulkImportDefaults = async () => {
-        if (!window.confirm('Import default categories? This will add any missing categories.')) return;
-        try {
-            toast.loading('Importing categories...');
-
-            // Build set of existing names (case-insensitive)
-            const existing = new Set(categories.map(c => (c.name || '').toLowerCase()));
-
-            // Determine current max numeric id
-            const existingIds = categories.map(c => {
-                const match = c.catId && c.catId.match(/\d+/);
-                return match ? parseInt(match[0], 10) : 0;
-            });
-            let maxId = existingIds.length ? Math.max(...existingIds) : 0;
-
-            const added = [];
-            for (const name of defaultCategories) {
-                if (existing.has(name.toLowerCase())) continue;
-                maxId += 1;
-                const catId = `CAT${String(maxId).padStart(3, '0')}`;
-                const payload = { catId, name, description: '', subcategory: [], images: [] };
-                // Create category via API
-                const res = await api.post('/categories', payload);
-                added.push({ ...payload, id: res.data.id });
-            }
-
-            if (added.length > 0) {
-                // Prepend added items for visibility
-                setCategories(prev => [...added, ...prev]);
-                toast.success(`Imported ${added.length} categories`);
-            } else {
-                toast('No new categories to import');
-            }
-        } catch (err) {
-            console.error('Bulk import failed', err);
-            toast.error('Failed to import categories');
-        }
-    };
-
-    const openEditModal = (category) => {
-        setFormData({
-            catId: category.catId,
-            name: category.name,
-            description: category.description,
-            subcategory: "",
-            images: Array.isArray(category.images) ? category.images : (category.images ? [category.images] : [])
-        });
-        setSubcategories(category.subcategory || []);
-        setIsEditing(true);
-        setIsModalOpen(true);
-    };
-
-    // ---- Renderers ----
-    return (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <Toaster position="top-right" />
-            {/* Header Section */}
-            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 mt-10">
-                <div>
-                    <div className="relative w-full sm:w-64">
-                        <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg" />
-                        <input
-                            type="text"
-                            placeholder="Search categories..."
-                            value={searchQuery}
-                            onChange={handleSearch}
-                            className="w-full bg-white border border-gray-200 text-slate-800 rounded-xl pl-10 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
-                        />
-                    </div>
-                </div>
-
-                <div className="flex flex-col sm:flex-row items-center gap-4">
-                    {/* Search Bar */}
-
-
-                    {/* View Toggles */}
-                    <div className="flex items-center bg-gray-100 p-2 rounded-xl">
-                        <button
-                            onClick={() => setViewMode("grid")}
-                            className={`p-3 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-                        >
-                            <FiGrid />
-                        </button>
-                        <button
-                            onClick={() => setViewMode("table")}
-                            className={`p-3 rounded-lg transition-all ${viewMode === 'table' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-                        >
-                            <FiList />
-                        </button>
-                    </div>
-
-                    {/* Add Button */}
-                    <div className="flex items-center gap-3">
-                       
-
-                        <button
-                            onClick={openAddModal}
-                            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg shadow-blue-200 active:scale-95"
-                        >
-                            <FiPlus className="text-lg" /> New Category
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            {/* Content Area */}
-            {loading ? (
-                <div className="bg-white rounded-[2rem] border border-gray-100 p-12 text-center flex flex-col items-center shadow-sm">
-                    <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
-                    <h3 className="text-xl font-bold text-slate-800">Loading Categories</h3>
-                    <p className="text-gray-500 mt-2">Please wait while we fetch your catalog.</p>
-                </div>
-            ) : currentCategories.length === 0 ? (
-                <div className="bg-white rounded-[2rem] border border-gray-100 p-12 text-center flex flex-col items-center shadow-sm">
-                    <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center text-gray-400 mb-4">
-                        <FiSearch className="text-3xl" />
-                    </div>
-                    <h3 className="text-xl font-bold text-slate-800">No categories found</h3>
-                    <p className="text-gray-500 mt-2">We couldn't find anything matching your search query.</p>
-                </div>
-            ) : (
-                <>
-                    {/* GRID VIEW */}
-                    {viewMode === "grid" && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-500">
-                            {currentCategories.map((cat) => (
-                                <div key={cat.catId} className="bg-white rounded-[2rem] p-6 border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group relative overflow-hidden flex flex-col h-full">
-                                    <div className="absolute -right-4 -top-4 w-24 h-24 bg-blue-500 opacity-5 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
-
-                                    <div className="flex items-start justify-between mb-4 relative z-10">
-                                        <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-lg ring-4 ring-white bg-gray-100 flex items-center justify-center relative shrink-0">
-                                            {cat.images && cat.images.length > 0 ? (
-                                                <img src={Array.isArray(cat.images) ? cat.images[0] : cat.images} alt={cat.name} className="w-full h-full object-cover" />
-                                            ) : (
-                                                <FiImage className="text-gray-400 text-2xl" />
-                                            )}
-                                        </div>
-                                        <div className="flex flex-col items-end gap-2">
-                                            <span className="bg-blue-50 text-blue-600 text-[10px] font-black tracking-wider uppercase px-2 py-1 rounded-lg">
-                                                {cat.catId}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <div className="relative z-10 flex-1">
-                                        <h3 className="text-xl font-bold text-slate-800 mb-2">{cat.name}</h3>
-                                        <p className="text-sm text-gray-500 font-medium leading-relaxed mb-4 line-clamp-2">
-                                            {cat.description || "No description provided."}
-                                        </p>
-
-                                        {cat.subcategory && cat.subcategory.length > 0 && (
-                                            <div className="space-y-2">
-                                                <div className="flex flex-wrap gap-2">
-                                                    {cat.subcategory.slice(0, 3).map((sub, i) => (
-                                                        <span key={i} className="inline-block bg-gray-50 text-gray-600 border border-gray-100 text-xs px-2 py-1 rounded-md font-medium">
-                                                            {sub}
-                                                        </span>
-                                                    ))}
-                                                    {cat.subcategory.length > 3 && (
-                                                        <span className="inline-block bg-gray-100 text-gray-500 text-xs px-2 py-1 rounded-md font-bold">
-                                                            +{cat.subcategory.length - 3}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="mt-6 pt-6 border-t border-gray-50 flex items-center gap-2 relative z-10 shrink-0">
-                                        <button
-                                            onClick={() => openEditModal(cat)}
-                                            className="flex-1 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2"
-                                        >
-                                            <FiEdit2 /> Edit
-                                        </button>
-                                        <button
-                                            onClick={() => handleDeleteCategory(cat.catId)}
-                                            className="px-4 py-2.5 bg-red-50 hover:bg-red-100 text-red-500 rounded-xl text-sm transition-all"
-                                        >
-                                            <FiTrash2 />
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-
-                    {/* TABLE VIEW */}
-                    {viewMode === "table" && (
-                        <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden animate-in fade-in duration-500">
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left border-collapse block md:table">
-                                    <thead className="hidden md:table-header-group">
-                                        <tr className="bg-gray-50/50 text-gray-500 text-xs uppercase tracking-wider font-bold border-b border-gray-100">
-                                            <th className="px-6 py-4">S No</th>
-                                            <th className="px-6 py-4">Name</th>
-                                            <th className="px-6 py-4">Image</th>
-
-                                            <th className="px-6 py-4">Subcategories</th>
-                                            <th className="px-6 py-4 text-right">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="block md:table-row-group divide-y divide-gray-100 px-3 py-4 md:p-0">
-                                        {currentCategories.map((cat, ind) => (
-                                            <tr key={cat.catId} className="hover:bg-blue-50/10 transition-colors group block md:table-row bg-white md:bg-transparent border border-gray-100 md:border-0 rounded-2xl md:rounded-none mb-4 md:mb-0 shadow-sm md:shadow-none">
-                                                <td className="px-3 py-4 md:px-6 md:py-4 align-top block md:table-cell border-b border-gray-50 md:border-b-0">
-                                                    <div className="flex md:block items-center justify-between w-full">
-                                                        <span className="md:hidden text-[10px] font-black text-gray-400 uppercase tracking-widest">S No</span>
-                                                        <span className="bg-blue-50 text-blue-600 text-[10px] font-black tracking-wider uppercase px-2.5 py-1.5 rounded-lg">
-                                                            {cat.catId}
-                                                        </span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-3 py-4 md:px-6 md:py-4 align-top block md:table-cell border-b border-gray-50 md:border-b-0">
-                                                    <div className="flex md:block items-center justify-between w-full">
-                                                        <span className="md:hidden text-[10px] font-black text-gray-400 uppercase tracking-widest">Name</span>
-                                                        <span className="bg-blue-50 text-gray-900 text-[10px] font-black tracking-wider uppercase px-2.5 py-1.5 rounded-lg">
-                                                            {cat.name}
-                                                        </span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-3 py-4 md:px-6 md:py-4 align-top block md:table-cell border-b border-gray-50 md:border-b-0">
-                                                    <div className="flex md:block items-center justify-between w-full">
-                                                        <span className="md:hidden text-[10px] font-black text-gray-400 uppercase tracking-widest">Image</span>
-                                                        <div className="flex items-center gap-4 text-right md:text-left">
-                                                            <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-100 flex items-center justify-center shrink-0 border border-gray-200">
-                                                                {cat.images && cat.images.length > 0 ? (
-                                                                    <img src={Array.isArray(cat.images) ? cat.images[0] : cat.images} alt={cat.name} className="w-full h-full object-cover" />
-                                                                ) : (
-                                                                    <FiImage className="text-gray-400 text-xl" />
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </td>
-
-                                                <td className="px-3 py-4 md:px-6 md:py-4 align-top block md:table-cell border-b border-gray-50 md:border-b-0">
-                                                    <div className="flex md:block flex-col md:flex-row items-start md:items-center justify-between w-full gap-2">
-                                                        <span className="md:hidden text-[10px] font-black text-gray-400 uppercase tracking-widest w-full">Subcategories</span>
-                                                        <div className="flex flex-wrap gap-1.5 max-w-[250px] justify-start mt-2 md:mt-0">
-                                                            {cat.subcategory && cat.subcategory.length > 0 ? (
-                                                                <>
-                                                                    {cat.subcategory.slice(0, 3).map((sub, i) => (
-                                                                        <span key={i} className="inline-block bg-gray-50 border border-gray-200 text-gray-900 text-[10px] px-2 py-1 rounded">
-                                                                            {sub}
-                                                                        </span>
-                                                                    ))}
-                                                                    {cat.subcategory.length > 3 && (
-                                                                        <span className="inline-block bg-gray-100 text-gray-500 text-[10px] px-2 py-1 rounded font-bold">
-                                                                            +{cat.subcategory.length - 3}
-                                                                        </span>
-                                                                    )}
-                                                                </>
-                                                            ) : (
-                                                                <span className="text-gray-400 text-xs italic">None</span>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td className="px-3 py-4 md:px-6 md:py-4 align-top text-right block md:table-cell">
-                                                    <div className="flex md:block items-center justify-between w-full">
-                                                        <span className="md:hidden text-[10px] font-black text-gray-400 uppercase tracking-widest">Actions</span>
-                                                        <div className="flex items-center justify-end gap-2 transition-opacity">
-                                                            <button
-                                                                onClick={() => openEditModal(cat)}
-                                                                className="p-2 text-gray-900 border border-gray-200 bg-gray-30 hover:bg-green-600 hover:text-white rounded-lg transition-colors"
-                                                                title="Edit"
-                                                            >
-                                                                <FiEdit2 />
-                                                            </button>
-
-                                                            <button
-                                                                onClick={() => handleDeleteCategory(cat.catId)}
-                                                                className="p-2 text-gray-900 border border-gray-200 bg-gray-30 hover:bg-red-600 hover:text-white rounded-lg transition-colors"
-                                                                title="Delete"
-                                                            >
-                                                                <FiTrash2 />
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* PAGINATION CONTROLS */}
-                    {totalPages > 1 && (
-                        <div className="flex items-center justify-between bg-white px-6 py-4 rounded-2xl border border-gray-100 shadow-sm mt-6">
-                            <span className="text-sm font-medium text-gray-500">
-                                Showing <span className="text-slate-800 font-bold">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="text-slate-800 font-bold">{Math.min(currentPage * itemsPerPage, filteredCategories.length)}</span> of <span className="text-slate-800 font-bold">{filteredCategories.length}</span> categories
-                            </span>
-
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                                    disabled={currentPage === 1}
-                                    className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                                >
-                                    <FiChevronLeft />
-                                </button>
-                                <span className="text-sm font-bold text-slate-800 px-4">
-                                    Page {currentPage} of {totalPages}
-                                </span>
-                                <button
-                                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                                    disabled={currentPage === totalPages}
-                                    className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                                >
-                                    <FiChevronRight />
-                                </button>
-                            </div>
-                        </div>
-                    )}
-                </>
-            )}
-
-            {/* Add/Edit Category Modal */}
-            {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60  p-4">
-                    <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-                        <div className="flex items-center justify-between p-6 border-b border-gray-100 shrink-0">
-                            <div>
-                                <h2 className="text-xl font-bold text-slate-800">
-                                    {isEditing ? 'Edit Category' : 'Add New Category'}
-                                </h2>
-                                {isEditing && <p className="text-xs text-gray-500 mt-1">Editing ID: <span className="font-bold">{formData.catId}</span></p>}
-                            </div>
-                            <button
-                                onClick={() => setIsModalOpen(false)}
-                                className="p-2 text-gray-400 hover:bg-gray-50 rounded-full transition-colors"
-                            >
-                                <FiX className="text-xl" />
-                            </button>
-                        </div>
-
-                        <div className="p-6 overflow-y-auto flex-1">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {/* Left Column: Inputs */}
-                                <div className="space-y-5">
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Category ID (Auto)</label>
-                                        <input
-                                            type="text"
-                                            name="catId"
-                                            value={formData.catId}
-                                            readOnly
-                                            className="w-full bg-gray-100 border border-gray-200 text-slate-500 font-medium rounded-xl px-4 py-3 cursor-not-allowed focus:outline-none transition-all"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Category Name</label>
-                                        <input
-                                            type="text"
-                                            name="name"
-                                            value={formData.name}
-                                            onChange={handleInputChange}
-                                            placeholder="e.g. Silk Sarees"
-                                            className="w-full bg-gray-50 border border-gray-200 text-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Description</label>
-                                        <textarea
-                                            name="description"
-                                            value={formData.description}
-                                            onChange={handleInputChange}
-                                            placeholder="Brief description of the category..."
-                                            rows="4"
-                                            className="w-full bg-gray-50 border border-gray-200 text-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none"
-                                        ></textarea>
-                                    </div>
-                                </div>
-
-                                {/* Right Column: Advanced */}
-                                <div className="space-y-5">
-                                    {/* Multiple Subcategories Input */}
-                                    <div>
-                                        <label className="flex items-center justify-between text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
-                                            <span>Subcategories</span>
-                                            <span className="text-[10px] text-gray-400 lowercase font-normal">Press enter to add</span>
-                                        </label>
-                                        <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 min-h-[140px] focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all">
-                                            <div className="flex flex-wrap gap-2 mb-3">
-                                                {subcategories.map((sub, idx) => (
-                                                    <span key={idx} className="flex items-center gap-1.5 bg-blue-50 text-blue-700 border border-blue-100 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm">
-                                                        {sub}
-                                                        <button
-                                                            onClick={() => removeSubcategory(sub)}
-                                                            className="text-blue-400 hover:text-red-500 transition-colors"
-                                                        >
-                                                            <FiX />
-                                                        </button>
-                                                    </span>
-                                                ))}
-                                            </div>
-                                            <input
-                                                type="text"
-                                                value={subInput}
-                                                onChange={(e) => setSubInput(e.target.value)}
-                                                onKeyDown={handleAddSubcategory}
-                                                placeholder={subcategories.length === 0 ? "Type and press Enter..." : "Add another..."}
-                                                className="w-full bg-transparent border-none outline-none text-slate-800 px-1 py-1 text-sm placeholder:text-gray-400"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* Image Dropzone */}
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Category Images</label>
-
-                                        {formData.images && formData.images.length > 0 ? (
-                                            <div className="grid grid-cols-3 gap-3 mb-3">
-                                                {formData.images.map((imgUrl, idx) => (
-                                                    <div key={idx} className="relative group w-full h-24 rounded-xl overflow-hidden shadow-sm border border-gray-200">
-                                                        <img src={imgUrl} alt={`Upload ${idx + 1}`} className="w-full h-full object-cover" />
-                                                        <button
-                                                            onClick={() => removeImage(idx)}
-                                                            className="absolute top-1 right-1 p-1 bg-white/90 hover:bg-red-50 text-red-500 rounded-md opacity-0 group-hover:opacity-100 transition-all shadow-sm"
-                                                        >
-                                                            <FiX className="text-xs" />
-                                                        </button>
-                                                    </div>
-                                                ))}
-                                                <label className="w-full h-24 border-2 border-dashed border-gray-200 hover:border-blue-400 hover:bg-blue-50/50 rounded-xl cursor-pointer flex flex-col items-center justify-center transition-all">
-                                                    <FiPlus className="text-xl text-blue-500 mb-1" />
-                                                    <span className="text-[10px] font-bold text-gray-500">Add More</span>
-                                                    <input
-                                                        type="file"
-                                                        accept="image/*"
-                                                        multiple
-                                                        onChange={handleImageUpload}
-                                                        className="hidden"
-                                                    />
-                                                </label>
-                                            </div>
-                                        ) : (
-                                            <label className="relative border-2 border-dashed border-gray-200 bg-gray-50 hover:bg-gray-100 hover:border-gray-300 rounded-xl overflow-hidden transition-all cursor-pointer flex flex-col items-center justify-center p-6 text-center min-h-[140px]">
-                                                <input
-                                                    type="file"
-                                                    accept="image/*"
-                                                    multiple
-                                                    onChange={handleImageUpload}
-                                                    className="hidden"
-                                                />
-                                                <div className="w-12 h-12 bg-white shadow-sm rounded-full flex items-center justify-center mb-3 text-blue-500 border border-gray-100">
-                                                    <FiUploadCloud className="text-xl" />
-                                                </div>
-                                                <p className="text-sm font-medium text-slate-700">Drop images here or browse</p>
-                                                <p className="text-xs text-gray-400 mt-1">PNG, JPG, WEBP • Max 5MB</p>
-                                            </label>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="p-6 bg-gray-50 border-t border-gray-100 flex items-center justify-end gap-3 shrink-0">
-                            <button
-                                onClick={() => setIsModalOpen(false)}
-                                className="px-6 py-3 text-sm font-bold text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded-xl transition-all"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleSaveCategory}
-                                disabled={!formData.name}
-                                className="px-8 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-blue-200 active:scale-95 flex items-center gap-2"
-                            >
-                                {isEditing ? 'Update Category' : 'Save Category'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+  return (
+    <div className="min-h-screen p-4 md:p-8 animate-in fade-in duration-700">
+      <div className="max-w-7xl mx-auto mt-0">
+        
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+           <div className="relative mb-8 max-w-md">
+          <FaSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search by ID or Name..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-14 pr-6 py-4 bg-white border border-gray-100 rounded-[1.5rem] shadow-sm outline-none focus:ring-4 focus:ring-emerald-500/5 focus:border-emerald-500/20 transition-all font-bold text-sm"
+          />
         </div>
-    );
+
+          <div className="flex items-center gap-3">
+             <div className="flex bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100">
+                <button 
+                  onClick={() => setViewMode("card")}
+                  className={`p-2.5 rounded-xl transition-all ${viewMode === 'card' ? 'bg-emerald-500 text-white shadow-lg' : 'text-gray-400 hover:text-emerald-600'}`}
+                >
+                  <FaThLarge size={18} />
+                </button>
+                <button 
+                  onClick={() => setViewMode("table")}
+                  className={`p-2.5 rounded-xl transition-all ${viewMode === 'table' ? 'bg-emerald-500 text-white shadow-lg' : 'text-gray-400 hover:text-emerald-600'}`}
+                >
+                  <FaList size={18} />
+                </button>
+             </div>
+             
+             <button
+               onClick={openAddModal}
+               className="flex items-center gap-2 px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-sm transition-all shadow-xl shadow-emerald-100 uppercase tracking-widest"
+             >
+               <FaPlus /> Add New Category
+             </button>
+          </div>
+        </div>
+
+        {/* Search Bar */}
+       
+
+        {/* Content Section */}
+        {viewMode === "card" ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {currentItems.map((cat) => (
+              <div key={cat.id} className="group bg-white rounded-[2.5rem] p-5 shadow-sm border border-gray-100/50 hover:shadow-2xl hover:shadow-emerald-950/5 transition-all duration-500 flex flex-col relative overflow-hidden">
+                <div className="relative h-48 mb-5 overflow-hidden rounded-[2rem] bg-gray-50 flex items-center justify-center">
+                   {cat.images?.[0] ? (
+                      <img src={cat.images[0]} alt={cat.name || cat.cname} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                   ) : (
+                      <FaImage size={40} className="text-gray-200" />
+                   )}
+                   <div className="absolute top-4 left-4">
+                      <span className="px-3 py-1 bg-white/90 backdrop-blur shadow-sm rounded-full text-[10px] font-black text-emerald-900 border border-emerald-100 uppercase tracking-tighter">
+                         {cat.catId}
+                      </span>
+                   </div>
+                </div>
+
+                <div className="px-2 pb-2">
+                   <h4 className="text-lg font-black text-slate-950 mb-2 truncate">{cat.name || cat.cname}</h4>
+                   <p className="text-[11px] text-slate-800 font-bold line-clamp-2 leading-relaxed h-8 mb-4">
+                      {cat.description || cat.cdescription}
+                   </p>
+
+                   <div className="flex items-center justify-between border-t border-gray-50 pt-4">
+                      <div className="flex -space-x-3 overflow-hidden">
+                        {(cat.images || []).slice(0, 3).map((img, i) => (
+                          <img key={i} src={img} className="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover" alt="" />
+                        ))}
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => handleEdit(cat)} className="p-2.5 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm">
+                          <FaEdit size={14} />
+                        </button>
+                        <button onClick={() => handleDelete(cat.id)} className="p-2.5 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-sm">
+                          <FaTrash size={14} />
+                        </button>
+                      </div>
+                   </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden overflow-x-auto">
+             <table className="w-full text-left">
+                <thead className="bg-[#009669] border-b border-emerald-700">
+                   <tr>
+                      <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">S.No</th>
+                      <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">ID</th>
+                      <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Identity</th>
+                      <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Description</th>
+                      <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest text-center">Gallery</th>
+                      <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest text-right">Actions</th>
+                   </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                   {currentItems.map((cat, index) => (
+                      <tr key={cat.id} className="hover:bg-slate-50/50 transition-colors group">
+                         <td className="px-8 py-6 font-black text-slate-900 text-xs text-center">
+                            {(currentPage - 1) * itemsPerPage + index + 1}
+                         </td>
+                         <td className="px-8 py-6 font-black text-slate-900 text-xs">#{cat.catId}</td>
+                         <td className="px-8 py-6">
+                            <div className="flex items-center gap-4">
+                               
+                               <span className="font-black text-slate-800 text-sm">{cat.name || cat.cname}</span>
+                            </div>
+                         </td>
+                         <td className="px-8 py-6 max-w-xs">
+                            <p className="text-xs text-gray-500 font-medium truncate italic">"{cat.description || cat.cdescription}"</p>
+                         </td>
+                         <td className="px-8 py-6 text-center">
+                            <div className="flex items-center justify-center -space-x-2">
+                               {(cat.images || []).map((img, i) => (
+                                 <img key={i} src={img} className="w-8 h-8 rounded-full ring-2 ring-white shadow-sm object-cover" alt="" />
+                               ))}
+                            </div>
+                         </td>
+                         <td className="px-8 py-6 text-right">
+                            <div className="flex justify-end gap-2">
+                               <button onClick={() => handleEdit(cat)} className="p-2.5 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm">
+                                 <FaEdit size={14} />
+                               </button>
+                               <button onClick={() => handleDelete(cat.id)} className="p-2.5 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-sm">
+                                 <FaTrash size={14} />
+                               </button>
+                            </div>
+                         </td>
+                      </tr>
+                   ))}
+                </tbody>
+             </table>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center gap-3 mt-10 mb-10">
+            <button 
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="p-3 bg-white border border-gray-100 rounded-xl text-gray-400 disabled:opacity-30 hover:text-emerald-600 transition-all shadow-sm"
+            >
+              ←
+            </button>
+            <div className="flex gap-2">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`w-10 h-10 rounded-xl text-xs font-black transition-all ${currentPage === page ? 'bg-emerald-600 text-white shadow-lg' : 'bg-white text-gray-500 border border-gray-100 hover:border-emerald-200'}`}
+                >
+                  {page}
+                </button>
+              ))}
+            </div>
+            <button 
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              className="p-3 bg-white border border-gray-100 rounded-xl text-gray-400 disabled:opacity-30 hover:text-emerald-600 transition-all shadow-sm"
+            >
+              →
+            </button>
+          </div>
+        )}
+
+        {/* Modal Overlay */}
+        {showModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+             <div className="absolute inset-0 bg-emerald-950/20 backdrop-blur-md animate-in fade-in duration-300" onClick={closeModal} />
+             
+             <div className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-500">
+                {/* Modal Header */}
+                <div className="bg-emerald-600 p-8 text-white relative">
+                   <div className="absolute right-0 top-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl" />
+                   <div className="relative flex items-center justify-between">
+                      <div>
+                         <h3 className="text-2xl font-[900] tracking-tight uppercase">{editId ? 'Update Category' : 'Create Category'}</h3>
+                         <p className="text-[10px] font-black opacity-80 uppercase tracking-widest mt-1">Configure your product classification</p>
+                      </div>
+                      <button onClick={closeModal} className="p-3 bg-black/10 hover:bg-black/20 rounded-2xl transition-all">
+                        <FaTimes size={18} />
+                      </button>
+                   </div>
+                </div>
+
+                {/* Form */}
+                <form onSubmit={handleSubmit} className="p-8 space-y-6">
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                         <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Auto-Generated ID</label>
+                         <div className="bg-emerald-50 border border-emerald-100 rounded-2xl px-5 py-3.5 text-emerald-950 font-black text-sm shadow-inner flex items-center gap-3">
+                            <FaFileAlt className="opacity-60" /> {category.catId}
+                         </div>
+                      </div>
+
+                      <div className="space-y-2">
+                         <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Category Name *</label>
+                         <input
+                           type="text"
+                           name="name"
+                           value={category.name}
+                           onChange={handleChange}
+                           placeholder="Enter name (e.g. Dry Fruits)"
+                           className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-emerald-600 focus:ring-4 focus:ring-emerald-600/5 transition-all font-black text-black text-sm"
+                           required
+                         />
+                      </div>
+                   </div>
+
+                   <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Detailed Description *</label>
+                      <textarea
+                        name="description"
+                        value={category.description}
+                        onChange={handleChange}
+                        rows={3}
+                        placeholder="What items fall under this category?"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-emerald-600 transition-all font-black text-black text-sm resize-none"
+                        required
+                      />
+                   </div>
+
+                   <div className="space-y-4">
+                      <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Visual Branding (Images) *</label>
+                      <div className="relative group cursor-pointer">
+                         <input
+                           type="file"
+                           accept="image/*"
+                           multiple
+                           onChange={handleImageChange}
+                           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                           required={!editId}
+                         />
+                         <div className="bg-emerald-50 border-2 border-dashed border-emerald-200 rounded-3xl p-8 flex flex-col items-center justify-center transition-all group-hover:bg-emerald-100/50 group-hover:border-emerald-400">
+                            <FaImage className="text-emerald-500 mb-3" size={32} />
+                            <p className="text-xs font-black text-emerald-950 uppercase tracking-widest">Drop images here or click to upload</p>
+                            <p className="text-[9px] text-emerald-600 mt-1 uppercase font-bold opacity-60">High quality images recommended</p>
+                         </div>
+                      </div>
+
+                      {previewImgs.length > 0 && (
+                        <div className="grid grid-cols-4 sm:grid-cols-6 gap-3 pt-2">
+                           {previewImgs.map((img, index) => (
+                             <div key={index} className="relative aspect-square rounded-xl overflow-hidden border border-emerald-100 shadow-sm animate-in zoom-in-75">
+                                <img src={img} className="w-full h-full object-cover" alt="" />
+                             </div>
+                           ))}
+                        </div>
+                      )}
+                   </div>
+
+                   <div className="pt-4">
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-[900] py-5 rounded-2xl shadow-xl shadow-emerald-100 transition-all flex items-center justify-center gap-3 disabled:opacity-50 uppercase tracking-[0.2em] text-xs"
+                      >
+                        {loading ? 'Processing Registry...' : (editId ? 'Commit Update' : 'Generate Category')}
+                      </button>
+                   </div>
+                </form>
+             </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default Category;

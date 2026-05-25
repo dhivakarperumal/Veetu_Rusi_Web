@@ -368,12 +368,16 @@ exports.getCategories = async (req, res) => {
 // Create a new category in database
 exports.createCategory = async (req, res) => {
     try {
-        const { catId, name, description = '', subcategory = [], images = [] } = req.body;
-        if (!catId || !name) return res.status(400).json({ message: 'catId and name are required' });
+        const { catId, name, description, subcategory = [], images } = req.body;
+        const categoryName = name || req.body.cname;
+        const categoryDescription = description || req.body.cdescription || '';
+        const categoryImages = images || req.body.cimgs || [];
+
+        if (!catId || !categoryName) return res.status(400).json({ message: 'catId and name are required' });
 
         await pool.execute(
             'INSERT INTO categories (catId, name, description, subcategory, images) VALUES (?, ?, ?, ?, ?)',
-            [catId, name, description, JSON.stringify(subcategory), JSON.stringify(images)]
+            [catId, categoryName, categoryDescription, JSON.stringify(subcategory), JSON.stringify(categoryImages)]
         );
 
         res.status(201).json({ message: 'Category created successfully' });
@@ -395,21 +399,21 @@ exports.updateCategory = async (req, res) => {
             fields.push('catId = ?');
             params.push(updates.catId);
         }
-        if (updates.name) {
+        if (updates.name || updates.cname) {
             fields.push('name = ?');
-            params.push(updates.name);
+            params.push(updates.name || updates.cname);
         }
-        if (updates.description !== undefined) {
+        if (updates.description !== undefined || updates.cdescription !== undefined) {
             fields.push('description = ?');
-            params.push(updates.description);
+            params.push(updates.description !== undefined ? updates.description : updates.cdescription);
         }
         if (updates.subcategory !== undefined) {
             fields.push('subcategory = ?');
             params.push(JSON.stringify(updates.subcategory));
         }
-        if (updates.images !== undefined) {
+        if (updates.images !== undefined || updates.cimgs !== undefined) {
             fields.push('images = ?');
-            params.push(JSON.stringify(updates.images));
+            params.push(JSON.stringify(updates.images !== undefined ? updates.images : updates.cimgs));
         }
 
         if (fields.length === 0) {
