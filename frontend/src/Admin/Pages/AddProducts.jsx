@@ -33,19 +33,37 @@ const Products = () => {
   const fetchData = async () => {
     setLoadingList(true);
     try {
-      const [catRes, prodRes, comboRes] = await Promise.all([
+      const [catRes, prodRes, comboRes] = await Promise.allSettled([
         api.get("/categories"),
         api.get("/products"),
         api.get("/combos"),
       ]);
-      const categoriesData = Array.isArray(catRes.data)
-        ? catRes.data
-        : Array.isArray(catRes.data?.categories)
-        ? catRes.data.categories
-        : [];
-      setCategories(categoriesData);
-      setProducts(Array.isArray(prodRes.data) ? prodRes.data : []);
-      setCombos(Array.isArray(comboRes.data) ? comboRes.data : []);
+
+      if (catRes.status === "fulfilled") {
+        const categoriesData = Array.isArray(catRes.value.data)
+          ? catRes.value.data
+          : Array.isArray(catRes.value.data?.categories)
+          ? catRes.value.data.categories
+          : [];
+        setCategories(categoriesData);
+      } else {
+        console.error("Category request failed:", catRes.reason);
+        setCategories([]);
+      }
+
+      if (prodRes.status === "fulfilled") {
+        setProducts(Array.isArray(prodRes.value.data) ? prodRes.value.data : []);
+      } else {
+        console.error("Products request failed:", prodRes.reason);
+        setProducts([]);
+      }
+
+      if (comboRes.status === "fulfilled") {
+        setCombos(Array.isArray(comboRes.value.data) ? comboRes.value.data : []);
+      } else {
+        console.error("Combos request failed:", comboRes.reason);
+        setCombos([]);
+      }
     } catch (err) {
       console.error("Category fetch failed:", err?.response?.data || err.message || err);
       toast.error("Failed to load dashboard data");
