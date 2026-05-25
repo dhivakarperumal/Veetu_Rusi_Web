@@ -14,7 +14,7 @@ import {
   Building,
   CheckCircle2,
   XCircle,
-  FileText
+  X
 } from "lucide-react";
 
 const CommissionManagement = () => {
@@ -25,6 +25,13 @@ const CommissionManagement = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [viewMode, setViewMode] = useState("table");
+
+  // State for Add Commission Modal
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [franchises, setFranchises] = useState([]);
+  const [selectedFranchiseId, setSelectedFranchiseId] = useState("");
+  const [newCommissionRate, setNewCommissionRate] = useState("");
+  const [loadingFranchises, setLoadingFranchises] = useState(false);
 
   const fallbackCommissions = [
     {
@@ -56,6 +63,57 @@ const CommissionManagement = () => {
       toast.error("Failed to load commission settings. Showing sample data.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchFranchises = async () => {
+    try {
+      setLoadingFranchises(true);
+      const res = await api.get("/superadmin/franchises");
+      setFranchises(res.data || []);
+    } catch (error) {
+      toast.error("Failed to fetch franchise owners.");
+    } finally {
+      setLoadingFranchises(false);
+    }
+  };
+
+  const handleOpenAddModal = () => {
+    fetchFranchises();
+    setIsAddModalOpen(true);
+    setSelectedFranchiseId("");
+    setNewCommissionRate("");
+  };
+
+  const handleAddCommission = async () => {
+    if (!selectedFranchiseId) {
+      return toast.error("Please select a franchise owner.");
+    }
+    if (!newCommissionRate || isNaN(newCommissionRate) || Number(newCommissionRate) < 0) {
+      return toast.error("Please enter a valid commission rate.");
+    }
+
+    try {
+      // Find the selected franchise to keep its existing data
+      const franchise = franchises.find(f => String(f.id) === String(selectedFranchiseId));
+      if (!franchise) return toast.error("Franchise not found.");
+
+      const updatedForm = {
+        franchise_name: franchise.franchise_name,
+        owner_name: franchise.owner_name,
+        mobile: franchise.mobile,
+        email: franchise.email,
+        city: franchise.city,
+        state: franchise.state,
+        commission_percentage: newCommissionRate,
+        status: franchise.status
+      };
+
+      await api.put(`/superadmin/franchises/${selectedFranchiseId}`, updatedForm);
+      toast.success("Commission added/updated for franchise owner successfully!");
+      setIsAddModalOpen(false);
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Failed to update commission.");
     }
   };
 
@@ -98,7 +156,10 @@ const CommissionManagement = () => {
       
       {/* Top Header Section */}
       <div className="flex justify-end mb-4">
-        <button className="flex items-center gap-2 bg-[#1b4332] hover:bg-[#143425] text-white px-5 py-2.5 rounded-lg text-sm font-bold tracking-wide transition-colors shadow-sm">
+        <button 
+          onClick={handleOpenAddModal}
+          className="flex items-center gap-2 bg-[#1b4332] hover:bg-[#143425] text-white px-5 py-2.5 rounded-lg text-sm font-bold tracking-wide transition-colors shadow-sm"
+        >
           <Plus className="w-4 h-4" />
           ADD COMMISSION
         </button>
@@ -318,6 +379,68 @@ const CommissionManagement = () => {
                 )}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Add Commission Modal */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 w-full max-w-md overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+              <h3 className="text-lg font-black text-slate-800 tracking-tight">Add Commission</h3>
+              <button 
+                onClick={() => setIsAddModalOpen(false)}
+                className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-5">
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Select Franchise Owner</label>
+                <select
+                  value={selectedFranchiseId}
+                  onChange={(e) => setSelectedFranchiseId(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-medium text-slate-800 text-sm focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
+                >
+                  <option value="">-- Choose Franchise Owner --</option>
+                  {franchises.map(f => (
+                    <option key={f.id} value={f.id}>
+                      {f.franchise_name} ({f.owner_name}) - Current: {f.commission_percentage}%
+                    </option>
+                  ))}
+                </select>
+                {loadingFranchises && <p className="text-xs text-emerald-600 font-semibold animate-pulse">Loading franchises...</p>}
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Commission Rate (%)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  placeholder="e.g. 10.0"
+                  value={newCommissionRate}
+                  onChange={(e) => setNewCommissionRate(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-medium text-slate-800 text-sm focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
+                />
+              </div>
+            </div>
+            <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex justify-end gap-3">
+              <button
+                onClick={() => setIsAddModalOpen(false)}
+                className="px-5 py-2.5 text-slate-600 hover:bg-slate-200 bg-slate-100 font-bold text-xs uppercase tracking-widest rounded-xl transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddCommission}
+                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-widest rounded-xl transition-colors shadow-sm flex items-center gap-2"
+              >
+                <Save className="w-4 h-4" /> Save
+              </button>
+            </div>
           </div>
         </div>
       )}
