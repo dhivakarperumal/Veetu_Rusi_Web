@@ -44,37 +44,19 @@ const CommissionManagement = () => {
   ];
 
   useEffect(() => {
-    fetchCommissions();
+    fetchFranchises();
   }, []);
-
-  const fetchCommissions = async () => {
-    try {
-      setLoading(true);
-      const res = await api.get("/superadmin/commissions");
-      let data = Array.isArray(res.data) && res.data.length ? res.data : fallbackCommissions;
-      
-      // Only keep franchise commissions
-      data = data.filter(c => c.type && c.type.toLowerCase().includes('franchise'));
-      if (data.length === 0) data = fallbackCommissions;
-      
-      setCommissions(data);
-    } catch (error) {
-      setCommissions(fallbackCommissions);
-      toast.error("Failed to load commission settings. Showing sample data.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const fetchFranchises = async () => {
     try {
-      setLoadingFranchises(true);
+      setLoading(true);
       const res = await api.get("/superadmin/franchises");
       setFranchises(res.data || []);
     } catch (error) {
-      toast.error("Failed to fetch franchise owners.");
+      toast.error("Failed to load franchise commissions.");
+      setFranchises([]);
     } finally {
-      setLoadingFranchises(false);
+      setLoading(false);
     }
   };
 
@@ -112,6 +94,7 @@ const CommissionManagement = () => {
       await api.put(`/superadmin/franchises/${selectedFranchiseId}`, updatedForm);
       toast.success("Commission added/updated for franchise owner successfully!");
       setIsAddModalOpen(false);
+      fetchFranchises();
     } catch (error) {
       toast.error(error?.response?.data?.message || "Failed to update commission.");
     }
@@ -124,25 +107,37 @@ const CommissionManagement = () => {
         toast.error("Please enter a valid positive number.");
         return;
       }
-      await api.put(`/superadmin/commissions/${id}`, {
-        commission_value: numVal,
-        is_percentage: 1
-      });
+
+      const franchise = franchises.find(f => f.id === id);
+      if (!franchise) return;
+
+      const updatedForm = {
+        franchise_name: franchise.franchise_name,
+        owner_name: franchise.owner_name,
+        mobile: franchise.mobile,
+        email: franchise.email,
+        city: franchise.city,
+        state: franchise.state,
+        commission_percentage: numVal,
+        status: franchise.status
+      };
+
+      await api.put(`/superadmin/franchises/${id}`, updatedForm);
       toast.success("Commission rule updated.");
       setEditingId(null);
-      fetchCommissions();
+      fetchFranchises();
     } catch (error) {
       toast.error("Failed to update commission.");
     }
   };
 
-  const totalRules = commissions.length;
-  const highestRate = commissions.length > 0 ? Math.max(...commissions.map((c) => Number(c.commission_value))) : 0;
-  const lowestRate = commissions.length > 0 ? Math.min(...commissions.map((c) => Number(c.commission_value))) : 0;
+  const totalRules = franchises.length;
+  const highestRate = franchises.length > 0 ? Math.max(...franchises.map((c) => Number(c.commission_percentage || 0))) : 0;
+  const lowestRate = franchises.length > 0 ? Math.min(...franchises.map((c) => Number(c.commission_percentage || 0))) : 0;
 
-  const visibleCommissions = commissions.filter((comm) => {
+  const visibleFranchises = franchises.filter((comm) => {
     const query = search.trim().toLowerCase();
-    const matchesSearch = !query || [comm.type, String(comm.commission_value), comm.description]
+    const matchesSearch = !query || [comm.franchise_name, comm.owner_name, String(comm.commission_percentage), comm.city]
       .filter(Boolean)
       .some((field) => field.toLowerCase().includes(query));
 
@@ -173,7 +168,7 @@ const CommissionManagement = () => {
             <Building className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">TOTAL COMMISSIONS</p>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">TOTAL FRANCHISES</p>
             <h3 className="text-3xl font-extrabold text-slate-800">{totalRules}</h3>
           </div>
         </div>
@@ -251,7 +246,7 @@ const CommissionManagement = () => {
       ) : viewMode === "card" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Card view implementation (simplified for brevity) */}
-          {visibleCommissions.map((comm) => (
+          {visibleFranchises.map((comm) => (
             <div key={comm.id} className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
               <div className="flex justify-between items-start mb-4">
                 <div className="flex gap-3 items-center">
@@ -259,17 +254,17 @@ const CommissionManagement = () => {
                      <Percent className="w-5 h-5" />
                    </div>
                    <div>
-                     <h4 className="font-bold text-slate-800">{comm.type}</h4>
-                     <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase tracking-wider">{comm.status}</span>
+                     <h4 className="font-bold text-slate-800">{comm.franchise_name}</h4>
+                     <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase tracking-wider">{comm.status || 'ACTIVE'}</span>
                    </div>
                 </div>
                 <div className="text-right">
-                  <span className="text-2xl font-black text-slate-800">{comm.commission_value}%</span>
+                  <span className="text-2xl font-black text-slate-800">{comm.commission_percentage || 0}%</span>
                 </div>
               </div>
-              <p className="text-sm text-slate-500 mb-6">{comm.description}</p>
+              <p className="text-sm text-slate-500 mb-6">Owner: {comm.owner_name} | City: {comm.city}</p>
               <div className="flex justify-end gap-2">
-                 <button onClick={() => { setEditingId(comm.id); setEditValue(comm.commission_value); }} className="p-2 text-slate-400 hover:text-emerald-600 transition-colors bg-slate-50 rounded-lg hover:bg-emerald-50">
+                 <button onClick={() => { setEditingId(comm.id); setEditValue(comm.commission_percentage || 0); }} className="p-2 text-slate-400 hover:text-emerald-600 transition-colors bg-slate-50 rounded-lg hover:bg-emerald-50">
                    <Edit2 className="w-4 h-4" />
                  </button>
               </div>
@@ -283,15 +278,15 @@ const CommissionManagement = () => {
               <thead>
                 <tr className="bg-[#2a3441] text-white">
                   <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest w-20">S.No</th>
-                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest">Commission Type</th>
-                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest">Rate</th>
-                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest">Description</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest">Franchise Name</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest">Commission Rate</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest">Location</th>
                   <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-center">Status</th>
                   <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-center">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {visibleCommissions.length ? visibleCommissions.map((comm, index) => {
+                {visibleFranchises.length ? visibleFranchises.map((comm, index) => {
                   const isEditing = editingId === comm.id;
                   return (
                     <tr key={comm.id} className="hover:bg-slate-50 transition-colors group">
@@ -301,11 +296,11 @@ const CommissionManagement = () => {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
-                            <Percent className="w-5 h-5" />
+                            <Building className="w-5 h-5" />
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-slate-800">{comm.type}</p>
-                            <p className="text-xs text-slate-400">Commission Rule</p>
+                            <p className="text-sm font-bold text-slate-800">{comm.franchise_name}</p>
+                            <p className="text-xs text-slate-400">{comm.owner_name}</p>
                           </div>
                         </div>
                       </td>
@@ -320,12 +315,12 @@ const CommissionManagement = () => {
                           />
                         ) : (
                           <span className="inline-flex items-center justify-center px-3 py-1 bg-emerald-50 text-emerald-600 text-sm font-bold rounded-md">
-                            {comm.commission_value}%
+                            {comm.commission_percentage || 0}%
                           </span>
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        <p className="text-sm text-slate-500 line-clamp-2 max-w-xs">{comm.description}</p>
+                        <p className="text-sm text-slate-500 line-clamp-2 max-w-xs">{comm.city}, {comm.state}</p>
                       </td>
                       <td className="px-6 py-4 text-center">
                         <span className="inline-flex px-3 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-widest rounded-full">
@@ -350,13 +345,10 @@ const CommissionManagement = () => {
                           </div>
                         ) : (
                           <div className="flex items-center justify-center gap-3">
-                            <button className="text-slate-400 hover:text-emerald-600 transition-colors">
-                              <Eye className="w-5 h-5" />
-                            </button>
                             <button 
                               onClick={() => {
                                 setEditingId(comm.id);
-                                setEditValue(comm.commission_value);
+                                setEditValue(comm.commission_percentage || 0);
                               }}
                               className="text-slate-400 hover:text-blue-600 transition-colors"
                             >
@@ -373,7 +365,7 @@ const CommissionManagement = () => {
                 }) : (
                   <tr>
                     <td colSpan="6" className="px-6 py-10 text-center text-slate-500 text-sm">
-                      No commissions found matching your criteria.
+                      No franchises found matching your criteria.
                     </td>
                   </tr>
                 )}
