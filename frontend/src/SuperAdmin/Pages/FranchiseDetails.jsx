@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../../api";
 import { toast } from "react-hot-toast";
-import { Landmark, MapPin, UserCheck, Clock, List, KeyRound, Copy, X, CheckCircle, ChevronLeft, ShieldAlert, BadgeCheck, Phone, Mail, Trash2, Edit3, ShieldCheck } from "lucide-react";
+import { Landmark, MapPin, UserCheck, Clock, List, KeyRound, Copy, X, CheckCircle, ChevronLeft, ShieldAlert, BadgeCheck, Phone, Mail, Trash2, Edit3, ShieldCheck, ShoppingCart } from "lucide-react";
 
 const FranchiseDetails = () => {
   const { id } = useParams();
@@ -14,6 +14,8 @@ const FranchiseDetails = () => {
   const [linkedDeliveryPartnerCount, setLinkedDeliveryPartnerCount] = useState(0);
   const [linkedHomeChefs, setLinkedHomeChefs] = useState([]);
   const [linkedDeliveryPartners, setLinkedDeliveryPartners] = useState([]);
+  const [linkedOrderCount, setLinkedOrderCount] = useState(0);
+  const [linkedOrders, setLinkedOrders] = useState([]);
   const [activeDetailTab, setActiveDetailTab] = useState("franchise");
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [plans, setPlans] = useState([]);
@@ -218,7 +220,7 @@ const FranchiseDetails = () => {
       </div>
 
       {/* Statistics Cards */}
-      <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2">
+      <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
         <div className="group relative overflow-hidden rounded-[2rem] bg-white p-8 shadow-sm transition-all hover:shadow-md border border-slate-100">
           <div className="absolute right-0 top-0 -mr-8 -mt-8 h-32 w-32 rounded-full bg-emerald-50 transition-transform duration-500 group-hover:scale-150"></div>
           <div className="relative z-10 flex items-start justify-between">
@@ -241,8 +243,19 @@ const FranchiseDetails = () => {
               <h3 className="mt-4 text-5xl font-black text-slate-800">{linkedDeliveryPartnerCount}</h3>
               <p className="mt-2 text-sm text-slate-500 font-medium">Actively linked to this franchise</p>
             </div>
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-100 text-blue-600 shadow-inner">
-              <MapPin className="h-7 w-7" />
+          </div>
+        </div>
+
+        <div className="group relative overflow-hidden rounded-[2rem] bg-white p-8 shadow-sm transition-all hover:shadow-md border border-slate-100">
+          <div className="absolute right-0 top-0 -mr-8 -mt-8 h-32 w-32 rounded-full bg-violet-50 transition-transform duration-500 group-hover:scale-150"></div>
+          <div className="relative z-10 flex items-start justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Total Orders</p>
+              <h3 className="mt-4 text-5xl font-black text-slate-800">{linkedOrderCount}</h3>
+              <p className="mt-2 text-sm text-slate-500 font-medium">Processed by this franchise</p>
+            </div>
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-100 text-violet-600 shadow-inner">
+              <ShoppingCart className="h-7 w-7" />
             </div>
           </div>
         </div>
@@ -259,6 +272,7 @@ const FranchiseDetails = () => {
               { id: 'owner', icon: UserCheck, label: 'Owner Profile' },
               { id: 'homechefs', icon: List, label: 'Home Chefs' },
               { id: 'deliverypartners', icon: MapPin, label: 'Delivery Partners' },
+              { id: 'orders', icon: ShoppingCart, label: 'Orders' },
               { id: 'subscription', icon: Clock, label: 'Subscription' },
               { id: 'credentials', icon: KeyRound, label: 'Credentials & Access' },
             ].map((tab) => {
@@ -564,6 +578,58 @@ const FranchiseDetails = () => {
                     </div>
                     <h4 className="text-lg font-bold text-slate-700">No Partners Linked</h4>
                     <p className="mt-1 text-sm text-slate-500 max-w-sm">There are no delivery partners assigned to this franchise account yet.</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ORDERS LIST */}
+            {activeDetailTab === 'orders' && (
+              <div className="animate-in slide-in-from-right-4 fade-in duration-300">
+                <div className="mb-6 flex items-center justify-between border-b border-slate-100 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 text-violet-600"><ShoppingCart className="h-5 w-5" /></div>
+                    <h3 className="text-xl font-black text-slate-800">Franchise Orders</h3>
+                  </div>
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500">{linkedOrders.length} Total</span>
+                </div>
+
+                {linkedOrders.length > 0 ? (
+                  <div className="overflow-hidden rounded-2xl border border-slate-200">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-sm">
+                        <thead className="bg-slate-50">
+                          <tr>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Order ID</th>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Date</th>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Amount</th>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs text-center">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 bg-white">
+                          {linkedOrders.map((order) => (
+                            <tr key={order.id} className="hover:bg-slate-50/50 transition-colors group">
+                              <td className="px-6 py-4 font-bold text-slate-800">#{order.order_id || order.id}</td>
+                              <td className="px-6 py-4 text-slate-600">{formatDate(order.created_at)}</td>
+                              <td className="px-6 py-4 font-bold text-emerald-600">₹{order.total_amount || 0}</td>
+                              <td className="px-6 py-4 text-center">
+                                <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${order.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                                  {order.status || 'Pending'}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-200 bg-slate-50 py-16 text-center">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-sm mb-4">
+                      <ShoppingCart className="h-8 w-8 text-slate-300" />
+                    </div>
+                    <h4 className="text-lg font-bold text-slate-700">No Orders Found</h4>
+                    <p className="mt-1 text-sm text-slate-500 max-w-sm">There are no orders associated with this franchise account yet.</p>
                   </div>
                 )}
               </div>
