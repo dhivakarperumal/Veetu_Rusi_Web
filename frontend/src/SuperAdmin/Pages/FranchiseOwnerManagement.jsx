@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { createPortal } from "react-dom";
 import api from "../../api";
 import { toast } from "react-hot-toast";
@@ -290,6 +291,8 @@ const FranchiseOwnerManagement = () => {
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
+
+  const navigate = useNavigate();
 
   if (viewDetailsFranchise) {
     return (
@@ -835,6 +838,7 @@ const FranchiseOwnerManagement = () => {
                             {approvingId === f.id ? "…" : "Approve"}
                           </button>
                         )}
+
                         {/* View Creds if linked */}
                         {f.franch_user_id && (
                           <button
@@ -845,12 +849,26 @@ const FranchiseOwnerManagement = () => {
                             <KeyRound className="w-4 h-4" />
                           </button>
                         )}
-                        <button onClick={() => setViewDetailsFranchise(f)} className="p-2 hover:bg-slate-100 text-slate-500 hover:text-slate-800 rounded-lg transition" title="View Details">
+
+                        {/* View Details */}
+                        <button
+                          onClick={() => navigate(`/superadmin/franchises/${f.id}`)}
+                          className="p-2 hover:bg-slate-100 text-slate-500 hover:text-slate-800 rounded-lg transition"
+                          title="View Details"
+                        >
                           <Eye className="w-4 h-4" />
                         </button>
-                        <button onClick={() => handleEdit(f)} className="p-2 hover:bg-slate-100 text-slate-500 hover:text-slate-800 rounded-lg transition" title="Edit">
+
+                        {/* Edit */}
+                        <button
+                          onClick={() => handleEdit(f)}
+                          className="p-2 hover:bg-slate-100 text-slate-500 hover:text-slate-800 rounded-lg transition"
+                          title="Edit"
+                        >
                           <Edit2 className="w-4 h-4" />
                         </button>
+
+                        {/* Delete */}
                         <button onClick={() => handleDelete(f.id)} className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition" title="Delete">
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -970,7 +988,7 @@ const FranchiseOwnerManagement = () => {
 
                   <div className="flex items-center gap-1">
                     <button
-                      onClick={() => setViewDetailsFranchise(f)}
+                      onClick={() => navigate(`/superadmin/franchises/${f.id}`)}
                       className="p-2 hover:bg-slate-200 text-slate-500 hover:text-slate-800 rounded-lg transition"
                       title="View Franchise Details"
                     >

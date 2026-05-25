@@ -80,6 +80,7 @@ const WalletAndEarnings = React.lazy(() => import("./HomeChef/Pages/WalletAndEar
 const OrderManagement = React.lazy(() => import("./Admin/Pages/OrderManagement.jsx"));
 const PayoutManagement = React.lazy(() => import("./Admin/Pages/PayoutManagement.jsx"));
 const FranchiseOwnerManagement = React.lazy(() => import("./SuperAdmin/Pages/FranchiseOwnerManagement.jsx"));
+const FranchiseDetails = React.lazy(() => import("./SuperAdmin/Pages/FranchiseDetails.jsx"));
 const CommissionManagement = React.lazy(() => import("./SuperAdmin/Pages/CommissionManagement.jsx"));
 const SuperBannerManagement = React.lazy(() => import("./SuperAdmin/Pages/BannerManagement.jsx"));
 const NotificationManagement = React.lazy(() => import("./SuperAdmin/Pages/NotificationManagement.jsx"));
@@ -127,6 +128,7 @@ const router = createBrowserRouter([
       { path: "orders", element: <OrderManagement /> },
       { path: "payouts", element: <PayoutManagement /> },
       { path: "franchises", element: <FranchiseOwnerManagement /> },
+      { path: "franchises/:id", element: <FranchiseDetails /> },
       { path: "commissions", element: <CommissionManagement /> },
       { path: "banners", element: <SuperBannerManagement /> },
       { path: "notifications", element: <NotificationManagement /> },
