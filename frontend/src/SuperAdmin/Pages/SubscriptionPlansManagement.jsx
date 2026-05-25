@@ -243,7 +243,7 @@ const SubscriptionPlansManagement = () => {
           {[1, 2, 3].map(i => <div key={i} className={`bg-slate-100 rounded-3xl animate-pulse ${viewMode === 'grid' ? 'h-64' : 'h-32'}`} />)}
         </div>
       ) : viewMode === 'table' ? (
-        <div className="bg-white rounded-[2rem] shadow-sm border-2 border-slate-100 overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm border-2 border-slate-100 overflow-hidden">
           <div className="overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             <table className="w-full text-left border-collapse">
               <thead>
