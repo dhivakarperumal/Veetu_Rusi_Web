@@ -17,6 +17,17 @@ const FranchiseDetails = () => {
 
   const copy = (text) => { navigator.clipboard.writeText(text || ''); toast.success('Copied!'); };
 
+  const handleDelete = async () => {
+    if (!window.confirm('Delete this franchise owner?')) return;
+    try {
+      await api.delete(`/superadmin/franchises/${franchise.id}`);
+      toast.success('Franchise removed.');
+      navigate('/superadmin/franchises');
+    } catch (err) {
+      toast.error('Failed to delete franchise.');
+    }
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('en-IN');
@@ -80,10 +91,18 @@ const FranchiseDetails = () => {
   if (!franchise) return null;
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="space-y-6 animate-in fade-in duration-300 bg-gradient-to-b from-slate-50 to-white min-h-screen p-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <button onClick={() => navigate('/superadmin/franchises')} className="flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest text-slate-500 hover:text-slate-800 bg-white border border-slate-200 px-4 py-2 rounded-xl transition shadow-sm active:scale-95 self-start">← Back to List</button>
-        <h2 className="text-2xl font-black tracking-tight">{franchise.franchise_name}</h2>
+        <div className="flex items-center gap-4">
+          <button onClick={() => navigate('/superadmin/franchises')} className="flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest text-slate-500 hover:text-slate-800 bg-white border border-slate-200 px-4 py-2 rounded-xl transition shadow-sm active:scale-95">← Back to List</button>
+          <h2 className="text-3xl font-black tracking-tight">{franchise.franchise_name}</h2>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-black text-emerald-700 bg-emerald-50 border border-emerald-200/50 px-3 py-2 rounded-lg">{franchise.commission_percentage}% Commission</span>
+          <button onClick={() => { navigate('/superadmin/franchises'); toast('Open the list to edit.'); }} className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-black uppercase tracking-wider hover:bg-slate-50">Edit Details</button>
+          <button onClick={handleDelete} className="px-4 py-2 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl text-sm font-black uppercase tracking-wider hover:bg-rose-100">Delete Owner</button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -140,6 +159,7 @@ const FranchiseDetails = () => {
 
         {/* Right content */}
         <div className="flex-1 min-w-0 lg:col-span-2">
+          <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-lg">
           {activeDetailTab === 'franchise' && (
             <div className="space-y-6">
               <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest border-b border-slate-100 pb-2">Franchise Information</h3>
@@ -319,6 +339,7 @@ const FranchiseDetails = () => {
               )}
             </div>
           )}
+          </div>
         </div>
       </div>
     </div>
