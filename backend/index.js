@@ -12,7 +12,7 @@ const productsRouter = require('./src/routes/products');
 const ordersRouter = require('./src/routes/orders');
 const preordersRouter = require('./src/routes/preorders');
 const categoriesRouter = require('./src/routes/categories');
-const { createProductsTable, createSubscriptionPlansTable } = require('./src/config/migrations');
+const { createProductsTable, createSubscriptionPlansTable, createFranchiseProductsTable } = require('./src/config/migrations');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -38,6 +38,7 @@ app.get('/api/health', (req, res) => {
 initDb().then(async () => {
   try {
     await createProductsTable();
+      await createFranchiseProductsTable();
     await createSubscriptionPlansTable();
   } catch (err) {
     console.error('Migration error:', err.message || err);

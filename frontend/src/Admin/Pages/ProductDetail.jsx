@@ -2,6 +2,16 @@ import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import api from "../../api";
 import { toast } from "react-hot-toast";
+
+const parseJsonField = (value) => {
+    if (value === null || value === undefined) return null;
+    if (typeof value === 'object') return value;
+    try {
+        return JSON.parse(value);
+    } catch {
+        return value;
+    }
+};
 import { QRCodeCanvas } from "qrcode.react";
 import {
     FiArrowLeft,
@@ -26,7 +36,17 @@ const ProductDetail = () => {
     const fetchProduct = async () => {
         try {
             const response = await api.get(`/products/${id}`);
-            setProduct(response.data);
+            const normalized = {
+                ...response.data,
+                images: parseJsonField(response.data.images) || [],
+                variants: Array.isArray(response.data.variants)
+                    ? response.data.variants.map((variant) => ({
+                        ...variant,
+                        images: parseJsonField(variant.images) || []
+                    }))
+                    : []
+            };
+            setProduct(normalized);
             setLoading(false);
         } catch (error) {
             toast.error("Failed to load boutique creation.");
@@ -57,7 +77,9 @@ const ProductDetail = () => {
     );
 
     const currentVariant = product.variants?.[activeVariant] || {};
-    const displayImages = currentVariant.images?.length > 0 ? currentVariant.images : (product.images || []);
+    const displayImages = Array.isArray(currentVariant.images) && currentVariant.images.length > 0
+        ? currentVariant.images
+        : (Array.isArray(product.images) ? product.images : []);
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-12">

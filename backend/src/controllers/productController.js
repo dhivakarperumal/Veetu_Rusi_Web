@@ -26,7 +26,7 @@ const serializeJsonField = (value) => {
 
 const generateNextProductCode = async () => {
     const [products] = await pool.execute(
-        'SELECT product_code FROM products WHERE product_code LIKE "SP%" ORDER BY id DESC LIMIT 1'
+        'SELECT product_code FROM franchise_products WHERE product_code LIKE "SP%" ORDER BY id DESC LIMIT 1'
     );
     if (products.length === 0) return 'SP001';
 
@@ -36,27 +36,27 @@ const generateNextProductCode = async () => {
     return `SP${String(nextNumber).padStart(3, '0')}`;
 };
 
-// Get all products (with filters)
+// Get all products (with filters) - from franchise_products table
 exports.getAllProducts = async (req, res) => {
     try {
-        const { chef_id, category, status } = req.query;
-        let query = 'SELECT * FROM products WHERE 1=1';
+        const { category, status, franchise_id, franchise_user_id } = req.query;
+        let query = 'SELECT * FROM franchise_products WHERE 1=1';
         const params = [];
 
-        if (chef_id) {
-            query += ' AND chef_id = ?';
-            params.push(chef_id);
+        // Allow filtering by franchise_id or franchise_user_id
+        if (franchise_id) {
+            query += ' AND franchise_id = ?';
+            params.push(franchise_id);
         }
-        // Allow filtering by chef_user_id (home chef's user id)
-        if (req.query.chef_user_id) {
-            query += ' AND chef_user_id = ?';
-            params.push(req.query.chef_user_id);
+        if (franchise_user_id) {
+            query += ' AND franchise_user_id = ?';
+            params.push(franchise_user_id);
         }
         if (category) {
             query += ' AND category = ?';
             params.push(category);
         }
-        if (status) {
+        if (status && status !== 'All') {
             query += ' AND status = ?';
             params.push(status);
         }
@@ -66,7 +66,8 @@ exports.getAllProducts = async (req, res) => {
         const [products] = await pool.execute(query, params);
         const normalizedProducts = products.map((product) => ({
             ...product,
-            variants: parseJsonField(product.variants)
+            variants: parseJsonField(product.variants) || [],
+            images: parseJsonField(product.images) || []
         }));
 
         res.json(normalizedProducts);
@@ -76,11 +77,11 @@ exports.getAllProducts = async (req, res) => {
     }
 };
 
-// Get product by ID
+// Get product by ID - from franchise_products table
 exports.getProductById = async (req, res) => {
     try {
         const { id } = req.params;
-        const [products] = await pool.execute('SELECT * FROM products WHERE id = ?', [id]);
+        const [products] = await pool.execute('SELECT * FROM franchise_products WHERE id = ?', [id]);
 
         if (products.length === 0) {
             return res.status(404).json({ message: 'Product not found' });
@@ -89,7 +90,8 @@ exports.getProductById = async (req, res) => {
         const product = products[0];
         res.json({
             ...product,
-            variants: parseJsonField(product.variants)
+            variants: parseJsonField(product.variants) || [],
+            images: parseJsonField(product.images) || []
         });
     } catch (error) {
         console.error('Error fetching product:', error);
@@ -132,11 +134,7 @@ exports.createProduct = async (req, res) => {
             packaging_type,
             manufacture_date,
             variants,
-            chef_id,
-            chef_user_id,
-            chef_name,
-            chef_phone,
-            chef_email,
+            images,
             created_by_user_id,
             franchise_user_id,
             created_by_email,
@@ -152,55 +150,16 @@ exports.createProduct = async (req, res) => {
             });
         }
 
-        // Determine product code and load home chef metadata
+        // Determine product code
         const finalProductCode = product_code || await generateNextProductCode();
-        let homeChef = null;
-        let finalChefId = chef_id;
 
-        const candidateChefId = chef_id || req.user?.user_id || req.user?.id || null;
-        const candidateEmail = req.user?.email || null;
-        const candidatePhone = req.user?.phone || null;
-
-        if (candidateChefId || candidateEmail || candidatePhone) {
-            const [homeChefs] = await pool.execute(
-                `SELECT hc.*, u.id AS chef_user_id, hc.created_by_id AS franchise_user_id
-                FROM home_chefs hc
-                LEFT JOIN users u ON (u.email = hc.email OR u.phone = hc.mobile)
-                WHERE hc.chef_id = ?
-                   OR hc.email = ?
-                   OR hc.mobile = ?
-                   OR u.user_id = ?
-                   OR u.id = ?
-                LIMIT 1`,
-                [candidateChefId, candidateEmail, candidatePhone, candidateChefId, candidateChefId]
-            );
-
-            if (homeChefs.length > 0) {
-                homeChef = homeChefs[0];
-                finalChefId = homeChef.chef_id;
-            }
-        }
-
-        if (!homeChef) {
-            return res.status(400).json({
-                message: 'Home chef not found. Send a valid chef_id or use a logged-in chef account.'
-            });
-        }
-        const finalChefUserId = chef_user_id || homeChef?.chef_user_id || req.user?.id || null;
-        const finalChefName = homeChef.name || chef_name || null;
-        const finalChefPhone = homeChef.mobile || chef_phone || null;
-        const finalChefEmail = homeChef.email || chef_email || null;
-        const finalFranchiseUserId = franchise_user_id || franchise_id || homeChef?.franchise_user_id || homeChef?.created_by_id || created_by_user_id || req.user?.user_id || req.user?.id || null;
-        const finalFranchiseName = homeChef.created_by_name || null;
-        const finalFranchiseEmail = homeChef.created_by_email || null;
-        const finalFranchisePhone = homeChef.created_by_phone || null;
-        const finalFranchiseId = franchise_id || null;
-
-        // Created-by metadata: prefer explicit body values, fall back to authenticated user
+        // Set franchise info from authenticated user
+        const finalFranchiseUserId = franchise_user_id || req.user?.user_id || req.user?.id || null;
         const finalCreatedByUserId = created_by_user_id || req.user?.user_id || req.user?.id || null;
         const finalCreatedByEmail = created_by_email || req.user?.email || null;
         const finalCreatedByName = created_by_name || req.user?.name || null;
         const finalCreatedByPhone = created_by_phone || req.user?.phone || null;
+        const finalFranchiseId = franchise_id || null;
 
         const params = [
             name, description || null, category, product_type || 'Cooked Food', subcategory || null,
@@ -212,30 +171,33 @@ exports.createProduct = async (req, res) => {
             prep_time || null, ingredients || null, spice_level || 'Medium',
             shelf_life_days || null, net_weight || null, package_count || null,
             packaging_type || 'Pouch', manufacture_date || null,
-            variants ? JSON.stringify(variants) : null, finalChefId, finalChefUserId,
-            finalChefName, finalChefPhone, finalChefEmail, finalFranchiseUserId,
-            finalFranchiseName, finalFranchiseEmail, finalFranchisePhone, finalCreatedByUserId,
-            finalCreatedByEmail, finalCreatedByName, finalCreatedByPhone, finalFranchiseId
+            variants ? JSON.stringify(variants) : null,
+            images ? JSON.stringify(images) : null,
+            finalFranchiseUserId,
+            finalCreatedByName, finalCreatedByEmail, finalCreatedByPhone, finalCreatedByUserId,
+            finalFranchiseId
         ];
 
         const columns = `name, description, category, product_type, subcategory, mrp, offer, offer_price,
             product_code, total_stock, rating, status, material, nutrition_info, storage_instructions,
             presentation_style, portion_format, service_type, packaging_notes, dietary_tag, heat_profile,
             serving_size, prep_time, ingredients, spice_level, shelf_life_days, net_weight, package_count,
-            packaging_type, manufacture_date, variants, chef_id, chef_user_id, chef_name, chef_phone, chef_email,
-            franchise_user_id, franchise_name, franchise_email, franchise_phone, created_by_user_id, created_by_email, created_by_name, created_by_phone, franchise_id`;
+            packaging_type, manufacture_date, variants, images, franchise_user_id,
+            created_by_name, created_by_email, created_by_phone, created_by_user_id,
+            franchise_id`;
 
         const placeholders = params.map(() => '?').join(', ');
         // Sanitize undefined -> null for insert params as well
         const insertParams = params.map(v => v === undefined ? null : v);
 
+        // Always insert into franchise_products table
         const [result] = await pool.execute(
-            `INSERT INTO products (${columns}) VALUES (${placeholders})`,
+            `INSERT INTO franchise_products (${columns}) VALUES (${placeholders})`,
             insertParams
         );
 
         res.status(201).json({
-            message: 'Product created successfully',
+            message: 'Franchise product created successfully',
             id: result.insertId,
             product_code: finalProductCode
         });
@@ -254,29 +216,27 @@ exports.updateProduct = async (req, res) => {
             product_code, total_stock, rating, status, material, nutrition_info, storage_instructions,
             presentation_style, portion_format, service_type, packaging_notes, dietary_tag, heat_profile,
             serving_size, prep_time, ingredients, spice_level, shelf_life_days, net_weight, package_count,
-            packaging_type, manufacture_date, variants,
-            chef_id, chef_user_id, chef_name, chef_phone, chef_email,
-            franchise_user_id, franchise_name, franchise_email, franchise_phone,
+            packaging_type, manufacture_date, variants, images,
+            franchise_user_id,
             created_by_user_id, created_by_email, created_by_name, created_by_phone, franchise_id
         } = req.body;
 
         // Check if product exists
-        const [existing] = await pool.execute('SELECT id FROM products WHERE id = ?', [id]);
+        const [existing] = await pool.execute('SELECT id FROM franchise_products WHERE id = ?', [id]);
         if (existing.length === 0) {
             return res.status(404).json({ message: 'Product not found' });
         }
 
         // Update product
-        const updateQuery = `UPDATE products SET
+        const updateQuery = `UPDATE franchise_products SET
                 name = ?, description = ?, category = ?, product_type = ?, subcategory = ?,
                 mrp = ?, offer = ?, offer_price = ?, product_code = ?, total_stock = ?,
                 rating = ?, status = ?, material = ?, nutrition_info = ?, storage_instructions = ?,
                 presentation_style = ?, portion_format = ?, service_type = ?, packaging_notes = ?,
                 dietary_tag = ?, heat_profile = ?, serving_size = ?, prep_time = ?,
                 ingredients = ?, spice_level = ?, shelf_life_days = ?, net_weight = ?,
-                package_count = ?, packaging_type = ?, manufacture_date = ?, variants = ?,
-                chef_id = ?, chef_user_id = ?, chef_name = ?, chef_phone = ?, chef_email = ?,
-                franchise_user_id = ?, franchise_name = ?, franchise_email = ?, franchise_phone = ?,
+                package_count = ?, packaging_type = ?, manufacture_date = ?, variants = ?, images = ?,
+                franchise_user_id = ?,
                 created_by_user_id = ?, created_by_email = ?, created_by_name = ?, created_by_phone = ?,
                 franchise_id = ?, updated_at = NOW()
             WHERE id = ?`;
@@ -286,8 +246,8 @@ exports.updateProduct = async (req, res) => {
             presentation_style, portion_format, service_type, packaging_notes, dietary_tag, heat_profile,
             serving_size, prep_time, ingredients, spice_level, shelf_life_days, net_weight, package_count,
             packaging_type, manufacture_date, serializeJsonField(variants),
-            chef_id, chef_user_id, chef_name, chef_phone, chef_email,
-            franchise_user_id, franchise_name, franchise_email, franchise_phone,
+            images ? JSON.stringify(images) : null,
+            franchise_user_id,
             created_by_user_id, created_by_email, created_by_name, created_by_phone,
             franchise_id,
             id
@@ -311,12 +271,12 @@ exports.deleteProduct = async (req, res) => {
         const { id } = req.params;
 
         // Check if product exists
-        const [existing] = await pool.execute('SELECT id FROM products WHERE id = ?', [id]);
+        const [existing] = await pool.execute('SELECT id FROM franchise_products WHERE id = ?', [id]);
         if (existing.length === 0) {
             return res.status(404).json({ message: 'Product not found' });
         }
 
-        await pool.execute('DELETE FROM products WHERE id = ?', [id]);
+        await pool.execute('DELETE FROM franchise_products WHERE id = ?', [id]);
         res.json({ message: 'Product deleted successfully' });
     } catch (error) {
         console.error('Error deleting product:', error);
@@ -328,7 +288,7 @@ exports.deleteProduct = async (req, res) => {
 exports.getLatestProductCode = async (req, res) => {
     try {
         const [products] = await pool.execute(
-            'SELECT product_code FROM products WHERE product_code LIKE "SP%" ORDER BY id DESC LIMIT 1'
+            'SELECT product_code FROM franchise_products WHERE product_code LIKE "SP%" ORDER BY id DESC LIMIT 1'
         );
 
         let nextCode = 'SP001';

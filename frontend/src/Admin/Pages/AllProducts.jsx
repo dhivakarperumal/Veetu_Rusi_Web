@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import { useAdmin } from "../../PrivateRouter/AdminContext";
+import { useAuth } from "../../PrivateRouter/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../../api";
 import { toast, Toaster } from "react-hot-toast";
@@ -23,22 +24,52 @@ import {
 const AllProducts = () => {
     const navigate = useNavigate();
     const { productsCache, setProductsCached } = useAdmin();
+    const { user } = useAuth();
 
     const [searchTerm, setSearchTerm] = useState("");
     const [showLowStockOnly, setShowLowStockOnly] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
+    const [franchiseUserId, setFranchiseUserId] = useState(null);
+    const [franchiseLoaded, setFranchiseLoaded] = useState(false);
     const itemsPerPage = 8;
+
+    // Fetch franchise info on component mount
+    useEffect(() => {
+        const fetchFranchiseInfo = async () => {
+            try {
+                const res = await api.get("/auth/profile");
+                console.log("Profile API Response:", res.data);
+                const userId = res.data?.user?.user_id || res.data?.user?.id;
+                const franchiseId = res.data?.franchise?.franchise_id;
+                if (userId) {
+                    console.log("Franchise user_id found:", userId);
+                    setFranchiseUserId(userId);
+                } else if (franchiseId) {
+                    console.log("Franchise ID found in franchise record:", franchiseId);
+                    setFranchiseUserId(franchiseId);
+                } else {
+                    console.warn("No franchise user_id or franchise_id in profile response");
+                }
+            } catch (error) {
+                console.error("Error fetching franchise info:", error);
+            } finally {
+                setFranchiseLoaded(true);
+            }
+        };
+        fetchFranchiseInfo();
+    }, []);
 
     const currentCacheKey = JSON.stringify({
         page: currentPage,
         limit: itemsPerPage,
         search: searchTerm,
-        status: showLowStockOnly ? "Low Stock" : "All"
+        status: showLowStockOnly ? "Low Stock" : "All",
+        franchiseUserId: franchiseUserId
     });
 
     const pageData = productsCache[currentCacheKey];
     const [products, setProducts] = useState(pageData?.products || []);
-    const [loading, setLoading] = useState(!pageData);
+    const [loading, setLoading] = useState(false);
     const [viewMode, setViewMode] = useState("table"); // 'table' or 'grid'
 
     // Stock Update Modal State
@@ -54,74 +85,189 @@ const AllProducts = () => {
     const [rapidSaving, setRapidSaving] = useState(false);
     const [rapidProd, setRapidProd] = useState({ name: "", mrp: "", status: "Active" });
 
-    const handleRapidAdd = async (e, shouldContinue = false) => {
-        if (e) e.preventDefault();
-        if (!rapidProd.name || !rapidProd.mrp) return toast.error("Essentials missing!");
+  // Rapid Add Product
+// Rapid Add Product
+const handleRapidAdd = async (e, shouldContinue = false) => {
+    if (e) e.preventDefault();
 
-        setRapidSaving(true);
-        try {
-            await api.post("/products", {
-                ...rapidProd,
-                category: "Saree",
-                total_stock: "0",
-                variants: []
-            });
-            toast.success("Boutique addition live!");
-            if (shouldContinue) {
-                setRapidProd({ name: "", mrp: "", status: "Active" });
-            } else {
-                setIsRapidAddOpen(false);
-                setRapidProd({ name: "", mrp: "", status: "Active" });
-            }
-            fetchProducts();
-        } catch (error) {
-            toast.error("Process failed.");
-        } finally {
-            setRapidSaving(false);
+    if (!rapidProd.name || !rapidProd.mrp) {
+        return toast.error("Essentials missing!");
+    }
+
+    setRapidSaving(true);
+
+    try {
+        await api.post("/products", {
+            ...rapidProd,
+            category: "Saree",
+            total_stock: 0,
+            variants: [],
+            franchise_user_id: franchiseUserId,
+            franchise_id: franchiseUserId
+        });
+
+        toast.success("Product added successfully");
+
+        setRapidProd({
+            name: "",
+            mrp: "",
+            status: "Active"
+        });
+
+        if (!shouldContinue) {
+            setIsRapidAddOpen(false);
         }
+
+        // clear cache + refresh
+        setProductsCached({});
+        fetchProducts();
+
+    } catch (error) {
+        console.log("Create Error:", error);
+        toast.error(
+            error?.response?.data?.message ||
+            "Product creation failed"
+        );
+    } finally {
+        setRapidSaving(false);
+    }
+};
+
+
+
+// Fetch Products
+const fetchProducts = async () => {
+
+    if (!franchiseLoaded) return;
+
+    const params = {
+        page: currentPage,
+        limit: itemsPerPage,
+        search: searchTerm,
+        franchise_user_id: franchiseUserId,
+        ...(showLowStockOnly ? { status: "Low Stock" } : {})
     };
 
-    const fetchProducts = async () => {
-        const params = {
-            page: currentPage,
-            limit: itemsPerPage,
-            search: searchTerm,
-            status: showLowStockOnly ? "Low Stock" : "All"
+    const cacheKey = JSON.stringify(params);
+
+    // Use cache
+    if (productsCache?.[cacheKey]) {
+
+        const cachedData = productsCache[cacheKey];
+
+        setProducts(cachedData.products || []);
+        setPagination(
+            cachedData.pagination || {
+                total: 0,
+                totalPages: 1
+            }
+        );
+
+        setStats(
+            cachedData.stats || {
+                total: 0,
+                active: 0,
+                lowStock: 0,
+                outOfStock: 0
+            }
+        );
+
+        return;
+    }
+
+    setLoading(true);
+
+    try {
+
+        console.log(
+            "Fetching Franchise Products:",
+            params
+        );
+
+        const response = await api.get(
+            "/products",
+            { params }
+        );
+
+        console.log(
+            "Franchise Products Response:",
+            response.data
+        );
+
+        const data = response.data;
+
+        const finalData = {
+
+            products:
+                data?.products ||
+                data ||
+                [],
+
+            pagination:
+                data?.pagination || {
+                    total:
+                        data?.length || 0,
+                    totalPages: 1
+                },
+
+            stats:
+                data?.stats || {
+                    total:
+                        data?.length || 0,
+
+                    active:
+                        data?.filter(
+                            p => p.status === "Active"
+                        ).length || 0,
+
+                    lowStock:
+                        data?.filter(
+                            p => p.status === "Low Stock"
+                        ).length || 0,
+
+                    outOfStock:
+                        data?.filter(
+                            p => p.status === "Out of Stock"
+                        ).length || 0
+                }
         };
-        const cacheKey = JSON.stringify(params);
-        if (!productsCache[cacheKey]) setLoading(true);
 
-        try {
-            const response = await api.get("/products", { params });
-            const data = response.data;
-            let finalData = {};
-            if (Array.isArray(data)) {
-                finalData = { products: data, pagination: { total: data.length, totalPages: 1 }, stats: { total: 0, active: 0, lowStock: 0, outOfStock: 0 } };
-            } else {
-                finalData = {
-                    products: Array.isArray(data.products) ? data.products : [],
-                    pagination: data.pagination || { total: 0, totalPages: 1 },
-                    stats: data.stats || { total: 0, active: 0, lowStock: 0, outOfStock: 0 }
-                };
-            }
-            setProducts(finalData.products);
-            setPagination(finalData.pagination);
-            setStats(finalData.stats);
-            setProductsCached(prev => ({ ...prev, [cacheKey]: finalData }));
-        } catch (error) {
-            console.error("Error fetching products:", error);
-            setProducts([]);
-        } finally {
-            setLoading(false);
-        }
-    };
+        setProducts(finalData.products);
+        setPagination(finalData.pagination);
+        setStats(finalData.stats);
+
+        // save cache
+        setProductsCached(prev => ({
+            ...prev,
+            [cacheKey]: finalData
+        }));
+
+    } catch (error) {
+
+        console.log(
+            "Fetch Error:",
+            error
+        );
+
+        toast.error(
+            error?.response?.data?.message ||
+            "Failed to load franchise products"
+        );
+
+        setProducts([]);
+    } finally {
+        setLoading(false);
+    }
+};
 
     useEffect(() => {
-        const timeout = setTimeout(() => {
-            fetchProducts();
-        }, 300);
-        return () => clearTimeout(timeout);
-    }, [currentPage, searchTerm, showLowStockOnly]);
+        if (franchiseLoaded) {
+            const timeout = setTimeout(() => {
+                fetchProducts();
+            }, 300);
+            return () => clearTimeout(timeout);
+        }
+    }, [currentPage, searchTerm, showLowStockOnly, franchiseUserId, franchiseLoaded]);
 
     const handleDelete = async (id) => {
         if (!window.confirm("Are you sure you want to delete this product?")) return;

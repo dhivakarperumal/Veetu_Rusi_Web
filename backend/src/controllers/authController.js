@@ -138,6 +138,13 @@ exports.profile = async (req, res) => {
       }
     }
 
+    if (role === 'admin') {
+      const [rows] = await pool.execute('SELECT id, franchise_id, franchise_name, status FROM franchise_owners WHERE email = ? LIMIT 1', [email]);
+      if (rows.length > 0) {
+        response.franchise = rows[0];
+      }
+    }
+
     return res.status(200).json(response);
   } catch (error) {
     console.error('Profile error:', error);

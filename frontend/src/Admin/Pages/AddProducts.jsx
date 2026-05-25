@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   FaPlus,
   FaTrash,
@@ -21,9 +21,12 @@ import imageCompression from "browser-image-compression";
 const Products = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { id } = useParams();
   const editItem = location.state?.editItem;
+  const [fetchedEditItem, setFetchedEditItem] = useState(null);
 
-  const [activeTab, setActiveTab] = useState(editItem?.type === "combo" ? "combo" : "single");
+  const currentEditItem = editItem || fetchedEditItem;
+  const [activeTab, setActiveTab] = useState(currentEditItem?.type === "combo" ? "combo" : "single");
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [combos, setCombos] = useState([]);
@@ -75,6 +78,25 @@ const Products = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (!editItem && id) {
+      const loadEditItem = async () => {
+        try {
+          const res = await api.get(`/products/${id}`);
+          setFetchedEditItem(res.data);
+          const item = res.data;
+          const shouldBeCombo = item?.type === "combo" || item?.comboItems;
+          setActiveTab(shouldBeCombo ? "combo" : "single");
+        } catch (err) {
+          console.error("Failed to load edit product:", err);
+          toast.error("Unable to load product for editing.");
+          navigate("/admin/products/all");
+        }
+      };
+      loadEditItem();
+    }
+  }, [id, editItem, navigate]);
 
   const handleDelete = async (id, type) => {
     if (!window.confirm("Are you sure you want to delete this?")) return;
@@ -139,21 +161,21 @@ const Products = () => {
               categories={categories} 
               onSuccess={() => { 
                 fetchData(); 
-                navigate('/adminpanel/all-products');
+                navigate('/admin/products/all');
               }} 
               products={products} 
-              editItem={editItem} 
+              editItem={currentEditItem} 
             />
           ) : (
             <ComboProductForm 
               categories={categories} 
               onSuccess={() => { 
                 fetchData(); 
-                navigate('/adminpanel/all-products');
+                navigate('/admin/products/all');
               }} 
               combos={combos} 
               products={products} 
-              editItem={editItem} 
+              editItem={currentEditItem} 
             />
           )}
         </div>
@@ -181,7 +203,23 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
   });
   const [loading, setLoading] = useState(false);
   const [manualWeight, setManualWeight] = useState(false);
+  const [franchiseId, setFranchiseId] = useState(null);
   const barcodeRef = useRef();
+
+  // Fetch franchise info on component mount
+  useEffect(() => {
+    const fetchFranchiseInfo = async () => {
+      try {
+        const res = await api.get("/auth/profile");
+        if (res.data.franchise && res.data.franchise.franchise_id) {
+          setFranchiseId(res.data.franchise.franchise_id);
+        }
+      } catch (error) {
+        console.error("Error fetching franchise info:", error);
+      }
+    };
+    fetchFranchiseInfo();
+  }, []);
 
   const safeParse = (data) => {
     if (!data) return [];
@@ -262,11 +300,26 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
     e.preventDefault();
     setLoading(true);
     try {
+      // Ensure backend-required top-level fields are present
+      const computedMrp = form.mrp || (Array.isArray(form.variants) && form.variants[0] && form.variants[0].mrp) || null;
+      if (!computedMrp) {
+        toast.error('Please enter MRP for the first variant or set product MRP');
+        setLoading(false);
+        return;
+      }
+
+      const payload = {
+        ...form,
+        mrp: computedMrp,
+        variants: form.variants,
+        franchise_id: franchiseId
+      };
+
       if (editItem) {
-        await api.put(`/products/${editItem.id}`, form);
+        await api.put(`/products/${editItem.id}`, payload);
         toast.success("Inventory Pulse Updated");
       } else {
-        await api.post("/products", form);
+        await api.post("/products", payload);
         toast.success("Product Registered Successfully");
       }
       onSuccess();
