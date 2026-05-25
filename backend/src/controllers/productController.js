@@ -345,18 +345,88 @@ exports.getLatestProductCode = async (req, res) => {
     }
 };
 
-// Get categories (can be enhanced based on database structure)
+const fs = require('fs').promises;
+const path = require('path');
+
+const categoriesFile = path.join(__dirname, '..', 'data', 'categories.json');
+
+async function readCategories() {
+    try {
+        const raw = await fs.readFile(categoriesFile, 'utf8');
+        return JSON.parse(raw);
+    } catch (err) {
+        console.error('Failed to read categories file:', err);
+        return [];
+    }
+}
+
+async function writeCategories(list) {
+    try {
+        await fs.writeFile(categoriesFile, JSON.stringify(list, null, 2), 'utf8');
+    } catch (err) {
+        console.error('Failed to write categories file:', err);
+        throw err;
+    }
+}
+
+// Get categories from JSON store
 exports.getCategories = async (req, res) => {
     try {
-        const categories = [
-            { id: 1, name: 'Cooked Food', subcategory: ['Biryani', 'Curry', 'Bread', 'Rice'] },
-            { id: 2, name: 'Masala / Pre-cooked', subcategory: ['Spice Mix', 'Pasta Mix', 'Sauce'] },
-            { id: 3, name: 'Snacks', subcategory: ['Samosa', 'Pakora', 'Chips'] },
-            { id: 4, name: 'Beverages', subcategory: ['Juice', 'Coffee', 'Tea'] }
-        ];
+        const categories = await readCategories();
         res.json(categories);
     } catch (error) {
         console.error('Error fetching categories:', error);
         res.status(500).json({ message: 'Failed to fetch categories', error: error.message });
+    }
+};
+
+// Create a new category
+exports.createCategory = async (req, res) => {
+    try {
+        const { catId, name, description = '', subcategory = [], images = [] } = req.body;
+        if (!catId || !name) return res.status(400).json({ message: 'catId and name are required' });
+
+        const categories = await readCategories();
+        const nextId = categories.length > 0 ? Math.max(...categories.map(c => c.id)) + 1 : 1;
+        const newCat = { id: nextId, catId, name, description, subcategory, images };
+        categories.unshift(newCat);
+        await writeCategories(categories);
+        res.status(201).json({ id: newCat.id });
+    } catch (err) {
+        console.error('Failed to create category:', err);
+        res.status(500).json({ message: 'Failed to create category', error: err.message });
+    }
+};
+
+// Update existing category by catId
+exports.updateCategory = async (req, res) => {
+    try {
+        const catId = req.params.catId;
+        const updates = req.body;
+        const categories = await readCategories();
+        const idx = categories.findIndex(c => c.catId === catId || String(c.id) === String(catId));
+        if (idx === -1) return res.status(404).json({ message: 'Category not found' });
+        categories[idx] = { ...categories[idx], ...updates };
+        await writeCategories(categories);
+        res.json({ message: 'Updated' });
+    } catch (err) {
+        console.error('Failed to update category:', err);
+        res.status(500).json({ message: 'Failed to update category', error: err.message });
+    }
+};
+
+// Delete category by catId
+exports.deleteCategory = async (req, res) => {
+    try {
+        const catId = req.params.catId;
+        let categories = await readCategories();
+        const before = categories.length;
+        categories = categories.filter(c => c.catId !== catId && String(c.id) !== String(catId));
+        if (categories.length === before) return res.status(404).json({ message: 'Category not found' });
+        await writeCategories(categories);
+        res.json({ message: 'Deleted' });
+    } catch (err) {
+        console.error('Failed to delete category:', err);
+        res.status(500).json({ message: 'Failed to delete category', error: err.message });
     }
 };

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import api from "../../api";
 import { toast, Toaster } from "react-hot-toast";
-import { Search, ShieldAlert, ShieldCheck, Trash2, Users, UserCheck, UserX } from "lucide-react";
+import { Search, ShieldAlert, ShieldCheck, Trash2, Users, UserCheck, UserX, Filter } from "lucide-react";
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -135,7 +135,7 @@ const UserManagement = () => {
 
       {/* Filter & Search Bar Area */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-white p-4 rounded-[1.5rem] border border-slate-200 shadow-sm mt-8">
-          <div className="relative w-full flex-1">
+          <div className="relative w-full md:w-[400px]">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
               <input
                   type="text"
@@ -144,6 +144,30 @@ const UserManagement = () => {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
               />
+          </div>
+          
+          <div className="flex items-center gap-3 w-full md:w-auto">
+              <div className="relative flex-1 md:w-48">
+                  <select 
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      className="w-full appearance-none bg-slate-50 border border-slate-200 text-slate-600 text-xs font-bold uppercase tracking-widest rounded-xl px-5 py-3.5 pr-10 outline-none cursor-pointer focus:border-blue-400 transition-colors"
+                  >
+                      <option value="All">All Statuses</option>
+                      <option value="Active">Active</option>
+                      <option value="Blocked">Blocked</option>
+                  </select>
+                  <Filter className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none w-4 h-4" />
+              </div>
+              
+              <div className="flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200">
+                  <button className="p-2.5 bg-white text-slate-700 rounded-lg shadow-sm border border-slate-200">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                  </button>
+                  <button className="p-2.5 text-slate-400 hover:text-slate-600">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                  </button>
+              </div>
           </div>
       </div>
 

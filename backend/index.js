@@ -11,13 +11,15 @@ const dashboardRouter = require('./src/routes/dashboard');
 const productsRouter = require('./src/routes/products');
 const ordersRouter = require('./src/routes/orders');
 const preordersRouter = require('./src/routes/preorders');
+const categoriesRouter = require('./src/routes/categories');
 const { createProductsTable, createSubscriptionPlansTable } = require('./src/config/migrations');
 
 const app = express();
 const port = process.env.PORT || 5000;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use('/api/auth', authRouter);
@@ -27,6 +29,7 @@ app.use('/api/dashboard', dashboardRouter);
 app.use('/api/products', productsRouter);
 app.use('/api/orders', ordersRouter);
 app.use('/api/preorders', preordersRouter);
+app.use('/api/categories', categoriesRouter);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });

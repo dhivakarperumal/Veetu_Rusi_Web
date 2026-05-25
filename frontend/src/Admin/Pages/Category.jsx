@@ -22,6 +22,28 @@ const Category = () => {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    // Default categories to import
+    const defaultCategories = [
+        "Grocery",
+        "Fruits",
+        "Vegetables",
+        "Dairy Products",
+        "Bakery",
+        "Snacks",
+        "Beverages",
+        "Meat & Seafood",
+        "Frozen Foods",
+        "Personal Care",
+        "Household Items",
+        "Baby Care",
+        "Health & Wellness",
+        "Pet Care",
+        "Stationery",
+        "Kitchen Items",
+        "Festival Items",
+        "Electronics",
+    ];
+
     useEffect(() => {
         fetchCategories();
     }, []);
@@ -198,6 +220,46 @@ const Category = () => {
         setIsModalOpen(true);
     };
 
+    // Bulk import default categories (only missing ones)
+    const handleBulkImportDefaults = async () => {
+        if (!window.confirm('Import default categories? This will add any missing categories.')) return;
+        try {
+            toast.loading('Importing categories...');
+
+            // Build set of existing names (case-insensitive)
+            const existing = new Set(categories.map(c => (c.name || '').toLowerCase()));
+
+            // Determine current max numeric id
+            const existingIds = categories.map(c => {
+                const match = c.catId && c.catId.match(/\d+/);
+                return match ? parseInt(match[0], 10) : 0;
+            });
+            let maxId = existingIds.length ? Math.max(...existingIds) : 0;
+
+            const added = [];
+            for (const name of defaultCategories) {
+                if (existing.has(name.toLowerCase())) continue;
+                maxId += 1;
+                const catId = `CAT${String(maxId).padStart(3, '0')}`;
+                const payload = { catId, name, description: '', subcategory: [], images: [] };
+                // Create category via API
+                const res = await api.post('/categories', payload);
+                added.push({ ...payload, id: res.data.id });
+            }
+
+            if (added.length > 0) {
+                // Prepend added items for visibility
+                setCategories(prev => [...added, ...prev]);
+                toast.success(`Imported ${added.length} categories`);
+            } else {
+                toast('No new categories to import');
+            }
+        } catch (err) {
+            console.error('Bulk import failed', err);
+            toast.error('Failed to import categories');
+        }
+    };
+
     const openEditModal = (category) => {
         setFormData({
             catId: category.catId,
@@ -251,12 +313,21 @@ const Category = () => {
                     </div>
 
                     {/* Add Button */}
-                    <button
-                        onClick={openAddModal}
-                        className="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg shadow-blue-200 active:scale-95"
-                    >
-                        <FiPlus className="text-lg" /> New Category
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={handleBulkImportDefaults}
+                            className="hidden sm:inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-xl font-bold transition-all"
+                        >
+                            <FiUploadCloud className="text-lg" /> Import Defaults
+                        </button>
+
+                        <button
+                            onClick={openAddModal}
+                            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg shadow-blue-200 active:scale-95"
+                        >
+                            <FiPlus className="text-lg" /> New Category
+                        </button>
+                    </div>
                 </div>
             </div>
 

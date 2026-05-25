@@ -38,7 +38,7 @@ const navItems = [
   { path: "/admin/delivery-partners", label: "Delivery Partners", icon: Bike },
   { path: "/admin/users", label: "User Management", icon: Users },
   // { path: "/admin/orders", label: "Order Management", icon: ShoppingBag },
-  { path: "/admin/payouts", label: "Payouts & Earnings", icon: CreditCard },
+  // { path: "/admin/payouts", label: "Payouts & Earnings", icon: CreditCard },
 
   {
     label: "Inventory",
