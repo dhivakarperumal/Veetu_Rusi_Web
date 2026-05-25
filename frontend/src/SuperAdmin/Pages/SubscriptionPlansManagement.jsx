@@ -9,6 +9,8 @@ const SubscriptionPlansManagement = () => {
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [viewMode, setViewMode] = useState('grid');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState(null);
   
@@ -138,10 +140,11 @@ const SubscriptionPlansManagement = () => {
     }
   };
 
-  const filteredPlans = plans.filter(p => 
-    p.name.toLowerCase().includes(search.toLowerCase()) || 
-    p.id.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredPlans = plans.filter(p => {
+    const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.id.toLowerCase().includes(search.toLowerCase());
+    const matchesStatus = statusFilter === 'ALL' || p.status.toUpperCase() === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   const activePlans = plans.filter(p => p.status === 'Active').length;
 
@@ -164,8 +167,8 @@ const SubscriptionPlansManagement = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-        <div className="bg-white border border-slate-100 border-l-4 border-l-[#1B4D22] p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-[#1B4D22] shrink-0">
+        <div className="bg-white border border-slate-200 border-l-4 border-l-slate-400 p-6 rounded-2xl shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 shrink-0">
             <CreditCard className="w-6 h-6" />
           </div>
           <div>
@@ -173,48 +176,85 @@ const SubscriptionPlansManagement = () => {
             <h4 className="text-2xl font-black text-slate-800 mt-1">{plans.length}</h4>
           </div>
         </div>
-        <div className="bg-white border border-slate-100 border-l-4 border-l-emerald-500 p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0">
-            <Activity className="w-6 h-6" />
+        <div className="bg-white border border-slate-200 border-l-4 border-l-emerald-500 p-6 rounded-2xl shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+            <CheckCircle className="w-6 h-6" />
           </div>
           <div>
             <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest">Active Plans</p>
             <h4 className="text-2xl font-black text-slate-800 mt-1">{activePlans}</h4>
           </div>
         </div>
-        <div className="bg-white border border-slate-100 border-l-4 border-l-slate-400 p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 shrink-0">
-            <Search className="w-6 h-6" />
+        <div className="bg-white border border-slate-200 border-l-4 border-l-orange-400 p-6 rounded-2xl shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center text-orange-500 shrink-0">
+            <X className="w-6 h-6" />
           </div>
-          <div className="flex-1 w-full relative">
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1.5">Quick Search</p>
-            <input 
-              type="text" 
-              placeholder="Search plans..." 
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm font-medium outline-none focus:border-emerald-500 transition-colors"
-            />
+          <div>
+            <p className="text-[10px] text-orange-500 font-bold uppercase tracking-widest">Pending & Inactive</p>
+            <h4 className="text-2xl font-black text-slate-800 mt-1">{plans.length - activePlans}</h4>
+          </div>
+        </div>
+      </div>
+
+      {/* Search and Filters Bar */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-3 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
+        <div className="relative flex-1 w-full max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input 
+            type="text" 
+            placeholder="Search by plan name or ID..." 
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full bg-slate-50 border border-slate-100 rounded-xl pl-9 pr-4 py-2.5 text-sm font-medium outline-none focus:bg-white focus:border-slate-300 transition-colors"
+          />
+        </div>
+        
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <select 
+            value={statusFilter}
+            onChange={e => setStatusFilter(e.target.value)}
+            className="bg-slate-50 border border-slate-100 rounded-xl px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-slate-600 outline-none focus:bg-white focus:border-slate-300 transition-colors cursor-pointer"
+          >
+            <option value="ALL">All Statuses</option>
+            <option value="ACTIVE">Active</option>
+            <option value="INACTIVE">Inactive</option>
+          </select>
+
+          <div className="flex items-center bg-slate-50 border border-slate-100 rounded-xl p-1">
+            <button 
+              onClick={() => setViewMode('list')}
+              className={`p-1.5 rounded-lg transition-colors ${viewMode === 'list' ? 'bg-white shadow-sm text-[#1B4D22]' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+            </button>
+            <button 
+              onClick={() => setViewMode('grid')}
+              className={`p-1.5 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-white shadow-sm text-[#1B4D22]' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+            </button>
           </div>
         </div>
       </div>
 
       {/* Grid of Plans */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3].map(i => <div key={i} className="h-64 bg-slate-100 rounded-3xl animate-pulse" />)}
+        <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
+          {[1, 2, 3].map(i => <div key={i} className={`bg-slate-100 rounded-3xl animate-pulse ${viewMode === 'grid' ? 'h-64' : 'h-32'}`} />)}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
           {filteredPlans.map((plan) => (
             <div 
               key={plan.id} 
-              className={`bg-white rounded-[2rem] border-2 transition-all duration-300 hover:-translate-y-1 shadow-sm hover:shadow-xl overflow-hidden flex flex-col ${
+              className={`bg-white rounded-[2rem] border-2 transition-all duration-300 hover:-translate-y-1 shadow-sm hover:shadow-xl overflow-hidden flex ${
+                viewMode === 'grid' ? 'flex-col' : 'flex-row items-center'
+              } ${
                 plan.status === 'Active' ? 'border-transparent hover:border-emerald-100' : 'border-slate-100 opacity-70'
               }`}
             >
               {/* Card Header */}
-              <div className={`p-6 pb-4 ${plan.status === 'Active' ? 'bg-gradient-to-br from-emerald-600 to-teal-700 text-white' : 'bg-slate-100 text-slate-500'}`}>
+              <div className={`p-6 ${viewMode === 'grid' ? 'pb-4 w-full' : 'w-1/3 h-full flex flex-col justify-center border-r border-slate-100'} ${plan.status === 'Active' ? 'bg-gradient-to-br from-emerald-600 to-teal-700 text-white' : 'bg-slate-100 text-slate-500'}`}>
                 <div className="flex justify-between items-start mb-2">
                   <span className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${
                     plan.status === 'Active' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-600'
@@ -234,29 +274,31 @@ const SubscriptionPlansManagement = () => {
               </div>
 
               {/* Card Body */}
-              <div className="p-6 flex-1 flex flex-col">
-                <div className="flex items-baseline gap-1 mb-6">
-                  <span className="text-4xl font-black text-slate-800">
-                    {plan.currency === 'INR' ? '₹' : plan.currency}{Number(plan.amount).toLocaleString('en-IN')}
-                  </span>
-                  <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">
-                    / {plan.durationDays} Days
-                  </span>
-                </div>
-
-                <div className="space-y-3 mb-8 flex-1">
-                  <div className="flex items-center gap-3 text-sm font-medium text-slate-600">
-                    <Clock className="w-5 h-5 text-emerald-500 shrink-0" />
-                    <span>Valid for {plan.durationDays} Days</span>
+              <div className={`p-6 flex-1 flex ${viewMode === 'grid' ? 'flex-col' : 'flex-row items-center justify-between'}`}>
+                <div className={`${viewMode === 'list' ? 'flex-1' : ''}`}>
+                  <div className={`flex items-baseline gap-1 ${viewMode === 'grid' ? 'mb-6' : 'mb-2'}`}>
+                    <span className="text-4xl font-black text-slate-800">
+                      {plan.currency === 'INR' ? '₹' : plan.currency}{Number(plan.amount).toLocaleString('en-IN')}
+                    </span>
+                    <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">
+                      / {plan.durationDays} Days
+                    </span>
                   </div>
-                  <div className="flex items-center gap-3 text-sm font-medium text-slate-600">
-                    <CheckCircle className="w-5 h-5 text-emerald-500 shrink-0" />
-                    <span>Full Access to Franchise Panel</span>
+
+                  <div className={`space-y-3 ${viewMode === 'grid' ? 'mb-8 flex-1' : ''}`}>
+                    <div className="flex items-center gap-3 text-sm font-medium text-slate-600">
+                      <Clock className="w-5 h-5 text-emerald-500 shrink-0" />
+                      <span>Valid for {plan.durationDays} Days</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm font-medium text-slate-600">
+                      <CheckCircle className="w-5 h-5 text-emerald-500 shrink-0" />
+                      <span>Full Access to Franchise Panel</span>
+                    </div>
                   </div>
                 </div>
 
                 {/* Actions */}
-                <div className="flex gap-2 pt-4 border-t border-slate-100 mt-auto">
+                <div className={`flex gap-2 ${viewMode === 'grid' ? 'pt-4 border-t border-slate-100 mt-auto' : 'ml-6 border-l border-slate-100 pl-6 flex-col justify-center'}`}>
                   <button 
                     onClick={() => handleToggleStatus(plan)}
                     className="flex-1 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors"
