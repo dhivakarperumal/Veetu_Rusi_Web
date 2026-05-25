@@ -37,7 +37,7 @@ const navItems = [
   { path: "/admin/homechefs", label: "Home Chefs", icon: ChefHat },
   { path: "/admin/delivery-partners", label: "Delivery Partners", icon: Bike },
   { path: "/admin/users", label: "User Management", icon: Users },
-  { path: "/admin/orders", label: "Order Management", icon: ShoppingBag },
+  // { path: "/admin/orders", label: "Order Management", icon: ShoppingBag },
   { path: "/admin/payouts", label: "Payouts & Earnings", icon: CreditCard },
 
   {
@@ -52,7 +52,7 @@ const navItems = [
   },
 
   {
-    label: "Orders",
+    label: "Order Management",
     icon: ShoppingCart,
     children: [
 

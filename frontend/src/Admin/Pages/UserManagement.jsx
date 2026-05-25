@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
 import api from "../../api";
-import { toast } from "react-hot-toast";
-import { Search, ShieldAlert, ShieldCheck, Trash2, Users } from "lucide-react";
+import { toast, Toaster } from "react-hot-toast";
+import { Search, ShieldAlert, ShieldCheck, Trash2, Users, UserCheck, UserX } from "lucide-react";
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
 
   useEffect(() => {
     fetchUsers();
@@ -27,20 +28,25 @@ const UserManagement = () => {
   };
 
   useEffect(() => {
+    let result = users;
     if (search.trim()) {
       const lower = search.toLowerCase();
-      setFilteredUsers(
-        users.filter(
-          (u) =>
-            u.name.toLowerCase().includes(lower) ||
-            u.email.toLowerCase().includes(lower) ||
-            (u.phone && u.phone.includes(lower))
-        )
+      result = result.filter(
+        (u) =>
+          u.name.toLowerCase().includes(lower) ||
+          u.email.toLowerCase().includes(lower) ||
+          (u.phone && u.phone.includes(lower))
       );
-    } else {
-      setFilteredUsers(users);
     }
-  }, [search, users]);
+    
+    if (statusFilter === "Active") {
+      result = result.filter((u) => u.active !== 0);
+    } else if (statusFilter === "Blocked") {
+      result = result.filter((u) => u.active === 0);
+    }
+    
+    setFilteredUsers(result);
+  }, [search, statusFilter, users]);
 
   const handleToggleStatus = async (id, currentActive) => {
     const nextActive = currentActive ? 0 : 1;
@@ -65,120 +71,182 @@ const UserManagement = () => {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-black text-white tracking-tight uppercase italic">User Management</h2>
-          <p className="text-xs text-white/40 font-bold uppercase tracking-widest mt-1">
-            Monitor registered customers, inspect account statistics, and block/suspend access
-          </p>
+    <div className="space-y-6 pb-20 font-sans animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <Toaster position="top-right" />
+
+      {/* Page Title */}
+      <div className="flex justify-between items-center mb-2">
+        <h2 className="text-xl font-black text-slate-800 tracking-tight uppercase">User Management</h2>
+      </div>
+
+      {/* Dark Premium Stat Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div 
+            onClick={() => setStatusFilter('All')}
+            className="group relative overflow-hidden rounded-2xl bg-[#131127] p-6 shadow-xl cursor-pointer transition-transform hover:-translate-y-1 border border-[#2a264a]"
+        >
+            <div className="absolute right-0 top-0 -mr-6 -mt-6 h-32 w-32 rounded-full bg-indigo-500/20 blur-2xl transition-transform duration-500 group-hover:scale-150"></div>
+            <div className="relative z-10 flex items-center gap-4">
+                <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-violet-600 shadow-lg text-white">
+                    <Users className="h-7 w-7" />
+                </div>
+                <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-indigo-300">Total Users</p>
+                    <h3 className="mt-1 text-3xl font-black text-white">{loading ? '-' : users.length}</h3>
+                    <p className="text-[10px] text-indigo-400 mt-1">All registered customers</p>
+                </div>
+            </div>
+        </div>
+
+        <div 
+            onClick={() => setStatusFilter('Active')}
+            className="group relative overflow-hidden rounded-2xl bg-[#0a1e17] p-6 shadow-xl cursor-pointer transition-transform hover:-translate-y-1 border border-[#143d2f]"
+        >
+            <div className="absolute right-0 top-0 -mr-6 -mt-6 h-32 w-32 rounded-full bg-emerald-500/20 blur-2xl transition-transform duration-500 group-hover:scale-150"></div>
+            <div className="relative z-10 flex items-center gap-4">
+                <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-emerald-500 shadow-lg text-white">
+                    <UserCheck className="h-7 w-7" />
+                </div>
+                <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-emerald-300">Active Users</p>
+                    <h3 className="mt-1 text-3xl font-black text-white">{loading ? '-' : users.filter(u => u.active !== 0).length}</h3>
+                    <p className="text-[10px] text-emerald-400 mt-1">Customers with full access</p>
+                </div>
+            </div>
+        </div>
+
+        <div 
+            onClick={() => setStatusFilter('Blocked')}
+            className="group relative overflow-hidden rounded-2xl bg-[#26150c] p-6 shadow-xl cursor-pointer transition-transform hover:-translate-y-1 border border-[#4d2a18]"
+        >
+            <div className="absolute right-0 top-0 -mr-6 -mt-6 h-32 w-32 rounded-full bg-rose-500/20 blur-2xl transition-transform duration-500 group-hover:scale-150"></div>
+            <div className="relative z-10 flex items-center gap-4">
+                <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-rose-500 shadow-lg text-white">
+                    <UserX className="h-7 w-7" />
+                </div>
+                <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-rose-300">Blocked Users</p>
+                    <h3 className="mt-1 text-3xl font-black text-white">{loading ? '-' : users.filter(u => u.active === 0).length}</h3>
+                    <p className="text-[10px] text-rose-400 mt-1">Suspended or blocked</p>
+                </div>
+            </div>
         </div>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="flex bg-[#0B1120]/40 backdrop-blur-md border border-white/5 p-4 rounded-3xl">
-        <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-          <input
-            type="text"
-            placeholder="Search by name, email or phone..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 bg-[#070b13]/60 border border-white/5 rounded-2xl outline-none font-medium text-white text-sm focus:border-emerald-500/30 transition-all"
-          />
-        </div>
-      </div>
-
-      {/* Data Table */}
-      {loading ? (
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-16 bg-white/5 rounded-2xl animate-pulse"></div>
-          ))}
-        </div>
-      ) : (
-        <div className="bg-[#0B1120]/40 backdrop-blur-md border border-white/5 rounded-[2.5rem] overflow-hidden shadow-xl">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b border-white/5 bg-[#070b13]/30">
-                  <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Customer Name</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Email Address</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Phone / Mobile</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Registered Date</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Status</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em] text-center">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {filteredUsers.map((u) => (
-                  <tr key={u.id} className="hover:bg-white/5 transition-colors">
-                    <td className="px-6 py-5">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center text-purple-400 border border-white/5">
-                          <Users className="w-4 h-4" />
-                        </div>
-                        <span className="text-sm font-black text-white">{u.name}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5 text-sm font-bold text-white/60">{u.email}</td>
-                    <td className="px-6 py-5 text-sm font-bold text-white/60">{u.phone || "N/A"}</td>
-                    <td className="px-6 py-5 text-xs font-bold text-white/40">
-                      {new Date(u.created_at).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-5">
-                      <span
-                        className={`text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider ${
-                          u.active !== 0
-                            ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                            : "bg-red-500/10 text-red-400 border border-red-500/20"
-                        }`}
-                      >
-                        {u.active !== 0 ? "Active" : "Blocked"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="flex items-center justify-center gap-2">
-                        {u.active !== 0 ? (
-                          <button
-                            onClick={() => handleToggleStatus(u.id, 1)}
-                            className="p-2 hover:bg-red-500/10 text-red-400 rounded-xl transition"
-                            title="Block User"
-                          >
-                            <ShieldAlert className="w-4 h-4" />
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => handleToggleStatus(u.id, 0)}
-                            className="p-2 hover:bg-emerald-500/10 text-emerald-400 rounded-xl transition"
-                            title="Unblock User"
-                          >
-                            <ShieldCheck className="w-4 h-4" />
-                          </button>
-                        )}
-                        <button
-                          onClick={() => handleDelete(u.id)}
-                          className="p-2 hover:bg-red-500/10 text-red-400 rounded-xl transition"
-                          title="Delete User"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {filteredUsers.length === 0 && (
-                  <tr>
-                    <td colSpan="6" className="px-6 py-8 text-center text-xs text-white/30 italic">
-                      No customer accounts found.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+      {/* Filter & Search Bar Area */}
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-white p-4 rounded-[1.5rem] border border-slate-200 shadow-sm mt-8">
+          <div className="relative w-full flex-1">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
+              <input
+                  type="text"
+                  placeholder="Search by name, email or phone..."
+                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-50 transition-all text-sm font-medium text-slate-700"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+              />
           </div>
-        </div>
-      )}
+      </div>
+
+      {/* Table Area */}
+      <div className="bg-white rounded-[1.5rem] shadow-sm border border-slate-200 overflow-hidden min-h-[400px]">
+          <div className="overflow-x-auto">
+              {loading ? (
+                  <div className="flex flex-col items-center justify-center py-24 gap-4">
+                      <div className="w-10 h-10 border-4 border-slate-200 border-t-[#2a3042] rounded-full animate-spin"></div>
+                      <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Loading Users...</p>
+                  </div>
+              ) : (
+                  <table className="w-full text-left border-collapse">
+                      <thead>
+                          <tr className="bg-[#2a3042]">
+                              <th className="px-6 py-5 text-xs font-black text-white uppercase tracking-wider">Customer Name</th>
+                              <th className="px-6 py-5 text-xs font-black text-white uppercase tracking-wider">Email Address</th>
+                              <th className="px-6 py-5 text-xs font-black text-white uppercase tracking-wider">Phone / Mobile</th>
+                              <th className="px-6 py-5 text-xs font-black text-white uppercase tracking-wider">Registered Date</th>
+                              <th className="px-6 py-5 text-xs font-black text-white uppercase tracking-wider text-center">Status</th>
+                              <th className="px-6 py-5 text-xs font-black text-white uppercase tracking-wider text-center">Actions</th>
+                          </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 bg-white">
+                          {filteredUsers.length > 0 ? (
+                              filteredUsers.map((u) => (
+                                  <tr key={u.id} className="hover:bg-slate-50 transition-colors group">
+                                      <td className="px-6 py-5">
+                                          <div className="flex items-center gap-3">
+                                              <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-500 border border-blue-100">
+                                                  <Users className="w-4 h-4" />
+                                              </div>
+                                              <span className="text-sm font-black text-slate-800">{u.name}</span>
+                                          </div>
+                                      </td>
+                                      <td className="px-6 py-5">
+                                          <p className="text-sm font-bold text-slate-600">{u.email}</p>
+                                      </td>
+                                      <td className="px-6 py-5">
+                                          <p className="text-sm font-bold text-slate-600">{u.phone || "N/A"}</p>
+                                      </td>
+                                      <td className="px-6 py-5">
+                                          <p className="text-sm font-bold text-slate-500">
+                                            {new Date(u.created_at).toLocaleDateString('en-IN', {day: 'numeric', month: 'short', year: 'numeric'})}
+                                          </p>
+                                      </td>
+                                      <td className="px-6 py-5 text-center">
+                                          <span
+                                              className={`text-[9px] font-black px-3 py-1.5 rounded-lg uppercase tracking-wider ${
+                                                  u.active !== 0
+                                                      ? "bg-emerald-100 text-emerald-700 border border-emerald-200"
+                                                      : "bg-rose-100 text-rose-700 border border-rose-200"
+                                              }`}
+                                          >
+                                              {u.active !== 0 ? "Active" : "Blocked"}
+                                          </span>
+                                      </td>
+                                      <td className="px-6 py-5">
+                                          <div className="flex items-center justify-center gap-3">
+                                              {u.active !== 0 ? (
+                                                  <button
+                                                      onClick={() => handleToggleStatus(u.id, 1)}
+                                                      className="p-2 hover:bg-rose-50 text-rose-500 rounded-xl transition-colors border border-transparent hover:border-rose-100"
+                                                      title="Block User"
+                                                  >
+                                                      <ShieldAlert size={16} />
+                                                  </button>
+                                              ) : (
+                                                  <button
+                                                      onClick={() => handleToggleStatus(u.id, 0)}
+                                                      className="p-2 hover:bg-emerald-50 text-emerald-500 rounded-xl transition-colors border border-transparent hover:border-emerald-100"
+                                                      title="Unblock User"
+                                                  >
+                                                      <ShieldCheck size={16} />
+                                                  </button>
+                                              )}
+                                              <button
+                                                  onClick={() => handleDelete(u.id)}
+                                                  className="p-2 hover:bg-red-50 text-red-500 rounded-xl transition-colors border border-transparent hover:border-red-100"
+                                                  title="Delete User"
+                                              >
+                                                  <Trash2 size={16} />
+                                              </button>
+                                          </div>
+                                      </td>
+                                  </tr>
+                              ))
+                          ) : (
+                              <tr>
+                                  <td colSpan="6" className="px-6 py-24 text-center">
+                                      <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
+                                          <Users size={28} />
+                                      </div>
+                                      <h3 className="text-sm font-bold text-slate-700">No Customers Found</h3>
+                                      <p className="text-[11px] text-slate-400 mt-1">Try adjusting your search query.</p>
+                                  </td>
+                              </tr>
+                          )}
+                      </tbody>
+                  </table>
+              )}
+          </div>
+      </div>
     </div>
   );
 };
