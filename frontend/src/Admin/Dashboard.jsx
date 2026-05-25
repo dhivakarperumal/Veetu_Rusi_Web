@@ -9,6 +9,8 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, PieChart, Pie, Cell
 } from "recharts";
+import SubscriptionAlert from "../Components/SubscriptionAlert";
+import SubscriptionPaymentModal from "../Components/SubscriptionPaymentModal";
 
 // ─── Fallback chart data ──────────────────────────────────────────────────────
 const FALLBACK = {
@@ -104,19 +106,64 @@ const ChartCard = ({ title, subtitle, icon: Icon, iconColor, children }) => (
 const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
+  const [subscriptionInfo, setSubscriptionInfo] = useState(null);
+  const [showSubscriptionAlert, setShowSubscriptionAlert] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [franchiseId, setFranchiseId] = useState(null);
 
-  useEffect(() => { fetchStats(); }, []);
+  useEffect(() => {
+    fetchStats();
+    fetchSubscriptionStatus();
+  }, []);
 
   const fetchStats = async () => {
     try {
       setLoading(true);
-      const res = await api.get("/superadmin/dashboard-stats");
+      const res = await api.get("/dashboard");
       setData(res.data);
+      
+      // Check subscription status from dashboard response
+      if (res.data.subscriptionInfo) {
+        const subInfo = res.data.subscriptionInfo;
+        console.log('📦 Subscription Info:', subInfo);
+        setSubscriptionInfo(subInfo);
+        setFranchiseId(subInfo.franchiseId || 1); // Fallback franchise ID
+        
+        // Show alert if subscription is expired or not active
+        if (subInfo.isExpired || subInfo.status !== "Active") {
+          console.log('🚨 Showing alert: Subscription expired or not active');
+          setShowSubscriptionAlert(true);
+        }
+        // Show warning if subscription is expiring soon (within 7 days)
+        else if (subInfo.daysRemaining && subInfo.daysRemaining <= 7) {
+          console.log('⏰ Showing alert: Subscription expiring in', subInfo.daysRemaining, 'days');
+          setShowSubscriptionAlert(true);
+        } else {
+          console.log('✅ Subscription active with', subInfo.daysRemaining, 'days remaining');
+        }
+      } else {
+        console.warn('⚠️ No subscription info in response');
+        // Show popup for demo/testing if no subscription found
+        setSubscriptionInfo({ isExpired: true, daysRemaining: null, status: 'Inactive' });
+        setShowSubscriptionAlert(true);
+        setFranchiseId(1);
+      }
     } catch {
       toast.error("Could not load live stats — showing demo data.");
       setData(FALLBACK);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSubscriptionStatus = async () => {
+    try {
+      const res = await api.get("/subscriptions/status");
+      if (res.data.subscription) {
+        setFranchiseId(res.data.subscription.id);
+      }
+    } catch (error) {
+      console.error("Error fetching subscription:", error);
     }
   };
 
@@ -286,6 +333,26 @@ const Dashboard = () => {
           </div>
         </ChartCard>
       </div>
+
+      {/* Subscription Alert Modal */}
+      <SubscriptionAlert
+        isOpen={showSubscriptionAlert}
+        subscriptionInfo={subscriptionInfo}
+        onClose={() => setShowSubscriptionAlert(false)}
+        onBuyClick={() => {
+          setShowSubscriptionAlert(false);
+          setShowPaymentModal(true);
+        }}
+      />
+
+      {/* Subscription Payment Modal */}
+      {franchiseId && (
+        <SubscriptionPaymentModal
+          isOpen={showPaymentModal}
+          onClose={() => setShowPaymentModal(false)}
+          franchiseId={franchiseId}
+        />
+      )}
     </div>
   );
 };

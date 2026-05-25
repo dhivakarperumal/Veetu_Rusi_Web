@@ -1,15 +1,20 @@
-import React, { useState } from "react";
-import { ShoppingCart, Trash2, Calendar } from "lucide-react";
-import toast from "react-hot-toast";
+import React, { useState, useEffect } from "react";
+import { ShoppingCart, Trash2, Calendar, Loader } from "lucide-react";
+import { toast } from "react-hot-toast";
+import api from "../../api";
 
 const PreorderFoodSystem = () => {
   const [preorders, setPreorders] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     itemName: "",
     quantity: "",
     deliveryDate: "",
     specialRequests: "",
     price: "",
+    customerEmail: "",
+    customerPhone: "",
   });
 
   const handleInputChange = (e) => {
@@ -17,7 +22,24 @@ const PreorderFoodSystem = () => {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = (e) => {
+  useEffect(() => {
+    fetchPreorders();
+  }, []);
+
+  const fetchPreorders = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get("/preorders");
+      setPreorders(res.data);
+    } catch (error) {
+      console.error("Error fetching preorders:", error);
+      toast.error("Failed to load preorders");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (
       !formData.itemName ||
@@ -29,37 +51,63 @@ const PreorderFoodSystem = () => {
       return;
     }
 
-    setPreorders([
-      ...preorders,
-      {
-        ...formData,
-        id: Date.now(),
-        status: "pending",
-        orderedAt: new Date(),
-      },
-    ]);
-    toast.success("Preorder added!");
-    setFormData({
-      itemName: "",
-      quantity: "",
-      deliveryDate: "",
-      specialRequests: "",
-      price: "",
-    });
+    try {
+      setSubmitting(true);
+      await api.post("/preorders", {
+        itemName: formData.itemName,
+        quantity: parseInt(formData.quantity),
+        deliveryDate: formData.deliveryDate,
+        specialRequests: formData.specialRequests,
+        price: parseFloat(formData.price),
+        customerEmail: formData.customerEmail,
+        customerPhone: formData.customerPhone,
+      });
+
+      toast.success("Preorder added successfully!");
+      setFormData({
+        itemName: "",
+        quantity: "",
+        deliveryDate: "",
+        specialRequests: "",
+        price: "",
+        customerEmail: "",
+        customerPhone: "",
+      });
+      
+      // Refresh the list
+      fetchPreorders();
+    } catch (error) {
+      console.error("Error creating preorder:", error);
+      toast.error(error.response?.data?.message || "Failed to create preorder");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const updateStatus = (id, newStatus) => {
-    setPreorders(
-      preorders.map((order) =>
-        order.id === id ? { ...order, status: newStatus } : order
-      )
-    );
-    toast.success(`Order status updated to ${newStatus}`);
+  const updateStatus = async (id, newStatus) => {
+    try {
+      await api.patch(`/preorders/${id}/status`, { status: newStatus });
+      setPreorders(
+        preorders.map((order) =>
+          order.id === id ? { ...order, status: newStatus } : order
+        )
+      );
+      toast.success(`Order status updated to ${newStatus}`);
+    } catch (error) {
+      console.error("Error updating preorder:", error);
+      toast.error("Failed to update preorder status");
+    }
   };
 
-  const deleteOrder = (id) => {
-    setPreorders(preorders.filter((o) => o.id !== id));
-    toast.success("Preorder deleted!");
+  const deleteOrder = async (id) => {
+    try {
+      await api.delete(`/preorders/${id}`);
+      setPreorders(preorders.filter((o) => o.id !== id));
+      toast.success("Preorder deleted!");
+    } catch (error) {
+      console.error("Error deleting preorder:", error);
+      toast.error("Failed to delete preorder");
+    }
   };
 
   const statusColors = {
@@ -150,6 +198,38 @@ const PreorderFoodSystem = () => {
           </div>
         </div>
 
+        <div className="grid grid-cols-2 gap-4">
+          {/* Customer Email */}
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-2">
+              Customer Email
+            </label>
+            <input
+              type="email"
+              name="customerEmail"
+              value={formData.customerEmail}
+              onChange={handleInputChange}
+              placeholder="customer@example.com"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Customer Phone */}
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-2">
+              Customer Phone
+            </label>
+            <input
+              type="tel"
+              name="customerPhone"
+              value={formData.customerPhone}
+              onChange={handleInputChange}
+              placeholder="9876543210"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+
         {/* Special Requests */}
         <div>
           <label className="block text-sm font-bold text-slate-700 mb-2">
@@ -168,16 +248,29 @@ const PreorderFoodSystem = () => {
         {/* Submit */}
         <button
           type="submit"
-          className="w-full px-6 py-3 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600"
+          disabled={submitting}
+          className="w-full px-6 py-3 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
-          Add Preorder
+          {submitting ? (
+            <>
+              <Loader className="w-5 h-5 animate-spin" />
+              Adding Preorder...
+            </>
+          ) : (
+            "Add Preorder"
+          )}
         </button>
       </form>
 
       {/* Preorders List */}
       <div className="space-y-4">
         <h2 className="text-2xl font-bold text-slate-900">Preorders</h2>
-        {preorders.length === 0 ? (
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader className="w-8 h-8 text-blue-600 animate-spin" />
+            <p className="ml-3 text-gray-600">Loading preorders...</p>
+          </div>
+        ) : preorders.length === 0 ? (
           <p className="text-gray-500">No preorders yet.</p>
         ) : (
           <div className="grid gap-4">
@@ -189,11 +282,16 @@ const PreorderFoodSystem = () => {
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <h3 className="text-lg font-bold text-slate-900">
-                      {order.itemName}
+                      {order.item_name}
                     </h3>
                     <p className="text-sm text-gray-600 mt-1">
                       Qty: {order.quantity} plates
                     </p>
+                    {order.customer_email && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        Customer: {order.customer_email}
+                      </p>
+                    )}
                   </div>
                   <div className="text-right">
                     <p className="text-2xl font-bold text-green-600">
@@ -212,10 +310,19 @@ const PreorderFoodSystem = () => {
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4" />
                     <span>
-                      Delivery: {new Date(order.deliveryDate).toLocaleDateString()}
+                      Delivery: {new Date(order.delivery_date).toLocaleDateString()}
                     </span>
                   </div>
                 </div>
+
+                {order.special_requests && (
+                  <div className="bg-gray-50 p-3 rounded">
+                    <p className="text-xs font-semibold text-gray-700 mb-1">
+                      Special Requests:
+                    </p>
+                    <p className="text-sm text-gray-600">{order.special_requests}</p>
+                  </div>
+                )}
 
                 {/* Status Update */}
                 <div className="space-y-2">

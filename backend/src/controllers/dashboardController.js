@@ -117,7 +117,47 @@ exports.getDashboardData = async (req, res) => {
       { state: 'Andhra Pradesh', orders: 110, rev: '₹29,000', pct: 28, color: 'bg-amber-500' }
     ];
 
-    res.json({ stats, recentOrders, topProducts, lowStockAlerts, categoryAnalytics, revenueTrends, regionalSales });
+    // ── Subscription Status ───────────────────────────────────────
+    let subscriptionInfo = { isExpired: false, daysRemaining: null, status: 'Active', franchiseId: null };
+    try {
+      const email = req.user?.email;
+      console.log('Checking subscription for email:', email);
+      if (email) {
+        const [rows] = await pool.execute(
+          'SELECT id, status, start_date, expiry_date FROM franchise_owners WHERE email = ? LIMIT 1',
+          [email]
+        );
+        console.log('Franchise query result:', rows);
+        if (rows.length > 0) {
+          const franchise = rows[0];
+          subscriptionInfo.franchiseId = franchise.id;
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          
+          if (franchise.expiry_date) {
+            const expiry = new Date(franchise.expiry_date);
+            expiry.setHours(0, 0, 0, 0);
+            subscriptionInfo.isExpired = expiry < today;
+            if (!subscriptionInfo.isExpired) {
+              subscriptionInfo.daysRemaining = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+            }
+            console.log('Subscription expiry check:', { isExpired: subscriptionInfo.isExpired, daysRemaining: subscriptionInfo.daysRemaining });
+          }
+          subscriptionInfo.status = franchise.status;
+          subscriptionInfo.expiryDate = franchise.expiry_date;
+          subscriptionInfo.startDate = franchise.start_date;
+        } else {
+          console.log('No franchise owner record found for:', email);
+          // Default to showing alert if no franchise found
+          subscriptionInfo.isExpired = true;
+          subscriptionInfo.status = 'Not Found';
+        }
+      }
+    } catch (err) {
+      console.error('Subscription status error:', err);
+    }
+
+    res.json({ stats, recentOrders, topProducts, lowStockAlerts, categoryAnalytics, revenueTrends, regionalSales, subscriptionInfo });
   } catch (error) {
     console.error('Admin dashboard error:', error);
     res.status(500).json({ message: 'Error loading admin dashboard.', error: error.message });

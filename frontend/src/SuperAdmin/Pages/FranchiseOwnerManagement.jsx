@@ -605,8 +605,8 @@ const FranchiseOwnerManagement = () => {
                               <td className="px-5 py-4">
                                 <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
                                   chef.status === "Active" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
-                                }`)}>
-                                  {getSubscriptionLabel(f) === 'Trial' ? `Trial (${getTrialDaysLeft(f)} days left)` : getSubscriptionLabel(f)}
+                                }`}>
+                                  {getSubscriptionLabel(chef) === 'Trial' ? `Trial (${getTrialDaysLeft(chef)} days left)` : getSubscriptionLabel(chef)}
                                 </span>
                               </td>
                             </tr>

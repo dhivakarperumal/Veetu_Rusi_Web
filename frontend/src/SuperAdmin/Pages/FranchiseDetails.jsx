@@ -14,6 +14,9 @@ const FranchiseDetails = () => {
   const [linkedHomeChefs, setLinkedHomeChefs] = useState([]);
   const [linkedDeliveryPartners, setLinkedDeliveryPartners] = useState([]);
   const [activeDetailTab, setActiveDetailTab] = useState("franchise");
+  const [showPurchaseModal, setShowPurchaseModal] = useState(false);
+  const [plans, setPlans] = useState([]);
+  const [selectedPlan, setSelectedPlan] = useState(null);
 
   const copy = (text) => { navigator.clipboard.writeText(text || ''); toast.success('Copied!'); };
 
@@ -25,6 +28,73 @@ const FranchiseDetails = () => {
       navigate('/superadmin/franchises');
     } catch (err) {
       toast.error('Failed to delete franchise.');
+    }
+  };
+
+  const openPurchaseModal = async () => {
+    try {
+      const res = await api.get('/subscriptions/plans');
+      setPlans(res.data);
+      setSelectedPlan(res.data[0] || null);
+      setShowPurchaseModal(true);
+    } catch (err) {
+      toast.error('Failed to load plans.');
+    }
+  };
+
+  const startCheckout = async () => {
+    if (!selectedPlan) return toast.error('Select a plan');
+    try {
+      const res = await api.post('/subscriptions/checkout', { franchiseId: franchise.id, planId: selectedPlan.id });
+      const { order, plan, key_id } = res.data;
+
+      if (order && key_id) {
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        document.body.appendChild(script);
+
+        script.onload = () => {
+          const options = {
+            key: key_id,
+            amount: order.amount,
+            currency: order.currency || plan.currency,
+            name: franchise.franchise_name,
+            description: plan.name,
+            ...(order.id && !order.id.startsWith("TEST_") ? { order_id: order.id } : {}),
+            handler: async function (response) {
+              try {
+                await api.post('/subscriptions/confirm', {
+                  franchiseId: franchise.id,
+                  planId: plan.id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_signature: response.razorpay_signature
+                });
+                toast.success('Subscription activated');
+                setShowPurchaseModal(false);
+                const r = await api.get('/superadmin/franchises');
+                const found = r.data.find(f => String(f.id) === String(franchise.id));
+                if (found) setFranchise(found);
+              } catch (err) {
+                toast.error('Payment verification failed');
+              }
+            },
+            modal: { ondismiss: function() { toast('Payment cancelled'); } }
+          };
+          const rz = new window.Razorpay(options);
+          rz.open();
+        };
+      } else {
+        await api.post('/subscriptions/confirm', { franchiseId: franchise.id, planId: selectedPlan.id, razorpay_payment_id: 'TEST', razorpay_order_id: order.id });
+        toast.success('Subscription activated (test)');
+        setShowPurchaseModal(false);
+        const r = await api.get('/superadmin/franchises');
+        const found = r.data.find(f => String(f.id) === String(franchise.id));
+        if (found) setFranchise(found);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(err?.response?.data?.message || 'Checkout failed');
     }
   };
 
@@ -259,6 +329,10 @@ const FranchiseDetails = () => {
                   <p className="font-bold">{getTrialDaysLeft(franchise)} days</p>
                 </div>
               </div>
+              <div className="flex items-center gap-3 pt-4">
+                <button onClick={openPurchaseModal} className="px-4 py-2 bg-emerald-600 text-white rounded-xl font-black text-sm">Buy / Renew Subscription</button>
+                <span className="text-sm text-slate-500">Or contact sales to arrange custom plans.</span>
+              </div>
             </div>
           )}
 
@@ -342,8 +416,35 @@ const FranchiseDetails = () => {
           </div>
         </div>
       </div>
+      {showPurchaseModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="w-full max-w-2xl p-6 bg-white rounded-2xl shadow-xl">
+            <h3 className="text-lg font-black mb-4">Purchase Subscription for {franchise.franchise_name}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {plans.map(p => (
+                <label key={p.id} className={`p-4 border rounded-xl cursor-pointer ${selectedPlan && selectedPlan.id === p.id ? 'border-emerald-500 bg-emerald-50' : 'border-slate-100'}`}>
+                  <input type="radio" name="plan" className="hidden" checked={selectedPlan && selectedPlan.id === p.id} onChange={() => setSelectedPlan(p)} />
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-sm font-black">{p.name}</div>
+                      <div className="text-xs text-slate-500">{p.durationDays} days</div>
+                    </div>
+                    <div className="text-sm font-black">₹{p.amount}</div>
+                  </div>
+                </label>
+              ))}
+            </div>
+            <div className="flex justify-end gap-2 mt-4">
+              <button onClick={() => setShowPurchaseModal(false)} className="px-4 py-2 bg-white border rounded-xl">Cancel</button>
+              <button onClick={startCheckout} className="px-4 py-2 bg-emerald-600 text-white rounded-xl font-black">Pay & Activate</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
+// Purchase modal markup is rendered inside the component return via state; keep file export below.
 
 export default FranchiseDetails;

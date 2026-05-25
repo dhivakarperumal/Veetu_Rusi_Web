@@ -485,6 +485,29 @@ async function createDatabaseAndTables() {
   `);
   console.log('Notifications table created or already exists');
 
+  await connection.execute(`
+    CREATE TABLE IF NOT EXISTS \`preorders\` (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      chef_id INT NOT NULL,
+      item_name VARCHAR(255) NOT NULL,
+      quantity INT NOT NULL,
+      delivery_date DATE NOT NULL,
+      special_requests TEXT,
+      price DECIMAL(10, 2) NOT NULL,
+      status VARCHAR(50) NOT NULL DEFAULT 'pending',
+      customer_email VARCHAR(255),
+      customer_phone VARCHAR(20),
+      ordered_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      FOREIGN KEY (chef_id) REFERENCES home_chefs(id) ON DELETE CASCADE,
+      INDEX idx_chef_id (chef_id),
+      INDEX idx_status (status),
+      INDEX idx_delivery_date (delivery_date)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+  console.log('Preorders table created or already exists');
+
   // Seed default SuperAdmin data
   await connection.execute(`
     INSERT INTO \`commissions\` (type, commission_value, is_percentage)
