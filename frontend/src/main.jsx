@@ -85,7 +85,7 @@ const CommissionManagement = React.lazy(() => import("./SuperAdmin/Pages/Commiss
 const SuperBannerManagement = React.lazy(() => import("./SuperAdmin/Pages/BannerManagement.jsx"));
 const NotificationManagement = React.lazy(() => import("./SuperAdmin/Pages/NotificationManagement.jsx"));
 const ReportsAnalytics = React.lazy(() => import("./SuperAdmin/Pages/ReportsAnalytics.jsx"));
-
+const SubscriptionPlansManagement = React.lazy(() => import("./SuperAdmin/Pages/SubscriptionPlansManagement.jsx"));
 const router = createBrowserRouter([
   {
     path: "/",
@@ -129,6 +129,7 @@ const router = createBrowserRouter([
       { path: "payouts", element: <PayoutManagement /> },
       { path: "franchises", element: <FranchiseOwnerManagement /> },
       { path: "franchises/:id", element: <FranchiseDetails /> },
+      { path: "plans", element: <SubscriptionPlansManagement /> },
       { path: "commissions", element: <CommissionManagement /> },
       { path: "banners", element: <SuperBannerManagement /> },
       { path: "notifications", element: <NotificationManagement /> },

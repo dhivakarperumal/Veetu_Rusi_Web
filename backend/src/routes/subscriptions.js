@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../config/db');
-const plans = require('../config/subscriptions');
+// Dynamic plans fetched from DB
 const { attachUser } = require('../middleware/authMiddleware');
 const Razorpay = require('razorpay');
 require('dotenv').config();
@@ -57,9 +57,15 @@ router.get('/status', attachUser, async (req, res) => {
   }
 });
 
-// List available plans
-router.get('/plans', (req, res) => {
-  res.json(plans);
+// List available active plans
+router.get('/plans', async (req, res) => {
+  try {
+    const [rows] = await pool.execute('SELECT * FROM subscription_plans WHERE status = "Active"');
+    res.json(rows);
+  } catch (err) {
+    console.error('Fetch plans error:', err);
+    res.status(500).json({ message: 'Error fetching plans', error: err.message });
+  }
 });
 
 // Create a checkout/order for Razorpay (server-side)
@@ -68,8 +74,9 @@ router.post('/checkout', async (req, res) => {
     const { franchiseId, planId } = req.body;
     if (!franchiseId || !planId) return res.status(400).json({ message: 'franchiseId and planId required' });
 
-    const plan = plans.find(p => p.id === planId);
-    if (!plan) return res.status(404).json({ message: 'Plan not found' });
+    const [rows] = await pool.execute('SELECT * FROM subscription_plans WHERE id = ?', [planId]);
+    if (rows.length === 0) return res.status(404).json({ message: 'Plan not found' });
+    const plan = rows[0];
 
     // Create a Razorpay order if keys present
     if (RAZOR_KEY_ID && RAZOR_KEY_SECRET) {
@@ -102,7 +109,10 @@ router.post('/confirm', async (req, res) => {
     }
 
     // Activate subscription in DB
-    const plan = plans.find(p => p.id === planId);
+    const [rows] = await pool.execute('SELECT * FROM subscription_plans WHERE id = ?', [planId]);
+    if (rows.length === 0) return res.status(404).json({ message: 'Plan not found' });
+    const plan = rows[0];
+
     const startDate = new Date();
     const expiryDate = new Date(startDate.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
 
@@ -116,6 +126,62 @@ router.post('/confirm', async (req, res) => {
   } catch (err) {
     console.error('Confirm error', err);
     res.status(500).json({ message: 'Confirm error', error: err.message });
+  }
+});
+
+// ============================
+// SuperAdmin Plan Management
+// ============================
+
+// Get all plans (including inactive)
+router.get('/admin/plans', attachUser, async (req, res) => {
+  try {
+    if (req.user?.role !== 'superadmin') return res.status(403).json({ message: 'Forbidden' });
+    const [rows] = await pool.execute('SELECT * FROM subscription_plans ORDER BY created_at DESC');
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching plans', error: err.message });
+  }
+});
+
+// Add new plan
+router.post('/admin/plans', attachUser, async (req, res) => {
+  try {
+    if (req.user?.role !== 'superadmin') return res.status(403).json({ message: 'Forbidden' });
+    const { id, name, amount, currency, durationDays, status } = req.body;
+    await pool.execute(
+      'INSERT INTO subscription_plans (id, name, amount, currency, durationDays, status) VALUES (?, ?, ?, ?, ?, ?)',
+      [id, name, amount, currency || 'INR', durationDays, status || 'Active']
+    );
+    res.json({ message: 'Plan created successfully' });
+  } catch (err) {
+    res.status(500).json({ message: 'Error creating plan', error: err.message });
+  }
+});
+
+// Update plan
+router.put('/admin/plans/:id', attachUser, async (req, res) => {
+  try {
+    if (req.user?.role !== 'superadmin') return res.status(403).json({ message: 'Forbidden' });
+    const { name, amount, currency, durationDays, status } = req.body;
+    await pool.execute(
+      'UPDATE subscription_plans SET name = ?, amount = ?, currency = ?, durationDays = ?, status = ? WHERE id = ?',
+      [name, amount, currency || 'INR', durationDays, status, req.params.id]
+    );
+    res.json({ message: 'Plan updated successfully' });
+  } catch (err) {
+    res.status(500).json({ message: 'Error updating plan', error: err.message });
+  }
+});
+
+// Delete plan
+router.delete('/admin/plans/:id', attachUser, async (req, res) => {
+  try {
+    if (req.user?.role !== 'superadmin') return res.status(403).json({ message: 'Forbidden' });
+    await pool.execute('DELETE FROM subscription_plans WHERE id = ?', [req.params.id]);
+    res.json({ message: 'Plan deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ message: 'Error deleting plan', error: err.message });
   }
 });
 

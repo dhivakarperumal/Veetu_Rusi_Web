@@ -24,6 +24,7 @@ const navItems = [
   // { path: "/superadmin/restaurants", label: "Restaurants", icon: Store },
  
   { path: "/superadmin/franchises", label: "Franchise Owners", icon: Landmark },
+  { path: "/superadmin/plans", label: "Subscription Plans", icon: CreditCard },
   { path: "/superadmin/commissions", label: "Commissions", icon: Percent },
   // { path: "/superadmin/notifications", label: "Notifications", icon: Bell },
   { path: "/superadmin/reports", label: "Reports & Analytics", icon: BarChart3 },
