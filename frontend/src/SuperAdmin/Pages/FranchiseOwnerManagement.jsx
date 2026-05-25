@@ -938,7 +938,7 @@ const FranchiseOwnerManagement = () => {
                     </td>
                     {/* Actions */}
                     <td className="px-5 py-4">
-                      <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                      <div className="flex items-center justify-end gap-1.5 flex-nowrap whitespace-nowrap">
                         {/* Buy Subscription — shown for Trial / Expired / Inactive */}
                         {needsSubscription(f) && (
                           <button
