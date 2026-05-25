@@ -268,8 +268,7 @@ const FranchiseDetails = () => {
         <div className="w-full lg:w-72 flex-shrink-0">
           <div className="sticky top-8 flex flex-col gap-2 rounded-[2rem] bg-white p-4 shadow-sm border border-slate-100">
             {[
-              { id: 'franchise', icon: Landmark, label: 'Franchise Info' },
-              { id: 'owner', icon: UserCheck, label: 'Owner Profile' },
+              { id: 'franchise', icon: Landmark, label: 'Franchise & Owner' },
               { id: 'homechefs', icon: List, label: 'Home Chefs' },
               { id: 'deliverypartners', icon: MapPin, label: 'Delivery Partners' },
               { id: 'orders', icon: ShoppingCart, label: 'Orders' },
@@ -300,65 +299,67 @@ const FranchiseDetails = () => {
         <div className="flex-1 min-w-0">
           <div className="rounded-[2rem] bg-white p-8 lg:p-10 shadow-sm border border-slate-100 min-h-[500px]">
             
-            {/* FRANCHISE INFO */}
+            {/* FRANCHISE & OWNER INFO */}
             {activeDetailTab === 'franchise' && (
-              <div className="animate-in slide-in-from-right-4 fade-in duration-300">
-                <div className="mb-8 flex items-center gap-3 border-b border-slate-100 pb-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600"><Landmark className="h-5 w-5" /></div>
-                  <h3 className="text-xl font-black text-slate-800">Franchise Information</h3>
-                </div>
+              <div className="animate-in slide-in-from-right-4 fade-in duration-300 space-y-12">
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                  <div className="rounded-2xl bg-slate-50 p-6 border border-slate-100">
-                    <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Franchise Name</span>
-                    <p className="mt-2 text-lg font-black text-slate-800">{franchise.franchise_name}</p>
+                {/* Franchise Section */}
+                <div>
+                  <div className="mb-8 flex items-center gap-3 border-b border-slate-100 pb-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600"><Landmark className="h-5 w-5" /></div>
+                    <h3 className="text-xl font-black text-slate-800">Franchise Information</h3>
                   </div>
-                  <div className="rounded-2xl bg-slate-50 p-6 border border-slate-100">
-                    <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Commission Rate</span>
-                    <div className="mt-2 flex items-center">
-                      <span className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-100 px-3 py-1.5 text-sm font-black text-emerald-700">
-                        {franchise.commission_percentage}% Share
-                      </span>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                    <div className="rounded-2xl bg-slate-50 p-6 border border-slate-100">
+                      <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Franchise Name</span>
+                      <p className="mt-2 text-lg font-black text-slate-800">{franchise.franchise_name}</p>
+                    </div>
+                    <div className="rounded-2xl bg-slate-50 p-6 border border-slate-100">
+                      <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Commission Rate</span>
+                      <div className="mt-2 flex items-center">
+                        <span className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-100 px-3 py-1.5 text-sm font-black text-emerald-700">
+                          {franchise.commission_percentage}% Share
+                        </span>
+                      </div>
+                    </div>
+                    <div className="rounded-2xl bg-slate-50 p-6 border border-slate-100">
+                      <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Territory Location</span>
+                      <p className="mt-2 text-lg font-black text-slate-800 flex items-center gap-2">
+                        <MapPin className="h-5 w-5 text-rose-500" /> {franchise.city}, {franchise.state}
+                      </p>
+                    </div>
+                    <div className="rounded-2xl bg-slate-50 p-6 border border-slate-100">
+                      <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Registration Date</span>
+                      <p className="mt-2 text-lg font-black text-slate-800">{formatDate(franchise.created_at)}</p>
                     </div>
                   </div>
-                  <div className="rounded-2xl bg-slate-50 p-6 border border-slate-100">
-                    <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Territory Location</span>
-                    <p className="mt-2 text-lg font-black text-slate-800 flex items-center gap-2">
-                      <MapPin className="h-5 w-5 text-rose-500" /> {franchise.city}, {franchise.state}
-                    </p>
-                  </div>
-                  <div className="rounded-2xl bg-slate-50 p-6 border border-slate-100">
-                    <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Registration Date</span>
-                    <p className="mt-2 text-lg font-black text-slate-800">{formatDate(franchise.created_at)}</p>
-                  </div>
                 </div>
-              </div>
-            )}
 
-            {/* OWNER PROFILE */}
-            {activeDetailTab === 'owner' && (
-              <div className="animate-in slide-in-from-right-4 fade-in duration-300">
-                <div className="mb-8 flex items-center gap-3 border-b border-slate-100 pb-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-600"><UserCheck className="h-5 w-5" /></div>
-                  <h3 className="text-xl font-black text-slate-800">Owner Profile Details</h3>
-                </div>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                  <div className="rounded-2xl bg-slate-50 p-6 border border-slate-100 sm:col-span-2">
-                    <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Owner Name</span>
-                    <p className="mt-2 text-xl font-black text-slate-800">{franchise.owner_name}</p>
+                {/* Owner Section */}
+                <div>
+                  <div className="mb-8 flex items-center gap-3 border-b border-slate-100 pb-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-600"><UserCheck className="h-5 w-5" /></div>
+                    <h3 className="text-xl font-black text-slate-800">Owner Profile Details</h3>
                   </div>
-                  <div className="rounded-2xl bg-slate-50 p-6 border border-slate-100">
-                    <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Email Address</span>
-                    <p className="mt-2 text-base font-bold text-slate-700 flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-slate-400" /> {franchise.email}
-                    </p>
-                  </div>
-                  <div className="rounded-2xl bg-slate-50 p-6 border border-slate-100">
-                    <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Mobile Phone</span>
-                    <p className="mt-2 text-base font-bold text-slate-700 flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-slate-400" /> {franchise.mobile}
-                    </p>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                    <div className="rounded-2xl bg-slate-50 p-6 border border-slate-100 sm:col-span-2">
+                      <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Owner Name</span>
+                      <p className="mt-2 text-xl font-black text-slate-800">{franchise.owner_name}</p>
+                    </div>
+                    <div className="rounded-2xl bg-slate-50 p-6 border border-slate-100">
+                      <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Email Address</span>
+                      <p className="mt-2 text-base font-bold text-slate-700 flex items-center gap-2">
+                        <Mail className="h-4 w-4 text-slate-400" /> {franchise.email}
+                      </p>
+                    </div>
+                    <div className="rounded-2xl bg-slate-50 p-6 border border-slate-100">
+                      <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Mobile Phone</span>
+                      <p className="mt-2 text-base font-bold text-slate-700 flex items-center gap-2">
+                        <Phone className="h-4 w-4 text-slate-400" /> {franchise.mobile}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
