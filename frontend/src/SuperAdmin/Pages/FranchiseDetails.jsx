@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../../api";
 import { toast } from "react-hot-toast";
-import { Landmark, MapPin, UserCheck, Clock, List, KeyRound, Copy } from "lucide-react";
+import { Landmark, MapPin, UserCheck, Clock, List, KeyRound, Copy, X, CheckCircle } from "lucide-react";
 
 const FranchiseDetails = () => {
   const { id } = useParams();
@@ -417,26 +417,90 @@ const FranchiseDetails = () => {
         </div>
       </div>
       {showPurchaseModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-2xl p-6 bg-white rounded-2xl shadow-xl">
-            <h3 className="text-lg font-black mb-4">Purchase Subscription for {franchise.franchise_name}</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {plans.map(p => (
-                <label key={p.id} className={`p-4 border rounded-xl cursor-pointer ${selectedPlan && selectedPlan.id === p.id ? 'border-emerald-500 bg-emerald-50' : 'border-slate-100'}`}>
-                  <input type="radio" name="plan" className="hidden" checked={selectedPlan && selectedPlan.id === p.id} onChange={() => setSelectedPlan(p)} />
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-sm font-black">{p.name}</div>
-                      <div className="text-xs text-slate-500">{p.durationDays} days</div>
-                    </div>
-                    <div className="text-sm font-black">₹{p.amount}</div>
-                  </div>
-                </label>
-              ))}
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm transition-all duration-300">
+          <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-300 border border-white/20">
+            {/* Header */}
+            <div className="bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-800 p-8 text-white relative overflow-hidden flex-shrink-0">
+              <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+              <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-32 h-32 bg-black/10 rounded-full blur-2xl"></div>
+              
+              <div className="relative z-10 flex justify-between items-start">
+                <div>
+                  <h3 className="text-2xl font-black mb-1 tracking-tight drop-shadow-sm">Choose Subscription Plan</h3>
+                  <p className="text-emerald-100 font-medium">Activating for {franchise.franchise_name}</p>
+                </div>
+                <button 
+                  onClick={() => setShowPurchaseModal(false)}
+                  className="bg-black/10 hover:bg-black/20 text-white rounded-full p-2 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
-            <div className="flex justify-end gap-2 mt-4">
-              <button onClick={() => setShowPurchaseModal(false)} className="px-4 py-2 bg-white border rounded-xl">Cancel</button>
-              <button onClick={startCheckout} className="px-4 py-2 bg-emerald-600 text-white rounded-xl font-black">Pay & Activate</button>
+
+            {/* Content */}
+            <div className="p-8 bg-slate-50 flex-1 overflow-y-auto max-h-[60vh]">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {plans.map(p => {
+                  const isSelected = selectedPlan && selectedPlan.id === p.id;
+                  return (
+                    <label 
+                      key={p.id} 
+                      className={`relative p-5 border-2 rounded-2xl cursor-pointer transition-all duration-300 transform hover:-translate-y-1 bg-white ${
+                        isSelected 
+                          ? 'border-emerald-500 shadow-md shadow-emerald-100/50 bg-emerald-50/30' 
+                          : 'border-slate-200 hover:border-emerald-300 hover:shadow-md'
+                      }`}
+                    >
+                      <input 
+                        type="radio" 
+                        name="plan" 
+                        className="hidden" 
+                        checked={isSelected} 
+                        onChange={() => setSelectedPlan(p)} 
+                      />
+                      
+                      <div className="flex justify-between items-start mb-4">
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${isSelected ? 'border-emerald-600' : 'border-slate-300'}`}>
+                          {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-emerald-600"></div>}
+                        </div>
+                        {p.durationDays >= 90 && (
+                          <span className="bg-emerald-100 text-emerald-800 text-[9px] font-black px-2 py-1 rounded-full uppercase tracking-wider">
+                            Best Value
+                          </span>
+                        )}
+                      </div>
+
+                      <div>
+                        <h4 className="font-bold text-slate-800 text-lg mb-1">{p.name}</h4>
+                        <div className="flex items-baseline gap-1 mt-1">
+                          <span className="text-2xl font-black text-emerald-700">₹{p.amount}</span>
+                        </div>
+                        <p className="text-sm font-medium text-slate-500 mt-2 flex items-center gap-1.5">
+                          <Clock className="w-4 h-4" /> {p.durationDays} Days Access
+                        </p>
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-6 bg-white border-t border-slate-100 flex justify-end gap-3 items-center">
+              <button 
+                onClick={() => setShowPurchaseModal(false)} 
+                className="px-6 py-3 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={startCheckout} 
+                className="px-8 py-3 text-sm font-bold text-white bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl shadow-lg shadow-emerald-500/30 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2"
+              >
+                <CheckCircle className="w-4 h-4" />
+                Pay & Activate
+              </button>
             </div>
           </div>
         </div>

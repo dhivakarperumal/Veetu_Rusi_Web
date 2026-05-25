@@ -143,7 +143,7 @@ const SubscriptionPaymentModal = ({ isOpen, onClose, franchiseId }) => {
       <div className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col md:flex-row animate-in fade-in zoom-in duration-300">
         
         {/* Left Panel */}
-        <div className="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 p-8 text-white md:w-5/12 flex flex-col justify-between relative overflow-hidden">
+        <div className="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 p-8 text-white md:w-5/12 flex flex-col justify-between relative overflow-hidden shrink-0">
           {/* Decorative background */}
           <div className="absolute -top-24 -left-24 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
           <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-indigo-900/30 rounded-full blur-3xl"></div>
@@ -178,7 +178,7 @@ const SubscriptionPaymentModal = ({ isOpen, onClose, franchiseId }) => {
         </div>
 
         {/* Right Panel */}
-        <div className="p-6 md:p-8 md:w-7/12 overflow-y-auto bg-gray-50 flex flex-col relative h-full">
+        <div className="p-6 md:p-8 md:w-7/12 overflow-y-auto bg-gray-50 flex flex-col relative flex-1 min-h-0">
           <button
             onClick={onClose}
             disabled={paymentProcessing}
