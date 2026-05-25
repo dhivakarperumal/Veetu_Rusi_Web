@@ -857,7 +857,7 @@ const FranchiseOwnerManagement = () => {
       ) : viewMode === "table" ? (
         <>
         <div className="bg-white rounded-2xl overflow-hidden shadow-sm animate-in fade-in duration-200">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-700">
@@ -947,7 +947,7 @@ const FranchiseOwnerManagement = () => {
                             title="Buy Subscription"
                           >
                             <CreditCard className="w-3 h-3" />
-                            Buy Plan
+                            Buy 
                           </button>
                         )}
 
@@ -965,7 +965,7 @@ const FranchiseOwnerManagement = () => {
                         )}
 
                         {/* View Creds if linked */}
-                        {f.franch_user_id && (
+                        {/* {f.franch_user_id && (
                           <button
                             onClick={() => setCredModal({ email: f.email, password: null, owner_name: f.owner_name, franchise_name: f.franchise_name, franch_user_id: f.franch_user_id })}
                             className="p-2 hover:bg-teal-50 text-teal-600 rounded-lg transition"
@@ -973,7 +973,7 @@ const FranchiseOwnerManagement = () => {
                           >
                             <KeyRound className="w-4 h-4" />
                           </button>
-                        )}
+                        )}  */}
 
                         {/* View Details */}
                         <button
