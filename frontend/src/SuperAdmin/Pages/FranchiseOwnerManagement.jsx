@@ -69,6 +69,32 @@ const FranchiseOwnerManagement = () => {
   const [pincodeEntry, setPincodeEntry] = useState("");
   const [activeFormTab, setActiveFormTab] = useState("basic");
 
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('en-IN');
+  };
+
+  const getSubscriptionLabel = (franchise) => {
+    if (!franchise) return 'Unknown';
+    if (franchise.status !== 'Active') return 'Inactive';
+    if (!franchise.start_date || !franchise.expiry_date) return 'Active';
+
+    const start = new Date(franchise.start_date);
+    const expiry = new Date(franchise.expiry_date);
+    const diffDays = Math.ceil((expiry - start) / (1000 * 60 * 60 * 24));
+    if (diffDays <= 3) return 'Trial';
+    return 'Active';
+  };
+
+  const getTrialDaysLeft = (franchise) => {
+    if (!franchise || !franchise.start_date || !franchise.expiry_date) return 0;
+    const now = new Date();
+    const expiry = new Date(franchise.expiry_date);
+    const diffMs = expiry - now;
+    const days = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    return days > 0 ? days : 0;
+  };
+
   const fetchFranchises = async () => {
     try {
       setLoading(true);
@@ -579,8 +605,8 @@ const FranchiseOwnerManagement = () => {
                               <td className="px-5 py-4">
                                 <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
                                   chef.status === "Active" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
-                                }`}>
-                                  {chef.status || "Pending"}
+                                }`)}>
+                                  {getSubscriptionLabel(f) === 'Trial' ? `Trial (${getTrialDaysLeft(f)} days left)` : getSubscriptionLabel(f)}
                                 </span>
                               </td>
                             </tr>
@@ -766,6 +792,7 @@ const FranchiseOwnerManagement = () => {
                   <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Owner</th>
                   <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Territory</th>
                   <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Commission</th>
+                  <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Subscription</th>
                   <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Status</th>
                   <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em] text-right">Actions</th>
                 </tr>
@@ -805,6 +832,18 @@ const FranchiseOwnerManagement = () => {
                     <td className="px-5 py-4">
                       <span className="inline-flex items-center text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/50 px-2.5 py-1 rounded-md">
                         {f.commission_percentage}%
+                      </span>
+                    </td>
+                    {/* Subscription */}
+                    <td className="px-5 py-4">
+                      <span className={`inline-flex items-center text-[10px] font-black px-2.5 py-1 rounded-md uppercase tracking-widest ${
+                        getSubscriptionLabel(f) === 'Trial'
+                          ? 'bg-amber-50 text-amber-700 border border-amber-200/50'
+                          : getSubscriptionLabel(f) === 'Active'
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/50'
+                          : 'bg-red-50 text-red-700 border border-red-200/50'
+                      }`}>
+                        {getSubscriptionLabel(f)}
                       </span>
                     </td>
                     {/* Status */}

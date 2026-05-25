@@ -8,6 +8,7 @@ const authRouter = require('./src/routes/auth');
 const superadminRouter = require('./src/routes/superadmin');
 const dashboardRouter = require('./src/routes/dashboard');
 const productsRouter = require('./src/routes/products');
+const ordersRouter = require('./src/routes/orders');
 const { createProductsTable } = require('./src/config/migrations');
 
 const app = express();
@@ -21,6 +22,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/superadmin', superadminRouter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/products', productsRouter);
+app.use('/api/orders', ordersRouter);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });

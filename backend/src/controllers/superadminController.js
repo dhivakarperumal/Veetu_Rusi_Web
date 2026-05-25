@@ -5,6 +5,43 @@ function hashPassword(password) {
   return crypto.createHash('sha256').update(password).digest('hex');
 }
 
+async function expireFranchiseSubscriptions() {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const [expiredFranchises] = await pool.execute(
+      "SELECT id, email, expiry_date FROM franchise_owners WHERE expiry_date IS NOT NULL AND status = 'Active'"
+    );
+
+    const expiredIds = expiredFranchises
+      .filter((franchise) => {
+        const expiryDate = new Date(franchise.expiry_date);
+        expiryDate.setHours(0, 0, 0, 0);
+        return expiryDate < today;
+      })
+      .map((franchise) => franchise.id);
+
+    if (expiredIds.length > 0) {
+      await pool.execute(
+        `UPDATE franchise_owners SET status = 'Inactive' WHERE id IN (${expiredIds.map(() => '?').join(',')})`,
+        expiredIds
+      );
+      const expiredEmails = expiredFranchises
+        .filter((franchise) => expiredIds.includes(franchise.id))
+        .map((franchise) => franchise.email);
+      if (expiredEmails.length > 0) {
+        await pool.execute(
+          `UPDATE users SET active = 0 WHERE email IN (${expiredEmails.map(() => '?').join(',')})`,
+          expiredEmails
+        );
+      }
+    }
+  } catch (error) {
+    console.error('Error expiring franchise subscriptions:', error);
+  }
+}
+
 async function syncUserForEntity(tableName, id, role) {
   try {
     const [rows] = await pool.execute(`SELECT * FROM ${tableName} WHERE id = ?`, [id]);
@@ -898,7 +935,8 @@ exports.getFranchises = async (req, res) => {
     // Safe migrations for new columns
     try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS franch_user_id CHAR(36) DEFAULT NULL"); } catch (_) {}
     try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS login_password VARCHAR(255) DEFAULT NULL"); } catch (_) {}
-    const [rows] = await pool.execute("SELECT id, franchise_id, franch_user_id, franchise_name, owner_name, mobile, email, city, state, commission_percentage, status, territory_pincodes, created_at, login_password IS NOT NULL AS password_preset FROM franchise_owners ORDER BY created_at DESC");
+    await expireFranchiseSubscriptions();
+    const [rows] = await pool.execute("SELECT id, franchise_id, franch_user_id, franchise_name, owner_name, mobile, email, city, state, commission_percentage, status, start_date, expiry_date, territory_pincodes, created_at, login_password IS NOT NULL AS password_preset FROM franchise_owners ORDER BY created_at DESC");
     res.json(rows);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving franchise owners.', error: error.message });
@@ -1027,6 +1065,12 @@ exports.approveFranchise = async (req, res) => {
       hashedPw = hashPassword(plainPassword);
     }
 
+    const today = new Date();
+    const defaultStartDate = franchise.start_date || today.toISOString().slice(0, 10);
+    const defaultExpiryDate = franchise.expiry_date
+      ? franchise.expiry_date
+      : new Date(new Date(defaultStartDate).valueOf() + 3 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
     // Check if a user with this email already exists
     const [existing] = await pool.execute('SELECT id, user_id FROM users WHERE email = ?', [franchise.email]);
     let userId;
@@ -1049,8 +1093,8 @@ exports.approveFranchise = async (req, res) => {
 
     // Update franchise: Active + link UUID + update login_password
     await pool.execute(
-      "UPDATE franchise_owners SET status = 'Active', franch_user_id = ?, login_password = ? WHERE id = ?",
-      [userId, hashedPw, id]
+      "UPDATE franchise_owners SET status = 'Active', franch_user_id = ?, login_password = ?, start_date = ?, expiry_date = ? WHERE id = ?",
+      [userId, hashedPw, defaultStartDate, defaultExpiryDate, id]
     );
 
     return res.json({

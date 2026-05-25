@@ -1,7 +1,38 @@
 const jwt = require('jsonwebtoken');
+const pool = require('../config/db');
 const JWT_SECRET = process.env.JWT_SECRET || 'default-secret';
 
-exports.verifyToken = (req, res, next) => {
+async function validateFranchiseAdminSubscription(user) {
+  if (!user || user.role !== 'admin' || !user.email) return null;
+  const [rows] = await pool.execute(
+    'SELECT id, status, expiry_date FROM franchise_owners WHERE email = ? LIMIT 1',
+    [user.email]
+  );
+  if (!rows.length) return null;
+
+  const franchise = rows[0];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  if (franchise.expiry_date) {
+    const expiry = new Date(franchise.expiry_date);
+    expiry.setHours(0, 0, 0, 0);
+    if (expiry < today && franchise.status === 'Active') {
+      await pool.execute('UPDATE franchise_owners SET status = ? WHERE id = ?', ['Inactive', franchise.id]);
+      await pool.execute('UPDATE users SET active = 0 WHERE email = ?', [user.email]);
+      return 'Your franchise subscription has expired. Please renew to continue.';
+    }
+  }
+
+  if (franchise.status !== 'Active') {
+    await pool.execute('UPDATE users SET active = 0 WHERE email = ?', [user.email]);
+    return 'Your franchise subscription is not active. Please renew or contact support.';
+  }
+
+  return null;
+}
+
+exports.verifyToken = async (req, res, next) => {
   const authHeader = req.headers['authorization'];
   if (!authHeader) {
     return res.status(403).json({ message: 'No authorization header provided.' });
@@ -15,6 +46,10 @@ exports.verifyToken = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
     req.user = decoded;
+    const subscriptionError = await validateFranchiseAdminSubscription(decoded);
+    if (subscriptionError) {
+      return res.status(403).json({ message: subscriptionError });
+    }
     next();
   } catch (error) {
     return res.status(401).json({ message: 'Unauthorized: Invalid token.' });

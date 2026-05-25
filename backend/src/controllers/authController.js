@@ -22,6 +22,36 @@ function createToken(user) {
   );
 }
 
+async function validateFranchiseAdminLogin(user) {
+  if (!user || user.role !== 'admin' || !user.email) return null;
+  const [rows] = await pool.execute(
+    'SELECT id, status, expiry_date FROM franchise_owners WHERE email = ? LIMIT 1',
+    [user.email]
+  );
+  if (!rows.length) return null;
+
+  const franchise = rows[0];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  if (franchise.expiry_date) {
+    const expiry = new Date(franchise.expiry_date);
+    expiry.setHours(0, 0, 0, 0);
+    if (expiry < today) {
+      await pool.execute('UPDATE franchise_owners SET status = ? WHERE id = ?', ['Inactive', franchise.id]);
+      await pool.execute('UPDATE users SET active = 0 WHERE email = ?', [user.email]);
+      return 'Your franchise subscription has expired. Please renew to continue.';
+    }
+  }
+
+  if (franchise.status !== 'Active') {
+    await pool.execute('UPDATE users SET active = 0 WHERE email = ?', [user.email]);
+    return 'Your franchise subscription is not active. Please renew or contact support.';
+  }
+
+  return null;
+}
+
 exports.register = async (req, res) => {
   try {
     const { username, email, phone, password } = req.body;
@@ -78,6 +108,11 @@ exports.login = async (req, res) => {
     const user = users[0];
     if (user.active === 0 || user.active === '0' || !user.active) {
       return res.status(403).json({ message: 'Your account is deactivated. Please contact support.' });
+    }
+
+    const subscriptionError = await validateFranchiseAdminLogin(user);
+    if (subscriptionError) {
+      return res.status(403).json({ message: subscriptionError });
     }
 
     const token = createToken(user);
