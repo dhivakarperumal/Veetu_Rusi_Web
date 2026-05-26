@@ -72,4 +72,45 @@ const createProductsTable = async () => {
     }
 };
 
-module.exports = { createProductsTable };
+const createRecipeDetailsTable = async () => {
+    try {
+        const createTableSQL = `
+        CREATE TABLE IF NOT EXISTS recipe_details (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            title VARCHAR(255) NOT NULL,
+            description LONGTEXT,
+            category VARCHAR(100),
+            status VARCHAR(50) DEFAULT 'Active',
+            recipe_code VARCHAR(50) UNIQUE,
+            ingredients LONGTEXT,
+            instructions LONGTEXT,
+            chef_id VARCHAR(255),
+            chef_user_id VARCHAR(255),
+            chef_name VARCHAR(255),
+            chef_phone VARCHAR(20),
+            chef_email VARCHAR(255),
+            franchise_id VARCHAR(255),
+            franchise_user_id VARCHAR(255),
+            franchise_name VARCHAR(255),
+            franchise_email VARCHAR(255),
+            franchise_phone VARCHAR(20),
+            created_by_user_id VARCHAR(255),
+            created_by_email VARCHAR(255),
+            created_by_name VARCHAR(255),
+            created_by_phone VARCHAR(20),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            KEY idx_chef_id (chef_id),
+            KEY idx_franchise_user_id (franchise_user_id),
+            KEY idx_created_at (created_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `;
+
+        await pool.execute(createTableSQL);
+        console.log('✓ Recipe details table created or already exists');
+    } catch (error) {
+        console.error('✗ Error creating recipe_details table:', error.message);
+    }
+};
+
+module.exports = { createProductsTable, createRecipeDetailsTable };
