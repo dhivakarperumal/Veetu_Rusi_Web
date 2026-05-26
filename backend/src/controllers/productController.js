@@ -36,6 +36,80 @@ const generateNextProductCode = async () => {
     return `P${String(nextNumber).padStart(3, '0')}`;
 };
 
+const resolveProductMetadata = async (req, body) => {
+    const {
+        chef_id,
+        chef_user_id,
+        chef_name,
+        chef_phone,
+        chef_email,
+        franchise_id,
+        franchise_user_id,
+        franchise_name,
+        franchise_email,
+        franchise_phone
+    } = body;
+
+    const candidateChefId = chef_id || chef_user_id || req.user?.user_id || req.user?.id || null;
+    const candidateEmail = chef_email || req.user?.email || null;
+    const candidatePhone = chef_phone || req.user?.phone || null;
+
+    let homeChef = null;
+    if (candidateChefId || candidateEmail || candidatePhone) {
+        const [rows] = await pool.execute(
+            `SELECT hc.*, u.id AS user_id, u.user_id AS user_user_id, u.name AS user_name, u.phone AS user_phone, u.email AS user_email
+             FROM home_chefs hc
+             LEFT JOIN users u ON (u.email = hc.email OR u.phone = hc.mobile)
+             WHERE hc.chef_id = ?
+                OR hc.email = ?
+                OR hc.mobile = ?
+                OR u.user_id = ?
+                OR u.id = ?
+             LIMIT 1`,
+            [candidateChefId, candidateEmail, candidatePhone, candidateChefId, candidateChefId]
+        );
+        if (rows.length > 0) homeChef = rows[0];
+    }
+
+    const finalChefUserId = chef_user_id || req.user?.user_id || req.user?.id || homeChef?.user_user_id || homeChef?.user_id || null;
+    const finalChefId = chef_id || homeChef?.chef_id || null;
+    const finalChefName = chef_name || homeChef?.name || req.user?.name || homeChef?.user_name || null;
+    const finalChefPhone = chef_phone || homeChef?.mobile || req.user?.phone || homeChef?.user_phone || null;
+    const finalChefEmail = chef_email || homeChef?.email || req.user?.email || homeChef?.user_email || null;
+
+    const finalFranchiseUserId = franchise_user_id || homeChef?.created_by_user_id || null;
+    const finalFranchiseId = franchise_id || homeChef?.created_by_id || null;
+    let finalFranchiseName = franchise_name || homeChef?.created_by_name || null;
+    let finalFranchiseEmail = franchise_email || homeChef?.created_by_email || null;
+    let finalFranchisePhone = franchise_phone || homeChef?.created_by_phone || null;
+
+    if (finalFranchiseUserId) {
+        const [franchiseUsers] = await pool.execute(
+            'SELECT id, user_id, name, phone, email FROM users WHERE id = ? OR user_id = ? LIMIT 1',
+            [finalFranchiseUserId, finalFranchiseUserId]
+        );
+        if (franchiseUsers.length > 0) {
+            const fu = franchiseUsers[0];
+            finalFranchiseName = finalFranchiseName || fu.name || null;
+            finalFranchiseEmail = finalFranchiseEmail || fu.email || null;
+            finalFranchisePhone = finalFranchisePhone || fu.phone || null;
+        }
+    }
+
+    return {
+        finalChefId,
+        finalChefUserId,
+        finalChefName,
+        finalChefPhone,
+        finalChefEmail,
+        finalFranchiseId,
+        finalFranchiseUserId,
+        finalFranchiseName,
+        finalFranchiseEmail,
+        finalFranchisePhone
+    };
+};
+
 // Get all products (with filters). If `chef_user_id` or `chef_id` is present, return chef-owned `products`.
 // Otherwise fall back to franchise/admin `franchise_products` if desired by callers.
 exports.getAllProducts = async (req, res) => {
@@ -166,23 +240,25 @@ exports.createProduct = async (req, res) => {
         // Determine product code
         const finalProductCode = product_code || await generateNextProductCode();
 
-        // Chef & franchise info (prefer request body, fall back to authenticated user)
-        const finalChefId = chef_id || null;
-        const finalChefUserId = chef_user_id || req.user?.user_id || req.user?.id || null;
-        const finalChefName = chef_name || req.user?.name || null;
-        const finalChefPhone = chef_phone || req.user?.phone || null;
-        const finalChefEmail = chef_email || null;
+        const metadata = await resolveProductMetadata(req, req.body);
+        const {
+            finalChefId,
+            finalChefUserId,
+            finalChefName,
+            finalChefPhone,
+            finalChefEmail,
+            finalFranchiseId,
+            finalFranchiseUserId,
+            finalFranchiseName,
+            finalFranchiseEmail,
+            finalFranchisePhone
+        } = metadata;
 
-        const finalFranchiseUserId = franchise_user_id || req.user?.user_id || req.user?.id || null;
-        const finalFranchiseName = franchise_name || null;
-        const finalFranchiseEmail = franchise_email || null;
-        const finalFranchisePhone = franchise_phone || null;
-
-        const finalCreatedByUserId = created_by_user_id || req.user?.user_id || req.user?.id || null;
-        const finalCreatedByEmail = created_by_email || req.user?.email || null;
-        const finalCreatedByName = created_by_name || req.user?.name || null;
-        const finalCreatedByPhone = created_by_phone || req.user?.phone || null;
-        const finalFranchiseId = franchise_id || null;
+        const finalCreatedByUserId = created_by_user_id || finalChefUserId || req.user?.user_id || req.user?.id || null;
+        const finalCreatedByEmail = created_by_email || finalChefEmail || req.user?.email || null;
+        const finalCreatedByName = created_by_name || finalChefName || req.user?.name || null;
+        const finalCreatedByPhone = created_by_phone || finalChefPhone || req.user?.phone || null;
+        const finalFranchiseIdResolved = franchise_id || finalFranchiseId || null;
 
         const params = [
             name, description || null, category, product_type || 'Cooked Food', subcategory || null,
@@ -199,7 +275,7 @@ exports.createProduct = async (req, res) => {
             finalChefId, finalChefUserId, finalChefName, finalChefPhone, finalChefEmail,
             finalFranchiseUserId, finalFranchiseName, finalFranchiseEmail, finalFranchisePhone,
             finalCreatedByUserId, finalCreatedByEmail, finalCreatedByName, finalCreatedByPhone,
-            finalFranchiseId
+            finalFranchiseIdResolved
         ];
 
         const columns = `name, description, category, product_type, subcategory, mrp, offer, offer_price,
@@ -253,6 +329,37 @@ exports.updateProduct = async (req, res) => {
             return res.status(404).json({ message: 'Product not found' });
         }
 
+        const metadata = await resolveProductMetadata(req, req.body);
+        const {
+            finalChefId,
+            finalChefUserId,
+            finalChefName,
+            finalChefPhone,
+            finalChefEmail,
+            finalFranchiseId,
+            finalFranchiseUserId,
+            finalFranchiseName,
+            finalFranchiseEmail,
+            finalFranchisePhone
+        } = metadata;
+
+        const finalChefIdResolved = chef_id || finalChefId || null;
+        const finalChefUserIdResolved = chef_user_id || finalChefUserId || null;
+        const finalChefNameResolved = chef_name || finalChefName || null;
+        const finalChefPhoneResolved = chef_phone || finalChefPhone || null;
+        const finalChefEmailResolved = chef_email || finalChefEmail || null;
+
+        const finalFranchiseIdResolved = franchise_id || finalFranchiseId || null;
+        const finalFranchiseUserIdResolved = franchise_user_id || finalFranchiseUserId || null;
+        const finalFranchiseNameResolved = franchise_name || finalFranchiseName || null;
+        const finalFranchiseEmailResolved = franchise_email || finalFranchiseEmail || null;
+        const finalFranchisePhoneResolved = franchise_phone || finalFranchisePhone || null;
+
+        const finalCreatedByUserId = created_by_user_id || finalChefUserIdResolved || req.user?.user_id || req.user?.id || null;
+        const finalCreatedByEmail = created_by_email || finalChefEmailResolved || req.user?.email || null;
+        const finalCreatedByName = created_by_name || finalChefNameResolved || req.user?.name || null;
+        const finalCreatedByPhone = created_by_phone || finalChefPhoneResolved || req.user?.phone || null;
+
         // Update product
         const updateQuery = `UPDATE products SET
                 name = ?, description = ?, category = ?, product_type = ?, subcategory = ?,
@@ -274,10 +381,10 @@ exports.updateProduct = async (req, res) => {
             serving_size, prep_time, ingredients, spice_level, shelf_life_days, net_weight, package_count,
             packaging_type, manufacture_date, serializeJsonField(variants),
             images ? JSON.stringify(images) : null,
-            chef_id, chef_user_id, chef_name, chef_phone, chef_email,
-            franchise_user_id, franchise_name, franchise_email, franchise_phone,
-            created_by_user_id, created_by_email, created_by_name, created_by_phone,
-            franchise_id,
+            finalChefIdResolved, finalChefUserIdResolved, finalChefNameResolved, finalChefPhoneResolved, finalChefEmailResolved,
+            finalFranchiseUserIdResolved, finalFranchiseNameResolved, finalFranchiseEmailResolved, finalFranchisePhoneResolved,
+            finalCreatedByUserId, finalCreatedByEmail, finalCreatedByName, finalCreatedByPhone,
+            finalFranchiseIdResolved,
             id
         ];
 
