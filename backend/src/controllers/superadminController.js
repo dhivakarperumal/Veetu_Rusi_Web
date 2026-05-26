@@ -62,7 +62,7 @@ async function syncUserForEntity(tableName, id, role) {
 
     // normalize role names
     let userRole = role;
-    if (role === 'delivery' || role === 'delivery_boy') userRole = 'delivery_boy';
+    if (role === 'delivery' || role === 'delivery_boy' || role === 'delivery_partner') userRole = 'delivery_partner';
 
     if (status === 'Approved' || status === 'Active') {
       const [existing] = await pool.execute("SELECT id, user_id FROM users WHERE email = ?", [email]);
@@ -72,7 +72,11 @@ async function syncUserForEntity(tableName, id, role) {
           "INSERT INTO users (user_id, full_name, email, mobile_number, password, role, status) VALUES (?, ?, ?, ?, ?, ?, 'Active')",
           [userId, name, email, mobile, password, userRole]
         );
-        await pool.execute(`UPDATE ${tableName} SET user_id = ? WHERE id = ?`, [userId, id]);
+        if (tableName === 'delivery_partners') {
+          await pool.execute(`UPDATE ${tableName} SET user_id = ?, delivery_partner_user_id = ? WHERE id = ?`, [userId, userId, id]);
+        } else {
+          await pool.execute(`UPDATE ${tableName} SET user_id = ? WHERE id = ?`, [userId, id]);
+        }
         return { created: true, user: { id: ins.insertId, name, email, phone: mobile, role: userRole }, plainPassword };
       } else {
         const existingUserId = existing[0].user_id;
@@ -81,7 +85,11 @@ async function syncUserForEntity(tableName, id, role) {
           [userRole, password, name, mobile, email]
         );
         if (existingUserId) {
-          await pool.execute(`UPDATE ${tableName} SET user_id = ? WHERE id = ?`, [existingUserId, id]);
+          if (tableName === 'delivery_partners') {
+            await pool.execute(`UPDATE ${tableName} SET user_id = ?, delivery_partner_user_id = ? WHERE id = ?`, [existingUserId, existingUserId, id]);
+          } else {
+            await pool.execute(`UPDATE ${tableName} SET user_id = ? WHERE id = ?`, [existingUserId, id]);
+          }
         }
         return { updated: true };
       }
@@ -853,7 +861,7 @@ exports.createDeliveryPartner = async (req, res) => {
 
     const [result] = await pool.execute(`INSERT INTO delivery_partners (${cols}) VALUES (${placeholders})`, params);
     // sync user only if record status requires it (syncUserForEntity will noop otherwise)
-    await syncUserForEntity('delivery_partners', result.insertId, 'delivery_boy');
+    await syncUserForEntity('delivery_partners', result.insertId, 'delivery_partner');
     res.status(201).json({ message: 'Delivery partner registered.', id: result.insertId, delivery_partner_code });
   } catch (error) {
     res.status(500).json({ message: 'Error registering delivery partner.', error: error.message });
@@ -933,7 +941,7 @@ exports.updateDeliveryPartner = async (req, res) => {
     params.push(id);
 
     await pool.execute(query, params);
-    const syncResult = await syncUserForEntity('delivery_partners', id, 'delivery_boy');
+    const syncResult = await syncUserForEntity('delivery_partners', id, 'delivery_partner');
     if (syncResult && syncResult.created) {
       res.json({ message: 'Delivery partner profile updated and user created.', user: syncResult.user, password: syncResult.plainPassword });
     } else {

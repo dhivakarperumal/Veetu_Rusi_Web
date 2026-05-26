@@ -16,6 +16,7 @@ function generateRoleId(role) {
     case 'chef':
       return `CHEF-${uuid}`;
     case 'delivery_partner':
+    case 'delivery_boy':
       return `DEL-${uuid}`;
     default:
       return `USER-${uuid}`;
