@@ -26,21 +26,21 @@ const serializeJsonField = (value) => {
 
 const generateNextProductCode = async () => {
     const [products] = await pool.execute(
-        'SELECT product_code FROM franchise_products WHERE product_code LIKE "SP%" ORDER BY id DESC LIMIT 1'
+        'SELECT product_code FROM products WHERE product_code LIKE "P%" ORDER BY id DESC LIMIT 1'
     );
-    if (products.length === 0) return 'SP001';
+    if (products.length === 0) return 'P001';
 
     const lastCode = products[0].product_code || '';
-    const numeric = parseInt(lastCode.replace(/^SP/i, ''), 10);
+    const numeric = parseInt(lastCode.replace(/^P/i, ''), 10);
     const nextNumber = Number.isInteger(numeric) ? numeric + 1 : 1;
-    return `SP${String(nextNumber).padStart(3, '0')}`;
+    return `P${String(nextNumber).padStart(3, '0')}`;
 };
 
-// Get all products (with filters) - from franchise_products table
+// Get all products (with filters) - from products table
 exports.getAllProducts = async (req, res) => {
     try {
         const { category, status, franchise_id, franchise_user_id } = req.query;
-        let query = 'SELECT * FROM franchise_products WHERE 1=1';
+        let query = 'SELECT * FROM products WHERE 1=1';
         const params = [];
 
         // Allow filtering by franchise_id or franchise_user_id
@@ -77,11 +77,11 @@ exports.getAllProducts = async (req, res) => {
     }
 };
 
-// Get product by ID - from franchise_products table
+// Get product by ID - from products table
 exports.getProductById = async (req, res) => {
     try {
         const { id } = req.params;
-        const [products] = await pool.execute('SELECT * FROM franchise_products WHERE id = ?', [id]);
+        const [products] = await pool.execute('SELECT * FROM products WHERE id = ?', [id]);
 
         if (products.length === 0) {
             return res.status(404).json({ message: 'Product not found' });
@@ -190,9 +190,9 @@ exports.createProduct = async (req, res) => {
         // Sanitize undefined -> null for insert params as well
         const insertParams = params.map(v => v === undefined ? null : v);
 
-        // Always insert into franchise_products table
+        // Insert into base products table
         const [result] = await pool.execute(
-            `INSERT INTO franchise_products (${columns}) VALUES (${placeholders})`,
+            `INSERT INTO products (${columns}) VALUES (${placeholders})`,
             insertParams
         );
 
@@ -222,13 +222,13 @@ exports.updateProduct = async (req, res) => {
         } = req.body;
 
         // Check if product exists
-        const [existing] = await pool.execute('SELECT id FROM franchise_products WHERE id = ?', [id]);
+        const [existing] = await pool.execute('SELECT id FROM products WHERE id = ?', [id]);
         if (existing.length === 0) {
             return res.status(404).json({ message: 'Product not found' });
         }
 
         // Update product
-        const updateQuery = `UPDATE franchise_products SET
+        const updateQuery = `UPDATE products SET
                 name = ?, description = ?, category = ?, product_type = ?, subcategory = ?,
                 mrp = ?, offer = ?, offer_price = ?, product_code = ?, total_stock = ?,
                 rating = ?, status = ?, material = ?, nutrition_info = ?, storage_instructions = ?,
@@ -271,12 +271,12 @@ exports.deleteProduct = async (req, res) => {
         const { id } = req.params;
 
         // Check if product exists
-        const [existing] = await pool.execute('SELECT id FROM franchise_products WHERE id = ?', [id]);
+        const [existing] = await pool.execute('SELECT id FROM products WHERE id = ?', [id]);
         if (existing.length === 0) {
             return res.status(404).json({ message: 'Product not found' });
         }
 
-        await pool.execute('DELETE FROM franchise_products WHERE id = ?', [id]);
+        await pool.execute('DELETE FROM products WHERE id = ?', [id]);
         res.json({ message: 'Product deleted successfully' });
     } catch (error) {
         console.error('Error deleting product:', error);
@@ -288,14 +288,14 @@ exports.deleteProduct = async (req, res) => {
 exports.getLatestProductCode = async (req, res) => {
     try {
         const [products] = await pool.execute(
-            'SELECT product_code FROM franchise_products WHERE product_code LIKE "SP%" ORDER BY id DESC LIMIT 1'
+            'SELECT product_code FROM products WHERE product_code LIKE "P%" ORDER BY id DESC LIMIT 1'
         );
 
-        let nextCode = 'SP001';
+        let nextCode = 'P001';
         if (products.length > 0) {
             const lastCode = products[0].product_code;
-            const num = parseInt(lastCode.replace('SP', '')) + 1;
-            nextCode = `SP${String(num).padStart(3, '0')}`;
+            const num = parseInt(lastCode.replace('P', ''), 10) + 1;
+            nextCode = `P${String(num).padStart(3, '0')}`;
         }
 
         res.json({ latestCode: nextCode });

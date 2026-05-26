@@ -38,7 +38,7 @@ const Products = () => {
     try {
       const [catRes, prodRes, comboRes] = await Promise.allSettled([
         api.get("/categories"),
-        api.get("/products"),
+        api.get("/franchise-products", { params: { ...(franchiseUserId ? { franchise_user_id: franchiseUserId } : {}), ...(franchiseId ? { franchise_id: franchiseId } : {}) } }),
         api.get("/combos"),
       ]);
 
@@ -83,7 +83,7 @@ const Products = () => {
     if (!editItem && id) {
       const loadEditItem = async () => {
         try {
-          const res = await api.get(`/products/${id}`);
+          const res = await api.get(`/franchise-products/${id}`);
           setFetchedEditItem(res.data);
           const item = res.data;
           const shouldBeCombo = item?.type === "combo" || item?.comboItems;
@@ -101,7 +101,7 @@ const Products = () => {
   const handleDelete = async (id, type) => {
     if (!window.confirm("Are you sure you want to delete this?")) return;
     try {
-      const endpoint = type === "single" ? "/products" : "/combos";
+      const endpoint = type === "single" ? "/franchise-products" : "/combos";
       await api.delete(`${endpoint}/${id}`);
       toast.success("Deleted successfully");
       fetchData();
@@ -320,10 +320,10 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
       };
 
       if (editItem) {
-        await api.put(`/products/${editItem.id}`, payload);
+        await api.put(`/franchise-products/${editItem.id}`, payload);
         toast.success("Inventory Pulse Updated");
       } else {
-        await api.post("/products", payload);
+        await api.post("/franchise-products", payload);
         toast.success("Product Registered Successfully");
       }
       onSuccess();
