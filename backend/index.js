@@ -9,11 +9,7 @@ const superadminRouter = require('./src/routes/superadmin');
 const subscriptionsRouter = require('./src/routes/subscriptions');
 const dashboardRouter = require('./src/routes/dashboard');
 const productsRouter = require('./src/routes/products');
-const ordersRouter = require('./src/routes/orders');
-const preordersRouter = require('./src/routes/preorders');
-const categoriesRouter = require('./src/routes/categories');
-const userRoutes = require('./src/routes/userRoutes');
-const { createProductsTable, createSubscriptionPlansTable, createFranchiseProductsTable } = require('./src/config/migrations');
+const { createProductsTable } = require('./src/config/migrations');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -28,10 +24,6 @@ app.use('/api/superadmin', superadminRouter);
 app.use('/api/subscriptions', subscriptionsRouter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/products', productsRouter);
-app.use('/api/orders', ordersRouter);
-app.use('/api/preorders', preordersRouter);
-app.use('/api/categories', categoriesRouter);
-app.use('/api/users', userRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
@@ -44,6 +36,12 @@ initDb().then(async () => {
     await createSubscriptionPlansTable();
   } catch (err) {
     console.error('Migration error:', err.message || err);
+  }
+
+  try {
+    await createRecipeDetailsTable();
+  } catch (err) {
+    console.error('Recipe details migration error:', err.message || err);
   }
 
   const server = app.listen(port, () => {
