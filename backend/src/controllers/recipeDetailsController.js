@@ -172,8 +172,8 @@ exports.createRecipe = async (req, res) => {
         let franchiseAdminDetails = null;
         if (finalFranchiseUserId) {
             const [franchiseUsers] = await pool.execute(
-                'SELECT id, name, phone, email FROM users WHERE id = ? LIMIT 1',
-                [finalFranchiseUserId]
+                'SELECT id, user_id, name, phone, email FROM users WHERE id = ? OR user_id = ? LIMIT 1',
+                [finalFranchiseUserId, finalFranchiseUserId]
             );
             if (franchiseUsers.length > 0) {
                 franchiseAdminDetails = franchiseUsers[0];
@@ -241,8 +241,8 @@ exports.updateRecipe = async (req, res) => {
         let franchiseAdminDetails = null;
         if (finalFranchiseUserId) {
             const [franchiseUsers] = await pool.execute(
-                'SELECT id, name, phone, email FROM users WHERE id = ? LIMIT 1',
-                [finalFranchiseUserId]
+                'SELECT id, user_id, name, phone, email FROM users WHERE id = ? OR user_id = ? LIMIT 1',
+                [finalFranchiseUserId, finalFranchiseUserId]
             );
             if (franchiseUsers.length > 0) {
                 franchiseAdminDetails = franchiseUsers[0];
