@@ -234,21 +234,46 @@ async function createDatabaseAndTables() {
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `created_by_phone` VARCHAR(50) DEFAULT NULL");
 
   await connection.execute(`
-    CREATE TABLE IF NOT EXISTS \`categories\` (
+    CREATE TABLE IF NOT EXISTS franchise_category (
       id INT AUTO_INCREMENT PRIMARY KEY,
-      catId VARCHAR(50) NOT NULL UNIQUE,
+      catId VARCHAR(50) NOT NULL,
       name VARCHAR(255) NOT NULL,
       description TEXT,
       subcategory LONGTEXT,
       images LONGTEXT,
+      franchise_user_id VARCHAR(255),
+      franchise_id INT,
+      created_by_user_id VARCHAR(255),
+      created_by_email VARCHAR(255),
+      created_by_name VARCHAR(255),
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      UNIQUE(catId, franchise_user_id),
+      INDEX(franchise_user_id),
+      INDEX(franchise_id),
+      INDEX(created_by_user_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
-  console.log('Categories table created or already exists');
+  console.log('Franchise category table created or already exists');
+
+  try { await connection.execute('ALTER TABLE franchise_category DROP INDEX catId'); } catch (err) {
+    // Ignore if the old single-column catId unique index does not exist.
+  }
+  try { await connection.execute('ALTER TABLE franchise_category ADD UNIQUE INDEX catId_franchise_user_id (catId, franchise_user_id)'); } catch (err) {
+    // Ignore if the composite unique index already exists.
+  }
+  
+  try { await connection.execute('ALTER TABLE franchise_category ADD COLUMN franchise_user_id VARCHAR(255)'); } catch {}
+  try { await connection.execute('ALTER TABLE franchise_category ADD COLUMN franchise_id INT'); } catch {}
+  try { await connection.execute('ALTER TABLE franchise_category ADD COLUMN created_by_user_id VARCHAR(255)'); } catch {}
+  try { await connection.execute('ALTER TABLE franchise_category ADD COLUMN created_by_email VARCHAR(255)'); } catch {}
+  try { await connection.execute('ALTER TABLE franchise_category ADD COLUMN created_by_name VARCHAR(255)'); } catch {}
+  try { await connection.execute('ALTER TABLE franchise_category ADD INDEX(franchise_user_id)'); } catch {}
+  try { await connection.execute('ALTER TABLE franchise_category ADD INDEX(franchise_id)'); } catch {}
+  try { await connection.execute('ALTER TABLE franchise_category ADD INDEX(created_by_user_id)'); } catch {}
 
   try {
-    const [categoryCount] = await connection.execute('SELECT COUNT(*) AS count FROM categories');
+    const [categoryCount] = await connection.execute('SELECT COUNT(*) AS count FROM franchise_category');
     if (categoryCount[0].count === 0) {
       const categoriesPath = path.join(__dirname, 'src', 'data', 'categories.json');
       const raw = await fs.readFile(categoriesPath, 'utf8');
@@ -256,13 +281,16 @@ async function createDatabaseAndTables() {
       if (Array.isArray(categoriesData) && categoriesData.length > 0) {
         for (const category of categoriesData) {
           await connection.execute(
-            'INSERT INTO categories (catId, name, description, subcategory, images) VALUES (?, ?, ?, ?, ?)',
+            'INSERT INTO franchise_category (catId, name, description, subcategory, images, created_by_user_id, created_by_email, created_by_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
             [
               category.catId || `CAT${category.id}`,
               category.name || category.cname || '',
               category.description || null,
               JSON.stringify(category.subcategory || []),
-              JSON.stringify(category.images || [])
+              JSON.stringify(category.images || []),
+              null,
+              'admin@system.com',
+              'System Admin'
             ]
           );
         }

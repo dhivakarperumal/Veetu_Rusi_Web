@@ -26,21 +26,21 @@ const serializeJsonField = (value) => {
 
 const generateNextProductCode = async () => {
     const [products] = await pool.execute(
-        'SELECT product_code FROM franchise_products WHERE product_code LIKE "SP%" ORDER BY id DESC LIMIT 1'
+        'SELECT product_code FROM products WHERE product_code LIKE "P%" ORDER BY id DESC LIMIT 1'
     );
-    if (products.length === 0) return 'SP001';
+    if (products.length === 0) return 'P001';
 
     const lastCode = products[0].product_code || '';
-    const numeric = parseInt(lastCode.replace(/^SP/i, ''), 10);
+    const numeric = parseInt(lastCode.replace(/^P/i, ''), 10);
     const nextNumber = Number.isInteger(numeric) ? numeric + 1 : 1;
-    return `SP${String(nextNumber).padStart(3, '0')}`;
+    return `P${String(nextNumber).padStart(3, '0')}`;
 };
 
-// Get all products (with filters) - from franchise_products table
+// Get all products (with filters) - from products table
 exports.getAllProducts = async (req, res) => {
     try {
         const { category, status, franchise_id, franchise_user_id } = req.query;
-        let query = 'SELECT * FROM franchise_products WHERE 1=1';
+        let query = 'SELECT * FROM products WHERE 1=1';
         const params = [];
 
         // Allow filtering by franchise_id or franchise_user_id
@@ -77,11 +77,11 @@ exports.getAllProducts = async (req, res) => {
     }
 };
 
-// Get product by ID - from franchise_products table
+// Get product by ID - from products table
 exports.getProductById = async (req, res) => {
     try {
         const { id } = req.params;
-        const [products] = await pool.execute('SELECT * FROM franchise_products WHERE id = ?', [id]);
+        const [products] = await pool.execute('SELECT * FROM products WHERE id = ?', [id]);
 
         if (products.length === 0) {
             return res.status(404).json({ message: 'Product not found' });
@@ -190,9 +190,9 @@ exports.createProduct = async (req, res) => {
         // Sanitize undefined -> null for insert params as well
         const insertParams = params.map(v => v === undefined ? null : v);
 
-        // Always insert into franchise_products table
+        // Insert into base products table
         const [result] = await pool.execute(
-            `INSERT INTO franchise_products (${columns}) VALUES (${placeholders})`,
+            `INSERT INTO products (${columns}) VALUES (${placeholders})`,
             insertParams
         );
 
@@ -222,13 +222,13 @@ exports.updateProduct = async (req, res) => {
         } = req.body;
 
         // Check if product exists
-        const [existing] = await pool.execute('SELECT id FROM franchise_products WHERE id = ?', [id]);
+        const [existing] = await pool.execute('SELECT id FROM products WHERE id = ?', [id]);
         if (existing.length === 0) {
             return res.status(404).json({ message: 'Product not found' });
         }
 
         // Update product
-        const updateQuery = `UPDATE franchise_products SET
+        const updateQuery = `UPDATE products SET
                 name = ?, description = ?, category = ?, product_type = ?, subcategory = ?,
                 mrp = ?, offer = ?, offer_price = ?, product_code = ?, total_stock = ?,
                 rating = ?, status = ?, material = ?, nutrition_info = ?, storage_instructions = ?,
@@ -271,12 +271,12 @@ exports.deleteProduct = async (req, res) => {
         const { id } = req.params;
 
         // Check if product exists
-        const [existing] = await pool.execute('SELECT id FROM franchise_products WHERE id = ?', [id]);
+        const [existing] = await pool.execute('SELECT id FROM products WHERE id = ?', [id]);
         if (existing.length === 0) {
             return res.status(404).json({ message: 'Product not found' });
         }
 
-        await pool.execute('DELETE FROM franchise_products WHERE id = ?', [id]);
+        await pool.execute('DELETE FROM products WHERE id = ?', [id]);
         res.json({ message: 'Product deleted successfully' });
     } catch (error) {
         console.error('Error deleting product:', error);
@@ -288,14 +288,14 @@ exports.deleteProduct = async (req, res) => {
 exports.getLatestProductCode = async (req, res) => {
     try {
         const [products] = await pool.execute(
-            'SELECT product_code FROM franchise_products WHERE product_code LIKE "SP%" ORDER BY id DESC LIMIT 1'
+            'SELECT product_code FROM products WHERE product_code LIKE "P%" ORDER BY id DESC LIMIT 1'
         );
 
-        let nextCode = 'SP001';
+        let nextCode = 'P001';
         if (products.length > 0) {
             const lastCode = products[0].product_code;
-            const num = parseInt(lastCode.replace('SP', '')) + 1;
-            nextCode = `SP${String(num).padStart(3, '0')}`;
+            const num = parseInt(lastCode.replace('P', ''), 10) + 1;
+            nextCode = `P${String(num).padStart(3, '0')}`;
         }
 
         res.json({ latestCode: nextCode });
@@ -305,12 +305,25 @@ exports.getLatestProductCode = async (req, res) => {
     }
 };
 
-// Get categories from database
+// Get categories - optionally filtered by franchise
 exports.getCategories = async (req, res) => {
     try {
-        const [rows] = await pool.execute(
-            'SELECT id, catId, name, description, subcategory, images FROM categories ORDER BY id DESC'
-        );
+        const { franchise_user_id, franchise_id } = req.query;
+        let query = 'SELECT id, catId, name, description, subcategory, images, franchise_user_id, franchise_id, created_by_user_id, created_by_email, created_by_name FROM franchise_category WHERE 1=1';
+        const params = [];
+
+        if (franchise_user_id) {
+            query += ' AND (franchise_user_id = ? OR franchise_user_id IS NULL)';
+            params.push(franchise_user_id);
+        }
+        if (franchise_id) {
+            query += ' AND (franchise_id = ? OR franchise_id IS NULL)';
+            params.push(franchise_id);
+        }
+
+        query += ' ORDER BY id DESC';
+
+        const [rows] = await pool.execute(query, params);
 
         const categories = rows.map((row) => ({
             ...row,
@@ -325,24 +338,89 @@ exports.getCategories = async (req, res) => {
     }
 };
 
+const generateNextCategoryId = async (franchiseUserId) => {
+    const [rows] = await pool.execute(
+        'SELECT catId FROM franchise_category WHERE franchise_user_id <=> ?',
+        [franchiseUserId]
+    );
+
+    let maxId = 0;
+    rows.forEach((row) => {
+        if (!row.catId) return;
+        const match = row.catId.match(/\d+/);
+        if (match) {
+            const numericId = parseInt(match[0], 10);
+            if (!Number.isNaN(numericId) && numericId > maxId) {
+                maxId = numericId;
+            }
+        }
+    });
+
+    return `CAT${String(maxId + 1).padStart(3, '0')}`;
+};
+
 // Create a new category in database
 exports.createCategory = async (req, res) => {
     try {
-        const { catId, name, description, subcategory = [], images } = req.body;
+        const { catId, name, description, subcategory = [], images, franchise_user_id, franchise_id, created_by_user_id } = req.body;
         const categoryName = name || req.body.cname;
         const categoryDescription = description || req.body.cdescription || '';
         const categoryImages = images || req.body.cimgs || [];
 
-        if (!catId || !categoryName) return res.status(400).json({ message: 'catId and name are required' });
+        if (!categoryName) return res.status(400).json({ message: 'Category name is required' });
 
-        await pool.execute(
-            'INSERT INTO categories (catId, name, description, subcategory, images) VALUES (?, ?, ?, ?, ?)',
-            [catId, categoryName, categoryDescription, JSON.stringify(subcategory), JSON.stringify(categoryImages)]
-        );
+        const finalFranchiseUserId = franchise_user_id || req.user?.user_id || req.user?.id || null;
+        const finalCreatedByUserId = created_by_user_id || req.user?.user_id || req.user?.id || null;
+        const finalFranchiseId = franchise_id || null;
 
-        res.status(201).json({ message: 'Category created successfully' });
+        // Ignore client-supplied catId for creates; generate franchise-scoped IDs server-side.
+        let finalCatId = await generateNextCategoryId(finalFranchiseUserId);
+
+        const insertSql =
+            'INSERT INTO franchise_category (catId, name, description, subcategory, images, franchise_user_id, franchise_id, created_by_user_id, created_by_email, created_by_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+
+        const insertParams = [
+            finalCatId,
+            categoryName,
+            categoryDescription,
+            JSON.stringify(subcategory),
+            JSON.stringify(categoryImages),
+            finalFranchiseUserId,
+            finalFranchiseId,
+            finalCreatedByUserId,
+            req.user?.email || null,
+            req.user?.name || null
+        ];
+
+        let result;
+        let attempt = 0;
+        const maxAttempts = 5;
+
+        while (attempt < maxAttempts) {
+            try {
+                [result] = await pool.execute(insertSql, insertParams);
+                break;
+            } catch (insertErr) {
+                if (insertErr.code === 'ER_DUP_ENTRY') {
+                    attempt += 1;
+                    finalCatId = await generateNextCategoryId(finalFranchiseUserId);
+                    insertParams[0] = finalCatId;
+                    continue;
+                }
+                throw insertErr;
+            }
+        }
+
+        if (!result) {
+            return res.status(409).json({ message: 'Unable to generate a unique Category ID. Please try again.' });
+        }
+
+        res.status(201).json({ message: 'Category created successfully', id: result.insertId, catId: finalCatId });
     } catch (err) {
         console.error('Failed to create category:', err);
+        if (err.code === 'ER_DUP_ENTRY') {
+            return res.status(409).json({ message: 'Category ID already exists for this franchise user. Please try again.' });
+        }
         res.status(500).json({ message: 'Failed to create category', error: err.message });
     }
 };
@@ -375,6 +453,14 @@ exports.updateCategory = async (req, res) => {
             fields.push('images = ?');
             params.push(JSON.stringify(updates.images !== undefined ? updates.images : updates.cimgs));
         }
+        if (updates.franchise_user_id !== undefined) {
+            fields.push('franchise_user_id = ?');
+            params.push(updates.franchise_user_id);
+        }
+        if (updates.franchise_id !== undefined) {
+            fields.push('franchise_id = ?');
+            params.push(updates.franchise_id);
+        }
 
         if (fields.length === 0) {
             return res.status(400).json({ message: 'No fields to update' });
@@ -382,7 +468,7 @@ exports.updateCategory = async (req, res) => {
 
         params.push(catId, catId);
         const [result] = await pool.execute(
-            `UPDATE categories SET ${fields.join(', ')} WHERE catId = ? OR id = ?`,
+            `UPDATE franchise_category SET ${fields.join(', ')} WHERE catId = ? OR id = ?`,
             params
         );
 
@@ -400,7 +486,7 @@ exports.deleteCategory = async (req, res) => {
     try {
         const catId = req.params.catId;
         const [result] = await pool.execute(
-            'DELETE FROM categories WHERE catId = ? OR id = ?',
+            'DELETE FROM franchise_category WHERE catId = ? OR id = ?',
             [catId, catId]
         );
 

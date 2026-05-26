@@ -32,13 +32,28 @@ const Products = () => {
   const [combos, setCombos] = useState([]);
   const [loadingList, setLoadingList] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [franchiseId, setFranchiseId] = useState(null);
+  const [franchiseUserId, setFranchiseUserId] = useState(null);
+
+  useEffect(() => {
+    const fetchFranchiseInfo = async () => {
+      try {
+        const res = await api.get("/auth/profile");
+        setFranchiseUserId(res.data?.user?.user_id || null);
+        setFranchiseId(res.data?.franchise?.franchise_id || null);
+      } catch (err) {
+        console.error("Failed to load franchise profile:", err);
+      }
+    };
+    fetchFranchiseInfo();
+  }, []);
 
   const fetchData = async () => {
     setLoadingList(true);
     try {
       const [catRes, prodRes, comboRes] = await Promise.allSettled([
         api.get("/categories"),
-        api.get("/products"),
+        api.get("/franchise-products", { params: { ...(franchiseUserId ? { franchise_user_id: franchiseUserId } : {}), ...(franchiseId ? { franchise_id: franchiseId } : {}) } }),
         api.get("/combos"),
       ]);
 
@@ -77,13 +92,13 @@ const Products = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [franchiseUserId, franchiseId]);
 
   useEffect(() => {
     if (!editItem && id) {
       const loadEditItem = async () => {
         try {
-          const res = await api.get(`/products/${id}`);
+          const res = await api.get(`/franchise-products/${id}`);
           setFetchedEditItem(res.data);
           const item = res.data;
           const shouldBeCombo = item?.type === "combo" || item?.comboItems;
@@ -101,7 +116,7 @@ const Products = () => {
   const handleDelete = async (id, type) => {
     if (!window.confirm("Are you sure you want to delete this?")) return;
     try {
-      const endpoint = type === "single" ? "/products" : "/combos";
+      const endpoint = type === "single" ? "/franchise-products" : "/combos";
       await api.delete(`${endpoint}/${id}`);
       toast.success("Deleted successfully");
       fetchData();
@@ -159,6 +174,8 @@ const Products = () => {
           {activeTab === "single" ? (
             <SingleProductForm 
               categories={categories} 
+              franchiseId={franchiseId}
+              franchiseUserId={franchiseUserId}
               onSuccess={() => { 
                 fetchData(); 
                 navigate('/admin/products/all');
@@ -185,7 +202,7 @@ const Products = () => {
   );
 };
 
-const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
+const SingleProductForm = ({ categories, franchiseId, franchiseUserId, onSuccess, products, editItem }) => {
   const [form, setForm] = useState({
     productId: "",
     name: "",
@@ -203,23 +220,7 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
   });
   const [loading, setLoading] = useState(false);
   const [manualWeight, setManualWeight] = useState(false);
-  const [franchiseId, setFranchiseId] = useState(null);
   const barcodeRef = useRef();
-
-  // Fetch franchise info on component mount
-  useEffect(() => {
-    const fetchFranchiseInfo = async () => {
-      try {
-        const res = await api.get("/auth/profile");
-        if (res.data.franchise && res.data.franchise.franchise_id) {
-          setFranchiseId(res.data.franchise.franchise_id);
-        }
-      } catch (error) {
-        console.error("Error fetching franchise info:", error);
-      }
-    };
-    fetchFranchiseInfo();
-  }, []);
 
   const safeParse = (data) => {
     if (!data) return [];
@@ -316,10 +317,10 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
       };
 
       if (editItem) {
-        await api.put(`/products/${editItem.id}`, payload);
+        await api.put(`/franchise-products/${editItem.id}`, payload);
         toast.success("Inventory Pulse Updated");
       } else {
-        await api.post("/products", payload);
+        await api.post("/franchise-products", payload);
         toast.success("Product Registered Successfully");
       }
       onSuccess();
@@ -348,7 +349,19 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
               </div>
               <div className="space-y-6">
                 <div className="grid grid-cols-2 gap-6">
-                  <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Category *</label><select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} required className="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 outline-none font-black text-emerald-800 shadow-sm"><option value="">Select Category</option>{categories.length ? categories.map((c) => { const label = c.name || c.cname || c.catId || `Category ${c.id}`; const value = c.catId || c.name || c.cname || c.id; return (<option key={c.id || value} value={value}>{label}</option>); }) : <option disabled>No categories available</option>}</select></div>
+                  <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Category *</label><select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} required className="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 outline-none font-black text-emerald-800 shadow-sm"><option value="">Select Category</option>{(() => {
+                    const filteredCategories = categories.filter((c) => {
+                      if (franchiseId) {
+                        return c.franchise_id === franchiseId || c.franchise_user_id === franchiseUserId;
+                      }
+                      return true;
+                    });
+                    return filteredCategories.length ? filteredCategories.map((c) => {
+                      const label = c.name || c.cname || c.catId || `Category ${c.id}`;
+                      const value = c.catId || c.name || c.cname || c.id;
+                      return (<option key={c.id || value} value={value}>{label}</option>);
+                    }) : <option disabled>No franchise categories available</option>;
+                  })()}</select></div>
                   <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Status *</label><select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 outline-none font-black text-emerald-800 shadow-sm"><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div>
                 </div>
                 <div>

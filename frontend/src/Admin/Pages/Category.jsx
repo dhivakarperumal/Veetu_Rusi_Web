@@ -27,19 +27,47 @@ const Category = () => {
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [viewMode, setViewMode] = useState("card"); // 'card' or 'table'
+  const [viewMode, setViewMode] = useState("card");
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [franchiseUserId, setFranchiseUserId] = useState(null);
+  const [franchiseId, setFranchiseId] = useState(null);
+  const [franchiseLoaded, setFranchiseLoaded] = useState(false);
   const itemsPerPage = 8;
 
+  // Fetch franchise info on mount
+  useEffect(() => {
+    const fetchFranchiseInfo = async () => {
+      try {
+        const res = await api.get("/auth/profile");
+        const userId = res.data?.user?.user_id || res.data?.user?.id;
+        const franchiseRecordId = res.data?.franchise?.franchise_id;
+        if (userId) setFranchiseUserId(userId);
+        if (franchiseRecordId) setFranchiseId(franchiseRecordId);
+      } catch (error) {
+        console.error("Error fetching franchise info:", error);
+      } finally {
+        setFranchiseLoaded(true);
+      }
+    };
+    fetchFranchiseInfo();
+  }, []);
+
   const generateCategoryId = (existingCategories) => {
-    if (!existingCategories || existingCategories.length === 0) return "CAT001";
-    const ids = existingCategories
+    // Filter to only current franchise's categories
+    const franchiseCategories = (existingCategories || []).filter(
+      cat => cat.franchise_user_id === franchiseUserId || (!cat.franchise_user_id && !franchiseUserId)
+    );
+    
+    if (!franchiseCategories || franchiseCategories.length === 0) return "CAT001";
+    
+    const ids = franchiseCategories
       .map((cat) => {
         const match = cat.catId.match(/\d+/);
         return match ? parseInt(match[0]) : 0;
       })
       .filter((id) => !isNaN(id));
+    
     const maxId = ids.length > 0 ? Math.max(...ids) : 0;
     return `CAT${String(maxId + 1).padStart(3, "0")}`;
   };
@@ -56,8 +84,13 @@ const Category = () => {
   };
 
   const fetchCategories = async () => {
+    if (!franchiseLoaded) return;
     try {
-      const response = await api.get("/categories");
+      const params = {};
+      if (franchiseUserId) params.franchise_user_id = franchiseUserId;
+      if (franchiseId) params.franchise_id = franchiseId;
+      
+      const response = await api.get("/categories", { params });
       const sanitized = (response.data || []).map(cat => ({
         ...cat,
         name: cat.name || cat.cname || "",
@@ -72,8 +105,10 @@ const Category = () => {
   };
 
   useEffect(() => {
-    fetchCategories();
-  }, []);
+    if (franchiseLoaded) {
+      fetchCategories();
+    }
+  }, [franchiseLoaded, franchiseUserId, franchiseId]);
 
   const handleImageChange = async (e) => {
     const files = Array.from(e.target.files);
@@ -137,11 +172,17 @@ const Category = () => {
 
     setLoading(true);
     try {
+      const payload = {
+        ...category,
+        franchise_user_id: franchiseUserId,
+        franchise_id: franchiseId,
+        created_by_user_id: franchiseUserId
+      };
       if (editId) {
-        await api.put(`/categories/${editId}`, category);
+        await api.put(`/categories/${editId}`, payload);
         toast.success("Category updated!");
       } else {
-        await api.post("/categories", category);
+        await api.post("/categories", payload);
         toast.success("Category added!");
       }
       closeModal();
@@ -368,10 +409,10 @@ const Category = () => {
 
         {/* Modal Overlay */}
         {showModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
              <div className="absolute inset-0 bg-emerald-950/20 backdrop-blur-md animate-in fade-in duration-300" onClick={closeModal} />
              
-             <div className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-500">
+             <div className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl relative z-[10000] overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-500">
                 {/* Modal Header */}
                 <div className="bg-emerald-600 p-8 text-white relative">
                    <div className="absolute right-0 top-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl" />

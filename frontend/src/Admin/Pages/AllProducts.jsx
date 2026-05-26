@@ -30,6 +30,7 @@ const AllProducts = () => {
     const [showLowStockOnly, setShowLowStockOnly] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [franchiseUserId, setFranchiseUserId] = useState(null);
+    const [franchiseId, setFranchiseId] = useState(null);
     const [franchiseLoaded, setFranchiseLoaded] = useState(false);
     const itemsPerPage = 8;
 
@@ -40,14 +41,16 @@ const AllProducts = () => {
                 const res = await api.get("/auth/profile");
                 console.log("Profile API Response:", res.data);
                 const userId = res.data?.user?.user_id || res.data?.user?.id;
-                const franchiseId = res.data?.franchise?.franchise_id;
+                const franchiseRecordId = res.data?.franchise?.franchise_id;
                 if (userId) {
                     console.log("Franchise user_id found:", userId);
                     setFranchiseUserId(userId);
-                } else if (franchiseId) {
-                    console.log("Franchise ID found in franchise record:", franchiseId);
-                    setFranchiseUserId(franchiseId);
-                } else {
+                }
+                if (franchiseRecordId) {
+                    console.log("Franchise ID found in franchise record:", franchiseRecordId);
+                    setFranchiseId(franchiseRecordId);
+                }
+                if (!userId && !franchiseRecordId) {
                     console.warn("No franchise user_id or franchise_id in profile response");
                 }
             } catch (error) {
@@ -64,7 +67,8 @@ const AllProducts = () => {
         limit: itemsPerPage,
         search: searchTerm,
         status: showLowStockOnly ? "Low Stock" : "All",
-        franchiseUserId: franchiseUserId
+        franchise_user_id: franchiseUserId,
+        franchise_id: franchiseId
     });
 
     const pageData = productsCache[currentCacheKey];
@@ -97,13 +101,13 @@ const handleRapidAdd = async (e, shouldContinue = false) => {
     setRapidSaving(true);
 
     try {
-        await api.post("/products", {
+        await api.post("/franchise-products", {
             ...rapidProd,
             category: "Saree",
             total_stock: 0,
             variants: [],
             franchise_user_id: franchiseUserId,
-            franchise_id: franchiseUserId
+            franchise_id: franchiseId
         });
 
         toast.success("Product added successfully");
@@ -144,7 +148,8 @@ const fetchProducts = async () => {
         page: currentPage,
         limit: itemsPerPage,
         search: searchTerm,
-        franchise_user_id: franchiseUserId,
+        ...(franchiseUserId ? { franchise_user_id: franchiseUserId } : {}),
+        ...(franchiseId ? { franchise_id: franchiseId } : {}),
         ...(showLowStockOnly ? { status: "Low Stock" } : {})
     };
 
@@ -185,7 +190,7 @@ const fetchProducts = async () => {
         );
 
         const response = await api.get(
-            "/products",
+            "/franchise-products",
             { params }
         );
 
@@ -272,7 +277,7 @@ const fetchProducts = async () => {
     const handleDelete = async (id) => {
         if (!window.confirm("Are you sure you want to delete this product?")) return;
         try {
-            await api.delete(`/products/${id}`);
+            await api.delete(`/franchise-products/${id}`);
             toast.success("Product removed from vault.");
             fetchProducts();
         } catch (error) {
@@ -291,7 +296,7 @@ const fetchProducts = async () => {
             // but for ours we might need to send all or use a specific endpoint.
             // Assuming current backend needs a full update based on our previous look.
             const updatedProduct = { ...currentProduct, total_stock: parseInt(newStock) };
-            await api.put(`/products/${currentProduct.id}`, updatedProduct);
+            await api.put(`/franchise-products/${currentProduct.id}`, updatedProduct);
 
             toast.success("Stock updated instantly!");
             setProducts(products.map(p => p.id === currentProduct.id ? { ...p, total_stock: parseInt(newStock), status: parseInt(newStock) === 0 ? 'Out of Stock' : parseInt(newStock) < 10 ? 'Low Stock' : 'Active' } : p));
