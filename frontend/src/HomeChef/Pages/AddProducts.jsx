@@ -238,26 +238,17 @@ const AddProducts = () => {
                 return;
             }
 
-            // Not editing: load categories and latest code
-            const [catsResult, codeResult] = await Promise.allSettled([
-                api.get("/categories"),
-                api.get("/products/latest-code")
-            ]);
-
-            if (catsResult.status === 'fulfilled') {
-                setCategories(Array.isArray(catsResult.value.data) ? catsResult.value.data : []);
-                setFormData(prev => ({
-                    ...prev,
-                    category: Array.isArray(catsResult.value.data) && catsResult.value.data[0]?.name ? catsResult.value.data[0].name : "Cooked Food" }));
-            } else {
-                console.warn('Failed to load categories', catsResult.reason);
-            }
-
-            if (codeResult.status === 'fulfilled') {
-                setFormData(prev => ({ ...prev, product_code: codeResult.value.data.latestCode || 'SP001' }));
-            } else {
-                console.warn('Failed to load latest product code', codeResult.reason);
-            }
+            // Not editing: load categories (product_code will be auto-generated on backend)
+            api.get("/categories")
+                .then((result) => {
+                    setCategories(Array.isArray(result.data) ? result.data : []);
+                    setFormData(prev => ({
+                        ...prev,
+                        category: Array.isArray(result.data) && result.data[0]?.name ? result.data[0].name : "Cooked Food" }));
+                })
+                .catch((err) => {
+                    console.warn('Failed to load categories', err);
+                });
 
             setFetching(false);
         };
@@ -426,7 +417,7 @@ const AddProducts = () => {
             const franchiseUserId = homeChef?.created_by_user_id || homeChef?.franchise_user_id || null;
             const createdByUserId = franchiseUserId || userData.id || null;
 
-            const finalData = {
+            let finalData = {
                 ...formData,
                 variants,
                 // chef identifiers
@@ -442,6 +433,11 @@ const AddProducts = () => {
                 created_by_name: homeChef?.created_by_name || userData.name || userData.username || "",
                 created_by_phone: homeChef?.created_by_phone || userData.phone || ""
             };
+
+            // For new products, don't send product_code - let backend auto-generate it
+            if (!isEdit) {
+                delete finalData.product_code;
+            }
 
             if (isEdit) {
                 await api.put(`/products/${id}`, finalData);
@@ -494,10 +490,12 @@ const AddProducts = () => {
                                     <span className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl"><FiLayers size={20} /></span>
                                     <h2 className="text-2xl font-black text-slate-800 tracking-tight">Dish Details</h2>
                                 </div>
-                                <div className="flex items-center gap-2 p-3 bg-blue-50/50 rounded-2xl border border-blue-100">
-                                    <FiHash className="text-blue-600" />
-                                    <span className="text-sm font-black text-blue-600 tracking-widest">{formData.product_code || 'Generating...'}</span>
-                                </div>
+                                {isEdit && formData.product_code && (
+                                    <div className="flex items-center gap-2 p-3 bg-blue-50/50 rounded-2xl border border-blue-100">
+                                        <FiHash className="text-blue-600" />
+                                        <span className="text-sm font-black text-blue-600 tracking-widest">{formData.product_code}</span>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

@@ -28,38 +28,42 @@ const generateNextProductCode = async () => {
     const [products] = await pool.execute(
         'SELECT product_code FROM products WHERE product_code LIKE "P%" ORDER BY id DESC LIMIT 1'
     );
-    if (products.length === 0) return 'P001';
+    if (rows.length === 0) return `${prefix}001`;
 
-    const lastCode = products[0].product_code || '';
-    const numeric = parseInt(lastCode.replace(/^P/i, ''), 10);
+    const lastCode = rows[0].product_code || '';
+    const numeric = parseInt(lastCode.replace(new RegExp(`^${prefix}`, 'i'), ''), 10);
     const nextNumber = Number.isInteger(numeric) ? numeric + 1 : 1;
-    return `P${String(nextNumber).padStart(3, '0')}`;
+    return `${prefix}${String(nextNumber).padStart(3, '0')}`;
 };
 
-// Get all products (with filters) - from products table
+// Get all products (with filters).
+// If `chef_user_id` or `chef_id` is present we query `products` (chef-owned listings),
+// otherwise we default to `franchise_products` for admin/franchise listings.
 exports.getAllProducts = async (req, res) => {
     try {
-        const { category, status, franchise_id, franchise_user_id } = req.query;
-        let query = 'SELECT * FROM products WHERE 1=1';
+        const { category, status, franchise_id, franchise_user_id, chef_user_id, chef_id } = req.query;
         const params = [];
+        let table = 'franchise_products';
+        let query = '';
 
-        // Allow filtering by franchise_id or franchise_user_id
-        if (franchise_id) {
-            query += ' AND franchise_id = ?';
-            params.push(franchise_id);
+        if (chef_user_id || chef_id) {
+            table = 'products';
+            query = 'SELECT * FROM products WHERE 1=1';
+            if (chef_id) {
+                query += ' AND chef_id = ?'; params.push(chef_id);
+            }
+            if (chef_user_id) {
+                query += ' AND chef_user_id = ?'; params.push(chef_user_id);
+            }
+        } else {
+            table = 'franchise_products';
+            query = 'SELECT * FROM franchise_products WHERE 1=1';
+            if (franchise_id) { query += ' AND franchise_id = ?'; params.push(franchise_id); }
+            if (franchise_user_id) { query += ' AND franchise_user_id = ?'; params.push(franchise_user_id); }
         }
-        if (franchise_user_id) {
-            query += ' AND franchise_user_id = ?';
-            params.push(franchise_user_id);
-        }
-        if (category) {
-            query += ' AND category = ?';
-            params.push(category);
-        }
-        if (status && status !== 'All') {
-            query += ' AND status = ?';
-            params.push(status);
-        }
+
+        if (category) { query += ' AND category = ?'; params.push(category); }
+        if (status && status !== 'All') { query += ' AND status = ?'; params.push(status); }
 
         query += ' ORDER BY created_at DESC';
 
@@ -77,17 +81,20 @@ exports.getAllProducts = async (req, res) => {
     }
 };
 
-// Get product by ID - from products table
+// Get product by ID — try `products` table first (chef-owned), then fallback to `franchise_products`.
 exports.getProductById = async (req, res) => {
     try {
         const { id } = req.params;
-        const [products] = await pool.execute('SELECT * FROM products WHERE id = ?', [id]);
-
-        if (products.length === 0) {
-            return res.status(404).json({ message: 'Product not found' });
+        const [prodRows] = await pool.execute('SELECT * FROM products WHERE id = ?', [id]);
+        let product = null;
+        if (prodRows.length > 0) product = prodRows[0];
+        else {
+            const [fpRows] = await pool.execute('SELECT * FROM franchise_products WHERE id = ?', [id]);
+            if (fpRows.length > 0) product = fpRows[0];
         }
 
-        const product = products[0];
+        if (!product) return res.status(404).json({ message: 'Product not found' });
+
         res.json({
             ...product,
             variants: parseJsonField(product.variants) || [],
@@ -135,12 +142,20 @@ exports.createProduct = async (req, res) => {
             manufacture_date,
             variants,
             images,
+            chef_id,
+            chef_user_id,
+            chef_name,
+            chef_phone,
+            chef_email,
             created_by_user_id,
             franchise_user_id,
             created_by_email,
             created_by_name,
             created_by_phone,
-            franchise_id
+            franchise_id,
+            franchise_name,
+            franchise_email,
+            franchise_phone
         } = req.body;
 
         // Validation
@@ -150,16 +165,29 @@ exports.createProduct = async (req, res) => {
             });
         }
 
-        // Determine product code
-        const finalProductCode = product_code || await generateNextProductCode();
+        // Determine target table: chefs' requests create into `products`, otherwise franchise/admin use `franchise_products`.
+        const targetTable = (req.user && req.user.role === 'chef') ? 'products' : 'franchise_products';
 
-        // Set franchise info from authenticated user
+        // Determine product code
+        const finalProductCode = product_code || await generateNextProductCode(targetTable);
+
+        // Chef metadata (prefer explicit body values, fall back to authenticated user)
+        const finalChefId = chef_id || null;
+        const finalChefUserId = chef_user_id || req.user?.user_id || req.user?.id || null;
+        const finalChefName = chef_name || req.user?.name || null;
+        const finalChefPhone = chef_phone || req.user?.phone || null;
+        const finalChefEmail = chef_email || null;
+
+        // Created-by / franchise info
         const finalFranchiseUserId = franchise_user_id || req.user?.user_id || req.user?.id || null;
         const finalCreatedByUserId = created_by_user_id || req.user?.user_id || req.user?.id || null;
         const finalCreatedByEmail = created_by_email || req.user?.email || null;
         const finalCreatedByName = created_by_name || req.user?.name || null;
         const finalCreatedByPhone = created_by_phone || req.user?.phone || null;
         const finalFranchiseId = franchise_id || null;
+        const finalFranchiseName = franchise_name || null;
+        const finalFranchiseEmail = franchise_email || null;
+        const finalFranchisePhone = franchise_phone || null;
 
         const params = [
             name, description || null, category, product_type || 'Cooked Food', subcategory || null,
@@ -173,31 +201,30 @@ exports.createProduct = async (req, res) => {
             packaging_type || 'Pouch', manufacture_date || null,
             variants ? JSON.stringify(variants) : null,
             images ? JSON.stringify(images) : null,
-            finalFranchiseUserId,
-            finalCreatedByName, finalCreatedByEmail, finalCreatedByPhone, finalCreatedByUserId,
-            finalFranchiseId
+            finalChefId, finalChefUserId, finalChefName, finalChefPhone, finalChefEmail,
+            finalCreatedByUserId, finalCreatedByEmail, finalCreatedByName, finalCreatedByPhone,
+            finalFranchiseUserId, finalFranchiseName, finalFranchiseEmail, finalFranchisePhone, finalFranchiseId
         ];
 
         const columns = `name, description, category, product_type, subcategory, mrp, offer, offer_price,
             product_code, total_stock, rating, status, material, nutrition_info, storage_instructions,
             presentation_style, portion_format, service_type, packaging_notes, dietary_tag, heat_profile,
             serving_size, prep_time, ingredients, spice_level, shelf_life_days, net_weight, package_count,
-            packaging_type, manufacture_date, variants, images, franchise_user_id,
-            created_by_name, created_by_email, created_by_phone, created_by_user_id,
-            franchise_id`;
+            packaging_type, manufacture_date, variants, images,
+            chef_id, chef_user_id, chef_name, chef_phone, chef_email,
+            created_by_user_id, created_by_email, created_by_name, created_by_phone,
+            franchise_user_id, franchise_name, franchise_email, franchise_phone, franchise_id`;
 
         const placeholders = params.map(() => '?').join(', ');
         // Sanitize undefined -> null for insert params as well
         const insertParams = params.map(v => v === undefined ? null : v);
 
-        // Insert into base products table
-        const [result] = await pool.execute(
-            `INSERT INTO products (${columns}) VALUES (${placeholders})`,
-            insertParams
-        );
+        // Insert into appropriate table
+        const insertSql = `INSERT INTO ${targetTable} (${columns}) VALUES (${placeholders})`;
+        const [result] = await pool.execute(insertSql, insertParams);
 
         res.status(201).json({
-            message: 'Franchise product created successfully',
+            message: targetTable === 'products' ? 'Product created successfully' : 'Franchise product created successfully',
             id: result.insertId,
             product_code: finalProductCode
         });
@@ -217,18 +244,23 @@ exports.updateProduct = async (req, res) => {
             presentation_style, portion_format, service_type, packaging_notes, dietary_tag, heat_profile,
             serving_size, prep_time, ingredients, spice_level, shelf_life_days, net_weight, package_count,
             packaging_type, manufacture_date, variants, images,
+            chef_id, chef_user_id, chef_name, chef_phone, chef_email,
             franchise_user_id,
-            created_by_user_id, created_by_email, created_by_name, created_by_phone, franchise_id
+            created_by_user_id, created_by_email, created_by_name, created_by_phone, franchise_id,
+            franchise_name, franchise_email, franchise_phone
         } = req.body;
 
-        // Check if product exists
-        const [existing] = await pool.execute('SELECT id FROM products WHERE id = ?', [id]);
-        if (existing.length === 0) {
+        // Determine which table contains this product (products preferred for chef-owned)
+        const [existsInProducts] = await pool.execute('SELECT id FROM products WHERE id = ?', [id]);
+        const [existsInFranchise] = await pool.execute('SELECT id FROM franchise_products WHERE id = ?', [id]);
+        if (existsInProducts.length === 0 && existsInFranchise.length === 0) {
             return res.status(404).json({ message: 'Product not found' });
         }
 
+        const targetTable = existsInProducts.length > 0 ? 'products' : 'franchise_products';
+
         // Update product
-        const updateQuery = `UPDATE products SET
+        const updateQuery = `UPDATE ${targetTable} SET
                 name = ?, description = ?, category = ?, product_type = ?, subcategory = ?,
                 mrp = ?, offer = ?, offer_price = ?, product_code = ?, total_stock = ?,
                 rating = ?, status = ?, material = ?, nutrition_info = ?, storage_instructions = ?,
@@ -236,9 +268,9 @@ exports.updateProduct = async (req, res) => {
                 dietary_tag = ?, heat_profile = ?, serving_size = ?, prep_time = ?,
                 ingredients = ?, spice_level = ?, shelf_life_days = ?, net_weight = ?,
                 package_count = ?, packaging_type = ?, manufacture_date = ?, variants = ?, images = ?,
-                franchise_user_id = ?,
+                chef_id = ?, chef_user_id = ?, chef_name = ?, chef_phone = ?, chef_email = ?,
                 created_by_user_id = ?, created_by_email = ?, created_by_name = ?, created_by_phone = ?,
-                franchise_id = ?, updated_at = NOW()
+                franchise_user_id = ?, franchise_name = ?, franchise_email = ?, franchise_phone = ?, franchise_id = ?, updated_at = NOW()
             WHERE id = ?`;
         const params = [
             name, description, category, product_type, subcategory, mrp, offer, offer_price,
@@ -247,9 +279,9 @@ exports.updateProduct = async (req, res) => {
             serving_size, prep_time, ingredients, spice_level, shelf_life_days, net_weight, package_count,
             packaging_type, manufacture_date, serializeJsonField(variants),
             images ? JSON.stringify(images) : null,
-            franchise_user_id,
+            chef_id, chef_user_id, chef_name, chef_phone, chef_email,
             created_by_user_id, created_by_email, created_by_name, created_by_phone,
-            franchise_id,
+            franchise_user_id, franchise_name, franchise_email, franchise_phone, franchise_id,
             id
         ];
 
@@ -269,14 +301,13 @@ exports.updateProduct = async (req, res) => {
 exports.deleteProduct = async (req, res) => {
     try {
         const { id } = req.params;
+        // Check both tables and delete from whichever contains the product
+        const [inProducts] = await pool.execute('SELECT id FROM products WHERE id = ?', [id]);
+        const [inFranchise] = await pool.execute('SELECT id FROM franchise_products WHERE id = ?', [id]);
+        if (inProducts.length === 0 && inFranchise.length === 0) return res.status(404).json({ message: 'Product not found' });
 
-        // Check if product exists
-        const [existing] = await pool.execute('SELECT id FROM products WHERE id = ?', [id]);
-        if (existing.length === 0) {
-            return res.status(404).json({ message: 'Product not found' });
-        }
-
-        await pool.execute('DELETE FROM products WHERE id = ?', [id]);
+        if (inProducts.length > 0) await pool.execute('DELETE FROM products WHERE id = ?', [id]);
+        else await pool.execute('DELETE FROM franchise_products WHERE id = ?', [id]);
         res.json({ message: 'Product deleted successfully' });
     } catch (error) {
         console.error('Error deleting product:', error);
@@ -287,18 +318,10 @@ exports.deleteProduct = async (req, res) => {
 // Get latest product code
 exports.getLatestProductCode = async (req, res) => {
     try {
-        const [products] = await pool.execute(
-            'SELECT product_code FROM products WHERE product_code LIKE "P%" ORDER BY id DESC LIMIT 1'
-        );
-
-        let nextCode = 'P001';
-        if (products.length > 0) {
-            const lastCode = products[0].product_code;
-            const num = parseInt(lastCode.replace('P', ''), 10) + 1;
-            nextCode = `P${String(num).padStart(3, '0')}`;
-        }
-
-        res.json({ latestCode: nextCode });
+        const wantProducts = req.query.table === 'products' || req.user?.role === 'chef';
+        const table = wantProducts ? 'products' : 'franchise_products';
+        const code = await generateNextProductCode(table);
+        res.json({ latestCode: code });
     } catch (error) {
         console.error('Error getting product code:', error);
         res.status(500).json({ message: 'Failed to get product code', error: error.message });
