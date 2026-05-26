@@ -146,12 +146,20 @@ exports.createProduct = async (req, res) => {
             manufacture_date,
             variants,
             images,
+            chef_id,
+            chef_user_id,
+            chef_name,
+            chef_phone,
+            chef_email,
             created_by_user_id,
             franchise_user_id,
             created_by_email,
             created_by_name,
             created_by_phone,
-            franchise_id
+            franchise_id,
+            franchise_name,
+            franchise_email,
+            franchise_phone
         } = req.body;
 
         // Validation
@@ -167,13 +175,23 @@ exports.createProduct = async (req, res) => {
         // Determine product code
         const finalProductCode = product_code || await generateNextProductCode(targetTable);
 
-        // Set franchise info from authenticated user
+        // Chef metadata (prefer explicit body values, fall back to authenticated user)
+        const finalChefId = chef_id || null;
+        const finalChefUserId = chef_user_id || req.user?.user_id || req.user?.id || null;
+        const finalChefName = chef_name || req.user?.name || null;
+        const finalChefPhone = chef_phone || req.user?.phone || null;
+        const finalChefEmail = chef_email || null;
+
+        // Created-by / franchise info
         const finalFranchiseUserId = franchise_user_id || req.user?.user_id || req.user?.id || null;
         const finalCreatedByUserId = created_by_user_id || req.user?.user_id || req.user?.id || null;
         const finalCreatedByEmail = created_by_email || req.user?.email || null;
         const finalCreatedByName = created_by_name || req.user?.name || null;
         const finalCreatedByPhone = created_by_phone || req.user?.phone || null;
         const finalFranchiseId = franchise_id || null;
+        const finalFranchiseName = franchise_name || null;
+        const finalFranchiseEmail = franchise_email || null;
+        const finalFranchisePhone = franchise_phone || null;
 
         const params = [
             name, description || null, category, product_type || 'Cooked Food', subcategory || null,
@@ -187,18 +205,19 @@ exports.createProduct = async (req, res) => {
             packaging_type || 'Pouch', manufacture_date || null,
             variants ? JSON.stringify(variants) : null,
             images ? JSON.stringify(images) : null,
-            finalFranchiseUserId,
-            finalCreatedByName, finalCreatedByEmail, finalCreatedByPhone, finalCreatedByUserId,
-            finalFranchiseId
+            finalChefId, finalChefUserId, finalChefName, finalChefPhone, finalChefEmail,
+            finalCreatedByUserId, finalCreatedByEmail, finalCreatedByName, finalCreatedByPhone,
+            finalFranchiseUserId, finalFranchiseName, finalFranchiseEmail, finalFranchisePhone, finalFranchiseId
         ];
 
         const columns = `name, description, category, product_type, subcategory, mrp, offer, offer_price,
             product_code, total_stock, rating, status, material, nutrition_info, storage_instructions,
             presentation_style, portion_format, service_type, packaging_notes, dietary_tag, heat_profile,
             serving_size, prep_time, ingredients, spice_level, shelf_life_days, net_weight, package_count,
-            packaging_type, manufacture_date, variants, images, franchise_user_id,
-            created_by_name, created_by_email, created_by_phone, created_by_user_id,
-            franchise_id`;
+            packaging_type, manufacture_date, variants, images,
+            chef_id, chef_user_id, chef_name, chef_phone, chef_email,
+            created_by_user_id, created_by_email, created_by_name, created_by_phone,
+            franchise_user_id, franchise_name, franchise_email, franchise_phone, franchise_id`;
 
         const placeholders = params.map(() => '?').join(', ');
         // Sanitize undefined -> null for insert params as well
@@ -209,7 +228,7 @@ exports.createProduct = async (req, res) => {
         const [result] = await pool.execute(insertSql, insertParams);
 
         res.status(201).json({
-            message: 'Franchise product created successfully',
+            message: targetTable === 'products' ? 'Product created successfully' : 'Franchise product created successfully',
             id: result.insertId,
             product_code: finalProductCode
         });
@@ -229,8 +248,10 @@ exports.updateProduct = async (req, res) => {
             presentation_style, portion_format, service_type, packaging_notes, dietary_tag, heat_profile,
             serving_size, prep_time, ingredients, spice_level, shelf_life_days, net_weight, package_count,
             packaging_type, manufacture_date, variants, images,
+            chef_id, chef_user_id, chef_name, chef_phone, chef_email,
             franchise_user_id,
-            created_by_user_id, created_by_email, created_by_name, created_by_phone, franchise_id
+            created_by_user_id, created_by_email, created_by_name, created_by_phone, franchise_id,
+            franchise_name, franchise_email, franchise_phone
         } = req.body;
 
         // Determine which table contains this product (products preferred for chef-owned)
@@ -251,9 +272,9 @@ exports.updateProduct = async (req, res) => {
                 dietary_tag = ?, heat_profile = ?, serving_size = ?, prep_time = ?,
                 ingredients = ?, spice_level = ?, shelf_life_days = ?, net_weight = ?,
                 package_count = ?, packaging_type = ?, manufacture_date = ?, variants = ?, images = ?,
-                franchise_user_id = ?,
+                chef_id = ?, chef_user_id = ?, chef_name = ?, chef_phone = ?, chef_email = ?,
                 created_by_user_id = ?, created_by_email = ?, created_by_name = ?, created_by_phone = ?,
-                franchise_id = ?, updated_at = NOW()
+                franchise_user_id = ?, franchise_name = ?, franchise_email = ?, franchise_phone = ?, franchise_id = ?, updated_at = NOW()
             WHERE id = ?`;
         const params = [
             name, description, category, product_type, subcategory, mrp, offer, offer_price,
@@ -262,9 +283,9 @@ exports.updateProduct = async (req, res) => {
             serving_size, prep_time, ingredients, spice_level, shelf_life_days, net_weight, package_count,
             packaging_type, manufacture_date, serializeJsonField(variants),
             images ? JSON.stringify(images) : null,
-            franchise_user_id,
+            chef_id, chef_user_id, chef_name, chef_phone, chef_email,
             created_by_user_id, created_by_email, created_by_name, created_by_phone,
-            franchise_id,
+            franchise_user_id, franchise_name, franchise_email, franchise_phone, franchise_id,
             id
         ];
 
@@ -301,18 +322,10 @@ exports.deleteProduct = async (req, res) => {
 // Get latest product code
 exports.getLatestProductCode = async (req, res) => {
     try {
-        const [products] = await pool.execute(
-            'SELECT product_code FROM franchise_products WHERE product_code LIKE "SP%" ORDER BY id DESC LIMIT 1'
-        );
-
-        let nextCode = 'SP001';
-        if (products.length > 0) {
-            const lastCode = products[0].product_code;
-            const num = parseInt(lastCode.replace('SP', '')) + 1;
-            nextCode = `SP${String(num).padStart(3, '0')}`;
-        }
-
-        res.json({ latestCode: nextCode });
+        const wantProducts = req.query.table === 'products' || req.user?.role === 'chef';
+        const table = wantProducts ? 'products' : 'franchise_products';
+        const code = await generateNextProductCode(table);
+        res.json({ latestCode: code });
     } catch (error) {
         console.error('Error getting product code:', error);
         res.status(500).json({ message: 'Failed to get product code', error: error.message });
