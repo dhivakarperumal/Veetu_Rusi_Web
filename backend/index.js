@@ -9,11 +9,11 @@ const superadminRouter = require('./src/routes/superadmin');
 const subscriptionsRouter = require('./src/routes/subscriptions');
 const dashboardRouter = require('./src/routes/dashboard');
 const productsRouter = require('./src/routes/products');
+const recipesRouter = require('./src/routes/recipes');
 const ordersRouter = require('./src/routes/orders');
-const preordersRouter = require('./src/routes/preorders');
-const categoriesRouter = require('./src/routes/categories');
-const userRoutes = require('./src/routes/userRoutes');
-const { createProductsTable, createSubscriptionPlansTable, createFranchiseProductsTable } = require('./src/config/migrations');
+const cartRouter = require('./src/routes/cart');
+const wishlistRouter = require('./src/routes/wishlist');
+const { createProductsTable, createRecipeDetailsTable, createFranchiseProductsTable, createSubscriptionPlansTable } = require('./src/config/migrations');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -29,9 +29,9 @@ app.use('/api/subscriptions', subscriptionsRouter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/products', productsRouter);
 app.use('/api/orders', ordersRouter);
-app.use('/api/preorders', preordersRouter);
-app.use('/api/categories', categoriesRouter);
-app.use('/api/users', userRoutes);
+app.use('/api/chef/recipes', recipesRouter);
+app.use('/api/cart', cartRouter);
+app.use('/api/wishlist', wishlistRouter);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
@@ -44,6 +44,12 @@ initDb().then(async () => {
     await createSubscriptionPlansTable();
   } catch (err) {
     console.error('Migration error:', err.message || err);
+  }
+
+  try {
+    await createRecipeDetailsTable();
+  } catch (err) {
+    console.error('Recipe details migration error:', err.message || err);
   }
 
   const server = app.listen(port, () => {
@@ -94,4 +100,3 @@ app.post('/api/generate-image', async (req, res) => {
     return res.status(500).json({ error: 'Generation failed' });
   }
 });
-
