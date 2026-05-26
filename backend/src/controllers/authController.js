@@ -17,6 +17,8 @@ function createToken(user) {
       user_id: user.user_id,
       email: user.email,
       role: user.role,
+      name: user.name || user.full_name || user.fullName || null,
+      phone: user.phone || user.mobile_number || user.mobile || null,
     },
     JWT_SECRET,
     { expiresIn: JWT_EXPIRES_IN }
