@@ -22,7 +22,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/superadmin', superadminRouter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/products', productsRouter);
-app.use('/chef/recipes', recipeRouter);
+app.use('/api/chef/recipes', recipeRouter);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
