@@ -3,7 +3,7 @@ const pool = require('../config/db');
 const parseJsonField = (value) => {
     if (value === null || value === undefined) return null;
     if (typeof value === 'object') return value;
-
+        const [existing] = await pool.execute('SELECT id FROM chef_products WHERE id = ?', [id]);
     try {
         return JSON.parse(value);
     } catch {
@@ -26,7 +26,7 @@ const serializeJsonField = (value) => {
 
 const generateNextProductCode = async () => {
     const [products] = await pool.execute(
-        'SELECT product_code FROM products WHERE product_code LIKE "P%" ORDER BY id DESC LIMIT 1'
+           'SELECT product_code FROM chef_products WHERE product_code LIKE "P%" ORDER BY id DESC LIMIT 1'
     );
     if (products.length === 0) return 'P001';
 
@@ -110,19 +110,18 @@ const resolveProductMetadata = async (req, body) => {
     };
 };
 
-// Get all products (with filters). If `chef_user_id` or `chef_id` is present, return chef-owned `products`.
+// Get all products (with filters). If `chef_user_id` or `chef_id` is present, return chef-owned `chef_products`.
 // Otherwise fall back to franchise/admin `franchise_products` if desired by callers.
 exports.getAllProducts = async (req, res) => {
     try {
         const { category, status, franchise_id, franchise_user_id, chef_user_id, chef_id } = req.query;
         const params = [];
-        let table = 'franchise_products';
         let query = '';
 
-        // If caller requests chef-scoped results, query `products` table
+        // If caller requests chef-scoped results, query `chef_products` table
         if (chef_user_id || chef_id) {
-            table = 'products';
-            query = 'SELECT * FROM products WHERE 1=1';
+            table = 'chef_products';
+            query = 'SELECT * FROM chef_products WHERE 1=1';
             if (chef_id) {
                 query += ' AND chef_id = ?'; params.push(chef_id);
             }
@@ -156,11 +155,11 @@ exports.getAllProducts = async (req, res) => {
     }
 };
 
-// Get product by ID - from products table
+// Get product by ID - from chef_products table
 exports.getProductById = async (req, res) => {
     try {
         const { id } = req.params;
-        const [products] = await pool.execute('SELECT * FROM products WHERE id = ?', [id]);
+        const [products] = await pool.execute('SELECT * FROM chef_products WHERE id = ?', [id]);
 
         if (products.length === 0) {
             return res.status(404).json({ message: 'Product not found' });
@@ -254,10 +253,10 @@ exports.createProduct = async (req, res) => {
             finalFranchisePhone
         } = metadata;
 
-        const finalCreatedByUserId = created_by_user_id || finalChefUserId || req.user?.user_id || req.user?.id || null;
-        const finalCreatedByEmail = created_by_email || finalChefEmail || req.user?.email || null;
-        const finalCreatedByName = created_by_name || finalChefName || req.user?.name || null;
-        const finalCreatedByPhone = created_by_phone || finalChefPhone || req.user?.phone || null;
+        const finalCreatedByUserId = finalChefUserId || created_by_user_id || null;
+        const finalCreatedByEmail = finalChefEmail || created_by_email || null;
+        const finalCreatedByName = created_by_name || finalChefName || null;
+        const finalCreatedByPhone = created_by_phone || finalChefPhone || null;
         const finalFranchiseIdResolved = franchise_id || finalFranchiseId || null;
 
         const params = [
@@ -293,7 +292,7 @@ exports.createProduct = async (req, res) => {
 
         // Insert into base products table
         const [result] = await pool.execute(
-            `INSERT INTO products (${columns}) VALUES (${placeholders})`,
+              `INSERT INTO chef_products (${columns}) VALUES (${placeholders})`,
             insertParams
         );
 
@@ -324,7 +323,7 @@ exports.updateProduct = async (req, res) => {
         } = req.body;
 
         // Check if product exists
-        const [existing] = await pool.execute('SELECT id FROM products WHERE id = ?', [id]);
+        const [existing] = await pool.execute('SELECT id FROM chef_products WHERE id = ?', [id]);
         if (existing.length === 0) {
             return res.status(404).json({ message: 'Product not found' });
         }
@@ -355,13 +354,13 @@ exports.updateProduct = async (req, res) => {
         const finalFranchiseEmailResolved = franchise_email || finalFranchiseEmail || null;
         const finalFranchisePhoneResolved = franchise_phone || finalFranchisePhone || null;
 
-        const finalCreatedByUserId = created_by_user_id || finalChefUserIdResolved || req.user?.user_id || req.user?.id || null;
-        const finalCreatedByEmail = created_by_email || finalChefEmailResolved || req.user?.email || null;
-        const finalCreatedByName = created_by_name || finalChefNameResolved || req.user?.name || null;
-        const finalCreatedByPhone = created_by_phone || finalChefPhoneResolved || req.user?.phone || null;
+        const finalCreatedByUserId = finalChefUserIdResolved || created_by_user_id || null;
+        const finalCreatedByEmail = finalChefEmailResolved || created_by_email || null;
+        const finalCreatedByName = created_by_name || finalChefNameResolved || null;
+        const finalCreatedByPhone = created_by_phone || finalChefPhoneResolved || null;
 
         // Update product
-        const updateQuery = `UPDATE products SET
+        const updateQuery = `UPDATE chef_products SET
                 name = ?, description = ?, category = ?, product_type = ?, subcategory = ?,
                 mrp = ?, offer = ?, offer_price = ?, product_code = ?, total_stock = ?,
                 rating = ?, status = ?, material = ?, nutrition_info = ?, storage_instructions = ?,
@@ -406,12 +405,12 @@ exports.deleteProduct = async (req, res) => {
         const { id } = req.params;
 
         // Check if product exists
-        const [existing] = await pool.execute('SELECT id FROM products WHERE id = ?', [id]);
+        const [existing] = await pool.execute('SELECT id FROM chef_products WHERE id = ?', [id]);
         if (existing.length === 0) {
             return res.status(404).json({ message: 'Product not found' });
         }
 
-        await pool.execute('DELETE FROM products WHERE id = ?', [id]);
+        await pool.execute('DELETE FROM chef_products WHERE id = ?', [id]);
         res.json({ message: 'Product deleted successfully' });
     } catch (error) {
         console.error('Error deleting product:', error);
@@ -423,7 +422,7 @@ exports.deleteProduct = async (req, res) => {
 exports.getLatestProductCode = async (req, res) => {
     try {
         const [products] = await pool.execute(
-            'SELECT product_code FROM products WHERE product_code LIKE "P%" ORDER BY id DESC LIMIT 1'
+            'SELECT product_code FROM chef_products WHERE product_code LIKE "P%" ORDER BY id DESC LIMIT 1'
         );
 
         let nextCode = 'P001';

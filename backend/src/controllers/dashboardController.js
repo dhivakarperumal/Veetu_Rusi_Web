@@ -21,13 +21,13 @@ exports.getDashboardData = async (req, res) => {
     } catch (_) {}
 
     try {
-      const [[tp]] = await pool.execute("SELECT COUNT(*) AS cnt FROM products");
+      const [[tp]] = await pool.execute("SELECT COUNT(*) AS cnt FROM chef_products");
       totalProducts = tp.cnt || 0;
     } catch (_) {}
 
     try {
       const [[ls]] = await pool.execute(
-        "SELECT COUNT(*) AS cnt FROM products WHERE total_stock < 5"
+        "SELECT COUNT(*) AS cnt FROM chef_products WHERE total_stock < 5"
       );
       lowStockCount = ls.cnt || 0;
     } catch (_) {}
@@ -56,7 +56,7 @@ exports.getDashboardData = async (req, res) => {
     let topProducts = [];
     try {
       const [rows] = await pool.execute(
-        "SELECT p.name, p.category AS cat, p.mrp AS rev, p.images AS img, COALESCE(p.total_stock, 0) AS sales FROM products p ORDER BY p.mrp DESC LIMIT 5"
+        "SELECT p.name, p.category AS cat, p.mrp AS rev, p.images AS img, COALESCE(p.total_stock, 0) AS sales FROM chef_products p ORDER BY p.mrp DESC LIMIT 5"
       );
       topProducts = rows.map(p => ({
         name: p.name,
@@ -71,7 +71,7 @@ exports.getDashboardData = async (req, res) => {
     let lowStockAlerts = [];
     try {
       const [rows] = await pool.execute(
-        "SELECT name, category AS cat, total_stock AS stock, images AS img FROM products WHERE total_stock < 5 ORDER BY total_stock ASC LIMIT 8"
+        "SELECT name, category AS cat, total_stock AS stock, images AS img FROM chef_products WHERE total_stock < 5 ORDER BY total_stock ASC LIMIT 8"
       );
       lowStockAlerts = rows.map(p => ({
         name: p.name,
@@ -86,7 +86,7 @@ exports.getDashboardData = async (req, res) => {
     let categoryAnalytics = [];
     try {
       const [rows] = await pool.execute(
-        "SELECT category AS name, COUNT(*) AS items, COALESCE(SUM(mrp), 0) AS revenue FROM products GROUP BY category ORDER BY revenue DESC LIMIT 5"
+        "SELECT category AS name, COUNT(*) AS items, COALESCE(SUM(mrp), 0) AS revenue FROM chef_products GROUP BY category ORDER BY revenue DESC LIMIT 5"
       );
       const totalRev = rows.reduce((acc, r) => acc + parseFloat(r.revenue), 0) || 1;
       const COLORS = ['bg-blue-500', 'bg-indigo-400', 'bg-emerald-500', 'bg-amber-500', 'bg-rose-400'];

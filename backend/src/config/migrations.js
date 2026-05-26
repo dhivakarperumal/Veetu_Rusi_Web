@@ -3,7 +3,7 @@ const pool = require('./db');
 const createProductsTable = async () => {
     try {
         const createTableSQL = `
-        CREATE TABLE IF NOT EXISTS products (
+        CREATE TABLE IF NOT EXISTS chef_products (
             id INT PRIMARY KEY AUTO_INCREMENT,
             name VARCHAR(255) NOT NULL,
             description LONGTEXT,
@@ -70,16 +70,16 @@ const createProductsTable = async () => {
 
         await pool.execute(createTableSQL);
 
-        try { await pool.execute('ALTER TABLE products ADD COLUMN chef_user_id VARCHAR(255)'); } catch {}
-        try { await pool.execute('ALTER TABLE products ADD COLUMN franchise_user_id VARCHAR(255)'); } catch {}
-        try { await pool.execute('ALTER TABLE products ADD COLUMN franchise_name VARCHAR(255)'); } catch {}
-        try { await pool.execute('ALTER TABLE products ADD COLUMN franchise_email VARCHAR(255)'); } catch {}
-        try { await pool.execute('ALTER TABLE products ADD COLUMN franchise_phone VARCHAR(20)'); } catch {}
-        try { await pool.execute('ALTER TABLE products ADD COLUMN images LONGTEXT'); } catch {}
+        try { await pool.execute('ALTER TABLE chef_products ADD COLUMN chef_user_id VARCHAR(255)'); } catch {}
+        try { await pool.execute('ALTER TABLE chef_products ADD COLUMN franchise_user_id VARCHAR(255)'); } catch {}
+        try { await pool.execute('ALTER TABLE chef_products ADD COLUMN franchise_name VARCHAR(255)'); } catch {}
+        try { await pool.execute('ALTER TABLE chef_products ADD COLUMN franchise_email VARCHAR(255)'); } catch {}
+        try { await pool.execute('ALTER TABLE chef_products ADD COLUMN franchise_phone VARCHAR(20)'); } catch {}
+        try { await pool.execute('ALTER TABLE chef_products ADD COLUMN images LONGTEXT'); } catch {}
 
-        console.log('✓ Products table created or already exists');
+        console.log('✓ Chef products table created or already exists');
     } catch (error) {
-        console.error('✗ Error creating products table:', error.message);
+        console.error('✗ Error creating chef_products table:', error.message);
     }
 };
 
