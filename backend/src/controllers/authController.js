@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
+const { generateRoleId } = require('../utils/idGenerator');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'default-secret';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
@@ -39,13 +40,13 @@ async function validateFranchiseAdminLogin(user) {
     expiry.setHours(0, 0, 0, 0);
     if (expiry < today) {
       await pool.execute('UPDATE franchise_owners SET status = ? WHERE id = ?', ['Inactive', franchise.id]);
-      await pool.execute('UPDATE users SET active = 0 WHERE email = ?', [user.email]);
+      await pool.execute('UPDATE users SET status = ? WHERE email = ?', ['Inactive', user.email]);
       return 'Your franchise subscription has expired. Please renew to continue.';
     }
   }
 
   if (franchise.status !== 'Active') {
-    await pool.execute('UPDATE users SET active = 0 WHERE email = ?', [user.email]);
+    await pool.execute('UPDATE users SET status = ? WHERE email = ?', ['Inactive', user.email]);
     return 'Your franchise subscription is not active. Please renew or contact support.';
   }
 
@@ -60,24 +61,27 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: 'Username, email and password are required.' });
     }
 
-    const [existing] = await pool.execute('SELECT id FROM `users` WHERE email = ? OR name = ?', [email, username]);
+    const [existing] = await pool.execute('SELECT id FROM `users` WHERE email = ? OR full_name = ?', [email, username]);
     if (existing.length > 0) {
       return res.status(409).json({ message: 'Email or username already registered.' });
     }
 
     const hashedPassword = hashPassword(password);
+    const role = 'user';
+    const userId = generateRoleId(role);
+
     const [result] = await pool.execute(
-      'INSERT INTO `users` (name, email, phone, password, role) VALUES (?, ?, ?, ?, ?)',
-      [username, email, phone || null, hashedPassword, 'user']
+      'INSERT INTO `users` (user_id, full_name, email, mobile_number, password, role) VALUES (?, ?, ?, ?, ?, ?)',
+      [userId, username, email, phone || null, hashedPassword, role]
     );
 
     const user = {
       id: result.insertId,
-      user_id: null,
+      user_id: userId,
       name: username,
       email,
       phone: phone || null,
-      role: 'user',
+      role: role,
     };
 
     return res.status(201).json({ message: 'Registration successful', user });
@@ -97,7 +101,7 @@ exports.login = async (req, res) => {
 
     const hashedPassword = hashPassword(password);
     const [users] = await pool.execute(
-      'SELECT id, user_id, name, email, phone, role, active FROM `users` WHERE (email = ? OR name = ?) AND password = ?',
+      'SELECT id, user_id, full_name as name, email, mobile_number as phone, role, status FROM `users` WHERE (email = ? OR full_name = ?) AND password = ?',
       [identifier, identifier, hashedPassword]
     );
 
@@ -106,7 +110,7 @@ exports.login = async (req, res) => {
     }
 
     const user = users[0];
-    if (user.active === 0 || user.active === '0' || !user.active) {
+    if (user.status !== 'Active') {
       return res.status(403).json({ message: 'Your account is deactivated. Please contact support.' });
     }
 
@@ -159,26 +163,28 @@ exports.googleLogin = async (req, res) => {
       return res.status(400).json({ message: 'Google login requires name and email.' });
     }
 
-    const [existing] = await pool.execute('SELECT id, user_id, name, email, phone, role, active FROM `users` WHERE email = ?', [email]);
+    const [existing] = await pool.execute('SELECT id, user_id, full_name as name, email, mobile_number as phone, role, status FROM `users` WHERE email = ?', [email]);
     let user;
 
     if (existing.length > 0) {
       user = existing[0];
-      if (user.active === 0 || user.active === '0' || !user.active) {
+      if (user.status !== 'Active') {
         return res.status(403).json({ message: 'Your account is deactivated. Please contact support.' });
       }
     } else {
+      const role = 'user';
+      const userId = generateRoleId(role);
       const [result] = await pool.execute(
-        'INSERT INTO `users` (name, email, phone, password, role) VALUES (?, ?, ?, ?, ?)',
-        [name, email, null, hashPassword(googleId || crypto.randomUUID()), 'user']
+        'INSERT INTO `users` (user_id, full_name, email, mobile_number, password, role) VALUES (?, ?, ?, ?, ?, ?)',
+        [userId, name, email, null, hashPassword(googleId || crypto.randomUUID()), role]
       );
       user = {
         id: result.insertId,
-        user_id: null,
+        user_id: userId,
         name,
         email,
         phone: null,
-        role: 'user',
+        role: role,
       };
     }
 

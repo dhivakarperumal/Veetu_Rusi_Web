@@ -30,48 +30,35 @@ async function createDatabaseAndTables() {
   await connection.execute(`
     CREATE TABLE IF NOT EXISTS \`users\` (
       id INT AUTO_INCREMENT PRIMARY KEY,
-      user_id CHAR(36) NOT NULL UNIQUE DEFAULT (UUID()),
-      name VARCHAR(255) NOT NULL,
+      user_id VARCHAR(100) NOT NULL UNIQUE,
+      full_name VARCHAR(255) NOT NULL,
+      mobile_number VARCHAR(50) DEFAULT NULL,
       email VARCHAR(255) NOT NULL UNIQUE,
-      phone VARCHAR(50) DEFAULT NULL,
       password VARCHAR(255) NOT NULL,
+      profile_image VARCHAR(255) DEFAULT NULL,
       role VARCHAR(50) NOT NULL DEFAULT 'user',
+      status VARCHAR(50) NOT NULL DEFAULT 'Active',
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-      active TINYINT(1) NOT NULL DEFAULT 1
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
   console.log('Users table created or already exists');
 
-  const [columns] = await connection.execute(
-    "SELECT COUNT(*) AS count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'users' AND COLUMN_NAME = 'user_id'",
-    [DB_NAME]
-  );
-
-  if (columns[0].count === 0) {
-    await connection.execute(`
-      ALTER TABLE \`users\`
-      ADD COLUMN \`user_id\` CHAR(36) NOT NULL UNIQUE DEFAULT (UUID())
-    `);
-    await connection.execute(`
-      UPDATE \`users\`
-      SET user_id = UUID()
-      WHERE user_id IS NULL OR user_id = ''
-    `);
-    console.log('Added user_id UUID column to existing users table');
-  }
-
-  const [phoneColumns] = await connection.execute(
-    "SELECT COUNT(*) AS count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'users' AND COLUMN_NAME = 'phone'",
-    [DB_NAME]
-  );
-
-  if (phoneColumns[0].count === 0) {
-    await connection.execute(`
-      ALTER TABLE \`users\`
-      ADD COLUMN \`phone\` VARCHAR(50) DEFAULT NULL
-    `);
-    console.log('Added phone column to existing users table');
+  // To support seamless updates of existing schemas:
+  try {
+    await connection.execute("ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `full_name` VARCHAR(255) NOT NULL");
+    await connection.execute("ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `mobile_number` VARCHAR(50) DEFAULT NULL");
+    await connection.execute("ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `profile_image` VARCHAR(255) DEFAULT NULL");
+    await connection.execute("ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `status` VARCHAR(50) NOT NULL DEFAULT 'Active'");
+    // Rename existing columns if they exist (ignoring errors if they don't or already renamed)
+    try { await connection.execute("ALTER TABLE `users` CHANGE `name` `full_name` VARCHAR(255) NOT NULL"); } catch (e) {}
+    try { await connection.execute("ALTER TABLE `users` CHANGE `phone` `mobile_number` VARCHAR(50) DEFAULT NULL"); } catch (e) {}
+    try { await connection.execute("ALTER TABLE `users` CHANGE `active` `status` VARCHAR(50) NOT NULL DEFAULT 'Active'"); } catch (e) {}
+    try { 
+      await connection.execute("ALTER TABLE `users` MODIFY `user_id` VARCHAR(100) NOT NULL"); 
+    } catch (e) {}
+  } catch (err) {
+    console.log('User alter tables:', err.message);
   }
 
   // SuperAdmin Tables
@@ -79,6 +66,7 @@ async function createDatabaseAndTables() {
     CREATE TABLE IF NOT EXISTS \`restaurants\` (
       id INT AUTO_INCREMENT PRIMARY KEY,
       restaurant_id CHAR(36) NOT NULL UNIQUE DEFAULT (UUID()),
+      user_id VARCHAR(100) DEFAULT NULL,
       name VARCHAR(255) NOT NULL,
       owner_name VARCHAR(255) NOT NULL,
       gst_number VARCHAR(100),
@@ -140,6 +128,9 @@ async function createDatabaseAndTables() {
   `);
   console.log('Restaurants table created or already exists');
 
+  // Add user_id column to existing restaurants table
+  await connection.execute("ALTER TABLE `restaurants` ADD COLUMN IF NOT EXISTS `user_id` VARCHAR(100) DEFAULT NULL");
+
   const [restColumns] = await connection.execute(
     "SELECT COUNT(*) AS count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'restaurants' AND COLUMN_NAME = 'verification_status'",
     [DB_NAME]
@@ -197,6 +188,7 @@ async function createDatabaseAndTables() {
     CREATE TABLE IF NOT EXISTS \`home_chefs\` (
       id INT AUTO_INCREMENT PRIMARY KEY,
       chef_id CHAR(36) NOT NULL UNIQUE DEFAULT (UUID()),
+      user_id VARCHAR(100) DEFAULT NULL,
       chef_unique_code VARCHAR(100) UNIQUE DEFAULT NULL,
       created_by_id INT DEFAULT NULL,
       created_by_user_id CHAR(36) DEFAULT NULL,
@@ -234,6 +226,7 @@ async function createDatabaseAndTables() {
     console.log('chef_unique_code column already exists');
   }
 
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `user_id` VARCHAR(100) DEFAULT NULL");
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `created_by_id` INT DEFAULT NULL");
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `created_by_user_id` CHAR(36) DEFAULT NULL");
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `created_by_name` VARCHAR(255) DEFAULT NULL");
@@ -284,6 +277,7 @@ async function createDatabaseAndTables() {
     CREATE TABLE IF NOT EXISTS \`delivery_partners\` (
       id INT AUTO_INCREMENT PRIMARY KEY,
       partner_id CHAR(36) NOT NULL UNIQUE DEFAULT (UUID()),
+      user_id VARCHAR(100) DEFAULT NULL,
       name VARCHAR(255) NOT NULL,
       mobile VARCHAR(50) NOT NULL,
       vehicle_type VARCHAR(100) NOT NULL,
@@ -300,6 +294,8 @@ async function createDatabaseAndTables() {
   console.log('Delivery Partners table created or already exists');
 
   // Ensure legacy or older DBs have the newer columns used by the application
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `email` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `user_id` VARCHAR(100) DEFAULT NULL");
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `delivery_partner_code` VARCHAR(100)");
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `father_husband_name` VARCHAR(255)");
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `gender` VARCHAR(50) DEFAULT 'Male'");
@@ -419,6 +415,7 @@ async function createDatabaseAndTables() {
       id INT AUTO_INCREMENT PRIMARY KEY,
       franchise_id CHAR(36) NOT NULL UNIQUE DEFAULT (UUID()),
       franch_user_id CHAR(36) DEFAULT NULL,
+      user_id VARCHAR(100) DEFAULT NULL,
       franchise_name VARCHAR(255) NOT NULL,
       owner_name VARCHAR(255) NOT NULL,
       mobile VARCHAR(50) NOT NULL,
@@ -427,11 +424,40 @@ async function createDatabaseAndTables() {
       state VARCHAR(100) NOT NULL,
       commission_percentage DECIMAL(5,2) NOT NULL DEFAULT 10.00,
       status VARCHAR(50) NOT NULL DEFAULT 'Pending',
-      territory_pincodes TEXT,
+      pincode VARCHAR(20),
+      latitude VARCHAR(50),
+      longitude VARCHAR(50),
+      map_link TEXT,
+      username VARCHAR(255),
+      role VARCHAR(50) DEFAULT 'Franchise Admin',
+      otp_verified TINYINT(1) DEFAULT 0,
+      email_verified TINYINT(1) DEFAULT 0,
+      login_status VARCHAR(50) DEFAULT 'Active',
+      aadhaar_url VARCHAR(255),
+      pan_url VARCHAR(255),
+      gst_certificate_url VARCHAR(255),
+      fssai_license_url VARCHAR(255),
+      shop_license_url VARCHAR(255),
+      vehicle_rc_url VARCHAR(255),
+      driving_license_url VARCHAR(255),
+      bank_passbook_url VARCHAR(255),
+      signature_url VARCHAR(255),
+      created_by_id INT DEFAULT NULL,
+      created_by_user_id VARCHAR(100) DEFAULT NULL,
+      created_by_name VARCHAR(255) DEFAULT NULL,
+      created_by_email VARCHAR(255) DEFAULT NULL,
+      created_by_phone VARCHAR(50) DEFAULT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
   console.log('Franchise Owners table created or already exists');
+
+  await connection.execute("ALTER TABLE `franchise_owners` ADD COLUMN IF NOT EXISTS `user_id` VARCHAR(100) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `franchise_owners` ADD COLUMN IF NOT EXISTS `created_by_id` INT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `franchise_owners` ADD COLUMN IF NOT EXISTS `created_by_user_id` VARCHAR(100) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `franchise_owners` ADD COLUMN IF NOT EXISTS `created_by_name` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `franchise_owners` ADD COLUMN IF NOT EXISTS `created_by_email` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `franchise_owners` ADD COLUMN IF NOT EXISTS `created_by_phone` VARCHAR(50) DEFAULT NULL");
 
   const [franColumns] = await connection.execute(
     "SELECT COUNT(*) AS count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'franchise_owners' AND COLUMN_NAME = 'logo_url'",
@@ -457,7 +483,6 @@ async function createDatabaseAndTables() {
       ADD COLUMN \`area\` VARCHAR(255),
       ADD COLUMN \`landmark\` VARCHAR(255),
       ADD COLUMN \`district\` VARCHAR(150),
-      ADD COLUMN \`territory_pincodes\` TEXT,
       ADD COLUMN \`pincode\` VARCHAR(20),
       ADD COLUMN \`latitude\` VARCHAR(50),
       ADD COLUMN \`longitude\` VARCHAR(50),
@@ -609,19 +634,21 @@ async function createDatabaseAndTables() {
   `);
 
 
+  const { generateRoleId } = require('./src/utils/idGenerator');
+
   const adminEmail = 'admin@gmail.com';
   const adminPassword = 'admin@123';
   const hashedPassword = hashPassword(adminPassword);
 
   await connection.execute(
-    `INSERT INTO \`users\` (name, email, password, role)
-      VALUES (?, ?, ?, ?)
+    `INSERT INTO \`users\` (user_id, full_name, email, password, role)
+      VALUES (?, ?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE
-        name = VALUES(name),
+        full_name = VALUES(full_name),
         password = VALUES(password),
         role = VALUES(role),
         updated_at = CURRENT_TIMESTAMP`,
-    ['Admin', adminEmail, hashedPassword, 'admin']
+    [generateRoleId('admin'), 'Admin', adminEmail, hashedPassword, 'admin']
   );
   console.log(`Admin user created or updated: ${adminEmail}`);
 
@@ -630,14 +657,14 @@ async function createDatabaseAndTables() {
   const hashedSuperPassword = hashPassword(superadminPassword);
 
   await connection.execute(
-    `INSERT INTO \`users\` (name, email, password, role)
-      VALUES (?, ?, ?, ?)
+    `INSERT INTO \`users\` (user_id, full_name, email, password, role)
+      VALUES (?, ?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE
-        name = VALUES(name),
+        full_name = VALUES(full_name),
         password = VALUES(password),
         role = VALUES(role),
         updated_at = CURRENT_TIMESTAMP`,
-    ['SuperAdmin', superadminEmail, hashedSuperPassword, 'superadmin']
+    [generateRoleId('superadmin'), 'SuperAdmin', superadminEmail, hashedSuperPassword, 'superadmin']
   );
   console.log(`SuperAdmin user created or updated: ${superadminEmail}`);
 

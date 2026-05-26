@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 const crypto = require('crypto');
+const { generateRoleId } = require('../utils/idGenerator');
 
 function hashPassword(password) {
   return crypto.createHash('sha256').update(password).digest('hex');
@@ -32,7 +33,7 @@ async function expireFranchiseSubscriptions() {
         .map((franchise) => franchise.email);
       if (expiredEmails.length > 0) {
         await pool.execute(
-          `UPDATE users SET active = 0 WHERE email IN (${expiredEmails.map(() => '?').join(',')})`,
+          `UPDATE users SET status = 'Inactive' WHERE email IN (${expiredEmails.map(() => '?').join(',')})`,
           expiredEmails
         );
       }
@@ -64,22 +65,28 @@ async function syncUserForEntity(tableName, id, role) {
     if (role === 'delivery' || role === 'delivery_boy') userRole = 'delivery_boy';
 
     if (status === 'Approved' || status === 'Active') {
-      const [existing] = await pool.execute("SELECT id FROM users WHERE email = ?", [email]);
+      const [existing] = await pool.execute("SELECT id, user_id FROM users WHERE email = ?", [email]);
       if (existing.length === 0) {
+        const userId = generateRoleId(userRole);
         const [ins] = await pool.execute(
-          "INSERT INTO users (name, email, phone, password, role, active) VALUES (?, ?, ?, ?, ?, 1)",
-          [name, email, mobile, password, userRole]
+          "INSERT INTO users (user_id, full_name, email, mobile_number, password, role, status) VALUES (?, ?, ?, ?, ?, ?, 'Active')",
+          [userId, name, email, mobile, password, userRole]
         );
+        await pool.execute(`UPDATE ${tableName} SET user_id = ? WHERE id = ?`, [userId, id]);
         return { created: true, user: { id: ins.insertId, name, email, phone: mobile, role: userRole }, plainPassword };
       } else {
+        const existingUserId = existing[0].user_id;
         await pool.execute(
-          "UPDATE users SET active = 1, role = ?, password = ?, name = ?, phone = ? WHERE email = ?",
+          "UPDATE users SET status = 'Active', role = ?, password = ?, full_name = ?, mobile_number = ? WHERE email = ?",
           [userRole, password, name, mobile, email]
         );
+        if (existingUserId) {
+          await pool.execute(`UPDATE ${tableName} SET user_id = ? WHERE id = ?`, [existingUserId, id]);
+        }
         return { updated: true };
       }
     } else if (status === 'Suspended' || status === 'Rejected' || status === 'Inactive') {
-      await pool.execute("UPDATE users SET active = 0 WHERE email = ?", [email]);
+      await pool.execute("UPDATE users SET status = 'Inactive' WHERE email = ?", [email]);
       return { deactivated: true };
     }
     return null;
@@ -221,11 +228,40 @@ exports.createHomeChef = async (req, res) => {
       rejection_reason, block_reason, address
     } = req.body;
 
-    const createdById = req.user?.id || null;
-    const createdByUserId = req.user?.user_id || null;
-    const createdByName = req.user?.name || null;
-    const createdByEmail = req.user?.email || null;
-    const createdByPhone = req.user?.phone || null;
+    let createdById = req.user?.id || null;
+    let createdByUserId = req.user?.user_id || null;
+    let createdByName = req.user?.full_name || null;
+    let createdByEmail = req.user?.email || null;
+    let createdByPhone = req.user?.phone || null;
+
+    // Fetch creator details from DB to ensure all fields are populated
+    if (createdById && (!createdByName || !createdByPhone)) {
+      const [uRows] = await pool.execute(
+        'SELECT user_id, full_name, email, mobile_number FROM users WHERE id = ?',
+        [createdById]
+      );
+      if (uRows.length) {
+        createdByUserId = uRows[0].user_id || createdByUserId;
+        createdByName = uRows[0].full_name || createdByName;
+        createdByEmail = uRows[0].email || createdByEmail;
+        createdByPhone = uRows[0].mobile_number || createdByPhone;
+      }
+    }
+
+    // Fallback to a system admin if creator info is still missing
+    if (!createdById) {
+      try {
+        const [adminRows] = await pool.execute("SELECT id, user_id, full_name AS full_name, email, mobile_number FROM users WHERE role = 'admin' ORDER BY id LIMIT 1");
+        if (adminRows.length) {
+          const a = adminRows[0];
+          createdById = a.id;
+          createdByUserId = a.user_id || createdByUserId;
+          createdByName = a.full_name || 'System Admin';
+          createdByEmail = a.email || null;
+          createdByPhone = a.mobile_number || null;
+        }
+      } catch (e) {}
+    }
 
     // Auto-generate chef_unique_code if not provided
     function generateChefUniqueCode() {
@@ -236,34 +272,18 @@ exports.createHomeChef = async (req, res) => {
     const generatedChefCode = chef_unique_code || generateChefUniqueCode();
 
     // Auto-calculate age from date_of_birth
-    function calculateAgeFromDOB(dob) {
+    const calculateAgeFromDOB = (dob) => {
       if (!dob) return null;
       const birthDate = new Date(dob);
       const today = new Date();
-      let calculatedAge = today.getFullYear() - birthDate.getFullYear();
+      let calcAge = today.getFullYear() - birthDate.getFullYear();
       const monthDiff = today.getMonth() - birthDate.getMonth();
-      
       if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-        calculatedAge--;
+        calcAge--;
       }
-      
-      return calculatedAge > 0 ? calculatedAge : null;
-    }
+      return calcAge > 0 ? calcAge : null;
+    };
     const calculatedAge = calculateAgeFromDOB(date_of_birth);
-
-    // Auto-calculate age from date_of_birth for updates
-    function calculateAgeFromDOB(dob) {
-      if (!dob) return null;
-      const birthDate = new Date(dob);
-      const today = new Date();
-      let calculatedAge = today.getFullYear() - birthDate.getFullYear();
-      const monthDiff = today.getMonth() - birthDate.getMonth();
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-        calculatedAge--;
-      }
-      return calculatedAge > 0 ? calculatedAge : null;
-    }
-    const calculatedAgeForUpdate = calculateAgeFromDOB(date_of_birth);
 
     const profile_photo = req.files && req.files.profile_photo ? req.files.profile_photo[0].filename : null;
     const cover_banner = req.files && req.files.cover_banner ? req.files.cover_banner[0].filename : null;
@@ -427,6 +447,21 @@ exports.updateHomeChef = async (req, res) => {
     const kitchen_videos = req.files && req.files.kitchen_videos ? req.files.kitchen_videos.map(f => f.filename).join(',') : null;
 
     const fullAddress = address || [door_number, street_name, area_name, landmark, city, district, state, pincode].filter(Boolean).join(', ') || null;
+
+    const calculateAgeFromDOB = (dob) => {
+      if (!dob) return null;
+      const today = new Date();
+      const birthDate = new Date(dob);
+      if (isNaN(birthDate)) return null;
+      let calculatedAge = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        calculatedAge--;
+      }
+      return calculatedAge;
+    };
+    
+    const calculatedAgeForUpdate = calculateAgeFromDOB(date_of_birth);
 
     let query = `UPDATE home_chefs SET 
       chef_unique_code = ?, name = ?, father_husband_name = ?, gender = ?, date_of_birth = ?, age = ?,
@@ -722,7 +757,7 @@ exports.createDeliveryPartner = async (req, res) => {
     // Attach current user info (created_by) when available
     let created_by_id = null, created_by_user_id = null, created_by_name = null, created_by_email = null, created_by_phone = null;
     if (req.user && req.user.id) {
-      const [uRows] = await pool.execute('SELECT id, user_id, name, email, phone FROM users WHERE id = ?', [req.user.id]);
+      const [uRows] = await pool.execute('SELECT id, user_id, full_name AS name, email, mobile_number AS phone FROM users WHERE id = ?', [req.user.id]);
       if (uRows.length) {
         const cu = uRows[0];
         created_by_id = cu.id;
@@ -730,6 +765,22 @@ exports.createDeliveryPartner = async (req, res) => {
         created_by_name = cu.name || null;
         created_by_email = cu.email || null;
         created_by_phone = cu.phone || null;
+      }
+    }
+    // Fallback: if no request user (e.g. seeded data or missing auth), use a system admin as creator
+    if (!created_by_id) {
+      try {
+        const [adminRows] = await pool.execute("SELECT id, user_id, full_name AS name, email, mobile_number AS phone FROM users WHERE role = 'admin' ORDER BY id LIMIT 1");
+        if (adminRows.length) {
+          const au = adminRows[0];
+          created_by_id = au.id;
+          created_by_user_id = au.user_id || null;
+          created_by_name = au.name || 'System Admin';
+          created_by_email = au.email || null;
+          created_by_phone = au.phone || null;
+        }
+      } catch (e) {
+        // ignore fallback errors
       }
     }
 
@@ -843,7 +894,7 @@ exports.deleteDeliveryPartner = async (req, res) => {
 // ==================== USER MANAGEMENT ====================
 exports.getUsers = async (req, res) => {
   try {
-    const [rows] = await pool.execute("SELECT id, user_id, name, email, phone, role, active, created_at FROM users WHERE role = 'user' ORDER BY created_at DESC");
+    const [rows] = await pool.execute("SELECT id, user_id, full_name AS name, email, mobile_number AS phone, role, status AS active, created_at FROM users WHERE role = 'user' ORDER BY created_at DESC");
     res.json(rows);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving users.', error: error.message });
@@ -854,7 +905,8 @@ exports.patchUserStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { active } = req.body; // 1 for active, 0 for blocked
-    await pool.execute("UPDATE users SET active = ? WHERE id = ?", [active, id]);
+    const statusVal = active ? 'Active' : 'Blocked';
+    await pool.execute("UPDATE users SET status = ? WHERE id = ?", [statusVal, id]);
     res.json({ message: `User status changed to ${active ? 'Active' : 'Blocked'}.` });
   } catch (error) {
     res.status(500).json({ message: 'Error changing user status.', error: error.message });
@@ -970,6 +1022,19 @@ exports.createFranchise = async (req, res) => {
     const hashedPw = password ? hashPassword(password) : null;
     const plainPw  = password || null;
 
+    let created_by_id = null, created_by_user_id = null, created_by_name = null, created_by_email = null, created_by_phone = null;
+    if (req.user && req.user.id) {
+      const [uRows] = await pool.execute('SELECT id, user_id, full_name AS name, email, mobile_number AS phone FROM users WHERE id = ?', [req.user.id]);
+      if (uRows.length) {
+        const cu = uRows[0];
+        created_by_id = cu.id;
+        created_by_user_id = cu.user_id || null;
+        created_by_name = cu.name || null;
+        created_by_email = cu.email || null;
+        created_by_phone = cu.phone || null;
+      }
+    }
+
     const insertData = {
       franchise_name,
       owner_name,
@@ -1014,7 +1079,12 @@ exports.createFranchise = async (req, res) => {
       vehicle_rc_url,
       driving_license_url,
       bank_passbook_url,
-      signature_url
+      signature_url,
+      created_by_id,
+      created_by_user_id,
+      created_by_name,
+      created_by_email,
+      created_by_phone
     };
 
     const [result] = await pool.query("INSERT INTO franchise_owners SET ?", insertData);
@@ -1079,13 +1149,14 @@ exports.approveFranchise = async (req, res) => {
       userId = existing[0].user_id;
       // Update role + password
       await pool.execute(
-        "UPDATE users SET role = 'admin', active = 1, password = ? WHERE email = ?",
+        "UPDATE users SET role = 'admin', status = 'Active', password = ? WHERE email = ?",
         [hashedPw, franchise.email]
       );
     } else {
+      const userIdStr = generateRoleId('franchise_admin');
       const [newUser] = await pool.execute(
-        "INSERT INTO users (name, email, phone, password, role, active) VALUES (?, ?, ?, ?, 'admin', 1)",
-        [franchise.owner_name, franchise.email, franchise.mobile, hashedPw]
+        "INSERT INTO users (user_id, full_name, email, mobile_number, password, role, status) VALUES (?, ?, ?, ?, ?, 'franchise_admin', 'Active')",
+        [userIdStr, franchise.owner_name, franchise.email, franchise.mobile, hashedPw]
       );
       const [created] = await pool.execute('SELECT user_id FROM users WHERE id = ?', [newUser.insertId]);
       userId = created[0].user_id;
@@ -1168,9 +1239,9 @@ exports.updateFranchise = async (req, res) => {
 
     await pool.execute(query, params);
     
-    // Sync status to associated user's active field
-    const isActive = status === 'Active' ? 1 : 0;
-    await pool.execute("UPDATE users SET active = ? WHERE email = ?", [isActive, email]);
+    // Sync status to associated user's status field
+    const isActive = status === 'Active' ? 'Active' : 'Inactive';
+    await pool.execute("UPDATE users SET status = ? WHERE email = ?", [isActive, email]);
 
     res.json({ message: 'Franchise updated successfully.' });
   } catch (error) {
@@ -1185,7 +1256,7 @@ exports.deleteFranchise = async (req, res) => {
     // Deactivate associated user account before deletion
     const [rows] = await pool.execute("SELECT email FROM franchise_owners WHERE id = ?", [id]);
     if (rows && rows.length > 0) {
-      await pool.execute("UPDATE users SET active = 0, role = 'user' WHERE email = ?", [rows[0].email]);
+      await pool.execute("UPDATE users SET status = 'Inactive', role = 'user' WHERE email = ?", [rows[0].email]);
     }
 
     await pool.execute("DELETE FROM franchise_owners WHERE id = ?", [id]);
