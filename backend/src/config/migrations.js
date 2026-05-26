@@ -15,8 +15,9 @@ const createProductsTable = async () => {
             offer_price DECIMAL(10, 2),
             product_code VARCHAR(50) UNIQUE,
             total_stock INT DEFAULT 0,
-            rating DECIMAL(2, 1) DEFAULT 5,
+            rating DECIMAL(2,1) DEFAULT 5,
             status VARCHAR(50) DEFAULT 'Active',
+
             material VARCHAR(255),
             nutrition_info VARCHAR(255),
             storage_instructions VARCHAR(255),
@@ -28,6 +29,7 @@ const createProductsTable = async () => {
             heat_profile VARCHAR(255),
             serving_size VARCHAR(100),
             prep_time VARCHAR(100),
+
             ingredients LONGTEXT,
             spice_level VARCHAR(50),
             shelf_life_days INT,
@@ -35,24 +37,30 @@ const createProductsTable = async () => {
             package_count INT,
             packaging_type VARCHAR(100),
             manufacture_date DATE,
+
             variants LONGTEXT,
             images LONGTEXT,
+
             chef_id VARCHAR(255) NOT NULL,
             chef_user_id VARCHAR(255),
             chef_name VARCHAR(255),
             chef_phone VARCHAR(20),
             chef_email VARCHAR(255),
+
             created_by_user_id VARCHAR(255),
             created_by_email VARCHAR(255),
             created_by_name VARCHAR(255),
             created_by_phone VARCHAR(20),
+
             franchise_user_id VARCHAR(255),
             franchise_name VARCHAR(255),
             franchise_email VARCHAR(255),
             franchise_phone VARCHAR(20),
             franchise_id VARCHAR(255),
+
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
             KEY idx_chef_id (chef_id),
             KEY idx_category (category),
             KEY idx_status (status),
@@ -61,17 +69,70 @@ const createProductsTable = async () => {
         `;
 
         await pool.execute(createTableSQL);
-        // Ensure optional columns exist (use individual try/catch for compatibility with older MySQL)
-        try { await pool.execute('ALTER TABLE products ADD COLUMN chef_user_id VARCHAR(255)'); } catch (e) { /* ignore if exists */ }
-        try { await pool.execute('ALTER TABLE products ADD COLUMN franchise_user_id VARCHAR(255)'); } catch (e) { /* ignore if exists */ }
-        try { await pool.execute('ALTER TABLE products ADD COLUMN franchise_name VARCHAR(255)'); } catch (e) { /* ignore if exists */ }
-        try { await pool.execute('ALTER TABLE products ADD COLUMN franchise_email VARCHAR(255)'); } catch (e) { /* ignore if exists */ }
-        try { await pool.execute('ALTER TABLE products ADD COLUMN franchise_phone VARCHAR(20)'); } catch (e) { /* ignore if exists */ }
-        try { await pool.execute('ALTER TABLE products ADD COLUMN images LONGTEXT'); } catch (e) { /* ignore if exists */ }
+
+        try { await pool.execute('ALTER TABLE products ADD COLUMN chef_user_id VARCHAR(255)'); } catch {}
+        try { await pool.execute('ALTER TABLE products ADD COLUMN franchise_user_id VARCHAR(255)'); } catch {}
+        try { await pool.execute('ALTER TABLE products ADD COLUMN franchise_name VARCHAR(255)'); } catch {}
+        try { await pool.execute('ALTER TABLE products ADD COLUMN franchise_email VARCHAR(255)'); } catch {}
+        try { await pool.execute('ALTER TABLE products ADD COLUMN franchise_phone VARCHAR(20)'); } catch {}
+        try { await pool.execute('ALTER TABLE products ADD COLUMN images LONGTEXT'); } catch {}
+
         console.log('✓ Products table created or already exists');
     } catch (error) {
         console.error('✗ Error creating products table:', error.message);
     }
 };
 
-module.exports = { createProductsTable };
+const createRecipeDetailsTable = async () => {
+    try {
+        const createTableSQL = `
+        CREATE TABLE IF NOT EXISTS recipe_details (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+
+            title VARCHAR(255) NOT NULL,
+            description LONGTEXT,
+            category VARCHAR(100),
+            status VARCHAR(50) DEFAULT 'Active',
+            recipe_code VARCHAR(50) UNIQUE,
+
+            ingredients LONGTEXT,
+            instructions LONGTEXT,
+
+            chef_id VARCHAR(255),
+            chef_user_id VARCHAR(255),
+            chef_name VARCHAR(255),
+            chef_phone VARCHAR(20),
+            chef_email VARCHAR(255),
+
+            franchise_id VARCHAR(255),
+            franchise_user_id VARCHAR(255),
+            franchise_name VARCHAR(255),
+            franchise_email VARCHAR(255),
+            franchise_phone VARCHAR(20),
+
+            created_by_user_id VARCHAR(255),
+            created_by_email VARCHAR(255),
+            created_by_name VARCHAR(255),
+            created_by_phone VARCHAR(20),
+
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+            KEY idx_chef_id (chef_id),
+            KEY idx_franchise_user_id (franchise_user_id),
+            KEY idx_created_at (created_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `;
+
+        await pool.execute(createTableSQL);
+
+        console.log('✓ Recipe details table created or already exists');
+    } catch (error) {
+        console.error('✗ Error creating recipe_details table:', error.message);
+    }
+};
+
+module.exports = {
+    createProductsTable,
+    createRecipeDetailsTable
+};
