@@ -92,4 +92,3 @@ app.post('/api/generate-image', async (req, res) => {
     return res.status(500).json({ error: 'Generation failed' });
   }
 });
-
