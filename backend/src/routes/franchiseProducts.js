@@ -4,13 +4,13 @@ const franchiseProductController = require('../controllers/franchiseProductContr
 const { attachUser } = require('../middleware/authMiddleware');
 
 // Get franchise products with filters
-router.get('/', franchiseProductController.getAllProducts);
+router.get('/', attachUser, franchiseProductController.getAllProducts);
 
 // Get latest franchise product code
-router.get('/latest-code', franchiseProductController.getLatestProductCode);
+router.get('/latest-code', attachUser, franchiseProductController.getLatestProductCode);
 
 // Get franchise product by ID
-router.get('/:id', franchiseProductController.getProductById);
+router.get('/:id', attachUser, franchiseProductController.getProductById);
 
 // Create franchise product
 router.post('/', attachUser, franchiseProductController.createProduct);

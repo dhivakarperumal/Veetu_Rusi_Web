@@ -11,6 +11,61 @@ const parseJsonField = (value) => {
     }
 };
 
+const getFranchiseIdForUser = async (user) => {
+    if (!user) return null;
+
+    try {
+        if (user.role === 'admin') {
+            const [rows] = await pool.execute(
+                'SELECT franchise_id FROM franchise_owners WHERE email = ? OR user_id = ? OR franch_user_id = ? LIMIT 1',
+                [user.email, user.user_id, user.user_id]
+            );
+            return rows.length ? rows[0].franchise_id : null;
+        }
+
+        if (user.role === 'chef') {
+            const [rows] = await pool.execute(
+                'SELECT created_by_id, created_by_user_id FROM home_chefs WHERE email = ? OR user_id = ? OR chef_id = ? OR chef_unique_code = ? OR created_by_user_id = ? LIMIT 1',
+                [user.email, user.user_id, user.user_id, user.user_id, user.user_id]
+            );
+            if (rows.length) {
+                const chefRow = rows[0];
+
+                if (chefRow.created_by_user_id) {
+                    const [ownerRows] = await pool.execute(
+                        'SELECT franchise_id FROM franchise_owners WHERE user_id = ? OR franch_user_id = ? LIMIT 1',
+                        [chefRow.created_by_user_id, chefRow.created_by_user_id]
+                    );
+                    if (ownerRows.length) {
+                        return ownerRows[0].franchise_id;
+                    }
+                }
+
+                if (chefRow.created_by_id) {
+                    const [userRows] = await pool.execute(
+                        'SELECT user_id FROM users WHERE id = ? LIMIT 1',
+                        [chefRow.created_by_id]
+                    );
+                    if (userRows.length) {
+                        const ownerUserId = userRows[0].user_id;
+                        const [ownerRows] = await pool.execute(
+                            'SELECT franchise_id FROM franchise_owners WHERE user_id = ? OR franch_user_id = ? LIMIT 1',
+                            [ownerUserId, ownerUserId]
+                        );
+                        if (ownerRows.length) {
+                            return ownerRows[0].franchise_id;
+                        }
+                    }
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error resolving franchise for user:', error);
+    }
+
+    return null;
+};
+
 const serializeJsonField = (value) => {
     if (value === null || value === undefined) return null;
     if (typeof value === 'string') {
@@ -50,6 +105,17 @@ exports.getAllProducts = async (req, res) => {
             query += ' AND franchise_user_id = ?';
             params.push(franchise_user_id);
         }
+
+        if (!franchise_id && !franchise_user_id && req.user) {
+            const inferredFranchiseId = await getFranchiseIdForUser(req.user);
+            if (inferredFranchiseId) {
+                query += ' AND franchise_id = ?';
+                params.push(inferredFranchiseId);
+            } else if (['admin', 'chef'].includes(req.user.role)) {
+                return res.status(403).json({ message: 'Unable to resolve franchise for current user.' });
+            }
+        }
+
         if (category) {
             query += ' AND category = ?';
             params.push(category);
@@ -85,6 +151,14 @@ exports.getProductById = async (req, res) => {
         }
 
         const product = products[0];
+
+        if (req.user && ['admin', 'chef'].includes(req.user.role)) {
+            const inferredFranchiseId = await getFranchiseIdForUser(req.user);
+            if (inferredFranchiseId && product.franchise_id !== inferredFranchiseId) {
+                return res.status(403).json({ message: 'Access denied for this franchise product.' });
+            }
+        }
+
         res.json({
             ...product,
             variants: parseJsonField(product.variants) || [],
@@ -149,7 +223,11 @@ exports.createProduct = async (req, res) => {
         const finalCreatedByEmail = created_by_email || req.user?.email || null;
         const finalCreatedByName = created_by_name || req.user?.name || null;
         const finalCreatedByPhone = created_by_phone || req.user?.phone || null;
-        const finalFranchiseId = franchise_id || null;
+        const resolvedFranchiseId = franchise_id || await getFranchiseIdForUser(req.user);
+        if (!resolvedFranchiseId && ['admin', 'chef'].includes(req.user?.role)) {
+            return res.status(400).json({ message: 'Unable to determine franchise_id for the current user.' });
+        }
+        const finalFranchiseId = resolvedFranchiseId || null;
 
         const params = [
             name, description || null, category, product_type || 'Cooked Food', subcategory || null,

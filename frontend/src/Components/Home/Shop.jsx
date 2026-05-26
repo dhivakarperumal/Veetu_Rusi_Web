@@ -40,11 +40,11 @@ const Shop = ({ defaultCategory = "" }) => {
 
   const fetchProducts = async () => {
     try {
-      const res = await api.get("/products");
+      const res = await api.get("/franchise-products");
       setProducts(res.data);
       setFilteredProducts(res.data);
     } catch (error) {
-      console.error("Error fetching products:", error);
+      console.error("Error fetching franchise products:", error);
     } finally {
       setLoading(false);
     }
