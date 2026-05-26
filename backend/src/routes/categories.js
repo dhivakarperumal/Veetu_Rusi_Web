@@ -1,18 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const productController = require('../controllers/productController');
-const { attachUser } = require('../middleware/authMiddleware');
+const { attachUser, verifyToken } = require('../middleware/authMiddleware');
 
-// Get categories
-router.get('/', productController.getCategories);
+// Get categories (optional auth for franchise filtering)
+router.get('/', attachUser, productController.getCategories);
 
 // Create category
-router.post('/', productController.createCategory);
+router.post('/', verifyToken, productController.createCategory);
 
 // Update category
-router.put('/:catId', productController.updateCategory);
+router.put('/:catId', verifyToken, productController.updateCategory);
 
 // Delete category
-router.delete('/:catId', productController.deleteCategory);
+router.delete('/:catId', verifyToken, productController.deleteCategory);
 
 module.exports = router;

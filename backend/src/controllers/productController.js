@@ -305,12 +305,25 @@ exports.getLatestProductCode = async (req, res) => {
     }
 };
 
-// Get categories from database
+// Get categories - optionally filtered by franchise
 exports.getCategories = async (req, res) => {
     try {
-        const [rows] = await pool.execute(
-            'SELECT id, catId, name, description, subcategory, images FROM categories ORDER BY id DESC'
-        );
+        const { franchise_user_id, franchise_id } = req.query;
+        let query = 'SELECT id, catId, name, description, subcategory, images, franchise_user_id, franchise_id, created_by_user_id, created_by_email, created_by_name FROM franchise_category WHERE 1=1';
+        const params = [];
+
+        if (franchise_user_id) {
+            query += ' AND (franchise_user_id = ? OR franchise_user_id IS NULL)';
+            params.push(franchise_user_id);
+        }
+        if (franchise_id) {
+            query += ' AND (franchise_id = ? OR franchise_id IS NULL)';
+            params.push(franchise_id);
+        }
+
+        query += ' ORDER BY id DESC';
+
+        const [rows] = await pool.execute(query, params);
 
         const categories = rows.map((row) => ({
             ...row,
@@ -325,24 +338,89 @@ exports.getCategories = async (req, res) => {
     }
 };
 
+const generateNextCategoryId = async (franchiseUserId) => {
+    const [rows] = await pool.execute(
+        'SELECT catId FROM franchise_category WHERE franchise_user_id <=> ?',
+        [franchiseUserId]
+    );
+
+    let maxId = 0;
+    rows.forEach((row) => {
+        if (!row.catId) return;
+        const match = row.catId.match(/\d+/);
+        if (match) {
+            const numericId = parseInt(match[0], 10);
+            if (!Number.isNaN(numericId) && numericId > maxId) {
+                maxId = numericId;
+            }
+        }
+    });
+
+    return `CAT${String(maxId + 1).padStart(3, '0')}`;
+};
+
 // Create a new category in database
 exports.createCategory = async (req, res) => {
     try {
-        const { catId, name, description, subcategory = [], images } = req.body;
+        const { catId, name, description, subcategory = [], images, franchise_user_id, franchise_id, created_by_user_id } = req.body;
         const categoryName = name || req.body.cname;
         const categoryDescription = description || req.body.cdescription || '';
         const categoryImages = images || req.body.cimgs || [];
 
-        if (!catId || !categoryName) return res.status(400).json({ message: 'catId and name are required' });
+        if (!categoryName) return res.status(400).json({ message: 'Category name is required' });
 
-        await pool.execute(
-            'INSERT INTO categories (catId, name, description, subcategory, images) VALUES (?, ?, ?, ?, ?)',
-            [catId, categoryName, categoryDescription, JSON.stringify(subcategory), JSON.stringify(categoryImages)]
-        );
+        const finalFranchiseUserId = franchise_user_id || req.user?.user_id || req.user?.id || null;
+        const finalCreatedByUserId = created_by_user_id || req.user?.user_id || req.user?.id || null;
+        const finalFranchiseId = franchise_id || null;
 
-        res.status(201).json({ message: 'Category created successfully' });
+        // Ignore client-supplied catId for creates; generate franchise-scoped IDs server-side.
+        let finalCatId = await generateNextCategoryId(finalFranchiseUserId);
+
+        const insertSql =
+            'INSERT INTO franchise_category (catId, name, description, subcategory, images, franchise_user_id, franchise_id, created_by_user_id, created_by_email, created_by_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+
+        const insertParams = [
+            finalCatId,
+            categoryName,
+            categoryDescription,
+            JSON.stringify(subcategory),
+            JSON.stringify(categoryImages),
+            finalFranchiseUserId,
+            finalFranchiseId,
+            finalCreatedByUserId,
+            req.user?.email || null,
+            req.user?.name || null
+        ];
+
+        let result;
+        let attempt = 0;
+        const maxAttempts = 5;
+
+        while (attempt < maxAttempts) {
+            try {
+                [result] = await pool.execute(insertSql, insertParams);
+                break;
+            } catch (insertErr) {
+                if (insertErr.code === 'ER_DUP_ENTRY') {
+                    attempt += 1;
+                    finalCatId = await generateNextCategoryId(finalFranchiseUserId);
+                    insertParams[0] = finalCatId;
+                    continue;
+                }
+                throw insertErr;
+            }
+        }
+
+        if (!result) {
+            return res.status(409).json({ message: 'Unable to generate a unique Category ID. Please try again.' });
+        }
+
+        res.status(201).json({ message: 'Category created successfully', id: result.insertId, catId: finalCatId });
     } catch (err) {
         console.error('Failed to create category:', err);
+        if (err.code === 'ER_DUP_ENTRY') {
+            return res.status(409).json({ message: 'Category ID already exists for this franchise user. Please try again.' });
+        }
         res.status(500).json({ message: 'Failed to create category', error: err.message });
     }
 };
@@ -375,6 +453,14 @@ exports.updateCategory = async (req, res) => {
             fields.push('images = ?');
             params.push(JSON.stringify(updates.images !== undefined ? updates.images : updates.cimgs));
         }
+        if (updates.franchise_user_id !== undefined) {
+            fields.push('franchise_user_id = ?');
+            params.push(updates.franchise_user_id);
+        }
+        if (updates.franchise_id !== undefined) {
+            fields.push('franchise_id = ?');
+            params.push(updates.franchise_id);
+        }
 
         if (fields.length === 0) {
             return res.status(400).json({ message: 'No fields to update' });
@@ -382,7 +468,7 @@ exports.updateCategory = async (req, res) => {
 
         params.push(catId, catId);
         const [result] = await pool.execute(
-            `UPDATE categories SET ${fields.join(', ')} WHERE catId = ? OR id = ?`,
+            `UPDATE franchise_category SET ${fields.join(', ')} WHERE catId = ? OR id = ?`,
             params
         );
 
@@ -400,7 +486,7 @@ exports.deleteCategory = async (req, res) => {
     try {
         const catId = req.params.catId;
         const [result] = await pool.execute(
-            'DELETE FROM categories WHERE catId = ? OR id = ?',
+            'DELETE FROM franchise_category WHERE catId = ? OR id = ?',
             [catId, catId]
         );
 
