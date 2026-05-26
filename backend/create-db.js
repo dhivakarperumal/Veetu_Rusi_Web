@@ -295,7 +295,23 @@ async function createDatabaseAndTables() {
 
   // Ensure legacy or older DBs have the newer columns used by the application
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `email` VARCHAR(255)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `vehicle_brand` VARCHAR(100)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `vehicle_model` VARCHAR(100)");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `vehicle_color` VARCHAR(100)");
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `user_id` VARCHAR(100) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `pan_number` VARCHAR(100)");
+  try {
+    await connection.execute("ALTER TABLE `delivery_partners` MODIFY `vehicle_type` VARCHAR(100) DEFAULT NULL");
+  } catch (e) {}
+  try {
+    await connection.execute("ALTER TABLE `delivery_partners` MODIFY `vehicle_number` VARCHAR(100) DEFAULT NULL");
+  } catch (e) {}
+  try {
+    await connection.execute("ALTER TABLE `delivery_partners` MODIFY `license_number` VARCHAR(100) DEFAULT NULL");
+  } catch (e) {}
+  try {
+    await connection.execute("ALTER TABLE `delivery_partners` MODIFY `aadhaar_number` VARCHAR(100) DEFAULT NULL");
+  } catch (e) {}
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `delivery_partner_code` VARCHAR(100)");
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `father_husband_name` VARCHAR(255)");
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `gender` VARCHAR(50) DEFAULT 'Male'");
