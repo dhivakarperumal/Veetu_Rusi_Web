@@ -163,7 +163,9 @@ exports.createChefCategory = async (req, res) => {
       description,
       subcategory = [],
       images = [],
-      created_by_user_id
+      created_by_user_id,
+      created_by_name,
+      created_by_phone
     } = req.body;
 
     const categoryName = name || req.body.cname;
