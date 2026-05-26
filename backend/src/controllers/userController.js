@@ -109,6 +109,17 @@ exports.getAllUsers = async (req, res) => {
   }
 };
 
+// Lightweight list for admin UI (returns array of users)
+exports.listAllUsers = async (req, res) => {
+  try {
+    const [users] = await pool.execute('SELECT id, user_id, full_name AS name, email, mobile_number AS phone, role, status, created_at FROM `users` ORDER BY created_at DESC');
+    return res.status(200).json(users);
+  } catch (error) {
+    console.error('List all users error:', error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
+
 exports.getUserById = async (req, res) => {
   try {
     const { id } = req.params;

@@ -784,6 +784,34 @@ exports.createDeliveryPartner = async (req, res) => {
       }
     }
 
+    // If status is Approved at creation, set approver metadata
+    let approved_by_id = null, approved_by_user_id = null, approved_by_name = null, approved_by_email = null, approval_date = null;
+    if ((b.status || '').toLowerCase() === 'approved') {
+      approval_date = new Date();
+      if (req.user && req.user.id) {
+        const [uRows2] = await pool.execute('SELECT id, user_id, full_name AS name, email FROM users WHERE id = ?', [req.user.id]);
+        if (uRows2.length) {
+          const au = uRows2[0];
+          approved_by_id = au.id;
+          approved_by_user_id = au.user_id || null;
+          approved_by_name = au.name || null;
+          approved_by_email = au.email || null;
+        }
+      }
+      if (!approved_by_id) {
+        try {
+          const [adminRows2] = await pool.execute("SELECT id, user_id, full_name AS name, email FROM users WHERE role = 'admin' ORDER BY id LIMIT 1");
+          if (adminRows2.length) {
+            const au = adminRows2[0];
+            approved_by_id = au.id;
+            approved_by_user_id = au.user_id || null;
+            approved_by_name = au.name || 'System Admin';
+            approved_by_email = au.email || null;
+          }
+        } catch (e) {}
+      }
+    }
+
     const params = [
       delivery_partner_code, b.name || null, b.father_husband_name || null, b.gender || 'Male', b.date_of_birth || null, b.age || null, b.profile_photo || null, b.cover_photo || null, b.marital_status || 'Single', b.blood_group || null,
       b.mobile || null, b.alt_mobile || null, b.whatsapp_number || null, b.email || null, b.emergency_contact || null,
@@ -802,6 +830,11 @@ exports.createDeliveryPartner = async (req, res) => {
       b.status || 'Pending'
     ];
 
+    // Append approver fields if any
+    if (approved_by_id !== null) {
+      params.push(approved_by_id, approved_by_user_id, approved_by_name, approved_by_email, approval_date);
+    }
+
     const placeholders = params.map(() => '?').join(', ');
     const cols = `delivery_partner_code, name, father_husband_name, gender, date_of_birth, age, profile_photo, cover_photo, marital_status, blood_group,
         mobile, alt_mobile, whatsapp_number, email, emergency_contact,
@@ -816,7 +849,7 @@ exports.createDeliveryPartner = async (req, res) => {
         online_status, availability_schedule, working_days, shift_timing, current_location, break_time_status,
         assigned_delivery_area, delivery_radius, preferred_delivery_zone, city_coverage, area_coverage, zone_status,
         created_by_id, created_by_user_id, created_by_name, created_by_email, created_by_phone,
-        status`;
+        status${approved_by_id !== null ? ', approved_by_id, approved_by_user_id, approved_by_name, approved_by_email, approval_date' : ''}`;
 
     const [result] = await pool.execute(`INSERT INTO delivery_partners (${cols}) VALUES (${placeholders})`, params);
     // sync user only if record status requires it (syncUserForEntity will noop otherwise)
@@ -860,6 +893,36 @@ exports.updateDeliveryPartner = async (req, res) => {
       b.assigned_delivery_area || null, b.delivery_radius || null, b.preferred_delivery_zone || null, b.city_coverage || null, b.area_coverage || null, b.zone_status || 'Active',
       b.status || 'Pending'
     ];
+
+    // If status being set to Approved, record approver metadata
+    if ((b.status || '').toLowerCase() === 'approved') {
+      let approved_by_id = null, approved_by_user_id = null, approved_by_name = null, approved_by_email = null, approval_date = new Date();
+      if (req.user && req.user.id) {
+        const [uRows] = await pool.execute('SELECT id, user_id, full_name AS name, email FROM users WHERE id = ?', [req.user.id]);
+        if (uRows.length) {
+          const au = uRows[0];
+          approved_by_id = au.id;
+          approved_by_user_id = au.user_id || null;
+          approved_by_name = au.name || null;
+          approved_by_email = au.email || null;
+        }
+      }
+      if (!approved_by_id) {
+        try {
+          const [adminRows] = await pool.execute("SELECT id, user_id, full_name AS name, email FROM users WHERE role = 'admin' ORDER BY id LIMIT 1");
+          if (adminRows.length) {
+            const au = adminRows[0];
+            approved_by_id = au.id;
+            approved_by_user_id = au.user_id || null;
+            approved_by_name = au.name || 'System Admin';
+            approved_by_email = au.email || null;
+          }
+        } catch (e) {}
+      }
+
+      query += `, approved_by_id = ?, approved_by_user_id = ?, approved_by_name = ?, approved_by_email = ?, approval_date = ?`;
+      params.push(approved_by_id, approved_by_user_id, approved_by_name, approved_by_email, approval_date);
+    }
 
     if (b.password) {
       query += `, password = ?`;

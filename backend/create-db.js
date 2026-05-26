@@ -394,6 +394,11 @@ async function createDatabaseAndTables() {
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `created_by_name` VARCHAR(255) DEFAULT NULL");
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `created_by_email` VARCHAR(255) DEFAULT NULL");
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `created_by_phone` VARCHAR(50) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `approved_by_id` INT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `approved_by_user_id` CHAR(36) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `approved_by_name` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `approved_by_email` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `approval_date` DATETIME DEFAULT NULL");
 
   await connection.execute(`
     CREATE TABLE IF NOT EXISTS \`orders\` (

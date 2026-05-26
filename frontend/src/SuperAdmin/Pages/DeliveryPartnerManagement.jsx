@@ -258,6 +258,14 @@ const DeliveryPartnerManagement = () => {
                   <p className="text-sm font-black mt-0.5">{selectedPartner.status}</p>
                 </div>
                 <div>
+                  <p className="text-[10px] text-white/40 font-bold uppercase">Approved By</p>
+                  <p className="text-sm font-black mt-0.5">{selectedPartner.approved_by_name || '—'}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-white/40 font-bold uppercase">Approved At</p>
+                  <p className="text-sm font-black mt-0.5">{selectedPartner.approval_date ? new Date(selectedPartner.approval_date).toLocaleString() : '—'}</p>
+                </div>
+                <div>
                   <p className="text-[10px] text-white/40 font-bold uppercase">Total Deliveries</p>
                   <p className="text-sm font-black mt-0.5 text-emerald-400">{selectedPartner.total_deliveries || 0} completed</p>
                 </div>
