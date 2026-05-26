@@ -189,8 +189,8 @@ exports.createChefCategory = async (req, res) => {
 
     const finalCreatedByUserId = created_by_user_id || req.user?.user_id || req.user?.id || null;
     const finalCreatedByEmail = req.user?.email || null;
-    const finalCreatedByName = req.user?.name || null;
-    const finalCreatedByPhone = req.user?.phone || null;
+    const finalCreatedByName = created_by_name || finalChefName || req.user?.name || null;
+    const finalCreatedByPhone = created_by_phone || finalChefPhone || req.user?.phone || null;
 
     let finalCatId = catId || await generateNextChefCategoryId(finalChefUserId);
 
