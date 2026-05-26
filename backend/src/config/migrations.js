@@ -132,7 +132,108 @@ const createRecipeDetailsTable = async () => {
     }
 };
 
+    const createFranchiseProductsTable = async () => {
+        try {
+            const createTableSQL = `
+            CREATE TABLE IF NOT EXISTS franchise_products (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                name VARCHAR(255) NOT NULL,
+                description LONGTEXT,
+                category VARCHAR(100),
+                product_type VARCHAR(100),
+                subcategory VARCHAR(100),
+                mrp DECIMAL(10, 2) NOT NULL,
+                offer INT DEFAULT 0,
+                offer_price DECIMAL(10, 2),
+                product_code VARCHAR(50) UNIQUE,
+                total_stock INT DEFAULT 0,
+                rating DECIMAL(2,1) DEFAULT 5,
+                status VARCHAR(50) DEFAULT 'Active',
+
+                material VARCHAR(255),
+                nutrition_info VARCHAR(255),
+                storage_instructions VARCHAR(255),
+                presentation_style VARCHAR(255),
+                portion_format VARCHAR(255),
+                service_type VARCHAR(255),
+                packaging_notes VARCHAR(255),
+                dietary_tag VARCHAR(255),
+                heat_profile VARCHAR(255),
+                serving_size VARCHAR(100),
+                prep_time VARCHAR(100),
+
+                ingredients LONGTEXT,
+                spice_level VARCHAR(50),
+                shelf_life_days INT,
+                net_weight VARCHAR(100),
+                package_count INT,
+                packaging_type VARCHAR(100),
+                manufacture_date DATE,
+
+                variants LONGTEXT,
+                images LONGTEXT,
+
+                chef_id VARCHAR(255) NOT NULL,
+                chef_user_id VARCHAR(255),
+                chef_name VARCHAR(255),
+                chef_phone VARCHAR(20),
+                chef_email VARCHAR(255),
+
+                created_by_user_id VARCHAR(255),
+                created_by_email VARCHAR(255),
+                created_by_name VARCHAR(255),
+                created_by_phone VARCHAR(20),
+
+                franchise_user_id VARCHAR(255),
+                franchise_name VARCHAR(255),
+                franchise_email VARCHAR(255),
+                franchise_phone VARCHAR(20),
+                franchise_id VARCHAR(255),
+
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+                KEY idx_chef_id (chef_id),
+                KEY idx_category (category),
+                KEY idx_status (status),
+                KEY idx_created_at (created_at)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            `;
+
+            await pool.execute(createTableSQL);
+            // ensure optional columns exist
+            try { await pool.execute('ALTER TABLE franchise_products ADD COLUMN images LONGTEXT'); } catch {}
+            try { await pool.execute('ALTER TABLE franchise_products ADD COLUMN franchise_user_id VARCHAR(255)'); } catch {}
+            console.log('✓ Franchise products table created or already exists');
+        } catch (error) {
+            console.error('✗ Error creating franchise_products table:', error.message);
+        }
+    };
+
+    const createSubscriptionPlansTable = async () => {
+        try {
+            const createTableSQL = `
+            CREATE TABLE IF NOT EXISTS subscription_plans (
+                id VARCHAR(100) PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                amount DECIMAL(10,2) NOT NULL,
+                currency VARCHAR(10) DEFAULT 'INR',
+                durationDays INT DEFAULT 30,
+                status VARCHAR(50) DEFAULT 'Active',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            `;
+
+            await pool.execute(createTableSQL);
+            console.log('✓ Subscription plans table created or already exists');
+        } catch (error) {
+            console.error('✗ Error creating subscription_plans table:', error.message);
+        }
+    };
+
 module.exports = {
     createProductsTable,
-    createRecipeDetailsTable
+    createRecipeDetailsTable,
+    createFranchiseProductsTable,
+    createSubscriptionPlansTable
 };
