@@ -30,6 +30,7 @@ const AllProducts = () => {
     const [showLowStockOnly, setShowLowStockOnly] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [franchiseUserId, setFranchiseUserId] = useState(null);
+    const [franchiseId, setFranchiseId] = useState(null);
     const [franchiseLoaded, setFranchiseLoaded] = useState(false);
     const itemsPerPage = 8;
 
@@ -40,14 +41,16 @@ const AllProducts = () => {
                 const res = await api.get("/auth/profile");
                 console.log("Profile API Response:", res.data);
                 const userId = res.data?.user?.user_id || res.data?.user?.id;
-                const franchiseId = res.data?.franchise?.franchise_id;
+                const franchiseRecordId = res.data?.franchise?.franchise_id;
                 if (userId) {
                     console.log("Franchise user_id found:", userId);
                     setFranchiseUserId(userId);
-                } else if (franchiseId) {
-                    console.log("Franchise ID found in franchise record:", franchiseId);
-                    setFranchiseUserId(franchiseId);
-                } else {
+                }
+                if (franchiseRecordId) {
+                    console.log("Franchise ID found in franchise record:", franchiseRecordId);
+                    setFranchiseId(franchiseRecordId);
+                }
+                if (!userId && !franchiseRecordId) {
                     console.warn("No franchise user_id or franchise_id in profile response");
                 }
             } catch (error) {
@@ -64,7 +67,8 @@ const AllProducts = () => {
         limit: itemsPerPage,
         search: searchTerm,
         status: showLowStockOnly ? "Low Stock" : "All",
-        franchiseUserId: franchiseUserId
+        franchise_user_id: franchiseUserId,
+        franchise_id: franchiseId
     });
 
     const pageData = productsCache[currentCacheKey];
@@ -144,7 +148,8 @@ const fetchProducts = async () => {
         page: currentPage,
         limit: itemsPerPage,
         search: searchTerm,
-        franchise_user_id: franchiseUserId,
+        ...(franchiseUserId ? { franchise_user_id: franchiseUserId } : {}),
+        ...(franchiseId ? { franchise_id: franchiseId } : {}),
         ...(showLowStockOnly ? { status: "Low Stock" } : {})
     };
 
