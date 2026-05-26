@@ -36,30 +36,35 @@ const generateNextProductCode = async () => {
     return `P${String(nextNumber).padStart(3, '0')}`;
 };
 
-// Get all products (with filters) - from products table
+// Get all products (with filters). If `chef_user_id` or `chef_id` is present, return chef-owned `products`.
+// Otherwise fall back to franchise/admin `franchise_products` if desired by callers.
 exports.getAllProducts = async (req, res) => {
     try {
-        const { category, status, franchise_id, franchise_user_id } = req.query;
-        let query = 'SELECT * FROM products WHERE 1=1';
+        const { category, status, franchise_id, franchise_user_id, chef_user_id, chef_id } = req.query;
         const params = [];
+        let table = 'franchise_products';
+        let query = '';
 
-        // Allow filtering by franchise_id or franchise_user_id
-        if (franchise_id) {
-            query += ' AND franchise_id = ?';
-            params.push(franchise_id);
+        // If caller requests chef-scoped results, query `products` table
+        if (chef_user_id || chef_id) {
+            table = 'products';
+            query = 'SELECT * FROM products WHERE 1=1';
+            if (chef_id) {
+                query += ' AND chef_id = ?'; params.push(chef_id);
+            }
+            if (chef_user_id) {
+                query += ' AND chef_user_id = ?'; params.push(chef_user_id);
+            }
+        } else {
+            // Default to franchise_products for admin/franchise listings
+            table = 'franchise_products';
+            query = 'SELECT * FROM franchise_products WHERE 1=1';
+            if (franchise_id) { query += ' AND franchise_id = ?'; params.push(franchise_id); }
+            if (franchise_user_id) { query += ' AND franchise_user_id = ?'; params.push(franchise_user_id); }
         }
-        if (franchise_user_id) {
-            query += ' AND franchise_user_id = ?';
-            params.push(franchise_user_id);
-        }
-        if (category) {
-            query += ' AND category = ?';
-            params.push(category);
-        }
-        if (status && status !== 'All') {
-            query += ' AND status = ?';
-            params.push(status);
-        }
+
+        if (category) { query += ' AND category = ?'; params.push(category); }
+        if (status && status !== 'All') { query += ' AND status = ?'; params.push(status); }
 
         query += ' ORDER BY created_at DESC';
 
