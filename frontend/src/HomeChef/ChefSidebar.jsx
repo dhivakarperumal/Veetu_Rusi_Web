@@ -43,6 +43,7 @@ const navItems = [
   // { path: "/chef/profile", label: "Profile", icon: Users },
   // { path: "/chef", label: "Dashboard", icon: LayoutDashboard },
   { path: "/chef/products", label: "All Products", icon: PlusCircle },
+  { path: "/chef/categories", label: "Categories", icon: Layers },
   { path: "/chef/recipes", label: "Recipe Details", icon: BookOpen },
   { path: "/chef/upload-videos", label: "Food Videos", icon: Upload },
   { path: "/chef/social-media", label: "Social Media", icon: Share2 },

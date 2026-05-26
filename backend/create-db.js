@@ -256,6 +256,61 @@ async function createDatabaseAndTables() {
   `);
   console.log('Franchise category table created or already exists');
 
+  await connection.execute(`
+    CREATE TABLE IF NOT EXISTS chef_category (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      catId VARCHAR(50) NOT NULL,
+      name VARCHAR(255) NOT NULL,
+      description TEXT,
+      subcategory LONGTEXT,
+      images LONGTEXT,
+      chef_user_id VARCHAR(255),
+      chef_id VARCHAR(255),
+      chef_name VARCHAR(255),
+      chef_phone VARCHAR(50),
+      chef_email VARCHAR(255),
+      franchise_user_id VARCHAR(255),
+      franchise_id INT,
+      franchise_name VARCHAR(255),
+      franchise_email VARCHAR(255),
+      franchise_phone VARCHAR(50),
+      created_by_user_id VARCHAR(255),
+      created_by_email VARCHAR(255),
+      created_by_name VARCHAR(255),
+      created_by_phone VARCHAR(50),
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      UNIQUE(catId, chef_user_id),
+      INDEX(chef_user_id),
+      INDEX(chef_id),
+      INDEX(franchise_user_id),
+      INDEX(franchise_id),
+      INDEX(created_by_user_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+  console.log('Chef category table created or already exists');
+
+  try { await connection.execute('ALTER TABLE chef_category DROP INDEX catId'); } catch (err) {
+    // Ignore if the old single-column catId unique index does not exist.
+  }
+  try { await connection.execute('ALTER TABLE chef_category ADD UNIQUE INDEX catId_chef_user_id (catId, chef_user_id)'); } catch (err) {
+    // Ignore if the composite unique index already exists.
+  }
+  try { await connection.execute('ALTER TABLE chef_category ADD COLUMN chef_user_id VARCHAR(255)'); } catch {}
+  try { await connection.execute('ALTER TABLE chef_category ADD COLUMN chef_id VARCHAR(255)'); } catch {}
+  try { await connection.execute('ALTER TABLE chef_category ADD COLUMN chef_name VARCHAR(255)'); } catch {}
+  try { await connection.execute('ALTER TABLE chef_category ADD COLUMN chef_phone VARCHAR(50)'); } catch {}
+  try { await connection.execute('ALTER TABLE chef_category ADD COLUMN chef_email VARCHAR(255)'); } catch {}
+  try { await connection.execute('ALTER TABLE chef_category ADD COLUMN franchise_user_id VARCHAR(255)'); } catch {}
+  try { await connection.execute('ALTER TABLE chef_category ADD COLUMN franchise_id INT'); } catch {}
+  try { await connection.execute('ALTER TABLE chef_category ADD COLUMN franchise_name VARCHAR(255)'); } catch {}
+  try { await connection.execute('ALTER TABLE chef_category ADD COLUMN franchise_email VARCHAR(255)'); } catch {}
+  try { await connection.execute('ALTER TABLE chef_category ADD COLUMN franchise_phone VARCHAR(50)'); } catch {}
+  try { await connection.execute('ALTER TABLE chef_category ADD COLUMN created_by_user_id VARCHAR(255)'); } catch {}
+  try { await connection.execute('ALTER TABLE chef_category ADD COLUMN created_by_email VARCHAR(255)'); } catch {}
+  try { await connection.execute('ALTER TABLE chef_category ADD COLUMN created_by_name VARCHAR(255)'); } catch {}
+  try { await connection.execute('ALTER TABLE chef_category ADD COLUMN created_by_phone VARCHAR(50)'); } catch {}
+
   try { await connection.execute('ALTER TABLE franchise_category DROP INDEX catId'); } catch (err) {
     // Ignore if the old single-column catId unique index does not exist.
   }
