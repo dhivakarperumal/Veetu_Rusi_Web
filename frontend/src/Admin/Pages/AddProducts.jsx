@@ -32,6 +32,21 @@ const Products = () => {
   const [combos, setCombos] = useState([]);
   const [loadingList, setLoadingList] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [franchiseId, setFranchiseId] = useState(null);
+  const [franchiseUserId, setFranchiseUserId] = useState(null);
+
+  useEffect(() => {
+    const fetchFranchiseInfo = async () => {
+      try {
+        const res = await api.get("/auth/profile");
+        setFranchiseUserId(res.data?.user?.user_id || null);
+        setFranchiseId(res.data?.franchise?.franchise_id || null);
+      } catch (err) {
+        console.error("Failed to load franchise profile:", err);
+      }
+    };
+    fetchFranchiseInfo();
+  }, []);
 
   const fetchData = async () => {
     setLoadingList(true);
@@ -77,7 +92,7 @@ const Products = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [franchiseUserId, franchiseId]);
 
   useEffect(() => {
     if (!editItem && id) {
@@ -159,6 +174,8 @@ const Products = () => {
           {activeTab === "single" ? (
             <SingleProductForm 
               categories={categories} 
+              franchiseId={franchiseId}
+              franchiseUserId={franchiseUserId}
               onSuccess={() => { 
                 fetchData(); 
                 navigate('/admin/products/all');
@@ -185,7 +202,7 @@ const Products = () => {
   );
 };
 
-const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
+const SingleProductForm = ({ categories, franchiseId, franchiseUserId, onSuccess, products, editItem }) => {
   const [form, setForm] = useState({
     productId: "",
     name: "",
@@ -203,27 +220,7 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
   });
   const [loading, setLoading] = useState(false);
   const [manualWeight, setManualWeight] = useState(false);
-  const [franchiseId, setFranchiseId] = useState(null);
-  const [franchiseUserId, setFranchiseUserId] = useState(null);
   const barcodeRef = useRef();
-
-  // Fetch franchise info on component mount
-  useEffect(() => {
-    const fetchFranchiseInfo = async () => {
-      try {
-        const res = await api.get("/auth/profile");
-        if (res.data.user?.user_id) {
-          setFranchiseUserId(res.data.user.user_id);
-        }
-        if (res.data.franchise && res.data.franchise.franchise_id) {
-          setFranchiseId(res.data.franchise.franchise_id);
-        }
-      } catch (error) {
-        console.error("Error fetching franchise info:", error);
-      }
-    };
-    fetchFranchiseInfo();
-  }, []);
 
   const safeParse = (data) => {
     if (!data) return [];
