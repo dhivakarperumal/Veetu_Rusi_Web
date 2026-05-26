@@ -368,7 +368,7 @@ const Category = () => {
 
         {/* Modal Overlay */}
         {showModal && (
-          <div className="fixed inset-0 z-[1] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
              <div className="absolute inset-0 bg-emerald-950/20 backdrop-blur-md animate-in fade-in duration-300" onClick={closeModal} />
              
              <div className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl relative z-[10000] overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-500">
