@@ -204,6 +204,7 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
   const [loading, setLoading] = useState(false);
   const [manualWeight, setManualWeight] = useState(false);
   const [franchiseId, setFranchiseId] = useState(null);
+  const [franchiseUserId, setFranchiseUserId] = useState(null);
   const barcodeRef = useRef();
 
   // Fetch franchise info on component mount
@@ -211,6 +212,9 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
     const fetchFranchiseInfo = async () => {
       try {
         const res = await api.get("/auth/profile");
+        if (res.data.user?.user_id) {
+          setFranchiseUserId(res.data.user.user_id);
+        }
         if (res.data.franchise && res.data.franchise.franchise_id) {
           setFranchiseId(res.data.franchise.franchise_id);
         }
@@ -348,7 +352,19 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
               </div>
               <div className="space-y-6">
                 <div className="grid grid-cols-2 gap-6">
-                  <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Category *</label><select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} required className="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 outline-none font-black text-emerald-800 shadow-sm"><option value="">Select Category</option>{categories.length ? categories.map((c) => { const label = c.name || c.cname || c.catId || `Category ${c.id}`; const value = c.catId || c.name || c.cname || c.id; return (<option key={c.id || value} value={value}>{label}</option>); }) : <option disabled>No categories available</option>}</select></div>
+                  <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Category *</label><select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} required className="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 outline-none font-black text-emerald-800 shadow-sm"><option value="">Select Category</option>{(() => {
+                    const filteredCategories = categories.filter((c) => {
+                      if (franchiseId) {
+                        return c.franchise_id === franchiseId || c.franchise_user_id === franchiseUserId;
+                      }
+                      return true;
+                    });
+                    return filteredCategories.length ? filteredCategories.map((c) => {
+                      const label = c.name || c.cname || c.catId || `Category ${c.id}`;
+                      const value = c.catId || c.name || c.cname || c.id;
+                      return (<option key={c.id || value} value={value}>{label}</option>);
+                    }) : <option disabled>No franchise categories available</option>;
+                  })()}</select></div>
                   <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Status *</label><select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 outline-none font-black text-emerald-800 shadow-sm"><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div>
                 </div>
                 <div>
