@@ -31,6 +31,81 @@ const generateNextChefCategoryId = async (chefUserId) => {
   return `CAT${String(maxId + 1).padStart(3, '0')}`;
 };
 
+const resolveChefCategoryMetadata = async (req, body) => {
+  const {
+    chef_id,
+    chef_user_id,
+    chef_name,
+    chef_phone,
+    chef_email,
+    franchise_id,
+    franchise_user_id,
+    franchise_name,
+    franchise_email,
+    franchise_phone
+  } = body;
+
+  const candidateChefId = chef_id || chef_user_id || req.user?.user_id || req.user?.id || null;
+  const candidateEmail = chef_email || req.user?.email || null;
+  const candidatePhone = chef_phone || req.user?.phone || null;
+
+  let homeChef = null;
+  if (candidateChefId || candidateEmail || candidatePhone) {
+    const [rows] = await pool.execute(
+      `SELECT hc.*, u.id AS user_id, u.user_id AS user_user_id, u.name AS user_name, u.phone AS user_phone, u.email AS user_email
+       FROM home_chefs hc
+       LEFT JOIN users u ON (u.email = hc.email OR u.phone = hc.mobile)
+       WHERE hc.chef_id = ?
+          OR hc.email = ?
+          OR hc.mobile = ?
+          OR u.user_id = ?
+          OR u.id = ?
+       LIMIT 1`,
+      [candidateChefId, candidateEmail, candidatePhone, candidateChefId, candidateChefId]
+    );
+
+    if (rows.length > 0) homeChef = rows[0];
+  }
+
+  const finalChefUserId = chef_user_id || req.user?.user_id || req.user?.id || homeChef?.user_user_id || homeChef?.user_id || null;
+  const finalChefId = chef_id || homeChef?.chef_id || null;
+  const finalChefName = chef_name || homeChef?.name || req.user?.name || homeChef?.user_name || null;
+  const finalChefPhone = chef_phone || homeChef?.mobile || req.user?.phone || homeChef?.user_phone || null;
+  const finalChefEmail = chef_email || homeChef?.email || req.user?.email || homeChef?.user_email || null;
+
+  const finalFranchiseUserId = franchise_user_id || homeChef?.created_by_user_id || null;
+  const finalFranchiseId = franchise_id || homeChef?.created_by_id || null;
+  let finalFranchiseName = franchise_name || homeChef?.created_by_name || null;
+  let finalFranchiseEmail = franchise_email || homeChef?.created_by_email || null;
+  let finalFranchisePhone = franchise_phone || homeChef?.created_by_phone || null;
+
+  if (finalFranchiseUserId) {
+    const [franchiseUsers] = await pool.execute(
+      'SELECT id, user_id, name, phone, email FROM users WHERE id = ? OR user_id = ? LIMIT 1',
+      [finalFranchiseUserId, finalFranchiseUserId]
+    );
+    if (franchiseUsers.length > 0) {
+      const fu = franchiseUsers[0];
+      finalFranchiseName = finalFranchiseName || fu.name || null;
+      finalFranchiseEmail = finalFranchiseEmail || fu.email || null;
+      finalFranchisePhone = finalFranchisePhone || fu.phone || null;
+    }
+  }
+
+  return {
+    finalChefId,
+    finalChefUserId,
+    finalChefName,
+    finalChefPhone,
+    finalChefEmail,
+    finalFranchiseId,
+    finalFranchiseUserId,
+    finalFranchiseName,
+    finalFranchiseEmail,
+    finalFranchisePhone
+  };
+};
+
 exports.getChefCategories = async (req, res) => {
   try {
     const {
@@ -88,16 +163,6 @@ exports.createChefCategory = async (req, res) => {
       description,
       subcategory = [],
       images = [],
-      chef_id,
-      chef_user_id,
-      chef_name,
-      chef_phone,
-      chef_email,
-      franchise_id,
-      franchise_user_id,
-      franchise_name,
-      franchise_email,
-      franchise_phone,
       created_by_user_id
     } = req.body;
 
@@ -108,17 +173,19 @@ exports.createChefCategory = async (req, res) => {
       return res.status(400).json({ message: 'Category name is required' });
     }
 
-    const finalChefUserId = chef_user_id || req.user?.user_id || req.user?.id || null;
-    const finalChefId = chef_id || null;
-    const finalChefName = chef_name || req.user?.name || null;
-    const finalChefPhone = chef_phone || req.user?.phone || null;
-    const finalChefEmail = chef_email || null;
-
-    const finalFranchiseUserId = franchise_user_id || null;
-    const finalFranchiseId = franchise_id || null;
-    const finalFranchiseName = franchise_name || null;
-    const finalFranchiseEmail = franchise_email || null;
-    const finalFranchisePhone = franchise_phone || null;
+    const metadata = await resolveChefCategoryMetadata(req, req.body);
+    const {
+      finalChefId,
+      finalChefUserId,
+      finalChefName,
+      finalChefPhone,
+      finalChefEmail,
+      finalFranchiseId,
+      finalFranchiseUserId,
+      finalFranchiseName,
+      finalFranchiseEmail,
+      finalFranchisePhone
+    } = metadata;
 
     const finalCreatedByUserId = created_by_user_id || req.user?.user_id || req.user?.id || null;
     const finalCreatedByEmail = req.user?.email || null;
