@@ -162,8 +162,12 @@ exports.createRecipe = async (req, res) => {
         const finalChefName = chef_name || homeChef?.name || null;
         const finalChefPhone = chef_phone || homeChef?.mobile || null;
         const finalChefEmail = chef_email || homeChef?.email || null;
-        const finalFranchiseUserId = franchise_user_id || franchise_id || homeChef?.franchise_user_id || homeChef?.franchise_created_by_user_id || homeChef?.created_by_id || created_by_user_id || req.user?.user_id || req.user?.id || null;
+        const finalFranchiseId =
+            franchise_id || homeChef?.created_by_id || null;
         
+        
+        const finalFranchiseUserId = franchise_user_id || homeChef?.created_by_user_id || null;
+
         // Fetch franchise admin details from users table if franchise_user_id exists
         let franchiseAdminDetails = null;
         if (finalFranchiseUserId) {
@@ -175,7 +179,7 @@ exports.createRecipe = async (req, res) => {
                 franchiseAdminDetails = franchiseUsers[0];
             }
         }
-        
+
         const finalFranchiseName = franchise_name || franchiseAdminDetails?.name || homeChef?.created_by_name || null;
         const finalFranchiseEmail = franchise_email || franchiseAdminDetails?.email || homeChef?.created_by_email || null;
         const finalFranchisePhone = franchise_phone || franchiseAdminDetails?.phone || homeChef?.created_by_phone || null;
@@ -190,7 +194,7 @@ exports.createRecipe = async (req, res) => {
             ingredients ? serializeJsonField(ingredients) : null,
             instructions ? serializeJsonField(instructions) : null,
             chef_id || null, finalChefUserId, finalChefName, finalChefPhone, finalChefEmail,
-            franchise_id || null, finalFranchiseUserId, finalFranchiseName, finalFranchiseEmail, finalFranchisePhone,
+            finalFranchiseId, finalFranchiseUserId, finalFranchiseName, finalFranchiseEmail, finalFranchisePhone,
             finalCreatedByUserId, finalCreatedByEmail, finalCreatedByName, finalCreatedByPhone
         ];
 
@@ -229,10 +233,10 @@ exports.updateRecipe = async (req, res) => {
         }
 
         const existingRecipe = existing[0];
-        
+
         // Determine final franchise_user_id
         const finalFranchiseUserId = franchise_user_id ?? existingRecipe.franchise_user_id;
-        
+
         // Fetch franchise admin details from users table if franchise_user_id exists
         let franchiseAdminDetails = null;
         if (finalFranchiseUserId) {
@@ -244,7 +248,7 @@ exports.updateRecipe = async (req, res) => {
                 franchiseAdminDetails = franchiseUsers[0];
             }
         }
-        
+
         const updatedRecipe = {
             title: title ?? existingRecipe.title,
             description: description ?? existingRecipe.description,
