@@ -141,7 +141,7 @@ exports.createRecipe = async (req, res) => {
 
         if (candidateChefId || candidateEmail || candidatePhone) {
             const [homeChefs] = await pool.execute(
-                `SELECT hc.*, u.id AS chef_user_id, hc.created_by_id AS franchise_user_id
+                `SELECT hc.*, u.id AS chef_user_id, hc.created_by_id AS franchise_user_id, hc.created_by_user_id AS franchise_created_by_user_id
                 FROM home_chefs hc
                 LEFT JOIN users u ON (u.email = hc.email OR u.phone = hc.mobile)
                 WHERE hc.chef_id = ?
@@ -162,7 +162,7 @@ exports.createRecipe = async (req, res) => {
         const finalChefName = chef_name || homeChef?.name || null;
         const finalChefPhone = chef_phone || homeChef?.mobile || null;
         const finalChefEmail = chef_email || homeChef?.email || null;
-        const finalFranchiseUserId = franchise_user_id || franchise_id || homeChef?.franchise_user_id || homeChef?.created_by_id || created_by_user_id || req.user?.user_id || req.user?.id || null;
+        const finalFranchiseUserId = franchise_user_id || franchise_id || homeChef?.franchise_user_id || homeChef?.franchise_created_by_user_id || homeChef?.created_by_id || created_by_user_id || req.user?.user_id || req.user?.id || null;
         const finalFranchiseName = franchise_name || homeChef?.created_by_name || null;
         const finalFranchiseEmail = franchise_email || homeChef?.created_by_email || null;
         const finalFranchisePhone = franchise_phone || homeChef?.created_by_phone || null;
