@@ -163,9 +163,22 @@ exports.createRecipe = async (req, res) => {
         const finalChefPhone = chef_phone || homeChef?.mobile || null;
         const finalChefEmail = chef_email || homeChef?.email || null;
         const finalFranchiseUserId = franchise_user_id || franchise_id || homeChef?.franchise_user_id || homeChef?.franchise_created_by_user_id || homeChef?.created_by_id || created_by_user_id || req.user?.user_id || req.user?.id || null;
-        const finalFranchiseName = franchise_name || homeChef?.created_by_name || null;
-        const finalFranchiseEmail = franchise_email || homeChef?.created_by_email || null;
-        const finalFranchisePhone = franchise_phone || homeChef?.created_by_phone || null;
+        
+        // Fetch franchise admin details from users table if franchise_user_id exists
+        let franchiseAdminDetails = null;
+        if (finalFranchiseUserId) {
+            const [franchiseUsers] = await pool.execute(
+                'SELECT id, name, phone, email FROM users WHERE id = ? LIMIT 1',
+                [finalFranchiseUserId]
+            );
+            if (franchiseUsers.length > 0) {
+                franchiseAdminDetails = franchiseUsers[0];
+            }
+        }
+        
+        const finalFranchiseName = franchise_name || franchiseAdminDetails?.name || homeChef?.created_by_name || null;
+        const finalFranchiseEmail = franchise_email || franchiseAdminDetails?.email || homeChef?.created_by_email || null;
+        const finalFranchisePhone = franchise_phone || franchiseAdminDetails?.phone || homeChef?.created_by_phone || null;
 
         const finalCreatedByUserId = created_by_user_id || req.user?.user_id || req.user?.id || null;
         const finalCreatedByEmail = created_by_email || req.user?.email || null;
@@ -216,6 +229,22 @@ exports.updateRecipe = async (req, res) => {
         }
 
         const existingRecipe = existing[0];
+        
+        // Determine final franchise_user_id
+        const finalFranchiseUserId = franchise_user_id ?? existingRecipe.franchise_user_id;
+        
+        // Fetch franchise admin details from users table if franchise_user_id exists
+        let franchiseAdminDetails = null;
+        if (finalFranchiseUserId) {
+            const [franchiseUsers] = await pool.execute(
+                'SELECT id, name, phone, email FROM users WHERE id = ? LIMIT 1',
+                [finalFranchiseUserId]
+            );
+            if (franchiseUsers.length > 0) {
+                franchiseAdminDetails = franchiseUsers[0];
+            }
+        }
+        
         const updatedRecipe = {
             title: title ?? existingRecipe.title,
             description: description ?? existingRecipe.description,
@@ -230,10 +259,10 @@ exports.updateRecipe = async (req, res) => {
             chef_phone: chef_phone ?? existingRecipe.chef_phone,
             chef_email: chef_email ?? existingRecipe.chef_email,
             franchise_id: franchise_id ?? existingRecipe.franchise_id,
-            franchise_user_id: franchise_user_id ?? existingRecipe.franchise_user_id,
-            franchise_name: franchise_name ?? existingRecipe.franchise_name,
-            franchise_email: franchise_email ?? existingRecipe.franchise_email,
-            franchise_phone: franchise_phone ?? existingRecipe.franchise_phone,
+            franchise_user_id: finalFranchiseUserId,
+            franchise_name: franchise_name || franchiseAdminDetails?.name || existingRecipe.franchise_name,
+            franchise_email: franchise_email || franchiseAdminDetails?.email || existingRecipe.franchise_email,
+            franchise_phone: franchise_phone || franchiseAdminDetails?.phone || existingRecipe.franchise_phone,
             created_by_user_id: created_by_user_id ?? existingRecipe.created_by_user_id,
             created_by_email: created_by_email ?? existingRecipe.created_by_email,
             created_by_name: created_by_name ?? existingRecipe.created_by_name,
