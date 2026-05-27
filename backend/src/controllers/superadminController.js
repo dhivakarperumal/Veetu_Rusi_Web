@@ -998,7 +998,18 @@ exports.deleteUser = async (req, res) => {
 exports.getOrders = async (req, res) => {
   try {
     const [rows] = await pool.execute("SELECT * FROM Chef_Order ORDER BY ordered_date DESC");
-    res.json(rows);
+    const parsedRows = rows.map(row => {
+      let items = row.items;
+      if (typeof items === 'string') {
+        try {
+          items = JSON.parse(items);
+        } catch (e) {
+          items = [];
+        }
+      }
+      return { ...row, items };
+    });
+    res.json(parsedRows);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving orders.', error: error.message });
   }
