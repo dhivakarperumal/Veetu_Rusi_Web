@@ -16,6 +16,7 @@ const FranchiseDetails = () => {
   const [linkedDeliveryPartners, setLinkedDeliveryPartners] = useState([]);
   const [linkedOrderCount, setLinkedOrderCount] = useState(0);
   const [linkedOrders, setLinkedOrders] = useState([]);
+  const [linkedUserOrders, setLinkedUserOrders] = useState([]);
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [productsError, setProductsError] = useState(null);
@@ -145,9 +146,11 @@ const FranchiseDetails = () => {
         const homeChefs = homeChefRes.data.filter(matcher);
         const deliveryPartners = deliveryRes.data.filter(matcher);
         const orders = ordersRes.data.filter(order => order.franchise_user_id === res.data.franch_user_id);
+        const userOrders = ordersRes.data.filter(order => order.user_id === res.data.franch_user_id);
         setLinkedHomeChefs(homeChefs);
         setLinkedDeliveryPartners(deliveryPartners);
         setLinkedOrders(orders);
+        setLinkedUserOrders(userOrders);
         setLinkedHomeChefCount(homeChefs.length);
         setLinkedDeliveryPartnerCount(deliveryPartners.length);
         setLinkedOrderCount(orders.length);
@@ -297,6 +300,7 @@ const FranchiseDetails = () => {
               { id: 'deliverypartners', icon: MapPin, label: 'Delivery Partners' },
               { id: 'products', icon: Package, label: 'Our Products' },
               { id: 'orders', icon: ShoppingCart, label: 'Orders' },
+              { id: 'usersOrder', icon: ShoppingCart, label: 'User Orders' },
               { id: 'subscription', icon: Clock, label: 'Subscription' },
               { id: 'credentials', icon: KeyRound, label: 'Credentials & Access' },
             ].map((tab) => {
@@ -727,6 +731,58 @@ const FranchiseDetails = () => {
                     </div>
                     <h4 className="text-lg font-bold text-slate-700">No Orders Found</h4>
                     <p className="mt-1 text-sm text-slate-500 max-w-sm">There are no orders associated with this franchise account yet.</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* USERS ORDER LIST */}
+            {activeDetailTab === 'usersOrder' && (
+              <div className="animate-in slide-in-from-right-4 fade-in duration-300">
+                <div className="mb-6 flex items-center justify-between border-b border-slate-100 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 text-violet-600"><ShoppingCart className="h-5 w-5" /></div>
+                    <h3 className="text-xl font-black text-slate-800">User Orders (Personal)</h3>
+                  </div>
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500">{linkedUserOrders.length} Total</span>
+                </div>
+
+                {linkedUserOrders.length > 0 ? (
+                  <div className="overflow-hidden rounded-2xl border border-slate-200">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-sm">
+                        <thead className="bg-slate-50">
+                          <tr>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Order ID</th>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Date</th>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Amount</th>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs text-center">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 bg-white">
+                          {linkedUserOrders.map((order) => (
+                            <tr key={order.id} className="hover:bg-slate-50/50 transition-colors group">
+                              <td className="px-6 py-4 font-bold text-slate-800">#{order.order_id || order.id}</td>
+                              <td className="px-6 py-4 text-slate-600">{formatDate(order.created_at)}</td>
+                              <td className="px-6 py-4 font-bold text-emerald-600">₹{order.total_amount || 0}</td>
+                              <td className="px-6 py-4 text-center">
+                                <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${order.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                                  {order.status || 'Pending'}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-200 bg-slate-50 py-16 text-center">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-sm mb-4">
+                      <ShoppingCart className="h-8 w-8 text-slate-300" />
+                    </div>
+                    <h4 className="text-lg font-bold text-slate-700">No Personal Orders Found</h4>
+                    <p className="mt-1 text-sm text-slate-500 max-w-sm">This franchise owner has not placed any orders as a regular user yet.</p>
                   </div>
                 )}
               </div>
