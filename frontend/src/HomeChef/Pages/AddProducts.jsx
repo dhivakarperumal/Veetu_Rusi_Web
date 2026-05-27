@@ -179,9 +179,11 @@ const AddProducts = () => {
         const fetchEssentialData = async () => {
             setFetching(true);
             if (isEdit) {
-                // Fetch franchise categories and the product independently so one failure doesn't block the other
+                // Fetch categories and the product independently so one failure doesn't block the other
+                const userData = JSON.parse(localStorage.getItem("user") || "{}");
+                const chefUserId = userData.user_id || userData.id || null;
                 const [catsResult, productResult] = await Promise.allSettled([
-                    api.get("/franchise-products/categories"),
+                    api.get("/chef-categories", { params: { chef_user_id: chefUserId } }),
                     api.get(`/products/${id}`)
                 ]);
 
@@ -238,8 +240,10 @@ const AddProducts = () => {
                 return;
             }
 
-            // Not editing: load franchise categories for the chef's franchise
-            const catsResult = await api.get("/franchise-products/categories");
+            // Not editing: load chef categories only
+            const userData = JSON.parse(localStorage.getItem("user") || "{}");
+            const chefUserId = userData.user_id || userData.id || null;
+            const catsResult = await api.get("/chef-categories", { params: { chef_user_id: chefUserId } });
 
             if (Array.isArray(catsResult.data)) {
                 setCategories(catsResult.data);
