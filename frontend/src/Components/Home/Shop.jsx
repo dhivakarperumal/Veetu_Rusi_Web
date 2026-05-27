@@ -29,11 +29,50 @@ const Shop = ({ defaultCategory = "" }) => {
   const [priceRange, setPriceRange] = useState(10000);
   const [offerFilter, setOfferFilter] = useState(0);
   const [sortOption, setSortOption] = useState("");
-  const [gridView, setGridView] = useState(4);
+  const [homeChef, setHomeChef] = useState(null);
+
+  const [gridView, setGridView] = useState(5);
+
   const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const res = await api.get("/auth/profile");
+        setHomeChef(res.data.homeChef);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    loadProfile();
+  }, []);
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const res = await api.get("/auth/profile");
+        setHomeChef(res.data.homeChef);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    loadProfile();
+  }, []);
 
   /* ─── Fetch Products ─────────────────────────────────────────── */
   const fetchProducts = async () => {
+    try {
+      const res = await api.get("/products");
+
+      const myProducts = res.data.filter(
+        (product) =>
+          product.created_by_user_id === homeChef?.created_by_user_id
+      );
+
+      setProducts(myProducts);
+      setFilteredProducts(myProducts);
     // Use cache if fresh (5 min)
     const isCacheValid = lastFetchTime && Date.now() - lastFetchTime < 5 * 60 * 1000;
     if (isCacheValid && productsCache?.length > 0) {
@@ -62,12 +101,19 @@ const Shop = ({ defaultCategory = "" }) => {
   };
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    if (homeChef?.created_by_user_id) {
+      fetchProducts();
+    }
+  }, [homeChef]);
 
   /* ─── Filter Logic ───────────────────────────────────────────── */
   useEffect(() => {
     let updated = [...products];
+    console.log("selectedCategory:", selectedCategory);
+
+    products.forEach((p) => {
+      console.log("product category:", p.category);
+    });
 
     if (search) {
       updated = updated.filter((p) =>
@@ -77,7 +123,9 @@ const Shop = ({ defaultCategory = "" }) => {
 
     if (selectedCategory) {
       updated = updated.filter(
-        (p) => p.category?.toLowerCase() === selectedCategory.toLowerCase(),
+        (p) =>
+          p.category?.trim().toLowerCase() ===
+          decodeURIComponent(selectedCategory).trim().toLowerCase()
       );
     }
 
@@ -145,23 +193,21 @@ const Shop = ({ defaultCategory = "" }) => {
   ];
   const colors = selectedCategory
     ? [
-        ...new Set(
-          products
-            .filter((p) => p.category === selectedCategory)
-            .flatMap((p) => p.variants?.map((v) => v.colorName) || [])
-            .filter(Boolean),
-        ),
-      ]
+      ...new Set(
+        products
+          .filter((p) => p.category === selectedCategory)
+          .flatMap((p) => p.variants?.map((v) => v.colorName)),
+      ),
+    ]
     : [];
   const sizes = selectedCategory
     ? [
-        ...new Set(
-          products
-            .filter((p) => p.category === selectedCategory)
-            .flatMap((p) => p.variants?.flatMap((v) => v.selectedSizes || []) || [])
-            .filter(Boolean),
-        ),
-      ]
+      ...new Set(
+        products
+          .filter((p) => p.category === selectedCategory)
+          .flatMap((p) => p.variants?.flatMap((v) => v.selectedSizes || [])),
+      ),
+    ]
     : [];
 
   const clearFilters = () => {
@@ -260,11 +306,47 @@ const Shop = ({ defaultCategory = "" }) => {
 
             {/* Grid view selectors */}
             <div className="flex items-center gap-2">
-              <button onClick={() => setGridView(5)} className={`hidden lg:flex p-2 border rounded ${gridView === 5 ? "bg-green-600 text-white" : "border-gray-300"}`}><BsGrid3X3Gap size={16} /></button>
-              <button onClick={() => setGridView(4)} className={`hidden lg:flex p-2 border rounded ${gridView === 4 ? "bg-green-600 text-white" : "border-gray-300"}`}><BsGridFill size={16} /></button>
-              <button onClick={() => setGridView(3)} className={`hidden lg:flex p-2 border rounded ${gridView === 3 ? "bg-green-600 text-white" : "border-gray-300"}`}><BsGrid3X2 size={16} /></button>
-              <button onClick={() => setGridView(2)} className={`lg:hidden flex p-2 border rounded ${gridView === 2 ? "bg-green-600 text-white" : "border-gray-300"}`}><BsGrid1X2 size={16} /></button>
-              <button onClick={() => setGridView(1)} className={`lg:hidden flex p-2 border rounded ${gridView === 1 ? "bg-green-600 text-white" : "border-gray-300"}`}><BsGridFill size={16} /></button>
+              {/* Desktop Grid Icons */}
+              <button
+                onClick={() => setGridView(5)}
+                className={`hidden lg:flex p-2 border rounded ${gridView === 5 ? "bg-primary text-white" : "border-gray-300"
+                  }`}
+              >
+                <BsGrid3X3Gap size={16} />
+              </button>
+
+              <button
+                onClick={() => setGridView(4)}
+                className={`hidden lg:flex p-2 border rounded ${gridView === 4 ? "bg-primary text-white" : "border-gray-300"
+                  }`}
+              >
+                <BsGridFill size={16} />
+              </button>
+
+              <button
+                onClick={() => setGridView(3)}
+                className={`hidden lg:flex p-2 border rounded ${gridView === 3 ? "bg-primary text-white" : "border-gray-300"
+                  }`}
+              >
+                <BsGrid3X2 size={16} />
+              </button>
+
+              {/* Mobile Grid Icons */}
+              <button
+                onClick={() => setGridView(2)}
+                className={`lg:hidden flex p-2 border rounded ${gridView === 2 ? "bg-primary text-white" : "border-gray-300"
+                  }`}
+              >
+                <BsGrid1X2 size={16} />
+              </button>
+
+              <button
+                onClick={() => setGridView(1)}
+                className={`lg:hidden flex p-2 border rounded ${gridView === 1 ? "bg-primary text-white" : "border-gray-300"
+                  }`}
+              >
+                <BsGridFill size={16} />
+              </button>
             </div>
           </div>
         </div>
@@ -348,9 +430,15 @@ const Shop = ({ defaultCategory = "" }) => {
                 <div className="flex flex-wrap gap-2">
                   {colors.map((color) => (
                     <button
-                      key={color} onClick={() => setSelectedColor(color === selectedColor ? "" : color)}
-                      className={`px-3 py-1 text-xs font-medium border rounded-full transition ${selectedColor === color ? "bg-green-600 text-white border-green-600" : "border-gray-300 hover:border-green-500"}`}
-                    >{color}</button>
+                      key={color}
+                      onClick={() => setSelectedColor(color)}
+                      className={`px-3 py-1 text-xs font-medium border rounded-full transition ${selectedColor === color
+                        ? "bg-primary text-white border-primary"
+                        : "border-gray-300 hover:border-primary"
+                        }`}
+                    >
+                      {color}
+                    </button>
                   ))}
                 </div>
               </div>
@@ -363,9 +451,15 @@ const Shop = ({ defaultCategory = "" }) => {
                 <div className="flex flex-wrap gap-2">
                   {sizes.map((size) => (
                     <button
-                      key={size} onClick={() => setSelectedSize(size === selectedSize ? "" : size)}
-                      className={`px-3 py-1 text-sm font-semibold border rounded-lg transition ${selectedSize === size ? "bg-green-600 text-white border-green-600" : "border-gray-300 hover:border-green-500"}`}
-                    >{size}</button>
+                      key={size}
+                      onClick={() => setSelectedSize(size)}
+                      className={`px-3 py-1 text-sm font-semibold border rounded-lg transition ${selectedSize === size
+                        ? "bg-primary text-white border-primary"
+                        : "border-gray-300 hover:border-primary"
+                        }`}
+                    >
+                      {size}
+                    </button>
                   ))}
                 </div>
               </div>
@@ -388,35 +482,32 @@ const Shop = ({ defaultCategory = "" }) => {
           </div>
         )}
 
-        {/* ── Products Grid ── */}
-        <div className="flex-1 min-w-0">
-          {currentProducts.length > 0 ? (
-            <div className={`px-4 md:px-10 py-4 grid gap-4 sm:gap-6 ${gridClass}`}>
-              {currentProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-24 px-4">
-              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                <FiSearch size={32} className="text-gray-300" />
-              </div>
-              <h3 className="text-lg font-bold text-gray-700 mb-1">No Products Found</h3>
-              <p className="text-sm text-gray-400 mb-6 text-center">
-                {search
-                  ? `No results for "${search}". Try different keywords.`
-                  : "Try adjusting your filters to see more products."}
-              </p>
-              <button
-                onClick={() => { clearFilters(); setSearch(""); }}
-                className="px-6 py-2.5 bg-green-600 text-white rounded-xl font-semibold text-sm hover:bg-green-700 transition"
-              >
-                Clear All Filters
-              </button>
-            </div>
-          )}
+        {/* PRODUCTS GRID */}
 
-          {/* Pagination */}
+        <div className="flex-1">
+          <div
+            className={`px-4 md:px-10 py-6 grid gap-6 
+  ${gridView === 5
+                ? showFilters
+                  ? "lg:grid-cols-4"
+                  : "lg:grid-cols-5"
+                : gridView === 4
+                  ? "lg:grid-cols-4"
+                  : gridView === 3
+                    ? "lg:grid-cols-3"
+                    : gridView === 2
+                      ? "grid-cols-2"
+                      : "grid-cols-1"
+              }`}
+          >
+            {currentProducts.length > 0 ? (
+              currentProducts.map((product) => (
+                <ProductCard key={product._id} product={product} />
+              ))
+            ) : (
+              <p>No products found</p>
+            )}
+          </div>
           {totalPages > 1 && (
             <div className="flex justify-center items-center gap-2 mt-10 flex-wrap pb-8">
               <button
@@ -433,7 +524,10 @@ const Shop = ({ defaultCategory = "" }) => {
                   <button
                     key={page}
                     onClick={() => setCurrentPage(page)}
-                    className={`px-4 py-2 rounded-lg border transition cursor-pointer ${currentPage === page ? "bg-green-600 text-white border-green-600 shadow-md" : "bg-white hover:bg-gray-100"}`}
+                    className={`px-4 py-2 rounded-lg border transition cursor-pointer ${currentPage === page
+                      ? "bg-primary text-white border-primary shadow-md"
+                      : "bg-white hover:bg-gray-100"
+                      }`}
                   >
                     {page}
                   </button>
