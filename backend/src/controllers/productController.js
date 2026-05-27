@@ -3,7 +3,7 @@ const pool = require('../config/db');
 const parseJsonField = (value) => {
     if (value === null || value === undefined) return null;
     if (typeof value === 'object') return value;
-        const [existing] = await pool.execute('SELECT id FROM chef_products WHERE id = ?', [id]);
+
     try {
         return JSON.parse(value);
     } catch {
@@ -26,7 +26,7 @@ const serializeJsonField = (value) => {
 
 const generateNextProductCode = async () => {
     const [products] = await pool.execute(
-           'SELECT product_code FROM chef_products WHERE product_code LIKE "P%" ORDER BY id DESC LIMIT 1'
+        'SELECT product_code FROM chef_products WHERE product_code LIKE "P%" ORDER BY id DESC LIMIT 1'
     );
     if (products.length === 0) return 'P001';
 
@@ -211,22 +211,22 @@ exports.createProduct = async (req, res) => {
             package_count,
             packaging_type,
             manufacture_date,
-                variants,
-                images,
-                chef_id,
-                chef_user_id,
-                chef_name,
-                chef_phone,
-                chef_email,
-                franchise_user_id,
-                franchise_name,
-                franchise_email,
-                franchise_phone,
-                created_by_user_id,
-                created_by_email,
-                created_by_name,
-                created_by_phone,
-                franchise_id
+            variants,
+            images,
+            chef_id,
+            chef_user_id,
+            chef_name,
+            chef_phone,
+            chef_email,
+            franchise_user_id,
+            franchise_name,
+            franchise_email,
+            franchise_phone,
+            created_by_user_id,
+            created_by_email,
+            created_by_name,
+            created_by_phone,
+            franchise_id
         } = req.body;
 
         // Validation
@@ -292,7 +292,7 @@ exports.createProduct = async (req, res) => {
 
         // Insert into base products table
         const [result] = await pool.execute(
-              `INSERT INTO chef_products (${columns}) VALUES (${placeholders})`,
+            `INSERT INTO chef_products (${columns}) VALUES (${placeholders})`,
             insertParams
         );
 
