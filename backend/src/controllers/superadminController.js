@@ -271,6 +271,21 @@ exports.createHomeChef = async (req, res) => {
       } catch (e) {}
     }
 
+    let resolvedFranchiseId = null;
+    let resolvedFranchiseUserId = null;
+    if (createdByUserId) {
+      try {
+        const [fRows] = await pool.execute('SELECT franchise_id, franch_user_id, user_id FROM franchise_owners WHERE user_id = ? OR franch_user_id = ? LIMIT 1', [createdByUserId, createdByUserId]);
+        if (fRows.length > 0) {
+          resolvedFranchiseId = fRows[0].franchise_id;
+          resolvedFranchiseUserId = fRows[0].franch_user_id || fRows[0].user_id || createdByUserId;
+        }
+      } catch(err) {
+        console.error('Error fetching franchise owner details:', err);
+      }
+    }
+
+
     // Auto-generate chef_unique_code if not provided
     function generateChefUniqueCode() {
       const timestamp = Date.now().toString(36);
@@ -313,6 +328,7 @@ exports.createHomeChef = async (req, res) => {
       `INSERT INTO home_chefs (
         name, mobile, email, address, fssai_number, aadhaar_url, pan_url, status,
         chef_unique_code, created_by_id, created_by_user_id, created_by_name, created_by_email, created_by_phone,
+        franchise_id, franchise_user_id,
         father_husband_name, gender, date_of_birth, age,
         profile_photo, cover_banner, alt_mobile, whatsapp_number, emergency_contact,
         door_number, street_name, area_name, landmark, city, district, state, pincode,
@@ -326,7 +342,7 @@ exports.createHomeChef = async (req, res) => {
         email_verified, last_login, device_details, login_status, verification_status, approval_status,
         approved_by_admin, approval_date, rejection_reason, block_reason,
         aadhaar_front_url, aadhaar_back_url, pan_card_url, fssai_certificate_url, gst_certificate_url, signature_url, selfie_verification_url
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         name,
         mobile,
@@ -342,6 +358,8 @@ exports.createHomeChef = async (req, res) => {
         createdByName,
         createdByEmail,
         createdByPhone,
+        resolvedFranchiseId,
+        resolvedFranchiseUserId,
         father_husband_name || null,
         gender || null,
         date_of_birth || null,

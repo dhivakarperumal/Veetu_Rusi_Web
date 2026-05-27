@@ -34,10 +34,10 @@ const MyProducts = () => {
       try {
         const chefUserId = user?.user_id || user?.id;
         if (!chefUserId) return setProducts([]);
-        const res = await api.get('/products', { params: { chef_user_id: chefUserId } });
+        const res = await api.get('/franchise-products');
         setProducts(Array.isArray(res.data) ? res.data : []);
       } catch (err) {
-        console.error('Failed to fetch chef products:', err);
+        console.error('Failed to fetch franchise products:', err);
         toast.error('Failed to load your products');
         setProducts([]);
       } finally {
@@ -47,45 +47,6 @@ const MyProducts = () => {
 
     fetchProducts();
   }, [user]);
-
-  const handleDelete = async (id) => {
-    if (!window.confirm('Delete this product? This action cannot be undone.')) return;
-    setDeleting(true);
-    try {
-      await api.delete(`/products/${id}`);
-      setProducts(products.filter(p => p.id !== id));
-      toast.success('Product deleted successfully');
-    } catch (err) {
-      console.error('Delete error:', err);
-      toast.error(err.response?.data?.message || 'Failed to delete product');
-    } finally {
-      setDeleting(false);
-    }
-  };
-
-  const handleEdit = (id) => {
-    navigate(`/chef/add-products/${id}`);
-  };
-
-  const handleStockUpdate = async (e) => {
-    e.preventDefault();
-    if (!currentProduct || newStock === '') return;
-
-    setUpdatingStock(true);
-    try {
-      const updatedProduct = { ...currentProduct, total_stock: parseInt(newStock) };
-      await api.put(`/products/${currentProduct.id}`, updatedProduct);
-      setProducts(products.map(p => 
-        p.id === currentProduct.id ? { ...p, total_stock: parseInt(newStock) } : p
-      ));
-      toast.success('Stock updated');
-      setCurrentProduct(null);
-    } catch (err) {
-      toast.error('Failed to update stock');
-    } finally {
-      setUpdatingStock(false);
-    }
-  };
 
   const filteredProducts = products.filter(p =>
     p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -139,20 +100,14 @@ const MyProducts = () => {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      {/* Header with Title and Add Button */}
+      {/* Header with Title */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-black text-slate-800 tracking-tight uppercase">My Products</h2>
+          <h2 className="text-3xl font-black text-slate-800 tracking-tight uppercase">Assigned Products</h2>
           <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-2">
-            Manage your listed products and inventory
+            View products assigned to you by your franchise owner
           </p>
         </div>
-        <button
-          onClick={() => navigate('/chef/add-products')}
-          className="flex items-center justify-center gap-2 bg-[#1B4D22] hover:bg-[#153b1a] text-white px-6 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-md hover:shadow-lg transition active:scale-95 self-start sm:self-auto"
-        >
-          <FiPlus className="w-4 h-4" /> Add Product
-        </button>
       </div>
 
       {/* Summary Cards */}
@@ -300,12 +255,9 @@ const MyProducts = () => {
                         </span>
                       </td>
                       <td className="px-8 py-6">
-                        <div className="flex items-center gap-2 cursor-pointer group/stock" onClick={() => {
-                          setCurrentProduct(product);
-                          setNewStock(product.total_stock || '0');
-                        }}>
-                          <FiPackage className="text-gray-300 group-hover/stock:text-blue-500 transition-colors" size={14} />
-                          <span className="text-sm font-black text-slate-700 underline decoration-dotted decoration-gray-200 group-hover/stock:text-blue-600 transition-colors">
+                        <div className="flex items-center gap-2 group/stock">
+                          <FiPackage className="text-gray-300 transition-colors" size={14} />
+                          <span className="text-sm font-black text-slate-700 transition-colors">
                             {product.total_stock ?? 0}
                           </span>
                           <span className="text-[10px] text-gray-400 font-bold">Units</span>
@@ -325,21 +277,6 @@ const MyProducts = () => {
                             title="View Details"
                           >
                             <FiEye size={16} />
-                          </button>
-                          <button
-                            onClick={() => handleEdit(product.id)}
-                            className="p-3 border border-gray-200 text-gray-500 rounded-xl hover:bg-blue-500 hover:text-white transition-all"
-                            title="Edit"
-                          >
-                            <FiEdit2 size={16} />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(product.id)}
-                            disabled={deleting}
-                            className="p-3 border border-gray-200 text-gray-500 rounded-xl hover:bg-red-500 hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                            title="Delete"
-                          >
-                            {deleting ? <div className="w-4 h-4 border-2 border-red-500/30 border-t-red-500 rounded-full animate-spin" /> : <FiTrash2 size={16} />}
                           </button>
                         </div>
                       </td>
@@ -394,19 +331,6 @@ const MyProducts = () => {
                     >
                       View
                     </button>
-                    <button
-                      onClick={() => handleEdit(product.id)}
-                      className="flex-1 p-2 bg-blue-50 border border-blue-100 text-blue-600 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-blue-100 transition-all text-center"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(product.id)}
-                      disabled={deleting}
-                      className="flex-1 p-2 bg-rose-50 border border-rose-100 text-rose-600 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-rose-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Delete
-                    </button>
                   </div>
                 </div>
               </div>
@@ -425,57 +349,7 @@ const MyProducts = () => {
         )
       )}
 
-      {/* Stock Update Modal */}
-      {currentProduct && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setCurrentProduct(null)}></div>
-          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300">
-            <div className="bg-slate-900 p-8 text-white relative">
-              <div className="absolute top-0 right-0 p-8 opacity-10"><FiPackage size={80} /></div>
-              <h2 className="text-2xl font-black italic uppercase tracking-tight truncate">{currentProduct.name}</h2>
-              <p className="text-xs text-white/40 font-bold uppercase tracking-widest mt-1">Update Stock</p>
-            </div>
 
-            <form onSubmit={handleStockUpdate} className="p-8 space-y-6">
-              <div className="space-y-4">
-                <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-between">
-                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Current Stock</span>
-                  <span className="text-lg font-black text-slate-800">{currentProduct.total_stock} Units</span>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">New Stock Level</label>
-                  <input
-                    autoFocus
-                    type="number"
-                    className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent focus:border-blue-500/20 rounded-2xl outline-none font-bold text-slate-800 transition-all text-2xl text-center"
-                    placeholder="0"
-                    value={newStock}
-                    onChange={(e) => setNewStock(e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={updatingStock}
-                className="w-full py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black uppercase tracking-widest text-xs transition-all active:scale-95 shadow-xl flex items-center justify-center gap-3"
-              >
-                {updatingStock ? <div className="w-4 h-4 border-2 border-t-white rounded-full animate-spin"></div> : 'Update Stock'}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setCurrentProduct(null)}
-                className="w-full py-2 text-[10px] font-black text-gray-400 hover:text-slate-800 uppercase tracking-widest transition-colors"
-              >
-                Cancel
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* Product Details Modal */}
       {viewingProduct && (
@@ -582,15 +456,6 @@ const MyProducts = () => {
 
             {/* Footer Actions */}
             <div className="border-t border-gray-100 p-8 bg-gray-50 flex gap-3">
-              <button
-                onClick={() => {
-                  setViewingProduct(null);
-                  handleEdit(viewingProduct.id);
-                }}
-                className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black uppercase tracking-widest text-xs transition-all active:scale-95 flex items-center justify-center gap-2"
-              >
-                <FiEdit2 size={16} /> Edit Product
-              </button>
               <button
                 onClick={() => setViewingProduct(null)}
                 className="flex-1 py-3 border-2 border-gray-200 hover:border-gray-300 text-slate-800 rounded-xl font-black uppercase tracking-widest text-xs transition-all"

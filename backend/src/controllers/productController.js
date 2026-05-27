@@ -159,18 +159,29 @@ exports.getAllProducts = async (req, res) => {
 exports.getProductById = async (req, res) => {
     try {
         const { id } = req.params;
-        const [products] = await pool.execute('SELECT * FROM chef_products WHERE id = ?', [id]);
+        const [chefProducts] = await pool.execute('SELECT * FROM chef_products WHERE id = ?', [id]);
 
-        if (products.length === 0) {
-            return res.status(404).json({ message: 'Product not found' });
+        if (chefProducts.length > 0) {
+            const product = chefProducts[0];
+            return res.json({
+                ...product,
+                variants: parseJsonField(product.variants) || [],
+                images: parseJsonField(product.images) || []
+            });
         }
 
-        const product = products[0];
-        res.json({
-            ...product,
-            variants: parseJsonField(product.variants) || [],
-            images: parseJsonField(product.images) || []
-        });
+        // Fallback: try franchise_products table
+        const [franchiseProducts] = await pool.execute('SELECT * FROM franchise_products WHERE id = ?', [id]);
+        if (franchiseProducts.length > 0) {
+            const product = franchiseProducts[0];
+            return res.json({
+                ...product,
+                variants: parseJsonField(product.variants) || [],
+                images: parseJsonField(product.images) || []
+            });
+        }
+
+        return res.status(404).json({ message: 'Product not found' });
     } catch (error) {
         console.error('Error fetching product:', error);
         res.status(500).json({ message: 'Failed to fetch product', error: error.message });

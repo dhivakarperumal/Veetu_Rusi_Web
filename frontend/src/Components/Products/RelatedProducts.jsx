@@ -13,7 +13,7 @@ const RelatedProducts = ({ category, currentProductId }) => {
 
   const fetchRelatedProducts = async () => {
     try {
-      const res = await api.get("/franchise-products");
+      const res = await api.get("/products");
 
       const filtered = res.data.filter(
         (p) =>

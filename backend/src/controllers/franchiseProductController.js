@@ -25,11 +25,14 @@ const getFranchiseIdForUser = async (user) => {
 
         if (user.role === 'chef') {
             const [rows] = await pool.execute(
-                'SELECT created_by_id, created_by_user_id FROM home_chefs WHERE email = ? OR user_id = ? OR chef_id = ? OR chef_unique_code = ? OR created_by_user_id = ? LIMIT 1',
-                [user.email, user.user_id, user.user_id, user.user_id, user.user_id]
+                'SELECT franchise_id, created_by_id, created_by_user_id FROM home_chefs WHERE email = ? OR user_id = ? OR chef_id = ? OR chef_unique_code = ? LIMIT 1',
+                [user.email, user.user_id, user.user_id, user.user_id]
             );
             if (rows.length) {
                 const chefRow = rows[0];
+                if (chefRow.franchise_id) {
+                    return chefRow.franchise_id;
+                }
 
                 if (chefRow.created_by_user_id) {
                     const [ownerRows] = await pool.execute(
@@ -106,23 +109,29 @@ exports.getAllProducts = async (req, res) => {
             params.push(franchise_user_id);
         }
 
-        if (!franchise_id && !franchise_user_id && req.user) {
+        // If no specific filters given AND user is admin/chef, try to scope to their franchise
+        if (!franchise_id && !franchise_user_id && req.user && ['admin', 'chef'].includes(req.user.role)) {
             const inferredFranchiseId = await getFranchiseIdForUser(req.user);
             if (inferredFranchiseId) {
                 query += ' AND franchise_id = ?';
                 params.push(inferredFranchiseId);
-            } else if (['admin', 'chef'].includes(req.user.role)) {
-                return res.status(403).json({ message: 'Unable to resolve franchise for current user.' });
             }
+            // If we can't resolve franchise for admin/chef, just show all active products
+            // (don't 403 — public Shop page needs to work for all roles)
         }
 
         if (category) {
             query += ' AND category = ?';
             params.push(category);
         }
+
+        // Only apply status filter if explicitly requested; default to showing Active products
         if (status && status !== 'All') {
             query += ' AND status = ?';
             params.push(status);
+        } else if (!status) {
+            // For public shop, show only Active products by default
+            query += ' AND status = \'Active\'';
         }
 
         query += ' ORDER BY created_at DESC';
