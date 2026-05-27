@@ -10,6 +10,22 @@ const parseJsonField = (value) => {
   }
 };
 
+const normalizeJsonField = (value) => {
+  if (value === null || value === undefined) return null;
+  if (typeof value === 'string') {
+    try {
+      JSON.parse(value);
+      return value;
+    } catch {
+      return JSON.stringify(value);
+    }
+  }
+  if (typeof value === 'object') {
+    return JSON.stringify(value);
+  }
+  return value;
+};
+
 const resolveChefFoodMetadata = async (req, body) => {
   const {
     chef_id,
@@ -116,7 +132,8 @@ exports.getFoods = async (req, res) => {
     const foods = rows.map((row) => ({
       ...row,
       ingredients: parseJsonField(row.ingredients) || row.ingredients,
-      instructions: parseJsonField(row.instructions) || row.instructions
+      instructions: parseJsonField(row.instructions) || row.instructions,
+      images: parseJsonField(row.images) || row.images || []
     }));
     res.json(foods);
   } catch (error) {
@@ -136,7 +153,8 @@ exports.getFoodById = async (req, res) => {
     res.json({
       ...food,
       ingredients: parseJsonField(food.ingredients) || food.ingredients,
-      instructions: parseJsonField(food.instructions) || food.instructions
+      instructions: parseJsonField(food.instructions) || food.instructions,
+      images: parseJsonField(food.images) || food.images || []
     });
   } catch (error) {
     console.error('Error fetching chef food item:', error);
@@ -161,6 +179,7 @@ exports.createFood = async (req, res) => {
       packaging_type,
       ingredients,
       instructions,
+      images,
       status,
       created_by_user_id,
       created_by_name,
@@ -195,7 +214,7 @@ exports.createFood = async (req, res) => {
 
     const insertSql = `INSERT INTO chef_food_table
       (category, name, description, cuisine, prep_time, shelf_life_days, mrp, offer, final_price,
-       dietary_tag, net_weight, packaging_type, ingredients, instructions, status,
+       dietary_tag, net_weight, packaging_type, ingredients, instructions, images, status,
        chef_id, chef_user_id, chef_name, chef_phone, chef_email,
        franchise_id, franchise_user_id, franchise_name, franchise_email, franchise_phone,
        created_by_user_id, created_by_email, created_by_name, created_by_phone)
@@ -216,6 +235,7 @@ exports.createFood = async (req, res) => {
       packaging_type || null,
       ingredients || null,
       instructions || null,
+      normalizeJsonField(images) || null,
       status || 'Active',
       finalChefId,
       finalChefUserId,
@@ -251,7 +271,7 @@ exports.updateFood = async (req, res) => {
     const allowed = [
       'category', 'name', 'description', 'cuisine', 'prep_time', 'shelf_life_days', 'mrp',
       'offer', 'final_price', 'dietary_tag', 'net_weight', 'packaging_type',
-      'ingredients', 'instructions', 'status', 'chef_id', 'chef_user_id', 'chef_name',
+      'ingredients', 'instructions', 'images', 'status', 'chef_id', 'chef_user_id', 'chef_name',
       'chef_phone', 'chef_email', 'franchise_id', 'franchise_user_id', 'franchise_name',
       'franchise_email', 'franchise_phone', 'created_by_user_id', 'created_by_email',
       'created_by_name', 'created_by_phone'
@@ -260,7 +280,11 @@ exports.updateFood = async (req, res) => {
     allowed.forEach((key) => {
       if (updates[key] !== undefined) {
         fields.push(`${key} = ?`);
-        params.push(updates[key]);
+        if (key === 'images') {
+          params.push(normalizeJsonField(updates[key]));
+        } else {
+          params.push(updates[key]);
+        }
       }
     });
 

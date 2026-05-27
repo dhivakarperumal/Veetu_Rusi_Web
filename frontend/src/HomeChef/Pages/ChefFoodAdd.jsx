@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
+import imageCompression from "browser-image-compression";
 import api from "../../api";
 import toast from "react-hot-toast";
 
@@ -18,6 +19,17 @@ const initialForm = {
   packaging_type: "Pouch",
   ingredients: "",
   instructions: "",
+  images: []
+};
+
+const safeParseImages = (value) => {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return [value];
+  }
 };
 
 const dietaryOptions = ["veg", "non-veg", "vegan", "contains egg"];
@@ -89,6 +101,32 @@ const ChefFoodAdd = () => {
     setEditId(null);
   };
 
+  const handleImageUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    try {
+      toast.success("Processing images...");
+      const imageData = await Promise.all(
+        files.map((file) =>
+          imageCompression(file, { maxSizeMB: 0.3, maxWidthOrHeight: 1200, useWebWorker: true })
+            .then((compressed) => new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result);
+              reader.readAsDataURL(compressed);
+            }))
+        )
+      );
+      setForm((prev) => ({ ...prev, images: [...(prev.images || []), ...imageData] }));
+      toast.success("Images ready");
+    } catch (error) {
+      console.error("Image upload failed", error);
+      toast.error("Could not process images.");
+    } finally {
+      e.target.value = "";
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.category || !form.name || !form.description || !form.mrp) {
@@ -116,6 +154,7 @@ const ChefFoodAdd = () => {
       created_by_name: profile?.name || profile?.username || null,
       created_by_email: profile?.email || null,
       created_by_phone: profile?.phone || null,
+      images: form.images || [],
       status: "Active"
     };
 
@@ -152,7 +191,8 @@ const ChefFoodAdd = () => {
       net_weight: item.net_weight || "",
       packaging_type: item.packaging_type || "Pouch",
       ingredients: item.ingredients || "",
-      instructions: item.instructions || ""
+      instructions: item.instructions || "",
+      images: safeParseImages(item.images)
     });
   };
 
@@ -354,6 +394,43 @@ const ChefFoodAdd = () => {
                 />
               </div>
 
+              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                <div className="flex items-center justify-between gap-4 mb-4">
+                  <div>
+                    <p className="text-sm font-bold text-slate-700">Upload Food Images</p>
+                    <p className="text-xs text-slate-500">Add one or more images for this chef food item.</p>
+                  </div>
+                  <label className="inline-flex items-center cursor-pointer rounded-3xl bg-slate-900 text-white px-4 py-3 text-sm font-bold hover:bg-slate-800 transition">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                    Choose Images
+                  </label>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
+                  {!form.images?.length ? (
+                    <div className="col-span-full rounded-3xl border border-dashed border-slate-300 p-8 text-center text-slate-500">
+                      No images added yet.
+                    </div>
+                  ) : form.images.map((img, idx) => (
+                    <div key={idx} className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+                      <img src={img} alt={`chef-food-${idx}`} className="h-28 w-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => setForm((prev) => ({ ...prev, images: prev.images.filter((_, index) => index !== idx) }))}
+                        className="absolute right-2 top-2 rounded-full bg-white/90 p-2 text-slate-700 shadow-md hover:bg-white"
+                      >
+                        <FaTrash size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div className="flex flex-wrap items-center gap-3 justify-end">
                 <button
                   type="button"
@@ -389,10 +466,17 @@ const ChefFoodAdd = () => {
                 {foods.map((item) => (
                   <div key={item.id} className="rounded-3xl border border-slate-200 p-4 shadow-sm">
                     <div className="flex items-start justify-between gap-4">
-                      <div>
+                      <div className="flex-1 min-w-0">
+                        <div className="mb-4 h-40 w-full overflow-hidden rounded-3xl bg-slate-100">
+                          <img
+                            src={item.images?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name || 'Food')}&background=random`}
+                            alt={item.name}
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
                         <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{item.category}</p>
-                        <h3 className="text-lg font-bold text-slate-900">{item.name}</h3>
-                        <p className="text-sm text-slate-600 mt-2">{item.description}</p>
+                        <h3 className="text-lg font-bold text-slate-900 truncate">{item.name}</h3>
+                        <p className="text-sm text-slate-600 mt-2 line-clamp-3">{item.description}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <button

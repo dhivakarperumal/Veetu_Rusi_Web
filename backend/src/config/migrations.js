@@ -229,6 +229,7 @@ const createChefFoodTable = async () => {
             packaging_type VARCHAR(100),
             ingredients LONGTEXT,
             instructions LONGTEXT,
+            images LONGTEXT,
             status VARCHAR(50) DEFAULT 'Active',
             chef_id VARCHAR(255),
             chef_user_id VARCHAR(255),
