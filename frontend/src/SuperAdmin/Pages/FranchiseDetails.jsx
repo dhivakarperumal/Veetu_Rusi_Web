@@ -78,9 +78,8 @@ const FranchiseDetails = () => {
                 });
                 toast.success('Subscription activated');
                 setShowPurchaseModal(false);
-                const r = await api.get('/superadmin/franchises');
-                const found = r.data.find(f => String(f.id) === String(franchise.id));
-                if (found) setFranchise(found);
+                const r = await api.get(`/superadmin/franchises/${franchise.id}`);
+                setFranchise(r.data);
               } catch (err) {
                 toast.error('Payment verification failed');
               }
@@ -94,9 +93,8 @@ const FranchiseDetails = () => {
         await api.post('/subscriptions/confirm', { franchiseId: franchise.id, planId: selectedPlan.id, razorpay_payment_id: 'TEST', razorpay_order_id: order.id });
         toast.success('Subscription activated (test)');
         setShowPurchaseModal(false);
-        const r = await api.get('/superadmin/franchises');
-        const found = r.data.find(f => String(f.id) === String(franchise.id));
-        if (found) setFranchise(found);
+        const r = await api.get(`/superadmin/franchises/${franchise.id}`);
+        setFranchise(r.data);
       }
     } catch (err) {
       console.error(err);
@@ -134,21 +132,15 @@ const FranchiseDetails = () => {
     const fetch = async () => {
       try {
         setLoading(true);
-        const res = await api.get('/superadmin/franchises');
-        const found = res.data.find(f => String(f.id) === String(id));
-        if (!found) {
-          toast.error('Franchise not found');
-          navigate('/superadmin/franchises');
-          return;
-        }
-        setFranchise(found);
+        const res = await api.get(`/superadmin/franchises/${id}`);
+        setFranchise(res.data);
 
         // fetch linked counts
         const [homeChefRes, deliveryRes] = await Promise.all([
           api.get('/superadmin/homechefs'),
           api.get('/superadmin/delivery-partners')
         ]);
-        const matcher = item => item.created_by_user_id === found.franch_user_id;
+        const matcher = item => item.created_by_user_id === res.data.franch_user_id;
         const homeChefs = homeChefRes.data.filter(matcher);
         const deliveryPartners = deliveryRes.data.filter(matcher);
         setLinkedHomeChefs(homeChefs);

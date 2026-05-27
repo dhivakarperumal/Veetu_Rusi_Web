@@ -101,6 +101,7 @@ const franchiseUploadFields = upload.fields([
   { name: 'signature_url', maxCount: 1 }
 ]);
 router.get('/franchises', controller.getFranchises);
+router.get('/franchises/:id', controller.getFranchiseById);
 router.post('/franchises', franchiseUploadFields, controller.createFranchise);
 router.patch('/franchises/approve/:id', controller.approveFranchise);
 router.put('/franchises/:id', franchiseUploadFields, controller.updateFranchise);

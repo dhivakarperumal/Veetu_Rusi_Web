@@ -1106,6 +1106,19 @@ exports.getFranchises = async (req, res) => {
   }
 };
 
+exports.getFranchiseById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS franch_user_id CHAR(36) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS login_password VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+    const [rows] = await pool.execute('SELECT * FROM franchise_owners WHERE id = ? LIMIT 1', [id]);
+    if (!rows.length) return res.status(404).json({ message: 'Franchise not found' });
+    res.json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving franchise.', error: error.message });
+  }
+};
+
 exports.createFranchise = async (req, res) => {
   try {
     const { 
