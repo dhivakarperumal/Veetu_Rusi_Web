@@ -36,20 +36,6 @@ const generateNextProductCode = async () => {
     return `SP${String(nextNumber).padStart(3, '0')}`;
 };
 
-const resolveChefFranchiseInfo = async (req) => {
-    if (!req.user || req.user.role !== 'chef') return {};
-    const { email, user_id } = req.user;
-    const [rows] = await pool.execute(
-        'SELECT created_by_user_id, created_by_id FROM home_chefs WHERE email = ? OR user_id = ? LIMIT 1',
-        [email, user_id]
-    );
-    if (rows.length === 0) return {};
-    return {
-        franchise_user_id: rows[0].created_by_user_id || null,
-        franchise_id: rows[0].created_by_id || null,
-    };
-};
-
 exports.getAllProducts = async (req, res) => {
     try {
         const { category, status, franchise_id, franchise_user_id } = req.query;
