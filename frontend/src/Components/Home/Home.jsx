@@ -9,6 +9,7 @@ import CategoryIcon from './CategoryIcon'
 import SareeSwiper from './SareeSwiper'
 import TrendingProducts from './TrendingProducts'
 import OfferProducts from '../Products/OfferProducts'
+import FoodItems from './FoodItems'
 
 const Home = () => {
   return (
@@ -36,6 +37,9 @@ const Home = () => {
       </div>
       <div>
         <Banner />
+      </div>
+      <div>
+        <FoodItems />
       </div>
       <div>
         <VideoSwiper />
