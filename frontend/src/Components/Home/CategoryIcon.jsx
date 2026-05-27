@@ -5,11 +5,14 @@ import { Link } from "react-router-dom";
 import Heading from "../Heading";
 import { useContext } from "react";
 import { StoreContext } from "../../PrivateRouter/StoreContext";
+import { AuthContext } from "../../PrivateRouter/AuthContext";
 
 const CategoryIcon = () => {
   const { categoriesCache, setCategoriesCache } = useContext(StoreContext);
   const [categories, setCategories] = useState(categoriesCache || []);
   const [loading, setLoading] = useState(!categoriesCache || categoriesCache.length === 0);
+  const { user } = useContext(AuthContext);
+  const [homeChef, setHomeChef] = useState(null);
 
   const fetchCategories = async () => {
     try {
@@ -21,8 +24,12 @@ const CategoryIcon = () => {
 
       const res = await api.get("/categories");
       const data = Array.isArray(res.data) ? res.data : [];
-      setCategories(data);
-      setCategoriesCache(data);
+      const myCategories = data.filter(
+        (cat) =>
+          cat.created_by_user_id === homeChef?.created_by_user_id
+      );
+      setCategories(myCategories);
+      setCategoriesCache(myCategories);
     } catch (error) {
       console.error(error);
       setCategories([]);
@@ -32,8 +39,23 @@ const CategoryIcon = () => {
   };
 
   useEffect(() => {
-    fetchCategories();
-  }, [categoriesCache, setCategoriesCache]);
+    if (homeChef?.created_by_user_id) {
+      fetchCategories();
+    }
+  }, [homeChef]);
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const res = await api.get("/auth/profile");
+        setHomeChef(res.data.homeChef);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    loadProfile();
+  }, []);
 
   return (
     <section className="py-12 bg-white overflow-hidden">
