@@ -50,6 +50,46 @@ const resolveChefFranchiseInfo = async (req) => {
     };
 };
 
+exports.getCategories = async (req, res) => {
+    try {
+        const { franchise_user_id, franchise_id } = req.query;
+        let effectiveFranchiseUserId = franchise_user_id;
+        let effectiveFranchiseId = franchise_id;
+
+        if (!effectiveFranchiseUserId && !effectiveFranchiseId && req.user?.role === 'chef') {
+            const chefFranchiseInfo = await resolveChefFranchiseInfo(req);
+            effectiveFranchiseUserId = chefFranchiseInfo.franchise_user_id || effectiveFranchiseUserId;
+            effectiveFranchiseId = chefFranchiseInfo.franchise_id || effectiveFranchiseId;
+        }
+
+        let query = 'SELECT id, catId, name, description, subcategory, images, franchise_user_id, franchise_id, created_by_user_id, created_by_email, created_by_name FROM franchise_category WHERE 1=1';
+        const params = [];
+
+        if (effectiveFranchiseUserId) {
+            query += ' AND (franchise_user_id = ? OR created_by_user_id = ?)';
+            params.push(effectiveFranchiseUserId, effectiveFranchiseUserId);
+        }
+        if (effectiveFranchiseId) {
+            query += ' AND franchise_id = ?';
+            params.push(effectiveFranchiseId);
+        }
+
+        query += ' ORDER BY id DESC';
+
+        const [rows] = await pool.execute(query, params);
+        const categories = rows.map((row) => ({
+            ...row,
+            subcategory: parseJsonField(row.subcategory) || [],
+            images: parseJsonField(row.images) || []
+        }));
+
+        res.json(categories);
+    } catch (error) {
+        console.error('Error fetching franchise categories:', error);
+        res.status(500).json({ message: 'Failed to fetch franchise categories', error: error.message });
+    }
+};
+
 exports.getAllProducts = async (req, res) => {
     try {
         const { category, status, franchise_id, franchise_user_id } = req.query;
