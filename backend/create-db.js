@@ -30,7 +30,7 @@ async function createDatabaseAndTables() {
   await connection.execute(`
     CREATE TABLE IF NOT EXISTS \`users\` (
       id INT AUTO_INCREMENT PRIMARY KEY,
-      user_id VARCHAR(100) NOT NULL UNIQUE,
+      user_id VARCHAR(255) NOT NULL UNIQUE,
       full_name VARCHAR(255) NOT NULL,
       mobile_number VARCHAR(50) DEFAULT NULL,
       email VARCHAR(255) NOT NULL UNIQUE,
@@ -55,7 +55,7 @@ async function createDatabaseAndTables() {
     try { await connection.execute("ALTER TABLE `users` CHANGE `phone` `mobile_number` VARCHAR(50) DEFAULT NULL"); } catch (e) {}
     try { await connection.execute("ALTER TABLE `users` CHANGE `active` `status` VARCHAR(50) NOT NULL DEFAULT 'Active'"); } catch (e) {}
     try { 
-      await connection.execute("ALTER TABLE `users` MODIFY `user_id` VARCHAR(100) NOT NULL"); 
+      await connection.execute("ALTER TABLE `users` MODIFY `user_id` VARCHAR(255) NOT NULL"); 
     } catch (e) {}
   } catch (err) {
     console.log('User alter tables:', err.message);
@@ -65,8 +65,8 @@ async function createDatabaseAndTables() {
   await connection.execute(`
     CREATE TABLE IF NOT EXISTS \`restaurants\` (
       id INT AUTO_INCREMENT PRIMARY KEY,
-      restaurant_id CHAR(36) NOT NULL UNIQUE DEFAULT (UUID()),
-      user_id VARCHAR(100) DEFAULT NULL,
+      restaurant_id VARCHAR(255) NOT NULL UNIQUE DEFAULT (UUID()),
+      user_id VARCHAR(255) DEFAULT NULL,
       name VARCHAR(255) NOT NULL,
       owner_name VARCHAR(255) NOT NULL,
       gst_number VARCHAR(100),
@@ -129,9 +129,9 @@ async function createDatabaseAndTables() {
   console.log('Restaurants table created or already exists');
 
   // Add user_id column to existing restaurants table
-  await connection.execute("ALTER TABLE `restaurants` ADD COLUMN IF NOT EXISTS `user_id` VARCHAR(100) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `restaurants` ADD COLUMN IF NOT EXISTS `user_id` VARCHAR(255) DEFAULT NULL");
 
-  const [restColumns] = await connection.execute(
+  const [restColumns] = await connection.execute,
     "SELECT COUNT(*) AS count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'restaurants' AND COLUMN_NAME = 'verification_status'",
     [DB_NAME]
   );
@@ -187,8 +187,8 @@ async function createDatabaseAndTables() {
   await connection.execute(`
     CREATE TABLE IF NOT EXISTS \`home_chefs\` (
       id INT AUTO_INCREMENT PRIMARY KEY,
-      chef_id CHAR(36) NOT NULL UNIQUE DEFAULT (UUID()),
-      user_id VARCHAR(100) DEFAULT NULL,
+      chef_id VARCHAR(255) NOT NULL UNIQUE DEFAULT (UUID()),
+      user_id VARCHAR(255) DEFAULT NULL,
       chef_unique_code VARCHAR(100) UNIQUE DEFAULT NULL,
       created_by_id INT DEFAULT NULL,
       created_by_user_id VARCHAR(255) DEFAULT NULL,
@@ -226,7 +226,7 @@ async function createDatabaseAndTables() {
     console.log('chef_unique_code column already exists');
   }
 
-  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `user_id` VARCHAR(100) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `user_id` VARCHAR(255) DEFAULT NULL");
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `created_by_id` INT DEFAULT NULL");
   try {
     await connection.execute("ALTER TABLE `home_chefs` MODIFY COLUMN `created_by_user_id` VARCHAR(255) DEFAULT NULL");
@@ -237,7 +237,7 @@ async function createDatabaseAndTables() {
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `created_by_name` VARCHAR(255) DEFAULT NULL");
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `created_by_email` VARCHAR(255) DEFAULT NULL");
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `created_by_phone` VARCHAR(50) DEFAULT NULL");
-  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `franchise_id` VARCHAR(100) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `franchise_id` VARCHAR(255) DEFAULT NULL");
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `franchise_user_id` VARCHAR(255) DEFAULT NULL");
 
   await connection.execute(`
@@ -366,8 +366,8 @@ async function createDatabaseAndTables() {
   await connection.execute(`
     CREATE TABLE IF NOT EXISTS \`delivery_partners\` (
       id INT AUTO_INCREMENT PRIMARY KEY,
-      partner_id CHAR(36) NOT NULL UNIQUE DEFAULT (UUID()),
-      user_id VARCHAR(100) DEFAULT NULL,
+      partner_id VARCHAR(255) NOT NULL UNIQUE DEFAULT (UUID()),
+      user_id VARCHAR(255) DEFAULT NULL,
       name VARCHAR(255) NOT NULL,
       mobile VARCHAR(50) NOT NULL,
       vehicle_type VARCHAR(100) NOT NULL,
@@ -388,8 +388,8 @@ async function createDatabaseAndTables() {
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `vehicle_brand` VARCHAR(100)");
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `vehicle_model` VARCHAR(100)");
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `vehicle_color` VARCHAR(100)");
-  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `user_id` VARCHAR(100) DEFAULT NULL");
-  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `delivery_partner_user_id` VARCHAR(100) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `user_id` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `delivery_partner_user_id` VARCHAR(255) DEFAULT NULL");
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `pan_number` VARCHAR(100)");
   try {
     await connection.execute("ALTER TABLE `delivery_partners` MODIFY `vehicle_type` VARCHAR(100) DEFAULT NULL");
@@ -481,12 +481,12 @@ async function createDatabaseAndTables() {
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `area_coverage` VARCHAR(255)");
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `zone_status` VARCHAR(50) DEFAULT 'Active'");
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `created_by_id` INT DEFAULT NULL");
-  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `created_by_user_id` CHAR(36) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `created_by_user_id` VARCHAR(255) DEFAULT NULL");
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `created_by_name` VARCHAR(255) DEFAULT NULL");
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `created_by_email` VARCHAR(255) DEFAULT NULL");
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `created_by_phone` VARCHAR(50) DEFAULT NULL");
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `approved_by_id` INT DEFAULT NULL");
-  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `approved_by_user_id` CHAR(36) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `approved_by_user_id` VARCHAR(255) DEFAULT NULL");
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `approved_by_name` VARCHAR(255) DEFAULT NULL");
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `approved_by_email` VARCHAR(255) DEFAULT NULL");
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `approval_date` DATETIME DEFAULT NULL");
@@ -525,9 +525,9 @@ async function createDatabaseAndTables() {
   await connection.execute(`
     CREATE TABLE IF NOT EXISTS \`franchise_owners\` (
       id INT AUTO_INCREMENT PRIMARY KEY,
-      franchise_id CHAR(36) NOT NULL UNIQUE DEFAULT (UUID()),
-      franch_user_id CHAR(36) DEFAULT NULL,
-      user_id VARCHAR(100) DEFAULT NULL,
+      franchise_id VARCHAR(255) NOT NULL UNIQUE DEFAULT (UUID()),
+      franch_user_id VARCHAR(255) DEFAULT NULL,
+      user_id VARCHAR(255) DEFAULT NULL,
       franchise_name VARCHAR(255) NOT NULL,
       owner_name VARCHAR(255) NOT NULL,
       mobile VARCHAR(50) NOT NULL,
@@ -555,7 +555,7 @@ async function createDatabaseAndTables() {
       bank_passbook_url VARCHAR(255),
       signature_url VARCHAR(255),
       created_by_id INT DEFAULT NULL,
-      created_by_user_id VARCHAR(100) DEFAULT NULL,
+      created_by_user_id VARCHAR(255) DEFAULT NULL,
       created_by_name VARCHAR(255) DEFAULT NULL,
       created_by_email VARCHAR(255) DEFAULT NULL,
       created_by_phone VARCHAR(50) DEFAULT NULL,
@@ -564,9 +564,9 @@ async function createDatabaseAndTables() {
   `);
   console.log('Franchise Owners table created or already exists');
 
-  await connection.execute("ALTER TABLE `franchise_owners` ADD COLUMN IF NOT EXISTS `user_id` VARCHAR(100) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `franchise_owners` ADD COLUMN IF NOT EXISTS `user_id` VARCHAR(255) DEFAULT NULL");
   await connection.execute("ALTER TABLE `franchise_owners` ADD COLUMN IF NOT EXISTS `created_by_id` INT DEFAULT NULL");
-  await connection.execute("ALTER TABLE `franchise_owners` ADD COLUMN IF NOT EXISTS `created_by_user_id` VARCHAR(100) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `franchise_owners` ADD COLUMN IF NOT EXISTS `created_by_user_id` VARCHAR(255) DEFAULT NULL");
   await connection.execute("ALTER TABLE `franchise_owners` ADD COLUMN IF NOT EXISTS `created_by_name` VARCHAR(255) DEFAULT NULL");
   await connection.execute("ALTER TABLE `franchise_owners` ADD COLUMN IF NOT EXISTS `created_by_email` VARCHAR(255) DEFAULT NULL");
   await connection.execute("ALTER TABLE `franchise_owners` ADD COLUMN IF NOT EXISTS `created_by_phone` VARCHAR(50) DEFAULT NULL");
