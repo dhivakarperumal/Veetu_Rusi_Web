@@ -66,6 +66,8 @@ const HomeChefPanel = React.lazy(() => import("./HomeChef/ChefPanel.jsx"));
 const HomeChefDashboard = React.lazy(() => import("./HomeChef/Pages/AnalyticsDashboard.jsx"));
 const HomeChefPageManagement = React.lazy(() => import("./HomeChef/Pages/HomeChefManagement.jsx"));
 const ChefAddProducts = React.lazy(() => import("./HomeChef/Pages/AddProducts.jsx"));
+const ChefFoodAdd = React.lazy(() => import("./HomeChef/Pages/ChefFoodAdd.jsx"));
+const ChefFoodAll = React.lazy(() => import("./HomeChef/Pages/ChefFoodAll.jsx"));
 const ChefProfile = React.lazy(() => import("./HomeChef/Pages/Profile.jsx"));
 const ChefProducts = React.lazy(() => import("./HomeChef/Pages/MyProducts.jsx"));
 const RecipeDetails = React.lazy(() => import("./HomeChef/Pages/RecipeDetails.jsx"));
@@ -156,8 +158,9 @@ const router = createBrowserRouter([
       { path: "add-products", element: <ChefAddProducts /> },
       { path: "add-products/:id", element: <ChefAddProducts /> },
       { path: "products", element: <ChefProducts /> },
-      { path: "food/add", element: <ChefAddProducts /> },
-      { path: "food/all", element: <ChefProducts /> },
+      { path: "food/add", element: <ChefFoodAdd /> },
+      { path: "food/edit/:id", element: <ChefFoodAdd /> },
+      { path: "food/all", element: <ChefFoodAll /> },
       { path: "recipes", element: <RecipeDetails /> },
       { path: "upload-videos", element: <UploadFoodVideos /> },
       { path: "social-media", element: <InstagramYouTubeIntegration /> },
