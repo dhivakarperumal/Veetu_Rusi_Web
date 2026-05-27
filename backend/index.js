@@ -13,12 +13,13 @@ const franchiseProductsRouter = require('./src/routes/franchiseProducts');
 const categoriesRouter = require('./src/routes/categories');
 const chefCategoriesRouter = require('./src/routes/chefCategories');
 const chefFoodCategoriesRouter = require('./src/routes/chefFoodCategories');
+const chefFoodsRouter = require('./src/routes/chefFoods');
 const recipesRouter = require('./src/routes/recipes');
 const preordersRouter = require('./src/routes/preorders');
 const ordersRouter = require('./src/routes/orders');
 const cartRouter = require('./src/routes/cart');
 const wishlistRouter = require('./src/routes/wishlist');
-const { createProductsTable, createRecipeDetailsTable, createFranchiseProductsTable, createSubscriptionPlansTable } = require('./src/config/migrations');
+const { createProductsTable, createRecipeDetailsTable, createFranchiseProductsTable, createChefFoodTable, createSubscriptionPlansTable } = require('./src/config/migrations');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -37,6 +38,7 @@ app.use('/api/franchise-products', franchiseProductsRouter);
 app.use('/api/categories', categoriesRouter);
 app.use('/api/chef-categories', chefCategoriesRouter);
 app.use('/api/chef-food-categories', chefFoodCategoriesRouter);
+app.use('/api/chef-foods', chefFoodsRouter);
 app.use('/api/preorders', preordersRouter);
 app.use('/api/orders', ordersRouter);
 app.use('/api/chef/recipes', recipesRouter);
@@ -50,7 +52,8 @@ app.get('/api/health', (req, res) => {
 initDb().then(async () => {
   try {
     await createProductsTable();
-      await createFranchiseProductsTable();
+    await createFranchiseProductsTable();
+    await createChefFoodTable();
     await createSubscriptionPlansTable();
   } catch (err) {
     console.error('Migration error:', err.message || err);

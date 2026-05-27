@@ -210,6 +210,60 @@ const createRecipeDetailsTable = async () => {
         }
     };
 
+const createChefFoodTable = async () => {
+    try {
+        const createTableSQL = `
+        CREATE TABLE IF NOT EXISTS chef_food_table (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            category VARCHAR(100) NOT NULL,
+            name VARCHAR(255) NOT NULL,
+            description LONGTEXT,
+            cuisine VARCHAR(100),
+            prep_time VARCHAR(100),
+            shelf_life_days INT,
+            mrp DECIMAL(10,2) NOT NULL,
+            offer INT DEFAULT 0,
+            final_price DECIMAL(10,2),
+            dietary_tag VARCHAR(50),
+            net_weight VARCHAR(100),
+            packaging_type VARCHAR(100),
+            ingredients LONGTEXT,
+            instructions LONGTEXT,
+            status VARCHAR(50) DEFAULT 'Active',
+            chef_id VARCHAR(255),
+            chef_user_id VARCHAR(255),
+            chef_name VARCHAR(255),
+            chef_phone VARCHAR(20),
+            chef_email VARCHAR(255),
+            franchise_id VARCHAR(255),
+            franchise_user_id VARCHAR(255),
+            franchise_name VARCHAR(255),
+            franchise_email VARCHAR(255),
+            franchise_phone VARCHAR(20),
+            created_by_user_id VARCHAR(255),
+            created_by_name VARCHAR(255),
+            created_by_email VARCHAR(255),
+            created_by_phone VARCHAR(20),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            KEY idx_category (category),
+            KEY idx_chef_id (chef_id),
+            KEY idx_chef_user_id (chef_user_id),
+            KEY idx_franchise_id (franchise_id),
+            KEY idx_created_at (created_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `;
+
+        await pool.execute(createTableSQL);
+        console.log('✓ Chef food table created or already exists');
+    } catch (error) {
+        console.error('✗ Error creating chef_food_table:', error.message);
+    }
+};
+
+    const createSubscriptionPlansTable = async () => {
+        try {
+
     const createSubscriptionPlansTable = async () => {
         try {
             const createTableSQL = `
