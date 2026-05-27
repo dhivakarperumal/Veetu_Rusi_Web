@@ -1042,11 +1042,16 @@ exports.getOrders = async (req, res) => {
       params.push(status);
     }
     
-    // If the user is a chef or franchise, they should only see their orders?
-    // Wait, the route is used by admin and superadmin too. If they are not admin/superadmin, maybe filter?
-    // Actually, let's just add the status filter for now since the frontend sends it.
+    // Role-based filtering:
+    // - superadmin → see all orders
+    // - admin/franchise → see only orders where their franchise_user_id matches
+    // - user → see only their own orders by user_id
+    // - chef → filter in JS below by product ownership
     if (role === 'franchise' || role === 'admin') {
       query += " AND franchise_user_id = ?";
+      params.push(currentUserId);
+    } else if (role === 'user') {
+      query += " AND user_id = ?";
       params.push(currentUserId);
     }
     

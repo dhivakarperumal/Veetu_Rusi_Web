@@ -133,6 +133,52 @@ router.post('/', verifyToken, async (req, res) => {
 // If it fails with 401 we will remove verifyToken from POST.
 
 router.get('/', verifyToken, controller.getOrders);
-// Wait, in Checkout.jsx, fetchAddresses calls GET /orders without verifying token logic if it fails it might be because of token, but let's use verifyToken for GET and POST.
+
+// GET personal orders for the logged-in user
+router.get('/myorders', verifyToken, async (req, res) => {
+  try {
+    const currentUserId = req.user?.user_id;
+    const currentId = req.user?.id;
+    
+    // Fallback if token doesn't have user_id
+    if (!currentUserId && !currentId) {
+      return res.status(401).json({ message: 'User not authenticated properly' });
+    }
+
+    const [rows] = await pool.execute(
+      'SELECT * FROM Chef_Order WHERE user_id = ? OR user_id = ? ORDER BY ordered_date DESC',
+      [currentUserId || currentId, currentId || currentUserId]
+    );
+
+    const parsedRows = rows.map(row => {
+      let items = row.items;
+      if (typeof items === 'string') {
+        try { items = JSON.parse(items); } catch (e) { items = []; }
+      }
+      return { ...row, items };
+    });
+
+    res.json(parsedRows);
+  } catch (err) {
+    console.error("Error fetching my orders:", err);
+    res.status(500).json({ message: 'Error retrieving your orders.', error: err.message });
+  }
+});
+
+// GET single order by id (for popup in My Orders page)
+router.get('/:id', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [rows] = await pool.execute('SELECT * FROM Chef_Order WHERE id = ?', [id]);
+    if (!rows.length) return res.status(404).json({ message: 'Order not found.' });
+    const order = rows[0];
+    if (typeof order.items === 'string') {
+      try { order.items = JSON.parse(order.items); } catch { order.items = []; }
+    }
+    res.json(order);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching order.', error: err.message });
+  }
+});
 
 module.exports = router;
