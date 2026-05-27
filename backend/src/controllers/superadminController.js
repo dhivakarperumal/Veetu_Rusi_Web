@@ -1053,6 +1053,13 @@ exports.getOrders = async (req, res) => {
     query += " ORDER BY ordered_date DESC";
     
     const [rows] = await pool.execute(query, params);
+    
+    let chefProductIds = new Set();
+    if (role === 'chef') {
+      const [chefProducts] = await pool.execute('SELECT id FROM chef_products WHERE chef_user_id = ?', [currentUserId]);
+      chefProducts.forEach(p => chefProductIds.add(p.id));
+    }
+    
     const parsedRows = rows.map(row => {
       let items = row.items;
       if (typeof items === 'string') {
@@ -1063,7 +1070,15 @@ exports.getOrders = async (req, res) => {
         }
       }
       return { ...row, items };
+    }).filter(row => {
+      if (role === 'chef') {
+        if (!row.items || row.items.length === 0) return false;
+        // Check if any item in the order belongs to this chef
+        return row.items.some(item => chefProductIds.has(Number(item.product_id) || Number(item.id)));
+      }
+      return true;
     });
+    
     res.json(parsedRows);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving orders.', error: error.message });
