@@ -256,6 +256,7 @@ const createChefFoodTable = async () => {
         `;
 
         await pool.execute(createTableSQL);
+        try { await pool.execute('ALTER TABLE chef_food_table ADD COLUMN images LONGTEXT'); } catch (err) {}
         console.log('✓ Chef food table created or already exists');
     } catch (error) {
         console.error('✗ Error creating chef_food_table:', error.message);
