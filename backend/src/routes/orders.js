@@ -26,6 +26,9 @@ const initOrderTable = async () => {
         payment_id VARCHAR(255),
         total_amount DECIMAL(10,2) NOT NULL,
         items JSON,
+        franchise_user_id VARCHAR(100),
+        franchise_user_name VARCHAR(255),
+        franchise_user_email VARCHAR(255),
         status VARCHAR(50) NOT NULL DEFAULT 'Pending',
         ordered_date DATETIME DEFAULT CURRENT_TIMESTAMP,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -43,20 +46,22 @@ router.post('/', verifyToken, async (req, res) => {
     const { 
       user_id, customer_name, customer_email, customer_phone, 
       street_address, city, district, state, country, zip_code, 
-      payment_method, payment_status, payment_id, total_amount, items 
+      payment_method, payment_status, payment_id, total_amount, items,
+      franchise_user_id, franchise_user_name, franchise_user_email
     } = req.body;
 
     const order_id = 'ORD-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
 
     const [result] = await pool.execute(
       `INSERT INTO \`Chef_Order\` 
-      (order_id, user_id, customer_name, customer_email, customer_phone, street_address, city, district, state, country, zip_code, payment_method, payment_status, payment_id, total_amount, items) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (order_id, user_id, customer_name, customer_email, customer_phone, street_address, city, district, state, country, zip_code, payment_method, payment_status, payment_id, total_amount, items, franchise_user_id, franchise_user_name, franchise_user_email) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         order_id, user_id || null, customer_name, customer_email || null, customer_phone || null,
         street_address || null, city || null, district || null, state || null, country || null,
         zip_code || null, payment_method || null, payment_status || 'pending', payment_id || null,
-        total_amount, JSON.stringify(items)
+        total_amount, JSON.stringify(items),
+        franchise_user_id || null, franchise_user_name || null, franchise_user_email || null
       ]
     );
 

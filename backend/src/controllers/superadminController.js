@@ -1165,7 +1165,7 @@ exports.createFranchise = async (req, res) => {
       longitude: longitude || null,
       map_link: map_link || null,
       username: username || null,
-      role: role || 'Franchise Admin',
+      role: role || 'Admin',
       otp_verified: otp_verified !== undefined ? (otp_verified ? 1 : 0) : 0,
       email_verified: email_verified !== undefined ? (email_verified ? 1 : 0) : 0,
       login_status: login_status || 'Active',
@@ -1255,7 +1255,7 @@ exports.approveFranchise = async (req, res) => {
     } else {
       const userIdStr = generateRoleId('franchise_admin');
       const [newUser] = await pool.execute(
-        "INSERT INTO users (user_id, full_name, email, mobile_number, password, role, status) VALUES (?, ?, ?, ?, ?, 'franchise_admin', 'Active')",
+        "INSERT INTO users (user_id, full_name, email, mobile_number, password, role, status) VALUES (?, ?, ?, ?, ?, 'admin', 'Active')",
         [userIdStr, franchise.owner_name, franchise.email, franchise.mobile, hashedPw]
       );
       const [created] = await pool.execute('SELECT user_id FROM users WHERE id = ?', [newUser.insertId]);
@@ -1319,7 +1319,7 @@ exports.updateFranchise = async (req, res) => {
       business_registration_number || null, gst_number || null, pan_number || null, start_date || null, expiry_date || null,
       alt_mobile || null, whatsapp_number || null, website_url || null, emergency_contact_number || null,
       door_number || null, street_name || null, area || null, landmark || null, district || null, territory_pincodes || null, pincode || null, latitude || null, longitude || null, map_link || null,
-      username || null, role || 'Franchise Admin', otp_verified !== undefined ? (otp_verified ? 1 : 0) : 0, email_verified !== undefined ? (email_verified ? 1 : 0) : 0, login_status || 'Active'
+      username || null, role || 'Admin', otp_verified !== undefined ? (otp_verified ? 1 : 0) : 0, email_verified !== undefined ? (email_verified ? 1 : 0) : 0, login_status || 'Active'
     ];
 
     if (logo_url) { query += `, logo_url = ?`; params.push(logo_url); }

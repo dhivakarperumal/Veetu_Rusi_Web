@@ -26,7 +26,7 @@ const emptyForm = {
   longitude: "", map_link: "",
   
   // Login Details
-  username: "", password: "", confirmPassword: "", role: "Franchise Admin",
+  username: "", password: "", confirmPassword: "", role: "Admin",
   login_status: "Active",
   
   // KYC Documents
@@ -310,7 +310,8 @@ const FranchiseOwnerManagement = () => {
     const territory_pincodes = typeof franchise.territory_pincodes === "string"
       ? franchise.territory_pincodes.split(/\s*,\s*/).filter(Boolean)
       : franchise.territory_pincodes || [];
-    setForm({ ...emptyForm, ...franchise, territory_pincodes, confirmPassword: "" });
+    const role = franchise.role === "Franchise Admin" ? "Admin" : franchise.role || "Admin";
+    setForm({ ...emptyForm, ...franchise, role, territory_pincodes, confirmPassword: "" });
     setPincodeEntry("");
     setActiveFormTab("basic");
     setIsModalOpen(true);
@@ -1490,7 +1491,7 @@ const FranchiseOwnerManagement = () => {
                       <div className="space-y-1">
                         <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Role</label>
                         <select required value={form.role} onChange={e => setForm({ ...form, role: e.target.value })} className={inputCls}>
-                          <option value="Franchise Admin">Franchise Admin</option>
+                          <option value="Admin">Admin</option>
                           <option value="Franchise Manager">Franchise Manager</option>
                           <option value="Staff">Staff</option>
                         </select>

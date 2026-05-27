@@ -14,6 +14,15 @@ const parseJsonField = (value) => {
 const getFranchiseIdForUser = async (user) => {
     if (!user) return null;
 
+    const resolveOwnerFranchiseId = async (ownerUserId) => {
+        if (!ownerUserId) return null;
+        const [ownerRows] = await pool.execute(
+            'SELECT franchise_id FROM franchise_owners WHERE user_id = ? OR franch_user_id = ? LIMIT 1',
+            [ownerUserId, ownerUserId]
+        );
+        return ownerRows.length ? ownerRows[0].franchise_id : null;
+    };
+
     try {
         if (user.role === 'admin') {
             const [rows] = await pool.execute(
@@ -25,40 +34,33 @@ const getFranchiseIdForUser = async (user) => {
 
         if (user.role === 'chef') {
             const [rows] = await pool.execute(
-                'SELECT franchise_id, created_by_id, created_by_user_id FROM home_chefs WHERE email = ? OR user_id = ? OR chef_id = ? OR chef_unique_code = ? LIMIT 1',
+                'SELECT franchise_id, franchise_user_id, created_by_id, created_by_user_id FROM home_chefs WHERE email = ? OR user_id = ? OR chef_id = ? OR chef_unique_code = ? LIMIT 1',
                 [user.email, user.user_id, user.user_id, user.user_id]
             );
-            if (rows.length) {
-                const chefRow = rows[0];
-                if (chefRow.franchise_id) {
-                    return chefRow.franchise_id;
-                }
+            if (!rows.length) return null;
 
-                if (chefRow.created_by_user_id) {
-                    const [ownerRows] = await pool.execute(
-                        'SELECT franchise_id FROM franchise_owners WHERE user_id = ? OR franch_user_id = ? LIMIT 1',
-                        [chefRow.created_by_user_id, chefRow.created_by_user_id]
-                    );
-                    if (ownerRows.length) {
-                        return ownerRows[0].franchise_id;
-                    }
-                }
+            const chefRow = rows[0];
+            if (chefRow.franchise_id) {
+                return chefRow.franchise_id;
+            }
 
-                if (chefRow.created_by_id) {
-                    const [userRows] = await pool.execute(
-                        'SELECT user_id FROM users WHERE id = ? LIMIT 1',
-                        [chefRow.created_by_id]
-                    );
-                    if (userRows.length) {
-                        const ownerUserId = userRows[0].user_id;
-                        const [ownerRows] = await pool.execute(
-                            'SELECT franchise_id FROM franchise_owners WHERE user_id = ? OR franch_user_id = ? LIMIT 1',
-                            [ownerUserId, ownerUserId]
-                        );
-                        if (ownerRows.length) {
-                            return ownerRows[0].franchise_id;
-                        }
-                    }
+            const directFranchise = await resolveOwnerFranchiseId(chefRow.franchise_user_id);
+            if (directFranchise) {
+                return directFranchise;
+            }
+
+            const createdByFranchise = await resolveOwnerFranchiseId(chefRow.created_by_user_id);
+            if (createdByFranchise) {
+                return createdByFranchise;
+            }
+
+            if (chefRow.created_by_id) {
+                const [userRows] = await pool.execute(
+                    'SELECT user_id FROM users WHERE id = ? LIMIT 1',
+                    [chefRow.created_by_id]
+                );
+                if (userRows.length) {
+                    return await resolveOwnerFranchiseId(userRows[0].user_id);
                 }
             }
         }
