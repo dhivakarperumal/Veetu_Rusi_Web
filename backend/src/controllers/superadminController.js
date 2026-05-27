@@ -324,8 +324,7 @@ exports.createHomeChef = async (req, res) => {
     const fullAddress = address || [door_number, street_name, area_name, landmark, city, district, state, pincode].filter(Boolean).join(', ') || null;
     const hashedPw = password ? hashPassword(password) : null;
 
-    const [result] = await pool.execute(
-      `INSERT INTO home_chefs (
+    const sql = `INSERT INTO home_chefs (
         name, mobile, email, address, fssai_number, aadhaar_url, pan_url, status,
         chef_unique_code, created_by_id, created_by_user_id, created_by_name, created_by_email, created_by_phone,
         franchise_id, franchise_user_id,
@@ -342,97 +341,109 @@ exports.createHomeChef = async (req, res) => {
         email_verified, last_login, device_details, login_status, verification_status, approval_status,
         approved_by_admin, approval_date, rejection_reason, block_reason,
         aadhaar_front_url, aadhaar_back_url, pan_card_url, fssai_certificate_url, gst_certificate_url, signature_url, selfie_verification_url
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        name,
-        mobile,
-        email,
-        fullAddress,
-        fssai_number || null,
-        null, // aadhaar_url
-        null, // pan_url
-        approval_status || 'Pending', // status
-        generatedChefCode,
-        createdById,
-        createdByUserId,
-        createdByName,
-        createdByEmail,
-        createdByPhone,
-        resolvedFranchiseId,
-        resolvedFranchiseUserId,
-        father_husband_name || null,
-        gender || null,
-        date_of_birth || null,
-        calculatedAge !== null ? calculatedAge : (age ? parseInt(age) : null),
-        profile_photo,
-        cover_banner,
-        alt_mobile || null,
-        whatsapp_number || null,
-        emergency_contact || null,
-        door_number || null,
-        street_name || null,
-        area_name || null,
-        landmark || null,
-        city || null,
-        district || null,
-        state || null,
-        pincode || null,
-        latitude || null,
-        longitude || null,
-        map_link || null,
-        kitchen_name || null,
-        kitchen_address || null,
-        kitchen_type || 'Home Kitchen',
-        kitchen_photos,
-        kitchen_videos,
-        seating_available === 'true' || seating_available === true ? 1 : 0,
-        dining_available === 'true' || dining_available === true ? 1 : 0,
-        takeaway_available === 'true' || takeaway_available === true ? 1 : 0,
-        delivery_available === 'true' || delivery_available === true ? 1 : 0,
-        specialty_food || null,
-        cuisine_type || 'South Indian',
-        signature_dish || null,
-        veg_nonveg || 'Veg',
-        experience_years ? parseInt(experience_years) : null,
-        cooking_style || null,
-        preparation_time || null,
-        daily_order_capacity ? parseInt(daily_order_capacity) : null,
-        available_days || null,
-        opening_time || null,
-        closing_time || null,
-        holiday_schedule || null,
-        busy_hours || null,
-        instant_order === 'true' || instant_order === true ? 1 : 0,
-        pre_order === 'true' || pre_order === true ? 1 : 0,
-        aadhaar_number || null,
-        pan_number || null,
-        gst_number || null,
-        bank_account_number || null,
-        ifsc_code || null,
-        account_holder_name || null,
-        upi_id || null,
-        username || null,
-        hashedPw,
-        otp_verified === 'true' || otp_verified === true ? 1 : 0,
-        email_verified === 'true' || email_verified === true ? 1 : 0,
-        null, // last_login
-        null, // device_details
-        login_status || 'Active',
-        verification_status || 'Pending',
-        approval_status || 'Pending',
-        null, // approved_by_admin
-        null, // approval_date
-        rejection_reason || null,
-        block_reason || null,
-        aadhaar_front_url,
-        aadhaar_back_url,
-        pan_card_url,
-        fssai_certificate_url,
-        gst_certificate_url,
-        signature_url,
-        selfie_verification_url
-      ]
-    );
+      ) VALUES (${Array(87).fill('?').join(', ')})`;
+
+    const params = [
+      name,
+      mobile,
+      email,
+      fullAddress,
+      fssai_number || null,
+      null, // aadhaar_url
+      null, // pan_url
+      approval_status || 'Pending', // status
+      generatedChefCode,
+      createdById,
+      createdByUserId,
+      createdByName,
+      createdByEmail,
+      createdByPhone,
+      resolvedFranchiseId,
+      resolvedFranchiseUserId,
+      father_husband_name || null,
+      gender || null,
+      date_of_birth || null,
+      calculatedAge !== null ? calculatedAge : (age ? parseInt(age) : null),
+      profile_photo,
+      cover_banner,
+      alt_mobile || null,
+      whatsapp_number || null,
+      emergency_contact || null,
+      door_number || null,
+      street_name || null,
+      area_name || null,
+      landmark || null,
+      city || null,
+      district || null,
+      state || null,
+      pincode || null,
+      latitude || null,
+      longitude || null,
+      map_link || null,
+      kitchen_name || null,
+      kitchen_address || null,
+      kitchen_type || 'Home Kitchen',
+      kitchen_photos,
+      kitchen_videos,
+      seating_available === 'true' || seating_available === true ? 1 : 0,
+      dining_available === 'true' || dining_available === true ? 1 : 0,
+      takeaway_available === 'true' || takeaway_available === true ? 1 : 0,
+      delivery_available === 'true' || delivery_available === true ? 1 : 0,
+      specialty_food || null,
+      cuisine_type || 'South Indian',
+      signature_dish || null,
+      veg_nonveg || 'Veg',
+      experience_years ? parseInt(experience_years) : null,
+      cooking_style || null,
+      preparation_time || null,
+      daily_order_capacity ? parseInt(daily_order_capacity) : null,
+      available_days || null,
+      opening_time || null,
+      closing_time || null,
+      holiday_schedule || null,
+      busy_hours || null,
+      instant_order === 'true' || instant_order === true ? 1 : 0,
+      pre_order === 'true' || pre_order === true ? 1 : 0,
+      aadhaar_number || null,
+      pan_number || null,
+      gst_number || null,
+      bank_account_number || null,
+      ifsc_code || null,
+      account_holder_name || null,
+      upi_id || null,
+      username || null,
+      hashedPw,
+      otp_verified === 'true' || otp_verified === true ? 1 : 0,
+      email_verified === 'true' || email_verified === true ? 1 : 0,
+      null, // last_login
+      null, // device_details
+      login_status || 'Active',
+      verification_status || 'Pending',
+      approval_status || 'Pending',
+      null, // approved_by_admin
+      null, // approval_date
+      rejection_reason || null,
+      block_reason || null,
+      aadhaar_front_url,
+      aadhaar_back_url,
+      pan_card_url,
+      fssai_certificate_url,
+      gst_certificate_url,
+      signature_url,
+      selfie_verification_url
+    ];
+
+    // Debug checks
+    try {
+      const colsMatch = sql.match(/INSERT INTO\s+home_chefs\s*\(([^)]*)\)\s*VALUES/i);
+      const colsCount = colsMatch ? colsMatch[1].split(',').filter(c => c.trim()).length : null;
+      const placeholders = (sql.match(/\?/g) || []).length;
+      if (colsCount !== placeholders) console.error('home_chefs: columns vs placeholders mismatch', colsCount, placeholders);
+      if (placeholders !== params.length) console.error('home_chefs: placeholders vs params length mismatch', placeholders, params.length);
+      console.log('home_chefs insert debug:', { colsCount, placeholders, paramsLength: params.length });
+    } catch (e) { console.error('Debug check failed', e); }
+
+    const [result] = await pool.execute(sql, params);
 
     await syncUserForEntity('home_chefs', result.insertId, 'chef');
     res.status(201).json({ message: 'Home chef application submitted.', id: result.insertId });

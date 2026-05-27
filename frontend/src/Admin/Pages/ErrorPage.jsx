@@ -20,6 +20,10 @@ const ErrorPage = () => {
                 <p className="text-gray-500 font-bold mb-8 uppercase tracking-widest text-xs italic">
                     {error.statusText || error.message || "An unexpected error occurred"}
                 </p>
+                
+                <pre className="text-left text-xs text-red-500 overflow-auto max-h-40 mb-4 p-2 bg-red-50 rounded">
+                    {error.stack || "No stack trace available"}
+                </pre>
 
                 <div className="space-y-4">
                     <Link
