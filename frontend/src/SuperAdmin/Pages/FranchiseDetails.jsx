@@ -136,17 +136,21 @@ const FranchiseDetails = () => {
         setFranchise(res.data);
 
         // fetch linked counts
-        const [homeChefRes, deliveryRes] = await Promise.all([
+        const [homeChefRes, deliveryRes, ordersRes] = await Promise.all([
           api.get('/superadmin/homechefs'),
-          api.get('/superadmin/delivery-partners')
+          api.get('/superadmin/delivery-partners'),
+          api.get('/superadmin/orders')
         ]);
         const matcher = item => item.created_by_user_id === res.data.franch_user_id;
         const homeChefs = homeChefRes.data.filter(matcher);
         const deliveryPartners = deliveryRes.data.filter(matcher);
+        const orders = ordersRes.data.filter(order => order.franchise_user_id === res.data.franch_user_id);
         setLinkedHomeChefs(homeChefs);
         setLinkedDeliveryPartners(deliveryPartners);
+        setLinkedOrders(orders);
         setLinkedHomeChefCount(homeChefs.length);
         setLinkedDeliveryPartnerCount(deliveryPartners.length);
+        setLinkedOrderCount(orders.length);
       } catch (err) {
         toast.error('Failed to load franchise');
         navigate('/superadmin/franchises');
@@ -615,6 +619,68 @@ const FranchiseDetails = () => {
             )}
 
             {/* DELIVERY PARTNERS LIST */}
+            {activeDetailTab === 'deliverypartners' && (
+              <div className="animate-in slide-in-from-right-4 fade-in duration-300">
+                <div className="mb-6 flex items-center justify-between border-b border-slate-100 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-600"><MapPin className="h-5 w-5" /></div>
+                    <h3 className="text-xl font-black text-slate-800">Linked Delivery Partners</h3>
+                  </div>
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500">{linkedDeliveryPartners.length} Total</span>
+                </div>
+
+                {linkedDeliveryPartners.length > 0 ? (
+                  <div className="overflow-hidden rounded-2xl border border-slate-200">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-sm">
+                        <thead className="bg-slate-50">
+                          <tr>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Partner Details</th>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Contact</th>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Code</th>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs text-center">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 bg-white">
+                          {linkedDeliveryPartners.map((partner) => (
+                            <tr key={partner.id} className="hover:bg-slate-50/50 transition-colors group">
+                              <td className="px-6 py-4">
+                                <p className="font-bold text-slate-800">{partner.name || 'Unnamed'}</p>
+                                <p className="text-xs text-slate-500 mt-0.5">{partner.city ? `${partner.city}, ${partner.state}` : 'Location unknown'}</p>
+                              </td>
+                              <td className="px-6 py-4">
+                                <p className="font-medium text-slate-700">{partner.mobile || '—'}</p>
+                                <p className="text-xs text-slate-400 mt-0.5 truncate max-w-[150px]">{partner.email || '—'}</p>
+                              </td>
+                              <td className="px-6 py-4">
+                                <span className="inline-flex items-center rounded-lg bg-slate-100 px-2 py-1 text-xs font-mono font-bold text-slate-600">
+                                  {partner.delivery_partner_code || partner.id || '—'}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 text-center">
+                                <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${partner.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                                  {partner.status || 'Pending'}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-200 bg-slate-50 py-16 text-center">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-sm mb-4">
+                      <MapPin className="h-8 w-8 text-slate-300" />
+                    </div>
+                    <h4 className="text-lg font-bold text-slate-700">No Delivery Partners Linked</h4>
+                    <p className="mt-1 text-sm text-slate-500 max-w-sm">There are no delivery partners assigned to this franchise account yet.</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ORDERS LIST */}
             {activeDetailTab === 'orders' && (
               <div className="animate-in slide-in-from-right-4 fade-in duration-300">
                 <div className="mb-6 flex items-center justify-between border-b border-slate-100 pb-4">
