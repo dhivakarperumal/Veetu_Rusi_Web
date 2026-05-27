@@ -80,6 +80,11 @@ const Shop = ({ defaultCategory = "" }) => {
 
   useEffect(() => {
     let updated = [...products];
+    console.log("selectedCategory:", selectedCategory);
+
+    products.forEach((p) => {
+      console.log("product category:", p.category);
+    });
 
     if (search) {
       updated = updated.filter((p) =>
@@ -89,7 +94,9 @@ const Shop = ({ defaultCategory = "" }) => {
 
     if (selectedCategory) {
       updated = updated.filter(
-        (p) => p.category?.toLowerCase() === selectedCategory.toLowerCase(),
+        (p) =>
+          p.category?.trim().toLowerCase() ===
+          decodeURIComponent(selectedCategory).trim().toLowerCase()
       );
     }
 
@@ -465,8 +472,8 @@ const Shop = ({ defaultCategory = "" }) => {
                       key={color}
                       onClick={() => setSelectedColor(color)}
                       className={`px-3 py-1 text-xs font-medium border rounded-full transition ${selectedColor === color
-                          ? "bg-primary text-white border-primary"
-                          : "border-gray-300 hover:border-primary"
+                        ? "bg-primary text-white border-primary"
+                        : "border-gray-300 hover:border-primary"
                         }`}
                     >
                       {color}
@@ -490,8 +497,8 @@ const Shop = ({ defaultCategory = "" }) => {
                       key={size}
                       onClick={() => setSelectedSize(size)}
                       className={`px-3 py-1 text-sm font-semibold border rounded-lg transition ${selectedSize === size
-                          ? "bg-primary text-white border-primary"
-                          : "border-gray-300 hover:border-primary"
+                        ? "bg-primary text-white border-primary"
+                        : "border-gray-300 hover:border-primary"
                         }`}
                     >
                       {size}
@@ -598,8 +605,8 @@ const Shop = ({ defaultCategory = "" }) => {
                     key={page}
                     onClick={() => setCurrentPage(page)}
                     className={`px-4 py-2 rounded-lg border transition cursor-pointer ${currentPage === page
-                        ? "bg-primary text-white border-primary shadow-md"
-                        : "bg-white hover:bg-gray-100"
+                      ? "bg-primary text-white border-primary shadow-md"
+                      : "bg-white hover:bg-gray-100"
                       }`}
                   >
                     {page}
