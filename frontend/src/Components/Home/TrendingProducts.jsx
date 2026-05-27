@@ -17,6 +17,7 @@ const TrendingProducts = () => {
   const { productsCache, setProductsCache, lastFetchTime, setLastFetchTime } = useContext(StoreContext);
   const initialProducts = Array.isArray(productsCache) ? [...productsCache].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) : [];
   const [products, setProducts] = useState(initialProducts);
+  const [homeChef, setHomeChef] = useState(null);
 
   const fetchTrendingProducts = async () => {
     try {
@@ -29,9 +30,14 @@ const TrendingProducts = () => {
         setLastFetchTime(Date.now());
       }
 
-      const sortedProducts = (data || []).slice().sort(
-        (a, b) => new Date(b.created_at) - new Date(a.created_at),
-      ); // latest first
+      const myProducts = (data || []).filter(
+        (product) =>
+          product.created_by_user_id === homeChef?.created_by_user_id
+      );
+
+      const sortedProducts = myProducts.sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at)
+      );
 
       setProducts(sortedProducts);
     } catch (error) {
@@ -41,8 +47,23 @@ const TrendingProducts = () => {
   };
 
   useEffect(() => {
-    fetchTrendingProducts();
+    const loadProfile = async () => {
+      try {
+        const res = await api.get("/auth/profile");
+        setHomeChef(res.data.homeChef);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    loadProfile();
   }, []);
+
+useEffect(() => {
+  if (homeChef?.created_by_user_id) {
+    fetchTrendingProducts();
+  }
+}, [homeChef]);
 
   if (products.length === 0) {
     return (
