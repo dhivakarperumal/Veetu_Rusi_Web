@@ -191,7 +191,7 @@ async function createDatabaseAndTables() {
       user_id VARCHAR(100) DEFAULT NULL,
       chef_unique_code VARCHAR(100) UNIQUE DEFAULT NULL,
       created_by_id INT DEFAULT NULL,
-      created_by_user_id CHAR(36) DEFAULT NULL,
+      created_by_user_id VARCHAR(255) DEFAULT NULL,
       created_by_name VARCHAR(255) DEFAULT NULL,
       created_by_email VARCHAR(255) DEFAULT NULL,
       created_by_phone VARCHAR(50) DEFAULT NULL,
@@ -228,7 +228,12 @@ async function createDatabaseAndTables() {
 
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `user_id` VARCHAR(100) DEFAULT NULL");
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `created_by_id` INT DEFAULT NULL");
-  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `created_by_user_id` CHAR(36) DEFAULT NULL");
+  try {
+    await connection.execute("ALTER TABLE `home_chefs` MODIFY COLUMN `created_by_user_id` VARCHAR(255) DEFAULT NULL");
+  } catch (err) {
+    // Column may not exist yet, so we add it below.
+  }
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `created_by_user_id` VARCHAR(255) DEFAULT NULL");
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `created_by_name` VARCHAR(255) DEFAULT NULL");
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `created_by_email` VARCHAR(255) DEFAULT NULL");
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `created_by_phone` VARCHAR(50) DEFAULT NULL");
