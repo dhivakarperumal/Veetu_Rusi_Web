@@ -1026,7 +1026,33 @@ exports.deleteUser = async (req, res) => {
 // ==================== ORDER MANAGEMENT ====================
 exports.getOrders = async (req, res) => {
   try {
-    const [rows] = await pool.execute("SELECT * FROM Chef_Order ORDER BY ordered_date DESC");
+    const { status } = req.query;
+    const currentUserId = req.user?.user_id;
+    const role = req.user?.role;
+    
+    let query = "SELECT * FROM Chef_Order WHERE 1=1";
+    let params = [];
+    
+    if (status && status !== 'All') {
+      if (status === 'Order Placed') {
+        query += " AND (status = ? OR status = 'Pending' OR status = 'New')";
+      } else {
+        query += " AND status = ?";
+      }
+      params.push(status);
+    }
+    
+    // If the user is a chef or franchise, they should only see their orders?
+    // Wait, the route is used by admin and superadmin too. If they are not admin/superadmin, maybe filter?
+    // Actually, let's just add the status filter for now since the frontend sends it.
+    if (role === 'franchise' || role === 'admin') {
+      query += " AND franchise_user_id = ?";
+      params.push(currentUserId);
+    }
+    
+    query += " ORDER BY ordered_date DESC";
+    
+    const [rows] = await pool.execute(query, params);
     const parsedRows = rows.map(row => {
       let items = row.items;
       if (typeof items === 'string') {

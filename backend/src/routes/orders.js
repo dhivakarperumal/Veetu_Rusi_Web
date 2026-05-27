@@ -29,7 +29,7 @@ const initOrderTable = async () => {
         franchise_user_id VARCHAR(100),
         franchise_user_name VARCHAR(255),
         franchise_user_email VARCHAR(255),
-        status VARCHAR(50) NOT NULL DEFAULT 'Pending',
+        status VARCHAR(50) NOT NULL DEFAULT 'Order Placed',
         ordered_date DATETIME DEFAULT CURRENT_TIMESTAMP,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -104,8 +104,8 @@ router.post('/', verifyToken, async (req, res) => {
 
     const [result] = await pool.execute(
       `INSERT INTO \`Chef_Order\` 
-      (order_id, user_id, customer_name, customer_email, customer_phone, street_address, city, district, state, country, zip_code, payment_method, payment_status, payment_id, total_amount, items, franchise_user_id, franchise_user_name, franchise_user_email) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (order_id, user_id, customer_name, customer_email, customer_phone, street_address, city, district, state, country, zip_code, payment_method, payment_status, payment_id, total_amount, items, franchise_user_id, franchise_user_name, franchise_user_email, status) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Order Placed')`,
       [
         order_id, user_id || null, customer_name, customer_email || null, customer_phone || null,
         street_address || null, city || null, district || null, state || null, country || null,
