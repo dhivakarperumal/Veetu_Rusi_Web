@@ -14,15 +14,16 @@ const QuickViewModal = ({ product, onClose }) => {
   const { addToCart, toggleWishlist, wishlist } = useContext(StoreContext);
   const navigate = useNavigate();
 
-  const [selectedVariant, setSelectedVariant] = useState(
-    product?.variants?.[0],
+  const initialVariant = product?.variants && product.variants.length > 0 ? product.variants[0] : null;
+  const initialImage = (initialVariant?.images && initialVariant.images.length > 0
+    ? initialVariant.images[0]
+    : (product?.images && product.images.length > 0 ? product.images[0] : `https://ui-avatars.com/api/?name=${encodeURIComponent(product?.name || '')}`)
   );
-  const [selectedImage, setSelectedImage] = useState(
-    product?.variants?.[0]?.images?.[0],
-  );
-  const [selectedSize, setSelectedSize] = useState(
-    product?.variants?.[0]?.selectedSizes?.[0],
-  );
+  const initialSize = initialVariant?.selectedSizes?.[0] || null;
+
+  const [selectedVariant, setSelectedVariant] = useState(initialVariant);
+  const [selectedImage, setSelectedImage] = useState(initialImage);
+  const [selectedSize, setSelectedSize] = useState(initialSize);
   const [imgIndex, setImgIndex] = useState(0);
 
   const [quantity, setQuantity] = useState(1);

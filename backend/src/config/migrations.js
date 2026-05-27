@@ -231,9 +231,35 @@ const createRecipeDetailsTable = async () => {
         }
     };
 
+    const createReviewsTable = async () => {
+        try {
+            const createTableSQL = `
+            CREATE TABLE IF NOT EXISTS reviews (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                product_id INT NOT NULL,
+                user_id VARCHAR(255),
+                user_name VARCHAR(255),
+                user_email VARCHAR(255),
+                rating INT NOT NULL,
+                comment LONGTEXT,
+                review_image LONGTEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                KEY idx_product_id (product_id),
+                KEY idx_user_id (user_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            `;
+
+            await pool.execute(createTableSQL);
+            console.log('✓ Reviews table created or already exists');
+        } catch (error) {
+            console.error('✗ Error creating reviews table:', error.message);
+        }
+    };
+
 module.exports = {
     createProductsTable,
     createRecipeDetailsTable,
     createFranchiseProductsTable,
     createSubscriptionPlansTable
+    ,createReviewsTable
 };

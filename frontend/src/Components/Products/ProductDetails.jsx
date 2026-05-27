@@ -353,19 +353,45 @@ const ProductDetails = () => {
           </div>
           {/* Thumbnails */}
           <div className="flex gap-2 sm:gap-3 mt-3 sm:mt-4 flex-wrap">
-            {selectedVariant?.images?.map((img, index) => {
-              const resolvedImg = resolveImageUrl(img);
-              return (
-                <img
-                  key={index}
-                  src={resolvedImg}
-                  onClick={() => setSelectedImage(resolvedImg)}
-                  className={`w-14 h-14 sm:w-18 sm:h-20 sm:h-16 object-cover object-top rounded-lg cursor-pointer border ${
-                    selectedImage === resolvedImg ? "border-primary" : "border-gray-200"
-                  }`}
-                />
-              );
-            })}
+            {(() => {
+              // collect thumbnails from all variants if available, otherwise use selectedVariant or product images
+              let thumbs = [];
+              if (product?.variants?.length > 0) {
+                product.variants.forEach((v) => {
+                  let imgs = v.images;
+                  if (typeof imgs === 'string') {
+                    try { imgs = JSON.parse(imgs); } catch { imgs = []; }
+                  }
+                  if (Array.isArray(imgs)) thumbs.push(...imgs);
+                });
+              }
+              if (thumbs.length === 0) {
+                thumbs = selectedVariant?.images || product?.images || [];
+              }
+
+              // remove duplicates while preserving order
+              const seen = new Set();
+              const uniqueThumbs = thumbs.filter((t) => {
+                const key = typeof t === 'string' ? t : JSON.stringify(t);
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+              });
+
+              return uniqueThumbs.map((img, index) => {
+                const resolvedImg = resolveImageUrl(img);
+                return (
+                  <img
+                    key={index}
+                    src={resolvedImg}
+                    onClick={() => setSelectedImage(resolvedImg)}
+                    className={`w-14 h-14 sm:w-18 sm:h-20 sm:h-16 object-cover object-top rounded-lg cursor-pointer border ${
+                      selectedImage === resolvedImg ? "border-primary" : "border-gray-200"
+                    }`}
+                  />
+                );
+              });
+            })()}
           </div>
         </div>
 

@@ -11,6 +11,7 @@ const dashboardRouter = require('./src/routes/dashboard');
 const productsRouter = require('./src/routes/products');
 const franchiseProductsRouter = require('./src/routes/franchiseProducts');
 const categoriesRouter = require('./src/routes/categories');
+const reviewsRouter = require('./src/routes/reviews');
 const chefCategoriesRouter = require('./src/routes/chefCategories');
 const recipesRouter = require('./src/routes/recipes');
 const preordersRouter = require('./src/routes/preorders');
@@ -33,6 +34,7 @@ app.use('/api/subscriptions', subscriptionsRouter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/products', productsRouter);
 app.use('/api/franchise-products', franchiseProductsRouter);
+app.use('/api/reviews', reviewsRouter);
 app.use('/api/categories', categoriesRouter);
 app.use('/api/chef-categories', chefCategoriesRouter);
 app.use('/api/preorders', preordersRouter);
@@ -50,6 +52,7 @@ initDb().then(async () => {
     await createProductsTable();
       await createFranchiseProductsTable();
     await createSubscriptionPlansTable();
+    await createReviewsTable();
   } catch (err) {
     console.error('Migration error:', err.message || err);
   }
