@@ -20,9 +20,24 @@ import { FiChevronRight, FiTag } from "react-icons/fi";
 const Navbar = () => {
 
   const { user, logout } = useContext(AuthContext);
+  console.log("USER DATA:", user);
   const { cart, wishlist } = useContext(StoreContext);
   const [mobilePages, setMobilePages] = useState(false);
   const navigate = useNavigate();
+  const [homeChef, setHomeChef] = useState(null);
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const res = await api.get("/auth/profile");
+        setHomeChef(res.data.homeChef);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    loadProfile();
+  }, []);
 
   const [mobileMenu, setMobileMenu] = useState(false);
   const [userMenu, setUserMenu] = useState(false);
@@ -83,13 +98,12 @@ const Navbar = () => {
 
   }, []);
 
-const navClass = ({ isActive }) =>
-  `px-4 py-1.5 rounded-lg text-sm font-medium transition
-  ${
-    isActive
+  const navClass = ({ isActive }) =>
+    `px-4 py-1.5 rounded-lg text-sm font-medium transition
+  ${isActive
       ? "bg-gradient-to-r from-primary-light to-secondary text-white shadow"
       : "text-gray-600 hover:bg-primary-light/10 hover:text-primary"
-  }`;
+    }`;
 
   return (
 
@@ -247,6 +261,14 @@ const navClass = ({ isActive }) =>
 
             </div>
 
+          </div>
+
+          <div className="hidden md:flex items-center gap-2 text-sm font-medium text-gray-700">
+            <span>Created By:</span>
+            <span className="text-primary">
+              {homeChef?.created_by_user_id || "-"}
+
+            </span>
           </div>
 
           {/* Right Icons */}
@@ -593,7 +615,7 @@ const navClass = ({ isActive }) =>
                     About
                   </NavLink>
 
-                    <NavLink
+                  <NavLink
                     to="/termsandconditions"
                     onClick={() => setMobileMenu(false)}
                     className={({ isActive }) =>
@@ -608,7 +630,7 @@ const navClass = ({ isActive }) =>
                     Terms And Conditions
                   </NavLink>
 
-                    
+
                   <NavLink
                     to="/contactus"
                     onClick={() => setMobileMenu(false)}
