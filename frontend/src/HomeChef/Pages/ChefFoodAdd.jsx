@@ -45,6 +45,7 @@ const ChefFoodAdd = () => {
   const [form, setForm] = useState(initialForm);
   const [editId, setEditId] = useState(null);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -165,12 +166,13 @@ const ChefFoodAdd = () => {
       if (editId) {
         await api.put(`/chef-foods/${editId}`, payload);
         toast.success("Food item updated successfully.");
+        resetForm();
+        fetchFoods();
       } else {
         await api.post("/chef-foods", payload);
         toast.success("Food item added successfully.");
+        navigate("/chef/food/all");
       }
-      resetForm();
-      fetchFoods();
     } catch (err) {
       console.error("Chef food save failed", err);
       toast.error(err.response?.data?.message || "Failed to save food item.");
