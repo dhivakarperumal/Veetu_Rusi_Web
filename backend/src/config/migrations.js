@@ -261,33 +261,31 @@ const createChefFoodTable = async () => {
     }
 };
 
-    const createSubscriptionPlansTable = async () => {
-        try {
+const createSubscriptionPlansTable = async () => {
+    try {
+        const createTableSQL = `
+        CREATE TABLE IF NOT EXISTS subscription_plans (
+            id VARCHAR(100) PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            amount DECIMAL(10,2) NOT NULL,
+            currency VARCHAR(10) DEFAULT 'INR',
+            durationDays INT DEFAULT 30,
+            status VARCHAR(50) DEFAULT 'Active',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `;
 
-    const createSubscriptionPlansTable = async () => {
-        try {
-            const createTableSQL = `
-            CREATE TABLE IF NOT EXISTS subscription_plans (
-                id VARCHAR(100) PRIMARY KEY,
-                name VARCHAR(255) NOT NULL,
-                amount DECIMAL(10,2) NOT NULL,
-                currency VARCHAR(10) DEFAULT 'INR',
-                durationDays INT DEFAULT 30,
-                status VARCHAR(50) DEFAULT 'Active',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-            `;
-
-            await pool.execute(createTableSQL);
-            console.log('✓ Subscription plans table created or already exists');
-        } catch (error) {
-            console.error('✗ Error creating subscription_plans table:', error.message);
-        }
-    };
+        await pool.execute(createTableSQL);
+        console.log('✓ Subscription plans table created or already exists');
+    } catch (error) {
+        console.error('✗ Error creating subscription_plans table:', error.message);
+    }
+};
 
 module.exports = {
     createProductsTable,
     createRecipeDetailsTable,
     createFranchiseProductsTable,
+    createChefFoodTable,
     createSubscriptionPlansTable
 };
