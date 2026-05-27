@@ -88,7 +88,12 @@ const Navbar = () => {
     const fetchCategories = async () => {
       try {
         const res = await api.get("/categories");
-        setCategories(res.data);
+
+        const myCategories = res.data.filter(
+          (cat) => cat.created_by_user_id === homeChef?.created_by_user_id
+        );
+
+        setCategories(myCategories);
       } catch (error) {
         console.error(error);
       }
@@ -180,7 +185,7 @@ const Navbar = () => {
                           }`
                         }
                       >
-                        {cat.name} - created by "{cat.created_by_user_id}"
+                        {cat.name} 
                       </NavLink>
 
                     ))}
@@ -340,7 +345,7 @@ const Navbar = () => {
                         Super Admin Panel
                       </Link>
                     )}
-                    {user.role === "admin" && (
+                    {user.role === "admin"  && (
                       <Link
                         to="admin"
                         className="block px-4 py-3 text-sm hover:bg-gray-100"
