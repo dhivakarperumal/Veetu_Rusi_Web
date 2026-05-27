@@ -3,7 +3,7 @@ import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
 import { FiArrowLeft, FiSave, FiUploadCloud, FiTrash2, FiHash, FiLayers, FiBox } from "react-icons/fi";
 import { FaRupeeSign } from "react-icons/fa";
 import imageCompression from "browser-image-compression";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import api from "../../api";
 import toast from "react-hot-toast";
 
@@ -46,6 +46,7 @@ const ChefFoodAdd = () => {
   const [editId, setEditId] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { id } = useParams();
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -65,6 +66,11 @@ const ChefFoodAdd = () => {
     fetchCategories();
     fetchFoods();
   }, [profile]);
+
+  useEffect(() => {
+    if (!profile || !id) return;
+    fetchFoodById(id);
+  }, [profile, id]);
 
   useEffect(() => {
     const mrp = parseFloat(form.mrp) || 0;
@@ -97,6 +103,40 @@ const ChefFoodAdd = () => {
     } catch (err) {
       console.error("Failed to load chef food items", err);
       toast.error("Could not load food items.");
+    }
+  };
+
+  const fetchFoodById = async (foodId) => {
+    try {
+      const res = await api.get(`/chef-foods/${foodId}`);
+      const item = res.data;
+      if (!item) {
+        toast.error("Food item not found.");
+        navigate("/chef/food/all");
+        return;
+      }
+      setEditId(item.id);
+      setForm({
+        category: item.category || "",
+        name: item.name || "",
+        description: item.description || "",
+        cuisine: item.cuisine || "",
+        prep_time: item.prep_time || "",
+        shelf_life_days: item.shelf_life_days?.toString() || "",
+        mrp: item.mrp?.toString() || "",
+        offer: item.offer?.toString() || "",
+        final_price: item.final_price?.toString() || "",
+        dietary_tag: item.dietary_tag || "veg",
+        net_weight: item.net_weight || "",
+        packaging_type: item.packaging_type || "Pouch",
+        ingredients: item.ingredients || "",
+        instructions: item.instructions || "",
+        images: safeParseImages(item.images)
+      });
+    } catch (err) {
+      console.error("Failed to load food item", err);
+      toast.error("Could not load food item for editing.");
+      navigate("/chef/food/all");
     }
   };
 
