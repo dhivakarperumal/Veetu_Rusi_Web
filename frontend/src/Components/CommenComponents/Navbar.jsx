@@ -82,15 +82,16 @@ const Navbar = () => {
 
   }, []);
 
-  // Fetch categories
+  // Fetch categories after homeChef profile is loaded
   useEffect(() => {
+    if (!homeChef?.created_by_user_id) return;
 
     const fetchCategories = async () => {
       try {
         const res = await api.get("/categories");
 
         const myCategories = res.data.filter(
-          (cat) => cat.created_by_user_id === homeChef?.created_by_user_id
+          (cat) => cat.created_by_user_id === homeChef.created_by_user_id
         );
 
         setCategories(myCategories);
@@ -100,8 +101,7 @@ const Navbar = () => {
     };
 
     fetchCategories();
-
-  }, []);
+  }, [homeChef]);
 
   const navClass = ({ isActive }) =>
     `px-4 py-1.5 rounded-lg text-sm font-medium transition
