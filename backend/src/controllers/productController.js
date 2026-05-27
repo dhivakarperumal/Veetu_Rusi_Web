@@ -3,6 +3,7 @@ const pool = require('../config/db');
 const parseJsonField = (value) => {
     if (value === null || value === undefined) return null;
     if (typeof value === 'object') return value;
+        const [existing] = await pool.execute('SELECT id FROM chef_products WHERE id = ?', [id]);
     try {
         return JSON.parse(value);
     } catch {
