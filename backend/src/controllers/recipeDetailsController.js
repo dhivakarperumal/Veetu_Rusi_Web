@@ -189,13 +189,39 @@ exports.createRecipe = async (req, res) => {
         const finalCreatedByName = created_by_name || req.user?.name || null;
         const finalCreatedByPhone = created_by_phone || req.user?.phone || null;
 
+        // If name/phone are missing from request and token, try to fetch from users table
+        let resolvedCreatedByName = finalCreatedByName;
+        let resolvedCreatedByPhone = finalCreatedByPhone;
+        if ((resolvedCreatedByName === null || resolvedCreatedByPhone === null) && (finalCreatedByEmail || finalCreatedByUserId)) {
+            try {
+                const lookupParams = [];
+                let lookupSql = 'SELECT full_name, mobile_number, name, phone FROM users WHERE 1=0';
+                if (finalCreatedByEmail) {
+                    lookupSql += ' OR email = ?';
+                    lookupParams.push(finalCreatedByEmail);
+                }
+                if (finalCreatedByUserId) {
+                    lookupSql += ' OR user_id = ? OR id = ?';
+                    lookupParams.push(finalCreatedByUserId, finalCreatedByUserId);
+                }
+                const [userRows] = await pool.execute(lookupSql, lookupParams);
+                if (userRows && userRows.length > 0) {
+                    const u = userRows[0];
+                    resolvedCreatedByName = resolvedCreatedByName || u.full_name || u.name || null;
+                    resolvedCreatedByPhone = resolvedCreatedByPhone || u.mobile_number || u.phone || null;
+                }
+            } catch (err) {
+                console.warn('Could not resolve created_by name/phone from users table:', err.message || err);
+            }
+        }
+
         const params = [
             title, description || null, category || null, status || 'Active', finalRecipeCode,
             ingredients ? serializeJsonField(ingredients) : null,
             instructions ? serializeJsonField(instructions) : null,
             chef_id || null, finalChefUserId, finalChefName, finalChefPhone, finalChefEmail,
             finalFranchiseId, finalFranchiseUserId, finalFranchiseName, finalFranchiseEmail, finalFranchisePhone,
-            finalCreatedByUserId, finalCreatedByEmail, finalCreatedByName, finalCreatedByPhone
+            finalCreatedByUserId, finalCreatedByEmail, resolvedCreatedByName, resolvedCreatedByPhone
         ];
 
         const columns = `title, description, category, status, recipe_code, ingredients, instructions,

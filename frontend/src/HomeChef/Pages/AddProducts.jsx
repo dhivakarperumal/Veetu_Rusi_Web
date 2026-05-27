@@ -180,8 +180,10 @@ const AddProducts = () => {
             setFetching(true);
             if (isEdit) {
                 // Fetch categories and the product independently so one failure doesn't block the other
+                const userData = JSON.parse(localStorage.getItem("user") || "{}");
+                const chefUserId = userData.user_id || userData.id || null;
                 const [catsResult, productResult] = await Promise.allSettled([
-                    api.get("/categories"),
+                    api.get("/chef-categories", { params: { chef_user_id: chefUserId } }),
                     api.get(`/products/${id}`)
                 ]);
 
@@ -238,25 +240,19 @@ const AddProducts = () => {
                 return;
             }
 
-            // Not editing: load categories and latest code
-            const [catsResult, codeResult] = await Promise.allSettled([
-                api.get("/categories"),
-                api.get("/products/latest-code")
-            ]);
+            // Not editing: load chef categories only
+            const userData = JSON.parse(localStorage.getItem("user") || "{}");
+            const chefUserId = userData.user_id || userData.id || null;
+            const catsResult = await api.get("/chef-categories", { params: { chef_user_id: chefUserId } });
 
-            if (catsResult.status === 'fulfilled') {
-                setCategories(Array.isArray(catsResult.value.data) ? catsResult.value.data : []);
+            if (Array.isArray(catsResult.data)) {
+                setCategories(catsResult.data);
                 setFormData(prev => ({
                     ...prev,
-                    category: Array.isArray(catsResult.value.data) && catsResult.value.data[0]?.name ? catsResult.value.data[0].name : "Cooked Food" }));
+                    category: catsResult.data[0]?.name || "Cooked Food",
+                }));
             } else {
-                console.warn('Failed to load categories', catsResult.reason);
-            }
-
-            if (codeResult.status === 'fulfilled') {
-                setFormData(prev => ({ ...prev, product_code: codeResult.value.data.latestCode || 'SP001' }));
-            } else {
-                console.warn('Failed to load latest product code', codeResult.reason);
+                console.warn('Unexpected category response', catsResult);
             }
 
             setFetching(false);

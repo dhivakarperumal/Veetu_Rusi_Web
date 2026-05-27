@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.0",
+    "jsbarcode": "^3.12.3",
     "razorpay": "^2.9.6",
     "tailwindcss": "^4.3.0"
   }
