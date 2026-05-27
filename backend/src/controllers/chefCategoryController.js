@@ -1,4 +1,4 @@
-const pool = require('../config/db');
+  const pool = require('../config/db');
 
 const parseJsonField = (value) => {
   if (value === null || value === undefined) return null;
