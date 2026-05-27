@@ -78,6 +78,7 @@ const DeliveryLimitSettings = React.lazy(() => import("./HomeChef/Pages/Delivery
 const AnalyticsDashboard = React.lazy(() => import("./HomeChef/Pages/AnalyticsDashboard.jsx"));
 const WalletAndEarnings = React.lazy(() => import("./HomeChef/Pages/WalletAndEarnings.jsx"));
 const ChefCategories = React.lazy(() => import("./HomeChef/Pages/ChefCategory.jsx"));
+const ChefFoodCategories = React.lazy(() => import("./HomeChef/Pages/ChefFoodCategories.jsx"));
 const ChefFoodCategoryAdd = React.lazy(() => import("./HomeChef/Pages/ChefFoodCategoryAdd.jsx"));
 const OrderManagement = React.lazy(() => import("./Admin/Pages/OrderManagement.jsx"));
 const PayoutManagement = React.lazy(() => import("./Admin/Pages/PayoutManagement.jsx"));
@@ -165,7 +166,7 @@ const router = createBrowserRouter([
       { path: "preorders", element: <PreorderFoodSystem /> },
       { path: "delivery-settings", element: <DeliveryLimitSettings /> },
       { path: "categories", element: <ChefCategories /> },
-      { path: "food/categories", element: <ChefCategories /> },
+      { path: "food/categories", element: <ChefFoodCategories /> },
       { path: "food/categories/add", element: <ChefFoodCategoryAdd /> },
       { path: "analytics", element: <AnalyticsDashboard /> },
       { path: "earnings", element: <WalletAndEarnings /> },
