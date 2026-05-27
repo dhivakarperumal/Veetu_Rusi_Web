@@ -10,6 +10,22 @@ export default function CartPage() {
   const { cart, removeFromCart, updateCartQuantity } = useContext(StoreContext);
   const navigate = useNavigate();
 
+  const resolveImageUrl = (url) => {
+    if (!url || typeof url !== 'string') return null;
+    let cleanUrl = url;
+    try {
+      const parsed = JSON.parse(url);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        cleanUrl = parsed[0];
+      }
+    } catch(e) {}
+    if (cleanUrl.startsWith('http') || cleanUrl.startsWith('data:')) return cleanUrl;
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+    const cleanPath = cleanUrl.replace(/\\/g, '/');
+    const finalPath = cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`;
+    return `${backendUrl}${finalPath}`;
+  };
+
   const subtotal = cart.reduce(
     (total, item) => total + parseFloat(item.price || 0) * item.quantity,
     0
@@ -52,7 +68,7 @@ export default function CartPage() {
 
                 cart.map((item, index) => {
 
-                  const image = item.image;
+                  const image = resolveImageUrl(item.image);
                   const price = item.price;
                   const mrp = item.mrp;
 
@@ -105,7 +121,7 @@ export default function CartPage() {
 
                           <div className="flex items-center gap-2 text-xs font-semibold text-black">
 
-                            {item.colorName && (
+                            {(item.variant_color || item.colorName) && (item.variant_color !== 'Default') && (
                               <div className="flex items-center gap-2">
                                 <span
                                   className="w-4 h-4 rounded-full border border-gray-400"
@@ -119,14 +135,14 @@ export default function CartPage() {
                                     textShadow: "0 0 1px rgba(0,0,0,0.8)"
                                   }}
                                 >
-                                  {item.colorName}
+                                  {item.variant_color || item.colorName}
                                 </span>
                               </div>
                             )}
 
-                            {item.size && (
+                            {(item.variant_size || item.size) && (item.variant_size !== 'Free Size') && (
                               <span className="ml-2 bg-gray-100 px-2 py-1 rounded">
-                                Size : {item.size}
+                                Weight/Size: {item.variant_size || item.size}
                               </span>
                             )}
 

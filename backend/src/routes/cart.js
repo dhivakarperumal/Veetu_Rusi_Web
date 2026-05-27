@@ -12,7 +12,7 @@ const initCartTable = async () => {
         product_id INT NOT NULL,
         variant_color VARCHAR(255),
         variant_size VARCHAR(255),
-        image VARCHAR(1000),
+        image LONGTEXT,
         email VARCHAR(255),
         price DECIMAL(10,2),
         total_price DECIMAL(10,2),

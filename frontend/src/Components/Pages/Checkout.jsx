@@ -25,6 +25,22 @@ const Checkout = () => {
   const [selectedAddress, setSelectedAddress] = useState(null);
   const buyNowQuantity = location.state?.quantity || 1;
 
+  const resolveImageUrl = (url) => {
+    if (!url || typeof url !== 'string') return null;
+    let cleanUrl = url;
+    try {
+      const parsed = JSON.parse(url);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        cleanUrl = parsed[0];
+      }
+    } catch(e) {}
+    if (cleanUrl.startsWith('http') || cleanUrl.startsWith('data:')) return cleanUrl;
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+    const cleanPath = cleanUrl.replace(/\\/g, '/');
+    const finalPath = cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`;
+    return `${backendUrl}${finalPath}`;
+  };
+
   const fetchAddresses = async () => {
     try {
 
@@ -103,7 +119,7 @@ const Checkout = () => {
       {
         id: buyNowProduct.id,
         name: buyNowProduct.name,
-        image: buyNowVariant?.images?.[0],
+        image: resolveImageUrl(buyNowVariant?.images?.[0]),
         price: buyNowProduct.offer_price,
         quantity: buyNowQuantity,
         size: buyNowSize,
@@ -480,7 +496,7 @@ const Checkout = () => {
                 >
 
                   <img
-                    src={item.image}
+                    src={resolveImageUrl(item.image)}
                     alt={item.name}
                     className="w-16 h-20 object-cover rounded"
                   />
@@ -493,7 +509,7 @@ const Checkout = () => {
 
                       <p>Qty: {item.quantity}</p>
 
-                      {item.colorName && (
+                      {(item.variant_color || item.colorName) && (item.variant_color !== 'Default') && (
                         <p className="flex items-center gap-2">
 
                           <span
@@ -508,14 +524,14 @@ const Checkout = () => {
                               textShadow: "0 0 1px rgba(0,0,0,0.4)"
                             }}
                           >
-                            {item.colorName}
+                            {item.variant_color || item.colorName}
                           </span>
                         </p>
                       )}
 
-                      {item.size && (
+                      {(item.variant_size || item.size) && (item.variant_size !== 'Free Size') && (
                         <p>
-                          Size: {item.size}
+                          Weight/Size: {item.variant_size || item.size}
                         </p>
                       )}
 
