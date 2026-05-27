@@ -166,7 +166,7 @@ const navClass = ({ isActive }) =>
                           }`
                         }
                       >
-                        {cat.name}
+                        {cat.name} - created by "{cat.created_by_user_id}"
                       </NavLink>
 
                     ))}
