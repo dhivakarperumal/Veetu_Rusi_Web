@@ -4,7 +4,7 @@ const franchiseProductController = require('../controllers/franchiseProductContr
 const { attachUser } = require('../middleware/authMiddleware');
 
 // Get franchise products with filters
-router.get('/', franchiseProductController.getAllProducts);
+router.get('/', attachUser, franchiseProductController.getAllProducts);
 
 // Get latest franchise product code
 router.get('/latest-code', franchiseProductController.getLatestProductCode);

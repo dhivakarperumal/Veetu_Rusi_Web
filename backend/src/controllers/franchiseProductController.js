@@ -36,19 +36,41 @@ const generateNextProductCode = async () => {
     return `SP${String(nextNumber).padStart(3, '0')}`;
 };
 
+const resolveChefFranchiseInfo = async (req) => {
+    if (!req.user || req.user.role !== 'chef') return {};
+    const { email, user_id } = req.user;
+    const [rows] = await pool.execute(
+        'SELECT created_by_user_id, created_by_id FROM home_chefs WHERE email = ? OR user_id = ? LIMIT 1',
+        [email, user_id]
+    );
+    if (rows.length === 0) return {};
+    return {
+        franchise_user_id: rows[0].created_by_user_id || null,
+        franchise_id: rows[0].created_by_id || null,
+    };
+};
+
 exports.getAllProducts = async (req, res) => {
     try {
         const { category, status, franchise_id, franchise_user_id } = req.query;
         let query = 'SELECT * FROM franchise_products WHERE 1=1';
         const params = [];
+        let effectiveFranchiseId = franchise_id;
+        let effectiveFranchiseUserId = franchise_user_id;
 
-        if (franchise_id) {
-            query += ' AND franchise_id = ?';
-            params.push(franchise_id);
+        if (!effectiveFranchiseId && !effectiveFranchiseUserId) {
+            const chefFranchiseInfo = await resolveChefFranchiseInfo(req);
+            effectiveFranchiseId = chefFranchiseInfo.franchise_id || effectiveFranchiseId;
+            effectiveFranchiseUserId = chefFranchiseInfo.franchise_user_id || effectiveFranchiseUserId;
         }
-        if (franchise_user_id) {
+
+        if (effectiveFranchiseId) {
+            query += ' AND franchise_id = ?';
+            params.push(effectiveFranchiseId);
+        }
+        if (effectiveFranchiseUserId) {
             query += ' AND franchise_user_id = ?';
-            params.push(franchise_user_id);
+            params.push(effectiveFranchiseUserId);
         }
         if (category) {
             query += ' AND category = ?';

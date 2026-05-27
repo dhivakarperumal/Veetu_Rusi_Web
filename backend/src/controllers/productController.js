@@ -442,16 +442,30 @@ exports.getLatestProductCode = async (req, res) => {
 exports.getCategories = async (req, res) => {
     try {
         const { franchise_user_id, franchise_id } = req.query;
+        let effectiveFranchiseUserId = franchise_user_id;
+        let effectiveFranchiseId = franchise_id;
+
+        if (!effectiveFranchiseUserId && !effectiveFranchiseId && req.user?.role === 'chef') {
+            const [rows] = await pool.execute(
+                'SELECT created_by_user_id, created_by_id FROM home_chefs WHERE email = ? OR user_id = ? LIMIT 1',
+                [req.user.email, req.user.user_id]
+            );
+            if (rows.length > 0) {
+                effectiveFranchiseUserId = rows[0].created_by_user_id || null;
+                effectiveFranchiseId = rows[0].created_by_id || null;
+            }
+        }
+
         let query = 'SELECT id, catId, name, description, subcategory, images, franchise_user_id, franchise_id, created_by_user_id, created_by_email, created_by_name FROM franchise_category WHERE 1=1';
         const params = [];
 
-        if (franchise_user_id) {
-            query += ' AND (franchise_user_id = ? OR franchise_user_id IS NULL)';
-            params.push(franchise_user_id);
+        if (effectiveFranchiseUserId) {
+            query += ' AND franchise_user_id = ?';
+            params.push(effectiveFranchiseUserId);
         }
-        if (franchise_id) {
-            query += ' AND (franchise_id = ? OR franchise_id IS NULL)';
-            params.push(franchise_id);
+        if (effectiveFranchiseId) {
+            query += ' AND franchise_id = ?';
+            params.push(effectiveFranchiseId);
         }
 
         query += ' ORDER BY id DESC';
