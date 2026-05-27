@@ -316,6 +316,10 @@ const SingleProductForm = ({ categories, franchiseId, franchiseUserId, onSuccess
         franchise_id: franchiseId
       };
 
+      try {
+        console.debug('Submitting franchise product payload', payload);
+      } catch (e) { /* ignore debug errors */ }
+
       if (editItem) {
         await api.put(`/franchise-products/${editItem.id}`, payload);
         toast.success("Inventory Pulse Updated");
