@@ -95,22 +95,14 @@ exports.getAllProducts = async (req, res) => {
         const { category, status, franchise_id, franchise_user_id } = req.query;
         let query = 'SELECT * FROM franchise_products WHERE 1=1';
         const params = [];
-        let effectiveFranchiseId = franchise_id;
-        let effectiveFranchiseUserId = franchise_user_id;
 
-        if (!effectiveFranchiseId && !effectiveFranchiseUserId) {
-            const chefFranchiseInfo = await resolveChefFranchiseInfo(req);
-            effectiveFranchiseId = chefFranchiseInfo.franchise_id || effectiveFranchiseId;
-            effectiveFranchiseUserId = chefFranchiseInfo.franchise_user_id || effectiveFranchiseUserId;
-        }
-
-        if (effectiveFranchiseId) {
+        if (franchise_id) {
             query += ' AND franchise_id = ?';
-            params.push(effectiveFranchiseId);
+            params.push(franchise_id);
         }
-        if (effectiveFranchiseUserId) {
+        if (franchise_user_id) {
             query += ' AND franchise_user_id = ?';
-            params.push(effectiveFranchiseUserId);
+            params.push(franchise_user_id);
         }
         if (category) {
             query += ' AND category = ?';

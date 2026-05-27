@@ -4,7 +4,7 @@ const franchiseProductController = require('../controllers/franchiseProductContr
 const { attachUser } = require('../middleware/authMiddleware');
 
 // Get franchise products with filters
-router.get('/', attachUser, franchiseProductController.getAllProducts);
+router.get('/', franchiseProductController.getAllProducts);
 
 // Get franchise categories for chef/product dropdowns
 router.get('/categories', attachUser, franchiseProductController.getCategories);
