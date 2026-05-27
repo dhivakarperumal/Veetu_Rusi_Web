@@ -63,34 +63,30 @@ const Shop = ({ defaultCategory = "" }) => {
 
   /* ─── Fetch Products ─────────────────────────────────────────── */
   const fetchProducts = async () => {
-    try {
-      const res = await api.get("/products");
-
-      const myProducts = res.data.filter(
-        (product) =>
-          product.created_by_user_id === homeChef?.created_by_user_id
-      );
-
-      setProducts(myProducts);
-      setFilteredProducts(myProducts);
     // Use cache if fresh (5 min)
     const isCacheValid = lastFetchTime && Date.now() - lastFetchTime < 5 * 60 * 1000;
     if (isCacheValid && productsCache?.length > 0) {
-      setProducts(productsCache);
-      setFilteredProducts(productsCache);
+      const myProducts = productsCache.filter(
+        (product) => product.created_by_user_id === homeChef?.created_by_user_id
+      );
+      setProducts(myProducts);
+      setFilteredProducts(myProducts);
       setLoading(false);
       return;
     }
 
     try {
       setLoading(true);
-      // Use the franchise-products endpoint (returns only Active products)
       const res = await api.get("/franchise-products");
       const data = Array.isArray(res.data) ? res.data : [];
-      setProducts(data);
-      setFilteredProducts(data);
       setProductsCache(data);
       setLastFetchTime(Date.now());
+      
+      const myProducts = data.filter(
+        (product) => product.created_by_user_id === homeChef?.created_by_user_id
+      );
+      setProducts(myProducts);
+      setFilteredProducts(myProducts);
     } catch (error) {
       console.error("Error fetching products:", error);
       setProducts([]);
