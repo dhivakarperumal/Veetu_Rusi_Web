@@ -60,14 +60,14 @@ export const StoreProvider = ({ children }) => {
         }
 
         const selectedVariant = variant || product.variants?.[0] || null;
-        const selectedSize = size || selectedVariant?.selectedSizes?.[0] || "Free Size";
+        const selectedSize = size || selectedVariant?.weight || selectedVariant?.selectedSizes?.[0] || "Free Size";
         const variantColor = selectedVariant?.colorName || selectedVariant?.color || "Default";
         
         // Correctly parse images if they are stored as JSON strings
         const productImages = typeof product.images === 'string' ? JSON.parse(product.images) : (product.images || []);
         const variantImage = selectedVariant?.images?.[0] || productImages[0] || null;
         
-        const price = parseFloat(product.offer_price || product.price || 0);
+        const price = parseFloat(selectedVariant?.offerPrice || selectedVariant?.salePrice || selectedVariant?.price || product.offer_price || product.price || 0);
 
         try {
             await api.post("/cart", {
@@ -150,14 +150,14 @@ export const StoreProvider = ({ children }) => {
                 toast.error("Removed from favorites");
             } else {
                 const selectedVariant = variant || product.variants?.[0] || null;
-                const selectedSize = size || selectedVariant?.selectedSizes?.[0] || "";
+                const selectedSize = size || selectedVariant?.weight || selectedVariant?.selectedSizes?.[0] || "";
                 const variantColor = selectedVariant?.colorName || selectedVariant?.color || "";
                 
                 // Correctly parse images if they are stored as JSON strings
                 const productImages = typeof product.images === 'string' ? JSON.parse(product.images) : (product.images || []);
                 const variantImage = selectedVariant?.images?.[0] || productImages[0] || null;
                 
-                const price = parseFloat(product.offer_price || product.price || 0);
+                const price = parseFloat(selectedVariant?.offerPrice || selectedVariant?.salePrice || selectedVariant?.price || product.offer_price || product.price || 0);
 
                 await api.post("/wishlist", {
                     user_id: user.user_id,

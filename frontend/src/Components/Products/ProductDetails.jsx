@@ -91,7 +91,7 @@ const ProductDetails = () => {
 
   const fetchProduct = async () => {
     try {
-      const res = await api.get(`/products/${id}`);
+      const res = await api.get(`/franchise-products/${id}`);
       const data = res.data;
       if (!data) throw new Error("Product data not found");
 
@@ -102,12 +102,20 @@ const ProductDetails = () => {
         const firstVariant = data.variants[0];
         // Parse variant images if they are JSON strings
         if (typeof firstVariant.images === 'string') {
-          firstVariant.images = JSON.parse(firstVariant.images);
+          try { firstVariant.images = JSON.parse(firstVariant.images); } catch { firstVariant.images = []; }
+        }
+
+        // Fallback: if variant has no images, use top-level product images
+        if (!firstVariant.images?.length && data.images?.length > 0) {
+          firstVariant.images = data.images;
         }
 
         setSelectedVariant(firstVariant);
         setSelectedImage(resolveImageUrl(firstVariant.images?.[0]));
         setSelectedSize(firstVariant.selectedSizes?.[0] || null);
+      } else if (data.images?.length > 0) {
+        // No variants — use top-level product images directly
+        setSelectedImage(resolveImageUrl(data.images[0]));
       }
     } catch (error) {
       console.error(error);
@@ -345,15 +353,19 @@ const ProductDetails = () => {
           </div>
           {/* Thumbnails */}
           <div className="flex gap-2 sm:gap-3 mt-3 sm:mt-4 flex-wrap">
-            {selectedVariant?.images?.map((img, index) => (
-              <img
-                key={index}
-                src={img}
-                onClick={() => setSelectedImage(img)}
-                className={`w-14 h-14 sm:w-18 sm:h-20 sm:h-16 object-cover object-top rounded-lg cursor-pointer border ${selectedImage === img ? "border-primary" : "border-gray-200"
+            {selectedVariant?.images?.map((img, index) => {
+              const resolvedImg = resolveImageUrl(img);
+              return (
+                <img
+                  key={index}
+                  src={resolvedImg}
+                  onClick={() => setSelectedImage(resolvedImg)}
+                  className={`w-14 h-14 sm:w-18 sm:h-20 sm:h-16 object-cover object-top rounded-lg cursor-pointer border ${
+                    selectedImage === resolvedImg ? "border-primary" : "border-gray-200"
                   }`}
-              />
-            ))}
+                />
+              );
+            })}
           </div>
         </div>
 
@@ -404,56 +416,88 @@ const ProductDetails = () => {
 
           <div className="flex items-center gap-3 mt-4">
             <span className="text-2xl sm:text-3xl font-bold text-primary">
-              ₹{product.offer_price}
+              ₹{selectedVariant?.offerPrice || selectedVariant?.salePrice || selectedVariant?.price || product.offer_price || product.price || 0}
             </span>
 
-            {product.mrp && (
+            {(selectedVariant?.mrp || product.mrp) && (
               <span className="text-gray-400 line-through text-lg">
-                ₹{product.mrp}
+                ₹{selectedVariant?.mrp || product.mrp}
               </span>
             )}
 
-            {product.offer && (
+            {(selectedVariant?.offerPercent || product.offer) && (
               <span className="bg-primary/10 text-primary text-sm px-2 py-1 rounded">
-                {Math.floor(product.offer)}% OFF
+                {Math.floor(selectedVariant?.offerPercent || product.offer)}% OFF
               </span>
             )}
           </div>
 
-          <div className="mt-6">
-            <p className="font-semibold mb-3">Color</p>
+          {product?.variants?.some(v => v.colorName) && (
+            <div className="mt-6">
+              <p className="font-semibold mb-3">Color</p>
 
-            <div className="flex gap-3 flex-wrap">
-              {product?.variants?.map((variant, index) => (
-                <div
-                  key={index}
-                  onClick={() => {
-                    setSelectedVariant(variant);
-                    setSelectedImage(variant.images?.[0]);
-                    setSelectedSize(variant.selectedSizes?.[0] || null);
-                    setQuantity(1);
-                  }}
-                  className="flex flex-col items-center cursor-pointer"
-                >
-                  {/* variant image */}
-                  <img
-                    src={resolveImageUrl(variant.images?.[0])}
-                    alt={variant.colorName}
-                    className={`w-16 h-16 object-cover object-top rounded-lg border-2 ${selectedVariant?.color === variant.color
-                      ? "border-primary"
-                      : "border-gray-200"
-                      }`}
-                  />
+              <div className="flex gap-3 flex-wrap">
+                {product?.variants?.map((variant, index) => (
+                  <div
+                    key={index}
+                    onClick={() => {
+                      const parsed = typeof variant.images === 'string'
+                        ? (() => { try { return JSON.parse(variant.images); } catch { return []; } })()
+                        : (variant.images || []);
+                      const variantWithParsed = { ...variant, images: parsed };
+                      setSelectedVariant(variantWithParsed);
+                      setSelectedImage(resolveImageUrl(parsed?.[0]));
+                      setSelectedSize(variant.selectedSizes?.[0] || null);
+                      setQuantity(1);
+                    }}
+                    className="flex flex-col items-center cursor-pointer"
+                  >
+                    {/* variant image */}
+                    <img
+                      src={resolveImageUrl(variant.images?.[0])}
+                      alt={variant.colorName}
+                      className={`w-16 h-16 object-cover object-top rounded-lg border-2 ${selectedVariant?.color === variant.color
+                        ? "border-primary"
+                        : "border-gray-200"
+                        }`}
+                    />
 
-                  {/* color name */}
-                  <span className="text-xs mt-1">{variant.colorName}</span>
-                </div>
-              ))}
+                    {/* color name */}
+                    <span className="text-xs mt-1">{variant.colorName}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* WEIGHT VARIANTS */}
+          {product?.variants?.some(v => v.weight) && (
+            <div className="mt-6">
+              <p className="font-semibold mb-3">Weight Options</p>
+              <div className="flex gap-3 flex-wrap">
+                {product?.variants?.map((variant, index) => (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      setSelectedVariant(variant);
+                      setSelectedSize(variant.weight);
+                      setQuantity(1);
+                    }}
+                    className={`px-4 py-2 rounded-lg border text-sm font-semibold transition
+                      ${(selectedSize === variant.weight || selectedVariant?.weight === variant.weight)
+                        ? "bg-primary text-white border-primary"
+                        : "border-gray-300 hover:border-primary"
+                      }`}
+                  >
+                    {variant.weight}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="mt-6">
-            {!(selectedVariant?.selectedSizes?.length === 1 && selectedVariant?.selectedSizes[0].toLowerCase() === "free size") && (
+            {!(selectedVariant?.selectedSizes?.length === 1 && selectedVariant?.selectedSizes[0].toLowerCase() === "free size") && selectedVariant?.selectedSizes?.length > 0 && (
               <>
                 <p className="font-semibold mb-3">Sizes</p>
 

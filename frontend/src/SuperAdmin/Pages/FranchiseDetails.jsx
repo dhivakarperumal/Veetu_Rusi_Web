@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../../api";
 import { toast } from "react-hot-toast";
-import { Landmark, MapPin, UserCheck, Clock, List, KeyRound, Copy, X, CheckCircle, ChevronLeft, ShieldAlert, BadgeCheck, Phone, Mail, Trash2, Edit3, ShieldCheck, ShoppingCart } from "lucide-react";
+import { Landmark, MapPin, UserCheck, Clock, List, KeyRound, Copy, X, CheckCircle, ChevronLeft, ShieldAlert, BadgeCheck, Phone, Mail, Trash2, Edit3, ShieldCheck, ShoppingCart, Package } from "lucide-react";
 
 const FranchiseDetails = () => {
   const { id } = useParams();
@@ -16,6 +16,9 @@ const FranchiseDetails = () => {
   const [linkedDeliveryPartners, setLinkedDeliveryPartners] = useState([]);
   const [linkedOrderCount, setLinkedOrderCount] = useState(0);
   const [linkedOrders, setLinkedOrders] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [productsError, setProductsError] = useState(null);
   const [activeDetailTab, setActiveDetailTab] = useState("franchise");
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [plans, setPlans] = useState([]);
@@ -160,6 +163,31 @@ const FranchiseDetails = () => {
     fetch();
   }, [id]);
 
+  const fetchProducts = async () => {
+    if (!franchise) return;
+    setLoadingProducts(true);
+    setProductsError(null);
+    try {
+      const params = {};
+      if (franchise.franchise_id) params.franchise_id = franchise.franchise_id;
+      if (franchise.franch_user_id) params.franchise_user_id = franchise.franch_user_id;
+      const res = await api.get('/franchise-products', { params });
+      const data = res.data;
+      setProducts(Array.isArray(data) ? data : Array.isArray(data.products) ? data.products : []);
+    } catch (err) {
+      setProductsError('Failed to load franchise products.');
+      setProducts([]);
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeDetailTab === 'products') {
+      fetchProducts();
+    }
+  }, [activeDetailTab, franchise]);
+
   if (loading) return (
     <div className="flex h-screen items-center justify-center bg-slate-50">
       <div className="flex flex-col items-center gap-4">
@@ -271,6 +299,7 @@ const FranchiseDetails = () => {
               { id: 'franchise', icon: Landmark, label: 'Franchise & Owner' },
               { id: 'homechefs', icon: List, label: 'Home Chefs' },
               { id: 'deliverypartners', icon: MapPin, label: 'Delivery Partners' },
+              { id: 'products', icon: Package, label: 'Our Products' },
               { id: 'orders', icon: ShoppingCart, label: 'Orders' },
               { id: 'subscription', icon: Clock, label: 'Subscription' },
               { id: 'credentials', icon: KeyRound, label: 'Credentials & Access' },
@@ -522,50 +551,59 @@ const FranchiseDetails = () => {
               </div>
             )}
 
-            {/* DELIVERY PARTNERS LIST */}
-            {activeDetailTab === 'deliverypartners' && (
+            {/* OUR PRODUCTS LIST */}
+            {activeDetailTab === 'products' && (
               <div className="animate-in slide-in-from-right-4 fade-in duration-300">
                 <div className="mb-6 flex items-center justify-between border-b border-slate-100 pb-4">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-600"><MapPin className="h-5 w-5" /></div>
-                    <h3 className="text-xl font-black text-slate-800">Linked Delivery Partners</h3>
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-100 text-cyan-600"><Package className="h-5 w-5" /></div>
+                    <h3 className="text-xl font-black text-slate-800">Our Products</h3>
                   </div>
-                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500">{linkedDeliveryPartners.length} Total</span>
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500">{products.length} items</span>
                 </div>
 
-                {linkedDeliveryPartners.length > 0 ? (
+                {loadingProducts ? (
+                  <div className="flex flex-col items-center justify-center rounded-[2rem] border border-slate-200 bg-slate-50 py-20 text-center">
+                    <div className="h-12 w-12 rounded-full border-4 border-cyan-500 border-t-transparent animate-spin mb-4"></div>
+                    <p className="text-sm font-black uppercase tracking-widest text-slate-500">Loading products...</p>
+                  </div>
+                ) : productsError ? (
+                  <div className="rounded-[2rem] border border-rose-200 bg-rose-50 p-8 text-center text-rose-700">
+                    <p className="font-bold">{productsError}</p>
+                  </div>
+                ) : products.length > 0 ? (
                   <div className="overflow-hidden rounded-2xl border border-slate-200">
                     <div className="overflow-x-auto">
                       <table className="w-full text-left text-sm">
                         <thead className="bg-slate-50">
                           <tr>
-                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Partner Details</th>
-                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Contact</th>
-                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Vehicle</th>
-                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs text-center">Status</th>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Product</th>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Category</th>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Price</th>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Status</th>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Added</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 bg-white">
-                          {linkedDeliveryPartners.map((partner) => (
-                            <tr key={partner.id} className="hover:bg-slate-50/50 transition-colors group">
+                          {products.map((product) => (
+                            <tr key={product.id || product.catId || product.product_code} className="hover:bg-slate-50/50 transition-colors group">
                               <td className="px-6 py-4">
-                                <p className="font-bold text-slate-800">{partner.name || 'Unnamed'}</p>
-                                <p className="text-xs text-slate-500 mt-0.5">{partner.city ? `${partner.city}, ${partner.state}` : 'Location unknown'}</p>
+                                <div className="flex items-center gap-3">
+                                  <div className="h-10 w-10 rounded-2xl bg-slate-100 grid place-items-center text-slate-600 font-bold">{String(product.name || '').charAt(0).toUpperCase() || 'P'}</div>
+                                  <div>
+                                    <p className="font-bold text-slate-800">{product.name || product.catId || 'Unnamed Product'}</p>
+                                    <p className="text-xs text-slate-500">{product.franchise_id ? 'Franchise item' : 'Catalog item'}</p>
+                                  </div>
+                                </div>
                               </td>
+                              <td className="px-6 py-4 text-slate-600">{product.category || product.subcategory || 'N/A'}</td>
+                              <td className="px-6 py-4 font-bold text-slate-800">₹{product.mrp ?? product.price ?? '0'}</td>
                               <td className="px-6 py-4">
-                                <p className="font-medium text-slate-700">{partner.mobile || '—'}</p>
-                                <p className="text-xs text-slate-400 mt-0.5 truncate max-w-[150px]">{partner.email || '—'}</p>
-                              </td>
-                              <td className="px-6 py-4">
-                                <span className="inline-flex items-center rounded-lg bg-slate-100 px-2 py-1 text-xs font-mono font-bold text-slate-600">
-                                  {partner.vehicle_number || partner.vehicle_type || '—'}
+                                <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${product.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : product.status === 'Low Stock' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}`}>
+                                  {product.status || 'Unknown'}
                                 </span>
                               </td>
-                              <td className="px-6 py-4 text-center">
-                                <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${partner.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                                  {partner.status || 'Pending'}
-                                </span>
-                              </td>
+                              <td className="px-6 py-4 text-slate-500">{new Date(product.created_at || product.createdAt || product.updated_at || Date.now()).toLocaleDateString('en-IN')}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -575,16 +613,16 @@ const FranchiseDetails = () => {
                 ) : (
                   <div className="flex flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-200 bg-slate-50 py-16 text-center">
                     <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-sm mb-4">
-                      <MapPin className="h-8 w-8 text-slate-300" />
+                      <Package className="h-8 w-8 text-slate-300" />
                     </div>
-                    <h4 className="text-lg font-bold text-slate-700">No Partners Linked</h4>
-                    <p className="mt-1 text-sm text-slate-500 max-w-sm">There are no delivery partners assigned to this franchise account yet.</p>
+                    <h4 className="text-lg font-bold text-slate-700">No products found</h4>
+                    <p className="mt-1 text-sm text-slate-500 max-w-sm">This franchise does not have any products listed yet.</p>
                   </div>
                 )}
               </div>
             )}
 
-            {/* ORDERS LIST */}
+            {/* DELIVERY PARTNERS LIST */}
             {activeDetailTab === 'orders' && (
               <div className="animate-in slide-in-from-right-4 fade-in duration-300">
                 <div className="mb-6 flex items-center justify-between border-b border-slate-100 pb-4">

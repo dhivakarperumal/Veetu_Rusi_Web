@@ -112,8 +112,8 @@ exports.getDashboardStats = async (req, res) => {
     const [[{ totalRestaurants }]] = await pool.execute("SELECT COUNT(*) AS totalRestaurants FROM restaurants");
     const [[{ totalHomeChefs }]] = await pool.execute("SELECT COUNT(*) AS totalHomeChefs FROM home_chefs");
     const [[{ totalDeliveryPartners }]] = await pool.execute("SELECT COUNT(*) AS totalDeliveryPartners FROM delivery_partners");
-    const [[{ totalOrders }]] = await pool.execute("SELECT COUNT(*) AS totalOrders FROM orders");
-    const [[{ totalRevenue }]] = await pool.execute("SELECT COALESCE(SUM(amount), 0) AS totalRevenue FROM orders WHERE status = 'Delivered'");
+    const [[{ totalOrders }]] = await pool.execute("SELECT COUNT(*) AS totalOrders FROM Chef_Order");
+    const [[{ totalRevenue }]] = await pool.execute("SELECT COALESCE(SUM(total_amount), 0) AS totalRevenue FROM Chef_Order WHERE status = 'Delivered'");
     const [[{ pendingApprovals }]] = await pool.execute(
       "SELECT (SELECT COUNT(*) FROM restaurants WHERE status = 'Pending') + (SELECT COUNT(*) FROM home_chefs WHERE status = 'Pending') + (SELECT COUNT(*) FROM delivery_partners WHERE status = 'Pending') AS pendingApprovals"
     );
@@ -121,7 +121,7 @@ exports.getDashboardStats = async (req, res) => {
 
     // 2. Mock or computed historical analytics data for charts (recharts)
     // In a fully populated DB, we can query orders grouped by date/status.
-    const [ordersByStatus] = await pool.execute("SELECT status, COUNT(*) AS count, SUM(amount) as revenue FROM orders GROUP BY status");
+    const [ordersByStatus] = await pool.execute("SELECT status, COUNT(*) AS count, SUM(total_amount) as revenue FROM Chef_Order GROUP BY status");
     
     // Fallback/standard chart seeds if DB counts are low
     const dailyOrders = [
@@ -997,7 +997,7 @@ exports.deleteUser = async (req, res) => {
 // ==================== ORDER MANAGEMENT ====================
 exports.getOrders = async (req, res) => {
   try {
-    const [rows] = await pool.execute("SELECT * FROM orders ORDER BY ordered_date DESC");
+    const [rows] = await pool.execute("SELECT * FROM Chef_Order ORDER BY ordered_date DESC");
     res.json(rows);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving orders.', error: error.message });
@@ -1009,7 +1009,7 @@ exports.updateOrder = async (req, res) => {
     const { id } = req.params;
     const { customer_name, restaurant_or_chef, delivery_partner, amount, status } = req.body;
     await pool.execute(
-      "UPDATE orders SET customer_name = ?, restaurant_or_chef = ?, delivery_partner = ?, amount = ?, status = ? WHERE id = ?",
+      "UPDATE Chef_Order SET customer_name = ?, restaurant_or_chef = ?, delivery_partner = ?, total_amount = ?, status = ? WHERE id = ?",
       [customer_name, restaurant_or_chef, delivery_partner, amount, status, id]
     );
     res.json({ message: 'Order updated successfully.' });
@@ -1022,7 +1022,7 @@ exports.patchOrderStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
-    await pool.execute("UPDATE orders SET status = ? WHERE id = ?", [status, id]);
+    await pool.execute("UPDATE Chef_Order SET status = ? WHERE id = ?", [status, id]);
     res.json({ message: `Order status set to ${status}.` });
   } catch (error) {
     res.status(500).json({ message: 'Error patching order status.', error: error.message });
