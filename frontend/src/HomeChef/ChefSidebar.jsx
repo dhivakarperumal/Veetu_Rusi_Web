@@ -40,8 +40,17 @@ import { useAuth } from "../PrivateRouter/AuthContext";
 /* ================= NAV ITEMS ================= */
 const navItems = [
   { path: "/chef", label: "Dashboard", icon: TrendingUp, exact: true },
-  // { path: "/chef/profile", label: "Profile", icon: Users },
-  // { path: "/chef", label: "Dashboard", icon: LayoutDashboard },
+  {
+    path: "/chef/food",
+    label: "Food",
+    icon: Package,
+    children: [
+      { path: "/chef/food/categories/add", label: "Add Category", icon: PlusCircle },
+      { path: "/chef/food/categories", label: "All Categories", icon: List },
+      { path: "/chef/food/add", label: "Add Food", icon: PlusCircle },
+      { path: "/chef/food/all", label: "All Food", icon: Package }
+    ]
+  },
   { path: "/chef/products", label: "All Products", icon: PlusCircle },
   { path: "/chef/categories", label: "Categories", icon: Layers },
   { path: "/chef/recipes", label: "Recipe Details", icon: BookOpen },

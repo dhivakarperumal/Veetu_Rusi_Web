@@ -172,6 +172,10 @@ exports.getProductById = async (req, res) => {
 
 exports.createProduct = async (req, res) => {
     try {
+        // Debug log to help trace calls coming from different branches/clients
+        try {
+            console.log('createProduct called - user:', req.user, 'body keys:', Object.keys(req.body || {}));
+        } catch(e) {}
         const {
             name,
             description,
