@@ -136,10 +136,10 @@ const ChefFoodAll = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-5">
-          <div className="relative overflow-hidden group rounded-2xl p-px bg-gradient-to-br from-blue-500/30 via-cyan-500/20 to-transparent hover:-translate-y-1 transition-all duration-300">
-            <div className="relative bg-gradient-to-br from-[#0f1628] to-[#0a0e1a] rounded-2xl p-6 flex items-center gap-4 h-full">
+          <div className="relative overflow-hidden group rounded-2xl p-px bg-linear-to-br from-blue-500/30 via-cyan-500/20 to-transparent hover:-translate-y-1 transition-all duration-300">
+            <div className="relative bg-linear-to-br from-[#0f1628] to-[#0a0e1a] rounded-2xl p-6 flex items-center gap-4 h-full">
               <div className="absolute -top-6 -right-6 w-28 h-28 bg-blue-600/15 rounded-full blur-2xl pointer-events-none" />
-              <div className="relative shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-700 flex items-center justify-center shadow-lg shadow-blue-700/40">
+              <div className="relative shrink-0 w-14 h-14 rounded-2xl bg-linear-to-br from-blue-600 to-cyan-700 flex items-center justify-center shadow-lg shadow-blue-700/40">
                 <FiBox className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -150,10 +150,10 @@ const ChefFoodAll = () => {
             </div>
           </div>
 
-          <div className="relative overflow-hidden group rounded-2xl p-px bg-gradient-to-br from-emerald-500/40 via-teal-500/20 to-transparent hover:-translate-y-1 transition-all duration-300">
-            <div className="relative bg-gradient-to-br from-[#071a10] to-[#0a0e1a] rounded-2xl p-6 flex items-center gap-4 h-full">
+          <div className="relative overflow-hidden group rounded-2xl p-px bg-linear-to-br from-emerald-500/40 via-teal-500/20 to-transparent hover:-translate-y-1 transition-all duration-300">
+            <div className="relative bg-linear-to-br from-[#071a10] to-[#0a0e1a] rounded-2xl p-6 flex items-center gap-4 h-full">
               <div className="absolute -top-6 -right-6 w-28 h-28 bg-emerald-500/20 rounded-full blur-2xl pointer-events-none" />
-              <div className="relative shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-600/40">
+              <div className="relative shrink-0 w-14 h-14 rounded-2xl bg-linear-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-600/40">
                 <FiCheckCircle className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -164,10 +164,10 @@ const ChefFoodAll = () => {
             </div>
           </div>
 
-          <div className="relative overflow-hidden group rounded-2xl p-px bg-gradient-to-br from-amber-500/40 via-orange-500/20 to-transparent hover:-translate-y-1 transition-all duration-300">
-            <div className="relative bg-gradient-to-br from-[#1a1004] to-[#0a0e1a] rounded-2xl p-6 flex items-center gap-4 h-full">
+          <div className="relative overflow-hidden group rounded-2xl p-px bg-linear-to-br from-amber-500/40 via-orange-500/20 to-transparent hover:-translate-y-1 transition-all duration-300">
+            <div className="relative bg-linear-to-br from-[#1a1004] to-[#0a0e1a] rounded-2xl p-6 flex items-center gap-4 h-full">
               <div className="absolute -top-6 -right-6 w-28 h-28 bg-amber-500/20 rounded-full blur-2xl pointer-events-none" />
-              <div className="relative shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-600/40">
+              <div className="relative shrink-0 w-14 h-14 rounded-2xl bg-linear-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-600/40">
                 <FiAlertCircle className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -178,10 +178,10 @@ const ChefFoodAll = () => {
             </div>
           </div>
 
-          <div className="relative overflow-hidden group rounded-2xl p-px bg-gradient-to-br from-rose-500/40 via-red-500/20 to-transparent hover:-translate-y-1 transition-all duration-300">
-            <div className="relative bg-gradient-to-br from-[#1a0a0a] to-[#0a0e1a] rounded-2xl p-6 flex items-center gap-4 h-full">
+          <div className="relative overflow-hidden group rounded-2xl p-px bg-linear-to-br from-rose-500/40 via-red-500/20 to-transparent hover:-translate-y-1 transition-all duration-300">
+            <div className="relative bg-linear-to-br from-[#1a0a0a] to-[#0a0e1a] rounded-2xl p-6 flex items-center gap-4 h-full">
               <div className="absolute -top-6 -right-6 w-28 h-28 bg-rose-500/20 rounded-full blur-2xl pointer-events-none" />
-              <div className="relative shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-500 to-red-600 flex items-center justify-center shadow-lg shadow-rose-600/40">
+              <div className="relative shrink-0 w-14 h-14 rounded-2xl bg-linear-to-br from-rose-500 to-red-600 flex items-center justify-center shadow-lg shadow-rose-600/40">
                 <FiXCircle className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -326,7 +326,7 @@ const ChefFoodAll = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredFoods.map((item) => (
                 <div key={item.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden group hover:shadow-xl transition-all flex flex-col">
-                  <div className="relative aspect-[4/5] overflow-hidden bg-gray-100">
+                  <div className="relative aspect-4/5 overflow-hidden bg-gray-100">
                     <img
                       src={getFoodImage(item)}
                       alt={item.name}
