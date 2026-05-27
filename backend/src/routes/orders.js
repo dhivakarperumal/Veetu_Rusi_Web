@@ -50,6 +50,56 @@ router.post('/', verifyToken, async (req, res) => {
       franchise_user_id, franchise_user_name, franchise_user_email
     } = req.body;
 
+    let final_franchise_user_id = franchise_user_id || null;
+    let final_franchise_user_name = franchise_user_name || null;
+    let final_franchise_user_email = franchise_user_email || null;
+
+    if (!final_franchise_user_id && items && items.length > 0) {
+      const firstProductId = items[0].product_id;
+      if (firstProductId) {
+        let productFranchiseId = null;
+        let productFranchiseName = null;
+        let productFranchiseEmail = null;
+
+        const [products] = await pool.execute(
+          'SELECT franchise_user_id, franchise_name, franchise_email FROM chef_products WHERE id = ?',
+          [firstProductId]
+        );
+        if (products.length > 0) {
+          productFranchiseId = products[0].franchise_user_id;
+          productFranchiseName = products[0].franchise_name;
+          productFranchiseEmail = products[0].franchise_email;
+        } else {
+          const [fProducts] = await pool.execute(
+            'SELECT franchise_user_id, franchise_name, franchise_email FROM franchise_products WHERE id = ?',
+            [firstProductId]
+          );
+          if (fProducts.length > 0) {
+            productFranchiseId = fProducts[0].franchise_user_id;
+            productFranchiseName = fProducts[0].franchise_name;
+            productFranchiseEmail = fProducts[0].franchise_email;
+          }
+        }
+
+        if (productFranchiseId) {
+          final_franchise_user_id = productFranchiseId;
+          final_franchise_user_name = productFranchiseName;
+          final_franchise_user_email = productFranchiseEmail;
+
+          if (!final_franchise_user_name || !final_franchise_user_email) {
+            const [franchiseUsers] = await pool.execute(
+              'SELECT full_name, email FROM users WHERE user_id = ? OR id = ? LIMIT 1',
+              [productFranchiseId, productFranchiseId]
+            );
+            if (franchiseUsers.length > 0) {
+              final_franchise_user_name = final_franchise_user_name || franchiseUsers[0].full_name;
+              final_franchise_user_email = final_franchise_user_email || franchiseUsers[0].email;
+            }
+          }
+        }
+      }
+    }
+
     const order_id = 'ORD-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
 
     const [result] = await pool.execute(
@@ -61,7 +111,7 @@ router.post('/', verifyToken, async (req, res) => {
         street_address || null, city || null, district || null, state || null, country || null,
         zip_code || null, payment_method || null, payment_status || 'pending', payment_id || null,
         total_amount, JSON.stringify(items),
-        franchise_user_id || null, franchise_user_name || null, franchise_user_email || null
+        final_franchise_user_id, final_franchise_user_name, final_franchise_user_email
       ]
     );
 
