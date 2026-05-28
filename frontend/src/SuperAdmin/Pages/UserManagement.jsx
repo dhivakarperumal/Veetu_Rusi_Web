@@ -25,6 +25,16 @@ const UserManagement = () => {
 
   const isActiveStatus = (status) => String(status).toLowerCase() === 'active';
 
+  const getRoleStyle = (role) => {
+    const r = String(role || 'user').toLowerCase();
+    if (r === 'superadmin') return 'bg-purple-500/15 text-purple-300 border border-purple-500/25';
+    if (r === 'admin') return 'bg-blue-500/15 text-blue-300 border border-blue-500/25';
+    if (r === 'chef') return 'bg-orange-500/15 text-orange-300 border border-orange-500/25';
+    if (r === 'franchise' || r === 'franchise admin') return 'bg-yellow-500/15 text-yellow-300 border border-yellow-500/25';
+    if (r === 'delivery_partner' || r === 'delivery partner') return 'bg-sky-500/15 text-sky-300 border border-sky-500/25';
+    return 'bg-white/10 text-white/50 border border-white/10';
+  };
+
   const filteredUsers = useMemo(() => {
     const lower = search.trim().toLowerCase();
     if (!lower) return users;
@@ -140,7 +150,7 @@ const UserManagement = () => {
                     </td>
                     <td className="px-6 py-5 text-sm font-bold text-white/60">{u.email}</td>
                     <td className="px-6 py-5 text-sm font-bold text-white/60">{u.phone || "N/A"}</td>
-                    <td className="px-6 py-5 text-sm font-bold uppercase tracking-[0.12em] text-white/60" onDoubleClick={() => { setEditingRole(u.id); setNewRole(u.role || 'user'); }}>
+                    <td className="px-6 py-5" onDoubleClick={() => { setEditingRole(u.id); setNewRole(u.role || 'user'); }}>
                       {editingRole === u.id ? (
                         <div className="flex gap-2">
                           <input
@@ -154,7 +164,9 @@ const UserManagement = () => {
                           <button onClick={() => setEditingRole(null)} className="bg-red-500/20 text-red-400 px-2 py-1 rounded text-xs">Cancel</button>
                         </div>
                       ) : (
-                        u.role?.replace(/_/g, ' ') || 'user'
+                        <span className={`inline-block text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider ${getRoleStyle(u.role)}`}>
+                          {u.role?.replace(/_/g, ' ') || 'user'}
+                        </span>
                       )}
                     </td>
                     <td className="px-6 py-5 text-xs font-bold text-white/40">

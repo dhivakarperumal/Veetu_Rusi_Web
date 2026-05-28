@@ -61,6 +61,16 @@ const UserManagement = () => {
     }
   };
 
+  const getRoleStyle = (role) => {
+    const r = String(role || 'user').toLowerCase();
+    if (r === 'superadmin') return 'bg-purple-100 text-purple-700 border border-purple-200';
+    if (r === 'admin') return 'bg-blue-100 text-blue-700 border border-blue-200';
+    if (r === 'chef') return 'bg-orange-100 text-orange-700 border border-orange-200';
+    if (r === 'franchise' || r === 'franchise admin') return 'bg-yellow-100 text-yellow-700 border border-yellow-200';
+    if (r === 'delivery_partner' || r === 'delivery partner') return 'bg-sky-100 text-sky-700 border border-sky-200';
+    return 'bg-slate-100 text-slate-600 border border-slate-200';
+  };
+
   const handleRoleChange = async (id) => {
     try {
       await api.patch(`/superadmin/users/role/${id}`, { role: newRole });
@@ -237,9 +247,9 @@ const UserManagement = () => {
                                                   <button onClick={() => setEditingRole(null)} className="bg-rose-100 text-rose-700 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm border border-rose-200 hover:bg-rose-200">Cancel</button>
                                               </div>
                                           ) : (
-                                              <p className="text-sm font-bold uppercase tracking-wider text-slate-600">
+                                              <span className={`inline-block text-[9px] font-black px-2.5 py-1.5 rounded-lg uppercase tracking-wider ${getRoleStyle(u.role)}`}>
                                                   {u.role?.replace(/_/g, ' ') || 'user'}
-                                              </p>
+                                              </span>
                                           )}
                                       </td>
                                       <td className="px-6 py-5">
