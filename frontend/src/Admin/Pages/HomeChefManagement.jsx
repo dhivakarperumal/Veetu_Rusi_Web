@@ -99,11 +99,12 @@ const emptyForm = {
 
 const tabs = [
   { id: "basic", label: "Basic Info" },
-  { id: "address", label: "Contact & Address Details" },
+  { id: "address", label: "Address Details" },
   { id: "kitchen", label: "Kitchen Info" },
   { id: "food", label: "Food & Specialty" },
   { id: "availability", label: "Availability" },
   { id: "kyc", label: "Verification & KYC" },
+  { id: "documents", label: "Upload Documents KYC" },
   { id: "account", label: "Account & Status" },
 ];
 
@@ -1466,6 +1467,14 @@ const HomeChefManagement = () => {
                       />
                     </div>
 
+                    
+                  </div>
+                )}
+
+
+                 {activeFormTab === "documents" && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   
                     {renderFileField(
                       "aadhaar_front_url",
                       "Aadhaar Front Image",
@@ -1506,6 +1515,19 @@ const HomeChefManagement = () => {
 
                 {activeFormTab === "account" && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                  <div>
+                      <label className={lbl}>Username</label>
+                      <input
+                        type="text"
+                        value={form.username}
+                        onChange={(e) =>
+                          setForm({ ...form, username: e.target.value })
+                        }
+                        placeholder="Username"
+                        className={inp}
+                      />
+                    </div>
                     <div>
                       <label className={lbl}>Mobile Number *</label>
                       <input
@@ -1519,18 +1541,7 @@ const HomeChefManagement = () => {
                         className={inp}
                       />
                     </div>
-                    <div>
-                      <label className={lbl}>Alternate Mobile Number</label>
-                      <input
-                        type="tel"
-                        value={form.alt_mobile}
-                        onChange={(e) =>
-                          setForm({ ...form, alt_mobile: e.target.value })
-                        }
-                        placeholder="Alternate Mobile Number"
-                        className={inp}
-                      />
-                    </div>
+                   
                     <div>
                       <label className={lbl}>Email Address *</label>
                       <input
@@ -1544,32 +1555,8 @@ const HomeChefManagement = () => {
                         className={inp}
                       />
                     </div>
-                    <div>
-                      <label className={lbl}>Username</label>
-                      <input
-                        type="text"
-                        value={form.username}
-                        onChange={(e) =>
-                          setForm({ ...form, username: e.target.value })
-                        }
-                        placeholder="Username"
-                        className={inp}
-                      />
-                    </div>
-                    <div>
-                      <label className={lbl}>Login Status</label>
-                      <select
-                        value={form.login_status}
-                        onChange={(e) =>
-                          setForm({ ...form, login_status: e.target.value })
-                        }
-                        className={inp}
-                      >
-                        <option value="Active">Active</option>
-                        <option value="Inactive">Inactive</option>
-                        <option value="Blocked">Blocked</option>
-                      </select>
-                    </div>
+                    
+                   
                     <div>
                       <label className={lbl}>
                         Password{" "}
@@ -1598,6 +1585,21 @@ const HomeChefManagement = () => {
                         placeholder="Confirm Password"
                         className={inp}
                       />
+                    </div>
+
+                     <div>
+                      <label className={lbl}>Login Status</label>
+                      <select
+                        value={form.login_status}
+                        onChange={(e) =>
+                          setForm({ ...form, login_status: e.target.value })
+                        }
+                        className={inp}
+                      >
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                        <option value="Blocked">Blocked</option>
+                      </select>
                     </div>
                     <div>
                       <label className={lbl}>Verification Status</label>
@@ -1666,37 +1668,7 @@ const HomeChefManagement = () => {
                       </div>
                     )}
 
-                    <div className="md:col-span-2 flex gap-6 pt-2">
-                      <label className="flex items-center gap-2.5 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={form.otp_verified}
-                          onChange={(e) =>
-                            setForm({ ...form, otp_verified: e.target.checked })
-                          }
-                          className="rounded bg-[#070b13]/60 border border-white/10 text-emerald-600 focus:ring-0 focus:ring-offset-0 w-4.5 h-4.5"
-                        />
-                        <span className="text-xs font-bold uppercase tracking-wider">
-                          OTP Verified
-                        </span>
-                      </label>
-                      <label className="flex items-center gap-2.5 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={form.email_verified}
-                          onChange={(e) =>
-                            setForm({
-                              ...form,
-                              email_verified: e.target.checked,
-                            })
-                          }
-                          className="rounded bg-[#070b13]/60 border border-white/10 text-emerald-600 focus:ring-0 focus:ring-offset-0 w-4.5 h-4.5"
-                        />
-                        <span className="text-xs font-bold uppercase tracking-wider">
-                          Email Verified
-                        </span>
-                      </label>
-                    </div>
+                    
                   </div>
                 )}
               </form>
