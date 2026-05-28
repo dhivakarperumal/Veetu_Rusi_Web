@@ -132,6 +132,47 @@ const createRecipeDetailsTable = async () => {
     }
 };
 
+const createDealersTable = async () => {
+    try {
+        const createTableSQL = `
+        CREATE TABLE IF NOT EXISTS dealers (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            dealer_id VARCHAR(255) UNIQUE,
+            name VARCHAR(255) NOT NULL,
+            contact VARCHAR(255),
+            email VARCHAR(255),
+            phone VARCHAR(50),
+            location VARCHAR(255),
+            status VARCHAR(50) DEFAULT 'Pending',
+            rating DECIMAL(3,1) DEFAULT 0,
+            orders INT DEFAULT 0,
+            image LONGTEXT,
+            details LONGTEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            KEY idx_status (status),
+            KEY idx_location (location)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `;
+
+        await pool.execute(createTableSQL);
+        try { await pool.execute('ALTER TABLE dealers ADD COLUMN dealer_id VARCHAR(255) UNIQUE'); } catch {}
+        try { await pool.execute('ALTER TABLE dealers ADD COLUMN contact VARCHAR(255)'); } catch {}
+        try { await pool.execute('ALTER TABLE dealers ADD COLUMN email VARCHAR(255)'); } catch {}
+        try { await pool.execute('ALTER TABLE dealers ADD COLUMN phone VARCHAR(50)'); } catch {}
+        try { await pool.execute('ALTER TABLE dealers ADD COLUMN location VARCHAR(255)'); } catch {}
+        try { await pool.execute("ALTER TABLE dealers ADD COLUMN status VARCHAR(50) DEFAULT 'Pending'"); } catch {}
+        try { await pool.execute('ALTER TABLE dealers ADD COLUMN rating DECIMAL(3,1) DEFAULT 0'); } catch {}
+        try { await pool.execute('ALTER TABLE dealers ADD COLUMN orders INT DEFAULT 0'); } catch {}
+        try { await pool.execute('ALTER TABLE dealers ADD COLUMN image LONGTEXT'); } catch {}
+        try { await pool.execute('ALTER TABLE dealers ADD COLUMN details LONGTEXT'); } catch {}
+
+        console.log('✓ Dealers table created or already exists');
+    } catch (error) {
+        console.error('✗ Error creating dealers table:', error.message);
+    }
+};
+
     const createFranchiseProductsTable = async () => {
         try {
             const createTableSQL = `
@@ -314,6 +355,7 @@ module.exports = {
     createRecipeDetailsTable,
     createFranchiseProductsTable,
     createChefFoodTable,
-    createSubscriptionPlansTable
-    ,createReviewsTable
+    createSubscriptionPlansTable,
+    createDealersTable,
+    createReviewsTable
 };

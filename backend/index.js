@@ -20,7 +20,8 @@ const preordersRouter = require('./src/routes/preorders');
 const ordersRouter = require('./src/routes/orders');
 const cartRouter = require('./src/routes/cart');
 const wishlistRouter = require('./src/routes/wishlist');
-const { createProductsTable, createRecipeDetailsTable, createFranchiseProductsTable, createChefFoodTable, createSubscriptionPlansTable } = require('./src/config/migrations');
+const dealersRouter = require('./src/routes/dealers');
+const { createProductsTable, createRecipeDetailsTable, createFranchiseProductsTable, createChefFoodTable, createSubscriptionPlansTable, createDealersTable } = require('./src/config/migrations');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -46,6 +47,7 @@ app.use('/api/orders', ordersRouter);
 app.use('/api/chef/recipes', recipesRouter);
 app.use('/api/cart', cartRouter);
 app.use('/api/wishlist', wishlistRouter);
+app.use('/api/dealers', dealersRouter);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
@@ -58,6 +60,7 @@ initDb().then(async () => {
     await createChefFoodTable();
     await createSubscriptionPlansTable();
     await createReviewsTable();
+    await createDealersTable();
   } catch (err) {
     console.error('Migration error:', err.message || err);
   }
