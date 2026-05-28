@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import api from "../../api";
 import { toast } from "react-hot-toast";
-import { Search, Filter, Edit, Eye, Check } from "lucide-react";
+import { Search, Filter, Edit, Check } from "lucide-react";
 
 const OrderManagement = () => {
   const [orders, setOrders] = useState([]);
@@ -21,9 +21,13 @@ const OrderManagement = () => {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const res = await api.get("/superadmin/orders");
-      setOrders(res.data);
-      setFilteredOrders(res.data);
+      const res = await api.get("/user-food-orders/chef");
+      const mapped = res.data.map((order) => ({
+        ...order,
+        restaurant_or_chef: order.chef_name || order.restaurant_or_chef || "Unknown Chef"
+      }));
+      setOrders(mapped);
+      setFilteredOrders(mapped);
     } catch (error) {
       toast.error("Failed to load orders.");
     } finally {
@@ -60,7 +64,7 @@ const OrderManagement = () => {
   const handleUpdateOrder = async (e) => {
     e.preventDefault();
     try {
-      await api.put(`/superadmin/orders/${editingOrder.id}`, editingOrder);
+      await api.put(`/user-food-orders/${editingOrder.id}`, editingOrder);
       toast.success("Order details updated successfully.");
       setIsModalOpen(false);
       fetchOrders();
@@ -71,7 +75,7 @@ const OrderManagement = () => {
 
   const handleStatusQuickChange = async (id, newStatus) => {
     try {
-      await api.patch(`/superadmin/orders/status/${id}`, { status: newStatus });
+      await api.patch(`/user-food-orders/status/${id}`, { status: newStatus });
       toast.success(`Order status changed to ${newStatus}`);
       fetchOrders();
     } catch (error) {
@@ -150,7 +154,7 @@ const OrderManagement = () => {
                     <td className="px-6 py-5 text-sm font-bold text-white/60">{order.customer_name}</td>
                     <td className="px-6 py-5 text-sm font-bold text-white/60">{order.restaurant_or_chef}</td>
                     <td className="px-6 py-5 text-sm font-semibold text-white/50">{order.delivery_partner || "Unassigned"}</td>
-                    <td className="px-6 py-5 text-sm font-black text-white">₹{parseFloat(order.amount).toLocaleString()}</td>
+                    <td className="px-6 py-5 text-sm font-black text-white">₹{parseFloat(order.total_amount || 0).toLocaleString()}</td>
                     <td className="px-6 py-5">
                       <span
                         className={`text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider ${
@@ -269,8 +273,8 @@ const OrderManagement = () => {
                   <label className="text-[10px] text-white/40 font-bold uppercase block mb-2">Order Amount (₹)</label>
                   <input
                     type="number"
-                    value={editingOrder.amount}
-                    onChange={(e) => setEditingOrder({ ...editingOrder, amount: e.target.value })}
+                    value={editingOrder.total_amount}
+                    onChange={(e) => setEditingOrder({ ...editingOrder, total_amount: e.target.value })}
                     className="w-full px-4 py-3 bg-[#070b13]/60 border border-white/5 rounded-2xl outline-none font-medium text-white text-sm focus:border-emerald-500/30"
                   />
                 </div>
