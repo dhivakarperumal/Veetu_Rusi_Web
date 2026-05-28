@@ -54,6 +54,8 @@ const CreateOrder = React.lazy(() => import("./Admin/Pages/CreateOrder.jsx"));
 const VideoManagement = React.lazy(() => import("./Admin/Pages/VideoManagement.jsx"));
 const BannerManagement = React.lazy(() => import("./Admin/Pages/BannerManagement.jsx"));
 const ErrorPage = React.lazy(() => import("./Admin/Pages/ErrorPage.jsx"));
+const FoodOrders = React.lazy(() => import("./Admin/Pages/FoodOrders.jsx"));
+const FoodProducts = React.lazy(() => import("./Admin/Pages/FoodProducts.jsx"));
 
 // Lazy Load SuperAdmin Components
 const SuperAdminPanel = React.lazy(() => import("./SuperAdmin/SuperAdminPanel.jsx"));
@@ -209,6 +211,9 @@ const router = createBrowserRouter([
       { path: "products/stock", element: <StockDetails /> },
       { path: "products/stock/add", element: <AddStock /> },
       { path: "products/:id", element: <ProductDetail /> },
+      // Food-specific
+      { path: "food-orders", element: <FoodOrders /> },
+      { path: "food-products", element: <FoodProducts /> },
       // Orders
       { path: "orders/create", element: <CreateOrder /> },
       { path: "orders/new", element: <Orders statusFilter="Order Placed" /> },
