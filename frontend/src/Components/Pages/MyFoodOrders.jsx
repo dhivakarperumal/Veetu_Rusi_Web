@@ -1,0 +1,265 @@
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../PrivateRouter/AuthContext";
+import api from "../../api";
+import PageHeader from "../CommenComponents/PageHeader";
+import PageContainer from "../CommenComponents/PageContainer";
+import { toast } from "react-hot-toast";
+import { Package, Clock, Calendar, MapPin, User, FileText } from "lucide-react";
+
+const formatDateTime = (value) => {
+  if (!value) return "-";
+  const date = new Date(value);
+  return date.toLocaleString();
+};
+
+const getItemSummary = (items) => {
+  if (!items || !items.length) return "No items";
+  const names = items.map((item) => item.name || item.product_name || "Food item");
+  if (names.length <= 2) return names.join(", ");
+  return `${names.slice(0, 2).join(", ")} +${names.length - 2} more`;
+};
+
+export default function MyFoodOrders() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+
+  useEffect(() => {
+    if (user === null) {
+      navigate("/login");
+      return;
+    }
+
+    const fetchOrders = async () => {
+      if (!user) return;
+      setLoading(true);
+      try {
+        const res = await api.get("/user-food-orders/my-orders");
+        setOrders(res.data || []);
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to load food orders.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, [user, navigate]);
+
+  const openOrder = (order) => {
+    setSelectedOrder(order);
+  };
+
+  const closeDetails = () => {
+    setSelectedOrder(null);
+  };
+
+  return (
+    <>
+      <PageHeader title="My Food Orders" />
+      <div className="min-h-screen bg-slate-50 py-14">
+        <PageContainer>
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-sm uppercase tracking-[0.3em] text-slate-500">Food order history</p>
+                <h2 className="text-3xl font-black text-slate-900">Your food order dashboard</h2>
+              </div>
+              <button
+                onClick={() => navigate("/food-cart")}
+                className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-100 transition"
+              >
+                <Package className="h-4 w-4" />
+                Back to Food Cart
+              </button>
+            </div>
+
+            {loading ? (
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {[1, 2, 3].map((index) => (
+                  <div key={index} className="h-56 rounded-[2rem] bg-white shadow-sm animate-pulse" />
+                ))}
+              </div>
+            ) : orders.length === 0 ? (
+              <div className="rounded-[2rem] border border-dashed border-slate-200 bg-white p-16 text-center text-slate-500">
+                <FileText className="mx-auto mb-4 h-10 w-10 text-slate-300" />
+                <h3 className="text-xl font-semibold text-slate-900">No food orders yet</h3>
+                <p className="mt-2 text-sm text-slate-500">Place your first food order from the food cart to view it here.</p>
+              </div>
+            ) : (
+              <div className="grid gap-6 lg:grid-cols-2">
+                {orders.map((order) => (
+                  <div
+                    key={order.id}
+                    className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+                  >
+                    <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-5 bg-slate-50">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Order ID</p>
+                        <p className="mt-2 text-lg font-bold text-slate-900">{order.order_id}</p>
+                      </div>
+                      <span className={`rounded-full px-3 py-1 text-sm font-semibold ${order.status === "Delivered" ? "bg-emerald-100 text-emerald-700" : order.status === "Pending" ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-700"}`}>
+                        {order.status}
+                      </span>
+                    </div>
+
+                    <div className="space-y-4 px-6 py-5">
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="rounded-3xl bg-slate-50 p-4">
+                          <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Order placed</p>
+                          <p className="mt-2 text-sm font-semibold text-slate-900">{formatDateTime(order.ordered_at)}</p>
+                        </div>
+                        <div className="rounded-3xl bg-slate-50 p-4">
+                          <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Delivery slot</p>
+                          <p className="mt-2 text-sm font-semibold text-slate-900">{order.delivery_date || "-"} {order.delivery_time ? `at ${order.delivery_time}` : ""}</p>
+                        </div>
+                      </div>
+
+                      <div className="rounded-3xl bg-slate-50 p-4">
+                        <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Food items</p>
+                        <p className="mt-2 text-sm font-semibold text-slate-900">{getItemSummary(order.items)}</p>
+                      </div>
+
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="rounded-3xl bg-slate-50 p-4">
+                          <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Total amount</p>
+                          <p className="mt-2 text-lg font-black text-slate-900">₹{parseFloat(order.total_amount || 0).toFixed(2)}</p>
+                        </div>
+                        <div className="rounded-3xl bg-slate-50 p-4">
+                          <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Chef</p>
+                          <p className="mt-2 text-sm font-semibold text-slate-900">{order.chef_name || "Unknown Chef"}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3 border-t border-slate-200 px-6 py-4 bg-white">
+                      <button
+                        onClick={() => openOrder(order)}
+                        className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-white transition hover:bg-primary-dark"
+                      >
+                        <Clock className="h-4 w-4" />
+                        View details
+                      </button>
+                      <button
+                        onClick={() => navigate("/food-cart")}
+                        className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                      >
+                        <Package className="h-4 w-4" />
+                        Back to cart
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </PageContainer>
+      </div>
+
+      {selectedOrder && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 p-4">
+          <div className="mx-auto max-w-4xl overflow-hidden rounded-[2rem] bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
+              <div>
+                <h3 className="text-xl font-black text-slate-900">Order details</h3>
+                <p className="text-sm text-slate-500">Order #{selectedOrder.order_id}</p>
+              </div>
+              <button
+                onClick={closeDetails}
+                className="rounded-full bg-slate-100 p-3 text-slate-700 hover:bg-slate-200"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="grid gap-6 p-6 lg:grid-cols-[1.4fr_0.9fr]">
+              <div className="space-y-6">
+                <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-6">
+                  <h4 className="text-sm uppercase tracking-[0.24em] text-slate-500">Delivery information</h4>
+                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Name</p>
+                      <p className="mt-2 text-sm font-semibold text-slate-900">{selectedOrder.customer_name || selectedOrder.ordered_by_name}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Phone</p>
+                      <p className="mt-2 text-sm font-semibold text-slate-900">{selectedOrder.customer_phone || selectedOrder.ordered_by_phone}</p>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Address</p>
+                      <p className="mt-2 text-sm font-semibold text-slate-900 whitespace-pre-line">
+                        {selectedOrder.street_address || "-"}
+                        {selectedOrder.city ? `\n${selectedOrder.city}` : ""}
+                        {selectedOrder.district ? `, ${selectedOrder.district}` : ""}
+                        {selectedOrder.state ? `, ${selectedOrder.state}` : ""}
+                        {selectedOrder.zip_code ? ` - ${selectedOrder.zip_code}` : ""}
+                        {selectedOrder.country ? `\n${selectedOrder.country}` : ""}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-[1.5rem] border border-slate-200 p-6">
+                  <h4 className="text-sm uppercase tracking-[0.24em] text-slate-500">Items</h4>
+                  <div className="mt-4 space-y-4">
+                    {selectedOrder.items?.map((item, index) => (
+                      <div key={index} className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <p className="font-semibold text-slate-900">{item.name || item.product_name}</p>
+                            <p className="text-sm text-slate-600">Qty {item.quantity} × ₹{item.price}</p>
+                          </div>
+                          <p className="font-semibold text-slate-900">₹{(parseFloat(item.price || 0) * item.quantity).toFixed(2)}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div className="rounded-[1.5rem] bg-slate-50 p-6 shadow-sm">
+                  <h4 className="text-sm uppercase tracking-[0.24em] text-slate-500">Summary</h4>
+                  <div className="mt-6 space-y-4 text-sm text-slate-700">
+                    <div className="flex justify-between">
+                      <span>Order Date</span>
+                      <span>{formatDateTime(selectedOrder.ordered_at)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Delivery Date</span>
+                      <span>{selectedOrder.delivery_date || '-'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Delivery Time</span>
+                      <span>{selectedOrder.delivery_time || '-'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Payment Method</span>
+                      <span>{selectedOrder.payment_method || 'Cash on Delivery'}</span>
+                    </div>
+                    <div className="flex justify-between text-base font-black text-slate-900 pt-4 border-t border-slate-200">
+                      <span>Total</span>
+                      <span>₹{parseFloat(selectedOrder.total_amount || 0).toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
+                  <h4 className="text-sm uppercase tracking-[0.24em] text-slate-500">Chef details</h4>
+                  <div className="mt-4 space-y-3 text-sm text-slate-700">
+                    <p><span className="font-semibold text-slate-900">Chef:</span> {selectedOrder.chef_name || 'N/A'}</p>
+                    <p><span className="font-semibold text-slate-900">Phone:</span> {selectedOrder.chef_phone || 'N/A'}</p>
+                    <p><span className="font-semibold text-slate-900">Email:</span> {selectedOrder.chef_email || 'N/A'}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}

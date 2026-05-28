@@ -300,6 +300,13 @@ const Navbar = () => {
             </Link>
 
             <Link
+              to="/food-orders"
+              className="text-primary hover:text-primary-light hover:scale-110 transition"
+            >
+              <FiFileText size={20} />
+            </Link>
+
+            <Link
               to="/food-cart"
               className="relative text-primary hover:text-primary-light hover:scale-110 transition"
             >

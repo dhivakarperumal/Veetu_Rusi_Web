@@ -27,6 +27,7 @@ const CategoryPage = React.lazy(() => import("./Components/Pages/CategoryPage.js
 const Account = React.lazy(() => import("./Components/Pages/Account/Account.jsx"));
 const TermsAndConditions = React.lazy(() => import("./Components/CommenComponents/TermsAndCondition.jsx"));
 const OrdersMain = React.lazy(() => import("./Components/Home/OrdersMain.jsx"));
+const MyFoodOrders = React.lazy(() => import("./Components/Pages/MyFoodOrders.jsx"));
 const Login = React.lazy(() => import("./Components/Auth/Login.jsx"));
 const Register = React.lazy(() => import("./Components/Auth/Register.jsx"));
 
@@ -113,6 +114,7 @@ const router = createBrowserRouter([
       { path: "/checkout", element: <Checkout /> },
       { path: "/account", element: <Account /> },
       { path: "/ordersmain", element: <OrdersMain /> },
+      { path: "/food-orders", element: <MyFoodOrders /> },
       { path: "/termsandconditions", element: <TermsAndConditions /> },
 
     ],

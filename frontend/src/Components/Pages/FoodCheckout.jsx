@@ -82,7 +82,7 @@ export default function FoodCheckout() {
       });
 
       toast.success("Order placed successfully.");
-      navigate("/ordersmain");
+      navigate("/food-orders");
     } catch (err) {
       toast.error("Unable to place the order. Please try again.");
     } finally {

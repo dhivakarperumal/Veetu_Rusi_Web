@@ -52,7 +52,8 @@ const OrderManagement = () => {
         (o) =>
           o.order_id.toLowerCase().includes(lower) ||
           o.customer_name.toLowerCase().includes(lower) ||
-          o.restaurant_or_chef.toLowerCase().includes(lower)
+          o.restaurant_or_chef.toLowerCase().includes(lower) ||
+          (o.items || []).some((item) => (item.name || item.product_name || "").toLowerCase().includes(lower))
       );
     }
     if (statusFilter !== "All") {
@@ -138,10 +139,11 @@ const OrderManagement = () => {
             <table className="w-full text-left">
               <thead>
                 <tr className="border-b border-white/5 bg-[#070b13]/30">
-                  <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Order ID</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Order ID</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Customer Name</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Restaurant / Chef</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Delivery Partner</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Food Items</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Ordered Date</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Delivery Slot</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Amount</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Status</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em] text-center">Actions</th>
@@ -152,8 +154,22 @@ const OrderManagement = () => {
                   <tr key={order.id} className="hover:bg-white/5 transition-colors">
                     <td className="px-6 py-5 text-sm font-black text-white">{order.order_id}</td>
                     <td className="px-6 py-5 text-sm font-bold text-white/60">{order.customer_name}</td>
-                    <td className="px-6 py-5 text-sm font-bold text-white/60">{order.restaurant_or_chef}</td>
-                    <td className="px-6 py-5 text-sm font-semibold text-white/50">{order.delivery_partner || "Unassigned"}</td>
+                    <td className="px-6 py-5 max-w-[18rem] text-sm text-white/70">
+                      <div className="space-y-1">
+                        {order.items?.slice(0, 2).map((item, idx) => (
+                          <p key={idx} className="truncate">{item.name || item.product_name || "Food item"}</p>
+                        ))}
+                        {order.items && order.items.length > 2 && (
+                          <p className="text-xs text-slate-300">+{order.items.length - 2} more</p>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-5 text-sm font-bold text-white/60">
+                      {order.ordered_at ? new Date(order.ordered_at).toLocaleString() : "-"}
+                    </td>
+                    <td className="px-6 py-5 text-sm font-semibold text-white/50">
+                      {order.delivery_date ? `${order.delivery_date} ${order.delivery_time || ""}` : "-"}
+                    </td>
                     <td className="px-6 py-5 text-sm font-black text-white">₹{parseFloat(order.total_amount || 0).toLocaleString()}</td>
                     <td className="px-6 py-5">
                       <span
