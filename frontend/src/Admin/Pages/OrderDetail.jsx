@@ -408,10 +408,12 @@ const OrderDetail = () => {
                             <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1 rounded-lg">{order.items?.length || 0} Products</span>
                         </div>
                         <div className="divide-y divide-gray-50">
-                            {order.items?.map((item) => (
-                                <div key={item.id} className="p-8 flex flex-col sm:flex-row items-start sm:items-center gap-6 group hover:bg-blue-50/20 transition-all">
-                                    <div className="w-16 h-16 rounded-2xl bg-gray-50 overflow-hidden border border-gray-100 shrink-0 shadow-sm animate-in zoom-in-90 duration-300">
-                                        <img
+                            {order.items?.map((item, index) => {
+                                const orderItemKey = item.id || item.product_id || `${item.product_name || 'item'}-${item.variant_color || 'default'}-${item.variant_size || 'default'}-${index}`;
+                                return (
+                                    <div key={orderItemKey} className="p-8 flex flex-col sm:flex-row items-start sm:items-center gap-6 group hover:bg-blue-50/20 transition-all">
+                                        <div className="w-16 h-16 rounded-2xl bg-gray-50 overflow-hidden border border-gray-100 shrink-0 shadow-sm animate-in zoom-in-90 duration-300">
+                                            <img
                                             src={getProductImage(item)}
                                             alt={item.product_name}
                                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"

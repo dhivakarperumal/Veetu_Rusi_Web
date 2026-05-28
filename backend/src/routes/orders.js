@@ -133,6 +133,7 @@ router.post('/', verifyToken, async (req, res) => {
 // If it fails with 401 we will remove verifyToken from POST.
 
 router.get('/', verifyToken, controller.getOrders);
+router.put('/:id/status', verifyToken, controller.patchOrderStatus);
 
 // GET personal orders for the logged-in user
 router.get('/myorders', verifyToken, async (req, res) => {
