@@ -1,25 +1,22 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import api from "../../api";
 import { toast } from "react-hot-toast";
 import { Search, ShieldAlert, ShieldCheck, Trash2, Users } from "lucide-react";
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
-  const [filteredUsers, setFilteredUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  const [updatingId, setUpdatingId] = useState(null);
+  const [editingRole, setEditingRole] = useState(null);
+  const [newRole, setNewRole] = useState("");
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
       const res = await api.get("/superadmin/users");
       setUsers(res.data);
-      setFilteredUsers(res.data);
-    } catch (error) {
+    } catch {
       toast.error("Failed to load user accounts.");
     } finally {
       setLoading(false);
@@ -28,31 +25,33 @@ const UserManagement = () => {
 
   const isActiveStatus = (status) => String(status).toLowerCase() === 'active';
 
-  useEffect(() => {
-    if (search.trim()) {
-      const lower = search.toLowerCase();
-      setFilteredUsers(
-        users.filter(
-          (u) =>
-            u.name.toLowerCase().includes(lower) ||
-            u.email.toLowerCase().includes(lower) ||
-            (u.phone && u.phone.includes(lower)) ||
-            (u.role && u.role.toLowerCase().includes(lower))
-        )
-      );
-    } else {
-      setFilteredUsers(users);
-    }
+  const filteredUsers = useMemo(() => {
+    const lower = search.trim().toLowerCase();
+    if (!lower) return users;
+    return users.filter(
+      (u) =>
+        u.name.toLowerCase().includes(lower) ||
+        u.email.toLowerCase().includes(lower) ||
+        (u.phone && u.phone.includes(lower)) ||
+        (u.role && u.role.toLowerCase().includes(lower))
+    );
   }, [search, users]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   const handleToggleStatus = async (id, currentActive) => {
     const nextActive = isActiveStatus(currentActive) ? 0 : 1;
     try {
+      setUpdatingId(id);
       await api.patch(`/superadmin/users/status/${id}`, { active: nextActive });
       toast.success(`User status changed successfully.`);
       fetchUsers();
-    } catch (error) {
+    } catch {
       toast.error("Failed to change user status.");
+    } finally {
+      setUpdatingId(null);
     }
   };
 
@@ -62,8 +61,22 @@ const UserManagement = () => {
       await api.delete(`/superadmin/users/${id}`);
       toast.success("User account deleted.");
       fetchUsers();
-    } catch (error) {
+    } catch {
       toast.error("Failed to delete user account.");
+    }
+  };
+
+  const handleRoleChange = async (id) => {
+    try {
+      setUpdatingId(id);
+      await api.patch(`/superadmin/users/role/${id}`, { role: newRole });
+      toast.success("User role updated successfully.");
+      setEditingRole(null);
+      fetchUsers();
+    } catch {
+      toast.error("Failed to update user role.");
+    } finally {
+      setUpdatingId(null);
     }
   };
 
@@ -127,35 +140,56 @@ const UserManagement = () => {
                     </td>
                     <td className="px-6 py-5 text-sm font-bold text-white/60">{u.email}</td>
                     <td className="px-6 py-5 text-sm font-bold text-white/60">{u.phone || "N/A"}</td>
-                    <td className="px-6 py-5 text-sm font-bold uppercase tracking-[0.12em] text-white/60">{u.role?.replace(/_/g, ' ') || 'user'}</td>
+                    <td className="px-6 py-5 text-sm font-bold uppercase tracking-[0.12em] text-white/60" onDoubleClick={() => { setEditingRole(u.id); setNewRole(u.role || 'user'); }}>
+                      {editingRole === u.id ? (
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={newRole}
+                            onChange={(e) => setNewRole(e.target.value)}
+                            className="bg-white/10 border border-white/20 rounded px-2 py-1 text-white text-xs w-24 outline-none"
+                            autoFocus
+                          />
+                          <button onClick={() => handleRoleChange(u.id)} className="bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded text-xs">Save</button>
+                          <button onClick={() => setEditingRole(null)} className="bg-red-500/20 text-red-400 px-2 py-1 rounded text-xs">Cancel</button>
+                        </div>
+                      ) : (
+                        u.role?.replace(/_/g, ' ') || 'user'
+                      )}
+                    </td>
                     <td className="px-6 py-5 text-xs font-bold text-white/40">
                       {new Date(u.created_at).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-5">
                       {(() => {
-                        const isActive = String(u.active).toLowerCase() === 'active';
+                        const isActive = isActiveStatus(u.active);
                         return (
-                          <span
-                            className={`text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider ${
+                          <button
+                            type="button"
+                            onDoubleClick={() => handleToggleStatus(u.id, u.active)}
+                            disabled={updatingId === u.id}
+                            className={`text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider transition-colors ${
                               isActive
-                                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                                : "bg-red-500/10 text-red-400 border border-red-500/20"
+                                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/15"
+                                : "bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/15"
                             }`}
+                            title="Double click to toggle status"
                           >
-                            {isActive ? "Active" : "Blocked"}
-                          </span>
+                            {updatingId === u.id ? "Updating..." : isActive ? "Active" : "Inactive"}
+                          </button>
                         );
                       })()}
                     </td>
                     <td className="px-6 py-5">
                       <div className="flex items-center justify-center gap-2">
                         {(() => {
-                          const isActive = String(u.active).toLowerCase() === 'active';
+                          const isActive = isActiveStatus(u.active);
                           return isActive ? (
                             <button
                               onClick={() => handleToggleStatus(u.id, u.active)}
                               className="p-2 hover:bg-red-500/10 text-red-400 rounded-xl transition"
                               title="Block User"
+                              disabled={updatingId === u.id}
                             >
                               <ShieldAlert className="w-4 h-4" />
                             </button>
@@ -164,6 +198,7 @@ const UserManagement = () => {
                               onClick={() => handleToggleStatus(u.id, u.active)}
                               className="p-2 hover:bg-emerald-500/10 text-emerald-400 rounded-xl transition"
                               title="Unblock User"
+                              disabled={updatingId === u.id}
                             >
                               <ShieldCheck className="w-4 h-4" />
                             </button>
@@ -173,6 +208,7 @@ const UserManagement = () => {
                           onClick={() => handleDelete(u.id)}
                           className="p-2 hover:bg-red-500/10 text-red-400 rounded-xl transition"
                           title="Delete User"
+                          disabled={updatingId === u.id}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>

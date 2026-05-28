@@ -1005,11 +1005,22 @@ exports.patchUserStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { active } = req.body; // 1 for active, 0 for blocked
-    const statusVal = active ? 'Active' : 'Blocked';
+    const statusVal = active ? 'Active' : 'Inactive';
     await pool.execute("UPDATE users SET status = ? WHERE id = ?", [statusVal, id]);
-    res.json({ message: `User status changed to ${active ? 'Active' : 'Blocked'}.` });
+    res.json({ message: `User status changed to ${active ? 'Active' : 'Inactive'}.` });
   } catch (error) {
     res.status(500).json({ message: 'Error changing user status.', error: error.message });
+  }
+};
+
+exports.patchUserRole = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { role } = req.body;
+    await pool.execute("UPDATE users SET role = ? WHERE id = ?", [role, id]);
+    res.json({ message: `User role changed to ${role}.` });
+  } catch (error) {
+    res.status(500).json({ message: 'Error changing user role.', error: error.message });
   }
 };
 
