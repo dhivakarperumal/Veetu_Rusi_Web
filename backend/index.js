@@ -21,7 +21,7 @@ const ordersRouter = require('./src/routes/orders');
 const cartRouter = require('./src/routes/cart');
 const wishlistRouter = require('./src/routes/wishlist');
 const dealersRouter = require('./src/routes/dealers');
-const { createProductsTable, createRecipeDetailsTable, createFranchiseProductsTable, createChefFoodTable, createSubscriptionPlansTable, createDealersTable, createUserFoodCartTable } = require('./src/config/migrations');
+const { createProductsTable, createRecipeDetailsTable, createFranchiseProductsTable, createChefFoodTable, createSubscriptionPlansTable, createDealersTable, createUserFoodCartTable, createChefFoodCategoryTable, createChefCategoryTable, createFranchiseCategoryTable } = require('./src/config/migrations');
 const userFoodRouter = require('./src/routes/userFood');
 
 const app = express();
@@ -64,6 +64,9 @@ initDb().then(async () => {
     await createReviewsTable();
     await createUserFoodCartTable();
     await createDealersTable();
+    await createChefFoodCategoryTable();
+    await createChefCategoryTable();
+    await createFranchiseCategoryTable();
   } catch (err) {
     console.error('Migration error:', err.message || err);
   }

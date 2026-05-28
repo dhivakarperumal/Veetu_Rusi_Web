@@ -57,9 +57,9 @@ const resolveProductMetadata = async (req, body) => {
     let homeChef = null;
     if (candidateChefId || candidateEmail || candidatePhone) {
         const [rows] = await pool.execute(
-            `SELECT hc.*, u.id AS user_id, u.user_id AS user_user_id, u.name AS user_name, u.phone AS user_phone, u.email AS user_email
+            `SELECT hc.*, u.id AS user_id, u.user_id AS user_user_id, u.full_name AS user_name, u.mobile_number AS user_phone, u.email AS user_email
              FROM home_chefs hc
-             LEFT JOIN users u ON (u.email = hc.email OR u.phone = hc.mobile)
+             LEFT JOIN users u ON (u.email = hc.email OR u.mobile_number = hc.mobile)
              WHERE hc.chef_id = ?
                 OR hc.email = ?
                 OR hc.mobile = ?
@@ -85,7 +85,7 @@ const resolveProductMetadata = async (req, body) => {
 
     if (finalFranchiseUserId) {
         const [franchiseUsers] = await pool.execute(
-            'SELECT id, user_id, name, phone, email FROM users WHERE id = ? OR user_id = ? LIMIT 1',
+            'SELECT id, user_id, full_name AS name, mobile_number AS phone, email FROM users WHERE id = ? OR user_id = ? LIMIT 1',
             [finalFranchiseUserId, finalFranchiseUserId]
         );
         if (franchiseUsers.length > 0) {

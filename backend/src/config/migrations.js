@@ -401,6 +401,122 @@ const createSubscriptionPlansTable = async () => {
         }
     };
 
+    const createChefFoodCategoryTable = async () => {
+        try {
+            const sql = `
+            CREATE TABLE IF NOT EXISTS cheffoodcategorytable (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                catId VARCHAR(50) UNIQUE,
+                name VARCHAR(255) NOT NULL,
+                description LONGTEXT,
+                category_image LONGTEXT,
+                images LONGTEXT,
+                subcategory LONGTEXT,
+
+                chef_id VARCHAR(255),
+                chef_user_id VARCHAR(255),
+                chef_name VARCHAR(255),
+                chef_phone VARCHAR(20),
+                chef_email VARCHAR(255),
+
+                franchise_id VARCHAR(255),
+                franchise_user_id VARCHAR(255),
+                franchise_name VARCHAR(255),
+                franchise_email VARCHAR(255),
+                franchise_phone VARCHAR(20),
+
+                created_by_user_id VARCHAR(255),
+                created_by_email VARCHAR(255),
+                created_by_name VARCHAR(255),
+                created_by_phone VARCHAR(20),
+
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+                KEY idx_catId (catId),
+                KEY idx_chef_user_id (chef_user_id),
+                KEY idx_franchise_user_id (franchise_user_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            `;
+
+            await pool.execute(sql);
+            console.log('✓ cheffoodcategorytable created or already exists');
+        } catch (err) {
+            console.error('✗ Error creating cheffoodcategorytable:', err.message || err);
+        }
+    };
+
+    const createChefCategoryTable = async () => {
+        try {
+            const sql = `
+            CREATE TABLE IF NOT EXISTS chef_category (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                catId VARCHAR(50) UNIQUE,
+                name VARCHAR(255) NOT NULL,
+                description LONGTEXT,
+                category_image LONGTEXT,
+                images LONGTEXT,
+                subcategory LONGTEXT,
+
+                chef_id VARCHAR(255),
+                chef_user_id VARCHAR(255),
+                chef_name VARCHAR(255),
+                chef_phone VARCHAR(20),
+                chef_email VARCHAR(255),
+
+                created_by_user_id VARCHAR(255),
+                created_by_email VARCHAR(255),
+                created_by_name VARCHAR(255),
+                created_by_phone VARCHAR(20),
+
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+                KEY idx_catId (catId),
+                KEY idx_chef_user_id (chef_user_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            `;
+
+            await pool.execute(sql);
+            console.log('✓ chef_category table created or already exists');
+        } catch (err) {
+            console.error('✗ Error creating chef_category table:', err.message || err);
+        }
+    };
+
+    const createFranchiseCategoryTable = async () => {
+        try {
+            const sql = `
+            CREATE TABLE IF NOT EXISTS franchise_category (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                catId VARCHAR(50) UNIQUE,
+                name VARCHAR(255) NOT NULL,
+                description LONGTEXT,
+                images LONGTEXT,
+                subcategory LONGTEXT,
+
+                franchise_user_id VARCHAR(255),
+                franchise_id VARCHAR(255),
+                
+                created_by_user_id VARCHAR(255),
+                created_by_email VARCHAR(255),
+                created_by_name VARCHAR(255),
+
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+                KEY idx_catId (catId),
+                KEY idx_franchise_user_id (franchise_user_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            `;
+
+            await pool.execute(sql);
+            console.log('✓ franchise_category table created or already exists');
+        } catch (err) {
+            console.error('✗ Error creating franchise_category table:', err.message || err);
+        }
+    };
+
     module.exports = {
         createProductsTable,
         createRecipeDetailsTable,
@@ -408,5 +524,8 @@ const createSubscriptionPlansTable = async () => {
         createChefFoodTable,
         createSubscriptionPlansTable,
         createReviewsTable,
-        createUserFoodCartTable
+        createUserFoodCartTable,
+        createChefFoodCategoryTable,
+        createChefCategoryTable,
+        createFranchiseCategoryTable
     };
