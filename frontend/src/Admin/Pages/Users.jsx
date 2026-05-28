@@ -54,7 +54,8 @@ const Users = ({ initialTab = "All" }) => {
                     id: u.id || u.user_id,
                     name: u.name || u.username,
                     email: u.email,
-                    role: u.role ? u.role.toLowerCase() : 'user',
+                    phone: u.phone || u.mobile || u.mobile_number || '',
+                    role: u.role ? u.role.toString().trim().toLowerCase() : 'user',
                     status: 'Active', // Mocking status since it's not in db yet
                     joined: u.created_at ? new Date(u.created_at).toLocaleDateString() : 'N/A',
                     rawCreated_at: u.created_at,
@@ -78,7 +79,8 @@ const Users = ({ initialTab = "All" }) => {
                 id: u.id || u.user_id,
                 name: u.name || u.username,
                 email: u.email,
-                role: u.role ? u.role.toLowerCase() : 'user',
+                phone: u.phone || u.mobile || u.mobile_number || '',
+                role: u.role ? u.role.toString().trim().toLowerCase() : 'user',
                 status: 'Active',
                 joined: u.created_at ? new Date(u.created_at).toLocaleDateString() : 'N/A',
                 rawCreated_at: u.created_at,
@@ -181,8 +183,10 @@ const Users = ({ initialTab = "All" }) => {
     };
 
     const filteredUsers = users.filter(user => {
-        const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.email.toLowerCase().includes(searchTerm.toLowerCase());
+        const lowerSearch = searchTerm.toLowerCase();
+        const matchesSearch = user.name.toLowerCase().includes(lowerSearch) ||
+            user.email.toLowerCase().includes(lowerSearch) ||
+            (user.phone || '').toLowerCase().includes(lowerSearch);
 
         const matchesTab = selectedTab === "All" || (selectedTab === "New" && isToday(user.rawCreated_at));
         const matchesRole = selectedRole === "all" || (user.role && user.role.toLowerCase() === selectedRole.toLowerCase());
@@ -282,6 +286,8 @@ const Users = ({ initialTab = "All" }) => {
                         <thead className="hidden md:table-header-group">
                             <tr className="bg-gray-50/50">
                                 <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">User Profile</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Email</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Phone</th>
                                 <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Role</th>
                                 <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Status</th>
                                 <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Joined Date</th>
@@ -322,6 +328,18 @@ const Users = ({ initialTab = "All" }) => {
                                                         <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">ID: {user.id}</p>
                                                     </div>
                                                 </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-3 py-4 md:px-6 md:py-4 block md:table-cell border-b border-gray-50 md:border-b-0">
+                                            <div className="flex md:block items-center justify-between w-full">
+                                                <span className="md:hidden text-[10px] font-black text-gray-400 uppercase tracking-widest">Email</span>
+                                                <p className="text-sm font-bold text-slate-700 truncate max-w-[220px]" title={user.email}>{user.email}</p>
+                                            </div>
+                                        </td>
+                                        <td className="px-3 py-4 md:px-6 md:py-4 block md:table-cell border-b border-gray-50 md:border-b-0">
+                                            <div className="flex md:block items-center justify-between w-full">
+                                                <span className="md:hidden text-[10px] font-black text-gray-400 uppercase tracking-widest">Phone</span>
+                                                <p className="text-sm font-bold text-slate-700 truncate max-w-[220px]" title={user.phone || 'N/A'}>{user.phone || 'N/A'}</p>
                                             </div>
                                         </td>
                                         <td className="px-3 py-4 md:px-6 md:py-4 block md:table-cell border-b border-gray-50 md:border-b-0">
