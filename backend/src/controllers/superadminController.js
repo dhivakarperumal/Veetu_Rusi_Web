@@ -1024,6 +1024,29 @@ exports.patchUserRole = async (req, res) => {
   }
 };
 
+exports.createUser = async (req, res) => {
+  try {
+    const { full_name, email, mobile_number, password, role } = req.body;
+    if (!full_name || !email || !password) {
+      return res.status(400).json({ message: 'Full name, email and password are required.' });
+    }
+    // Check duplicate email
+    const [existing] = await pool.execute('SELECT id FROM users WHERE email = ?', [email]);
+    if (existing.length > 0) {
+      return res.status(409).json({ message: 'A user with this email already exists.' });
+    }
+    const hashedPw = hashPassword(password);
+    const userIdStr = generateRoleId(role || 'user');
+    const [result] = await pool.execute(
+      'INSERT INTO users (user_id, full_name, email, mobile_number, password, role, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [userIdStr, full_name, email, mobile_number || null, hashedPw, role || 'user', 'Active']
+    );
+    res.status(201).json({ message: 'User created successfully.', id: result.insertId, user_id: userIdStr });
+  } catch (error) {
+    res.status(500).json({ message: 'Error creating user.', error: error.message });
+  }
+};
+
 exports.deleteUser = async (req, res) => {
   try {
     const { id } = req.params;

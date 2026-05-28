@@ -74,6 +74,7 @@ router.delete('/delivery-partners/:id', controller.deleteDeliveryPartner);
 
 // User Management
 router.get('/users', controller.getUsers);
+router.post('/users', controller.createUser);
 router.patch('/users/status/:id', controller.patchUserStatus);
 router.patch('/users/role/:id', controller.patchUserRole);
 router.delete('/users/:id', controller.deleteUser);
