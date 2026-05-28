@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../../api';
 import { toast } from 'react-hot-toast';
@@ -8,10 +8,35 @@ const FoodProducts = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [foods, setFoods] = useState([]);
+  const [chefs, setChefs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [viewMode, setViewMode] = useState('table');
+
+  useEffect(() => {
+    const fetchChefs = async () => {
+      try {
+        const res = await api.get('/superadmin/homechefs');
+        setChefs(Array.isArray(res.data) ? res.data : []);
+      } catch (err) {
+        console.error('Failed to load chefs for filter', err);
+      }
+    };
+    fetchChefs();
+  }, []);
+
+  const handleChefChange = (selectedChefId) => {
+    const params = new URLSearchParams(location.search);
+    if (selectedChefId && selectedChefId !== 'All') {
+      params.set('chef_id', selectedChefId);
+      params.delete('chef_user_id');
+    } else {
+      params.delete('chef_id');
+      params.delete('chef_user_id');
+    }
+    navigate(`${location.pathname}?${params.toString()}`);
+  };
 
   const fetchFoods = useCallback(async () => {
     try {
@@ -141,6 +166,20 @@ const FoodProducts = () => {
           />
         </div>
         <div className="flex items-center gap-3 self-end md:self-auto">
+          {chefs.length > 0 && (
+            <select
+              value={new URLSearchParams(location.search).get('chef_id') || 'All'}
+              onChange={(e) => handleChefChange(e.target.value)}
+              className="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-xs uppercase tracking-widest text-slate-600 focus:bg-white focus:border-emerald-600/40 transition-all cursor-pointer"
+            >
+              <option value="All">All Chefs</option>
+              {chefs.map((chef) => (
+                <option key={chef.chef_id || chef.id} value={chef.chef_id || chef.id}>
+                  {chef.name || 'Unnamed Chef'}
+                </option>
+              ))}
+            </select>
+          )}
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}

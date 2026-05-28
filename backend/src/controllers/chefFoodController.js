@@ -98,6 +98,18 @@ exports.getFoods = async (req, res) => {
     let query = 'SELECT * FROM chef_food_table WHERE 1=1';
     const params = [];
 
+    // Enforce role-based restrictions
+    if (req.user) {
+      if (req.user.role === 'chef') {
+        query += ' AND (chef_id = ? OR chef_user_id = ?)';
+        params.push(req.user.id, req.user.user_id);
+      } else if (req.user.role === 'admin') {
+        query += ' AND (franchise_id = ? OR franchise_user_id = ?)';
+        params.push(req.user.id, req.user.user_id);
+      }
+      // superadmin can see all
+    }
+
     if (chef_id) {
       query += ' AND chef_id = ?';
       params.push(chef_id);
