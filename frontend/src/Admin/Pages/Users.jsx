@@ -21,7 +21,7 @@ const Users = ({ initialTab = "All" }) => {
     const [selectedTab, setSelectedTab] = useState(initialTab);
     const [selectedRole, setSelectedRole] = useState("all");
     const [searchTerm, setSearchTerm] = useState("");
-    const roleOptions = ["all", "superadmin", "admin", "manager", "chef", "dealer", "delivery_partner", "user"];
+    const roleOptions = ["all", "superadmin", "admin", "franchise", "manager", "chef", "dealer", "delivery_partner", "user"];
 
     const formatRoleLabel = (role) => {
         if (!role) return "";
@@ -178,6 +178,7 @@ const Users = ({ initialTab = "All" }) => {
         if (normalizedRole.includes("superadmin")) return "bg-slate-900 text-white shadow-sm";
         if (normalizedRole.includes("delivery_partner")) return "bg-sky-50 text-sky-600 border border-sky-100";
         if (normalizedRole.includes("admin")) return "bg-slate-900 text-white shadow-sm";
+        if (normalizedRole.includes("franchise")) return "bg-cyan-50 text-cyan-600 border border-cyan-100";
         if (normalizedRole.includes("chef")) return "bg-purple-50 text-purple-600 border border-purple-100";
         if (normalizedRole.includes("manager")) return "bg-indigo-50 text-indigo-600 border border-indigo-100";
         if (normalizedRole.includes("dealer")) return "bg-amber-50 text-amber-600 border border-amber-100";
@@ -268,7 +269,7 @@ const Users = ({ initialTab = "All" }) => {
                         <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
                             type="text"
-                            placeholder="Find by name or email..."
+                            placeholder="Find by name, email or phone..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full pl-12 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:bg-white focus:border-blue-500 transition-all text-sm"
@@ -508,9 +509,12 @@ const Users = ({ initialTab = "All" }) => {
                                     onChange={handleInputChange}
                                     className="w-full bg-gray-50 border border-gray-200 text-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium cursor-pointer"
                                 >
-                                    <option value="admin">admin</option>
+                                        <option value="admin">admin</option>
+                                    <option value="franchise">franchise</option>
                                     <option value="manager">manager</option>
+                                    <option value="chef">chef</option>
                                     <option value="dealer">dealer</option>
+                                    <option value="delivery_partner">delivery partner</option>
                                     <option value="user">user</option>
                                 </select>
                             </div>
