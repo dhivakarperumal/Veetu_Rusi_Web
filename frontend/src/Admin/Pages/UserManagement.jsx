@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import api from "../../api";
 import { toast, Toaster } from "react-hot-toast";
 import { Search, ShieldAlert, ShieldCheck, Trash2, Users, UserCheck, UserX, Filter } from "lucide-react";
@@ -9,25 +9,30 @@ const UserManagement = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [editingRole, setEditingRole] = useState(null);
   const [newRole, setNewRole] = useState("");
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
+  async function fetchUsers() {
     try {
       setLoading(true);
       const res = await api.get("/superadmin/users");
       setUsers(res.data);
       setFilteredUsers(res.data);
-    } catch (error) {
+    } catch {
       toast.error("Failed to load user accounts.");
     } finally {
       setLoading(false);
     }
-  };
+  }
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / itemsPerPage));
+  const paginatedUsers = filteredUsers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   useEffect(() => {
     let result = users;
@@ -48,6 +53,7 @@ const UserManagement = () => {
     }
     
     setFilteredUsers(result);
+    setCurrentPage(1);
   }, [search, statusFilter, users]);
 
   const handleToggleStatus = async (id, currentActive) => {
@@ -56,7 +62,7 @@ const UserManagement = () => {
       await api.patch(`/superadmin/users/status/${id}`, { active: nextActive });
       toast.success(`User status changed successfully.`);
       fetchUsers();
-    } catch (error) {
+    } catch {
       toast.error("Failed to change user status.");
     }
   };
@@ -77,7 +83,7 @@ const UserManagement = () => {
       toast.success("User role updated successfully.");
       setEditingRole(null);
       fetchUsers();
-    } catch (error) {
+    } catch {
       toast.error("Failed to update user role.");
     }
   };
@@ -88,7 +94,7 @@ const UserManagement = () => {
       await api.delete(`/superadmin/users/${id}`);
       toast.success("User account deleted.");
       fetchUsers();
-    } catch (error) {
+    } catch {
       toast.error("Failed to delete user account.");
     }
   };
@@ -217,7 +223,7 @@ const UserManagement = () => {
                       </thead>
                       <tbody className="divide-y divide-slate-100 bg-white">
                           {filteredUsers.length > 0 ? (
-                              filteredUsers.map((u) => (
+                              paginatedUsers.map((u) => (
                                   <tr key={u.id} className="hover:bg-slate-50 transition-colors group">
                                       <td className="px-6 py-5">
                                           <div className="flex items-center gap-3">
@@ -312,6 +318,48 @@ const UserManagement = () => {
                       </tbody>
                   </table>
               )}
+          </div>
+
+          <div className="flex flex-col gap-4 sm:flex-row items-center justify-between px-6 py-4 bg-slate-50 border-t border-slate-200">
+              <div className="text-slate-600 text-xs">
+                  Showing {paginatedUsers.length > 0 ? (Math.min((currentPage - 1) * itemsPerPage + 1, filteredUsers.length)) : 0} - {Math.min(currentPage * itemsPerPage, filteredUsers.length)} of {filteredUsers.length} customers
+              </div>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div className="flex items-center gap-2 text-slate-600 text-xs">
+                      <label htmlFor="itemsPerPage" className="uppercase tracking-[0.18em] font-bold">Rows</label>
+                      <select
+                          id="itemsPerPage"
+                          value={itemsPerPage}
+                          onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
+                          className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-700 text-xs outline-none focus:border-blue-400"
+                      >
+                          <option value={5}>5</option>
+                          <option value={10}>10</option>
+                          <option value={20}>20</option>
+                          <option value={50}>50</option>
+                      </select>
+                  </div>
+
+                  <div className="inline-flex items-center rounded-2xl border border-slate-200 overflow-hidden bg-white">
+                      <button
+                          onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                          disabled={currentPage === 1}
+                          className="px-4 py-2 text-slate-600 text-xs font-bold uppercase tracking-[0.18em] transition-colors disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400 hover:bg-slate-50"
+                      >
+                          Prev
+                      </button>
+                      <div className="px-4 py-2 text-slate-700 text-xs font-bold uppercase tracking-[0.18em] bg-slate-50">
+                          Page {currentPage} of {totalPages}
+                      </div>
+                      <button
+                          onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                          disabled={currentPage === totalPages}
+                          className="px-4 py-2 text-slate-600 text-xs font-bold uppercase tracking-[0.18em] transition-colors disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400 hover:bg-slate-50"
+                      >
+                          Next
+                      </button>
+                  </div>
+              </div>
           </div>
       </div>
     </div>
