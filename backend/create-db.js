@@ -203,6 +203,77 @@ async function createDatabaseAndTables() {
       aadhaar_url VARCHAR(255),
       pan_url VARCHAR(255),
       status VARCHAR(50) NOT NULL DEFAULT 'Pending',
+      father_husband_name VARCHAR(255) DEFAULT NULL,
+      gender VARCHAR(50) DEFAULT NULL,
+      date_of_birth DATE DEFAULT NULL,
+      age INT DEFAULT NULL,
+      profile_photo VARCHAR(255) DEFAULT NULL,
+      cover_banner VARCHAR(255) DEFAULT NULL,
+      alt_mobile VARCHAR(50) DEFAULT NULL,
+      whatsapp_number VARCHAR(50) DEFAULT NULL,
+      emergency_contact VARCHAR(50) DEFAULT NULL,
+      door_number VARCHAR(50) DEFAULT NULL,
+      street_name VARCHAR(255) DEFAULT NULL,
+      area_name VARCHAR(255) DEFAULT NULL,
+      landmark VARCHAR(255) DEFAULT NULL,
+      city VARCHAR(150) DEFAULT NULL,
+      district VARCHAR(150) DEFAULT NULL,
+      state VARCHAR(150) DEFAULT NULL,
+      pincode VARCHAR(20) DEFAULT NULL,
+      latitude VARCHAR(50) DEFAULT NULL,
+      longitude VARCHAR(50) DEFAULT NULL,
+      map_link TEXT DEFAULT NULL,
+      kitchen_name VARCHAR(255) DEFAULT NULL,
+      kitchen_address VARCHAR(255) DEFAULT NULL,
+      kitchen_type VARCHAR(255) DEFAULT NULL,
+      kitchen_photos TEXT DEFAULT NULL,
+      kitchen_videos TEXT DEFAULT NULL,
+      seating_available TINYINT(1) DEFAULT 0,
+      dining_available TINYINT(1) DEFAULT 0,
+      takeaway_available TINYINT(1) DEFAULT 0,
+      delivery_available TINYINT(1) DEFAULT 0,
+      specialty_food VARCHAR(255) DEFAULT NULL,
+      cuisine_type VARCHAR(255) DEFAULT NULL,
+      signature_dish VARCHAR(255) DEFAULT NULL,
+      veg_nonveg VARCHAR(50) DEFAULT NULL,
+      experience_years INT DEFAULT NULL,
+      cooking_style VARCHAR(255) DEFAULT NULL,
+      preparation_time VARCHAR(255) DEFAULT NULL,
+      daily_order_capacity INT DEFAULT NULL,
+      available_days VARCHAR(255) DEFAULT NULL,
+      opening_time VARCHAR(50) DEFAULT NULL,
+      closing_time VARCHAR(50) DEFAULT NULL,
+      holiday_schedule VARCHAR(255) DEFAULT NULL,
+      busy_hours VARCHAR(255) DEFAULT NULL,
+      instant_order TINYINT(1) DEFAULT 0,
+      pre_order TINYINT(1) DEFAULT 0,
+      aadhaar_number VARCHAR(100) DEFAULT NULL,
+      pan_number VARCHAR(100) DEFAULT NULL,
+      gst_number VARCHAR(100) DEFAULT NULL,
+      bank_account_number VARCHAR(255) DEFAULT NULL,
+      ifsc_code VARCHAR(50) DEFAULT NULL,
+      account_holder_name VARCHAR(255) DEFAULT NULL,
+      upi_id VARCHAR(255) DEFAULT NULL,
+      username VARCHAR(255) DEFAULT NULL,
+      password VARCHAR(255) DEFAULT NULL,
+      otp_verified TINYINT(1) DEFAULT 0,
+      email_verified TINYINT(1) DEFAULT 0,
+      last_login DATETIME DEFAULT NULL,
+      device_details TEXT DEFAULT NULL,
+      login_status VARCHAR(50) DEFAULT 'Active',
+      verification_status VARCHAR(50) DEFAULT 'Pending',
+      approval_status VARCHAR(50) DEFAULT 'Pending',
+      approved_by_admin VARCHAR(255) DEFAULT NULL,
+      approval_date DATETIME DEFAULT NULL,
+      rejection_reason TEXT DEFAULT NULL,
+      block_reason TEXT DEFAULT NULL,
+      aadhaar_front_url VARCHAR(255) DEFAULT NULL,
+      aadhaar_back_url VARCHAR(255) DEFAULT NULL,
+      pan_card_url VARCHAR(255) DEFAULT NULL,
+      fssai_certificate_url VARCHAR(255) DEFAULT NULL,
+      gst_certificate_url VARCHAR(255) DEFAULT NULL,
+      signature_url VARCHAR(255) DEFAULT NULL,
+      selfie_verification_url VARCHAR(255) DEFAULT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -257,6 +328,198 @@ async function createDatabaseAndTables() {
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `created_by_phone` VARCHAR(50) DEFAULT NULL");
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `franchise_id` VARCHAR(255) DEFAULT NULL");
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `franchise_user_id` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `father_husband_name` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `gender` VARCHAR(50) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `date_of_birth` DATE DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `age` INT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `profile_photo` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `cover_banner` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `alt_mobile` VARCHAR(50) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `whatsapp_number` VARCHAR(50) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `emergency_contact` VARCHAR(50) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `door_number` VARCHAR(50) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `street_name` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `area_name` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `landmark` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `city` VARCHAR(150) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `district` VARCHAR(150) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `state` VARCHAR(150) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `pincode` VARCHAR(20) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `latitude` VARCHAR(50) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `longitude` VARCHAR(50) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `map_link` TEXT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `kitchen_name` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `kitchen_address` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `kitchen_type` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `kitchen_photos` TEXT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `kitchen_videos` TEXT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `seating_available` TINYINT(1) DEFAULT 0");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `dining_available` TINYINT(1) DEFAULT 0");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `takeaway_available` TINYINT(1) DEFAULT 0");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `delivery_available` TINYINT(1) DEFAULT 0");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `specialty_food` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `cuisine_type` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `signature_dish` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `veg_nonveg` VARCHAR(50) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `experience_years` INT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `cooking_style` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `preparation_time` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `daily_order_capacity` INT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `available_days` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `opening_time` VARCHAR(50) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `closing_time` VARCHAR(50) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `holiday_schedule` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `busy_hours` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `instant_order` TINYINT(1) DEFAULT 0");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `pre_order` TINYINT(1) DEFAULT 0");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `aadhaar_number` VARCHAR(100) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `pan_number` VARCHAR(100) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `gst_number` VARCHAR(100) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `bank_account_number` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `ifsc_code` VARCHAR(50) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `account_holder_name` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `upi_id` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `username` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `password` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `otp_verified` TINYINT(1) DEFAULT 0");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `email_verified` TINYINT(1) DEFAULT 0");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `last_login` DATETIME DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `device_details` TEXT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `login_status` VARCHAR(50) DEFAULT 'Active'");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `verification_status` VARCHAR(50) DEFAULT 'Pending'");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `approval_status` VARCHAR(50) DEFAULT 'Pending'");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `approved_by_admin` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `approval_date` DATETIME DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `rejection_reason` TEXT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `block_reason` TEXT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `gender` VARCHAR(50) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `date_of_birth` DATE DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `age` INT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `profile_photo` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `cover_banner` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `alt_mobile` VARCHAR(50) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `whatsapp_number` VARCHAR(50) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `emergency_contact` VARCHAR(50) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `door_number` VARCHAR(50) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `street_name` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `area_name` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `landmark` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `city` VARCHAR(150) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `district` VARCHAR(150) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `state` VARCHAR(150) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `pincode` VARCHAR(20) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `latitude` VARCHAR(50) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `longitude` VARCHAR(50) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `map_link` TEXT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `kitchen_name` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `kitchen_address` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `kitchen_type` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `kitchen_photos` TEXT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `kitchen_videos` TEXT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `seating_available` TINYINT(1) DEFAULT 0");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `dining_available` TINYINT(1) DEFAULT 0");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `takeaway_available` TINYINT(1) DEFAULT 0");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `delivery_available` TINYINT(1) DEFAULT 0");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `specialty_food` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `cuisine_type` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `signature_dish` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `veg_nonveg` VARCHAR(50) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `experience_years` INT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `cooking_style` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `preparation_time` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `daily_order_capacity` INT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `available_days` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `opening_time` VARCHAR(50) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `closing_time` VARCHAR(50) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `holiday_schedule` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `busy_hours` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `instant_order` TINYINT(1) DEFAULT 0");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `pre_order` TINYINT(1) DEFAULT 0");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `aadhaar_number` VARCHAR(100) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `pan_number` VARCHAR(100) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `gst_number` VARCHAR(100) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `bank_account_number` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `ifsc_code` VARCHAR(50) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `account_holder_name` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `upi_id` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `username` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `password` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `otp_verified` TINYINT(1) DEFAULT 0");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `email_verified` TINYINT(1) DEFAULT 0");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `last_login` DATETIME DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `device_details` TEXT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `login_status` VARCHAR(50) DEFAULT 'Active'");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `verification_status` VARCHAR(50) DEFAULT 'Pending'");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `approval_status` VARCHAR(50) DEFAULT 'Pending'");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `approved_by_admin` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `approval_date` DATETIME DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `rejection_reason` TEXT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `block_reason` TEXT DEFAULT NULL");
+
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `gender` VARCHAR(50) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `date_of_birth` DATE DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `age` INT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `profile_photo` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `cover_banner` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `alt_mobile` VARCHAR(50) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `whatsapp_number` VARCHAR(50) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `emergency_contact` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `door_number` VARCHAR(50) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `street_name` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `area_name` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `landmark` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `city` VARCHAR(150) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `district` VARCHAR(150) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `state` VARCHAR(150) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `pincode` VARCHAR(20) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `latitude` VARCHAR(50) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `longitude` VARCHAR(50) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `map_link` TEXT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `kitchen_name` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `kitchen_address` TEXT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `kitchen_type` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `kitchen_photos` LONGTEXT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `kitchen_videos` LONGTEXT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `seating_available` TINYINT(1) DEFAULT 0");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `dining_available` TINYINT(1) DEFAULT 0");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `takeaway_available` TINYINT(1) DEFAULT 0");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `delivery_available` TINYINT(1) DEFAULT 0");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `specialty_food` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `cuisine_type` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `signature_dish` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `veg_nonveg` VARCHAR(50) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `experience_years` INT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `cooking_style` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `preparation_time` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `daily_order_capacity` INT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `available_days` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `opening_time` VARCHAR(50) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `closing_time` VARCHAR(50) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `holiday_schedule` TEXT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `busy_hours` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `instant_order` TINYINT(1) DEFAULT 0");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `pre_order` TINYINT(1) DEFAULT 0");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `aadhaar_number` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `pan_number` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `gst_number` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `bank_account_number` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `ifsc_code` VARCHAR(50) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `account_holder_name` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `upi_id` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `last_login` DATETIME DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `device_details` TEXT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `approval_status` VARCHAR(50) DEFAULT 'Pending'");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `approved_by_admin` INT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `approval_date` DATETIME DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `rejection_reason` TEXT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `block_reason` TEXT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `aadhaar_front_url` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `aadhaar_back_url` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `pan_card_url` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `fssai_certificate_url` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `gst_certificate_url` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `signature_url` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `selfie_verification_url` VARCHAR(255) DEFAULT NULL");
 
   await connection.execute(`
     CREATE TABLE IF NOT EXISTS franchise_category (
@@ -632,40 +895,40 @@ async function createDatabaseAndTables() {
   if (franColumns[0].count === 0) {
     await connection.execute(`
       ALTER TABLE \`franchise_owners\`
-      ADD COLUMN \`logo_url\` VARCHAR(255),
-      ADD COLUMN \`banner_url\` VARCHAR(255),
-      ADD COLUMN \`business_registration_number\` VARCHAR(100),
-      ADD COLUMN \`gst_number\` VARCHAR(100),
-      ADD COLUMN \`pan_number\` VARCHAR(100),
-      ADD COLUMN \`start_date\` DATE,
-      ADD COLUMN \`expiry_date\` DATE,
-      ADD COLUMN \`alt_mobile\` VARCHAR(50),
-      ADD COLUMN \`whatsapp_number\` VARCHAR(50),
-      ADD COLUMN \`website_url\` VARCHAR(255),
-      ADD COLUMN \`emergency_contact_number\` VARCHAR(50),
-      ADD COLUMN \`door_number\` VARCHAR(50),
-      ADD COLUMN \`street_name\` VARCHAR(255),
-      ADD COLUMN \`area\` VARCHAR(255),
-      ADD COLUMN \`landmark\` VARCHAR(255),
-      ADD COLUMN \`district\` VARCHAR(150),
-      ADD COLUMN \`pincode\` VARCHAR(20),
-      ADD COLUMN \`latitude\` VARCHAR(50),
-      ADD COLUMN \`longitude\` VARCHAR(50),
-      ADD COLUMN \`map_link\` TEXT,
-      ADD COLUMN \`username\` VARCHAR(255),
-      ADD COLUMN \`role\` VARCHAR(50) DEFAULT 'Admin',
-      ADD COLUMN \`otp_verified\` TINYINT(1) DEFAULT 0,
-      ADD COLUMN \`email_verified\` TINYINT(1) DEFAULT 0,
-      ADD COLUMN \`login_status\` VARCHAR(50) DEFAULT 'Active',
-      ADD COLUMN \`aadhaar_url\` VARCHAR(255),
-      ADD COLUMN \`pan_url\` VARCHAR(255),
-      ADD COLUMN \`gst_certificate_url\` VARCHAR(255),
-      ADD COLUMN \`fssai_license_url\` VARCHAR(255),
-      ADD COLUMN \`shop_license_url\` VARCHAR(255),
-      ADD COLUMN \`vehicle_rc_url\` VARCHAR(255),
-      ADD COLUMN \`driving_license_url\` VARCHAR(255),
-      ADD COLUMN \`bank_passbook_url\` VARCHAR(255),
-      ADD COLUMN \`signature_url\` VARCHAR(255)
+      ADD COLUMN IF NOT EXISTS \`logo_url\` VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS \`banner_url\` VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS \`business_registration_number\` VARCHAR(100),
+      ADD COLUMN IF NOT EXISTS \`gst_number\` VARCHAR(100),
+      ADD COLUMN IF NOT EXISTS \`pan_number\` VARCHAR(100),
+      ADD COLUMN IF NOT EXISTS \`start_date\` DATE,
+      ADD COLUMN IF NOT EXISTS \`expiry_date\` DATE,
+      ADD COLUMN IF NOT EXISTS \`alt_mobile\` VARCHAR(50),
+      ADD COLUMN IF NOT EXISTS \`whatsapp_number\` VARCHAR(50),
+      ADD COLUMN IF NOT EXISTS \`website_url\` VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS \`emergency_contact_number\` VARCHAR(50),
+      ADD COLUMN IF NOT EXISTS \`door_number\` VARCHAR(50),
+      ADD COLUMN IF NOT EXISTS \`street_name\` VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS \`area\` VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS \`landmark\` VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS \`district\` VARCHAR(150),
+      ADD COLUMN IF NOT EXISTS \`pincode\` VARCHAR(20),
+      ADD COLUMN IF NOT EXISTS \`latitude\` VARCHAR(50),
+      ADD COLUMN IF NOT EXISTS \`longitude\` VARCHAR(50),
+      ADD COLUMN IF NOT EXISTS \`map_link\` TEXT,
+      ADD COLUMN IF NOT EXISTS \`username\` VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS \`role\` VARCHAR(50) DEFAULT 'Admin',
+      ADD COLUMN IF NOT EXISTS \`otp_verified\` TINYINT(1) DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS \`email_verified\` TINYINT(1) DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS \`login_status\` VARCHAR(50) DEFAULT 'Active',
+      ADD COLUMN IF NOT EXISTS \`aadhaar_url\` VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS \`pan_url\` VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS \`gst_certificate_url\` VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS \`fssai_license_url\` VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS \`shop_license_url\` VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS \`vehicle_rc_url\` VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS \`driving_license_url\` VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS \`bank_passbook_url\` VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS \`signature_url\` VARCHAR(255)
     `);
     console.log('Added all new fields to the existing franchise_owners table');
   }

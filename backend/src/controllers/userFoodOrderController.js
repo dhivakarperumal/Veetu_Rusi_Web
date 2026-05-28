@@ -203,36 +203,52 @@ const updateOrderStatus = async (id, status) => {
   await pool.execute('UPDATE user_food_order_table SET status = ? WHERE id = ?', [status, id]);
 };
 
-const getAllOrders = async ({ role, userId, numericId, status, chef_id, search }) => {
-  let query = 'SELECT * FROM user_food_order_table WHERE 1=1';
-  const params = [];
+const getFranchiseAdminOrders = async (franchiseUserId) => {
+  // First, get all home chefs created by this franchise admin
+  const [chefs] = await pool.execute(
+    'SELECT chef_id, user_id FROM home_chefs WHERE created_by_user_id = ? OR franchise_user_id = ?',
+    [franchiseUserId, franchiseUserId]
+  );
 
-  if (role === 'chef') {
-    query += ' AND (chef_user_id = ? OR chef_id = ?)';
-    params.push(userId, userId);
-  } else if (role === 'admin') {
-    query += ' AND (franchise_user_id = ? OR franchise_id = ?)';
-    params.push(userId, String(numericId));
-  }
-  // superadmin sees all
-
-  if (status && status !== 'All') {
-    query += ' AND status = ?';
-    params.push(status);
-  }
-  if (chef_id) {
-    query += ' AND chef_id = ?';
-    params.push(chef_id);
-  }
-  if (search) {
-    query += ' AND (customer_name LIKE ? OR order_id LIKE ? OR chef_name LIKE ? OR ordered_by_name LIKE ?)';
-    const like = `%${search}%`;
-    params.push(like, like, like, like);
+  if (!chefs.length) {
+    return [];
   }
 
+  // Extract chef IDs and user IDs, filter out null values
+  const chefIds = chefs.map(c => c.chef_id).filter(id => id);
+  const chefUserIds = chefs.map(c => c.user_id).filter(id => id);
+
+  // If no valid chef IDs, return empty
+  if (!chefIds.length && !chefUserIds.length) {
+    return [];
+  }
+
+  // Build query parts conditionally
+  let query = 'SELECT * FROM user_food_order_table WHERE ';
+  const queryParams = [];
+  const queryParts = [];
+
+  if (chefIds.length > 0) {
+    const placeholders = chefIds.map(() => '?').join(',');
+    queryParts.push(`chef_id IN (${placeholders})`);
+    queryParams.push(...chefIds);
+  }
+
+  if (chefUserIds.length > 0) {
+    const placeholders = chefUserIds.map(() => '?').join(',');
+    queryParts.push(`chef_user_id IN (${placeholders})`);
+    queryParams.push(...chefUserIds);
+  }
+
+  query += queryParts.join(' OR ');
   query += ' ORDER BY ordered_at DESC';
-  const [rows] = await pool.execute(query, params);
-  return rows.map((row) => ({ ...row, items: parseJson(row.items) }));
+
+  const [rows] = await pool.execute(query, queryParams);
+
+  return rows.map((row) => ({
+    ...row,
+    items: parseJson(row.items)
+  }));
 };
 
 module.exports = {
@@ -242,5 +258,6 @@ module.exports = {
   getUserOrders,
   getOrderById,
   updateOrder,
-  updateOrderStatus
+  updateOrderStatus,
+  getFranchiseAdminOrders
 };
