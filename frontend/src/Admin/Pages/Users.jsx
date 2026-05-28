@@ -21,7 +21,14 @@ const Users = ({ initialTab = "All" }) => {
     const [selectedTab, setSelectedTab] = useState(initialTab);
     const [selectedRole, setSelectedRole] = useState("all");
     const [searchTerm, setSearchTerm] = useState("");
-    const roleOptions = ["all", "superadmin", "admin", "manager", "chef", "dealer", "user"];
+    const roleOptions = ["all", "superadmin", "admin", "manager", "chef", "dealer", "delivery_partner", "user"];
+
+    const formatRoleLabel = (role) => {
+        if (!role) return "";
+        return role === "all"
+            ? "all roles"
+            : role.replace(/_/g, " ");
+    };
 
     // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
@@ -169,6 +176,7 @@ const Users = ({ initialTab = "All" }) => {
     const getRoleStyle = (role) => {
         const normalizedRole = role ? role.toLowerCase() : "";
         if (normalizedRole.includes("superadmin")) return "bg-slate-900 text-white shadow-sm";
+        if (normalizedRole.includes("delivery_partner")) return "bg-sky-50 text-sky-600 border border-sky-100";
         if (normalizedRole.includes("admin")) return "bg-slate-900 text-white shadow-sm";
         if (normalizedRole.includes("chef")) return "bg-purple-50 text-purple-600 border border-purple-100";
         if (normalizedRole.includes("manager")) return "bg-indigo-50 text-indigo-600 border border-indigo-100";
@@ -276,7 +284,7 @@ const Users = ({ initialTab = "All" }) => {
                             >
                                 {roleOptions.map((role) => (
                                     <option key={role} value={role}>
-                                        {role === 'all' ? 'all roles' : role}
+                                        {formatRoleLabel(role)}
                                     </option>
                                 ))}
                             </select>
@@ -355,7 +363,7 @@ const Users = ({ initialTab = "All" }) => {
                                                         className={`appearance-none cursor-pointer px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-transparent outline-none transition-all ${getRoleStyle(user.role)}`}
                                                     >
                                                         {roleOptions.filter((role) => role !== 'all').map((role) => (
-                                                            <option key={role} value={role}>{role}</option>
+                                                            <option key={role} value={role}>{formatRoleLabel(role)}</option>
                                                         ))}
                                                     </select>
                                                 </div>
