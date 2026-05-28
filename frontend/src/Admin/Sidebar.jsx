@@ -64,7 +64,7 @@ const navItems = [
     ],
   },
 
-  { path: "/admin/orders/create", label: "Billing", icon: PlusCircle },
+  // { path: "/admin/orders/create", label: "Billing", icon: PlusCircle },
   // { path: "/admin/users/all", label: "Customers", icon: Users },
   {
     label: "Dealers",
@@ -74,11 +74,11 @@ const navItems = [
       { path: "/admin/invoices/add", label: "New Invoice", icon: PlusCircle },
     ],
   },
-  { path: "/admin/banners", label: "Promotion Banners", icon: Image },
-  { path: "/admin/videos", label: "Showcase Videos", icon: Video },
-  { path: "/admin/reviews", label: "Customer Reviews", icon: MessageSquare },
+  // { path: "/admin/banners", label: "Promotion Banners", icon: Image },
+  // { path: "/admin/videos", label: "Showcase Videos", icon: Video },
+  // { path: "/admin/reviews", label: "Customer Reviews", icon: MessageSquare },
   { path: "/admin/reports", label: "Reports", icon: BarChart3 },
-  { path: "/", label: "Back Home", icon: Home },
+  // { path: "/", label: "Back Home", icon: Home },
 ];
 
 /* ================= SIDEBAR ================= */
