@@ -45,10 +45,8 @@ const emptyForm = {
   blood_group: "",
   // Contact
   mobile: "",
-  alt_mobile: "",
-  whatsapp_number: "",
   email: "",
-  emergency_contact: "",
+  
   // Address
   door_number: "",
   street_name: "",
@@ -356,10 +354,7 @@ const DeliveryPartnerManagement = () => {
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {f("mobile", "Mobile Number", "tel")}
-            {f("alt_mobile", "Alternate Mobile Number", "tel")}
-            {f("whatsapp_number", "WhatsApp Number", "tel")}
             {f("email", "Email Address", "email")}
-            {f("emergency_contact", "Emergency Contact Number", "tel")}
           </div>
         );
       case "address":
