@@ -206,7 +206,7 @@ const updateOrderStatus = async (id, status) => {
 const getFranchiseAdminOrders = async (franchiseUserId) => {
   // First, get all home chefs created by this franchise admin
   const [chefs] = await pool.execute(
-    'SELECT chef_id, chef_user_id FROM home_chefs WHERE created_by_user_id = ? OR franchise_user_id = ?',
+    'SELECT chef_id, user_id FROM home_chefs WHERE created_by_user_id = ? OR franchise_user_id = ?',
     [franchiseUserId, franchiseUserId]
   );
 
@@ -216,7 +216,7 @@ const getFranchiseAdminOrders = async (franchiseUserId) => {
 
   // Extract chef IDs and user IDs, filter out null values
   const chefIds = chefs.map(c => c.chef_id).filter(id => id);
-  const chefUserIds = chefs.map(c => c.chef_user_id).filter(id => id);
+  const chefUserIds = chefs.map(c => c.user_id).filter(id => id);
 
   // If no valid chef IDs, return empty
   if (!chefIds.length && !chefUserIds.length) {
