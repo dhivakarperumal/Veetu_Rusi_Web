@@ -1,11 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import api from "../../api";
 import { toast, Toaster } from "react-hot-toast";
 import { Search, ShieldAlert, ShieldCheck, Trash2, Users, UserCheck, UserX, Filter } from "lucide-react";
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
-  const [filteredUsers, setFilteredUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -19,7 +18,6 @@ const UserManagement = () => {
       setLoading(true);
       const res = await api.get("/superadmin/users");
       setUsers(res.data);
-      setFilteredUsers(res.data);
     } catch {
       toast.error("Failed to load user accounts.");
     } finally {
@@ -28,13 +26,11 @@ const UserManagement = () => {
   }
 
   useEffect(() => {
+    // eslint-disable-next-line
     fetchUsers();
   }, []);
 
-  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / itemsPerPage));
-  const paginatedUsers = filteredUsers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
-  useEffect(() => {
+  const filteredUsers = useMemo(() => {
     let result = users;
     if (search.trim()) {
       const lower = search.toLowerCase();
@@ -45,16 +41,19 @@ const UserManagement = () => {
           (u.phone && u.phone.includes(lower))
       );
     }
-    
+
     if (statusFilter === "Active") {
       result = result.filter((u) => String(u.active).toLowerCase() === 'active');
     } else if (statusFilter === "Blocked") {
       result = result.filter((u) => String(u.active).toLowerCase() !== 'active');
     }
-    
-    setFilteredUsers(result);
-    setCurrentPage(1);
+
+    return result;
   }, [search, statusFilter, users]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / itemsPerPage));
+  const currentPageIndex = Math.min(currentPage, totalPages);
+  const paginatedUsers = filteredUsers.slice((currentPageIndex - 1) * itemsPerPage, currentPageIndex * itemsPerPage);
 
   const handleToggleStatus = async (id, currentActive) => {
     const nextActive = String(currentActive).toLowerCase() === 'active' ? 0 : 1;
@@ -171,7 +170,7 @@ const UserManagement = () => {
                   placeholder="Search by name, email or phone..."
                   className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-50 transition-all text-sm font-medium text-slate-700"
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
               />
           </div>
           
@@ -179,7 +178,7 @@ const UserManagement = () => {
               <div className="relative flex-1 md:w-48">
                   <select 
                       value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value)}
+                      onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
                       className="w-full appearance-none bg-slate-50 border border-slate-200 text-slate-600 text-xs font-bold uppercase tracking-widest rounded-xl px-5 py-3.5 pr-10 outline-none cursor-pointer focus:border-blue-400 transition-colors"
                   >
                       <option value="All">All Statuses</option>
@@ -212,6 +211,7 @@ const UserManagement = () => {
                   <table className="w-full text-left border-collapse">
                       <thead>
                           <tr className="bg-[#2a3042]">
+                              <th className="px-6 py-5 text-xs font-black text-white uppercase tracking-wider">S.No</th>
                               <th className="px-6 py-5 text-xs font-black text-white uppercase tracking-wider">Customer Name</th>
                               <th className="px-6 py-5 text-xs font-black text-white uppercase tracking-wider">Email Address</th>
                               <th className="px-6 py-5 text-xs font-black text-white uppercase tracking-wider">Phone / Mobile</th>
@@ -223,8 +223,11 @@ const UserManagement = () => {
                       </thead>
                       <tbody className="divide-y divide-slate-100 bg-white">
                           {filteredUsers.length > 0 ? (
-                              paginatedUsers.map((u) => (
+                              paginatedUsers.map((u, index) => (
                                   <tr key={u.id} className="hover:bg-slate-50 transition-colors group">
+                                      <td className="px-6 py-5">
+                                          <span className="text-sm font-bold text-slate-500">{index + 1 + (currentPage - 1) * itemsPerPage}</span>
+                                      </td>
                                       <td className="px-6 py-5">
                                           <div className="flex items-center gap-3">
                                               <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-500 border border-blue-100">
@@ -306,7 +309,7 @@ const UserManagement = () => {
                               ))
                           ) : (
                               <tr>
-                                  <td colSpan="7" className="px-6 py-24 text-center">
+                                  <td colSpan="8" className="px-6 py-24 text-center">
                                       <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
                                           <Users size={28} />
                                       </div>
