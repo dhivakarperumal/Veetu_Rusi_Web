@@ -402,7 +402,7 @@ const SingleProductForm = ({ categories, franchiseId, franchiseUserId, onSuccess
                     });
                     return filteredCategories.length ? filteredCategories.map((c) => {
                       const label = c.name || c.cname || c.catId || `Category ${c.id}`;
-                      const value = c.catId || c.name || c.cname || c.id;
+                      const value = c.name || c.cname || c.catId || c.id;
                       return (<option key={c.id || value} value={value}>{label}</option>);
                     }) : <option disabled>No franchise categories available</option>;
                   })()}</select></div>
