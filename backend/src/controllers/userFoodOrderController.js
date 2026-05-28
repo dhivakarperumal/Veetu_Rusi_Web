@@ -251,6 +251,72 @@ const getFranchiseAdminOrders = async (franchiseUserId) => {
   }));
 };
 
+const getAllOrders = async ({ role, userId, numericId, status, chef_id, search }) => {
+  let query = 'SELECT * FROM user_food_order_table WHERE 1=1';
+  const params = [];
+
+  if (role === 'chef') {
+    const chefIdentifier = chef_id || userId || numericId;
+    if (!chefIdentifier) return [];
+    query += ' AND (chef_user_id = ? OR chef_id = ?)';
+    params.push(chefIdentifier, chefIdentifier);
+  } else if (role === 'franchise') {
+    const franchiseUserId = userId || numericId;
+    if (!franchiseUserId) return [];
+
+    const [chefs] = await pool.execute(
+      'SELECT chef_id, user_id FROM home_chefs WHERE created_by_user_id = ? OR franchise_user_id = ?',
+      [franchiseUserId, franchiseUserId]
+    );
+
+    const chefIds = chefs.map(c => c.chef_id).filter(Boolean);
+    const chefUserIds = chefs.map(c => c.user_id).filter(Boolean);
+
+    if (!chefIds.length && !chefUserIds.length) return [];
+
+    const franchiseParts = [];
+    if (chefIds.length) {
+      franchiseParts.push(`chef_id IN (${chefIds.map(() => '?').join(',')})`);
+      params.push(...chefIds);
+    }
+    if (chefUserIds.length) {
+      franchiseParts.push(`chef_user_id IN (${chefUserIds.map(() => '?').join(',')})`);
+      params.push(...chefUserIds);
+    }
+
+    query += ` AND (${franchiseParts.join(' OR ')})`;
+  } else if (role === 'user') {
+    const orderUserId = userId || numericId;
+    if (!orderUserId) return [];
+    query += ' AND user_id = ?';
+    params.push(orderUserId);
+  }
+
+  if (chef_id && role !== 'chef') {
+    query += ' AND (chef_id = ? OR chef_user_id = ?)';
+    params.push(chef_id, chef_id);
+  }
+
+  if (status) {
+    query += ' AND status = ?';
+    params.push(status);
+  }
+
+  if (search) {
+    query += ' AND (order_id LIKE ? OR customer_name LIKE ? OR customer_email LIKE ? OR chef_name LIKE ? OR franchise_name LIKE ?)';
+    const searchTerm = `%${search}%`;
+    params.push(searchTerm, searchTerm, searchTerm, searchTerm, searchTerm);
+  }
+
+  query += ' ORDER BY ordered_at DESC';
+
+  const [rows] = await pool.execute(query, params);
+  return rows.map((row) => ({
+    ...row,
+    items: parseJson(row.items)
+  }));
+};
+
 module.exports = {
   addUserFoodOrder,
   getAllOrders,
