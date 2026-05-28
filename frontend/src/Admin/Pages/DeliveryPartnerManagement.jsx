@@ -20,7 +20,7 @@ import {
 
 const tabs = [
   { id: "basic", label: "Basic Info" },
-  { id: "contact", label: "Contact Details" },
+ 
   { id: "address", label: "Address Details" },
   { id: "login", label: "Login & Auth" },
   { id: "vehicle", label: "Vehicle Info" },
