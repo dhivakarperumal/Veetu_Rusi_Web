@@ -21,6 +21,7 @@ const Users = ({ initialTab = "All" }) => {
     const [selectedTab, setSelectedTab] = useState(initialTab);
     const [selectedRole, setSelectedRole] = useState("all");
     const [searchTerm, setSearchTerm] = useState("");
+    const roleOptions = ["all", "superadmin", "admin", "manager", "chef", "dealer", "user"];
 
     // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
@@ -167,7 +168,9 @@ const Users = ({ initialTab = "All" }) => {
 
     const getRoleStyle = (role) => {
         const normalizedRole = role ? role.toLowerCase() : "";
+        if (normalizedRole.includes("superadmin")) return "bg-slate-900 text-white shadow-sm";
         if (normalizedRole.includes("admin")) return "bg-slate-900 text-white shadow-sm";
+        if (normalizedRole.includes("chef")) return "bg-purple-50 text-purple-600 border border-purple-100";
         if (normalizedRole.includes("manager")) return "bg-indigo-50 text-indigo-600 border border-indigo-100";
         if (normalizedRole.includes("dealer")) return "bg-amber-50 text-amber-600 border border-amber-100";
         return "bg-emerald-50 text-emerald-600 border border-emerald-100"; // User / Customer
@@ -271,11 +274,11 @@ const Users = ({ initialTab = "All" }) => {
                                 onChange={(e) => setSelectedRole(e.target.value)}
                                 className="pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:bg-white focus:border-blue-500 transition-all text-sm font-bold text-gray-600 cursor-pointer appearance-none min-w-[140px]"
                             >
-                                <option value="all">all roles</option>
-                                <option value="admin">admin</option>
-                                <option value="manager">manager</option>
-                                <option value="dealer">dealer</option>
-                                <option value="user">user</option>
+                                {roleOptions.map((role) => (
+                                    <option key={role} value={role}>
+                                        {role === 'all' ? 'all roles' : role}
+                                    </option>
+                                ))}
                             </select>
                         </div>
                     </div>
@@ -351,10 +354,9 @@ const Users = ({ initialTab = "All" }) => {
                                                         onChange={(e) => handleQuickRoleUpdate(user.id, e.target.value, user)}
                                                         className={`appearance-none cursor-pointer px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-transparent outline-none transition-all ${getRoleStyle(user.role)}`}
                                                     >
-                                                        <option value="admin">admin</option>
-                                                        <option value="manager">manager</option>
-                                                        <option value="dealer">dealer</option>
-                                                        <option value="user">user</option>
+                                                        {roleOptions.filter((role) => role !== 'all').map((role) => (
+                                                            <option key={role} value={role}>{role}</option>
+                                                        ))}
                                                     </select>
                                                 </div>
                                             </div>
