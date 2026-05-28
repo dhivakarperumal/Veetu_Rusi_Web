@@ -21,7 +21,7 @@ const Navbar = () => {
 
   const { user, logout } = useContext(AuthContext);
   console.log("USER DATA:", user);
-  const { cart, wishlist } = useContext(StoreContext);
+  const { cart, wishlist, userFoodCart } = useContext(StoreContext);
   const [mobilePages, setMobilePages] = useState(false);
   const navigate = useNavigate();
   const [homeChef, setHomeChef] = useState(null);
@@ -300,7 +300,19 @@ const Navbar = () => {
             </Link>
 
             <Link
-              to="cart"
+              to="/food-cart"
+              className="relative text-primary hover:text-primary-light hover:scale-110 transition"
+            >
+              <FiShoppingBag size={20} />
+              {userFoodCart && userFoodCart.length > 0 && (
+                <span className="absolute -top-2 -right-2 bg-rose-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">
+                  {userFoodCart.length > 9 ? '9+' : userFoodCart.length}
+                </span>
+              )}
+            </Link>
+
+            <Link
+              to="/cart"
               className="relative text-primary hover:text-primary-light hover:scale-110 transition"
             >
               <ShoppingCart size={22} />

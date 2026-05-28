@@ -350,12 +350,63 @@ const createSubscriptionPlansTable = async () => {
         }
     };
 
-module.exports = {
-    createProductsTable,
-    createRecipeDetailsTable,
-    createFranchiseProductsTable,
-    createChefFoodTable,
-    createSubscriptionPlansTable,
-    createDealersTable,
-    createReviewsTable
-};
+    const createUserFoodCartTable = async () => {
+        try {
+            const sql = `
+            CREATE TABLE IF NOT EXISTS user_food_cart (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                user_id VARCHAR(255),
+                product_id INT,
+                name VARCHAR(255),
+                image LONGTEXT,
+                price DECIMAL(10,2),
+                total_price DECIMAL(10,2),
+                quantity INT DEFAULT 1,
+
+                created_by_user_id VARCHAR(255),
+                created_by_name VARCHAR(255),
+                created_by_email VARCHAR(255),
+                created_by_phone VARCHAR(20),
+
+                chef_user_id VARCHAR(255),
+                chef_id VARCHAR(255),
+                chef_name VARCHAR(255),
+                chef_phone VARCHAR(20),
+                chef_email VARCHAR(255),
+
+                franchise_id VARCHAR(255),
+                franchise_user_id VARCHAR(255),
+                franchise_email VARCHAR(255),
+                franchise_name VARCHAR(255),
+                franchise_phone VARCHAR(20),
+
+                ordered_by_name VARCHAR(255),
+                ordered_by_user_id VARCHAR(255),
+                ordered_by_email VARCHAR(255),
+                ordered_by_phone VARCHAR(20),
+
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+                KEY idx_user_id (user_id),
+                KEY idx_product_id (product_id),
+                KEY idx_created_at (created_at)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            `;
+
+            await pool.execute(sql);
+            console.log('✓ user_food_cart table created or already exists');
+        } catch (err) {
+            console.error('✗ Error creating user_food_cart table:', err.message || err);
+        }
+    };
+
+    module.exports = {
+        createProductsTable,
+        createRecipeDetailsTable,
+        createFranchiseProductsTable,
+        createChefFoodTable,
+        createSubscriptionPlansTable,
+        createReviewsTable,
+        createUserFoodCartTable
+    };

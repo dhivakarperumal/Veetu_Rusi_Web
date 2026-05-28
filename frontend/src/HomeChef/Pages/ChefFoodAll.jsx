@@ -17,6 +17,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import api from "../../api";
 import toast from "react-hot-toast";
+import QuickViewModal from "../../Components/Products/QuickModel";
 
 const ChefFoodAll = () => {
   const [profile, setProfile] = useState(null);
@@ -25,6 +26,7 @@ const ChefFoodAll = () => {
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState("table");
   const [deleting, setDeleting] = useState(false);
+  const [quickViewProduct, setQuickViewProduct] = useState(null);
   const navigate = useNavigate();
 
   const getStatusStyle = (status) => {
@@ -337,6 +339,13 @@ const ChefFoodAll = () => {
                         {item.status || "Active"}
                       </span>
                     </div>
+
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setQuickViewProduct(item); }}
+                      className="absolute bottom-3 right-3 bg-primary text-white p-2 rounded-full shadow-md hover:bg-primary-light cursor-pointer z-20"
+                    >
+                      <FiPlus className="text-lg" />
+                    </button>
                   </div>
                   <div className="p-6 space-y-4 flex-1 flex flex-col">
                     <div>
@@ -379,6 +388,9 @@ const ChefFoodAll = () => {
           )
         )}
       </div>
+      {quickViewProduct && (
+        <QuickViewModal product={quickViewProduct} onClose={() => setQuickViewProduct(null)} />
+      )}
     </div>
   );
 };
