@@ -253,6 +253,8 @@ const SingleProductForm = ({ categories, franchiseId, franchiseUserId, onSuccess
     variants: [{ weight: "", mrp: "", offerPercent: "", offerPrice: "" }],
     totalStock: "0",
     totalWeight: 0,
+    manufactureDate: "",
+    expiryDate: "",
     barcode: "",
     barcodeValue: "",
     rating: 5,
@@ -276,6 +278,8 @@ const SingleProductForm = ({ categories, franchiseId, franchiseUserId, onSuccess
         healthBenefits: safeParse(editItem.healthBenefits).length ? safeParse(editItem.healthBenefits) : [""],
         variants: safeParse(editItem.variants),
         images: safeParse(editItem.images),
+        manufactureDate: editItem.manufactureDate || editItem.mfg_date || "",
+        expiryDate: editItem.expiryDate || editItem.expiryDate || "",
         barcodeValue: editItem.barcodeValue || editItem.productId
       });
     } else {
@@ -403,6 +407,26 @@ const SingleProductForm = ({ categories, franchiseId, franchiseUserId, onSuccess
                     }) : <option disabled>No franchise categories available</option>;
                   })()}</select></div>
                   <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Status *</label><select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 outline-none font-black text-emerald-800 shadow-sm"><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                  <div>
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Manufacture Date</label>
+                    <input
+                      type="date"
+                      value={form.manufactureDate}
+                      onChange={(e) => setForm({ ...form, manufactureDate: e.target.value })}
+                      className="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 outline-none font-bold text-gray-900 shadow-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Expiry Date</label>
+                    <input
+                      type="date"
+                      value={form.expiryDate}
+                      onChange={(e) => setForm({ ...form, expiryDate: e.target.value })}
+                      className="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 outline-none font-bold text-gray-900 shadow-sm"
+                    />
+                  </div>
                 </div>
                 <div>
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1 flex items-center gap-2">
@@ -547,6 +571,8 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
     comboDetails: { mrp: "", offerPercent: "", offerPrice: "", totalWeight: 0 },
     totalStock: "0",
     totalWeight: 0,
+    manufactureDate: "",
+    expiryDate: "",
     barcode: "",
     barcodeValue: "",
     rating: 5,
@@ -574,6 +600,8 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
         images: safeParse(editItem.images),
         comboItems: safeParse(editItem.comboItems),
         comboDetails: parsedDetails,
+        manufactureDate: editItem.manufactureDate || editItem.mfg_date || "",
+        expiryDate: editItem.expiryDate || editItem.expiryDate || "",
         // Restore totalWeight from comboDetails if available
         totalWeight: Number(parsedDetails?.totalWeight || editItem.totalWeight || 0),
         barcodeValue: editItem.barcodeValue || editItem.productId
@@ -730,7 +758,26 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                   )}
                   <div className="grid grid-cols-2 gap-4 mb-4">
                     <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Status *</label><select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="w-full bg-gray-50 border-2 border-transparent focus:border-amber-500 rounded-2xl px-4 py-2.5 outline-none font-black text-amber-800 shadow-sm text-sm"><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div>
-                    <div className="hidden"></div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Manufacture Date</label>
+                        <input
+                          type="date"
+                          value={form.manufactureDate}
+                          onChange={(e) => setForm({ ...form, manufactureDate: e.target.value })}
+                          className="w-full bg-gray-50 border-2 border-transparent focus:border-amber-500 rounded-2xl px-4 py-2.5 outline-none font-black text-gray-900 shadow-sm text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Expiry Date</label>
+                        <input
+                          type="date"
+                          value={form.expiryDate}
+                          onChange={(e) => setForm({ ...form, expiryDate: e.target.value })}
+                          className="w-full bg-gray-50 border-2 border-transparent focus:border-amber-500 rounded-2xl px-4 py-2.5 outline-none font-black text-gray-900 shadow-sm text-sm"
+                        />
+                      </div>
+                    </div>
                   </div>
                   <div>
                     <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
