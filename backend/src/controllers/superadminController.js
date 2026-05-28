@@ -321,7 +321,7 @@ exports.createHomeChef = async (req, res) => {
     const kitchen_photos = req.files && req.files.kitchen_photos ? req.files.kitchen_photos.map(f => f.filename).join(',') : null;
     const kitchen_videos = req.files && req.files.kitchen_videos ? req.files.kitchen_videos.map(f => f.filename).join(',') : null;
 
-    const fullAddress = address || [door_number, street_name, area_name, landmark, city, district, state, pincode].filter(Boolean).join(', ') || null;
+    const fullAddress = address || [door_number, street_name, area_name, landmark, city, district, state, pincode].filter(Boolean).join(', ') || '';
     const hashedPw = password ? hashPassword(password) : null;
 
     const sql = `INSERT INTO home_chefs (
@@ -483,7 +483,7 @@ exports.updateHomeChef = async (req, res) => {
     const kitchen_photos = req.files && req.files.kitchen_photos ? req.files.kitchen_photos.map(f => f.filename).join(',') : null;
     const kitchen_videos = req.files && req.files.kitchen_videos ? req.files.kitchen_videos.map(f => f.filename).join(',') : null;
 
-    const fullAddress = address || [door_number, street_name, area_name, landmark, city, district, state, pincode].filter(Boolean).join(', ') || null;
+    const fullAddress = address || [door_number, street_name, area_name, landmark, city, district, state, pincode].filter(Boolean).join(', ') || '';
 
     const calculateAgeFromDOB = (dob) => {
       if (!dob) return null;
