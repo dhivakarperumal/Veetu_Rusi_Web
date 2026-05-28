@@ -695,7 +695,7 @@ const DeliveryPartnerManagement = () => {
           <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={() => setIsFormOpen(false)} />
           <div className="border border-white/10 w-full max-w-6xl rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden flex flex-col max-h-[95vh] bg-transparent">
             {/* Form Header */}
-            <div className="p-6 text-white flex-shrink-0 flex justify-between items-center bg-emerald-800 rounded-t-[2.5rem] border-b border-white/5">
+            <div className="p-4 text-white flex-shrink-0 flex justify-between items-center bg-emerald-800 rounded-t-[2.5rem] border-b border-white/5">
               <div>
                 <h3 className="text-xl font-black uppercase italic tracking-tight">
                   {editingPartner ? "Edit Delivery Partner" : "Add New Delivery Partner"}
@@ -710,13 +710,13 @@ const DeliveryPartnerManagement = () => {
             </div>
 
             {/* Tab List */}
-            <div className="border-b border-gray-100 bg-white p-2 flex gap-2 overflow-x-auto whitespace-nowrap scrollbar-thin relative z-20">
+            <div className="border-b border-gray-100 bg-white p-1 flex gap-2 overflow-x-auto whitespace-nowrap scrollbar-thin relative z-20">
               {tabs.map((t) => (
                 <button
                   key={t.id}
                   type="button"
                   onClick={() => setActiveTab(t.id)}
-                  className={`flex-shrink-0 mx-1 px-4 py-2 text-xs font-black uppercase tracking-wider rounded-full transition focus:outline-none ${activeTab === t.id ? "bg-emerald-800 text-white shadow-inner" : "text-gray-600 hover:text-gray-800 hover:bg-gray-100"}`}
+                  className={`flex-shrink-0 mx-1 px-3 py-1.5 text-xs font-black uppercase tracking-wider rounded-full transition focus:outline-none ${activeTab === t.id ? "bg-emerald-800 text-white shadow-inner" : "text-gray-600 hover:text-gray-800 hover:bg-gray-100"}`}
                 >
                   {t.label}
                 </button>
