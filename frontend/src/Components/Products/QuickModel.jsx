@@ -42,6 +42,8 @@ const QuickViewModal = ({ product, onClose }) => {
   if (!product) return null;
 
   const allImages = selectedVariant?.images || product?.images || [];
+  const unitPrice = parseFloat(product.offer_price ?? product.final_price ?? product.mrp ?? product.price ?? 0);
+  const totalPrice = (unitPrice * quantity).toFixed(2);
 
   const stock = selectedVariant?.sizesStock?.[selectedSize];
 
@@ -170,16 +172,18 @@ const QuickViewModal = ({ product, onClose }) => {
             </div>
 
             {/* Price */}
-            <div className="flex items-end gap-3 bg-gray-50 p-4 rounded-xl">
-              <span className="text-3xl font-bold text-primary">
-                ₹{product.offer_price}
-              </span>
-
-              {product.mrp && (
-                <span className="line-through text-gray-400">
-                  ₹{product.mrp}
+            <div className="flex flex-col gap-2 bg-gray-50 p-4 rounded-xl">
+              <div className="flex items-center gap-3">
+                <span className="text-3xl font-bold text-primary">
+                  ₹{unitPrice}
                 </span>
-              )}
+                {product.mrp && (
+                  <span className="line-through text-gray-400">
+                    ₹{product.mrp}
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-gray-500">Total: ₹{totalPrice}</p>
             </div>
 
             {/* Colors */}
@@ -297,7 +301,7 @@ const QuickViewModal = ({ product, onClose }) => {
                 className="w-full md:flex-1 flex items-center justify-center gap-2 bg-primary text-white py-3 rounded-lg cursor-pointer"
               >
                 <FiShoppingCart size={18} />
-                Add to Cart
+                Add to Cart · ₹{totalPrice}
               </button>
 
               {/* Buy Now + Wishlist */}

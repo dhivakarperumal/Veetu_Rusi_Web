@@ -51,7 +51,7 @@ export const StoreProvider = ({ children }) => {
         fetchCart();
         fetchWishlist();
         fetchUserFoodCart();
-    }, [fetchCart, fetchWishlist]);
+    }, [fetchCart, fetchWishlist, fetchUserFoodCart]);
 
     const fetchUserFoodCart = useCallback(async () => {
         if (!user?.user_id) { setUserFoodCart([]); return; }

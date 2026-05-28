@@ -28,117 +28,80 @@ export default function FoodCartPage() {
       <PageHeader title="My Food Cart" />
       <div className="min-h-screen bg-gray-50 py-16">
         <PageContainer>
-          <div className=" grid lg:grid-cols-3 gap-10">
+          <div className="grid lg:grid-cols-3 gap-10">
 
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-2">
+              <div className="overflow-x-auto bg-white rounded-3xl shadow-md">
+                <table className="min-w-full text-left">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-4 text-sm font-semibold text-gray-700">Item</th>
+                      <th className="px-6 py-4 text-sm font-semibold text-gray-700">Price</th>
+                      <th className="px-6 py-4 text-sm font-semibold text-gray-700">Quantity</th>
+                      <th className="px-6 py-4 text-sm font-semibold text-gray-700">Total</th>
+                      <th className="px-6 py-4 text-sm font-semibold text-gray-700">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {userFoodCart.length === 0 ? (
+                      <tr>
+                        <td colSpan="5" className="px-6 py-16 text-center text-gray-500">
+                          Your food cart is empty. Browse available foods and add items to your food cart.
+                        </td>
+                      </tr>
+                    ) : (
+                      userFoodCart.map((item, index) => {
+                        const image = resolveImageUrl(item.image);
+                        const price = parseFloat(item.price || 0);
+                        const total = (price * item.quantity).toFixed(2);
 
-              {userFoodCart.length === 0 ? (
-
-                <div className="text-center py-24 bg-white rounded-xl shadow">
-
-                  <FiShoppingCart className="mx-auto text-primary-light text-5xl mb-4" />
-
-                  <h2 className="text-xl font-semibold text-gray-700">
-                    Your food cart is empty
-                  </h2>
-
-                  <p className="text-gray-500 mt-2">
-                    Browse available foods and add items to your food cart.
-                  </p>
-
-                  <button
-                    onClick={() => navigate("/shop")}
-                    className="mt-6 px-6 py-3 bg-primary text-white rounded-lg"
-                  >
-                    Browse Foods
-                  </button>
-
-                </div>
-
-              ) : (
-
-                userFoodCart.map((item, index) => {
-
-                  const image = resolveImageUrl(item.image);
-                  const price = item.price;
-
-                  return (
-
-                    <div
-                      key={index}
-                      className="bg-white rounded-2xl shadow-md hover:shadow-xl transition p-5 flex flex-col md:flex-row gap-6 items-center"
-                    >
-
-                      <div className="w-32 h-40 rounded-lg overflow-hidden">
-
-                        <img
-                          src={image}
-                          alt={item.name}
-                          className="w-full h-full object-cover"
-                        />
-
-                      </div>
-
-                      <div className="flex-1">
-
-                        <h3 className="font-semibold text-lg text-gray-800">
-                          {item.name}
-                        </h3>
-
-                        <div className="flex flex-wrap gap-2 mt-1 text-xs">
-                          {item.category && (
-                            <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded">
-                              {item.category}
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="flex items-center gap-3 mt-3">
-
-                          <span className="text-primary-light font-bold text-lg">
-                            ₹{price}
-                          </span>
-
-                        </div>
-
-                        <div className="flex items-center gap-3 mt-4">
-
-                          <button
-                            onClick={() => updateFoodCartQuantity(item.id, item.quantity - 1)}
-                            className="bg-gray-100 p-2 rounded hover:bg-gray-200 cursor-pointer"
-                          >
-                            <FiMinus />
-                          </button>
-
-                          <span className="font-semibold text-gray-700">
-                            {item.quantity}
-                          </span>
-
-                          <button
-                            onClick={() => updateFoodCartQuantity(item.id, item.quantity + 1)}
-                            className="bg-gray-100 p-2 rounded hover:bg-gray-200 cursor-pointer"
-                          >
-                            <FiPlus />
-                          </button>
-
-                        </div>
-
-                      </div>
-
-                      <button
-                        onClick={() => removeFromFoodCart(item.id)}
-                        className="bg-primary-light text-white p-2 rounded-lg hover:bg-primary-dark transition cursor-pointer"
-                      >
-                        <FiTrash2 />
-                      </button>
-
-                    </div>
-
-                  );
-                })
-
-              )}
-
+                        return (
+                          <tr key={index} className="border-t border-gray-100">
+                            <td className="px-6 py-4 align-top">
+                              <div className="flex items-start gap-4">
+                                <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gray-100">
+                                  <img src={image} alt={item.name} className="w-full h-full object-cover" />
+                                </div>
+                                <div>
+                                  <p className="font-semibold text-gray-800">{item.name}</p>
+                                  {item.category && <p className="mt-1 text-sm text-gray-500">{item.category}</p>}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 align-top font-semibold text-gray-800">₹{price.toFixed(2)}</td>
+                            <td className="px-6 py-4 align-top">
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => updateFoodCartQuantity(item.id, item.quantity - 1)}
+                                  className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200"
+                                >
+                                  <FiMinus />
+                                </button>
+                                <span className="w-10 text-center text-gray-700 font-semibold">{item.quantity}</span>
+                                <button
+                                  onClick={() => updateFoodCartQuantity(item.id, item.quantity + 1)}
+                                  className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200"
+                                >
+                                  <FiPlus />
+                                </button>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 align-top font-semibold text-gray-800">₹{total}</td>
+                            <td className="px-6 py-4 align-top">
+                              <button
+                                onClick={() => removeFromFoodCart(item.id)}
+                                className="inline-flex items-center justify-center rounded-lg bg-primary-light px-3 py-2 text-white hover:bg-primary-dark transition"
+                              >
+                                <FiTrash2 />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             <div className="bg-white rounded-2xl shadow-lg p-6 h-fit sticky top-24">

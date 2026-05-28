@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
+import { FiPlus } from "react-icons/fi";
 import api from "../../api";
 import Heading from "../Heading";
+import QuickViewModal from "../Products/QuickModel";
 
 const parseJsonField = (value) => {
   if (!value) return [];
@@ -37,6 +39,23 @@ const FoodItems = () => {
   const [foods, setFoods] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedFood, setSelectedFood] = useState(null);
+  const [showQuickView, setShowQuickView] = useState(false);
+
+  const openQuickView = (food) => {
+    setSelectedFood(food);
+    setShowQuickView(true);
+  };
+
+  const closeQuickView = () => {
+    setShowQuickView(false);
+    setSelectedFood(null);
+  };
+
+  const formatPrice = (value) => {
+    const amount = parseFloat(value || 0);
+    return amount.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  };
 
   useEffect(() => {
     const fetchFoods = async () => {
@@ -103,67 +122,57 @@ const FoodItems = () => {
                     <span className={`rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.25em] ${getStatusClasses(food.status)}`}>
                       {food.status || "Active"}
                     </span>
-                    <span className="rounded-full bg-slate-950/90 px-3 py-1 text-[10px] font-black uppercase tracking-[0.25em] text-white">
-                      {food.dietary_tag?.toUpperCase() || "VEG"}
-                    </span>
+                    <button
+                      type="button"
+                      onClick={() => openQuickView(food)}
+                      className="rounded-full bg-white/90 p-3 text-slate-900 shadow-sm transition hover:bg-white"
+                    >
+                      <FiPlus size={16} />
+                    </button>
                   </div>
                 </div>
 
-                <div className="p-6 space-y-5">
-                  <div>
-                    <h3 className="text-xl font-black text-slate-900">{food.name || "Chef Special"}</h3>
-                    <p className="mt-3 text-sm leading-6 text-slate-500">{food.description || "A delightful homemade dish prepared by our chef."}</p>
-                  </div>
+<div className="p-6 space-y-4">
+                    <div>
+                      <h3 className="text-xl font-black text-slate-900">{food.name || "Chef Special"}</h3>
+                      <p className="mt-2 text-sm leading-6 text-slate-500 line-clamp-3">
+                        {food.description || "A delightful homemade dish prepared by our chef."}
+                      </p>
+                    </div>
 
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-3xl bg-slate-50 p-4">
-                      <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Category</p>
-                      <p className="mt-2 font-black text-slate-900">{food.category || "Uncategorized"}</p>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="rounded-3xl bg-slate-50 p-4">
+                        <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Category</p>
+                        <p className="mt-2 font-black text-slate-900">{food.category || food.chef_category || "Uncategorized"}</p>
+                      </div>
+                      <div className="rounded-3xl bg-slate-50 p-4">
+                        <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Chef</p>
+                        <p className="mt-2 font-black text-slate-900">{food.chef_name || food.created_by_name || "Chef"}</p>
+                      </div>
                     </div>
-                    <div className="rounded-3xl bg-slate-50 p-4">
-                      <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Cuisine</p>
-                      <p className="mt-2 font-black text-slate-900">{food.cuisine || "Chef's Choice"}</p>
-                    </div>
-                  </div>
 
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-3xl bg-slate-50 p-4">
-                      <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Prep time</p>
-                      <p className="mt-2 font-black text-slate-900">{food.prep_time || "--"}</p>
-                    </div>
-                    <div className="rounded-3xl bg-slate-50 p-4">
-                      <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Shelf life</p>
-                      <p className="mt-2 font-black text-slate-900">{food.shelf_life_days ? `${food.shelf_life_days} days` : "--"}</p>
-                    </div>
-                  </div>
-
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-3xl bg-slate-50 p-4">
-                      <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">MRP</p>
-                      <p className="mt-2 font-black text-slate-900">₹{parseFloat(food.mrp || 0).toLocaleString()}</p>
-                    </div>
-                    <div className="rounded-3xl bg-slate-50 p-4">
-                      <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Offer</p>
-                      <p className="mt-2 font-black text-slate-900">{food.offer ? `${food.offer}%` : "0%"}</p>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="rounded-3xl bg-slate-50 p-4">
+                        <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">MRP</p>
+                        <p className="mt-2 font-black text-slate-900">₹{formatPrice(food.mrp)}</p>
+                      </div>
+                      <div className="rounded-3xl bg-slate-50 p-4">
+                        <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Price</p>
+                        <p className="mt-2 font-black text-emerald-700">₹{formatPrice(food.final_price || food.offer_price || food.mrp)}</p>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-3xl bg-slate-50 p-4">
-                      <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Final price</p>
-                      <p className="mt-2 font-black text-emerald-700">₹{parseFloat(food.final_price || food.mrp || 0).toLocaleString()}</p>
-                    </div>
-                    <div className="rounded-3xl bg-slate-50 p-4">
-                      <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Packaging</p>
-                      <p className="mt-2 font-black text-slate-900">{food.packaging_type || "Pouch"}</p>
-                    </div>
-                  </div>
                 </div>
               </article>
             ))}
           </div>
         )}
       </div>
+
+      {showQuickView && selectedFood && (
+        <QuickViewModal product={selectedFood} onClose={closeQuickView} />
+      )}
     </section>
   );
 };
