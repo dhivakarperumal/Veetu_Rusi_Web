@@ -353,8 +353,7 @@ const DeliveryPartnerManagement = () => {
       case "contact":
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {f("mobile", "Mobile Number", "tel")}
-            {f("email", "Email Address", "email")}
+            {/* Contact details moved to Login & Auth tab */}
           </div>
         );
       case "address":
@@ -377,13 +376,13 @@ const DeliveryPartnerManagement = () => {
       case "login":
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+           
             {f("username", "Username")}
+             {f("mobile", "Mobile Number", "tel")}
+            {f("email", "Email Address", "email")}
             {f("password", "Password", "password")}
             {f("confirmPassword", "Confirm Password", "password")}
-            <div className="flex flex-col gap-3 pt-2">
-              {toggle("otp_verified", "OTP Verified")}
-              {toggle("email_verified", "Email Verified")}
-            </div>
+            
             {f("device_id", "Device ID")}
             {f("last_login_time", "Last Login Time", "datetime-local")}
             {sel("login_status", "Login Status", ["Active", "Inactive", "Blocked"])}
