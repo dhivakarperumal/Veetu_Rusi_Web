@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import api from "../../api";
 import { toast, Toaster } from "react-hot-toast";
-import { Search, ShieldAlert, ShieldCheck, Trash2, Users, UserCheck, UserX, Filter } from "lucide-react";
+import { Search, ShieldAlert, ShieldCheck, Trash2, Users, UserCheck, UserX, Filter, Plus, Edit2, X } from "lucide-react";
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -12,6 +12,40 @@ const UserManagement = () => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [editingRole, setEditingRole] = useState(null);
   const [newRole, setNewRole] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState("add"); // "add" or "edit"
+  const [formData, setFormData] = useState({ id: null, name: "", email: "", phone: "", role: "user", password: "" });
+
+  const openAddModal = () => {
+    setModalMode("add");
+    setFormData({ id: null, name: "", email: "", phone: "", role: "user", password: "" });
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (user) => {
+    setModalMode("edit");
+    setFormData({ id: user.id, name: user.name, email: user.email, phone: user.phone || "", role: user.role || "user", password: "" });
+    setIsModalOpen(true);
+  };
+
+  const handleModalSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (modalMode === "add") {
+        await api.post("/superadmin/users", formData);
+        toast.success("User added successfully.");
+      } else {
+        const payload = { ...formData };
+        if (!payload.password) delete payload.password;
+        await api.put(`/superadmin/users/${formData.id}`, payload);
+        toast.success("User updated successfully.");
+      }
+      setIsModalOpen(false);
+      fetchUsers();
+    } catch {
+      toast.error(`Failed to ${modalMode} user.`);
+    }
+  };
 
   async function fetchUsers() {
     try {
@@ -105,6 +139,10 @@ const UserManagement = () => {
       {/* Page Title */}
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-xl font-black text-slate-800 tracking-tight uppercase">User Management</h2>
+        <button onClick={openAddModal} className="flex items-center gap-2 bg-[#2a3042] hover:bg-slate-800 text-white px-4 py-4 rounded-xl text-xs font-bold transition-colors shadow-sm">
+          <Plus className="w-4 h-4" />
+          Add New User
+        </button>
       </div>
 
       {/* Dark Premium Stat Cards */}
@@ -297,6 +335,13 @@ const UserManagement = () => {
                                                   </button>
                                               )}
                                               <button
+                                                  onClick={() => openEditModal(u)}
+                                                  className="p-2 hover:bg-blue-50 text-blue-500 rounded-xl transition-colors border border-transparent hover:border-blue-100"
+                                                  title="Edit User"
+                                              >
+                                                  <Edit2 size={16} />
+                                              </button>
+                                              <button
                                                   onClick={() => handleDelete(u.id)}
                                                   className="p-2 hover:bg-red-50 text-red-500 rounded-xl transition-colors border border-transparent hover:border-red-100"
                                                   title="Delete User"
@@ -365,6 +410,112 @@ const UserManagement = () => {
               </div>
           </div>
       </div>
+
+      {/* User Form Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-0">
+          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col max-h-[95vh]">
+            <div className="flex items-start justify-between p-6 border-b border-slate-100 shrink-0">
+              <div>
+                <h3 className="text-xl font-bold text-slate-800">
+                  {modalMode === "add" ? "Register New User" : "Edit User"}
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  {modalMode === "add" ? "Add a new user to your system" : "Update user details"}
+                </p>
+              </div>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors shrink-0"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleModalSubmit} className="p-6 space-y-5 overflow-y-auto flex-1">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Username *</label>
+                <input
+                  required
+                  type="text"
+                  placeholder="e.g. johndoe"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-50 transition-all text-sm font-medium text-slate-700"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Email Address *</label>
+                <input
+                  required
+                  type="email"
+                  placeholder="john@example.com"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-50 transition-all text-sm font-medium text-slate-700"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Phone Number</label>
+                <input
+                  type="text"
+                  placeholder="+1 234 567 8900"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-50 transition-all text-sm font-medium text-slate-700"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Assign Role *</label>
+                <select
+                  required
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-50 transition-all text-sm font-medium text-slate-700 appearance-none"
+                  value={formData.role}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                >
+                  <option value="user">User</option>
+                  <option value="admin">Admin</option>
+                  <option value="superadmin">Superadmin</option>
+                  <option value="chef">Chef</option>
+                  <option value="franchise">Franchise</option>
+                  <option value="delivery_partner">Delivery Partner</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Password {modalMode === "add" && "*"}</label>
+                <input
+                  required={modalMode === "add"}
+                  type="password"
+                  placeholder={modalMode === "add" ? "Enter a secure password" : "Leave blank to keep unchanged"}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-50 transition-all text-sm font-medium text-slate-700"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 shrink-0 sticky bottom-0 bg-white">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 text-sm font-bold text-white bg-blue-500 hover:bg-blue-600 rounded-xl shadow-sm transition-colors"
+                >
+                  {modalMode === "add" ? "Register User" : "Update User"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
