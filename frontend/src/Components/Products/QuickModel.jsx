@@ -11,7 +11,7 @@ import { useNavigate } from "react-router-dom";
 import ReactDOM from "react-dom";
 
 const QuickViewModal = ({ product, onClose }) => {
-  const { addToCart, toggleWishlist, wishlist } = useContext(StoreContext);
+  const { addToCart, addToFoodCart, toggleWishlist, wishlist } = useContext(StoreContext);
   const navigate = useNavigate();
 
   const initialVariant = product?.variants && product.variants.length > 0 ? product.variants[0] : null;
@@ -286,7 +286,12 @@ const QuickViewModal = ({ product, onClose }) => {
             <div className="flex flex-col md:flex-row gap-3 md:sticky md:bottom-0 bg-white pt-4 border-t">
               <button
                 onClick={() => {
-                  addToCart(product, selectedVariant, selectedSize, quantity);
+                  // if this is a chef food item, use food cart endpoint
+                  if (product.chef_id || product.chef_user_id || product.final_price) {
+                    addToFoodCart(product, selectedVariant, selectedSize, quantity);
+                  } else {
+                    addToCart(product, selectedVariant, selectedSize, quantity);
+                  }
                   onClose();
                 }}
                 className="w-full md:flex-1 flex items-center justify-center gap-2 bg-primary text-white py-3 rounded-lg cursor-pointer"

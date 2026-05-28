@@ -12,6 +12,7 @@ export const StoreProvider = ({ children }) => {
     const [loadingCart, setLoadingCart] = useState(false);
     const [loadingWishlist, setLoadingWishlist] = useState(false);
     const [productsCache, setProductsCache] = useState([]);
+    const [userFoodCart, setUserFoodCart] = useState([]);
     const [videosCache, setVideosCache] = useState([]);
     const [bannersCache, setBannersCache] = useState({});
     const [categoriesCache, setCategoriesCache] = useState([]);
@@ -49,7 +50,18 @@ export const StoreProvider = ({ children }) => {
     useEffect(() => {
         fetchCart();
         fetchWishlist();
+        fetchUserFoodCart();
     }, [fetchCart, fetchWishlist]);
+
+    const fetchUserFoodCart = useCallback(async () => {
+        if (!user?.user_id) { setUserFoodCart([]); return; }
+        try {
+            const res = await api.get(`/user-food/${user.user_id}`);
+            setUserFoodCart(res.data);
+        } catch (err) {
+            console.error('Fetch user food cart error:', err);
+        }
+    }, [user?.user_id]);
 
     // ─── CART ACTIONS ────────────────────────────────────────────
 
@@ -86,6 +98,93 @@ export const StoreProvider = ({ children }) => {
         } catch (err) {
             console.error("Add to cart error:", err);
             toast.error("Failed to add to cart");
+        }
+    };
+
+    const addToFoodCart = async (product, variant = null, size = null, qty = 1) => {
+        if (!user?.user_id) {
+            toast.error('Please login to add items to cart');
+            return;
+        }
+
+        // Prepare fields expected by user_food_cart
+        const productImages = typeof product.images === 'string' ? JSON.parse(product.images) : (product.images || []);
+        const image = productImages[0] || product.image || '';
+        const price = parseFloat(product.final_price ?? product.offer_price ?? product.mrp ?? product.price ?? 0);
+
+        const payload = {
+            user_id: user.user_id,
+            product_id: product.id || product.product_id,
+            name: product.name,
+            image: image,
+            price: price,
+            total_price: price * qty,
+            quantity: qty,
+
+            created_by_user_id: product.created_by_user_id || product.created_by || '',
+            created_by_name: product.created_by_name || product.created_by || '',
+            created_by_email: product.created_by_email || '',
+            created_by_phone: product.created_by_phone || '',
+
+            chef_user_id: product.chef_user_id || product.chef_user || '',
+            chef_id: product.chef_id || product.chef || '',
+            chef_name: product.chef_name || '',
+            chef_phone: product.chef_phone || '',
+            chef_email: product.chef_email || '',
+
+            franchise_id: product.franchise_id || '',
+            franchise_user_id: product.franchise_user_id || '',
+            franchise_email: product.franchise_email || '',
+            franchise_name: product.franchise_name || '',
+            franchise_phone: product.franchise_phone || '',
+
+            ordered_by_name: user.name || user.fullname || user.username || '',
+            ordered_by_user_id: user.user_id,
+            ordered_by_email: user.email || '',
+            ordered_by_phone: user.phone || user.mobile || ''
+        };
+
+        try {
+            await api.post('/user-food', payload);
+            toast.success('Added to food cart');
+            await fetchUserFoodCart();
+        } catch (err) {
+            console.error('Add to food cart error:', err);
+            toast.error('Failed to add to food cart');
+        }
+    };
+
+    const removeFromFoodCart = async (id) => {
+        try {
+            await api.delete(`/user-food/${id}`);
+            toast.error('Removed from food cart');
+            await fetchUserFoodCart();
+        } catch (err) {
+            console.error('Remove food cart error:', err);
+            toast.error('Failed to remove item');
+        }
+    };
+
+    const updateFoodCartQuantity = async (id, qty) => {
+        if (qty < 1) return;
+        const item = userFoodCart.find(i => i.id === id);
+        if (!item) return;
+        try {
+            await api.put(`/user-food/${id}`, { quantity: qty, price: item.price });
+            setUserFoodCart(prev => prev.map(it => it.id === id ? { ...it, quantity: qty, total_price: it.price * qty } : it));
+        } catch (err) {
+            console.error('Update food qty error:', err);
+            toast.error('Failed to update quantity');
+        }
+    };
+
+    const clearUserFoodCart = async () => {
+        if (!user?.user_id) { setUserFoodCart([]); return; }
+        try {
+            await api.delete(`/user-food/clear/${user.user_id}`);
+            setUserFoodCart([]);
+        } catch (err) {
+            console.error('Clear user food cart error:', err);
         }
     };
 
@@ -180,8 +279,9 @@ export const StoreProvider = ({ children }) => {
 
     return (
         <StoreContext.Provider value={{
-            cart, wishlist,
+            cart, wishlist, userFoodCart,
             addToCart, removeFromCart, updateCartQuantity, clearCart,
+            addToFoodCart, removeFromFoodCart, updateFoodCartQuantity, clearUserFoodCart, fetchUserFoodCart,
             toggleWishlist,
             loadingCart, loadingWishlist,
             fetchCart, fetchWishlist,
