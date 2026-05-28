@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import api from "../../api";
 import { toast, Toaster } from "react-hot-toast";
 import { Search, ShieldAlert, ShieldCheck, Trash2, Users, UserCheck, UserX, Filter, Plus, Edit2, X } from "lucide-react";
@@ -412,8 +413,8 @@ const UserManagement = () => {
       </div>
 
       {/* User Form Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-0">
+      {isModalOpen && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col max-h-[95vh]">
             <div className="flex items-start justify-between p-6 border-b border-slate-100 shrink-0">
               <div>
@@ -514,7 +515,8 @@ const UserManagement = () => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
