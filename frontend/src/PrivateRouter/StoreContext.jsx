@@ -46,13 +46,6 @@ export const StoreProvider = ({ children }) => {
         }
     }, [user?.user_id]);
 
-    // Load cart + wishlist when user logs in
-    useEffect(() => {
-        fetchCart();
-        fetchWishlist();
-        fetchUserFoodCart();
-    }, [fetchCart, fetchWishlist, fetchUserFoodCart]);
-
     const fetchUserFoodCart = useCallback(async () => {
         if (!user?.user_id) { setUserFoodCart([]); return; }
         try {
@@ -62,6 +55,13 @@ export const StoreProvider = ({ children }) => {
             console.error('Fetch user food cart error:', err);
         }
     }, [user?.user_id]);
+
+    // Load cart + wishlist when user logs in
+    useEffect(() => {
+        fetchCart();
+        fetchWishlist();
+        fetchUserFoodCart();
+    }, [fetchCart, fetchWishlist, fetchUserFoodCart]);
 
     // ─── CART ACTIONS ────────────────────────────────────────────
 
@@ -74,11 +74,11 @@ export const StoreProvider = ({ children }) => {
         const selectedVariant = variant || product.variants?.[0] || null;
         const selectedSize = size || selectedVariant?.weight || selectedVariant?.selectedSizes?.[0] || "Free Size";
         const variantColor = selectedVariant?.colorName || selectedVariant?.color || "Default";
-        
+
         // Correctly parse images if they are stored as JSON strings
         const productImages = typeof product.images === 'string' ? JSON.parse(product.images) : (product.images || []);
         const variantImage = selectedVariant?.images?.[0] || productImages[0] || null;
-        
+
         const price = parseFloat(selectedVariant?.offerPrice || selectedVariant?.salePrice || selectedVariant?.price || product.offer_price || product.price || 0);
 
         try {
@@ -90,7 +90,7 @@ export const StoreProvider = ({ children }) => {
                 image: variantImage,
                 email: user.email || "",
                 price: price,
-                total_price: price * qty, 
+                total_price: price * qty,
                 quantity: qty,
             });
             toast.success("Added to cart!");
@@ -251,11 +251,11 @@ export const StoreProvider = ({ children }) => {
                 const selectedVariant = variant || product.variants?.[0] || null;
                 const selectedSize = size || selectedVariant?.weight || selectedVariant?.selectedSizes?.[0] || "";
                 const variantColor = selectedVariant?.colorName || selectedVariant?.color || "";
-                
+
                 // Correctly parse images if they are stored as JSON strings
                 const productImages = typeof product.images === 'string' ? JSON.parse(product.images) : (product.images || []);
                 const variantImage = selectedVariant?.images?.[0] || productImages[0] || null;
-                
+
                 const price = parseFloat(selectedVariant?.offerPrice || selectedVariant?.salePrice || selectedVariant?.price || product.offer_price || product.price || 0);
 
                 await api.post("/wishlist", {
