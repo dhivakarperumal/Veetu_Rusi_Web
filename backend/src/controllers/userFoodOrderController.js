@@ -251,66 +251,37 @@ const getFranchiseAdminOrders = async (franchiseUserId) => {
   }));
 };
 
+
 const getAllOrders = async ({ role, userId, numericId, status, chef_id, search }) => {
   let query = 'SELECT * FROM user_food_order_table WHERE 1=1';
   const params = [];
 
   if (role === 'chef') {
-    const chefIdentifier = chef_id || userId || numericId;
-    if (!chefIdentifier) return [];
     query += ' AND (chef_user_id = ? OR chef_id = ?)';
-    params.push(chefIdentifier, chefIdentifier);
-  } else if (role === 'franchise') {
-    const franchiseUserId = userId || numericId;
-    if (!franchiseUserId) return [];
-
-    const [chefs] = await pool.execute(
-      'SELECT chef_id, user_id FROM home_chefs WHERE created_by_user_id = ? OR franchise_user_id = ?',
-      [franchiseUserId, franchiseUserId]
-    );
-
-    const chefIds = chefs.map(c => c.chef_id).filter(Boolean);
-    const chefUserIds = chefs.map(c => c.user_id).filter(Boolean);
-
-    if (!chefIds.length && !chefUserIds.length) return [];
-
-    const franchiseParts = [];
-    if (chefIds.length) {
-      franchiseParts.push(`chef_id IN (${chefIds.map(() => '?').join(',')})`);
-      params.push(...chefIds);
-    }
-    if (chefUserIds.length) {
-      franchiseParts.push(`chef_user_id IN (${chefUserIds.map(() => '?').join(',')})`);
-      params.push(...chefUserIds);
-    }
-
-    query += ` AND (${franchiseParts.join(' OR ')})`;
-  } else if (role === 'user') {
-    const orderUserId = userId || numericId;
-    if (!orderUserId) return [];
-    query += ' AND user_id = ?';
-    params.push(orderUserId);
+    params.push(userId, userId);
+  } else if (role === 'admin') {
+    query += ' AND (franchise_user_id = ? OR franchise_id = ?)';
+    params.push(userId, String(numericId));
   }
+  // superadmin sees all
 
-  if (chef_id && role !== 'chef') {
-    query += ' AND (chef_id = ? OR chef_user_id = ?)';
-    params.push(chef_id, chef_id);
-  }
-
-  if (status) {
+  if (status && status !== 'All') {
     query += ' AND status = ?';
     params.push(status);
   }
-
+  if (chef_id) {
+    query += ' AND chef_id = ?';
+    params.push(chef_id);
+  }
   if (search) {
-    query += ' AND (order_id LIKE ? OR customer_name LIKE ? OR customer_email LIKE ? OR chef_name LIKE ? OR franchise_name LIKE ?)';
-    const searchTerm = `%${search}%`;
-    params.push(searchTerm, searchTerm, searchTerm, searchTerm, searchTerm);
+    query += ' AND (customer_name LIKE ? OR order_id LIKE ? OR chef_name LIKE ? OR ordered_by_name LIKE ?)';
+    const like = `%${search}%`;
+    params.push(like, like, like, like);
   }
 
   query += ' ORDER BY ordered_at DESC';
-
   const [rows] = await pool.execute(query, params);
+
   return rows.map((row) => ({
     ...row,
     items: parseJson(row.items)
