@@ -162,8 +162,6 @@ const FoodItems = () => {
                       </div>
                     </div>
                   </div>
-
-                </div>
               </article>
             ))}
           </div>
