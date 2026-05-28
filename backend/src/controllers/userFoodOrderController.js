@@ -203,8 +203,41 @@ const updateOrderStatus = async (id, status) => {
   await pool.execute('UPDATE user_food_order_table SET status = ? WHERE id = ?', [status, id]);
 };
 
+const getAllOrders = async ({ role, userId, numericId, status, chef_id, search }) => {
+  let query = 'SELECT * FROM user_food_order_table WHERE 1=1';
+  const params = [];
+
+  if (role === 'chef') {
+    query += ' AND (chef_user_id = ? OR chef_id = ?)';
+    params.push(userId, userId);
+  } else if (role === 'admin') {
+    query += ' AND (franchise_user_id = ? OR franchise_id = ?)';
+    params.push(userId, String(numericId));
+  }
+  // superadmin sees all
+
+  if (status && status !== 'All') {
+    query += ' AND status = ?';
+    params.push(status);
+  }
+  if (chef_id) {
+    query += ' AND chef_id = ?';
+    params.push(chef_id);
+  }
+  if (search) {
+    query += ' AND (customer_name LIKE ? OR order_id LIKE ? OR chef_name LIKE ? OR ordered_by_name LIKE ?)';
+    const like = `%${search}%`;
+    params.push(like, like, like, like);
+  }
+
+  query += ' ORDER BY ordered_at DESC';
+  const [rows] = await pool.execute(query, params);
+  return rows.map((row) => ({ ...row, items: parseJson(row.items) }));
+};
+
 module.exports = {
   addUserFoodOrder,
+  getAllOrders,
   getChefOrders,
   getUserOrders,
   getOrderById,

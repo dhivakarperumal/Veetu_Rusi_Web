@@ -61,6 +61,24 @@ const initUserFoodOrderTable = async () => {
 
 initUserFoodOrderTable();
 
+router.get('/', verifyToken, async (req, res) => {
+  try {
+    const { status, chef_id, search } = req.query;
+    const orders = await controller.getAllOrders({
+      role: req.user?.role,
+      userId: req.user?.user_id,
+      numericId: req.user?.id,
+      status,
+      chef_id,
+      search
+    });
+    res.json(orders);
+  } catch (err) {
+    console.error('Error fetching all food orders:', err);
+    res.status(500).json({ message: 'Error fetching orders', error: err.message });
+  }
+});
+
 router.post('/', verifyToken, async (req, res) => {
   try {
     const payload = {
