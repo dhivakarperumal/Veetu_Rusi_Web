@@ -408,12 +408,10 @@ const OrderDetail = () => {
                             <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1 rounded-lg">{order.items?.length || 0} Products</span>
                         </div>
                         <div className="divide-y divide-gray-50">
-                            {order.items?.map((item, index) => {
-                                const orderItemKey = item.id || item.product_id || `${item.product_name || 'item'}-${item.variant_color || 'default'}-${item.variant_size || 'default'}-${index}`;
-                                return (
-                                    <div key={orderItemKey} className="p-8 flex flex-col sm:flex-row items-start sm:items-center gap-6 group hover:bg-blue-50/20 transition-all">
-                                        <div className="w-16 h-16 rounded-2xl bg-gray-50 overflow-hidden border border-gray-100 shrink-0 shadow-sm animate-in zoom-in-90 duration-300">
-                                            <img
+                            {order.items?.map((item, index) => (
+                                <div key={item.id || item.product_id || index} className="p-8 flex flex-col sm:flex-row items-start sm:items-center gap-6 group hover:bg-blue-50/20 transition-all">
+                                    <div className="w-16 h-16 rounded-2xl bg-gray-50 overflow-hidden border border-gray-100 shrink-0 shadow-sm animate-in zoom-in-90 duration-300">
+                                        <img
                                             src={getProductImage(item)}
                                             alt={item.product_name}
                                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
@@ -426,7 +424,6 @@ const OrderDetail = () => {
                                     </div>
                                     <div className="flex-1">
                                         <h4 className="font-black text-slate-800 text-md tracking-tight">{item.product_name}</h4>
-
                                         <p className="text-xs font-bold text-gray-400 mt-2 italic uppercase tracking-wider">Unit Price: ₹{parseFloat(item.price).toLocaleString()}</p>
                                     </div>
                                     <div className="flex items-center gap-3 mt-1.5">
