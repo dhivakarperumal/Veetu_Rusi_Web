@@ -115,6 +115,21 @@ router.get('/my-orders', verifyToken, async (req, res) => {
   }
 });
 
+router.get('/franchise/all', verifyToken, async (req, res) => {
+  try {
+    const franchiseUserId = req.user?.user_id || req.user?.id;
+    if (!franchiseUserId) {
+      return res.status(403).json({ message: 'Franchise admin authentication required' });
+    }
+
+    const rows = await controller.getFranchiseAdminOrders(franchiseUserId);
+    res.json(rows);
+  } catch (err) {
+    console.error('Error fetching franchise orders:', err);
+    res.status(500).json({ message: 'Error fetching franchise orders', error: err.message });
+  }
+});
+
 router.get('/:id', verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
