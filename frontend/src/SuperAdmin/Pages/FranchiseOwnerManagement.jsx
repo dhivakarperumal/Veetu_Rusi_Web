@@ -236,6 +236,32 @@ const FranchiseOwnerManagement = () => {
   }, [search, statusFilter, franchises]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
+  const handlePincodeChange = async (e) => {
+    const value = e.target.value;
+    setForm(prev => ({ ...prev, pincode: value }));
+
+    if (value.length === 6 && /^\d+$/.test(value)) {
+      try {
+        const res = await api.get(`/superadmin/pincode/${value}`);
+        const data = res.data;
+        if (data && data[0] && data[0].Status === "Success") {
+          const postOffice = data[0].PostOffice[0];
+          setForm(prev => ({
+            ...prev,
+            city: postOffice.Block !== "NA" ? postOffice.Block : (postOffice.Region !== "NA" ? postOffice.Region : postOffice.District),
+            district: postOffice.District,
+            state: postOffice.State
+          }));
+          toast.success("Location details fetched successfully");
+        } else {
+          toast.error("Invalid Pincode");
+        }
+      } catch (error) {
+        toast.error("Failed to fetch location details");
+      }
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!editingFranchise && form.password !== form.confirmPassword) {
@@ -317,19 +343,39 @@ const FranchiseOwnerManagement = () => {
     setIsModalOpen(true);
   };
 
-  const addTerritoryPincode = () => {
+  const addTerritoryPincode = async () => {
     const value = pincodeEntry.trim();
     if (!value) return;
     if (!/^\d{6}$/.test(value)) {
       toast.error("Enter a valid 6-digit pincode.");
       return;
     }
-    if (form.territory_pincodes.includes(value)) {
+    
+    if (form.territory_pincodes.some(pin => pin === value || pin.startsWith(value + " -"))) {
       toast.error("Pincode already added.");
       return;
     }
-    setForm({ ...form, territory_pincodes: [...form.territory_pincodes, value] });
-    setPincodeEntry("");
+
+    try {
+      const res = await api.get(`/superadmin/pincode/${value}`);
+      const data = res.data;
+      
+      let displayValue = value;
+      if (data && data[0] && data[0].Status === "Success") {
+        const postOffice = data[0].PostOffice[0];
+        const cityName = postOffice.Block !== "NA" ? postOffice.Block : (postOffice.Region !== "NA" ? postOffice.Region : postOffice.District);
+        displayValue = `${value} - ${cityName}`;
+      } else {
+        toast.error("Invalid Pincode details, but adding anyway.");
+      }
+      
+      setForm(prev => ({ ...prev, territory_pincodes: [...prev.territory_pincodes, displayValue] }));
+      setPincodeEntry("");
+    } catch (error) {
+      setForm(prev => ({ ...prev, territory_pincodes: [...prev.territory_pincodes, value] }));
+      setPincodeEntry("");
+      toast.error("Could not fetch city for pincode");
+    }
   };
 
   const removeTerritoryPincode = (index) => {
@@ -1445,7 +1491,7 @@ const FranchiseOwnerManagement = () => {
                       </div>
                       <div className="space-y-1">
                         <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Pincode</label>
-                        <input type="text" value={form.pincode} onChange={e => setForm({ ...form, pincode: e.target.value })} placeholder="641001" className={inputCls} />
+                        <input type="text" value={form.pincode} onChange={handlePincodeChange} placeholder="641001" className={inputCls} />
                       </div>
                       <div className="space-y-1">
                         <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Latitude</label>
