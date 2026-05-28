@@ -106,11 +106,14 @@ exports.getFoods = async (req, res) => {
       query += ' AND chef_user_id = ?';
       params.push(chef_user_id);
     }
-    if (franchise_id) {
+    // Use OR logic for franchise: match if either franchise_id OR franchise_user_id matches
+    if (franchise_id && franchise_user_id) {
+      query += ' AND (franchise_id = ? OR franchise_user_id = ?)';
+      params.push(franchise_id, franchise_user_id);
+    } else if (franchise_id) {
       query += ' AND franchise_id = ?';
       params.push(franchise_id);
-    }
-    if (franchise_user_id) {
+    } else if (franchise_user_id) {
       query += ' AND franchise_user_id = ?';
       params.push(franchise_user_id);
     }

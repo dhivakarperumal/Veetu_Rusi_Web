@@ -50,6 +50,15 @@ body {
     animation-name: slideInFromBottom;
   }
 
+  .slide-in-from-right-4 {
+    animation-name: slideInFromRight;
+  }
+
+  .stagger-1 { animation-delay: 50ms; }
+  .stagger-2 { animation-delay: 100ms; }
+  .stagger-3 { animation-delay: 150ms; }
+  .stagger-4 { animation-delay: 200ms; }
+
   @keyframes fadeIn {
     from {
       opacity: 0;
@@ -68,6 +77,17 @@ body {
 
     to {
       transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideInFromRight {
+    from {
+      transform: translateX(1rem);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
       opacity: 1;
     }
   }
