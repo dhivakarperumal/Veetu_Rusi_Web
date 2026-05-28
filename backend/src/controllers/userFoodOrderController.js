@@ -203,11 +203,60 @@ const updateOrderStatus = async (id, status) => {
   await pool.execute('UPDATE user_food_order_table SET status = ? WHERE id = ?', [status, id]);
 };
 
+const getFranchiseAdminOrders = async (franchiseUserId) => {
+  // First, get all home chefs created by this franchise admin
+  const [chefs] = await pool.execute(
+    'SELECT chef_id, user_id FROM home_chefs WHERE created_by_user_id = ? OR franchise_user_id = ?',
+    [franchiseUserId, franchiseUserId]
+  );
+
+  if (!chefs.length) {
+    return [];
+  }
+
+  // Extract chef IDs and user IDs, filter out null values
+  const chefIds = chefs.map(c => c.chef_id).filter(id => id);
+  const chefUserIds = chefs.map(c => c.user_id).filter(id => id);
+
+  // If no valid chef IDs, return empty
+  if (!chefIds.length && !chefUserIds.length) {
+    return [];
+  }
+
+  // Build query parts conditionally
+  let query = 'SELECT * FROM user_food_order_table WHERE ';
+  const queryParams = [];
+  const queryParts = [];
+
+  if (chefIds.length > 0) {
+    const placeholders = chefIds.map(() => '?').join(',');
+    queryParts.push(`chef_id IN (${placeholders})`);
+    queryParams.push(...chefIds);
+  }
+
+  if (chefUserIds.length > 0) {
+    const placeholders = chefUserIds.map(() => '?').join(',');
+    queryParts.push(`chef_user_id IN (${placeholders})`);
+    queryParams.push(...chefUserIds);
+  }
+
+  query += queryParts.join(' OR ');
+  query += ' ORDER BY ordered_at DESC';
+
+  const [rows] = await pool.execute(query, queryParams);
+
+  return rows.map((row) => ({
+    ...row,
+    items: parseJson(row.items)
+  }));
+};
+
 module.exports = {
   addUserFoodOrder,
   getChefOrders,
   getUserOrders,
   getOrderById,
   updateOrder,
-  updateOrderStatus
+  updateOrderStatus,
+  getFranchiseAdminOrders
 };
