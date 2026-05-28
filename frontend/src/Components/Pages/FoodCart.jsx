@@ -129,16 +129,12 @@ export default function FoodCartPage() {
 
               </div>
 
-              <button onClick={() => navigate("/checkout")} className="w-full mt-6 bg-primary-light hover:bg-primary-dark text-white py-3 rounded-lg font-semibold transition cursor-pointer">
-                Proceed to Checkout
-              </button>
-
               <button onClick={() => navigate("/food-checkout")} className="w-full mt-3 bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-lg font-semibold transition cursor-pointer">
                 Food Checkout
               </button>
 
               <button
-                onClick={() => navigate("/shop")}
+                onClick={() => navigate("/")}
                 className="w-full mt-3 border border-primary-light text-primary-light py-3 rounded-lg hover:bg-primary-light/10 transition cursor-pointer"
               >
                 Continue Shopping
