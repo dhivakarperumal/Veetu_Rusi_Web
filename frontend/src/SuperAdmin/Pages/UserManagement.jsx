@@ -175,7 +175,7 @@ const UserManagement = () => {
                             }`}
                             title="Double click to toggle status"
                           >
-                            {updatingId === u.id ? "Updating..." : isActive ? "Active" : "Inactive"}
+                            {updatingId === u.id ? "Updating..." : u.active}
                           </button>
                         );
                       })()}

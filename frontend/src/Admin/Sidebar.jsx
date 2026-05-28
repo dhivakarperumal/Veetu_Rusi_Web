@@ -65,7 +65,7 @@ const navItems = [
   },
 
   { path: "/admin/orders/create", label: "Billing", icon: PlusCircle },
-  { path: "/admin/users/all", label: "Customers", icon: Users },
+  // { path: "/admin/users/all", label: "Customers", icon: Users },
   {
     label: "Dealers",
     icon: Handshake,

@@ -9,6 +9,8 @@ const UserManagement = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [editingRole, setEditingRole] = useState(null);
+  const [newRole, setNewRole] = useState("");
 
   useEffect(() => {
     fetchUsers();
@@ -40,22 +42,33 @@ const UserManagement = () => {
     }
     
     if (statusFilter === "Active") {
-      result = result.filter((u) => u.active !== 0);
+      result = result.filter((u) => String(u.active).toLowerCase() === 'active');
     } else if (statusFilter === "Blocked") {
-      result = result.filter((u) => u.active === 0);
+      result = result.filter((u) => String(u.active).toLowerCase() !== 'active');
     }
     
     setFilteredUsers(result);
   }, [search, statusFilter, users]);
 
   const handleToggleStatus = async (id, currentActive) => {
-    const nextActive = currentActive ? 0 : 1;
+    const nextActive = String(currentActive).toLowerCase() === 'active' ? 0 : 1;
     try {
       await api.patch(`/superadmin/users/status/${id}`, { active: nextActive });
       toast.success(`User status changed successfully.`);
       fetchUsers();
     } catch (error) {
       toast.error("Failed to change user status.");
+    }
+  };
+
+  const handleRoleChange = async (id) => {
+    try {
+      await api.patch(`/superadmin/users/role/${id}`, { role: newRole });
+      toast.success("User role updated successfully.");
+      setEditingRole(null);
+      fetchUsers();
+    } catch (error) {
+      toast.error("Failed to update user role.");
     }
   };
 
@@ -109,7 +122,7 @@ const UserManagement = () => {
                 </div>
                 <div>
                     <p className="text-[10px] font-black uppercase tracking-widest text-emerald-300">Active Users</p>
-                    <h3 className="mt-1 text-3xl font-black text-white">{loading ? '-' : users.filter(u => u.active !== 0).length}</h3>
+                    <h3 className="mt-1 text-3xl font-black text-white">{loading ? '-' : users.filter(u => String(u.active).toLowerCase() === 'active').length}</h3>
                     <p className="text-[10px] text-emerald-400 mt-1">Customers with full access</p>
                 </div>
             </div>
@@ -126,7 +139,7 @@ const UserManagement = () => {
                 </div>
                 <div>
                     <p className="text-[10px] font-black uppercase tracking-widest text-rose-300">Blocked Users</p>
-                    <h3 className="mt-1 text-3xl font-black text-white">{loading ? '-' : users.filter(u => u.active === 0).length}</h3>
+                    <h3 className="mt-1 text-3xl font-black text-white">{loading ? '-' : users.filter(u => String(u.active).toLowerCase() !== 'active').length}</h3>
                     <p className="text-[10px] text-rose-400 mt-1">Suspended or blocked</p>
                 </div>
             </div>
@@ -186,6 +199,7 @@ const UserManagement = () => {
                               <th className="px-6 py-5 text-xs font-black text-white uppercase tracking-wider">Customer Name</th>
                               <th className="px-6 py-5 text-xs font-black text-white uppercase tracking-wider">Email Address</th>
                               <th className="px-6 py-5 text-xs font-black text-white uppercase tracking-wider">Phone / Mobile</th>
+                              <th className="px-6 py-5 text-xs font-black text-white uppercase tracking-wider">Role</th>
                               <th className="px-6 py-5 text-xs font-black text-white uppercase tracking-wider">Registered Date</th>
                               <th className="px-6 py-5 text-xs font-black text-white uppercase tracking-wider text-center">Status</th>
                               <th className="px-6 py-5 text-xs font-black text-white uppercase tracking-wider text-center">Actions</th>
@@ -209,6 +223,25 @@ const UserManagement = () => {
                                       <td className="px-6 py-5">
                                           <p className="text-sm font-bold text-slate-600">{u.phone || "N/A"}</p>
                                       </td>
+                                      <td className="px-6 py-5" onDoubleClick={() => { setEditingRole(u.id); setNewRole(u.role || 'user'); }}>
+                                          {editingRole === u.id ? (
+                                              <div className="flex gap-2">
+                                                  <input
+                                                      type="text"
+                                                      value={newRole}
+                                                      onChange={(e) => setNewRole(e.target.value)}
+                                                      className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-slate-700 text-xs w-28 outline-none focus:border-blue-400"
+                                                      autoFocus
+                                                  />
+                                                  <button onClick={() => handleRoleChange(u.id)} className="bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm border border-emerald-200 hover:bg-emerald-200">Save</button>
+                                                  <button onClick={() => setEditingRole(null)} className="bg-rose-100 text-rose-700 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm border border-rose-200 hover:bg-rose-200">Cancel</button>
+                                              </div>
+                                          ) : (
+                                              <p className="text-sm font-bold uppercase tracking-wider text-slate-600">
+                                                  {u.role?.replace(/_/g, ' ') || 'user'}
+                                              </p>
+                                          )}
+                                      </td>
                                       <td className="px-6 py-5">
                                           <p className="text-sm font-bold text-slate-500">
                                             {new Date(u.created_at).toLocaleDateString('en-IN', {day: 'numeric', month: 'short', year: 'numeric'})}
@@ -217,19 +250,19 @@ const UserManagement = () => {
                                       <td className="px-6 py-5 text-center">
                                           <span
                                               className={`text-[9px] font-black px-3 py-1.5 rounded-lg uppercase tracking-wider ${
-                                                  u.active !== 0
+                                                  String(u.active).toLowerCase() === 'active'
                                                       ? "bg-emerald-100 text-emerald-700 border border-emerald-200"
                                                       : "bg-rose-100 text-rose-700 border border-rose-200"
                                               }`}
                                           >
-                                              {u.active !== 0 ? "Active" : "Blocked"}
+                                              {u.active || "Unknown"}
                                           </span>
                                       </td>
                                       <td className="px-6 py-5">
                                           <div className="flex items-center justify-center gap-3">
-                                              {u.active !== 0 ? (
+                                              {String(u.active).toLowerCase() === 'active' ? (
                                                   <button
-                                                      onClick={() => handleToggleStatus(u.id, 1)}
+                                                      onClick={() => handleToggleStatus(u.id, u.active)}
                                                       className="p-2 hover:bg-rose-50 text-rose-500 rounded-xl transition-colors border border-transparent hover:border-rose-100"
                                                       title="Block User"
                                                   >
@@ -237,7 +270,7 @@ const UserManagement = () => {
                                                   </button>
                                               ) : (
                                                   <button
-                                                      onClick={() => handleToggleStatus(u.id, 0)}
+                                                      onClick={() => handleToggleStatus(u.id, u.active)}
                                                       className="p-2 hover:bg-emerald-50 text-emerald-500 rounded-xl transition-colors border border-transparent hover:border-emerald-100"
                                                       title="Unblock User"
                                                   >
@@ -257,7 +290,7 @@ const UserManagement = () => {
                               ))
                           ) : (
                               <tr>
-                                  <td colSpan="6" className="px-6 py-24 text-center">
+                                  <td colSpan="7" className="px-6 py-24 text-center">
                                       <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
                                           <Users size={28} />
                                       </div>
