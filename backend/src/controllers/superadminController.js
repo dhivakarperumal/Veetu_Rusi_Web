@@ -994,7 +994,7 @@ exports.deleteDeliveryPartner = async (req, res) => {
 // ==================== USER MANAGEMENT ====================
 exports.getUsers = async (req, res) => {
   try {
-    const [rows] = await pool.execute("SELECT id, user_id, full_name AS name, email, mobile_number AS phone, role, status AS active, created_at FROM users WHERE role = 'user' ORDER BY created_at DESC");
+    const [rows] = await pool.execute("SELECT id, user_id, full_name AS name, email, mobile_number AS phone, role, status AS active, created_at FROM users ORDER BY created_at DESC");
     res.json(rows);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving users.', error: error.message });

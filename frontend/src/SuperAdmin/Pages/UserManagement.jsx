@@ -26,6 +26,8 @@ const UserManagement = () => {
     }
   };
 
+  const isActiveStatus = (status) => String(status).toLowerCase() === 'active';
+
   useEffect(() => {
     if (search.trim()) {
       const lower = search.toLowerCase();
@@ -34,7 +36,8 @@ const UserManagement = () => {
           (u) =>
             u.name.toLowerCase().includes(lower) ||
             u.email.toLowerCase().includes(lower) ||
-            (u.phone && u.phone.includes(lower))
+            (u.phone && u.phone.includes(lower)) ||
+            (u.role && u.role.toLowerCase().includes(lower))
         )
       );
     } else {
@@ -43,7 +46,7 @@ const UserManagement = () => {
   }, [search, users]);
 
   const handleToggleStatus = async (id, currentActive) => {
-    const nextActive = currentActive ? 0 : 1;
+    const nextActive = isActiveStatus(currentActive) ? 0 : 1;
     try {
       await api.patch(`/superadmin/users/status/${id}`, { active: nextActive });
       toast.success(`User status changed successfully.`);
@@ -105,6 +108,7 @@ const UserManagement = () => {
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Customer Name</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Email Address</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Phone / Mobile</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Role</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Registered Date</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Status</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em] text-center">Actions</th>
@@ -123,39 +127,48 @@ const UserManagement = () => {
                     </td>
                     <td className="px-6 py-5 text-sm font-bold text-white/60">{u.email}</td>
                     <td className="px-6 py-5 text-sm font-bold text-white/60">{u.phone || "N/A"}</td>
+                    <td className="px-6 py-5 text-sm font-bold uppercase tracking-[0.12em] text-white/60">{u.role?.replace(/_/g, ' ') || 'user'}</td>
                     <td className="px-6 py-5 text-xs font-bold text-white/40">
                       {new Date(u.created_at).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-5">
-                      <span
-                        className={`text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider ${
-                          u.active !== 0
-                            ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                            : "bg-red-500/10 text-red-400 border border-red-500/20"
-                        }`}
-                      >
-                        {u.active !== 0 ? "Active" : "Blocked"}
-                      </span>
+                      {(() => {
+                        const isActive = String(u.active).toLowerCase() === 'active';
+                        return (
+                          <span
+                            className={`text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider ${
+                              isActive
+                                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                                : "bg-red-500/10 text-red-400 border border-red-500/20"
+                            }`}
+                          >
+                            {isActive ? "Active" : "Blocked"}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="px-6 py-5">
                       <div className="flex items-center justify-center gap-2">
-                        {u.active !== 0 ? (
-                          <button
-                            onClick={() => handleToggleStatus(u.id, 1)}
-                            className="p-2 hover:bg-red-500/10 text-red-400 rounded-xl transition"
-                            title="Block User"
-                          >
-                            <ShieldAlert className="w-4 h-4" />
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => handleToggleStatus(u.id, 0)}
-                            className="p-2 hover:bg-emerald-500/10 text-emerald-400 rounded-xl transition"
-                            title="Unblock User"
-                          >
-                            <ShieldCheck className="w-4 h-4" />
-                          </button>
-                        )}
+                        {(() => {
+                          const isActive = String(u.active).toLowerCase() === 'active';
+                          return isActive ? (
+                            <button
+                              onClick={() => handleToggleStatus(u.id, u.active)}
+                              className="p-2 hover:bg-red-500/10 text-red-400 rounded-xl transition"
+                              title="Block User"
+                            >
+                              <ShieldAlert className="w-4 h-4" />
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleToggleStatus(u.id, u.active)}
+                              className="p-2 hover:bg-emerald-500/10 text-emerald-400 rounded-xl transition"
+                              title="Unblock User"
+                            >
+                              <ShieldCheck className="w-4 h-4" />
+                            </button>
+                          );
+                        })()}
                         <button
                           onClick={() => handleDelete(u.id)}
                           className="p-2 hover:bg-red-500/10 text-red-400 rounded-xl transition"
@@ -169,7 +182,7 @@ const UserManagement = () => {
                 ))}
                 {filteredUsers.length === 0 && (
                   <tr>
-                    <td colSpan="6" className="px-6 py-8 text-center text-xs text-white/30 italic">
+                    <td colSpan="7" className="px-6 py-8 text-center text-xs text-white/30 italic">
                       No customer accounts found.
                     </td>
                   </tr>
