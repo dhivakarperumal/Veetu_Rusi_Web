@@ -99,8 +99,7 @@ const emptyForm = {
 
 const tabs = [
   { id: "basic", label: "Basic Info" },
-  { id: "contact", label: "Contact Details" },
-  { id: "address", label: "Address Details" },
+  { id: "address", label: "Contact & Address Details" },
   { id: "kitchen", label: "Kitchen Info" },
   { id: "food", label: "Food & Specialty" },
   { id: "availability", label: "Availability" },
@@ -895,76 +894,6 @@ const HomeChefManagement = () => {
                   </div>
                 )}
 
-                {activeFormTab === "contact" && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className={lbl}>Mobile Number *</label>
-                      <input
-                        type="tel"
-                        required
-                        value={form.mobile}
-                        onChange={(e) =>
-                          setForm({ ...form, mobile: e.target.value })
-                        }
-                        placeholder="Mobile Number"
-                        className={inp}
-                      />
-                    </div>
-                    <div>
-                      <label className={lbl}>Alternate Mobile Number</label>
-                      <input
-                        type="tel"
-                        value={form.alt_mobile}
-                        onChange={(e) =>
-                          setForm({ ...form, alt_mobile: e.target.value })
-                        }
-                        placeholder="Alternate Mobile Number"
-                        className={inp}
-                      />
-                    </div>
-                    <div>
-                      <label className={lbl}>WhatsApp Number</label>
-                      <input
-                        type="tel"
-                        value={form.whatsapp_number}
-                        onChange={(e) =>
-                          setForm({ ...form, whatsapp_number: e.target.value })
-                        }
-                        placeholder="WhatsApp Number"
-                        className={inp}
-                      />
-                    </div>
-                    <div>
-                      <label className={lbl}>Email Address *</label>
-                      <input
-                        type="email"
-                        required
-                        value={form.email}
-                        onChange={(e) =>
-                          setForm({ ...form, email: e.target.value })
-                        }
-                        placeholder="Email Address"
-                        className={inp}
-                      />
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className={lbl}>Emergency Contact Number</label>
-                      <input
-                        type="tel"
-                        value={form.emergency_contact}
-                        onChange={(e) =>
-                          setForm({
-                            ...form,
-                            emergency_contact: e.target.value,
-                          })
-                        }
-                        placeholder="Emergency Contact Number"
-                        className={inp}
-                      />
-                    </div>
-                  </div>
-                )}
-
                 {activeFormTab === "address" && (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
@@ -1577,6 +1506,44 @@ const HomeChefManagement = () => {
 
                 {activeFormTab === "account" && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className={lbl}>Mobile Number *</label>
+                      <input
+                        type="tel"
+                        required
+                        value={form.mobile}
+                        onChange={(e) =>
+                          setForm({ ...form, mobile: e.target.value })
+                        }
+                        placeholder="Mobile Number"
+                        className={inp}
+                      />
+                    </div>
+                    <div>
+                      <label className={lbl}>Alternate Mobile Number</label>
+                      <input
+                        type="tel"
+                        value={form.alt_mobile}
+                        onChange={(e) =>
+                          setForm({ ...form, alt_mobile: e.target.value })
+                        }
+                        placeholder="Alternate Mobile Number"
+                        className={inp}
+                      />
+                    </div>
+                    <div>
+                      <label className={lbl}>Email Address *</label>
+                      <input
+                        type="email"
+                        required
+                        value={form.email}
+                        onChange={(e) =>
+                          setForm({ ...form, email: e.target.value })
+                        }
+                        placeholder="Email Address"
+                        className={inp}
+                      />
+                    </div>
                     <div>
                       <label className={lbl}>Username</label>
                       <input
