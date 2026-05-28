@@ -188,6 +188,84 @@ export const StoreProvider = ({ children }) => {
         }
     };
 
+    const placeFoodOrder = async (checkoutData) => {
+        if (!user?.user_id) {
+            toast.error('Please login to place your order');
+            return null;
+        }
+
+        if (!userFoodCart.length) {
+            toast.error('Your food cart is empty');
+            return null;
+        }
+
+        const totalAmount = userFoodCart.reduce(
+            (sum, item) => sum + parseFloat(item.price || 0) * (item.quantity || 1),
+            0
+        );
+
+        const orderPayload = {
+            ...checkoutData,
+            user_id: user.user_id,
+            customer_name: user.name || user.username || user.fullname || '',
+            customer_email: user.email || '',
+            customer_phone: user.phone || user.mobile || '',
+            ordered_by_name: user.name || user.username || user.fullname || '',
+            ordered_by_email: user.email || '',
+            ordered_by_phone: user.phone || user.mobile || '',
+            total_amount: totalAmount,
+            items: userFoodCart.map((item) => ({
+                product_id: item.product_id,
+                name: item.name,
+                image: item.image,
+                price: item.price,
+                quantity: item.quantity,
+                total_price: item.total_price,
+                created_by_user_id: item.created_by_user_id,
+                created_by_name: item.created_by_name,
+                created_by_email: item.created_by_email,
+                created_by_phone: item.created_by_phone,
+                chef_user_id: item.chef_user_id,
+                chef_id: item.chef_id,
+                chef_name: item.chef_name,
+                chef_email: item.chef_email,
+                chef_phone: item.chef_phone,
+                franchise_id: item.franchise_id,
+                franchise_user_id: item.franchise_user_id,
+                franchise_name: item.franchise_name,
+                franchise_email: item.franchise_email,
+                franchise_phone: item.franchise_phone,
+                ordered_by_name: item.ordered_by_name,
+                ordered_by_email: item.ordered_by_email,
+                ordered_by_phone: item.ordered_by_phone,
+            })),
+            created_by_user_id: userFoodCart[0]?.created_by_user_id || '',
+            created_by_name: userFoodCart[0]?.created_by_name || '',
+            created_by_email: userFoodCart[0]?.created_by_email || '',
+            created_by_phone: userFoodCart[0]?.created_by_phone || '',
+            chef_user_id: userFoodCart[0]?.chef_user_id || '',
+            chef_id: userFoodCart[0]?.chef_id || '',
+            chef_name: userFoodCart[0]?.chef_name || '',
+            chef_email: userFoodCart[0]?.chef_email || '',
+            chef_phone: userFoodCart[0]?.chef_phone || '',
+            franchise_user_id: userFoodCart[0]?.franchise_user_id || '',
+            franchise_id: userFoodCart[0]?.franchise_id || '',
+            franchise_name: userFoodCart[0]?.franchise_name || '',
+            franchise_email: userFoodCart[0]?.franchise_email || '',
+            franchise_phone: userFoodCart[0]?.franchise_phone || '',
+        };
+
+        try {
+            const res = await api.post('/user-food-orders', orderPayload);
+            await clearUserFoodCart();
+            return res.data;
+        } catch (err) {
+            console.error('Place food order error:', err);
+            toast.error('Failed to place the food order');
+            throw err;
+        }
+    };
+
     const removeFromCart = async (cartItemId) => {
         try {
             await api.delete(`/cart/${cartItemId}`);
@@ -281,7 +359,7 @@ export const StoreProvider = ({ children }) => {
         <StoreContext.Provider value={{
             cart, wishlist, userFoodCart,
             addToCart, removeFromCart, updateCartQuantity, clearCart,
-            addToFoodCart, removeFromFoodCart, updateFoodCartQuantity, clearUserFoodCart, fetchUserFoodCart,
+            addToFoodCart, removeFromFoodCart, updateFoodCartQuantity, clearUserFoodCart, placeFoodOrder, fetchUserFoodCart,
             toggleWishlist,
             loadingCart, loadingWishlist,
             fetchCart, fetchWishlist,

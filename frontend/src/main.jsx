@@ -27,6 +27,7 @@ const CategoryPage = React.lazy(() => import("./Components/Pages/CategoryPage.js
 const Account = React.lazy(() => import("./Components/Pages/Account/Account.jsx"));
 const TermsAndConditions = React.lazy(() => import("./Components/CommenComponents/TermsAndCondition.jsx"));
 const OrdersMain = React.lazy(() => import("./Components/Home/OrdersMain.jsx"));
+const MyFoodOrders = React.lazy(() => import("./Components/Pages/MyFoodOrders.jsx"));
 const Login = React.lazy(() => import("./Components/Auth/Login.jsx"));
 const Register = React.lazy(() => import("./Components/Auth/Register.jsx"));
 
@@ -87,7 +88,7 @@ const WalletAndEarnings = React.lazy(() => import("./HomeChef/Pages/WalletAndEar
 const ChefCategories = React.lazy(() => import("./HomeChef/Pages/ChefCategory.jsx"));
 const ChefFoodCategories = React.lazy(() => import("./HomeChef/Pages/ChefFoodCategories.jsx"));
 const ChefFoodCategoryAdd = React.lazy(() => import("./HomeChef/Pages/ChefFoodCategoryAdd.jsx"));
-const OrderManagement = React.lazy(() => import("./Admin/Pages/OrderManagement.jsx"));
+const AdminOrderManagement = React.lazy(() => import("./Admin/Pages/OrderManagement.jsx"));
 const PayoutManagement = React.lazy(() => import("./Admin/Pages/PayoutManagement.jsx"));
 const FranchiseOwnerManagement = React.lazy(() => import("./SuperAdmin/Pages/FranchiseOwnerManagement.jsx"));
 const FranchiseDetails = React.lazy(() => import("./SuperAdmin/Pages/FranchiseDetails.jsx"));
@@ -96,6 +97,7 @@ const SuperBannerManagement = React.lazy(() => import("./SuperAdmin/Pages/Banner
 const NotificationManagement = React.lazy(() => import("./SuperAdmin/Pages/NotificationManagement.jsx"));
 const ReportsAnalytics = React.lazy(() => import("./SuperAdmin/Pages/ReportsAnalytics.jsx"));
 const SubscriptionPlansManagement = React.lazy(() => import("./SuperAdmin/Pages/SubscriptionPlansManagement.jsx"));
+const ChefOrderManagement = React.lazy(() => import("./HomeChef/Pages/OrderManagement.jsx"));
 const router = createBrowserRouter([
   {
     path: "/",
@@ -115,6 +117,7 @@ const router = createBrowserRouter([
       { path: "/checkout", element: <Checkout /> },
       { path: "/account", element: <Account /> },
       { path: "/ordersmain", element: <OrdersMain /> },
+      { path: "/food-orders", element: <MyFoodOrders /> },
       { path: "/termsandconditions", element: <TermsAndConditions /> },
 
     ],
@@ -138,7 +141,7 @@ const router = createBrowserRouter([
       { path: "homechefs", element: <HomeChefManagement /> },
       { path: "delivery-partners", element: <DeliveryPartnerManagement /> },
       { path: "users", element: <UserManagement /> },
-      { path: "orders", element: <OrderManagement /> },
+      { path: "orders", element: <AdminOrderManagement /> },
       { path: "payouts", element: <PayoutManagement /> },
       { path: "franchises", element: <FranchiseOwnerManagement /> },
       { path: "franchises/:id", element: <FranchiseDetails /> },
@@ -181,7 +184,7 @@ const router = createBrowserRouter([
       { path: "food/categories/add", element: <ChefFoodCategoryAdd /> },
       { path: "analytics", element: <AnalyticsDashboard /> },
       { path: "earnings", element: <WalletAndEarnings /> },
-      { path: "orders", element: <OrderManagement /> },
+      { path: "orders", element: <ChefOrderManagement /> },
     ],
   },
 
@@ -202,7 +205,7 @@ const router = createBrowserRouter([
       { path: "homechefs/:id", element: <HomeChefDetail /> },
       { path: "delivery-partners", element: <DeliveryPartnerManagement /> },
       { path: "users", element: <UserManagement /> },
-      { path: "orders", element: <OrderManagement /> },
+      { path: "orders", element: <AdminOrderManagement /> },
       { path: "payouts", element: <PayoutManagement /> },
       // Products
       { path: "products/all", element: <AllProducts /> },

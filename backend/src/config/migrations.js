@@ -517,6 +517,64 @@ const createSubscriptionPlansTable = async () => {
         }
     };
 
+const createUserFoodOrderTable = async () => {
+    try {
+        const sql = `
+        CREATE TABLE IF NOT EXISTS user_food_order_table (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            order_id VARCHAR(100) NOT NULL UNIQUE,
+            user_id VARCHAR(255),
+            customer_name VARCHAR(255),
+            customer_email VARCHAR(255),
+            customer_phone VARCHAR(50),
+            street_address TEXT,
+            city VARCHAR(100),
+            district VARCHAR(100),
+            state VARCHAR(100),
+            country VARCHAR(100),
+            zip_code VARCHAR(50),
+            delivery_date DATE,
+            delivery_time VARCHAR(50),
+            payment_method VARCHAR(50),
+            payment_status VARCHAR(50) DEFAULT 'Pending',
+            total_amount DECIMAL(10,2) DEFAULT 0,
+            items JSON,
+            delivery_partner VARCHAR(255),
+            created_by_user_id VARCHAR(255),
+            created_by_name VARCHAR(255),
+            created_by_email VARCHAR(255),
+            created_by_phone VARCHAR(20),
+            chef_user_id VARCHAR(255),
+            chef_id VARCHAR(255),
+            chef_name VARCHAR(255),
+            chef_email VARCHAR(255),
+            chef_phone VARCHAR(20),
+            franchise_user_id VARCHAR(255),
+            franchise_id VARCHAR(255),
+            franchise_name VARCHAR(255),
+            franchise_email VARCHAR(255),
+            franchise_phone VARCHAR(20),
+            ordered_by_name VARCHAR(255),
+            ordered_by_email VARCHAR(255),
+            ordered_by_phone VARCHAR(20),
+            status VARCHAR(50) DEFAULT 'Pending',
+            ordered_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            KEY idx_user_id (user_id),
+            KEY idx_chef_user_id (chef_user_id),
+            KEY idx_franchise_user_id (franchise_user_id),
+            KEY idx_status (status),
+            KEY idx_ordered_at (ordered_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `;
+
+        await pool.execute(sql);
+        console.log('✓ user_food_order_table created or already exists');
+    } catch (err) {
+        console.error('✗ Error creating user_food_order_table:', err.message || err);
+    }
+};
+
     module.exports = {
         createProductsTable,
         createRecipeDetailsTable,
@@ -525,6 +583,7 @@ const createSubscriptionPlansTable = async () => {
         createSubscriptionPlansTable,
         createReviewsTable,
         createUserFoodCartTable,
+        createUserFoodOrderTable,
         createChefFoodCategoryTable,
         createChefCategoryTable,
         createFranchiseCategoryTable

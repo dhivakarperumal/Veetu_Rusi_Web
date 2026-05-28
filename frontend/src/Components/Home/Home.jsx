@@ -10,18 +10,24 @@ import SareeSwiper from './SareeSwiper'
 import TrendingProducts from './TrendingProducts'
 import OfferProducts from '../Products/OfferProducts'
 import FoodItems from './FoodItems'
+import { AuthContext } from '../../PrivateRouter/AuthContext'
+import { useContext } from 'react'
 
 const Home = () => {
+  const { user } = useContext(AuthContext);
   return (
     <div>
       <div>
         <Hero />
       </div>
+      {/* SHOW ONLY FOR USER ROLE */}
+      {user?.role === "user" && (
+        <div>
+          <FoodItems />
+        </div>
+      )}
       <div>
-        <FoodItems />
-      </div>
-      <div>
-        <CategoryIcon/>
+        <CategoryIcon />
       </div>
       <div>
         <SareeSwiper />
