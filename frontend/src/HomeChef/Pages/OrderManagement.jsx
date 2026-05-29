@@ -144,83 +144,89 @@ const OrderManagement = () => {
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Food Items</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Ordered Date</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Delivery Slot</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Qty</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Amount</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Status</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em] text-center">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {filteredOrders.map((order) => (
-                  <tr key={order.id} className="hover:bg-white/5 transition-colors">
-                    <td className="px-6 py-5 text-sm font-black text-white">{order.order_id}</td>
-                    <td className="px-6 py-5 text-sm font-bold text-white/60">{order.customer_name}</td>
-                    <td className="px-6 py-5 max-w-[18rem] text-sm text-white/70">
-                      <div className="space-y-1">
-                        {order.items?.slice(0, 2).map((item, idx) => (
-                          <p key={idx} className="truncate">{item.name || item.product_name || "Food item"}</p>
-                        ))}
-                        {order.items && order.items.length > 2 && (
-                          <p className="text-xs text-slate-300">+{order.items.length - 2} more</p>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-5 text-sm font-bold text-white/60">
-                      {order.ordered_at ? new Date(order.ordered_at).toLocaleString() : "-"}
-                    </td>
-                    <td className="px-6 py-5 text-sm font-semibold text-white/50">
-                      {order.delivery_date ? `${order.delivery_date} ${order.delivery_time || ""}` : "-"}
-                    </td>
-                    <td className="px-6 py-5 text-sm font-black text-white">₹{parseFloat(order.total_amount || 0).toLocaleString()}</td>
-                    <td className="px-6 py-5">
-                      <span
-                        className={`text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider ${
-                          order.status === "Delivered"
-                            ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                            : order.status === "Cancelled"
-                            ? "bg-red-500/10 text-red-400 border border-red-500/20"
-                            : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
-                        }`}
-                      >
-                        {order.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          onClick={() => {
-                            setEditingOrder(order);
-                            setIsModalOpen(true);
-                          }}
-                          className="p-2 hover:bg-white/10 text-white/70 hover:text-white rounded-xl transition"
-                          title="Assign Partner / Edit"
+                {filteredOrders.map((order) => {
+                  const chefQuantity = order.chef_total_quantity ?? order.items?.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0);
+                  const chefAmount = parseFloat((order.chef_total_amount ?? order.total_amount) || 0);
+                  return (
+                    <tr key={order.id} className="hover:bg-white/5 transition-colors">
+                      <td className="px-6 py-5 text-sm font-black text-white">{order.order_id}</td>
+                      <td className="px-6 py-5 text-sm font-bold text-white/60">{order.customer_name}</td>
+                      <td className="px-6 py-5 max-w-[18rem] text-sm text-white/70">
+                        <div className="space-y-1">
+                          {order.items?.slice(0, 2).map((item, idx) => (
+                            <p key={idx} className="truncate">{item.name || item.product_name || "Food item"} x{item.quantity || 1}</p>
+                          ))}
+                          {order.items && order.items.length > 2 && (
+                            <p className="text-xs text-slate-300">+{order.items.length - 2} more</p>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-5 text-sm font-bold text-white/60">
+                        {order.ordered_at ? new Date(order.ordered_at).toLocaleString() : "-"}
+                      </td>
+                      <td className="px-6 py-5 text-sm font-semibold text-white/50">
+                        {order.delivery_date ? `${order.delivery_date} ${order.delivery_time || ""}` : "-"}
+                      </td>
+                      <td className="px-6 py-5 text-sm font-black text-white">{chefQuantity}</td>
+                      <td className="px-6 py-5 text-sm font-black text-white">₹{chefAmount.toLocaleString()}</td>
+                      <td className="px-6 py-5">
+                        <span
+                          className={`text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider ${
+                            order.status === "Delivered"
+                              ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                              : order.status === "Cancelled"
+                              ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                              : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                          }`}
                         >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        {order.status === "Accepted" && (
+                          {order.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-5">
+                        <div className="flex items-center justify-center gap-2">
                           <button
-                            onClick={() => handleStatusQuickChange(order.id, "Out for Delivery")}
-                            className="p-2 hover:bg-blue-500/10 text-blue-400 rounded-xl transition"
-                            title="Dispatch Order"
+                            onClick={() => {
+                              setEditingOrder(order);
+                              setIsModalOpen(true);
+                            }}
+                            className="p-2 hover:bg-white/10 text-white/70 hover:text-white rounded-xl transition"
+                            title="Assign Partner / Edit"
                           >
-                            <Check className="w-4 h-4" />
+                            <Edit className="w-4 h-4" />
                           </button>
-                        )}
-                        {order.status === "Out for Delivery" && (
-                          <button
-                            onClick={() => handleStatusQuickChange(order.id, "Delivered")}
-                            className="p-2 hover:bg-emerald-500/10 text-emerald-400 rounded-xl transition"
-                            title="Complete Order"
-                          >
-                            <Check className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                          {order.status === "Accepted" && (
+                            <button
+                              onClick={() => handleStatusQuickChange(order.id, "Out for Delivery")}
+                              className="p-2 hover:bg-blue-500/10 text-blue-400 rounded-xl transition"
+                              title="Dispatch Order"
+                            >
+                              <Check className="w-4 h-4" />
+                            </button>
+                          )}
+                          {order.status === "Out for Delivery" && (
+                            <button
+                              onClick={() => handleStatusQuickChange(order.id, "Delivered")}
+                              className="p-2 hover:bg-emerald-500/10 text-emerald-400 rounded-xl transition"
+                              title="Complete Order"
+                            >
+                              <Check className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
                 {filteredOrders.length === 0 && (
                   <tr>
-                    <td colSpan="7" className="px-6 py-8 text-center text-xs text-white/30 italic">
+                    <td colSpan="8" className="px-6 py-8 text-center text-xs text-white/30 italic">
                       No order logs available.
                     </td>
                   </tr>

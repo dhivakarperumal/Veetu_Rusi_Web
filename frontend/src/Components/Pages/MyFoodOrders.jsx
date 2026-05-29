@@ -13,6 +13,48 @@ const formatDateTime = (value) => {
   return date.toLocaleString();
 };
 
+const getChefNames = (items, fallbackName) => {
+  if (!Array.isArray(items) || !items.length) {
+    return fallbackName || "Unknown Chef";
+  }
+  const names = [...new Set(items.map((item) => item.chef_name || item.chef || item.created_by_name).filter(Boolean))];
+  if (!names.length) return fallbackName || "Unknown Chef";
+  return names.join(", ");
+};
+
+const getChefGroups = (items) => {
+  if (!Array.isArray(items) || !items.length) return [];
+  const chefs = {};
+  items.forEach((item) => {
+    const key = item.chef_name || item.chef_email || item.chef_user_id || item.chef_id || item.created_by_name || "unknown";
+    const chefName = item.chef_name || item.chef || item.created_by_name || "Unknown Chef";
+    const chefEmail = item.chef_email || item.email || "N/A";
+    const chefPhone = item.chef_phone || item.phone || "N/A";
+    const quantity = Number(item.quantity) || 1;
+    const price = parseFloat(item.price || item.final_price || item.mrp || 0) || 0;
+
+    if (!chefs[key]) {
+      chefs[key] = {
+        name: chefName,
+        email: chefEmail,
+        phone: chefPhone,
+        items: [],
+        total_amount: 0,
+        total_quantity: 0,
+      };
+    }
+
+    chefs[key].items.push(item);
+    chefs[key].total_amount += price * quantity;
+    chefs[key].total_quantity += quantity;
+  });
+
+  return Object.values(chefs).map((chef) => ({
+    ...chef,
+    total_amount: parseFloat(chef.total_amount.toFixed(2)),
+  }));
+};
+
 const getItemSummary = (items) => {
   if (!items || !items.length) return "No items";
   const names = items.map((item) => item.name || item.product_name || "Food item");
@@ -126,12 +168,25 @@ export default function MyFoodOrders() {
 
                       <div className="grid gap-3 sm:grid-cols-2">
                         <div className="rounded-3xl bg-slate-50 p-4">
+                          <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Items quantity</p>
+                          <p className="mt-2 text-lg font-black text-slate-900">
+                            {order.items?.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0) || 0}
+                          </p>
+                        </div>
+                        <div className="rounded-3xl bg-slate-50 p-4">
                           <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Total amount</p>
                           <p className="mt-2 text-lg font-black text-slate-900">₹{parseFloat(order.total_amount || 0).toFixed(2)}</p>
                         </div>
+                      </div>
+
+                      <div className="grid gap-3 sm:grid-cols-2">
                         <div className="rounded-3xl bg-slate-50 p-4">
                           <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Chef</p>
-                          <p className="mt-2 text-sm font-semibold text-slate-900">{order.chef_name || "Unknown Chef"}</p>
+                          <p className="mt-2 text-sm font-semibold text-slate-900">{getChefNames(order.items, order.chef_name)}</p>
+                        </div>
+                        <div className="rounded-3xl bg-slate-50 p-4">
+                          <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Order status</p>
+                          <p className="mt-2 text-sm font-semibold text-slate-900">{order.status || 'Pending'}</p>
                         </div>
                       </div>
                     </div>
@@ -210,9 +265,9 @@ export default function MyFoodOrders() {
                         <div className="flex items-start justify-between gap-4">
                           <div>
                             <p className="font-semibold text-slate-900">{item.name || item.product_name}</p>
-                            <p className="text-sm text-slate-600">Qty {item.quantity} × ₹{item.price}</p>
+                            <p className="text-sm text-slate-600">Qty {item.quantity || 1} × ₹{item.price || '0.00'}</p>
                           </div>
-                          <p className="font-semibold text-slate-900">₹{(parseFloat(item.price || 0) * item.quantity).toFixed(2)}</p>
+                          <p className="font-semibold text-slate-900">₹{(parseFloat(item.price || 0) * (item.quantity || 1)).toFixed(2)}</p>
                         </div>
                       </div>
                     ))}
@@ -249,10 +304,26 @@ export default function MyFoodOrders() {
 
                 <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
                   <h4 className="text-sm uppercase tracking-[0.24em] text-slate-500">Chef details</h4>
-                  <div className="mt-4 space-y-3 text-sm text-slate-700">
-                    <p><span className="font-semibold text-slate-900">Chef:</span> {selectedOrder.chef_name || 'N/A'}</p>
-                    <p><span className="font-semibold text-slate-900">Phone:</span> {selectedOrder.chef_phone || 'N/A'}</p>
-                    <p><span className="font-semibold text-slate-900">Email:</span> {selectedOrder.chef_email || 'N/A'}</p>
+                  <div className="mt-4 space-y-4 text-sm text-slate-700">
+                    {getChefGroups(selectedOrder.items).map((chef, index) => (
+                      <div key={index} className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <div>
+                            <p className="font-semibold text-slate-900">{chef.name}</p>
+                            <p className="text-xs uppercase tracking-[0.24em] text-slate-500 mt-2">Chef</p>
+                          </div>
+                          <div>
+                            <p className="font-semibold text-slate-900">₹{chef.total_amount.toFixed(2)}</p>
+                            <p className="text-xs uppercase tracking-[0.24em] text-slate-500 mt-2">Chef share</p>
+                          </div>
+                        </div>
+                        <div className="mt-3 grid gap-2 sm:grid-cols-3 text-sm">
+                          <p><span className="font-semibold text-slate-900">Qty:</span> {chef.total_quantity}</p>
+                          <p><span className="font-semibold text-slate-900">Phone:</span> {chef.phone}</p>
+                          <p><span className="font-semibold text-slate-900">Email:</span> {chef.email}</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>

@@ -131,15 +131,57 @@ const addUserFoodOrder = async (payload) => {
 };
 
 const getChefOrders = async (chefUserId) => {
+  const patterns = [
+    `%"chef_user_id":"${chefUserId}"%`,
+    `%"chef_user_id":${chefUserId}%`,
+    `%"chef_id":"${chefUserId}"%`,
+    `%"chef_id":${chefUserId}%`
+  ];
+
   const [rows] = await pool.execute(
-    'SELECT * FROM user_food_order_table WHERE chef_user_id = ? OR chef_id = ? ORDER BY ordered_at DESC',
-    [chefUserId, chefUserId]
+    `SELECT * FROM user_food_order_table
+     WHERE chef_user_id = ?
+       OR chef_id = ?
+       OR items LIKE ?
+       OR items LIKE ?
+       OR items LIKE ?
+       OR items LIKE ?
+     ORDER BY ordered_at DESC`,
+    [chefUserId, chefUserId, ...patterns]
   );
 
-  return rows.map((row) => ({
-    ...row,
-    items: parseJson(row.items)
-  }));
+  const chefOrders = [];
+  for (const row of rows) {
+    const items = parseJson(row.items);
+    const chefItems = items.filter((item) =>
+      String(item.chef_user_id) === String(chefUserId) ||
+      String(item.chef_id) === String(chefUserId)
+    );
+
+    if (!chefItems.length) continue;
+
+    const chefNames = [...new Set(chefItems.map((item) => item.chef_name).filter(Boolean))];
+    const chefEmails = [...new Set(chefItems.map((item) => item.chef_email).filter(Boolean))];
+    const chefPhones = [...new Set(chefItems.map((item) => item.chef_phone).filter(Boolean))];
+    const chefTotalAmount = chefItems.reduce((sum, item) => {
+      const price = parseFloat(item.price || item.final_price || item.mrp || 0) || 0;
+      const quantity = Number(item.quantity) || 1;
+      return sum + price * quantity;
+    }, 0);
+    const chefTotalQuantity = chefItems.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0);
+
+    chefOrders.push({
+      ...row,
+      items: chefItems,
+      chef_name: chefNames.join(', ') || row.chef_name,
+      chef_email: chefEmails[0] || row.chef_email,
+      chef_phone: chefPhones[0] || row.chef_phone,
+      chef_total_amount: parseFloat(chefTotalAmount.toFixed(2)),
+      chef_total_quantity: chefTotalQuantity,
+    });
+  }
+
+  return chefOrders;
 };
 
 const getUserOrders = async (userId) => {
@@ -148,10 +190,47 @@ const getUserOrders = async (userId) => {
     [userId]
   );
 
-  return rows.map((row) => ({
-    ...row,
-    items: parseJson(row.items)
-  }));
+  return rows.map((row) => {
+    const items = parseJson(row.items);
+    const chefNames = [...new Set(items.map((item) => item.chef_name || item.chef || item.created_by_name).filter(Boolean))];
+
+    const chefGroups = Object.values(
+      items.reduce((groups, item) => {
+        const key = item.chef_name || item.chef_email || item.chef_user_id || item.chef_id || item.created_by_name || 'unknown';
+        const chefName = item.chef_name || item.chef || item.created_by_name || 'Unknown Chef';
+        const chefEmail = item.chef_email || item.email || 'N/A';
+        const chefPhone = item.chef_phone || item.phone || 'N/A';
+        const quantity = Number(item.quantity) || 1;
+        const price = parseFloat(item.price || item.final_price || item.mrp || 0) || 0;
+
+        if (!groups[key]) {
+          groups[key] = {
+            chef_name: chefName,
+            chef_email: chefEmail,
+            chef_phone: chefPhone,
+            items: [],
+            total_amount: 0,
+            total_quantity: 0,
+          };
+        }
+
+        groups[key].items.push(item);
+        groups[key].total_amount += price * quantity;
+        groups[key].total_quantity += quantity;
+        return groups;
+      }, {})
+    ).map((group) => ({
+      ...group,
+      total_amount: parseFloat(group.total_amount.toFixed(2))
+    }));
+
+    return {
+      ...row,
+      items,
+      chef_names: chefNames.join(', '),
+      chef_groups: chefGroups,
+    };
+  });
 };
 
 const getOrderById = async (id) => {
@@ -201,6 +280,53 @@ const updateOrder = async (id, payload) => {
 
 const updateOrderStatus = async (id, status) => {
   await pool.execute('UPDATE user_food_order_table SET status = ? WHERE id = ?', [status, id]);
+};
+
+const getAllOrders = async (filters = {}) => {
+  const { role, userId, numericId, status, chef_id, search } = filters;
+
+  let query = 'SELECT * FROM user_food_order_table WHERE 1=1';
+  const params = [];
+
+  // Role-based filtering
+  if (role === 'chef' && userId) {
+    query += ' AND chef_user_id = ?';
+    params.push(userId);
+  } else if (role === 'franchise' && userId) {
+    query += ' AND franchise_user_id = ?';
+    params.push(userId);
+  } else if (role === 'user' && userId) {
+    query += ' AND (user_id = ? OR created_by_user_id = ?)';
+    params.push(userId, userId);
+  }
+
+  // Status filter
+  if (status) {
+    query += ' AND status = ?';
+    params.push(status);
+  }
+
+  // Chef ID filter
+  if (chef_id) {
+    query += ' AND chef_id = ?';
+    params.push(chef_id);
+  }
+
+  // Search filter
+  if (search) {
+    query += ' AND (customer_name LIKE ? OR customer_email LIKE ? OR order_id LIKE ?)';
+    const searchParam = `%${search}%`;
+    params.push(searchParam, searchParam, searchParam);
+  }
+
+  query += ' ORDER BY ordered_at DESC';
+
+  const [rows] = await pool.execute(query, params);
+
+  return rows.map((row) => ({
+    ...row,
+    items: parseJson(row.items)
+  }));
 };
 
 const getFranchiseAdminOrders = async (franchiseUserId) => {
