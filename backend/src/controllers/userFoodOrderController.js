@@ -308,7 +308,7 @@ const getChefOrderItemsAndTotals = (row, chefId) => {
 };
 
 const getAllOrders = async (filters = {}) => {
-  const { role, userId, numericId, status, chef_id, search } = filters;
+  const { role, userId, numericId, status, chef_id, franchise_user_id, franchise_id, search } = filters;
 
   let query = 'SELECT * FROM user_food_order_table WHERE 1=1';
   const params = [];
@@ -342,6 +342,17 @@ const getAllOrders = async (filters = {}) => {
 
     query += ' AND (chef_id = ? OR chef_user_id = ? OR items LIKE ? OR items LIKE ? OR items LIKE ? OR items LIKE ?)';
     params.push(chef_id, chef_id, ...patterns);
+  }
+
+  // Franchise filters
+  if (franchise_user_id) {
+    query += ' AND franchise_user_id = ?';
+    params.push(franchise_user_id);
+  }
+
+  if (franchise_id) {
+    query += ' AND franchise_id = ?';
+    params.push(franchise_id);
   }
 
   // Search filter

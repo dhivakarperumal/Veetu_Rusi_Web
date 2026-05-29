@@ -111,6 +111,20 @@ const FranchiseDetails = () => {
     return new Date(dateString).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
   };
 
+  const formatAmount = (value) => `₹${Number(value || 0).toFixed(2)}`;
+
+  const getItemUnitPrice = (item) => parseFloat(item.price || item.final_price || item.mrp || 0) || 0;
+  const getItemTotal = (item) => {
+    const qty = Number(item.quantity) || 1;
+    return getItemUnitPrice(item) * qty;
+  };
+
+  const getChefNames = (items) => {
+    if (!Array.isArray(items)) return '—';
+    const names = [...new Set(items.map((item) => item.chef_name || item.chef || item.created_by_name).filter(Boolean))];
+    return names.length ? names.join(', ') : '—';
+  };
+
   const getSubscriptionLabel = (franchise) => {
     if (!franchise) return 'Unknown';
     if (franchise.status !== 'Active') return 'Inactive';
@@ -143,13 +157,13 @@ const FranchiseDetails = () => {
         const [homeChefRes, deliveryRes, ordersRes] = await Promise.all([
           api.get('/superadmin/homechefs'),
           api.get('/superadmin/delivery-partners'),
-          api.get('/superadmin/orders')
+          api.get('/user-food-orders', { params: { franchise_user_id: res.data.franch_user_id, franchise_id: res.data.franchise_id } })
         ]);
         const matcher = item => item.created_by_user_id === res.data.franch_user_id;
         const homeChefs = homeChefRes.data.filter(matcher);
         const deliveryPartners = deliveryRes.data.filter(matcher);
-        const orders = ordersRes.data.filter(order => order.franchise_user_id === res.data.franch_user_id);
-        const userOrders = ordersRes.data.filter(order => order.user_id === res.data.franch_user_id);
+        const orders = Array.isArray(ordersRes.data) ? ordersRes.data : [];
+        const userOrders = orders.filter(order => String(order.user_id) === String(res.data.franch_user_id) || String(order.created_by_user_id) === String(res.data.franch_user_id));
         setLinkedHomeChefs(homeChefs);
         setLinkedDeliveryPartners(deliveryPartners);
         setLinkedOrders(orders);
@@ -797,22 +811,41 @@ const FranchiseDetails = () => {
                         <thead className="bg-slate-50">
                           <tr>
                             <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Order ID</th>
-                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Date</th>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Customer</th>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Home Chef(s)</th>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Items</th>
                             <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Amount</th>
                             <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs text-center">Status</th>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Placed</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 bg-white">
                           {linkedOrders.map((order) => (
                             <tr key={order.id} className="hover:bg-slate-50/50 transition-colors group">
                               <td className="px-6 py-4 font-bold text-slate-800">#{order.order_id || order.id}</td>
-                              <td className="px-6 py-4 text-slate-600">{formatDate(order.created_at)}</td>
-                              <td className="px-6 py-4 font-bold text-emerald-600">₹{order.total_amount || 0}</td>
+                              <td className="px-6 py-4 text-slate-600">{order.customer_name || order.ordered_by_name || 'Guest'}</td>
+                              <td className="px-6 py-4 text-slate-700">{getChefNames(order.items)}</td>
+                              <td className="px-6 py-4 space-y-2 text-slate-700">
+                                {Array.isArray(order.items) && order.items.length > 0 ? (
+                                  order.items.map((item, idx) => (
+                                    <div key={idx} className="rounded-2xl bg-slate-50 p-3">
+                                      <p className="font-semibold text-slate-800">{item.name || item.product_name || 'Item'}</p>
+                                      <p className="text-xs text-slate-500">
+                                        Qty {Number(item.quantity) || 1} × {formatAmount(getItemUnitPrice(item))} = {formatAmount(getItemTotal(item))}
+                                      </p>
+                                    </div>
+                                  ))
+                                ) : (
+                                  <p className="text-xs text-slate-400">No items found</p>
+                                )}
+                              </td>
+                              <td className="px-6 py-4 font-bold text-emerald-600">{formatAmount(order.total_amount)}</td>
                               <td className="px-6 py-4 text-center">
-                                <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${order.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                                <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${order.status === 'Delivered' ? 'bg-emerald-100 text-emerald-700' : order.status === 'Confirmed' ? 'bg-blue-100 text-blue-700' : order.status === 'Preparing' ? 'bg-violet-100 text-violet-700' : order.status === 'Pending' ? 'bg-amber-100 text-amber-700' : order.status === 'Out for Delivery' ? 'bg-orange-100 text-orange-700' : order.status === 'Cancelled' ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-500'}`}>
                                   {order.status || 'Pending'}
                                 </span>
                               </td>
+                              <td className="px-6 py-4 text-slate-400 text-xs">{formatDate(order.ordered_at || order.ordered_date || order.created_at)}</td>
                             </tr>
                           ))}
                         </tbody>
