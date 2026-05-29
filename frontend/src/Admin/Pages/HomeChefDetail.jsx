@@ -121,7 +121,7 @@ const HomeChefDetail = () => {
     return (
       <div className="min-h-screen bg-slate-50 p-6 space-y-5">
         <div className="h-10 w-40 rounded-full bg-slate-200 animate-pulse" />
-        <div className="h-40 rounded-[2rem] bg-slate-200 animate-pulse" />
+        <div className="h-40 rounded-4xl bg-slate-200 animate-pulse" />
         <div className="grid grid-cols-3 gap-4">
           {[1,2,3].map(i => <div key={i} className="h-28 rounded-2xl bg-slate-200 animate-pulse" />)}
         </div>

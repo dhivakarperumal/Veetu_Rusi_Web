@@ -334,10 +334,10 @@ const getAllOrders = async (filters = {}) => {
   // Chef ID filter
   if (chef_id) {
     const patterns = [
-      `%%"chef_user_id":"${chef_id}"%%`,
-      `%%"chef_user_id":${chef_id}%%`,
-      `%%"chef_id":"${chef_id}"%%`,
-      `%%"chef_id":${chef_id}%%`
+      `%"chef_user_id":"${chef_id}"%`,
+      `%"chef_user_id":${chef_id}%`,
+      `%"chef_id":"${chef_id}"%`,
+      `%"chef_id":${chef_id}%`
     ];
 
     query += ' AND (chef_id = ? OR chef_user_id = ? OR items LIKE ? OR items LIKE ? OR items LIKE ? OR items LIKE ?)';
