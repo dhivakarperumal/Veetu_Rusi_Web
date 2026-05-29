@@ -287,22 +287,13 @@ const FranchiseDetails = () => {
   };
 
   const fetchFranchiseAdminOrders = async () => {
-    if (!franchise || linkedHomeChefs.length === 0) {
-      setFranchiseAdminOrders([]);
-      return;
-    }
+    if (!franchise) return;
     setLoadingFranchiseAdminOrders(true);
     setFranchiseAdminOrdersError(null);
     try {
       const res = await api.get('/orders', { params: { franchise_user_id: franchise.franch_user_id } });
-      const allOrders = Array.isArray(res.data) ? res.data : [];
-      
-      // Filter to only show orders from home chefs linked to this franchise
-      const branchChefIds = linkedHomeChefs.map((chef) => String(chef.chef_id || '').trim()).filter(Boolean);
-      const branchChefUserIds = linkedHomeChefs.map((chef) => String(chef.user_id || '').trim()).filter(Boolean);
-      const filteredOrders = allOrders.filter((order) => isBranchChefOrder(order, branchChefIds, branchChefUserIds));
-      
-      setFranchiseAdminOrders(filteredOrders);
+      const orders = Array.isArray(res.data) ? res.data : [];
+      setFranchiseAdminOrders(orders);
     } catch (err) {
       setFranchiseAdminOrdersError('Failed to load franchise admin orders.');
       setFranchiseAdminOrders([]);
@@ -319,7 +310,7 @@ const FranchiseDetails = () => {
     } else if (activeDetailTab === 'orders') {
       fetchFranchiseAdminOrders();
     }
-  }, [activeDetailTab, franchise, linkedHomeChefs]);
+  }, [activeDetailTab, franchise]);
 
   if (loading) return (
     <div className="flex h-screen items-center justify-center bg-slate-50">
