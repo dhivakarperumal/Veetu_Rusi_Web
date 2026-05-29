@@ -203,6 +203,53 @@ const updateOrderStatus = async (id, status) => {
   await pool.execute('UPDATE user_food_order_table SET status = ? WHERE id = ?', [status, id]);
 };
 
+const getAllOrders = async (filters = {}) => {
+  const { role, userId, numericId, status, chef_id, search } = filters;
+
+  let query = 'SELECT * FROM user_food_order_table WHERE 1=1';
+  const params = [];
+
+  // Role-based filtering
+  if (role === 'chef' && userId) {
+    query += ' AND chef_user_id = ?';
+    params.push(userId);
+  } else if (role === 'franchise' && userId) {
+    query += ' AND franchise_user_id = ?';
+    params.push(userId);
+  } else if (role === 'user' && userId) {
+    query += ' AND (user_id = ? OR created_by_user_id = ?)';
+    params.push(userId, userId);
+  }
+
+  // Status filter
+  if (status) {
+    query += ' AND status = ?';
+    params.push(status);
+  }
+
+  // Chef ID filter
+  if (chef_id) {
+    query += ' AND chef_id = ?';
+    params.push(chef_id);
+  }
+
+  // Search filter
+  if (search) {
+    query += ' AND (customer_name LIKE ? OR customer_email LIKE ? OR order_id LIKE ?)';
+    const searchParam = `%${search}%`;
+    params.push(searchParam, searchParam, searchParam);
+  }
+
+  query += ' ORDER BY ordered_at DESC';
+
+  const [rows] = await pool.execute(query, params);
+
+  return rows.map((row) => ({
+    ...row,
+    items: parseJson(row.items)
+  }));
+};
+
 const getFranchiseAdminOrders = async (franchiseUserId) => {
   // First, get all home chefs created by this franchise admin
   const [chefs] = await pool.execute(
