@@ -308,7 +308,7 @@ const getChefOrderItemsAndTotals = (row, chefId) => {
 };
 
 const getAllOrders = async (filters = {}) => {
-  const { role, userId, numericId, status, chef_id, franchise_user_id, franchise_id, user_id, created_by_user_id, search } = filters;
+  const { role, userId, numericId, status, chef_id, franchise_user_id, franchise_id, user_id, created_by_user_id, ordered_by_user_id, search } = filters;
 
   let query = 'SELECT * FROM user_food_order_table WHERE 1=1';
   const params = [];
@@ -321,8 +321,8 @@ const getAllOrders = async (filters = {}) => {
     query += ' AND franchise_user_id = ?';
     params.push(userId);
   } else if (role === 'user' && userId) {
-    query += ' AND (user_id = ? OR created_by_user_id = ?)';
-    params.push(userId, userId);
+    query += ' AND (user_id = ? OR created_by_user_id = ? OR ordered_by_user_id = ?)';
+    params.push(userId, userId, userId);
   }
 
   // Status filter
@@ -365,8 +365,15 @@ const getAllOrders = async (filters = {}) => {
   // Created by user filter (for personal orders) - match all variations of user ID
   if (created_by_user_id) {
     const stringId = String(created_by_user_id).trim();
-    query += ' AND (user_id = ? OR user_id LIKE ? OR created_by_user_id = ? OR created_by_user_id LIKE ?)';
-    params.push(stringId, `%${stringId}%`, stringId, `%${stringId}%`);
+    query += ' AND (user_id = ? OR user_id LIKE ? OR created_by_user_id = ? OR created_by_user_id LIKE ? OR ordered_by_user_id = ? OR ordered_by_user_id LIKE ?)';
+    params.push(stringId, `%${stringId}%`, stringId, `%${stringId}%`, stringId, `%${stringId}%`);
+  }
+
+  // Ordered by user filter (for personal orders) - match all variations of user ID
+  if (ordered_by_user_id) {
+    const stringId = String(ordered_by_user_id).trim();
+    query += ' AND (user_id = ? OR user_id LIKE ? OR created_by_user_id = ? OR created_by_user_id LIKE ? OR ordered_by_user_id = ? OR ordered_by_user_id LIKE ?)';
+    params.push(stringId, `%${stringId}%`, stringId, `%${stringId}%`, stringId, `%${stringId}%`);
   }
 
   // Search filter
