@@ -308,7 +308,7 @@ const getChefOrderItemsAndTotals = (row, chefId) => {
 };
 
 const getAllOrders = async (filters = {}) => {
-  const { role, userId, numericId, status, chef_id, franchise_user_id, franchise_id, created_by_user_id, search } = filters;
+  const { role, userId, numericId, status, chef_id, franchise_user_id, franchise_id, user_id, created_by_user_id, search } = filters;
 
   let query = 'SELECT * FROM user_food_order_table WHERE 1=1';
   const params = [];
