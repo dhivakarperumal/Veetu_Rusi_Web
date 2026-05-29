@@ -173,19 +173,21 @@ const FranchiseDetails = () => {
         setFranchise(res.data);
 
         // fetch linked counts
-        const [homeChefRes, deliveryRes, ordersRes] = await Promise.all([
+        const [homeChefRes, deliveryRes, ordersRes, userOrdersRes] = await Promise.all([
           api.get('/superadmin/homechefs'),
           api.get('/superadmin/delivery-partners'),
-          api.get('/user-food-orders', { params: { franchise_user_id: res.data.franch_user_id, franchise_id: res.data.franchise_id } })
+          api.get('/user-food-orders', { params: { franchise_user_id: res.data.franch_user_id, franchise_id: res.data.franchise_id } }),
+          api.get('/user-food-orders', { params: { created_by_user_id: res.data.franch_user_id } })
         ]);
         const matcher = item => item.created_by_user_id === res.data.franch_user_id;
         const homeChefs = homeChefRes.data.filter(matcher);
         const deliveryPartners = deliveryRes.data.filter(matcher);
         const orders = Array.isArray(ordersRes.data) ? ordersRes.data : [];
+        const allUserOrders = Array.isArray(userOrdersRes.data) ? userOrdersRes.data : [];
         const branchChefIds = homeChefs.map((chef) => String(chef.chef_id || '').trim()).filter(Boolean);
         const branchChefUserIds = homeChefs.map((chef) => String(chef.user_id || '').trim()).filter(Boolean);
         const branchOrders = orders.filter((order) => isBranchChefOrder(order, branchChefIds, branchChefUserIds));
-        const userOrders = orders.filter((order) =>
+        const userOrders = allUserOrders.filter((order) =>
           String(order.user_id || '') === String(res.data.franch_user_id) ||
           String(order.created_by_user_id || '') === String(res.data.franch_user_id) ||
           String(order.ordered_by_user_id || '') === String(res.data.franch_user_id)
