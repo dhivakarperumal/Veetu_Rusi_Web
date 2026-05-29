@@ -125,6 +125,25 @@ const FranchiseDetails = () => {
     return names.length ? names.join(', ') : '—';
   };
 
+  const isBranchChefOrder = (order, chefIds, chefUserIds) => {
+    const orderChefId = String(order.chef_id || '').trim();
+    const orderChefUserId = String(order.chef_user_id || '').trim();
+    if (orderChefId && chefIds.includes(orderChefId)) return true;
+    if (orderChefUserId && chefUserIds.includes(orderChefUserId)) return true;
+
+    if (!Array.isArray(order.items)) return false;
+    return order.items.some((item) => {
+      const itemChefId = String(item.chef_id || '').trim();
+      const itemChefUserId = String(item.chef_user_id || '').trim();
+      const itemCreatedByUserId = String(item.created_by_user_id || '').trim();
+      return (
+        (itemChefId && chefIds.includes(itemChefId)) ||
+        (itemChefUserId && chefUserIds.includes(itemChefUserId)) ||
+        (itemCreatedByUserId && chefUserIds.includes(itemCreatedByUserId))
+      );
+    });
+  };
+
   const getSubscriptionLabel = (franchise) => {
     if (!franchise) return 'Unknown';
     if (franchise.status !== 'Active') return 'Inactive';
@@ -163,14 +182,21 @@ const FranchiseDetails = () => {
         const homeChefs = homeChefRes.data.filter(matcher);
         const deliveryPartners = deliveryRes.data.filter(matcher);
         const orders = Array.isArray(ordersRes.data) ? ordersRes.data : [];
-        const userOrders = orders.filter(order => String(order.user_id) === String(res.data.franch_user_id) || String(order.created_by_user_id) === String(res.data.franch_user_id));
+        const branchChefIds = homeChefs.map((chef) => String(chef.chef_id || '').trim()).filter(Boolean);
+        const branchChefUserIds = homeChefs.map((chef) => String(chef.user_id || '').trim()).filter(Boolean);
+        const branchOrders = orders.filter((order) => isBranchChefOrder(order, branchChefIds, branchChefUserIds));
+        const userOrders = orders.filter((order) =>
+          String(order.user_id || '') === String(res.data.franch_user_id) ||
+          String(order.created_by_user_id || '') === String(res.data.franch_user_id) ||
+          String(order.ordered_by_user_id || '') === String(res.data.franch_user_id)
+        );
         setLinkedHomeChefs(homeChefs);
         setLinkedDeliveryPartners(deliveryPartners);
-        setLinkedOrders(orders);
+        setLinkedOrders(branchOrders);
         setLinkedUserOrders(userOrders);
         setLinkedHomeChefCount(homeChefs.length);
         setLinkedDeliveryPartnerCount(deliveryPartners.length);
-        setLinkedOrderCount(orders.length);
+        setLinkedOrderCount(branchOrders.length);
       } catch (err) {
         toast.error('Failed to load franchise');
         navigate('/superadmin/franchises');
@@ -799,7 +825,7 @@ const FranchiseDetails = () => {
                 <div className="mb-6 flex items-center justify-between border-b border-slate-100 pb-4">
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 text-violet-600"><ShoppingCart className="h-5 w-5" /></div>
-                    <h3 className="text-xl font-black text-slate-800">Franchise Orders</h3>
+                    <h3 className="text-xl font-black text-slate-800">Branch Chef Orders</h3>
                   </div>
                   <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500">{linkedOrders.length} Total</span>
                 </div>
@@ -812,8 +838,6 @@ const FranchiseDetails = () => {
                           <tr>
                             <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Order ID</th>
                             <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Customer</th>
-                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Home Chef(s)</th>
-                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Items</th>
                             <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Amount</th>
                             <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs text-center">Status</th>
                             <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Placed</th>
@@ -824,21 +848,6 @@ const FranchiseDetails = () => {
                             <tr key={order.id} className="hover:bg-slate-50/50 transition-colors group">
                               <td className="px-6 py-4 font-bold text-slate-800">#{order.order_id || order.id}</td>
                               <td className="px-6 py-4 text-slate-600">{order.customer_name || order.ordered_by_name || 'Guest'}</td>
-                              <td className="px-6 py-4 text-slate-700">{getChefNames(order.items)}</td>
-                              <td className="px-6 py-4 space-y-2 text-slate-700">
-                                {Array.isArray(order.items) && order.items.length > 0 ? (
-                                  order.items.map((item, idx) => (
-                                    <div key={idx} className="rounded-2xl bg-slate-50 p-3">
-                                      <p className="font-semibold text-slate-800">{item.name || item.product_name || 'Item'}</p>
-                                      <p className="text-xs text-slate-500">
-                                        Qty {Number(item.quantity) || 1} × {formatAmount(getItemUnitPrice(item))} = {formatAmount(getItemTotal(item))}
-                                      </p>
-                                    </div>
-                                  ))
-                                ) : (
-                                  <p className="text-xs text-slate-400">No items found</p>
-                                )}
-                              </td>
                               <td className="px-6 py-4 font-bold text-emerald-600">{formatAmount(order.total_amount)}</td>
                               <td className="px-6 py-4 text-center">
                                 <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${order.status === 'Delivered' ? 'bg-emerald-100 text-emerald-700' : order.status === 'Confirmed' ? 'bg-blue-100 text-blue-700' : order.status === 'Preparing' ? 'bg-violet-100 text-violet-700' : order.status === 'Pending' ? 'bg-amber-100 text-amber-700' : order.status === 'Out for Delivery' ? 'bg-orange-100 text-orange-700' : order.status === 'Cancelled' ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-500'}`}>
