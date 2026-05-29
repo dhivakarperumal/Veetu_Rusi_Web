@@ -345,12 +345,13 @@ const getAllOrders = async (filters = {}) => {
   }
 
   // Franchise filters
-  if (franchise_user_id) {
+  if (franchise_user_id && franchise_id) {
+    query += ' AND (franchise_user_id = ? OR franchise_id = ?)';
+    params.push(franchise_user_id, franchise_id);
+  } else if (franchise_user_id) {
     query += ' AND franchise_user_id = ?';
     params.push(franchise_user_id);
-  }
-
-  if (franchise_id) {
+  } else if (franchise_id) {
     query += ' AND franchise_id = ?';
     params.push(franchise_id);
   }
