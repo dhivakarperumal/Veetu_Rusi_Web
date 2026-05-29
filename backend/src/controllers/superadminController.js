@@ -1060,7 +1060,7 @@ exports.deleteUser = async (req, res) => {
 // ==================== ORDER MANAGEMENT ====================
 exports.getOrders = async (req, res) => {
   try {
-    const { status } = req.query;
+    const { status, franchise_user_id } = req.query;
     const currentUserId = req.user?.user_id;
     const role = req.user?.role;
     
@@ -1077,11 +1077,14 @@ exports.getOrders = async (req, res) => {
     }
     
     // Role-based filtering:
-    // - superadmin → see all orders
-    // - admin/franchise → see only orders where their franchise_user_id matches
+    // - superadmin → see all orders unless franchise_user_id is provided
+    // - admin/franchise → see only orders where their franchise_user_id matches, or where query param is provided for a specific franchise
     // - user → see only their own orders by user_id
     // - chef → filter in JS below by product ownership
-    if (role === 'franchise' || role === 'admin') {
+    if (franchise_user_id) {
+      query += " AND franchise_user_id = ?";
+      params.push(franchise_user_id);
+    } else if (role === 'franchise' || role === 'admin') {
       query += " AND franchise_user_id = ?";
       params.push(currentUserId);
     } else if (role === 'user') {
