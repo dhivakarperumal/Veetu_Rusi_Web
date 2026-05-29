@@ -208,7 +208,7 @@ const FranchiseDetails = () => {
           api.get('/superadmin/homechefs'),
           api.get('/superadmin/delivery-partners'),
           api.get('/user-food-orders', { params: { franchise_user_id: res.data.franch_user_id, franchise_id: res.data.franchise_id } }),
-          api.get('/user-food-orders', { params: { user_id: res.data.franch_user_id } })
+          api.get('/user-food-orders', { params: { franchise_user_id: res.data.franch_user_id, franchise_id: res.data.franchise_id } })
         ]);
         const matcher = (item) => {
           const chefFranchiseUserId = String(item.franchise_user_id || '');
@@ -231,9 +231,7 @@ const FranchiseDetails = () => {
         const branchChefUserIds = homeChefs.map((chef) => String(chef.user_id || '').trim()).filter(Boolean);
         const branchOrders = orders.filter((order) => isBranchChefOrder(order, branchChefIds, branchChefUserIds));
         const userOrders = allUserOrders.filter((order) =>
-          String(order.user_id || '') === String(res.data.franch_user_id) ||
-          String(order.created_by_user_id || '') === String(res.data.franch_user_id) ||
-          String(order.ordered_by_user_id || '') === String(res.data.franch_user_id)
+          !isBranchChefOrder(order, branchChefIds, branchChefUserIds)
         );
         setLinkedHomeChefs(homeChefs);
         setLinkedDeliveryPartners(deliveryPartners);
