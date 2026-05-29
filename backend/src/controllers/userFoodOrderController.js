@@ -356,6 +356,12 @@ const getAllOrders = async (filters = {}) => {
     params.push(franchise_id);
   }
 
+  // User filter (for customers) - match both user_id and created_by_user_id
+  if (user_id) {
+    query += ' AND (user_id = ? OR created_by_user_id = ?)';
+    params.push(user_id, user_id);
+  }
+
   // Created by user filter (for personal orders) - match all variations of user ID
   if (created_by_user_id) {
     const stringId = String(created_by_user_id).trim();

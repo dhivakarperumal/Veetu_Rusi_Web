@@ -125,6 +125,37 @@ const FranchiseDetails = () => {
     return names.length ? names.join(', ') : '—';
   };
 
+  const getChefGroups = (items) => {
+    if (!Array.isArray(items)) return [];
+
+    const groups = items.reduce((acc, item) => {
+      const key = item.chef_name || item.chef || item.created_by_name || item.chef_email || item.chef_phone || 'Unknown Chef';
+      const name = item.chef_name || item.chef || item.created_by_name || 'Unknown Chef';
+      const quantity = Number(item.quantity) || 1;
+      const price = parseFloat(item.price || item.final_price || item.mrp || 0) || 0;
+
+      if (!acc[key]) {
+        acc[key] = {
+          name,
+          total_quantity: 0,
+          total_amount: 0,
+          items: []
+        };
+      }
+
+      acc[key].items.push(item);
+      acc[key].total_quantity += quantity;
+      acc[key].total_amount += price * quantity;
+
+      return acc;
+    }, {});
+
+    return Object.values(groups).map((group) => ({
+      ...group,
+      total_amount: parseFloat(group.total_amount.toFixed(2))
+    }));
+  };
+
   const isBranchChefOrder = (order, chefIds, chefUserIds) => {
     const orderChefId = String(order.chef_id || '').trim();
     const orderChefUserId = String(order.chef_user_id || '').trim();
@@ -177,7 +208,7 @@ const FranchiseDetails = () => {
           api.get('/superadmin/homechefs'),
           api.get('/superadmin/delivery-partners'),
           api.get('/user-food-orders', { params: { franchise_user_id: res.data.franch_user_id, franchise_id: res.data.franchise_id } }),
-          api.get('/user-food-orders', { params: { created_by_user_id: res.data.franch_user_id } })
+          api.get('/user-food-orders', { params: { user_id: res.data.franch_user_id } })
         ]);
         const matcher = item => item.created_by_user_id === res.data.franch_user_id;
         const homeChefs = homeChefRes.data.filter(matcher);
@@ -892,25 +923,60 @@ const FranchiseDetails = () => {
                       <table className="w-full text-left text-sm">
                         <thead className="bg-slate-50">
                           <tr>
-                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Order ID</th>
-                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Date</th>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Order</th>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Customer</th>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Chefs</th>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Item Breakdown</th>
                             <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Amount</th>
                             <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs text-center">Status</th>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Date</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 bg-white">
-                          {linkedUserOrders.map((order) => (
-                            <tr key={order.id} className="hover:bg-slate-50/50 transition-colors group">
-                              <td className="px-6 py-4 font-bold text-slate-800">#{order.order_id || order.id}</td>
-                              <td className="px-6 py-4 text-slate-600">{formatDate(order.created_at)}</td>
-                              <td className="px-6 py-4 font-bold text-emerald-600">₹{order.total_amount || 0}</td>
-                              <td className="px-6 py-4 text-center">
-                                <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${order.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                                  {order.status || 'Pending'}
-                                </span>
-                              </td>
-                            </tr>
-                          ))}
+                          {linkedUserOrders.map((order) => {
+                            const items = Array.isArray(order.items) ? order.items : [];
+                            const chefGroups = getChefGroups(items);
+
+                            return (
+                              <tr key={order.id} className="hover:bg-slate-50/50 transition-colors group">
+                                <td className="px-6 py-4 font-bold text-slate-800">#{order.order_id || order.id}</td>
+                                <td className="px-6 py-4 text-slate-600">{order.customer_name || order.ordered_by_name || 'Guest'}</td>
+                                <td className="px-6 py-4 space-y-2">
+                                  {chefGroups.length > 0 ? (
+                                    chefGroups.map((group) => (
+                                      <div key={group.name} className="rounded-2xl bg-slate-100 px-3 py-2">
+                                        <p className="text-sm font-semibold text-slate-900">{group.name}</p>
+                                        <p className="text-xs text-slate-500">Qty {group.total_quantity} · {group.items.length} item{group.items.length === 1 ? '' : 's'}</p>
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <span className="text-xs text-slate-500">No chef info</span>
+                                  )}
+                                </td>
+                                <td className="px-6 py-4 space-y-2">
+                                  {chefGroups.length > 0 ? (
+                                    chefGroups.map((group) => (
+                                      <div key={`${group.name}-items`} className="rounded-2xl bg-slate-100 px-3 py-2">
+                                        <p className="text-sm font-semibold text-slate-900">{group.name}</p>
+                                        <p className="text-xs text-slate-500">
+                                          {group.items.map((item) => `${item.name || 'Item'} x${item.quantity || 1}`).join(', ')}
+                                        </p>
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <span className="text-xs text-slate-500">No items</span>
+                                  )}
+                                </td>
+                                <td className="px-6 py-4 font-bold text-emerald-600">{formatAmount(order.total_amount)}</td>
+                                <td className="px-6 py-4 text-center">
+                                  <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${order.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                                    {order.status || 'Pending'}
+                                  </span>
+                                </td>
+                                <td className="px-6 py-4 text-slate-400 text-xs">{formatDate(order.created_at)}</td>
+                              </tr>
+                            );
+                          })}
                         </tbody>
                       </table>
                     </div>
