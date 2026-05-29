@@ -890,6 +890,60 @@ const FranchiseDetails = () => {
               </div>
             )}
 
+            {/* ORDERS LIST */}
+            {activeDetailTab === 'orders' && (
+              <div className="animate-in slide-in-from-right-4 fade-in duration-300">
+                <div className="mb-6 flex items-center justify-between border-b border-slate-100 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 text-violet-600"><ShoppingCart className="h-5 w-5" /></div>
+                    <h3 className="text-xl font-black text-slate-800">Branch Chef Orders</h3>
+                  </div>
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500">{linkedOrders.length} Total</span>
+                </div>
+
+                {linkedOrders.length > 0 ? (
+                  <div className="overflow-hidden rounded-2xl border border-slate-200">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-sm">
+                        <thead className="bg-slate-50">
+                          <tr>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Order ID</th>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Customer</th>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Amount</th>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs text-center">Status</th>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Placed</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 bg-white">
+                          {linkedOrders.map((order) => (
+                            <tr key={order.id} className="hover:bg-slate-50/50 transition-colors group">
+                              <td className="px-6 py-4 font-bold text-slate-800">#{order.order_id || order.id}</td>
+                              <td className="px-6 py-4 text-slate-600">{order.customer_name || order.ordered_by_name || 'Guest'}</td>
+                              <td className="px-6 py-4 font-bold text-emerald-600">{formatAmount(order.total_amount)}</td>
+                              <td className="px-6 py-4 text-center">
+                                <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${order.status === 'Delivered' ? 'bg-emerald-100 text-emerald-700' : order.status === 'Confirmed' ? 'bg-blue-100 text-blue-700' : order.status === 'Preparing' ? 'bg-violet-100 text-violet-700' : order.status === 'Pending' ? 'bg-amber-100 text-amber-700' : order.status === 'Out for Delivery' ? 'bg-orange-100 text-orange-700' : order.status === 'Cancelled' ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-500'}`}>
+                                  {order.status || 'Pending'}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 text-slate-400 text-xs">{formatDate(order.ordered_at || order.ordered_date || order.created_at)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-200 bg-slate-50 py-16 text-center">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-sm mb-4">
+                      <ShoppingCart className="h-8 w-8 text-slate-300" />
+                    </div>
+                    <h4 className="text-lg font-bold text-slate-700">No Orders Found</h4>
+                    <p className="mt-1 text-sm text-slate-500 max-w-sm">There are no orders associated with this franchise account yet.</p>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* FRANCHISE ADMIN ORDERS LIST */}
             {activeDetailTab === 'orders' && (
               <div className="animate-in slide-in-from-right-4 fade-in duration-300 mt-8">
