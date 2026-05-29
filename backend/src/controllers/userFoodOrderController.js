@@ -131,15 +131,49 @@ const addUserFoodOrder = async (payload) => {
 };
 
 const getChefOrders = async (chefUserId) => {
+  const patterns = [
+    `%"chef_user_id":"${chefUserId}"%`,
+    `%"chef_user_id":${chefUserId}%`,
+    `%"chef_id":"${chefUserId}"%`,
+    `%"chef_id":${chefUserId}%`
+  ];
+
   const [rows] = await pool.execute(
-    'SELECT * FROM user_food_order_table WHERE chef_user_id = ? OR chef_id = ? ORDER BY ordered_at DESC',
-    [chefUserId, chefUserId]
+    `SELECT * FROM user_food_order_table
+     WHERE chef_user_id = ?
+       OR chef_id = ?
+       OR items LIKE ?
+       OR items LIKE ?
+       OR items LIKE ?
+       OR items LIKE ?
+     ORDER BY ordered_at DESC`,
+    [chefUserId, chefUserId, ...patterns]
   );
 
-  return rows.map((row) => ({
-    ...row,
-    items: parseJson(row.items)
-  }));
+  const chefOrders = [];
+  for (const row of rows) {
+    const items = parseJson(row.items);
+    const chefItems = items.filter((item) =>
+      String(item.chef_user_id) === String(chefUserId) ||
+      String(item.chef_id) === String(chefUserId)
+    );
+
+    if (!chefItems.length) continue;
+
+    const chefNames = [...new Set(chefItems.map((item) => item.chef_name).filter(Boolean))];
+    const chefEmails = [...new Set(chefItems.map((item) => item.chef_email).filter(Boolean))];
+    const chefPhones = [...new Set(chefItems.map((item) => item.chef_phone).filter(Boolean))];
+
+    chefOrders.push({
+      ...row,
+      items: chefItems,
+      chef_name: chefNames.join(', ') || row.chef_name,
+      chef_email: chefEmails[0] || row.chef_email,
+      chef_phone: chefPhones[0] || row.chef_phone,
+    });
+  }
+
+  return chefOrders;
 };
 
 const getUserOrders = async (userId) => {
@@ -148,10 +182,16 @@ const getUserOrders = async (userId) => {
     [userId]
   );
 
-  return rows.map((row) => ({
-    ...row,
-    items: parseJson(row.items)
-  }));
+  return rows.map((row) => {
+    const items = parseJson(row.items);
+    const chefNames = [...new Set(items.map((item) => item.chef_name).filter(Boolean))];
+
+    return {
+      ...row,
+      items,
+      chef_names: chefNames.join(', ')
+    };
+  });
 };
 
 const getOrderById = async (id) => {
