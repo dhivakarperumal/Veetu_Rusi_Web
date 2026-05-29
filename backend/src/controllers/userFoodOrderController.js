@@ -163,6 +163,12 @@ const getChefOrders = async (chefUserId) => {
     const chefNames = [...new Set(chefItems.map((item) => item.chef_name).filter(Boolean))];
     const chefEmails = [...new Set(chefItems.map((item) => item.chef_email).filter(Boolean))];
     const chefPhones = [...new Set(chefItems.map((item) => item.chef_phone).filter(Boolean))];
+    const chefTotalAmount = chefItems.reduce((sum, item) => {
+      const price = parseFloat(item.price || item.final_price || item.mrp || 0) || 0;
+      const quantity = Number(item.quantity) || 1;
+      return sum + price * quantity;
+    }, 0);
+    const chefTotalQuantity = chefItems.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0);
 
     chefOrders.push({
       ...row,
@@ -170,6 +176,8 @@ const getChefOrders = async (chefUserId) => {
       chef_name: chefNames.join(', ') || row.chef_name,
       chef_email: chefEmails[0] || row.chef_email,
       chef_phone: chefPhones[0] || row.chef_phone,
+      chef_total_amount: parseFloat(chefTotalAmount.toFixed(2)),
+      chef_total_quantity: chefTotalQuantity,
     });
   }
 
@@ -184,12 +192,43 @@ const getUserOrders = async (userId) => {
 
   return rows.map((row) => {
     const items = parseJson(row.items);
-    const chefNames = [...new Set(items.map((item) => item.chef_name).filter(Boolean))];
+    const chefNames = [...new Set(items.map((item) => item.chef_name || item.chef || item.created_by_name).filter(Boolean))];
+
+    const chefGroups = Object.values(
+      items.reduce((groups, item) => {
+        const key = item.chef_name || item.chef_email || item.chef_user_id || item.chef_id || item.created_by_name || 'unknown';
+        const chefName = item.chef_name || item.chef || item.created_by_name || 'Unknown Chef';
+        const chefEmail = item.chef_email || item.email || 'N/A';
+        const chefPhone = item.chef_phone || item.phone || 'N/A';
+        const quantity = Number(item.quantity) || 1;
+        const price = parseFloat(item.price || item.final_price || item.mrp || 0) || 0;
+
+        if (!groups[key]) {
+          groups[key] = {
+            chef_name: chefName,
+            chef_email: chefEmail,
+            chef_phone: chefPhone,
+            items: [],
+            total_amount: 0,
+            total_quantity: 0,
+          };
+        }
+
+        groups[key].items.push(item);
+        groups[key].total_amount += price * quantity;
+        groups[key].total_quantity += quantity;
+        return groups;
+      }, {})
+    ).map((group) => ({
+      ...group,
+      total_amount: parseFloat(group.total_amount.toFixed(2))
+    }));
 
     return {
       ...row,
       items,
-      chef_names: chefNames.join(', ')
+      chef_names: chefNames.join(', '),
+      chef_groups: chefGroups,
     };
   });
 };
