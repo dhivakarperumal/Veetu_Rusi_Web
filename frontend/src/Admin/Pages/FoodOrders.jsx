@@ -67,6 +67,14 @@ const formatDate = (val) => {
 const formatAmount = (val) =>
   val != null ? `₹${Number(val).toFixed(2)}` : '₹0.00';
 
+const getItemUnitPrice = (item) =>
+  parseFloat(item.price || item.final_price || item.mrp || 0) || 0;
+
+const getItemTotal = (item) => {
+  const quantity = Number(item.quantity) || 1;
+  return getItemUnitPrice(item) * quantity;
+};
+
 const getChefGroups = (items) => {
   if (!Array.isArray(items)) return [];
 
@@ -264,6 +272,47 @@ const OrderModal = ({ order, onClose, onStatusChange }) => {
             </button>
           </div>
 
+          {/* ORDER INFO */}
+          <div className="rounded-2xl border border-slate-200 p-5 space-y-3">
+            <p className="text-xs uppercase tracking-widest text-slate-400">
+              Order Info
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <InfoRow
+                icon={<Package className="w-4 h-4" />}
+                label="Order ID"
+                value={order.order_id || '—'}
+              />
+
+              <InfoRow
+                icon={<Calendar className="w-4 h-4" />}
+                label="Placed At"
+                value={formatDate(order.ordered_at)}
+              />
+
+              <InfoRow
+                icon={<Calendar className="w-4 h-4" />}
+                label="Delivery"
+                value={
+                  order.delivery_date
+                    ? `${order.delivery_date}${order.delivery_time ? ` • ${order.delivery_time}` : ''}`
+                    : '—'
+                }
+              />
+
+              <InfoRow
+                icon={<CreditCard className="w-4 h-4" />}
+                label="Payment"
+                value={
+                  order.payment_method
+                    ? `${order.payment_method}${order.payment_status ? ` • ${order.payment_status}` : ''}`
+                    : order.payment_status || '—'
+                }
+              />
+            </div>
+          </div>
+
           {/* CUSTOMER */}
           <div className="rounded-2xl border border-slate-200 p-5 space-y-3">
             <p className="text-xs uppercase tracking-widest text-slate-400">
@@ -277,6 +326,8 @@ const OrderModal = ({ order, onClose, onStatusChange }) => {
                 value={
                   order.customer_name ||
                   order.ordered_by_name ||
+                  order.name ||
+                  order.user_name ||
                   '—'
                 }
               />
@@ -287,6 +338,8 @@ const OrderModal = ({ order, onClose, onStatusChange }) => {
                 value={
                   order.customer_email ||
                   order.ordered_by_email ||
+                  order.email ||
+                  order.user_email ||
                   '—'
                 }
               />
@@ -297,14 +350,16 @@ const OrderModal = ({ order, onClose, onStatusChange }) => {
                 value={
                   order.customer_phone ||
                   order.ordered_by_phone ||
+                  order.phone ||
+                  order.user_phone ||
                   '—'
                 }
               />
 
               <InfoRow
-                icon={<CreditCard className="w-4 h-4" />}
-                label="Payment"
-                value={order.payment_method || '—'}
+                icon={<Store className="w-4 h-4" />}
+                label="Customer Type"
+                value={order.user_id ? 'Registered' : 'Guest'}
               />
             </div>
 
@@ -354,20 +409,22 @@ const OrderModal = ({ order, onClose, onStatusChange }) => {
                           {item.name || 'Item'}
                         </p>
 
-                        {item.quantity && (
-                          <p className="text-xs text-slate-500">
-                            Qty: {item.quantity}
+                        <p className="text-xs text-slate-500">
+                          Qty: {item.quantity || 1}
+                          {` • Unit: ${formatAmount(getItemUnitPrice(item))}`}
+                          {` • Total: ${formatAmount(getItemTotal(item))}`}
+                        </p>
+
+                        {(item.chef_name || item.chef || item.created_by_name) && (
+                          <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400 mt-1">
+                            {`Chef: ${item.chef_name || item.chef || item.created_by_name}`}
                           </p>
                         )}
                       </div>
                     </div>
 
                     <p className="text-sm font-black text-emerald-600">
-                      {formatAmount(
-                        item.price ||
-                          item.final_price ||
-                          item.mrp
-                      )}
+                      {formatAmount(getItemTotal(item))}
                     </p>
                   </div>
                 ))}
