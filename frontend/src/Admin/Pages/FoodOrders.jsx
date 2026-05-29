@@ -67,6 +67,40 @@ const formatDate = (val) => {
 const formatAmount = (val) =>
   val != null ? `₹${Number(val).toFixed(2)}` : '₹0.00';
 
+const getChefGroups = (items) => {
+  if (!Array.isArray(items)) return [];
+
+  const groups = items.reduce((acc, item) => {
+    const chefKey =
+      item.chef_name || item.chef || item.created_by_name ||
+      item.chef_email || item.chef_phone || 'Unknown Chef';
+    const chefName =
+      item.chef_name || item.chef || item.created_by_name || 'Unknown Chef';
+    const quantity = Number(item.quantity) || 0;
+    const price = parseFloat(item.price || item.final_price || item.mrp || 0) || 0;
+
+    if (!acc[chefKey]) {
+      acc[chefKey] = {
+        name: chefName,
+        total_quantity: 0,
+        total_amount: 0,
+        items: [],
+      };
+    }
+
+    acc[chefKey].items.push(item);
+    acc[chefKey].total_quantity += quantity;
+    acc[chefKey].total_amount += price * quantity;
+
+    return acc;
+  }, {});
+
+  return Object.values(groups).map((group) => ({
+    ...group,
+    total_amount: parseFloat(group.total_amount.toFixed(2)),
+  }));
+};
+
 /* ───────────────────────────────────────────── */
 /* INFO ROW */
 /* ───────────────────────────────────────────── */
@@ -579,8 +613,8 @@ const FoodOrders = () => {
                 <tr>
                   <th className="px-5 py-4">Order</th>
                   <th className="px-5 py-4">Customer</th>
-                  <th className="px-5 py-4">Chef</th>
-                  <th className="px-5 py-4">Items</th>
+                  <th className="px-5 py-4">Chefs</th>
+                  <th className="px-5 py-4">Item Breakdown</th>
                   <th className="px-5 py-4">Amount</th>
                   <th className="px-5 py-4">Status</th>
                   <th className="px-5 py-4">Date</th>
@@ -595,7 +629,7 @@ const FoodOrders = () => {
                   const items = Array.isArray(order.items)
                     ? order.items
                     : [];
-
+                  const chefGroups = getChefGroups(items);
                   const isExpanded =
                     expandedRow === order.id;
 
@@ -615,18 +649,40 @@ const FoodOrders = () => {
                             order.ordered_by_name}
                         </td>
 
-                        <td className="px-5 py-4">
-                          {order.chef_name}
+                        <td className="px-5 py-4 space-y-2">
+                          {chefGroups.map((group) => (
+                            <div
+                              key={group.name}
+                              className="rounded-2xl bg-slate-100 px-3 py-2"
+                            >
+                              <p className="text-sm font-semibold text-slate-900">
+                                {group.name}
+                              </p>
+                              <p className="text-xs text-slate-500">
+                                Qty {group.total_quantity} · {group.items.length} product{group.items.length === 1 ? '' : 's'}
+                              </p>
+                            </div>
+                          ))}
                         </td>
 
-                        <td className="px-5 py-4">
-                          {items.length}
+                        <td className="px-5 py-4 space-y-2">
+                          {chefGroups.map((group) => (
+                            <div
+                              key={`${group.name}-items`}
+                              className="rounded-2xl bg-slate-100 px-3 py-2"
+                            >
+                              <p className="text-sm font-semibold text-slate-900">
+                                {group.name}
+                              </p>
+                              <p className="text-xs text-slate-500">
+                                {group.items.map((item) => `${item.name || 'Item'} x${item.quantity || 1}`).join(', ')}
+                              </p>
+                            </div>
+                          ))}
                         </td>
 
                         <td className="px-5 py-4 font-black text-emerald-600">
-                          {formatAmount(
-                            order.total_amount
-                          )}
+                          {formatAmount(order.total_amount)}
                         </td>
 
                         <td className="px-5 py-4">
@@ -685,40 +741,49 @@ const FoodOrders = () => {
                       </tr>
 
                       {isExpanded &&
-                        items.length > 0 && (
+                        chefGroups.length > 0 && (
                           <tr className="bg-slate-50">
                             <td
                               colSpan={8}
                               className="px-5 py-3"
                             >
-                              <div className="flex flex-wrap gap-2">
+                              <div className="space-y-4">
+                                {chefGroups.map((group) => (
+                                  <div
+                                    key={group.name}
+                                    className="rounded-2xl border border-slate-200 bg-white p-4"
+                                  >
+                                    <div className="mb-3 flex items-center justify-between gap-3">
+                                      <div>
+                                        <p className="font-semibold text-slate-900">
+                                          {group.name}
+                                        </p>
+                                        <p className="text-xs text-slate-500">
+                                          {group.items.length} items · Qty {group.total_quantity}
+                                        </p>
+                                      </div>
+                                      <p className="text-sm font-black text-emerald-600">
+                                        {formatAmount(group.total_amount)}
+                                      </p>
+                                    </div>
 
-                                {items.map(
-                                  (item, idx) => (
-                                    <span
-                                      key={idx}
-                                      className="inline-flex items-center gap-2 rounded-xl border bg-white px-3 py-2 text-xs"
-                                    >
-                                      <span className="font-bold">
-                                        {item.name}
-                                      </span>
-
-                                      <span>
-                                        ×{' '}
-                                        {
-                                          item.quantity
-                                        }
-                                      </span>
-
-                                      <span className="font-black text-emerald-600">
-                                        {formatAmount(
-                                          item.price
-                                        )}
-                                      </span>
-                                    </span>
-                                  )
-                                )}
-
+                                    <div className="grid gap-3 sm:grid-cols-2">
+                                      {group.items.map((item, idx) => (
+                                        <div
+                                          key={idx}
+                                          className="rounded-2xl bg-slate-50 p-3"
+                                        >
+                                          <p className="font-semibold text-slate-900">
+                                            {item.name || 'Item'}
+                                          </p>
+                                          <p className="text-xs text-slate-500">
+                                            Qty {item.quantity || 1} × {formatAmount(item.price || item.final_price || item.mrp)}
+                                          </p>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                ))}
                               </div>
                             </td>
                           </tr>
