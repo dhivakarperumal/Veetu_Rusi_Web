@@ -208,7 +208,7 @@ const FranchiseDetails = () => {
           api.get('/superadmin/homechefs'),
           api.get('/superadmin/delivery-partners'),
           api.get('/user-food-orders', { params: { franchise_user_id: res.data.franch_user_id, franchise_id: res.data.franchise_id } }),
-          api.get('/user-food-orders', { params: { ordered_by_user_id: res.data.franch_user_id } })
+          api.get('/user-food-orders', { params: { franchise_user_id: res.data.franch_user_id, franchise_id: res.data.franchise_id } })
         ]);
         const matcher = (item) => {
           const chefFranchiseUserId = String(item.franchise_user_id || '');
