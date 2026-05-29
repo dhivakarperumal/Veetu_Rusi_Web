@@ -357,8 +357,8 @@ const getAllOrders = async (filters = {}) => {
 
   // Created by user filter (for personal orders)
   if (created_by_user_id) {
-    query += ' AND (user_id = ? OR created_by_user_id = ? OR ordered_by_user_id = ?)';
-    params.push(created_by_user_id, created_by_user_id, created_by_user_id);
+    query += ' AND (user_id = ? OR created_by_user_id = ?)';
+    params.push(created_by_user_id, created_by_user_id);
   }
 
   // Search filter
