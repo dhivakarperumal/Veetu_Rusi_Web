@@ -153,7 +153,7 @@ const OrderManagement = () => {
               <tbody className="divide-y divide-white/5">
                 {filteredOrders.map((order) => {
                   const chefQuantity = order.chef_total_quantity ?? order.items?.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0);
-                  const chefAmount = parseFloat(order.chef_total_amount ?? order.total_amount || 0);
+                  const chefAmount = parseFloat((order.chef_total_amount ?? order.total_amount) || 0);
                   return (
                     <tr key={order.id} className="hover:bg-white/5 transition-colors">
                       <td className="px-6 py-5 text-sm font-black text-white">{order.order_id}</td>
@@ -189,43 +189,44 @@ const OrderManagement = () => {
                           {order.status}
                         </span>
                       </td>
-                    <td className="px-6 py-5">
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          onClick={() => {
-                            setEditingOrder(order);
-                            setIsModalOpen(true);
-                          }}
-                          className="p-2 hover:bg-white/10 text-white/70 hover:text-white rounded-xl transition"
-                          title="Assign Partner / Edit"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        {order.status === "Accepted" && (
+                      <td className="px-6 py-5">
+                        <div className="flex items-center justify-center gap-2">
                           <button
-                            onClick={() => handleStatusQuickChange(order.id, "Out for Delivery")}
-                            className="p-2 hover:bg-blue-500/10 text-blue-400 rounded-xl transition"
-                            title="Dispatch Order"
+                            onClick={() => {
+                              setEditingOrder(order);
+                              setIsModalOpen(true);
+                            }}
+                            className="p-2 hover:bg-white/10 text-white/70 hover:text-white rounded-xl transition"
+                            title="Assign Partner / Edit"
                           >
-                            <Check className="w-4 h-4" />
+                            <Edit className="w-4 h-4" />
                           </button>
-                        )}
-                        {order.status === "Out for Delivery" && (
-                          <button
-                            onClick={() => handleStatusQuickChange(order.id, "Delivered")}
-                            className="p-2 hover:bg-emerald-500/10 text-emerald-400 rounded-xl transition"
-                            title="Complete Order"
-                          >
-                            <Check className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                          {order.status === "Accepted" && (
+                            <button
+                              onClick={() => handleStatusQuickChange(order.id, "Out for Delivery")}
+                              className="p-2 hover:bg-blue-500/10 text-blue-400 rounded-xl transition"
+                              title="Dispatch Order"
+                            >
+                              <Check className="w-4 h-4" />
+                            </button>
+                          )}
+                          {order.status === "Out for Delivery" && (
+                            <button
+                              onClick={() => handleStatusQuickChange(order.id, "Delivered")}
+                              className="p-2 hover:bg-emerald-500/10 text-emerald-400 rounded-xl transition"
+                              title="Complete Order"
+                            >
+                              <Check className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
                 {filteredOrders.length === 0 && (
                   <tr>
-                    <td colSpan="7" className="px-6 py-8 text-center text-xs text-white/30 italic">
+                    <td colSpan="8" className="px-6 py-8 text-center text-xs text-white/30 italic">
                       No order logs available.
                     </td>
                   </tr>
