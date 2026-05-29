@@ -82,6 +82,23 @@ const HomeChefDetail = () => {
   const getDocLink = (filename) =>
     filename ? `${import.meta.env.VITE_API_URL}/../uploads/homechefs/${filename}` : null;
 
+  const formatAmount = (value) => `₹${Number(value || 0).toFixed(2)}`;
+
+  const getChefOrderAmount = (order) => {
+    if (order.chef_total_amount != null) {
+      return formatAmount(order.chef_total_amount);
+    }
+    if (Array.isArray(order.items)) {
+      const total = order.items.reduce((sum, item) => {
+        const price = parseFloat(item.price || item.final_price || item.mrp || 0) || 0;
+        const qty = Number(item.quantity) || 1;
+        return sum + price * qty;
+      }, 0);
+      return formatAmount(total);
+    }
+    return formatAmount(order.total_amount);
+  };
+
   const StatusBadge = ({ status }) => {
     const map = {
       Approved: "bg-emerald-100 text-emerald-700",
@@ -512,7 +529,7 @@ const HomeChefDetail = () => {
                       <table className="w-full text-sm text-left">
                         <thead className="bg-slate-50">
                           <tr>
-                            {["Order ID", "Customer", "Amount", "Status", "Placed"].map(h => (
+                            {["Order ID", "Customer", "Items", "Amount", "Status", "Placed"].map(h => (
                               <th key={h} className="px-6 py-4 text-xs font-black uppercase tracking-widest text-slate-400">{h}</th>
                             ))}
                           </tr>
@@ -522,7 +539,25 @@ const HomeChefDetail = () => {
                             <tr key={order.id} className="hover:bg-slate-50/50 transition-colors">
                               <td className="px-6 py-4 font-bold text-slate-700">{order.order_id || `#${order.id}`}</td>
                               <td className="px-6 py-4 text-slate-600">{order.customer_name || order.ordered_by_name || "—"}</td>
-                              <td className="px-6 py-4 font-black text-emerald-600">₹{Number(order.total_amount || 0).toFixed(2)}</td>
+                              <td className="px-6 py-4 space-y-2 text-slate-700">
+                                {Array.isArray(order.items) && order.items.length > 0 ? (
+                                  order.items.map((item, idx) => {
+                                    const itemPrice = parseFloat(item.price || item.final_price || item.mrp || 0) || 0;
+                                    const itemQty = Number(item.quantity) || 1;
+                                    return (
+                                      <div key={idx} className="rounded-2xl bg-slate-50 p-3">
+                                        <p className="font-semibold text-slate-800">{item.name || item.product_name || 'Item'}</p>
+                                        <p className="text-xs text-slate-500">
+                                          Qty {itemQty} × {formatAmount(itemPrice)} = {formatAmount(itemPrice * itemQty)}
+                                        </p>
+                                      </div>
+                                    );
+                                  })
+                                ) : (
+                                  <p className="text-xs text-slate-400">Chef-specific items not found</p>
+                                )}
+                              </td>
+                              <td className="px-6 py-4 font-black text-emerald-600">{getChefOrderAmount(order)}</td>
                               <td className="px-6 py-4">
                                 <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest
                                   ${order.status === "Delivered" ? "bg-emerald-100 text-emerald-700" :

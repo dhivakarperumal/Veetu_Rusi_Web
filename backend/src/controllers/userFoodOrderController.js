@@ -282,6 +282,31 @@ const updateOrderStatus = async (id, status) => {
   await pool.execute('UPDATE user_food_order_table SET status = ? WHERE id = ?', [status, id]);
 };
 
+const getChefOrderItemsAndTotals = (row, chefId) => {
+  const items = parseJson(row.items);
+  const filteredItems = items.filter((item) =>
+    String(item.chef_user_id) === String(chefId) ||
+    String(item.chef_id) === String(chefId)
+  );
+
+  const chefTotalQuantity = filteredItems.reduce(
+    (sum, item) => sum + (Number(item.quantity) || 1),
+    0
+  );
+
+  const chefTotalAmount = filteredItems.reduce((sum, item) => {
+    const price = parseFloat(item.price || item.final_price || item.mrp || 0) || 0;
+    const quantity = Number(item.quantity) || 1;
+    return sum + price * quantity;
+  }, 0);
+
+  return {
+    filteredItems,
+    chefTotalQuantity,
+    chefTotalAmount: parseFloat(chefTotalAmount.toFixed(2)),
+  };
+};
+
 const getAllOrders = async (filters = {}) => {
   const { role, userId, numericId, status, chef_id, search } = filters;
 
@@ -308,8 +333,15 @@ const getAllOrders = async (filters = {}) => {
 
   // Chef ID filter
   if (chef_id) {
-    query += ' AND chef_id = ?';
-    params.push(chef_id);
+    const patterns = [
+      `%%"chef_user_id":"${chef_id}"%%`,
+      `%%"chef_user_id":${chef_id}%%`,
+      `%%"chef_id":"${chef_id}"%%`,
+      `%%"chef_id":${chef_id}%%`
+    ];
+
+    query += ' AND (chef_id = ? OR chef_user_id = ? OR items LIKE ? OR items LIKE ? OR items LIKE ? OR items LIKE ?)';
+    params.push(chef_id, chef_id, ...patterns);
   }
 
   // Search filter
@@ -323,10 +355,38 @@ const getAllOrders = async (filters = {}) => {
 
   const [rows] = await pool.execute(query, params);
 
-  return rows.map((row) => ({
-    ...row,
-    items: parseJson(row.items)
-  }));
+  return rows
+    .map((row) => {
+      const items = parseJson(row.items);
+      const enrichedOrder = {
+        ...row,
+        items,
+      };
+
+      if (chef_id) {
+        const chefData = getChefOrderItemsAndTotals(row, chef_id);
+        const hasChefRow =
+          String(row.chef_id) === String(chef_id) ||
+          String(row.chef_user_id) === String(chef_id);
+
+        return {
+          ...enrichedOrder,
+          items: chefData.filteredItems.length > 0 ? chefData.filteredItems : hasChefRow ? items : [],
+          chef_total_amount: chefData.filteredItems.length > 0 ? chefData.chefTotalAmount : hasChefRow ? Number(row.total_amount || 0) : 0,
+          chef_total_quantity: chefData.filteredItems.length > 0 ? chefData.chefTotalQuantity : hasChefRow ? items.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0) : 0,
+        };
+      }
+
+      return enrichedOrder;
+    })
+    .filter((row) => {
+      if (!chef_id) return true;
+      return (
+        row.items.length > 0 ||
+        String(row.chef_id) === String(chef_id) ||
+        String(row.chef_user_id) === String(chef_id)
+      );
+    });
 };
 
 const getFranchiseAdminOrders = async (franchiseUserId) => {
