@@ -69,7 +69,7 @@ const HomeChefDetail = () => {
   const fetchChefOrders = async () => {
     setLoadingOrders(true);
     try {
-      const res = await api.get("/orders", { params: { chef_id: chef.chef_id } });
+      const res = await api.get("/user-food-orders", { params: { chef_id: chef.chef_id || chef.id } });
       const data = res.data;
       setChefOrders(Array.isArray(data) ? data : Array.isArray(data?.orders) ? data.orders : []);
     } catch {
@@ -497,7 +497,7 @@ const HomeChefDetail = () => {
                   <div className="p-6 border-b border-slate-100 flex items-center justify-between">
                     <h3 className="font-black text-slate-800">Order History</h3>
                     <button
-                      onClick={() => navigate("/admin/orders/all")}
+                      onClick={() => navigate("/admin/food-orders")}
                       className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-200 transition"
                     >
                       <Eye className="h-3.5 w-3.5" /> View All Orders
@@ -512,7 +512,7 @@ const HomeChefDetail = () => {
                       <table className="w-full text-sm text-left">
                         <thead className="bg-slate-50">
                           <tr>
-                            {["Order ID", "Customer", "Amount", "Status", "Date"].map(h => (
+                            {["Order ID", "Customer", "Amount", "Status", "Placed"].map(h => (
                               <th key={h} className="px-6 py-4 text-xs font-black uppercase tracking-widest text-slate-400">{h}</th>
                             ))}
                           </tr>
@@ -520,18 +520,22 @@ const HomeChefDetail = () => {
                         <tbody className="divide-y divide-slate-100">
                           {chefOrders.slice(0, 10).map((order) => (
                             <tr key={order.id} className="hover:bg-slate-50/50 transition-colors">
-                              <td className="px-6 py-4 font-bold text-slate-700">#{order.id}</td>
+                              <td className="px-6 py-4 font-bold text-slate-700">{order.order_id || `#${order.id}`}</td>
                               <td className="px-6 py-4 text-slate-600">{order.customer_name || order.ordered_by_name || "—"}</td>
-                              <td className="px-6 py-4 font-black text-emerald-600">₹{order.total_amount ?? order.amount ?? "—"}</td>
+                              <td className="px-6 py-4 font-black text-emerald-600">₹{Number(order.total_amount || 0).toFixed(2)}</td>
                               <td className="px-6 py-4">
                                 <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest
                                   ${order.status === "Delivered" ? "bg-emerald-100 text-emerald-700" :
+                                    order.status === "Confirmed" ? "bg-blue-100 text-blue-700" :
+                                    order.status === "Preparing" ? "bg-violet-100 text-violet-700" :
                                     order.status === "Pending" ? "bg-amber-100 text-amber-700" :
+                                    order.status === "Out for Delivery" ? "bg-orange-100 text-orange-700" :
+                                    order.status === "Cancelled" ? "bg-rose-100 text-rose-700" :
                                     "bg-slate-100 text-slate-500"}`}>
-                                  {order.status}
+                                  {order.status || "Pending"}
                                 </span>
                               </td>
-                              <td className="px-6 py-4 text-slate-400 text-xs">{order.created_at ? new Date(order.created_at).toLocaleDateString("en-IN") : "—"}</td>
+                              <td className="px-6 py-4 text-slate-400 text-xs">{order.ordered_at ? new Date(order.ordered_at).toLocaleDateString("en-IN") : "—"}</td>
                             </tr>
                           ))}
                         </tbody>
