@@ -30,6 +30,7 @@ const OrdersMain = React.lazy(() => import("./Components/Home/OrdersMain.jsx"));
 const MyFoodOrders = React.lazy(() => import("./Components/Pages/MyFoodOrders.jsx"));
 const Login = React.lazy(() => import("./Components/Auth/Login.jsx"));
 const Register = React.lazy(() => import("./Components/Auth/Register.jsx"));
+const ForgotPassword = React.lazy(() => import("./Components/Auth/ForgotPassword.jsx"));
 
 // Lazy Load Admin Components
 const AdminPanel = React.lazy(() => import("./Admin/AdminPanel.jsx"));
@@ -132,6 +133,7 @@ const router = createBrowserRouter([
   },
   { path: "/login", element: <Login /> },
   { path: "/register", element: <Register /> },
+  { path: "/forgot-password", element: <ForgotPassword /> },
   
   {
     path: "/superadmin",
