@@ -178,10 +178,10 @@ const Orders = ({ statusFilter = "All" }) => {
                 <div className="flex items-center gap-3">
 
                     <Link
-                        to="/admin/orders/create"
+                        to="/delivery/orders"
                         className="flex items-center gap-2 px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-blue-100 active:scale-95"
                     >
-                        <FiPlus /> New Order
+                        <FiPlus /> My Deliveries
                     </Link>
                 </div>
             </div>

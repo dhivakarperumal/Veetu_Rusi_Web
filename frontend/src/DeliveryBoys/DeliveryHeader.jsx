@@ -19,18 +19,19 @@ import {
 import { useAuth } from "../PrivateRouter/AuthContext";
 
 const pageTitles = {
-  "/superadmin": "Dashboard",
-  "/superadmin/restaurants": "Restaurant Management",
-  "/superadmin/homechefs": "Home Chef Management",
-  "/superadmin/delivery-partners": "Delivery Partners",
-  "/superadmin/users": "User Management",
-  "/superadmin/orders": "Order Management",
-  "/superadmin/payouts": "Payouts & Earnings",
-  "/superadmin/franchises": "Franchise Owners",
-  "/superadmin/commissions": "Commissions",
-  "/superadmin/banners": "Banner Management",
-  "/superadmin/notifications": "Notifications",
-  "/superadmin/reports": "Reports & Analytics",
+  "/delivery": "Dashboard",
+  "/delivery/orders": "Orders",
+  "/delivery/new-orders": "New Orders",
+  "/delivery/accepted-orders": "Accepted Orders",
+  "/delivery/picked-up-orders": "Picked Up Orders",
+  "/delivery/delivered-orders": "Delivered Orders",
+  "/delivery/live-tracking": "Live Tracking",
+  "/delivery/earnings": "Earnings",
+  "/delivery/ratings": "Ratings",
+  "/delivery/notifications": "Notifications",
+  "/delivery/attendance": "Attendance",
+  "/delivery/profile": "Profile",
+  "/delivery/settings": "Settings",
 };
 
 const Header = ({ onMenuClick }) => {
@@ -172,7 +173,7 @@ const Header = ({ onMenuClick }) => {
   };
 
   const handleSearchResultClick = (orderId) => {
-    navigate(`/admin/orders/${orderId}`);
+    navigate(`/delivery/orders/${orderId}`);
     setSearchQuery("");
     setSearchResults([]);
     setShowSearchResults(false);
@@ -249,7 +250,7 @@ const Header = ({ onMenuClick }) => {
   }, []);
 
   const handleNotificationClick = (orderId) => {
-    navigate(`/admin/orders/${orderId}`);
+    navigate(`/delivery/orders/${orderId}`);
     setShowNotifications(false);
   };
 
@@ -415,7 +416,7 @@ const Header = ({ onMenuClick }) => {
                       return (
                         <button
                           key={product.id}
-                          onClick={() => { navigate('/admin/products/stock'); setShowLowStock(false); }}
+                          onClick={() => { navigate('/delivery'); setShowLowStock(false); }}
                           className="w-full px-4 py-3 flex items-center gap-3 hover:bg-amber-50/40 transition-all text-left group"
                         >
                           {/* Product image */}
@@ -446,11 +447,11 @@ const Header = ({ onMenuClick }) => {
                   </div>
 
                   <Link
-                    to="/admin/products/stock"
+                    to="/delivery"
                     onClick={() => setShowLowStock(false)}
                     className="block w-full py-3.5 text-center text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] bg-amber-50/60 hover:bg-amber-50 transition-colors border-t border-slate-50"
                   >
-                    View Full Stock Report →
+                    View Delivery Dashboard →
                   </Link>
                 </div>
             )}
@@ -576,7 +577,7 @@ const Header = ({ onMenuClick }) => {
 
                   {(notifications.today?.length > 0 || notifications.earlier?.length > 0) && (
                     <Link
-                      to="/admin/orders/new"
+                      to="/delivery/orders"
                       onClick={() => setShowNotifications(false)}
                       className="block w-full py-4 text-center text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] bg-blue-50/50 hover:bg-blue-50 transition-colors border-t border-slate-50"
                     >
@@ -630,7 +631,7 @@ const Header = ({ onMenuClick }) => {
                   </div>
 
                   <Link
-                    to="/admin/profile"
+                    to="/delivery/profile"
                     className="flex items-center gap-3 px-3 py-2.5 
                     rounded-xl hover:bg-blue-50 hover:text-blue-600
                     text-sm text-slate-600 transition font-bold"
@@ -639,7 +640,7 @@ const Header = ({ onMenuClick }) => {
                   </Link>
 
                   {/* <Link
-                    to="/admin/settings"
+                    to="/delivery/settings"
                     className="flex items-center gap-3 px-3 py-2.5 
                     rounded-xl hover:bg-blue-50 hover:text-blue-600
                     text-sm text-slate-600 transition font-bold"

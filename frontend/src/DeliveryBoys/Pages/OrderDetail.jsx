@@ -351,7 +351,7 @@ const OrderDetail = () => {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 no-print">
                 <div className="flex items-center gap-4">
-                    <Link to="/admin/orders/all" className="p-2 bg-white border border-gray-100 rounded-xl text-gray-400 hover:text-blue-600 transition-all shadow-sm">
+                    <Link to="/delivery/orders" className="p-2 bg-white border border-gray-100 rounded-xl text-gray-400 hover:text-blue-600 transition-all shadow-sm">
                         <FiArrowLeft size={20} />
                     </Link>
                     <div>

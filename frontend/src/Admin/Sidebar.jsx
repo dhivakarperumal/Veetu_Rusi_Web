@@ -39,6 +39,8 @@ const navItems = [
   { path: "/admin/food-orders", label: "Food Orders", icon: ShoppingCart },
   { path: "/admin/food-products", label: "Food Products", icon: ShoppingBag },
   { path: "/admin/users", label: "User Management", icon: Users },
+  { path: "/admin/earnings", label: "Wallet & Earnings", icon: CreditCard },
+  { path: "/admin/reviews", label: "Customer Reviews", icon: MessageSquare },
   // { path: "/admin/orders", label: "Order Management", icon: ShoppingBag },
   // { path: "/admin/payouts", label: "Payouts & Earnings", icon: CreditCard },
 

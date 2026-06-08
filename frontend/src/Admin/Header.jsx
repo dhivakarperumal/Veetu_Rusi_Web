@@ -40,6 +40,7 @@ const pageTitles = {
   "/admin/dealers": "Dealers",
   "/admin/dealers/add": "Add Dealer",
   "/admin/invoices/add": "Add Invoice",
+  "/admin/earnings": "Wallet & Earnings",
   "/admin/reviews": "Reviews",
   "/admin/reports": "Reports",
   "/admin/settings": "Settings",

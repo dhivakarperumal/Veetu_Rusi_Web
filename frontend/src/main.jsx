@@ -92,6 +92,8 @@ const PreorderFoodSystem = React.lazy(() => import("./HomeChef/Pages/PreorderFoo
 const DeliveryLimitSettings = React.lazy(() => import("./HomeChef/Pages/DeliveryLimitSettings.jsx"));
 const AnalyticsDashboard = React.lazy(() => import("./HomeChef/Pages/AnalyticsDashboard.jsx"));
 const WalletAndEarnings = React.lazy(() => import("./HomeChef/Pages/WalletAndEarnings.jsx"));
+const AdminWalletAndEarnings = React.lazy(() => import("./Admin/Pages/WalletAndEarnings.jsx"));
+const SuperAdminWalletAndEarnings = React.lazy(() => import("./SuperAdmin/Pages/WalletAndEarnings.jsx"));
 const ChefCategories = React.lazy(() => import("./HomeChef/Pages/ChefCategory.jsx"));
 const ChefFoodCategories = React.lazy(() => import("./HomeChef/Pages/ChefFoodCategories.jsx"));
 const ChefFoodCategoryAdd = React.lazy(() => import("./HomeChef/Pages/ChefFoodCategoryAdd.jsx"));
@@ -122,6 +124,7 @@ const DeliveryNotifications = React.lazy(() => import("./DeliveryBoys/Pages/Noti
 const DeliveryAttendance = React.lazy(() => import("./DeliveryBoys/Pages/Attendance.jsx"));
 const DeliveryProfile = React.lazy(() => import("./DeliveryBoys/Pages/Profile.jsx"));
 const DeliverySettings = React.lazy(() => import("./DeliveryBoys/Pages/Settings.jsx"));
+const DeliveryOrderDetail = React.lazy(() => import("./DeliveryBoys/Pages/OrderDetail.jsx"));
 
 const router = createBrowserRouter([
   {
@@ -168,7 +171,7 @@ const router = createBrowserRouter([
       { path: "delivery-partners", element: <DeliveryPartnerManagement /> },
       { path: "users", element: <UserManagement /> },
       { path: "orders", element: <AdminOrderManagement /> },
-      { path: "earnings", element: <WalletAndEarnings /> },
+      { path: "earnings", element: <SuperAdminWalletAndEarnings /> },
       { path: "reviews", element: <SuperReviews /> },
       { path: "payouts", element: <PayoutManagement /> },
       { path: "franchises", element: <FranchiseOwnerManagement /> },
@@ -230,6 +233,7 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <DeliveryDashboard /> },
       { path: "orders", element: <DeliveryOrders /> },
+      { path: "orders/:id", element: <DeliveryOrderDetail /> },
       { path: "new-orders", element: <DeliveryNewOrders /> },
       { path: "accepted-orders", element: <DeliveryAcceptedOrders /> },
       { path: "picked-up-orders", element: <DeliveryPickedUpOrders /> },
@@ -262,6 +266,7 @@ const router = createBrowserRouter([
       { path: "delivery-partners", element: <DeliveryPartnerManagement /> },
       { path: "users", element: <UserManagement /> },
       { path: "orders", element: <AdminOrderManagement /> },
+      { path: "earnings", element: <AdminWalletAndEarnings /> },
       { path: "payouts", element: <PayoutManagement /> },
       // Products
       { path: "products/all", element: <AllProducts /> },
