@@ -1598,14 +1598,14 @@ exports.getAreas = async (req, res) => {
 
 exports.createArea = async (req, res) => {
   try {
-    const { name, pincode } = req.body;
+    const { name, pincode, status } = req.body;
     if (!name || !pincode) {
       return res.status(400).json({ message: 'Name and pincode are required.' });
     }
     const createdBy = req.user?.id || null;
     const [result] = await pool.execute(
-      'INSERT INTO areas (name, pincode, created_by) VALUES (?, ?, ?)',
-      [name.trim(), pincode.trim(), createdBy]
+      'INSERT INTO areas (name, pincode, created_by, status) VALUES (?, ?, ?, ?)',
+      [name.trim(), pincode.trim(), createdBy, status || 'Active']
     );
     const [rows] = await pool.execute('SELECT * FROM areas WHERE id = ?', [result.insertId]);
     res.status(201).json({ message: 'Area added successfully.', area: rows[0] });
@@ -1620,14 +1620,17 @@ exports.createArea = async (req, res) => {
 exports.updateArea = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, pincode } = req.body;
+    const { name, pincode, status } = req.body;
     if (!name || !pincode) {
       return res.status(400).json({ message: 'Name and pincode are required.' });
     }
-    await pool.execute(
-      'UPDATE areas SET name = ?, pincode = ? WHERE id = ?',
-      [name.trim(), pincode.trim(), id]
-    );
+    const query = status !== undefined
+      ? 'UPDATE areas SET name = ?, pincode = ?, status = ? WHERE id = ?'
+      : 'UPDATE areas SET name = ?, pincode = ? WHERE id = ?';
+    const params = status !== undefined
+      ? [name.trim(), pincode.trim(), status, id]
+      : [name.trim(), pincode.trim(), id];
+    await pool.execute(query, params);
     const [rows] = await pool.execute('SELECT * FROM areas WHERE id = ?', [id]);
     if (!rows.length) return res.status(404).json({ message: 'Area not found.' });
     res.json({ message: 'Area updated successfully.', area: rows[0] });
@@ -1636,6 +1639,23 @@ exports.updateArea = async (req, res) => {
       return res.status(409).json({ message: 'Area name or pincode already exists.' });
     }
     res.status(500).json({ message: 'Error updating area.', error: error.message });
+  }
+};
+
+exports.patchAreaStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const normalizedStatus = String(status || '').trim();
+    if (!['Active', 'Inactive'].includes(normalizedStatus)) {
+      return res.status(400).json({ message: 'Status must be Active or Inactive.' });
+    }
+    await pool.execute('UPDATE areas SET status = ? WHERE id = ?', [normalizedStatus, id]);
+    const [rows] = await pool.execute('SELECT * FROM areas WHERE id = ?', [id]);
+    if (!rows.length) return res.status(404).json({ message: 'Area not found.' });
+    res.json({ message: `Area status changed to ${normalizedStatus}.`, area: rows[0] });
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating area status.', error: error.message });
   }
 };
 

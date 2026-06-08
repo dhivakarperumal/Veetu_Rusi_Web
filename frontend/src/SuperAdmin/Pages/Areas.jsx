@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Eye, Plus, Search, Trash2 } from "lucide-react";
+import { Edit3, Plus, Search, Trash2 } from "lucide-react";
 import api from "../../api";
 import { toast } from "react-hot-toast";
 import AddAreaModal from "../AddAreaModal";
@@ -9,6 +9,8 @@ const Areas = () => {
   const [search, setSearch] = useState("");
   const [loadingAreas, setLoadingAreas] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [selectedArea, setSelectedArea] = useState(null);
+  const [statusUpdatingId, setStatusUpdatingId] = useState(null);
 
   const fetchAreas = async () => {
     setLoadingAreas(true);
@@ -38,9 +40,66 @@ const Areas = () => {
     );
   }, [areas, search]);
 
+  const handleAddClick = () => {
+    setSelectedArea(null);
+    setShowModal(true);
+  };
+
+  const handleEditClick = (area) => {
+    setSelectedArea(area);
+    setShowModal(true);
+  };
+
   const handleAreaAdded = (area) => {
     setAreas((prev) => [area, ...prev]);
     toast.success('Area added successfully');
+  };
+
+  const handleAreaUpdated = (updatedArea) => {
+    setAreas((prev) => prev.map((area) => (area.id === updatedArea.id ? updatedArea : area)));
+    toast.success('Area updated successfully');
+  };
+
+  const handleDelete = async (area) => {
+    if (!window.confirm(`Delete ${area.name}? This cannot be undone.`)) return;
+    try {
+      await api.delete(`/areas/${area.id}`);
+      setAreas((prev) => prev.filter((item) => item.id !== area.id));
+      toast.success('Area deleted successfully');
+    } catch (err) {
+      console.error('Delete area error', err);
+      toast.error(err?.response?.data?.message || 'Failed to delete area');
+    }
+  };
+
+  const handleToggleStatus = async (area) => {
+    const nextStatus = String(area.status || 'Active').toLowerCase() === 'active' ? 'Inactive' : 'Active';
+    try {
+      setStatusUpdatingId(area.id);
+      const res = await api.patch(`/areas/status/${area.id}`, { status: nextStatus });
+      const updatedArea = res?.data?.area || res?.data;
+      if (updatedArea) {
+        setAreas((prev) => prev.map((item) => (item.id === updatedArea.id ? updatedArea : item)));
+      } else {
+        setAreas((prev) => prev.map((item) => (item.id === area.id ? { ...item, status: nextStatus } : item)));
+      }
+      toast.success(`Area status set to ${nextStatus}.`);
+    } catch (err) {
+      console.error('Toggle area status error', err);
+      toast.error(err?.response?.data?.message || 'Failed to update area status');
+    } finally {
+      setStatusUpdatingId(null);
+    }
+  };
+
+  const handleModalSuccess = (data) => {
+    const area = data.area || data;
+    if (selectedArea) {
+      handleAreaUpdated(area);
+    } else {
+      handleAreaAdded(area);
+    }
+    setShowModal(false);
   };
 
   return (
@@ -54,7 +113,7 @@ const Areas = () => {
         </div>
 
         <button
-          onClick={() => setShowModal(true)}
+          onClick={handleAddClick}
           className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-5 py-3 text-sm font-black text-white transition hover:bg-emerald-500"
         >
           <Plus className="h-4 w-4" />
@@ -115,6 +174,7 @@ const Areas = () => {
                 <th className="px-5 py-4">Pincode</th>
                 <th className="px-5 py-4">Created By</th>
                 <th className="px-5 py-4">Created At</th>
+                <th className="px-5 py-4">Status</th>
                 <th className="px-5 py-4 text-right">Actions</th>
               </tr>
             </thead>
@@ -132,7 +192,7 @@ const Areas = () => {
                 ))
               ) : filteredAreas.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-16 text-center text-sm text-slate-500">
+                  <td colSpan={7} className="px-5 py-16 text-center text-sm text-slate-500">
                     No areas match your search.
                   </td>
                 </tr>
@@ -144,12 +204,37 @@ const Areas = () => {
                     <td className="px-5 py-4 text-slate-300">{area.pincode}</td>
                     <td className="px-5 py-4 text-slate-300">{area.created_by || 'N/A'}</td>
                     <td className="px-5 py-4 text-slate-300">{area.created_at ? new Date(area.created_at).toLocaleString() : '—'}</td>
+                    <td className="px-5 py-4">
+                      <button
+                        type="button"
+                        disabled={statusUpdatingId === area.id}
+                        onDoubleClick={() => handleToggleStatus(area)}
+                        title="Double click to toggle status"
+                        className={`rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-[0.24em] transition ${
+                          String(area.status || 'Active').toLowerCase() === 'active'
+                            ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 hover:bg-emerald-500/15'
+                            : 'bg-rose-500/10 text-rose-300 border border-rose-500/20 hover:bg-rose-500/15'
+                        } ${statusUpdatingId === area.id ? 'opacity-70 cursor-not-allowed' : ''}`}
+                      >
+                        {statusUpdatingId === area.id ? 'Updating...' : (area.status || 'Active')}
+                      </button>
+                    </td>
                     <td className="px-5 py-4 text-right">
-                      <div className="inline-flex items-center gap-2">
-                        <button type="button" className="rounded-full border border-white/10 bg-white/5 p-2 text-slate-300 transition hover:bg-white/10">
-                          <Eye className="h-4 w-4" />
+                      <div className="inline-flex items-center gap-2 justify-end">
+                        <button
+                          type="button"
+                          onClick={() => handleEditClick(area)}
+                          className="rounded-full border border-white/10 bg-white/5 p-2 text-slate-300 transition hover:bg-white/10"
+                          title="Edit area"
+                        >
+                          <Edit3 className="h-4 w-4" />
                         </button>
-                        <button type="button" className="rounded-full border border-white/10 bg-white/5 p-2 text-slate-300 transition hover:bg-white/10">
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(area)}
+                          className="rounded-full border border-white/10 bg-white/5 p-2 text-rose-300 transition hover:bg-white/10"
+                          title="Delete area"
+                        >
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
@@ -165,11 +250,9 @@ const Areas = () => {
       {showModal && (
         <AddAreaModal
           open={showModal}
+          initialData={selectedArea}
           onClose={() => setShowModal(false)}
-          onSuccess={(data) => {
-            handleAreaAdded(data.area || data);
-            setShowModal(false);
-          }}
+          onSuccess={handleModalSuccess}
         />
       )}
     </div>

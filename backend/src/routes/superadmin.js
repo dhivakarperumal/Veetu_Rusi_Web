@@ -130,6 +130,7 @@ router.get('/reports', controller.getReportsList);
 router.get('/areas', controller.getAreas);
 router.post('/areas', controller.createArea);
 router.put('/areas/:id', controller.updateArea);
+router.patch('/areas/status/:id', controller.patchAreaStatus);
 router.delete('/areas/:id', controller.deleteArea);
 
 module.exports = router;

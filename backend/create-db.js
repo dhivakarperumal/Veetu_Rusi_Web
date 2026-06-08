@@ -1016,6 +1016,7 @@ async function createDatabaseAndTables() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
   console.log('Areas table created or already exists');
+  await connection.execute(`ALTER TABLE areas ADD COLUMN IF NOT EXISTS status VARCHAR(50) NOT NULL DEFAULT 'Active';`);
 
   await connection.execute(`
     INSERT INTO \`commissions\` (type, commission_value, is_percentage)

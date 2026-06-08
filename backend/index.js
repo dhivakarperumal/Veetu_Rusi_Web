@@ -38,15 +38,17 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use('/api/auth', authRouter);
 app.use('/api/superadmin', superadminRouter);
-app.use('/api/areas', verifyToken, requireRole(['superadmin', 'admin']), (req, res, next) => {
-  const allowedPaths = ['/','/:id'];
-  const method = req.method.toUpperCase();
-  if (req.path === '/' && method === 'GET') return superadminController.getAreas(req, res, next);
-  if (req.path === '/' && method === 'POST') return superadminController.createArea(req, res, next);
-  if (/^\/\d+$/.test(req.path) && method === 'PUT') return superadminController.updateArea(req, res, next);
-  if (/^\/\d+$/.test(req.path) && method === 'DELETE') return superadminController.deleteArea(req, res, next);
-  next();
-});
+
+const areasRouter = express.Router();
+areasRouter.use(verifyToken);
+areasRouter.use(requireRole(['superadmin', 'admin']));
+areasRouter.get('/', superadminController.getAreas);
+areasRouter.post('/', superadminController.createArea);
+areasRouter.put('/:id', superadminController.updateArea);
+areasRouter.patch('/status/:id', superadminController.patchAreaStatus);
+areasRouter.delete('/:id', superadminController.deleteArea);
+app.use('/api/areas', areasRouter);
+
 app.use('/api/subscriptions', subscriptionsRouter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/products', productsRouter);
