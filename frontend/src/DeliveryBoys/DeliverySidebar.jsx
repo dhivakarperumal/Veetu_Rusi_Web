@@ -20,17 +20,10 @@ import {
 import { useAuth } from "../PrivateRouter/AuthContext";
 
 const navItems = [
-  { path: "/superadmin", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  // { path: "/superadmin/restaurants", label: "Restaurants", icon: Store },
- 
-  { path: "/superadmin/franchises", label: "Franchise Owners", icon: Landmark },
-  { path: "/superadmin/users", label: "User Management", icon: Users },
-  { path: "/superadmin/food-orders", label: "Food Orders", icon: ShoppingBag },
-  { path: "/superadmin/plans", label: "Subscription Plans", icon: CreditCard },
-  { path: "/superadmin/commissions", label: "Commissions", icon: Percent },
-  // { path: "/superadmin/notifications", label: "Notifications", icon: Bell },
-  { path: "/superadmin/reports", label: "Reports & Analytics", icon: BarChart3 },
-  // { path: "/", label: "Back to Website", icon: Home, exact: true }
+  { path: "/delivery", label: "Dashboard", icon: LayoutDashboard, exact: true },
+  { path: "/delivery/orders", label: "My Deliveries", icon: Bike },
+  { path: "/delivery/profile", label: "Profile", icon: Users },
+  { path: "/delivery/settings", label: "Settings", icon: Store },
 ];
 
 const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
@@ -85,7 +78,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                 Veetu Rusi
               </h1>
               <p className="text-[9px] text-emerald-400 font-bold tracking-widest uppercase opacity-70 mt-1">
-                Super Admin
+                Delivery Partner
               </p>
             </div>
           )}
@@ -142,10 +135,10 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
               </div>
               <div className="overflow-hidden">
                 <p className="text-xs font-black text-white truncate">
-                  {profileName || "Super Admin"}
+                  {profileName || "Delivery Partner"}
                 </p>
                 <p className="text-[9px] text-emerald-400 font-bold uppercase truncate opacity-70">
-                  Global Owner
+                  Delivery Partner
                 </p>
               </div>
             </div>

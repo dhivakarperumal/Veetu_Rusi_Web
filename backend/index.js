@@ -24,6 +24,7 @@ const dealersRouter = require('./src/routes/dealers');
 const { createProductsTable, createRecipeDetailsTable, createFranchiseProductsTable, createChefFoodTable, createSubscriptionPlansTable, createReviewsTable, createDealersTable, createUserFoodCartTable, createChefFoodCategoryTable, createChefCategoryTable, createFranchiseCategoryTable, createUserFoodOrderTable } = require('./src/config/migrations');
 const userFoodRouter = require('./src/routes/userFood');
 const userFoodOrdersRouter = require('./src/routes/userFoodOrders');
+const deliveryRouter = require('./src/routes/delivery');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -52,6 +53,7 @@ app.use('/api/wishlist', wishlistRouter);
 app.use('/api/dealers', dealersRouter);
 app.use('/api/user-food', userFoodRouter);
 app.use('/api/user-food-orders', userFoodOrdersRouter);
+app.use('/api/delivery', deliveryRouter);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });

@@ -98,6 +98,14 @@ const NotificationManagement = React.lazy(() => import("./SuperAdmin/Pages/Notif
 const ReportsAnalytics = React.lazy(() => import("./SuperAdmin/Pages/ReportsAnalytics.jsx"));
 const SubscriptionPlansManagement = React.lazy(() => import("./SuperAdmin/Pages/SubscriptionPlansManagement.jsx"));
 const ChefOrderManagement = React.lazy(() => import("./HomeChef/Pages/OrderManagement.jsx"));
+
+// Lazy Load Delivery Boys Components
+const DeliveryPanel = React.lazy(() => import("./DeliveryBoys/DeliveryPanel.jsx"));
+const DeliveryDashboard = React.lazy(() => import("./DeliveryBoys/DeliveryDashboard.jsx"));
+const DeliveryOrders = React.lazy(() => import("./DeliveryBoys/Pages/Orders.jsx"));
+const DeliveryProfile = React.lazy(() => import("./DeliveryBoys/Pages/Profile.jsx"));
+const DeliverySettings = React.lazy(() => import("./DeliveryBoys/Pages/Settings.jsx"));
+
 const router = createBrowserRouter([
   {
     path: "/",
@@ -186,6 +194,24 @@ const router = createBrowserRouter([
       { path: "analytics", element: <AnalyticsDashboard /> },
       { path: "earnings", element: <WalletAndEarnings /> },
       { path: "orders", element: <ChefOrderManagement /> },
+    ],
+  },
+
+  {
+    path: "/delivery",
+    element: (
+      <PrivateRoute allowedRoles={["delivery_partner"]}>
+        <AdminProvider>
+          <DeliveryPanel />
+        </AdminProvider>
+      </PrivateRoute>
+    ),
+    errorElement: <ErrorPage />,
+    children: [
+      { index: true, element: <DeliveryDashboard /> },
+      { path: "orders", element: <DeliveryOrders /> },
+      { path: "profile", element: <DeliveryProfile /> },
+      { path: "settings", element: <DeliverySettings /> },
     ],
   },
 
