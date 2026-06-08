@@ -212,7 +212,7 @@ const Orders = ({ statusFilter = "All" }) => {
             </div>
 
             {/* Orders Table Container */}
-            <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden min-h-[400px]">
+            <div className="superadmin-card overflow-hidden min-h-[400px]">
                 {/* Search and Filters */}
                 <div className="p-8 border-b border-gray-50 flex flex-col gap-6">
                     <div className="flex flex-wrap gap-2">

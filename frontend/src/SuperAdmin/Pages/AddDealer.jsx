@@ -85,7 +85,7 @@ const AddDealer = () => {
             </div>
 
             <div className="max-w-4xl">
-                <form onSubmit={handleSubmit} className="bg-white p-8 sm:p-10 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-8">
+                <form onSubmit={handleSubmit} className="superadmin-card p-8 sm:p-10 space-y-8">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         {/* Dealer Name */}
                         <div className="space-y-3">

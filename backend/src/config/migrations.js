@@ -586,6 +586,7 @@ const createUserFoodOrderTable = async () => {
         createReviewsTable,
         createUserFoodCartTable,
         createUserFoodOrderTable,
+        createDealersTable,
         createChefFoodCategoryTable,
         createChefCategoryTable,
         createFranchiseCategoryTable

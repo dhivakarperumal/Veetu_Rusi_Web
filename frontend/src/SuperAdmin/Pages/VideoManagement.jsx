@@ -134,12 +134,12 @@ const VideoManagement = () => {
             </div>
 
             {loading ? (
-                <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-gray-100 shadow-sm text-slate-800">
+                <div className="superadmin-card flex flex-col items-center justify-center py-20 text-slate-100">
                     <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin mb-4"></div>
                     <p className="text-gray-500 font-bold">Loading videos...</p>
                 </div>
             ) : (
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden text-slate-800">
+                <div className="superadmin-card overflow-hidden text-slate-100">
                     <div className="p-6 border-b border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="relative flex-1 max-w-md">
                             <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />

@@ -281,7 +281,7 @@ const Category = () => {
                     {viewMode === "grid" && (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-500">
                             {currentCategories.map((cat) => (
-                                <div key={cat.catId} className="bg-white rounded-[2rem] p-6 border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group relative overflow-hidden flex flex-col h-full">
+                                <div key={cat.catId} className="superadmin-card p-6 hover:shadow-xl hover:-translate-y-1 transition-all group relative overflow-hidden flex flex-col h-full">
                                     <div className="absolute -right-4 -top-4 w-24 h-24 bg-blue-500 opacity-5 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
 
                                     <div className="flex items-start justify-between mb-4 relative z-10">
@@ -344,7 +344,7 @@ const Category = () => {
 
                     {/* TABLE VIEW */}
                     {viewMode === "table" && (
-                        <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden animate-in fade-in duration-500">
+                        <div className="superadmin-card overflow-hidden animate-in fade-in duration-500">
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left border-collapse block md:table">
                                     <thead className="hidden md:table-header-group">
@@ -446,7 +446,7 @@ const Category = () => {
 
                     {/* PAGINATION CONTROLS */}
                     {totalPages > 1 && (
-                        <div className="flex items-center justify-between bg-white px-6 py-4 rounded-2xl border border-gray-100 shadow-sm mt-6">
+                        <div className="superadmin-card flex items-center justify-between px-6 py-4 mt-6">
                             <span className="text-sm font-medium text-gray-500">
                                 Showing <span className="text-slate-800 font-bold">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="text-slate-800 font-bold">{Math.min(currentPage * itemsPerPage, filteredCategories.length)}</span> of <span className="text-slate-800 font-bold">{filteredCategories.length}</span> categories
                             </span>

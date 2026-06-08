@@ -241,7 +241,7 @@ const AllProducts = () => {
             </div>
 
             {loading ? (
-                <div className="flex flex-col items-center justify-center py-32 bg-white rounded-[2.5rem] border border-gray-100 shadow-sm">
+                <div className="superadmin-card flex flex-col items-center justify-center py-32">
                     <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin mb-6"></div>
                     <p className="text-gray-400 font-black uppercase tracking-widest text-[10px]">Synchronizing Vault...</p>
                 </div>
@@ -255,7 +255,7 @@ const AllProducts = () => {
                             { label: "Low Stock", value: stats.lowStock, icon: <FiAlertCircle />, color: "text-amber-600", bg: "bg-amber-50" },
                             { label: "Out of Stock", value: stats.outOfStock, icon: <FiXCircle />, color: "text-rose-600", bg: "bg-rose-50" },
                         ].map((stat, i) => (
-                            <div key={i} className="bg-white px-4 py-5 md:p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row items-start md:items-center gap-4 transition-all hover:shadow-md">
+                            <div key={i} className="superadmin-card px-4 py-5 md:p-6 flex flex-col md:flex-row items-start md:items-center gap-4 transition-all hover:shadow-md">
                                 <div className={`w-10 h-10 md:w-12 md:h-12 ${stat.bg} ${stat.color} rounded-xl flex items-center justify-center text-lg shadow-inner`}>
                                     {stat.icon}
                                 </div>
@@ -268,7 +268,7 @@ const AllProducts = () => {
                     </div>
 
                     {/* Controls */}
-                    <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-4 md:p-6 flex flex-col md:flex-row gap-4 items-center">
+                    <div className="superadmin-card p-4 md:p-6 flex flex-col md:flex-row gap-4 items-center">
                         <div className="relative flex-1 w-full md:max-w-md group">
                             <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-blue-500 transition-colors" />
                             <input
@@ -297,7 +297,7 @@ const AllProducts = () => {
 
                     {viewMode === "table" ? (
                         /* Modern Table View */
-                        <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
+                        <div className="superadmin-card overflow-hidden">
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left border-collapse block md:table">
                                     <thead className="hidden md:table-header-group">
@@ -406,7 +406,7 @@ const AllProducts = () => {
                         /* Premium Grid View */
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                             {currentItems.map((product) => (
-                                <div key={product.id} className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden group hover:shadow-xl transition-all flex flex-col">
+                                <div key={product.id} className="superadmin-card overflow-hidden group hover:shadow-xl transition-all flex flex-col">
                                     <div className="relative aspect-[4/5] overflow-hidden bg-gray-100">
                                         <img
                                             src={getProductImage(product)}

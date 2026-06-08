@@ -41,7 +41,7 @@ const Settings = () => {
 
                 {/* Content Area */}
                 <div className="lg:col-span-2 space-y-6">
-                    <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm space-y-8">
+                    <div className="superadmin-card p-8 space-y-8">
                         <div>
                             <h3 className="text-xl font-bold text-slate-800 mb-6 border-b border-gray-50 pb-4">General Configuration</h3>
 

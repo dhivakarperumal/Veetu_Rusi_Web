@@ -199,7 +199,7 @@ const CreateOrder = () => {
                 <div className="lg:col-span-2 space-y-8">
                     {step === 1 ? (
                         /* Step 1: Product Selection */
-                        <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-8">
+                        <div className="superadmin-card p-8 space-y-8">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* Category Selection */}
                                 <div className="space-y-4">
@@ -379,7 +379,7 @@ const CreateOrder = () => {
                         </div>
                     ) : (
                         /* Step 2: Customer Details */
-                        <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-8 animate-in slide-in-from-right-4 duration-500">
+                        <div className="superadmin-card p-8 space-y-8 animate-in slide-in-from-right-4 duration-500">
 
                             {/* User Selection */}
                             <div className="space-y-4 pb-6 border-b border-gray-50">

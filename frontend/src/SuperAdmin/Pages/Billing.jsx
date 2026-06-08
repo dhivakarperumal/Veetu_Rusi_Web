@@ -48,7 +48,7 @@ const Billing = () => {
 
             {/* Billing Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col justify-between">
+                <div className="superadmin-card p-8 flex flex-col justify-between">
                     <div>
                         <p className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Total Revenue</p>
                         <h2 className="text-4xl font-black text-slate-800">₹128,430</h2>
@@ -64,7 +64,7 @@ const Billing = () => {
                     </div>
                     <p className="mt-6 text-xs font-bold opacity-80 uppercase tracking-widest">Available to withdraw</p>
                 </div>
-                <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col justify-between">
+                <div className="superadmin-card p-8 flex flex-col justify-between">
                     <div>
                         <p className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Unpaid Invoices</p>
                         <h2 className="text-4xl font-black text-slate-800">14</h2>
@@ -76,7 +76,7 @@ const Billing = () => {
             </div>
 
             {/* Invoices Table */}
-            <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden">
+            <div className="superadmin-card overflow-hidden">
                 <div className="p-8 border-b border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <h3 className="text-xl font-bold text-slate-800">Recent Invoices</h3>
                     <div className="flex items-center gap-3">

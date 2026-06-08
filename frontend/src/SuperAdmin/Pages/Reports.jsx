@@ -75,7 +75,7 @@ const Reports = () => {
             {/* Top Stats */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {reportsData?.stats?.map((stat, i) => (
-                    <div key={i} className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
+                    <div key={i} className="superadmin-card p-6">
                         <div className="flex items-center justify-between mb-4">
                             <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-gray-400 text-xl border border-gray-50">
                                 {getStatIcon(stat.label)}
@@ -92,7 +92,7 @@ const Reports = () => {
 
             {/* Main Charts Placeholder */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm relative overflow-hidden group">
+                <div className="superadmin-card p-8 relative overflow-hidden group">
                     <div className="flex items-center justify-between mb-8">
                         <div>
                             <h3 className="text-xl font-bold text-slate-800">Sales Comparison</h3>
@@ -132,7 +132,7 @@ const Reports = () => {
                     </div>
                 </div>
 
-                <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm">
+                <div className="superadmin-card p-8">
                     <h3 className="text-xl font-bold text-slate-800 mb-2">Category Distribution</h3>
                     <p className="text-sm text-gray-400 font-medium mb-8">Sales percentage by saree types</p>
 

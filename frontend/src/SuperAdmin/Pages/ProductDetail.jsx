@@ -90,7 +90,7 @@ const ProductDetail = () => {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 {/* Left: Product Images */}
                 <div className="lg:col-span-4 space-y-4">
-                    <div className="bg-white p-3 sm:p-4 rounded-[2rem] sm:rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden group">
+                    <div className="superadmin-card p-3 sm:p-4 group">
                         <div className="aspect-[3/4] rounded-[1.5rem] sm:rounded-[2rem] overflow-hidden bg-gray-50">
                             {displayImages.length > 0 ? (
                                 <img src={displayImages[activeImage] || displayImages[0]} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" />
@@ -116,7 +116,7 @@ const ProductDetail = () => {
 
                 {/* Right: Details & Stats */}
                 <div className="lg:col-span-8 space-y-6 sm:space-y-8">
-                    <div className="bg-white p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] border border-gray-100 shadow-sm">
+                    <div className="superadmin-card p-6 sm:p-8">
                         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-6 sm:pb-8 border-b border-gray-50">
                             <div className="space-y-4 max-w-xl text-slate-800">
                                 <div className="flex items-center gap-2 flex-wrap">
@@ -171,7 +171,7 @@ const ProductDetail = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         {/* Variants Management */}
                         {product.variants?.length > 0 && (
-                            <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">
+                            <div className="superadmin-card p-8 space-y-6">
                                 <div className="flex items-center justify-between">
                                     <h3 className="font-bold text-slate-800 uppercase tracking-widest text-xs">Available Shades</h3>
                                 </div>
@@ -203,7 +203,7 @@ const ProductDetail = () => {
                         )}
 
                         {/* Product Passport (QR Code) */}
-                        <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">
+                        <div className="superadmin-card p-8 space-y-6">
                             <div className="flex items-center justify-between">
                                 <h3 className="font-bold text-slate-800 uppercase tracking-widest text-xs">Product Passport</h3>
                                 <BsQrCode className="text-blue-500" size={18} />

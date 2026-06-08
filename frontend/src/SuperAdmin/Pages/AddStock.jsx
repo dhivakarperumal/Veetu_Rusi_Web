@@ -141,7 +141,7 @@ const AddStock = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Search & Selection Section */}
                 <div className="lg:col-span-1 space-y-6">
-                    <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
+                    <div className="superadmin-card p-6">
                         <label className="text-xs font-black text-gray-400 uppercase tracking-widest block mb-4">Step 1: Find Product</label>
                         <div className="relative mb-4">
                             <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -199,7 +199,7 @@ const AddStock = () => {
                 {/* Addition Section */}
                 <div className="lg:col-span-2 space-y-6">
                     {selectedProduct ? (
-                        <div className="bg-white p-6 sm:p-10 rounded-[2.5rem] border border-gray-100 shadow-sm relative overflow-hidden group">
+                        <div className="superadmin-card p-6 sm:p-10 relative overflow-hidden group">
                             <div className="absolute -top-10 -right-10 p-8 opacity-[0.03] text-blue-600">
                                 <FiLayers size={200} />
                             </div>
@@ -234,7 +234,7 @@ const AddStock = () => {
                                             {selectedProduct.variants.map((v, vIndex) => {
                                                 if (!v.sizesStock || Object.keys(v.sizesStock).length === 0) return null;
                                                 return (
-                                                    <div key={vIndex} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+                                                    <div key={vIndex} className="superadmin-card p-5">
                                                         <div className="flex items-center gap-3 mb-4">
                                                             <div className="w-5 h-5 rounded-full shadow-sm border border-gray-200" style={{ backgroundColor: v.color }}></div>
                                                             <span className="text-sm font-black text-slate-800">{v.colorName || 'Default Shade'}</span>
@@ -275,7 +275,7 @@ const AddStock = () => {
                                             })}
                                         </div>
                                     ) : (
-                                        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
+                                        <div className="superadmin-card p-6 space-y-4">
                                             <div className="flex justify-between items-end">
                                                 <div className="space-y-1">
                                                     <label className="text-[10px] font-black text-gray-400 uppercase">Quantity to Add</label>

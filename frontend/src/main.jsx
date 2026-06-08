@@ -40,6 +40,7 @@ const StockDetails = React.lazy(() => import("./Admin/Pages/StockDetails.jsx"));
 const AddStock = React.lazy(() => import("./Admin/Pages/AddStock.jsx"));
 const Orders = React.lazy(() => import("./Admin/Pages/Orders.jsx"));
 const Users = React.lazy(() => import("./Admin/Pages/Users.jsx"));
+const UserManagement = React.lazy(() => import("./Admin/Pages/UserManagement.jsx"));
 const Billing = React.lazy(() => import("./Admin/Pages/Billing.jsx"));
 const Dealers = React.lazy(() => import("./Admin/Pages/Dealers.jsx"));
 const Reviews = React.lazy(() => import("./Admin/Pages/Reviews.jsx"));
@@ -52,25 +53,29 @@ const AddProducts = React.lazy(() => import("./Admin/Pages/AddProducts.jsx"));
 const AddDealer = React.lazy(() => import("./Admin/Pages/AddDealer.jsx"));
 const AddInvoice = React.lazy(() => import("./Admin/Pages/AddInvoice.jsx"));
 const CreateOrder = React.lazy(() => import("./Admin/Pages/CreateOrder.jsx"));
+const PayoutManagement = React.lazy(() => import("./Admin/Pages/PayoutManagement.jsx"));
 const VideoManagement = React.lazy(() => import("./Admin/Pages/VideoManagement.jsx"));
+const AdminOrderManagement = React.lazy(() => import("./Admin/Pages/OrderManagement.jsx"));
 const BannerManagement = React.lazy(() => import("./Admin/Pages/BannerManagement.jsx"));
 const ErrorPage = React.lazy(() => import("./Admin/Pages/ErrorPage.jsx"));
 const FoodOrders = React.lazy(() => import("./Admin/Pages/FoodOrders.jsx"));
 const FoodProducts = React.lazy(() => import("./Admin/Pages/FoodProducts.jsx"));
 const FoodProductDetails = React.lazy(() => import("./Admin/Pages/FoodProductDetails.jsx"));
+const DeliveryPartnerManagement = React.lazy(() => import("./Admin/Pages/DeliveryPartnerManagement.jsx"));
 
 // Lazy Load SuperAdmin Components
 const SuperAdminPanel = React.lazy(() => import("./SuperAdmin/SuperAdminPanel.jsx"));
 const SuperDashboard = React.lazy(() => import("./SuperAdmin/SuperDashboard.jsx"));
-const RestaurantManagement = React.lazy(() => import("./SuperAdmin/Pages/RestaurantManagement.jsx"));
+const SuperRestaurantManagement = React.lazy(() => import("./SuperAdmin/Pages/RestaurantManagement.jsx"));
 const AdminRestaurantManagement = React.lazy(() => import("./Admin/Pages/RestaurantManagement.jsx"));
-const HomeChefManagement = React.lazy(() => import("./Admin/Pages/HomeChefManagement.jsx"));
+const SuperHomeChefManagement = React.lazy(() => import("./SuperAdmin/Pages/HomeChefManagement.jsx"));
 const HomeChefDetail = React.lazy(() => import("./Admin/Pages/HomeChefDetail.jsx"));
-const DeliveryPartnerManagement = React.lazy(() => import("./Admin/Pages/DeliveryPartnerManagement.jsx"));
-const UserManagement = React.lazy(() => import("./Admin/Pages/UserManagement.jsx"));
+const SuperDeliveryPartnerManagement = React.lazy(() => import("./SuperAdmin/Pages/DeliveryPartnerManagement.jsx"));
+const SuperUserManagement = React.lazy(() => import("./SuperAdmin/Pages/UserManagement.jsx"));
 const HomeChefPanel = React.lazy(() => import("./HomeChef/ChefPanel.jsx"));
 const HomeChefDashboard = React.lazy(() => import("./HomeChef/Pages/AnalyticsDashboard.jsx"));
 const HomeChefPageManagement = React.lazy(() => import("./HomeChef/Pages/HomeChefManagement.jsx"));
+const AdminHomeChefManagement = React.lazy(() => import("./Admin/Pages/HomeChefManagement.jsx"));
 const ChefAddProducts = React.lazy(() => import("./HomeChef/Pages/AddProducts.jsx"));
 const ChefFoodAdd = React.lazy(() => import("./HomeChef/Pages/ChefFoodAdd.jsx"));
 const ChefFoodAll = React.lazy(() => import("./HomeChef/Pages/ChefFoodAll.jsx"));
@@ -88,8 +93,8 @@ const WalletAndEarnings = React.lazy(() => import("./HomeChef/Pages/WalletAndEar
 const ChefCategories = React.lazy(() => import("./HomeChef/Pages/ChefCategory.jsx"));
 const ChefFoodCategories = React.lazy(() => import("./HomeChef/Pages/ChefFoodCategories.jsx"));
 const ChefFoodCategoryAdd = React.lazy(() => import("./HomeChef/Pages/ChefFoodCategoryAdd.jsx"));
-const AdminOrderManagement = React.lazy(() => import("./Admin/Pages/OrderManagement.jsx"));
-const PayoutManagement = React.lazy(() => import("./Admin/Pages/PayoutManagement.jsx"));
+const SuperOrderManagement = React.lazy(() => import("./SuperAdmin/Pages/OrderManagement.jsx"));
+const SuperPayoutManagement = React.lazy(() => import("./SuperAdmin/Pages/PayoutManagement.jsx"));
 const FranchiseOwnerManagement = React.lazy(() => import("./SuperAdmin/Pages/FranchiseOwnerManagement.jsx"));
 const FranchiseDetails = React.lazy(() => import("./SuperAdmin/Pages/FranchiseDetails.jsx"));
 const CommissionManagement = React.lazy(() => import("./SuperAdmin/Pages/CommissionManagement.jsx"));
@@ -137,12 +142,12 @@ const router = createBrowserRouter([
     errorElement: <ErrorPage />,
     children: [
       { index: true, element: <SuperDashboard /> },
-      { path: "restaurants", element: <RestaurantManagement /> },
-      { path: "homechefs", element: <HomeChefManagement /> },
-      { path: "delivery-partners", element: <DeliveryPartnerManagement /> },
-      { path: "users", element: <UserManagement /> },
-      { path: "orders", element: <AdminOrderManagement /> },
-      { path: "payouts", element: <PayoutManagement /> },
+      { path: "restaurants", element: <SuperRestaurantManagement /> },
+      { path: "homechefs", element: <SuperHomeChefManagement /> },
+      { path: "delivery-partners", element: <SuperDeliveryPartnerManagement /> },
+      { path: "users", element: <SuperUserManagement /> },
+      { path: "orders", element: <SuperOrderManagement /> },
+      { path: "payouts", element: <SuperPayoutManagement /> },
       { path: "franchises", element: <FranchiseOwnerManagement /> },
       { path: "franchises/:id", element: <FranchiseDetails /> },
       { path: "plans", element: <SubscriptionPlansManagement /> },
@@ -201,7 +206,7 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Dashboard /> },
       { path: "restaurants", element: <AdminRestaurantManagement /> },
-      { path: "homechefs", element: <HomeChefManagement /> },
+      { path: "homechefs", element: <AdminHomeChefManagement /> },
       { path: "homechefs/:id", element: <HomeChefDetail /> },
       { path: "delivery-partners", element: <DeliveryPartnerManagement /> },
       { path: "users", element: <UserManagement /> },

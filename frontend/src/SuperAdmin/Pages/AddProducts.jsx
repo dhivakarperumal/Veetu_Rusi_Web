@@ -392,7 +392,7 @@ const AddProducts = () => {
             <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 space-y-8">
                     {/* Primary Categorization & Identity */}
-                    <div className="bg-white p-6 sm:p-10 rounded-[2.5rem] border border-gray-100 shadow-sm relative overflow-hidden group">
+                    <div className="superadmin-card p-6 sm:p-10 relative overflow-hidden group">
                         <div className="absolute -top-10 -right-10 p-8 opacity-[0.03] text-blue-600">
                             <FiLayers size={200} />
                         </div>
@@ -517,7 +517,7 @@ const AddProducts = () => {
                     </div>
 
                     {/* Product Details */}
-                    <div className="bg-white p-6 sm:p-10 rounded-[2.5rem] border border-gray-100 shadow-sm relative overflow-hidden group">
+                    <div className="superadmin-card p-6 sm:p-10 relative overflow-hidden group">
                         <div className="absolute -bottom-10 -right-10 p-8 opacity-[0.03] text-indigo-600">
                             <FiBox size={200} />
                         </div>
@@ -575,7 +575,7 @@ const AddProducts = () => {
 
                 {/* Inventory Manager */}
                 <div className="space-y-8">
-                    <div className="flex items-center justify-between sticky top-[100px] z-20 bg-gray-50/90 backdrop-blur-md p-3 rounded-2xl border border-gray-100 shadow-sm">
+                    <div className="superadmin-card flex items-center justify-between sticky top-[100px] z-20 bg-slate-950/80 backdrop-blur-md p-3 rounded-2xl border border-white/10 shadow-xl">
                         <div className="flex items-center gap-2">
                             <FiBox className="text-orange-500" />
                             <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">Variants & Inventory</h3>
@@ -584,7 +584,7 @@ const AddProducts = () => {
                     </div>
 
                     {variants.map((v, vIndex) => (
-                        <div key={vIndex} className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6 relative group animate-in zoom-in-95 duration-500">
+                        <div key={vIndex} className="superadmin-card p-6 space-y-6 relative group animate-in zoom-in-95 duration-500">
                             <div className="flex items-center justify-between">
                                 <div className="flex flex-col gap-2">
                                     <div className="flex items-center gap-3">

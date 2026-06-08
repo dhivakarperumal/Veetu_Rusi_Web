@@ -154,7 +154,7 @@ const Dealers = () => {
                         </div>
                     ))
                 ) : filteredDealers.map((dealer) => (
-                    <div key={dealer.id} className="bg-white rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-xl transition-all group p-6">
+                    <div key={dealer.id} className="superadmin-card hover:shadow-xl transition-all group p-6">
                         <div className="flex items-start justify-between mb-6">
                             <div className="flex items-center gap-4">
                                 <div className="w-16 h-16 rounded-2xl bg-gray-50 overflow-hidden border border-gray-100 flex items-center justify-center">

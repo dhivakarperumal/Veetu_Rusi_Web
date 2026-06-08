@@ -33,6 +33,8 @@ const emptyForm = {
   aadhaar_url: "", pan_url: "", gst_certificate_url: "",
   fssai_license_url: "", shop_license_url: "", vehicle_rc_url: "",
   driving_license_url: "", bank_passbook_url: "", signature_url: "",
+  kyc_verification_status: "Pending",
+  image_upload_status: "Pending",
   
   // Other existing
   commission_percentage: "10.00"
@@ -424,8 +426,15 @@ const FranchiseOwnerManagement = () => {
   };
 
   const copy = (text) => { navigator.clipboard.writeText(text); toast.success("Copied!"); };
+  const isLogoUploaded = Boolean(form.logo_url);
+  const isBannerUploaded = Boolean(form.banner_url);
+  const imageComplete = isLogoUploaded && isBannerUploaded;
+  const getFileName = (file) => {
+    if (!file) return "No file uploaded";
+    return typeof file === "string" ? file.split("/").pop() : file.name;
+  };
 
-  const inputCls = "w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-medium text-slate-800 text-sm focus:bg-white focus:border-emerald-600/40 transition-all";
+  const inputCls = "w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-2xl outline-none font-medium text-slate-100 text-sm placeholder:text-slate-500 focus:bg-slate-800 focus:border-emerald-500/60 transition-all";
 
   const totalCount = franchises.length;
   const activeCount = franchises.filter(f => f.status === "Active").length;
@@ -796,15 +805,23 @@ const FranchiseOwnerManagement = () => {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="space-y-6 animate-in fade-in duration-300 bg-slate-950/90 border border-slate-800 shadow-2xl shadow-slate-950/40 rounded-[2rem] p-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-         
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="inline-flex items-center rounded-full bg-emerald-500/15 text-emerald-200 px-3 py-1 text-[10px] font-black uppercase tracking-[0.3em]">Platform Control</span>
+            <span className="inline-flex items-center rounded-full bg-slate-800/80 text-slate-300 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em]">Live Real-Time Insights</span>
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-4xl lg:text-5xl font-black text-white tracking-tight">Franchise Owners</h1>
+            <p className="max-w-2xl text-sm text-slate-400">Premium dashboard for instant platform oversight. Manage franchise registrations, approvals, and owner subscriptions with enhanced visibility.</p>
+          </div>
         </div>
+
         <button
           onClick={() => { resetForm(); setIsModalOpen(true); }}
-          className="flex items-center justify-center gap-2 bg-[#1B4D22] hover:bg-[#153b1a] text-white px-6 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-md hover:shadow-lg transition active:scale-95 self-start sm:self-auto"
+          className="inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-6 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-emerald-500/20 transition active:scale-95 self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" /> Add Franchise
         </button>
@@ -847,23 +864,23 @@ const FranchiseOwnerManagement = () => {
       </div>
 
       {/* Toolbar: Search on Left, View Mode Switcher on Right */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border border-slate-100 p-4 rounded-xl shadow-sm">
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-slate-900/95 border border-slate-800 p-5 rounded-[1.75rem] shadow-2xl shadow-slate-950/30">
         {/* Left: Search input */}
-        <div className="relative flex-1 max-w-md w-full">
+        <div className="relative flex-1 max-w-xl w-full">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
             type="text" placeholder="Search by franchise name, owner or city..."
             value={search} onChange={e => setSearch(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-medium text-slate-800 text-sm focus:bg-white focus:border-emerald-600/40 transition-all placeholder:text-slate-400"
+            className="w-full pl-11 pr-4 py-3 bg-slate-950 border border-slate-800 rounded-2xl outline-none font-medium text-slate-100 text-sm focus:bg-slate-900 focus:border-emerald-500/70 transition-all placeholder:text-slate-500"
           />
         </div>
 
         {/* Right: Filters & View toggle mode */}
-        <div className="flex items-center gap-3 self-end md:self-auto">
+        <div className="flex flex-wrap items-center gap-3 self-end xl:self-auto">
           <select
             value={statusFilter}
             onChange={e => setStatusFilter(e.target.value)}
-            className="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-xs uppercase tracking-widest text-slate-600 focus:bg-white focus:border-emerald-600/40 transition-all cursor-pointer"
+            className="px-4 py-3 bg-slate-950 border border-slate-800 rounded-2xl outline-none font-bold text-xs uppercase tracking-widest text-slate-200 focus:bg-slate-900 focus:border-emerald-500/70 transition-all cursor-pointer"
           >
             <option value="All">All Statuses</option>
             <option value="Active">Active</option>
@@ -871,13 +888,13 @@ const FranchiseOwnerManagement = () => {
             <option value="Inactive">Inactive</option>
           </select>
 
-          <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200/50">
+          <div className="flex bg-slate-950 border border-slate-800 p-1 rounded-2xl">
             <button
               onClick={() => setViewMode("table")}
-              className={`p-2 rounded-lg transition ${
+              className={`p-3 rounded-xl transition ${
                 viewMode === "table"
-                  ? "bg-white text-[#1B4D22] shadow-sm"
-                  : "text-slate-500 hover:text-[#1B4D22]"
+                  ? "bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20"
+                  : "text-slate-400 hover:text-slate-100"
               }`}
               title="Table View"
             >
@@ -885,10 +902,10 @@ const FranchiseOwnerManagement = () => {
             </button>
             <button
               onClick={() => setViewMode("card")}
-              className={`p-2 rounded-lg transition ${
+              className={`p-3 rounded-xl transition ${
                 viewMode === "card"
-                  ? "bg-white text-[#1B4D22] shadow-sm"
-                  : "text-slate-500 hover:text-[#1B4D22]"
+                  ? "bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20"
+                  : "text-slate-400 hover:text-slate-100"
               }`}
               title="Card View"
             >
@@ -1301,8 +1318,8 @@ const FranchiseOwnerManagement = () => {
       {isModalOpen && createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
-          <form onSubmit={handleSubmit} className="bg-white border border-slate-100 w-full max-w-3xl rounded-3xl shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[92vh]">
-            <div className="bg-[#1B4D22] p-7 text-white flex items-center justify-between flex-shrink-0">
+          <form onSubmit={handleSubmit} className="bg-slate-950 border border-slate-800 w-full max-w-3xl rounded-3xl shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[92vh] text-slate-100">
+            <div className="bg-gradient-to-r from-slate-900 via-slate-950 to-[#102c1e] p-7 text-white flex items-center justify-between flex-shrink-0 border-b border-slate-800">
               <div>
                 <h3 className="text-lg font-black uppercase italic tracking-tight">
                   {editingFranchise ? "Edit Franchise" : "Register New Franchise"}
@@ -1314,7 +1331,7 @@ const FranchiseOwnerManagement = () => {
               </button>
             </div>
             
-            <div className="flex overflow-x-auto border-b border-slate-100 shrink-0 custom-scrollbar bg-slate-50">
+            <div className="flex overflow-x-auto border-b border-slate-800 shrink-0 custom-scrollbar bg-slate-950">
                 {[
                   { id: "basic", label: "Basic Info" },
                   { id: "contact", label: "Contact" },
@@ -1328,8 +1345,8 @@ const FranchiseOwnerManagement = () => {
                     onClick={() => setActiveFormTab(tab.id)}
                     className={`whitespace-nowrap px-6 py-4 text-[10px] font-black uppercase tracking-widest transition-all duration-200 ${
                       activeFormTab === tab.id
-                        ? "text-[#1B4D22] border-b-[3px] border-[#1B4D22] bg-white shadow-sm"
-                        : "text-slate-400 hover:text-slate-600 hover:bg-slate-100 border-b-[3px] border-transparent"
+                        ? "text-emerald-200 border-b-[3px] border-emerald-500 bg-slate-950 shadow-[inset_0_-2px_0_rgba(16,185,129,0.3)]"
+                        : "text-slate-500 hover:text-slate-200 hover:bg-slate-900 border-b-[3px] border-transparent"
                     }`}
                   >
                     {tab.label}
@@ -1342,52 +1359,52 @@ const FranchiseOwnerManagement = () => {
               
                 {/* Basic Info */}
                 {activeFormTab === "basic" && (
-                  <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm animate-in fade-in zoom-in-95 duration-200">
-                    <p className="text-xs text-[#1B4D22] uppercase tracking-[0.25em] font-black mb-5">Basic Details</p>
+                  <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 shadow-lg shadow-slate-950/20 animate-in fade-in zoom-in-95 duration-200">
+                    <p className="text-xs text-emerald-300 uppercase tracking-[0.25em] font-black mb-5">Basic Details</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {/* Franchise Name */}
                       <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Franchise Name / Branch *</label>
+                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Franchise Name / Branch *</label>
                         <input type="text" required value={form.franchise_name} onChange={e => setForm({ ...form, franchise_name: e.target.value })} placeholder="e.g. Veetu Rusi Coimbatore" className={inputCls} />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Owner Name *</label>
+                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Owner Name *</label>
                         <input type="text" required value={form.owner_name} onChange={e => setForm({ ...form, owner_name: e.target.value })} placeholder="Ram Kumar" className={inputCls} />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Franchise Logo</label>
+                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Franchise Logo</label>
                         <input type="file" accept="image/*" onChange={e => setForm({ ...form, logo_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Franchise Banner Image</label>
+                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Franchise Banner Image</label>
                         <input type="file" accept="image/*" onChange={e => setForm({ ...form, banner_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Business Reg. Number</label>
+                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Business Reg. Number</label>
                         <input type="text" value={form.business_registration_number} onChange={e => setForm({ ...form, business_registration_number: e.target.value })} placeholder="REG-12345" className={inputCls} />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">GST Number</label>
+                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">GST Number</label>
                         <input type="text" value={form.gst_number} onChange={e => setForm({ ...form, gst_number: e.target.value })} placeholder="GSTIN..." className={inputCls} />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">PAN Number</label>
+                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">PAN Number</label>
                         <input type="text" value={form.pan_number} onChange={e => setForm({ ...form, pan_number: e.target.value })} placeholder="PAN..." className={inputCls} />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Commission (%) *</label>
+                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Commission (%) *</label>
                         <input type="number" step="0.01" required value={form.commission_percentage} onChange={e => setForm({ ...form, commission_percentage: e.target.value })} className={inputCls} />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Start Date</label>
+                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Start Date</label>
                         <input type="date" value={form.start_date} onChange={e => setForm({ ...form, start_date: e.target.value })} className={inputCls} />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Expiry Date</label>
+                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Expiry Date</label>
                         <input type="date" value={form.expiry_date} onChange={e => setForm({ ...form, expiry_date: e.target.value })} className={inputCls} />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Status</label>
+                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Status</label>
                         <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })} className={inputCls}>
                           <option value="Pending">Pending</option>
                           <option value="Active">Active</option>
@@ -1397,13 +1414,46 @@ const FranchiseOwnerManagement = () => {
                         </select>
                       </div>
                     </div>
+
+                    <div className="grid grid-cols-1 gap-4 mt-6 sm:grid-cols-2">
+                      <div className="rounded-3xl border border-slate-800 bg-slate-900 p-4 text-slate-100 shadow-sm">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <p className="text-[10px] uppercase tracking-[0.28em] text-slate-400 font-black">Image Upload Status</p>
+                            <p className="mt-2 text-sm font-semibold text-slate-200">{imageComplete ? "All images ready for publish" : "Upload both logo and banner"}</p>
+                          </div>
+                          <span className={`inline-flex items-center rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${imageComplete ? "bg-emerald-500/15 text-emerald-200 border border-emerald-500/30" : "bg-amber-500/10 text-amber-200 border border-amber-500/20"}`}>
+                            {imageComplete ? "Complete" : "Incomplete"}
+                          </span>
+                        </div>
+                        <div className="mt-4 grid gap-3">
+                          <div className="rounded-3xl border border-slate-800 bg-slate-950 p-3">
+                            <p className="text-[10px] uppercase tracking-[0.24em] text-slate-500 font-black">Logo File</p>
+                            <p className="mt-2 text-sm text-slate-100 font-semibold">{getFileName(form.logo_url)}</p>
+                          </div>
+                          <div className="rounded-3xl border border-slate-800 bg-slate-950 p-3">
+                            <p className="text-[10px] uppercase tracking-[0.24em] text-slate-500 font-black">Banner File</p>
+                            <p className="mt-2 text-sm text-slate-100 font-semibold">{getFileName(form.banner_url)}</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="rounded-3xl border border-slate-800 bg-slate-900 p-4 shadow-sm">
+                        <p className="text-[10px] uppercase tracking-[0.28em] text-slate-400 font-black">KYC Readiness</p>
+                        <p className="mt-2 text-sm font-semibold text-slate-200">Capture business registration, GST, PAN and license data in one section. KYC verification will help speed approvals.</p>
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          <span className="inline-flex items-center rounded-full bg-slate-800 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-300">GST: {form.gst_number ? "Added" : "Missing"}</span>
+                          <span className="inline-flex items-center rounded-full bg-slate-800 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-300">PAN: {form.pan_number ? "Added" : "Missing"}</span>
+                          <span className="inline-flex items-center rounded-full bg-slate-800 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-300">Business Reg: {form.business_registration_number ? "Added" : "Missing"}</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
                 
                 {/* Contact Details */}
                 {activeFormTab === "contact" && (
-                  <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm animate-in fade-in zoom-in-95 duration-200">
-                    <p className="text-xs text-[#1B4D22] uppercase tracking-[0.25em] font-black mb-5">Contact Details</p>
+                  <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 shadow-lg shadow-slate-950/20 animate-in fade-in zoom-in-95 duration-200">
+                    <p className="text-xs text-emerald-300 uppercase tracking-[0.25em] font-black mb-5">Contact Details</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-1">
                         <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Mobile Number *</label>
@@ -1458,8 +1508,8 @@ const FranchiseOwnerManagement = () => {
                 
                 {/* Address Details */}
                 {activeFormTab === "address" && (
-                  <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm animate-in fade-in zoom-in-95 duration-200">
-                    <p className="text-xs text-[#1B4D22] uppercase tracking-[0.25em] font-black mb-5">Address Details</p>
+                  <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 shadow-lg shadow-slate-950/20 animate-in fade-in zoom-in-95 duration-200">
+                    <p className="text-xs text-emerald-300 uppercase tracking-[0.25em] font-black mb-5">Address Details</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-1">
                         <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Door Number</label>
@@ -1511,8 +1561,8 @@ const FranchiseOwnerManagement = () => {
                 
                 {/* Login & Auth */}
                 {activeFormTab === "login" && (
-                  <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm animate-in fade-in zoom-in-95 duration-200">
-                    <p className="text-xs text-[#1B4D22] uppercase tracking-[0.25em] font-black mb-5">Login & Authentication</p>
+                  <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 shadow-lg shadow-slate-950/20 animate-in fade-in zoom-in-95 duration-200">
+                    <p className="text-xs text-emerald-300 uppercase tracking-[0.25em] font-black mb-5">Login & Authentication</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {!editingFranchise && (
                         <>
@@ -1555,43 +1605,81 @@ const FranchiseOwnerManagement = () => {
                 
                 {/* KYC & Docs */}
                 {activeFormTab === "kyc" && (
-                  <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm animate-in fade-in zoom-in-95 duration-200">
-                    <p className="text-xs text-[#1B4D22] uppercase tracking-[0.25em] font-black mb-5">KYC & Verification Documents</p>
+                  <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 shadow-lg shadow-slate-950/20 animate-in fade-in zoom-in-95 duration-200">
+                    <p className="text-xs text-emerald-300 uppercase tracking-[0.25em] font-black mb-5">KYC & Verification Documents</p>
+
+                    <div className="grid grid-cols-1 gap-4 mb-5 sm:grid-cols-2">
+                      <div className="rounded-3xl border border-slate-800 bg-slate-900 p-4">
+                        <p className="text-[10px] uppercase tracking-[0.28em] text-slate-400 font-black">Verification Status</p>
+                        <select value={form.kyc_verification_status} onChange={e => setForm({ ...form, kyc_verification_status: e.target.value })} className={inputCls + " bg-slate-900 border-slate-700 text-slate-100"}>
+                          <option value="Pending">Pending</option>
+                          <option value="Verified">Verified</option>
+                          <option value="Rejected">Rejected</option>
+                        </select>
+                        <p className="mt-3 text-[11px] text-slate-500">Select the current verification state for this franchise owner.</p>
+                      </div>
+                      <div className="rounded-3xl border border-slate-800 bg-slate-900 p-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <p className="text-[10px] uppercase tracking-[0.28em] text-slate-400 font-black">Required Documents</p>
+                            <p className="mt-2 text-sm text-slate-200 font-semibold">Keep these ready for upload and review.</p>
+                          </div>
+                          <span className={`inline-flex items-center rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${form.kyc_verification_status === "Verified" ? "bg-emerald-500/15 text-emerald-200 border border-emerald-500/30" : "bg-amber-500/10 text-amber-200 border border-amber-500/20"}`}>
+                            {form.kyc_verification_status}
+                          </span>
+                        </div>
+                        <div className="mt-4 grid gap-2 text-[11px] text-slate-400">
+                          <div className="flex items-center justify-between rounded-2xl bg-slate-950 px-3 py-2 border border-slate-800">
+                            <span>Aadhaar</span>
+                            <span className="text-slate-300">{form.aadhaar_url ? "Uploaded" : "Pending"}</span>
+                          </div>
+                          <div className="flex items-center justify-between rounded-2xl bg-slate-950 px-3 py-2 border border-slate-800">
+                            <span>PAN</span>
+                            <span className="text-slate-300">{form.pan_url ? "Uploaded" : "Pending"}</span>
+                          </div>
+                          <div className="flex items-center justify-between rounded-2xl bg-slate-950 px-3 py-2 border border-slate-800">
+                            <span>GST Certificate</span>
+                            <span className="text-slate-300">{form.gst_certificate_url ? "Uploaded" : "Pending"}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Aadhaar Card</label>
+                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Aadhaar Card</label>
                         <input type="file" accept="image/*,.pdf" onChange={e => setForm({ ...form, aadhaar_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">PAN Card</label>
+                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">PAN Card</label>
                         <input type="file" accept="image/*,.pdf" onChange={e => setForm({ ...form, pan_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">GST Certificate</label>
+                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">GST Certificate</label>
                         <input type="file" accept="image/*,.pdf" onChange={e => setForm({ ...form, gst_certificate_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">FSSAI License</label>
+                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">FSSAI License</label>
                         <input type="file" accept="image/*,.pdf" onChange={e => setForm({ ...form, fssai_license_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Shop License</label>
+                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Shop License</label>
                         <input type="file" accept="image/*,.pdf" onChange={e => setForm({ ...form, shop_license_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Vehicle RC</label>
+                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Vehicle RC</label>
                         <input type="file" accept="image/*,.pdf" onChange={e => setForm({ ...form, vehicle_rc_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Driving License</label>
+                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Driving License</label>
                         <input type="file" accept="image/*,.pdf" onChange={e => setForm({ ...form, driving_license_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Bank Passbook</label>
+                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Bank Passbook</label>
                         <input type="file" accept="image/*,.pdf" onChange={e => setForm({ ...form, bank_passbook_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Signature Image</label>
+                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Signature Image</label>
                         <input type="file" accept="image/*" onChange={e => setForm({ ...form, signature_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
                       </div>
                     </div>
@@ -1601,11 +1689,11 @@ const FranchiseOwnerManagement = () => {
               </div>
             </div>
             
-            <div className="p-6 border-t border-slate-100 bg-white flex gap-3 shrink-0">
-              <button type="submit" className="flex-1 py-3 bg-[#1B4D22] hover:bg-[#153b1a] text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-md transition active:scale-95">
+            <div className="p-6 border-t border-slate-800 bg-slate-950 flex gap-3 shrink-0">
+              <button type="submit" className="flex-1 py-3 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs uppercase tracking-widest rounded-xl shadow-lg transition active:scale-95">
                 {editingFranchise ? "Update Franchise" : "Register Franchise"}
               </button>
-              <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-black text-xs uppercase tracking-widest rounded-xl transition">
+              <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-slate-200 font-black text-xs uppercase tracking-widest rounded-xl transition">
                 Cancel
               </button>
             </div>

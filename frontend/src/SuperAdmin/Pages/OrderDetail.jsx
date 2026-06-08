@@ -402,7 +402,7 @@ const OrderDetail = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 print-container print:block">
                 <div className="lg:col-span-2 space-y-6 sm:space-y-8">
                     {/* Items */}
-                    <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
+                    <div className="superadmin-card overflow-hidden">
                         <div className="p-8 border-b border-gray-50 flex items-center justify-between">
                             <h3 className="text-xl font-black text-slate-800 tracking-tight">Manifest Items</h3>
                             <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1 rounded-lg">{order.items?.length || 0} Products</span>
@@ -470,7 +470,7 @@ const OrderDetail = () => {
                     </div>
 
                     {/* Payment */}
-                    {/* <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm flex flex-col md:flex-row gap-8 items-center group">
+                    {/* <div className="superadmin-card p-8 flex flex-col md:flex-row gap-8 items-center group">
                         <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center text-3xl shrink-0 group-hover:scale-110 transition-transform">
                             <FiCreditCard />
                         </div>
@@ -488,7 +488,7 @@ const OrderDetail = () => {
 
                     {/* Logistics Detail Card */}
                     {/* {(order.tracking_number || order.cancellation_reason) && (
-                        <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-4 animate-in fade-in duration-500">
+                        <div className="superadmin-card p-8 space-y-4 animate-in fade-in duration-500">
                             <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 italic">
                                 {order.status === 'Cancelled' ? 'Incidence Report' : 'Logistics Intelligence'}
                             </h3>
@@ -531,7 +531,7 @@ const OrderDetail = () => {
                 {/* Right Column */}
                 <div className="space-y-8">
                     {/* Customer */}
-                    <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-8">
+                    <div className="superadmin-card p-8 space-y-8">
                         <div className="flex items-center justify-between">
                             <h3 className="font-black text-slate-800 uppercase tracking-widest text-[10px] italic">Manifest Destination</h3>
                         </div>

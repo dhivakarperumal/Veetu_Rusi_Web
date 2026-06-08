@@ -250,7 +250,7 @@ const StockDetails = () => {
                         <p className="text-2xl font-black text-slate-800">{outOfStockCount} items</p>
                     </div>
                 </div>
-                <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center gap-4">
+                <div className="superadmin-card p-6 flex items-center gap-4">
                     <div className="w-12 h-12 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center text-xl shadow-sm">
                         <FiPackage />
                     </div>
@@ -262,7 +262,7 @@ const StockDetails = () => {
             </div>
 
             {/* Inventory Table */}
-            <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden text-slate-800">
+            <div className="superadmin-card overflow-hidden text-slate-800">
                 <div className="p-8 border-b border-gray-50 flex items-center justify-between">
                     <h3 className="text-xl font-bold text-slate-800">Stock Levels</h3>
                     <div className="flex items-center gap-3">

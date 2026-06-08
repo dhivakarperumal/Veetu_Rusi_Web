@@ -146,7 +146,7 @@ const AddInvoice = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Main Form */}
                 <div className="lg:col-span-2 space-y-8">
-                    <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-8">
+                    <div className="superadmin-card p-8 space-y-8">
                         {/* Dealer Selection */}
                         <div className="space-y-4">
                             <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">1. Select Dealer *</label>

@@ -4,7 +4,7 @@ import { toast } from "react-hot-toast";
 import {
   Users, Store, ChefHat, Bike, ShoppingBag, DollarSign,
   Clock, Landmark, TrendingUp, TrendingDown, ArrowUpRight,
-  Percent, Image
+  Percent, Image, BarChart3
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
@@ -192,14 +192,15 @@ const SuperDashboard = () => {
           style={{ backgroundImage: "radial-gradient(circle at 80% 50%, #10B981 0%, transparent 60%)" }} />
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.25em] mb-1">
-              Veetu Rusi Platform
-            </p>
-            <h1 className="text-3xl sm:text-4xl font-black text-white uppercase italic tracking-tight leading-none">
-              Super Admin
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.25em] text-emerald-300 border border-white/10">
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_16px_rgba(16,185,129,0.35)]"></span>
+              LIVE
+            </div>
+            <h1 className="mt-4 text-3xl sm:text-4xl font-black text-white uppercase tracking-tight leading-none">
+              Dashboard
             </h1>
-            <p className="text-xs text-white/30 font-semibold mt-2 uppercase tracking-widest">
-              Real-time analytics &amp; global platform controls
+            <p className="text-xs text-white/40 font-semibold mt-2 uppercase tracking-[0.28em]">
+              Palace Artisan Admin
             </p>
           </div>
           <button
@@ -227,15 +228,18 @@ const SuperDashboard = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
             { label: "Restaurants", icon: Store, path: "/superadmin/restaurants", gradient: "linear-gradient(135deg,#052e16 0%,#0B1120 100%)", iconBg: "#10B981" },
-            { label: "Franchises", icon: Landmark, path: "/superadmin/franchises", gradient: "linear-gradient(135deg,#01140f 0%,#0B1120 100%)", iconBg: "#14B8A6" },
+            { label: "Home Chefs", icon: ChefHat, path: "/superadmin/homechefs", gradient: "linear-gradient(135deg,#08172a 0%,#0B1120 100%)", iconBg: "#60A5FA" },
+            { label: "Delivery Partners", icon: Bike, path: "/superadmin/delivery-partners", gradient: "linear-gradient(135deg,#112018 0%,#0B1120 100%)", iconBg: "#38BDF8" },
+            { label: "Users", icon: Users, path: "/superadmin/users", gradient: "linear-gradient(135deg,#1c1327 0%,#0B1120 100%)", iconBg: "#C084FC" },
+            { label: "Orders", icon: ShoppingBag, path: "/superadmin/orders", gradient: "linear-gradient(135deg,#1f1c11 0%,#0B1120 100%)", iconBg: "#FBBF24" },
+            { label: "Payouts", icon: DollarSign, path: "/superadmin/payouts", gradient: "linear-gradient(135deg,#19191f 0%,#0B1120 100%)", iconBg: "#10B981" },
             { label: "Commissions", icon: Percent, path: "/superadmin/commissions", gradient: "linear-gradient(135deg,#05162e 0%,#0B1120 100%)", iconBg: "#3B82F6" },
-            { label: "Banners", icon: Image, path: "/superadmin/banners", gradient: "linear-gradient(135deg,#1f052e 0%,#0B1120 100%)", iconBg: "#8B5CF6" },
+            { label: "Reports", icon: BarChart3, path: "/superadmin/reports", gradient: "linear-gradient(135deg,#1b1029 0%,#0B1120 100%)", iconBg: "#8B5CF6" },
           ].map((item, i) => (
             <Link key={i} to={item.path}
               className="relative overflow-hidden group flex items-center gap-4 p-5 rounded-3xl border border-white/5 shadow-xl hover:-translate-y-1 transition-all duration-300"
               style={{ background: item.gradient }}
             >
-              {/* Glow blob */}
               <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full opacity-20 blur-2xl transition-opacity group-hover:opacity-40" style={{ background: item.iconBg }} />
 
               <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg relative z-10" style={{ background: item.iconBg }}>
