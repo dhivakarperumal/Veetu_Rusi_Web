@@ -25,6 +25,7 @@ const pageTitles = {
   "/superadmin/delivery-partners": "Delivery Partners",
   "/superadmin/users": "User Management",
   "/superadmin/orders": "Order Management",
+  "/superadmin/earnings": "Wallet & Earnings",
   "/superadmin/reviews": "All Reviews",
   "/superadmin/payouts": "Payouts & Earnings",
   "/superadmin/franchises": "Franchise Owners",

@@ -168,6 +168,7 @@ const router = createBrowserRouter([
       { path: "delivery-partners", element: <DeliveryPartnerManagement /> },
       { path: "users", element: <UserManagement /> },
       { path: "orders", element: <AdminOrderManagement /> },
+      { path: "earnings", element: <WalletAndEarnings /> },
       { path: "reviews", element: <SuperReviews /> },
       { path: "payouts", element: <PayoutManagement /> },
       { path: "franchises", element: <FranchiseOwnerManagement /> },

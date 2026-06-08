@@ -4,7 +4,7 @@ import { toast } from "react-hot-toast";
 import {
   Users, Store, ChefHat, Bike, ShoppingBag, DollarSign,
   Clock, Landmark, TrendingUp, TrendingDown, ArrowUpRight,
-  Percent, Image, BarChart3
+  Percent, Image, BarChart3, CreditCard
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
@@ -233,7 +233,7 @@ const SuperDashboard = () => {
             { label: "Users", icon: Users, path: "/superadmin/users", gradient: "linear-gradient(135deg,#1c1327 0%,#0B1120 100%)", iconBg: "#C084FC" },
             { label: "Orders", icon: ShoppingBag, path: "/superadmin/orders", gradient: "linear-gradient(135deg,#1f1c11 0%,#0B1120 100%)", iconBg: "#FBBF24" },
             { label: "Payouts", icon: DollarSign, path: "/superadmin/payouts", gradient: "linear-gradient(135deg,#19191f 0%,#0B1120 100%)", iconBg: "#10B981" },
-            { label: "Commissions", icon: Percent, path: "/superadmin/commissions", gradient: "linear-gradient(135deg,#05162e 0%,#0B1120 100%)", iconBg: "#3B82F6" },
+            { label: "Wallet & Earnings", icon: CreditCard, path: "/superadmin/earnings", gradient: "linear-gradient(135deg,#05162e 0%,#0B1120 100%)", iconBg: "#3B82F6" },
             { label: "Reports", icon: BarChart3, path: "/superadmin/reports", gradient: "linear-gradient(135deg,#1b1029 0%,#0B1120 100%)", iconBg: "#8B5CF6" },
           ].map((item, i) => (
             <Link key={i} to={item.path}
