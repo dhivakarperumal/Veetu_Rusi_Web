@@ -152,8 +152,8 @@ const router = createBrowserRouter([
     errorElement: <ErrorPage />,
     children: [
       { index: true, element: <SuperDashboard /> },
-      { path: "restaurants", element: <RestaurantManagement /> },
-      { path: "homechefs", element: <HomeChefManagement /> },
+      { path: "restaurants", element: <SuperRestaurantManagement /> },
+      { path: "homechefs", element: <SuperHomeChefManagement /> },
       { path: "delivery-partners", element: <DeliveryPartnerManagement /> },
       { path: "users", element: <UserManagement /> },
       { path: "orders", element: <AdminOrderManagement /> },
