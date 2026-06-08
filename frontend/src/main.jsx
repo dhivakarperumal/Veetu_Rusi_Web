@@ -30,6 +30,7 @@ const OrdersMain = React.lazy(() => import("./Components/Home/OrdersMain.jsx"));
 const MyFoodOrders = React.lazy(() => import("./Components/Pages/MyFoodOrders.jsx"));
 const Login = React.lazy(() => import("./Components/Auth/Login.jsx"));
 const Register = React.lazy(() => import("./Components/Auth/Register.jsx"));
+const ForgotPassword = React.lazy(() => import("./Components/Auth/ForgotPassword.jsx"));
 
 // Lazy Load Admin Components
 const AdminPanel = React.lazy(() => import("./Admin/AdminPanel.jsx"));
@@ -103,6 +104,14 @@ const NotificationManagement = React.lazy(() => import("./SuperAdmin/Pages/Notif
 const ReportsAnalytics = React.lazy(() => import("./SuperAdmin/Pages/ReportsAnalytics.jsx"));
 const SubscriptionPlansManagement = React.lazy(() => import("./SuperAdmin/Pages/SubscriptionPlansManagement.jsx"));
 const ChefOrderManagement = React.lazy(() => import("./HomeChef/Pages/OrderManagement.jsx"));
+
+// Lazy Load Delivery Boys Components
+const DeliveryPanel = React.lazy(() => import("./DeliveryBoys/DeliveryPanel.jsx"));
+const DeliveryDashboard = React.lazy(() => import("./DeliveryBoys/DeliveryDashboard.jsx"));
+const DeliveryOrders = React.lazy(() => import("./DeliveryBoys/Pages/Orders.jsx"));
+const DeliveryProfile = React.lazy(() => import("./DeliveryBoys/Pages/Profile.jsx"));
+const DeliverySettings = React.lazy(() => import("./DeliveryBoys/Pages/Settings.jsx"));
+
 const router = createBrowserRouter([
   {
     path: "/",
@@ -129,6 +138,7 @@ const router = createBrowserRouter([
   },
   { path: "/login", element: <Login /> },
   { path: "/register", element: <Register /> },
+  { path: "/forgot-password", element: <ForgotPassword /> },
   
   {
     path: "/superadmin",
@@ -142,12 +152,12 @@ const router = createBrowserRouter([
     errorElement: <ErrorPage />,
     children: [
       { index: true, element: <SuperDashboard /> },
-      { path: "restaurants", element: <SuperRestaurantManagement /> },
-      { path: "homechefs", element: <SuperHomeChefManagement /> },
-      { path: "delivery-partners", element: <SuperDeliveryPartnerManagement /> },
-      { path: "users", element: <SuperUserManagement /> },
-      { path: "orders", element: <SuperOrderManagement /> },
-      { path: "payouts", element: <SuperPayoutManagement /> },
+      { path: "restaurants", element: <RestaurantManagement /> },
+      { path: "homechefs", element: <HomeChefManagement /> },
+      { path: "delivery-partners", element: <DeliveryPartnerManagement /> },
+      { path: "users", element: <UserManagement /> },
+      { path: "orders", element: <AdminOrderManagement /> },
+      { path: "payouts", element: <PayoutManagement /> },
       { path: "franchises", element: <FranchiseOwnerManagement /> },
       { path: "franchises/:id", element: <FranchiseDetails /> },
       { path: "plans", element: <SubscriptionPlansManagement /> },
@@ -190,6 +200,24 @@ const router = createBrowserRouter([
       { path: "analytics", element: <AnalyticsDashboard /> },
       { path: "earnings", element: <WalletAndEarnings /> },
       { path: "orders", element: <ChefOrderManagement /> },
+    ],
+  },
+
+  {
+    path: "/delivery",
+    element: (
+      <PrivateRoute allowedRoles={["delivery_partner"]}>
+        <AdminProvider>
+          <DeliveryPanel />
+        </AdminProvider>
+      </PrivateRoute>
+    ),
+    errorElement: <ErrorPage />,
+    children: [
+      { index: true, element: <DeliveryDashboard /> },
+      { path: "orders", element: <DeliveryOrders /> },
+      { path: "profile", element: <DeliveryProfile /> },
+      { path: "settings", element: <DeliverySettings /> },
     ],
   },
 

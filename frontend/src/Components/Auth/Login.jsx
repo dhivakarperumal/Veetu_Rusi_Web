@@ -34,6 +34,8 @@ function Login() {
         navigate("/superadmin");
       } else if (res.data.user.role === "admin") {
         navigate("/admin");
+      } else if (res.data.user.role === "delivery_partner") {
+        navigate("/delivery");
       } else {
         navigate("/");
       }
@@ -62,6 +64,8 @@ function Login() {
         navigate("/superadmin");
       } else if (res.data.user.role === "admin") {
         navigate("/admin");
+      } else if (res.data.user.role === "delivery_partner") {
+        navigate("/delivery");
       } else {
         navigate("/");
       }

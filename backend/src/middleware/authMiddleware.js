@@ -17,16 +17,13 @@ async function validateFranchiseAdminSubscription(user) {
   if (franchise.expiry_date) {
     const expiry = new Date(franchise.expiry_date);
     expiry.setHours(0, 0, 0, 0);
-    if (expiry < today && franchise.status === 'Active') {
-      await pool.execute('UPDATE franchise_owners SET status = ? WHERE id = ?', ['Inactive', franchise.id]);
-      await pool.execute('UPDATE users SET status = ? WHERE email = ?', ['Inactive', user.email]);
+    if (expiry < today) {
       return 'Your franchise subscription has expired. Please renew to continue.';
     }
   }
 
   if (franchise.status !== 'Active') {
-    await pool.execute('UPDATE users SET status = ? WHERE email = ?', ['Inactive', user.email]);
-    return 'Your franchise subscription is not active. Please renew or contact support.';
+    return 'Your franchise status is not active. Please contact support.';
   }
 
   return null;

@@ -41,15 +41,12 @@ async function validateFranchiseAdminLogin(user) {
     const expiry = new Date(franchise.expiry_date);
     expiry.setHours(0, 0, 0, 0);
     if (expiry < today) {
-      await pool.execute('UPDATE franchise_owners SET status = ? WHERE id = ?', ['Inactive', franchise.id]);
-      await pool.execute('UPDATE users SET status = ? WHERE email = ?', ['Inactive', user.email]);
       return 'Your franchise subscription has expired. Please renew to continue.';
     }
   }
 
   if (franchise.status !== 'Active') {
-    await pool.execute('UPDATE users SET status = ? WHERE email = ?', ['Inactive', user.email]);
-    return 'Your franchise subscription is not active. Please renew or contact support.';
+    return 'Your franchise status is not active. Please contact support.';
   }
 
   return null;
@@ -194,6 +191,56 @@ exports.googleLogin = async (req, res) => {
     return res.status(200).json({ message: 'Login successful', user, token });
   } catch (error) {
     console.error('Google login error:', error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// ── Forgot Password ──────────────────────────────────────────────────────
+const resetTokens = new Map(); // In-memory store: token -> { email, expiresAt }
+
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: 'Email is required.' });
+
+    const [users] = await pool.execute('SELECT id, email FROM users WHERE email = ?', [email]);
+    if (users.length === 0) {
+      return res.status(404).json({ message: 'No account found with this email.' });
+    }
+
+    // Generate a reset token
+    const resetToken = crypto.randomUUID();
+    resetTokens.set(resetToken, { email, expiresAt: Date.now() + 15 * 60 * 1000 }); // 15 min expiry
+
+    return res.status(200).json({ message: 'Email verified', resetToken });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.resetPassword = async (req, res) => {
+  try {
+    const { resetToken, password } = req.body;
+    if (!resetToken || !password) return res.status(400).json({ message: 'Token and password are required.' });
+
+    const tokenData = resetTokens.get(resetToken);
+    if (!tokenData) return res.status(400).json({ message: 'Invalid or expired reset token.' });
+
+    if (Date.now() > tokenData.expiresAt) {
+      resetTokens.delete(resetToken);
+      return res.status(400).json({ message: 'Reset token has expired. Please try again.' });
+    }
+
+    if (password.length < 6) return res.status(400).json({ message: 'Password must be at least 6 characters.' });
+
+    const hashedPassword = hashPassword(password);
+    await pool.execute('UPDATE users SET password = ?, status = ? WHERE email = ?', [hashedPassword, 'Active', tokenData.email]);
+
+    resetTokens.delete(resetToken);
+    return res.status(200).json({ message: 'Password reset successful.' });
+  } catch (error) {
+    console.error('Reset password error:', error);
     return res.status(500).json({ message: 'Server error' });
   }
 };

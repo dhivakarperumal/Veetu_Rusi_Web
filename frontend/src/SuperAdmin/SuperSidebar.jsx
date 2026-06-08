@@ -21,18 +21,15 @@ import { useAuth } from "../PrivateRouter/AuthContext";
 
 const navItems = [
   { path: "/superadmin", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { path: "/superadmin/restaurants", label: "Restaurants", icon: Store },
-  { path: "/superadmin/homechefs", label: "Home Chefs", icon: ChefHat },
-  { path: "/superadmin/delivery-partners", label: "Delivery Partners", icon: Bike },
-  { path: "/superadmin/users", label: "Users", icon: Users },
-  { path: "/superadmin/orders", label: "Orders", icon: ShoppingBag },
-  { path: "/superadmin/payouts", label: "Payouts", icon: CreditCard },
-  { path: "/superadmin/franchises", label: "Franchises", icon: Landmark },
-  { path: "/superadmin/plans", label: "Plans", icon: Percent },
-  { path: "/superadmin/commissions", label: "Commissions", icon: Activity },
-  { path: "/superadmin/banners", label: "Banners", icon: Image },
-  { path: "/superadmin/notifications", label: "Notifications", icon: Bell },
-  { path: "/superadmin/reports", label: "Reports", icon: BarChart3 },
+  // { path: "/superadmin/restaurants", label: "Restaurants", icon: Store },
+ 
+  { path: "/superadmin/franchises", label: "Franchise Owners", icon: Landmark },
+  { path: "/superadmin/users", label: "User Management", icon: Users },
+  { path: "/superadmin/plans", label: "Subscription Plans", icon: CreditCard },
+  { path: "/superadmin/commissions", label: "Commissions", icon: Percent },
+  // { path: "/superadmin/notifications", label: "Notifications", icon: Bell },
+  { path: "/superadmin/reports", label: "Reports & Analytics", icon: BarChart3 },
+  // { path: "/", label: "Back to Website", icon: Home, exact: true }
 ];
 
 const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {

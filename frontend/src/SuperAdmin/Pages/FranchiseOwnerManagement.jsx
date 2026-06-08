@@ -83,11 +83,16 @@ const FranchiseOwnerManagement = () => {
 
   const getSubscriptionLabel = (franchise) => {
     if (!franchise) return 'Unknown';
-    if (franchise.status !== 'Active') return 'Inactive';
-    if (!franchise.start_date || !franchise.expiry_date) return 'Active';
+    if (!franchise.start_date || !franchise.expiry_date) return 'Inactive';
 
     const start = new Date(franchise.start_date);
     const expiry = new Date(franchise.expiry_date);
+    const now = new Date();
+    
+    expiry.setHours(23, 59, 59, 999);
+    
+    if (expiry < now) return 'Inactive';
+
     const diffDays = Math.ceil((expiry - start) / (1000 * 60 * 60 * 24));
     if (diffDays <= 3) return 'Trial';
     return 'Active';
