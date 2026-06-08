@@ -131,7 +131,7 @@ async function createDatabaseAndTables() {
   // Add user_id column to existing restaurants table
   await connection.execute("ALTER TABLE `restaurants` ADD COLUMN IF NOT EXISTS `user_id` VARCHAR(255) DEFAULT NULL");
 
-  const [restColumns] = await connection.execute,
+  const [restColumns] = await connection.execute(
     "SELECT COUNT(*) AS count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'restaurants' AND COLUMN_NAME = 'verification_status'",
     [DB_NAME]
   );
@@ -600,7 +600,7 @@ async function createDatabaseAndTables() {
       ADD COLUMN \`longitude\` VARCHAR(50),
       ADD COLUMN \`map_link\` TEXT,
       ADD COLUMN \`username\` VARCHAR(255),
-      ADD COLUMN `role` VARCHAR(50) DEFAULT 'Admin',
+      ADD COLUMN \`role\` VARCHAR(50) DEFAULT 'Admin',
       ADD COLUMN \`otp_verified\` TINYINT(1) DEFAULT 0,
       ADD COLUMN \`email_verified\` TINYINT(1) DEFAULT 0,
       ADD COLUMN \`login_status\` VARCHAR(50) DEFAULT 'Active',
