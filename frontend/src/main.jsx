@@ -73,6 +73,7 @@ const SuperHomeChefManagement = React.lazy(() => import("./SuperAdmin/Pages/Home
 const HomeChefDetail = React.lazy(() => import("./Admin/Pages/HomeChefDetail.jsx"));
 const SuperDeliveryPartnerManagement = React.lazy(() => import("./SuperAdmin/Pages/DeliveryPartnerManagement.jsx"));
 const SuperUserManagement = React.lazy(() => import("./SuperAdmin/Pages/UserManagement.jsx"));
+const SuperReviews = React.lazy(() => import("./SuperAdmin/Pages/Reviews.jsx"));
 const HomeChefPanel = React.lazy(() => import("./HomeChef/ChefPanel.jsx"));
 const HomeChefDashboard = React.lazy(() => import("./HomeChef/Pages/AnalyticsDashboard.jsx"));
 const HomeChefPageManagement = React.lazy(() => import("./HomeChef/Pages/HomeChefManagement.jsx"));
@@ -167,6 +168,7 @@ const router = createBrowserRouter([
       { path: "delivery-partners", element: <DeliveryPartnerManagement /> },
       { path: "users", element: <UserManagement /> },
       { path: "orders", element: <AdminOrderManagement /> },
+      { path: "reviews", element: <SuperReviews /> },
       { path: "payouts", element: <PayoutManagement /> },
       { path: "franchises", element: <FranchiseOwnerManagement /> },
       { path: "areas", element: <SuperAreas /> },
