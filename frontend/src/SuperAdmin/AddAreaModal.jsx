@@ -40,12 +40,22 @@ const AddAreaModal = ({ open, onClose, onSuccess }) => {
 
         <label className="block mb-3">
           <span className="text-xs font-bold text-slate-600 uppercase">Area Name</span>
-          <input value={areaName} onChange={e => setAreaName(e.target.value)} className="mt-2 w-full px-4 py-3 rounded-xl border bg-gray-50 outline-none text-sm" placeholder="e.g. Rajajinagar" />
+          <input
+            value={areaName}
+            onChange={e => setAreaName(e.target.value)}
+            className="mt-2 w-full px-4 py-3 rounded-xl border border-gray-200 bg-white outline-none text-sm text-slate-800 placeholder-slate-400"
+            placeholder="e.g. Rajajinagar"
+          />
         </label>
 
         <label className="block mb-4">
           <span className="text-xs font-bold text-slate-600 uppercase">Pincode</span>
-          <input value={pincode} onChange={e => setPincode(e.target.value)} className="mt-2 w-full px-4 py-3 rounded-xl border bg-gray-50 outline-none text-sm" placeholder="e.g. 560001" />
+          <input
+            value={pincode}
+            onChange={e => setPincode(e.target.value)}
+            className="mt-2 w-full px-4 py-3 rounded-xl border border-gray-200 bg-white outline-none text-sm text-slate-800 placeholder-slate-400"
+            placeholder="e.g. 560001"
+          />
         </label>
 
         <div className="flex items-center justify-end gap-3">

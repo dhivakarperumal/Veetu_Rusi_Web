@@ -21,6 +21,8 @@ const ordersRouter = require('./src/routes/orders');
 const cartRouter = require('./src/routes/cart');
 const wishlistRouter = require('./src/routes/wishlist');
 const dealersRouter = require('./src/routes/dealers');
+const { verifyToken, requireRole } = require('./src/middleware/authMiddleware');
+const superadminController = require('./src/controllers/superadminController');
 const { createProductsTable, createRecipeDetailsTable, createFranchiseProductsTable, createChefFoodTable, createSubscriptionPlansTable, createReviewsTable, createDealersTable, createUserFoodCartTable, createChefFoodCategoryTable, createChefCategoryTable, createFranchiseCategoryTable, createUserFoodOrderTable } = require('./src/config/migrations');
 const userFoodRouter = require('./src/routes/userFood');
 const userFoodOrdersRouter = require('./src/routes/userFoodOrders');
@@ -36,6 +38,15 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use('/api/auth', authRouter);
 app.use('/api/superadmin', superadminRouter);
+app.use('/api/areas', verifyToken, requireRole(['superadmin', 'admin']), (req, res, next) => {
+  const allowedPaths = ['/','/:id'];
+  const method = req.method.toUpperCase();
+  if (req.path === '/' && method === 'GET') return superadminController.getAreas(req, res, next);
+  if (req.path === '/' && method === 'POST') return superadminController.createArea(req, res, next);
+  if (/^\/\d+$/.test(req.path) && method === 'PUT') return superadminController.updateArea(req, res, next);
+  if (/^\/\d+$/.test(req.path) && method === 'DELETE') return superadminController.deleteArea(req, res, next);
+  next();
+});
 app.use('/api/subscriptions', subscriptionsRouter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/products', productsRouter);

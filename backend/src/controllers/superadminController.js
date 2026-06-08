@@ -1585,3 +1585,66 @@ exports.getReportsList = async (req, res) => {
     res.status(500).json({ message: 'Error reading reports.', error: error.message });
   }
 };
+
+// ==================== AREAS MANAGEMENT ====================
+exports.getAreas = async (req, res) => {
+  try {
+    const [rows] = await pool.execute('SELECT * FROM areas ORDER BY created_at DESC');
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving areas.', error: error.message });
+  }
+};
+
+exports.createArea = async (req, res) => {
+  try {
+    const { name, pincode } = req.body;
+    if (!name || !pincode) {
+      return res.status(400).json({ message: 'Name and pincode are required.' });
+    }
+    const createdBy = req.user?.id || null;
+    const [result] = await pool.execute(
+      'INSERT INTO areas (name, pincode, created_by) VALUES (?, ?, ?)',
+      [name.trim(), pincode.trim(), createdBy]
+    );
+    const [rows] = await pool.execute('SELECT * FROM areas WHERE id = ?', [result.insertId]);
+    res.status(201).json({ message: 'Area added successfully.', area: rows[0] });
+  } catch (error) {
+    if (error.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ message: 'Area name or pincode already exists.' });
+    }
+    res.status(500).json({ message: 'Error creating area.', error: error.message });
+  }
+};
+
+exports.updateArea = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, pincode } = req.body;
+    if (!name || !pincode) {
+      return res.status(400).json({ message: 'Name and pincode are required.' });
+    }
+    await pool.execute(
+      'UPDATE areas SET name = ?, pincode = ? WHERE id = ?',
+      [name.trim(), pincode.trim(), id]
+    );
+    const [rows] = await pool.execute('SELECT * FROM areas WHERE id = ?', [id]);
+    if (!rows.length) return res.status(404).json({ message: 'Area not found.' });
+    res.json({ message: 'Area updated successfully.', area: rows[0] });
+  } catch (error) {
+    if (error.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ message: 'Area name or pincode already exists.' });
+    }
+    res.status(500).json({ message: 'Error updating area.', error: error.message });
+  }
+};
+
+exports.deleteArea = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.execute('DELETE FROM areas WHERE id = ?', [id]);
+    res.json({ message: 'Area deleted successfully.' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting area.', error: error.message });
+  }
+};

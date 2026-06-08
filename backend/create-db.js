@@ -1005,6 +1005,19 @@ async function createDatabaseAndTables() {
 
   // Seed default SuperAdmin data
   await connection.execute(`
+    CREATE TABLE IF NOT EXISTS \`areas\` (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(255) NOT NULL UNIQUE,
+      pincode VARCHAR(20) NOT NULL UNIQUE,
+      created_by INT DEFAULT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+  console.log('Areas table created or already exists');
+
+  await connection.execute(`
     INSERT INTO \`commissions\` (type, commission_value, is_percentage)
     VALUES 
       ('Restaurant', 15.00, 1),

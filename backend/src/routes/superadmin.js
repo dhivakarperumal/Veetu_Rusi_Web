@@ -126,4 +126,10 @@ router.post('/notifications', controller.createNotification);
 // Reports Management
 router.get('/reports', controller.getReportsList);
 
+// Areas Management
+router.get('/areas', controller.getAreas);
+router.post('/areas', controller.createArea);
+router.put('/areas/:id', controller.updateArea);
+router.delete('/areas/:id', controller.deleteArea);
+
 module.exports = router;

@@ -17,8 +17,6 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "../PrivateRouter/AuthContext";
-import AddAreaModal from "./AddAreaModal";
-import { toast } from "react-hot-toast";
 
 const pageTitles = {
   "/superadmin": "Dashboard",
@@ -39,7 +37,6 @@ const Header = ({ onMenuClick }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
-  const [showAddArea, setShowAddArea] = useState(false);
   const [notifications, setNotifications] = useState({ today: [], earlier: [] });
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -296,16 +293,7 @@ const Header = ({ onMenuClick }) => {
         {/* RIGHT */}
         <div className="flex flex-wrap items-center gap-3">
 
-          <button
-            onClick={() => setShowAddArea(true)}
-            className="hidden lg:inline-flex px-3 py-2 rounded-xl bg-emerald-600 text-white font-black text-sm hover:bg-emerald-700 transition-all"
-          >
-            Add New Area
-          </button>
-
-          <AddAreaModal open={showAddArea} onClose={() => setShowAddArea(false)} onSuccess={(data) => {
-            toast.success('Area added successfully');
-          }} />
+          
 
           {/* SEARCH */}
           <div className="relative flex items-center" ref={searchWrapperRef}>

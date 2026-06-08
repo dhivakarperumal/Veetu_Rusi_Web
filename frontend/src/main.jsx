@@ -103,6 +103,7 @@ const SuperBannerManagement = React.lazy(() => import("./SuperAdmin/Pages/Banner
 const NotificationManagement = React.lazy(() => import("./SuperAdmin/Pages/NotificationManagement.jsx"));
 const ReportsAnalytics = React.lazy(() => import("./SuperAdmin/Pages/ReportsAnalytics.jsx"));
 const SubscriptionPlansManagement = React.lazy(() => import("./SuperAdmin/Pages/SubscriptionPlansManagement.jsx"));
+const SuperAreas = React.lazy(() => import("./SuperAdmin/Pages/Areas.jsx"));
 const ChefOrderManagement = React.lazy(() => import("./HomeChef/Pages/OrderManagement.jsx"));
 
 // Lazy Load Delivery Boys Components
@@ -168,6 +169,7 @@ const router = createBrowserRouter([
       { path: "orders", element: <AdminOrderManagement /> },
       { path: "payouts", element: <PayoutManagement /> },
       { path: "franchises", element: <FranchiseOwnerManagement /> },
+      { path: "areas", element: <SuperAreas /> },
       { path: "franchises/:id", element: <FranchiseDetails /> },
       { path: "plans", element: <SubscriptionPlansManagement /> },
       { path: "commissions", element: <CommissionManagement /> },

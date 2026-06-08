@@ -18,12 +18,14 @@ import {
   Activity,
 } from "lucide-react";
 import { useAuth } from "../PrivateRouter/AuthContext";
+// AddAreaModal intentionally unused; using dedicated page instead
 
 const navItems = [
   { path: "/superadmin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   // { path: "/superadmin/restaurants", label: "Restaurants", icon: Store },
  
   { path: "/superadmin/franchises", label: "Franchise Owners", icon: Landmark },
+  { path: "/superadmin/areas", label: "Areas", icon: Activity },
   { path: "/superadmin/users", label: "User Management", icon: Users },
   { path: "/superadmin/plans", label: "Subscription Plans", icon: CreditCard },
   { path: "/superadmin/commissions", label: "Commissions", icon: Percent },
@@ -34,6 +36,7 @@ const navItems = [
 
 const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
   useAuth();
+  
   const location = useLocation();
 
   const isActiveRoute = (item) => {
@@ -118,7 +121,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
         </nav>
 
         {!collapsed && (
-          <div className="px-4 pb-5">
+          <div className="px-4 pb-5 space-y-3">
             <div className="rounded-[2rem] border border-white/10 bg-[#071611]/90 p-4 shadow-2xl shadow-emerald-900/20">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 grid place-items-center rounded-2xl bg-slate-900/80 text-emerald-300">
@@ -133,8 +136,12 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                 Manage platform events, monitor approvals, and keep the entire system running smoothly.
               </p>
             </div>
+
+            
           </div>
         )}
+
+        
 
         <button
           onClick={onToggleCollapse}
