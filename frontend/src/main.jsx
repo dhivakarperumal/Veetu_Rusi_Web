@@ -109,6 +109,15 @@ const ChefOrderManagement = React.lazy(() => import("./HomeChef/Pages/OrderManag
 const DeliveryPanel = React.lazy(() => import("./DeliveryBoys/DeliveryPanel.jsx"));
 const DeliveryDashboard = React.lazy(() => import("./DeliveryBoys/DeliveryDashboard.jsx"));
 const DeliveryOrders = React.lazy(() => import("./DeliveryBoys/Pages/Orders.jsx"));
+const DeliveryNewOrders = React.lazy(() => import("./DeliveryBoys/Pages/NewOrders.jsx"));
+const DeliveryAcceptedOrders = React.lazy(() => import("./DeliveryBoys/Pages/AcceptedOrders.jsx"));
+const DeliveryPickedUpOrders = React.lazy(() => import("./DeliveryBoys/Pages/PickedUpOrders.jsx"));
+const DeliveryDeliveredOrders = React.lazy(() => import("./DeliveryBoys/Pages/DeliveredOrders.jsx"));
+const DeliveryLiveTracking = React.lazy(() => import("./DeliveryBoys/Pages/LiveTracking.jsx"));
+const DeliveryEarnings = React.lazy(() => import("./DeliveryBoys/Pages/Earnings.jsx"));
+const DeliveryRatings = React.lazy(() => import("./DeliveryBoys/Pages/Ratings.jsx"));
+const DeliveryNotifications = React.lazy(() => import("./DeliveryBoys/Pages/Notifications.jsx"));
+const DeliveryAttendance = React.lazy(() => import("./DeliveryBoys/Pages/Attendance.jsx"));
 const DeliveryProfile = React.lazy(() => import("./DeliveryBoys/Pages/Profile.jsx"));
 const DeliverySettings = React.lazy(() => import("./DeliveryBoys/Pages/Settings.jsx"));
 
@@ -216,6 +225,15 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <DeliveryDashboard /> },
       { path: "orders", element: <DeliveryOrders /> },
+      { path: "new-orders", element: <DeliveryNewOrders /> },
+      { path: "accepted-orders", element: <DeliveryAcceptedOrders /> },
+      { path: "picked-up-orders", element: <DeliveryPickedUpOrders /> },
+      { path: "delivered-orders", element: <DeliveryDeliveredOrders /> },
+      { path: "live-tracking", element: <DeliveryLiveTracking /> },
+      { path: "earnings", element: <DeliveryEarnings /> },
+      { path: "ratings", element: <DeliveryRatings /> },
+      { path: "notifications", element: <DeliveryNotifications /> },
+      { path: "attendance", element: <DeliveryAttendance /> },
       { path: "profile", element: <DeliveryProfile /> },
       { path: "settings", element: <DeliverySettings /> },
     ],

@@ -1,34 +1,49 @@
 import { useState, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
+import { ChevronLeft, X } from "lucide-react";
 import {
-  LayoutDashboard,
-  Store,
-  ChefHat,
-  Bike,
-  Users,
-  ShoppingBag,
-  CreditCard,
-  Landmark,
-  Percent,
-  Image,
-  Bell,
-  BarChart3,
-  Home,
-  ChevronLeft,
-  X
-} from "lucide-react";
+  FaHome,
+  FaBox,
+  FaCheckCircle,
+  FaShoppingBag,
+  FaTruck,
+  FaMapMarkerAlt,
+  FaWallet,
+  FaStar,
+  FaBell,
+  FaCalendarCheck,
+  FaUser,
+  FaCog,
+  FaChevronDown,
+  FaChevronUp,
+} from "react-icons/fa";
 import { useAuth } from "../PrivateRouter/AuthContext";
 
 const navItems = [
-  { path: "/delivery", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { path: "/delivery/orders", label: "My Deliveries", icon: Bike },
-  { path: "/delivery/profile", label: "Profile", icon: Users },
-  { path: "/delivery/settings", label: "Settings", icon: Store },
+  { path: "/delivery", label: "Dashboard", icon: FaHome, exact: true },
+  {
+    label: "Orders",
+    icon: FaBox,
+    children: [
+      { path: "/delivery/new-orders", label: "New Orders", icon: FaBox },
+      { path: "/delivery/accepted-orders", label: "Accepted Orders", icon: FaCheckCircle },
+      { path: "/delivery/picked-up-orders", label: "Picked Up Orders", icon: FaShoppingBag },
+      { path: "/delivery/delivered-orders", label: "Delivered Orders", icon: FaTruck },
+    ],
+  },
+  { path: "/delivery/live-tracking", label: "Live Tracking", icon: FaMapMarkerAlt },
+  { path: "/delivery/earnings", label: "Earnings", icon: FaWallet },
+  { path: "/delivery/ratings", label: "Ratings", icon: FaStar },
+  { path: "/delivery/notifications", label: "Notifications", icon: FaBell },
+  { path: "/delivery/attendance", label: "Attendance", icon: FaCalendarCheck },
+  { path: "/delivery/profile", label: "Profile", icon: FaUser },
+  { path: "/delivery/settings", label: "Settings", icon: FaCog },
 ];
 
 const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
   const { profileName } = useAuth();
   const location = useLocation();
+  const [openMenu, setOpenMenu] = useState({ Orders: true });
 
   const isActiveRoute = (item) => {
     const currentPath = location.pathname;
@@ -95,8 +110,46 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
         <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto hide-scrollbar">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const active = isActiveRoute(item);
+            if (item.children) {
+              const isOpenMenu = openMenu[item.label];
+              return (
+                <div key={item.label} className="space-y-1">
+                  <button
+                    onClick={() => setOpenMenu(prev => ({ ...prev, [item.label]: !prev[item.label] }))}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-white/50 hover:bg-white/5 hover:text-white`}
+                  >
+                    <Icon className="w-5 h-5 shrink-0" />
+                    {!collapsed && (
+                      <span className="text-sm font-bold tracking-wide flex-1 text-left">{item.label}</span>
+                    )}
+                    {!collapsed && (
+                      isOpenMenu ? <FaChevronUp className="w-4 h-4" /> : <FaChevronDown className="w-4 h-4" />
+                    )}
+                  </button>
 
+                  {isOpenMenu && (
+                    <div className="pl-8 pr-2 space-y-1">
+                      {item.children.map((child) => {
+                        const ChildIcon = child.icon;
+                        return (
+                          <NavLink
+                            key={child.path}
+                            to={child.path}
+                            className={({ isActive }) => `flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-all ${isActive ? 'bg-emerald-600 text-white' : 'text-white/50 hover:bg-white/5 hover:text-white'}`}
+                            onClick={() => { if (isOpen) onClose(); }}
+                          >
+                            <ChildIcon className="w-4 h-4 shrink-0" />
+                            {!collapsed && <span className="font-bold tracking-wide">{child.label}</span>}
+                          </NavLink>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            const active = isActiveRoute(item);
             return (
               <NavLink
                 key={item.path}
