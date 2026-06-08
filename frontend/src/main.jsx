@@ -142,6 +142,7 @@ const router = createBrowserRouter([
       { path: "delivery-partners", element: <DeliveryPartnerManagement /> },
       { path: "users", element: <UserManagement /> },
       { path: "orders", element: <AdminOrderManagement /> },
+      { path: "food-orders", element: <FoodOrders /> },
       { path: "payouts", element: <PayoutManagement /> },
       { path: "franchises", element: <FranchiseOwnerManagement /> },
       { path: "franchises/:id", element: <FranchiseDetails /> },
