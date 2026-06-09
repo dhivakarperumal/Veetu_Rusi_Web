@@ -31,10 +31,11 @@ const emptyForm = {
   
   // KYC Documents
   aadhaar_url: "", pan_url: "", gst_certificate_url: "",
-  fssai_license_url: "", shop_license_url: "", vehicle_rc_url: "",
-  driving_license_url: "", bank_passbook_url: "", signature_url: "",
+  bank_passbook_url: "", signature_url: "",
   kyc_verification_status: "Pending",
   image_upload_status: "Pending",
+  email_verified: false,
+  otp_verified: false,
   
   // Other existing
   commission_percentage: "10.00"
@@ -75,11 +76,6 @@ const FranchiseOwnerManagement = () => {
   const [form, setForm] = useState(emptyForm);
   const [pincodeEntry, setPincodeEntry] = useState("");
   const [activeFormTab, setActiveFormTab] = useState("basic");
-
-  const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-IN');
-  };
 
   const getSubscriptionLabel = (franchise) => {
     if (!franchise) return 'Unknown';
@@ -185,9 +181,7 @@ const FranchiseOwnerManagement = () => {
     finally { setLoading(false); }
   };
 
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => { fetchFranchises(); }, []);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   const fetchLinkedEntityCounts = async (franchise) => {
     if (!franchise) return;
@@ -263,7 +257,7 @@ const FranchiseOwnerManagement = () => {
         } else {
           toast.error("Invalid Pincode");
         }
-      } catch (error) {
+      } catch {
         toast.error("Failed to fetch location details");
       }
     }
@@ -274,6 +268,33 @@ const FranchiseOwnerManagement = () => {
     if (!editingFranchise && form.password !== form.confirmPassword) {
       toast.error("Passwords do not match.");
       return;
+    }
+    if (!editingFranchise) {
+      if (!form.email_verified) {
+        toast.error("Verify the email before registering the franchise.");
+        setActiveFormTab("kyc");
+        return;
+      }
+      if (!form.otp_verified) {
+        toast.error("Complete mobile OTP verification before registering.");
+        setActiveFormTab("kyc");
+        return;
+      }
+      if (form.kyc_verification_status !== "Verified") {
+        toast.error("Mark KYC as Verified in the KYC tab before adding the franchise.");
+        setActiveFormTab("kyc");
+        return;
+      }
+      if (!form.aadhaar_url || !form.pan_url) {
+        toast.error("Upload Aadhaar and PAN documents to complete KYC.");
+        setActiveFormTab("kyc");
+        return;
+      }
+      if (!form.logo_url || !form.banner_url) {
+        toast.error("Upload both franchise logo and banner before registering.");
+        setActiveFormTab("basic");
+        return;
+      }
     }
     try {
       const submitForm = {
@@ -344,7 +365,16 @@ const FranchiseOwnerManagement = () => {
       ? franchise.territory_pincodes.split(/\s*,\s*/).filter(Boolean)
       : franchise.territory_pincodes || [];
     const role = franchise.role === "Franchise Admin" ? "Admin" : franchise.role || "Admin";
-    setForm({ ...emptyForm, ...franchise, role, territory_pincodes, confirmPassword: "" });
+    setForm({
+      ...emptyForm,
+      ...franchise,
+      role,
+      territory_pincodes,
+      confirmPassword: "",
+      email_verified: !!franchise.email_verified,
+      otp_verified: !!franchise.otp_verified,
+      kyc_verification_status: franchise.kyc_verification_status || "Pending"
+    });
     setPincodeEntry("");
     setActiveFormTab("basic");
     setIsModalOpen(true);
@@ -378,7 +408,7 @@ const FranchiseOwnerManagement = () => {
       
       setForm(prev => ({ ...prev, territory_pincodes: [...prev.territory_pincodes, displayValue] }));
       setPincodeEntry("");
-    } catch (error) {
+    } catch {
       setForm(prev => ({ ...prev, territory_pincodes: [...prev.territory_pincodes, value] }));
       setPincodeEntry("");
       toast.error("Could not fetch city for pincode");
@@ -428,6 +458,15 @@ const FranchiseOwnerManagement = () => {
     setEditingFranchise(null);
     setForm(emptyForm);
     setActiveFormTab("basic");
+  };
+
+  const finalizeKycVerification = () => {
+    if (!form.aadhaar_url || !form.pan_url) {
+      toast.error("Upload Aadhaar and PAN to complete KYC.");
+      return;
+    }
+    setForm(prev => ({ ...prev, kyc_verification_status: "Verified" }));
+    toast.success("KYC marked verified. You can now submit the registration.");
   };
 
   const copy = (text) => { navigator.clipboard.writeText(text); toast.success("Copied!"); };
@@ -1385,18 +1424,6 @@ const FranchiseOwnerManagement = () => {
                         <input type="file" accept="image/*" onChange={e => setForm({ ...form, banner_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Business Reg. Number</label>
-                        <input type="text" value={form.business_registration_number} onChange={e => setForm({ ...form, business_registration_number: e.target.value })} placeholder="REG-12345" className={inputCls} />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">GST Number</label>
-                        <input type="text" value={form.gst_number} onChange={e => setForm({ ...form, gst_number: e.target.value })} placeholder="GSTIN..." className={inputCls} />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">PAN Number</label>
-                        <input type="text" value={form.pan_number} onChange={e => setForm({ ...form, pan_number: e.target.value })} placeholder="PAN..." className={inputCls} />
-                      </div>
-                      <div className="space-y-1">
                         <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Commission (%) *</label>
                         <input type="number" step="0.01" required value={form.commission_percentage} onChange={e => setForm({ ...form, commission_percentage: e.target.value })} className={inputCls} />
                       </div>
@@ -1446,9 +1473,7 @@ const FranchiseOwnerManagement = () => {
                         <p className="text-[10px] uppercase tracking-[0.28em] text-slate-400 font-black">KYC Readiness</p>
                         <p className="mt-2 text-sm font-semibold text-slate-200">Capture business registration, GST, PAN and license data in one section. KYC verification will help speed approvals.</p>
                         <div className="mt-4 flex flex-wrap gap-2">
-                          <span className="inline-flex items-center rounded-full bg-slate-800 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-300">GST: {form.gst_number ? "Added" : "Missing"}</span>
-                          <span className="inline-flex items-center rounded-full bg-slate-800 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-300">PAN: {form.pan_number ? "Added" : "Missing"}</span>
-                          <span className="inline-flex items-center rounded-full bg-slate-800 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-300">Business Reg: {form.business_registration_number ? "Added" : "Missing"}</span>
+                          <span className="inline-flex items-center rounded-full bg-slate-800 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-300">PAN Document: {form.pan_url ? "Uploaded" : "Pending"}</span>
                         </div>
                       </div>
                     </div>
@@ -1642,12 +1667,19 @@ const FranchiseOwnerManagement = () => {
                             <span>PAN</span>
                             <span className="text-slate-300">{form.pan_url ? "Uploaded" : "Pending"}</span>
                           </div>
-                          <div className="flex items-center justify-between rounded-2xl bg-slate-950 px-3 py-2 border border-slate-800">
-                            <span>GST Certificate</span>
-                            <span className="text-slate-300">{form.gst_certificate_url ? "Uploaded" : "Pending"}</span>
-                          </div>
                         </div>
                       </div>
+                    </div>
+
+                    <div className="flex flex-col gap-3 mb-5">
+                      <button
+                        type="button"
+                        onClick={finalizeKycVerification}
+                        className="w-full inline-flex items-center justify-center px-4 py-3 text-xs font-black uppercase tracking-widest rounded-2xl bg-teal-500 hover:bg-teal-400 text-slate-950 transition"
+                      >
+                        Mark KYC Verified
+                      </button>
+                      <p className="text-[11px] text-slate-400">KYC can only be marked verified once Aadhaar and PAN are uploaded.</p>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1658,26 +1690,6 @@ const FranchiseOwnerManagement = () => {
                       <div className="space-y-1">
                         <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">PAN Card</label>
                         <input type="file" accept="image/*,.pdf" onChange={e => setForm({ ...form, pan_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">GST Certificate</label>
-                        <input type="file" accept="image/*,.pdf" onChange={e => setForm({ ...form, gst_certificate_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">FSSAI License</label>
-                        <input type="file" accept="image/*,.pdf" onChange={e => setForm({ ...form, fssai_license_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Shop License</label>
-                        <input type="file" accept="image/*,.pdf" onChange={e => setForm({ ...form, shop_license_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Vehicle RC</label>
-                        <input type="file" accept="image/*,.pdf" onChange={e => setForm({ ...form, vehicle_rc_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Driving License</label>
-                        <input type="file" accept="image/*,.pdf" onChange={e => setForm({ ...form, driving_license_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
                       </div>
                       <div className="space-y-1">
                         <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Bank Passbook</label>
