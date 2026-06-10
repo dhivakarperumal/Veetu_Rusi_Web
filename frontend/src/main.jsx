@@ -117,6 +117,7 @@ const DeliveryNewOrders = React.lazy(() => import("./DeliveryBoys/Pages/NewOrder
 const DeliveryAcceptedOrders = React.lazy(() => import("./DeliveryBoys/Pages/AcceptedOrders.jsx"));
 const DeliveryPickedUpOrders = React.lazy(() => import("./DeliveryBoys/Pages/PickedUpOrders.jsx"));
 const DeliveryDeliveredOrders = React.lazy(() => import("./DeliveryBoys/Pages/DeliveredOrders.jsx"));
+const DeliveryAllOrders = React.lazy(() => import("./DeliveryBoys/Pages/AllOrders.jsx"));
 const DeliveryLiveTracking = React.lazy(() => import("./DeliveryBoys/Pages/LiveTracking.jsx"));
 const DeliveryEarnings = React.lazy(() => import("./DeliveryBoys/Pages/Earnings.jsx"));
 const DeliveryRatings = React.lazy(() => import("./DeliveryBoys/Pages/Ratings.jsx"));
@@ -233,6 +234,7 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <DeliveryDashboard /> },
       { path: "orders", element: <DeliveryOrders /> },
+      { path: "all-orders", element: <DeliveryAllOrders /> },
       { path: "orders/:id", element: <DeliveryOrderDetail /> },
       { path: "new-orders", element: <DeliveryNewOrders /> },
       { path: "accepted-orders", element: <DeliveryAcceptedOrders /> },

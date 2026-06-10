@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { useAdmin } from "../../PrivateRouter/AdminContext";
 import { Link } from "react-router-dom";
 import {
@@ -50,10 +51,13 @@ const Orders = ({ statusFilter = "All" }) => {
         fetchOrders();
     }, [activeStatus]);
 
+    const location = useLocation();
+
     const fetchOrders = async () => {
         if (!ordersCache[activeStatus]) setLoading(true);
         try {
-            const res = await api.get(`/orders?status=${activeStatus}`);
+            const base = location.pathname && location.pathname.startsWith("/delivery") ? "/delivery/orders" : "/orders";
+            const res = await api.get(`${base}?status=${activeStatus}`);
             const data = res.data || [];
             setOrders(data);
             setOrdersCache(prev => ({ ...prev, [activeStatus]: data }));
