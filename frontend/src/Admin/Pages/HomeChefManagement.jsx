@@ -1027,7 +1027,7 @@ const HomeChefManagement = () => {
                   className="flex flex-col flex-1 overflow-hidden bg-slate-950 min-h-0 h-full"
                 >
                   <div className="flex-1 min-h-0 overflow-y-auto p-8 space-y-6">
-                {activeFormTab === "basic" && (
+                {activeFormTab === "personal" && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                     <div>

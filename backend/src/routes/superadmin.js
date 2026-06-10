@@ -63,6 +63,8 @@ const deliveryUploadFields = upload.fields([
   { name: 'aadhaar_back_url', maxCount: 1 },
   { name: 'pan_card_url', maxCount: 1 },
   { name: 'selfie_verification_url', maxCount: 1 },
+  { name: 'selfie_with_vehicle', maxCount: 1 },
+  { name: 'selfie_with_aadhaar', maxCount: 1 },
   { name: 'police_verification_certificate', maxCount: 1 },
   { name: 'vehicle_front_photo', maxCount: 1 },
   { name: 'vehicle_back_photo', maxCount: 1 },

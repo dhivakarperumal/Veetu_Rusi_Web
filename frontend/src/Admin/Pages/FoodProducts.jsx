@@ -118,8 +118,6 @@ const FoodProducts = () => {
 
   return (
     <div className="space-y-6 p-6 min-h-screen">
-      
-
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         <div className="rounded-3xl bg-slate-950 px-6 py-6 text-white shadow-xl shadow-slate-950/10 ring-1 ring-white/5">
           <div className="flex items-center justify-between gap-4">

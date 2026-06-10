@@ -6,6 +6,10 @@ function hashPassword(password) {
   return crypto.createHash('sha256').update(password).digest('hex');
 }
 
+function normalizeBoolean(value) {
+  return value === true || value === 'true' || value === '1' || value === 1 || value === 'on';
+}
+
 async function expireFranchiseSubscriptions() {
   try {
     const today = new Date();
@@ -831,7 +835,7 @@ exports.createDeliveryPartner = async (req, res) => {
     // If files were uploaded via multer, map their filenames into the body fields
     if (req.files) {
       const fileFields = [
-        'profile_photo','cover_photo','aadhaar_front_url','aadhaar_back_url','pan_card_url','selfie_verification_url','police_verification_certificate',
+        'profile_photo','cover_photo','aadhaar_front_url','aadhaar_back_url','pan_card_url','selfie_verification_url','selfie_with_vehicle','selfie_with_aadhaar','police_verification_certificate',
         'vehicle_front_photo','vehicle_back_photo','rc_book_image','insurance_document_image','license_front_image','license_back_image'
       ];
       fileFields.forEach((f) => {
@@ -919,7 +923,7 @@ exports.createDeliveryPartner = async (req, res) => {
       b.bank_name || null, b.account_holder_name || null, b.bank_account_number || null, b.ifsc_code || null, b.branch_name || null, b.upi_id || null,
       b.wallet_balance || 0, b.pending_earnings || 0, b.total_earnings || b.earnings || 0, b.daily_earnings || 0, b.weekly_earnings || 0, b.monthly_earnings || 0, b.incentive_amount || 0, b.bonus_amount || 0,
       b.online_status || 'Offline', b.availability_schedule || null, b.working_days || null, b.shift_timing || null, b.current_location || null, b.break_time_status || null,
-      b.assigned_delivery_area || null, b.delivery_radius || null, b.preferred_delivery_zone || null, b.city_coverage || null, b.area_coverage || null, b.zone_status || 'Active',
+      b.assigned_delivery_area || null, b.delivery_radius || null, b.preferred_delivery_zone || null, b.preferred_distance || '3 KM', b.city_coverage || null, b.area_coverage || null, b.zone_status || 'Active',
       // created_by fields
       created_by_id, created_by_user_id, created_by_name, created_by_email, created_by_phone,
       b.status || 'Pending'
@@ -933,16 +937,19 @@ exports.createDeliveryPartner = async (req, res) => {
     const placeholders = params.map(() => '?').join(', ');
     const cols = `delivery_partner_code, name, father_husband_name, gender, date_of_birth, age, profile_photo, cover_photo, marital_status, blood_group,
         mobile, alt_mobile, whatsapp_number, email, emergency_contact,
-        door_number, street_name, area_name, landmark, city, district, state, pincode, country, latitude, longitude, map_link,
+        door_number, street_name, current_address, permanent_address, area_name, landmark, city, district, state, pincode, country, latitude, longitude, live_location, map_link,
         username, password, otp_verified, email_verified, device_id, login_status, account_status,
         vehicle_type, vehicle_brand, vehicle_model, vehicle_color, vehicle_number, rc_book_number, insurance_number, insurance_expiry_date, pollution_certificate_number,
         vehicle_front_photo, vehicle_back_photo, rc_book_image, insurance_document_image,
-        license_number, license_holder_name, license_expiry_date, license_front_image, license_back_image, driving_experience,
-        aadhaar_number, pan_number, aadhaar_front_url, aadhaar_back_url, pan_card_url, selfie_verification_url, police_verification_certificate, background_verification_status, kyc_verification_status,
+        license_number, license_holder_name, license_issue_date, license_expiry_date, license_front_image, license_back_image, driving_experience,
+        aadhaar_number, pan_number, aadhaar_front_url, aadhaar_back_url, pan_card_url, selfie_verification_url, selfie_with_vehicle, selfie_with_aadhaar, police_verification_certificate, background_verification_status, kyc_verification_status,
         bank_name, account_holder_name, bank_account_number, ifsc_code, branch_name, upi_id,
         wallet_balance, pending_earnings, total_earnings, daily_earnings, weekly_earnings, monthly_earnings, incentive_amount, bonus_amount,
         online_status, availability_schedule, working_days, shift_timing, current_location, break_time_status,
-        assigned_delivery_area, delivery_radius, preferred_delivery_zone, city_coverage, area_coverage, zone_status,
+        assigned_delivery_area, delivery_radius, preferred_delivery_zone, preferred_distance, city_coverage, area_coverage, zone_status,
+        emergency_contact_name, emergency_contact_relationship, emergency_contact_mobile,
+        available_time_morning, available_time_afternoon, available_time_evening, available_time_night,
+        face_verified, location_verified,
         created_by_id, created_by_user_id, created_by_name, created_by_email, created_by_phone,
         status${approved_by_id !== null ? ', approved_by_id, approved_by_user_id, approved_by_name, approved_by_email, approval_date' : ''}`;
 
@@ -960,32 +967,52 @@ exports.updateDeliveryPartner = async (req, res) => {
     const { id } = req.params;
     const b = req.body;
 
+    if (req.files) {
+      const fileFields = [
+        'profile_photo','cover_photo','aadhaar_front_url','aadhaar_back_url','pan_card_url','selfie_verification_url','selfie_with_vehicle','selfie_with_aadhaar','police_verification_certificate',
+        'vehicle_front_photo','vehicle_back_photo','rc_book_image','insurance_document_image','license_front_image','license_back_image'
+      ];
+      fileFields.forEach((f) => {
+        if (req.files[f] && req.files[f][0]) {
+          b[f] = req.files[f][0].filename;
+        }
+      });
+    }
+
     let query = `UPDATE delivery_partners SET
       name = ?, father_husband_name = ?, gender = ?, date_of_birth = ?, age = ?, marital_status = ?, blood_group = ?,
       mobile = ?, alt_mobile = ?, whatsapp_number = ?, email = ?, emergency_contact = ?,
-      door_number = ?, street_name = ?, area_name = ?, landmark = ?, city = ?, district = ?, state = ?, pincode = ?, country = ?, latitude = ?, longitude = ?, map_link = ?,
+      door_number = ?, street_name = ?, current_address = ?, permanent_address = ?, area_name = ?, landmark = ?, city = ?, district = ?, state = ?, pincode = ?, country = ?, latitude = ?, longitude = ?, live_location = ?, map_link = ?,
       username = ?, otp_verified = ?, email_verified = ?, device_id = ?, login_status = ?, account_status = ?,
       vehicle_type = ?, vehicle_brand = ?, vehicle_model = ?, vehicle_color = ?, vehicle_number = ?, rc_book_number = ?, insurance_number = ?, insurance_expiry_date = ?, pollution_certificate_number = ?,
-      license_number = ?, license_holder_name = ?, license_expiry_date = ?, driving_experience = ?,
-      aadhaar_number = ?, pan_number = ?, background_verification_status = ?, kyc_verification_status = ?,
+      vehicle_front_photo = ?, vehicle_back_photo = ?, rc_book_image = ?, insurance_document_image = ?,
+      license_number = ?, license_holder_name = ?, license_issue_date = ?, license_expiry_date = ?, license_front_image = ?, license_back_image = ?, driving_experience = ?,
+      aadhaar_number = ?, pan_number = ?, aadhaar_front_url = ?, aadhaar_back_url = ?, pan_card_url = ?, selfie_verification_url = ?, selfie_with_vehicle = ?, selfie_with_aadhaar = ?, police_verification_certificate = ?, background_verification_status = ?, kyc_verification_status = ?,
       bank_name = ?, account_holder_name = ?, bank_account_number = ?, ifsc_code = ?, branch_name = ?, upi_id = ?,
       wallet_balance = ?, pending_earnings = ?, total_earnings = ?, daily_earnings = ?, weekly_earnings = ?, monthly_earnings = ?, incentive_amount = ?, bonus_amount = ?, total_deliveries = ?,
       online_status = ?, availability_schedule = ?, working_days = ?, shift_timing = ?, current_location = ?, break_time_status = ?,
-      assigned_delivery_area = ?, delivery_radius = ?, preferred_delivery_zone = ?, city_coverage = ?, area_coverage = ?, zone_status = ?,
+      assigned_delivery_area = ?, delivery_radius = ?, preferred_delivery_zone = ?, preferred_distance = ?, city_coverage = ?, area_coverage = ?, zone_status = ?,
+      emergency_contact_name = ?, emergency_contact_relationship = ?, emergency_contact_mobile = ?,
+      available_time_morning = ?, available_time_afternoon = ?, available_time_evening = ?, available_time_night = ?,
+      face_verified = ?, location_verified = ?,
       status = ?`;
 
     let params = [
       b.name || null, b.father_husband_name || null, b.gender || 'Male', b.date_of_birth || null, b.age || null, b.marital_status || 'Single', b.blood_group || null,
       b.mobile || null, b.alt_mobile || null, b.whatsapp_number || null, b.email || null, b.emergency_contact || null,
-      b.door_number || null, b.street_name || null, b.area_name || null, b.landmark || null, b.city || null, b.district || null, b.state || null, b.pincode || null, b.country || 'India', b.latitude || null, b.longitude || null, b.map_link || null,
-      b.username || null, b.otp_verified ? 1 : 0, b.email_verified ? 1 : 0, b.device_id || null, b.login_status || 'Active', b.account_status || 'Pending',
+      b.door_number || null, b.street_name || null, b.current_address || null, b.permanent_address || null, b.area_name || null, b.landmark || null, b.city || null, b.district || null, b.state || null, b.pincode || null, b.country || 'India', b.latitude || null, b.longitude || null, b.live_location || null, b.map_link || null,
+      b.username || null, normalizeBoolean(b.otp_verified) ? 1 : 0, normalizeBoolean(b.email_verified) ? 1 : 0, b.device_id || null, b.login_status || 'Active', b.account_status || 'Pending',
       b.vehicle_type || null, b.vehicle_brand || null, b.vehicle_model || null, b.vehicle_color || null, b.vehicle_number || null, b.rc_book_number || null, b.insurance_number || null, b.insurance_expiry_date || null, b.pollution_certificate_number || null,
-      b.license_number || null, b.license_holder_name || null, b.license_expiry_date || null, b.driving_experience || null,
-      b.aadhaar_number || null, b.pan_number || null, b.background_verification_status || 'Pending', b.kyc_verification_status || 'Pending',
+      b.vehicle_front_photo || null, b.vehicle_back_photo || null, b.rc_book_image || null, b.insurance_document_image || null,
+      b.license_number || null, b.license_holder_name || null, b.license_issue_date || null, b.license_expiry_date || null, b.license_front_image || null, b.license_back_image || null, b.driving_experience || null,
+      b.aadhaar_number || null, b.pan_number || null, b.aadhaar_front_url || null, b.aadhaar_back_url || null, b.pan_card_url || null, b.selfie_verification_url || null, b.selfie_with_vehicle || null, b.selfie_with_aadhaar || null, b.police_verification_certificate || null, b.background_verification_status || 'Pending', b.kyc_verification_status || 'Pending',
       b.bank_name || null, b.account_holder_name || null, b.bank_account_number || null, b.ifsc_code || null, b.branch_name || null, b.upi_id || null,
       b.wallet_balance || 0, b.pending_earnings || 0, b.total_earnings || b.earnings || 0, b.daily_earnings || 0, b.weekly_earnings || 0, b.monthly_earnings || 0, b.incentive_amount || 0, b.bonus_amount || 0, b.total_deliveries || 0,
       b.online_status || 'Offline', b.availability_schedule || null, b.working_days || null, b.shift_timing || null, b.current_location || null, b.break_time_status || null,
-      b.assigned_delivery_area || null, b.delivery_radius || null, b.preferred_delivery_zone || null, b.city_coverage || null, b.area_coverage || null, b.zone_status || 'Active',
+      b.assigned_delivery_area || null, b.delivery_radius || null, b.preferred_delivery_zone || null, b.preferred_distance || '3 KM', b.city_coverage || null, b.area_coverage || null, b.zone_status || 'Active',
+      b.emergency_contact_name || null, b.emergency_contact_relationship || null, b.emergency_contact_mobile || null,
+      normalizeBoolean(b.available_time_morning) ? 1 : 0, normalizeBoolean(b.available_time_afternoon) ? 1 : 0, normalizeBoolean(b.available_time_evening) ? 1 : 0, normalizeBoolean(b.available_time_night) ? 1 : 0,
+      normalizeBoolean(b.face_verified) ? 1 : 0, normalizeBoolean(b.location_verified) ? 1 : 0,
       b.status || 'Pending'
     ];
 
