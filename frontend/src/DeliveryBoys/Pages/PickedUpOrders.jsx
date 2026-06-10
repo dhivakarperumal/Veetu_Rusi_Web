@@ -7,18 +7,45 @@ const PickedUpOrders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [updatingId, setUpdatingId] = useState(null);
 
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const { data } = await api.get("/delivery/orders?status=Out%20for%20Delivery");
-      setOrders(Array.isArray(data) ? data : []);
+      const { data } = await api.get("/delivery/orders");
+      const filtered = Array.isArray(data)
+        ? data.filter((order) => ["Out for Delivery", "Picked Up"].includes(order.status))
+        : [];
+      setOrders(filtered);
     } catch (error) {
       console.error("Failed to load picked up orders:", error);
       toast.error("Unable to fetch picked up orders.");
       setOrders([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const normalizeStatus = (status) => {
+    if (!status) return status;
+    if (status === "start_delivery" || status === "out_for_delivery") return "Out for Delivery";
+    if (status === "delivered") return "Delivered";
+    if (status === "picked_up") return "Picked Up";
+    return status;
+  };
+
+  const updateOrderStatus = async (orderId, status) => {
+    const normalizedStatus = normalizeStatus(status);
+    setUpdatingId(orderId);
+    try {
+      await api.patch(`/user-food-orders/status/${orderId}`, { status: normalizedStatus });
+      toast.success(`Order updated to ${normalizedStatus}.`);
+      await fetchOrders();
+    } catch (error) {
+      console.error("Failed to update picked up order status:", error);
+      toast.error(error.response?.data?.message || "Unable to update order status.");
+    } finally {
+      setUpdatingId(null);
     }
   };
 
@@ -75,15 +102,15 @@ const PickedUpOrders = () => {
         </div>
         <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
           <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Status</p>
-          <p className="mt-4 text-4xl font-black text-slate-900">Out for Delivery</p>
+          <p className="mt-4 text-4xl font-black text-slate-900">Picked Up / Out for Delivery</p>
         </div>
       </div>
 
       <div className="bg-white rounded-4xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="p-6 border-b border-slate-100 flex items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-black">Out for Delivery Orders</h2>
-            <p className="text-sm text-slate-500 mt-1">Orders currently in transit to customers.</p>
+            <h2 className="text-lg font-black">Picked Up / Out for Delivery Orders</h2>
+            <p className="text-sm text-slate-500 mt-1">Orders that are picked up or currently in transit to customers.</p>
           </div>
         </div>
 
@@ -101,6 +128,7 @@ const PickedUpOrders = () => {
                   <th className="px-6 py-4">Address</th>
                   <th className="px-6 py-4">Amount</th>
                   <th className="px-6 py-4">Picked Up</th>
+                  <th className="px-6 py-4">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -124,6 +152,28 @@ const PickedUpOrders = () => {
                     </td>
                     <td className="px-6 py-4 font-bold text-slate-900">₹{Number(order.total_amount || order.amount || 0).toFixed(2)}</td>
                     <td className="px-6 py-4 text-slate-500">{new Date(order.updated_at || order.ordered_at || Date.now()).toLocaleString()}</td>
+                    <td className="px-6 py-4">
+                      <label className="sr-only" htmlFor={`picked-up-action-${order.id}`}>Update status</label>
+                      <select
+                        id={`picked-up-action-${order.id}`}
+                        disabled={updatingId === order.id}
+                        defaultValue=""
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (!value) return;
+                          updateOrderStatus(order.id, value);
+                        }}
+                        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        <option value="">Select action</option>
+                        <option value="start_delivery">Start Delivery</option>
+                        <option value="out_for_delivery">Out for Delivery</option>
+                        <option value="delivered">Mark as Delivered</option>
+                      </select>
+                      {updatingId === order.id && (
+                        <p className="mt-2 text-xs text-slate-400">Updating status...</p>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>

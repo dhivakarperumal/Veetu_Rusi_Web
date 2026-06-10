@@ -23,11 +23,20 @@ const AcceptedOrders = () => {
     }
   };
 
+  const normalizeStatus = (status) => {
+    if (!status) return status;
+    if (status === "start_delivery" || status === "out_for_delivery") return "Out for Delivery";
+    if (status === "delivered") return "Delivered";
+    if (status === "picked_up") return "Picked Up";
+    return status;
+  };
+
   const updateOrderStatus = async (orderId, status) => {
+    const normalizedStatus = normalizeStatus(status);
     setUpdatingId(orderId);
     try {
-      await api.patch(`/user-food-orders/status/${orderId}`, { status });
-      toast.success(`Order updated to ${status}.`);
+      await api.patch(`/user-food-orders/status/${orderId}`, { status: normalizedStatus });
+      toast.success(`Order updated to ${normalizedStatus}.`);
       await fetchAcceptedOrders();
     } catch (error) {
       console.error("Failed to update order status:", error);
@@ -156,9 +165,10 @@ const AcceptedOrders = () => {
                         className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         <option value="">Select action</option>
-                        <option value="Picked Up">Pickup Food</option>
-                        <option value="Out for Delivery">Start Delivery</option>
-                        <option value="Delivered">Delivered</option>
+                        <option value="picked_up">Pickup Food</option>
+                        <option value="start_delivery">Start Delivery</option>
+                        <option value="out_for_delivery">Out for Delivery</option>
+                        <option value="delivered">Mark as Delivered</option>
                       </select>
                       {updatingId === order.id && (
                         <p className="mt-2 text-xs text-slate-400">Updating status...</p>
