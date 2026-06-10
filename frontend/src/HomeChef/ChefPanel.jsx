@@ -1,5 +1,8 @@
-import { useState, useEffect } from "react";
-import { Outlet } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { Outlet, useNavigate } from "react-router-dom";
+import { io } from 'socket.io-client';
+import { toast, Toaster } from 'react-hot-toast';
+import api from '../api';
 import ChefSidebar from "./ChefSidebar";
 import ChefHeader from "./ChefHeader";
 
@@ -9,6 +12,63 @@ const AdminLayout = () => {
     const [isLargeScreen, setIsLargeScreen] = useState(
         window.innerWidth >= 1024
     );
+
+    // Socket.IO and Polling - listen for new orders for this chef
+    const [popupVisible, setPopupVisible] = useState(false);
+    const [popupOrder, setPopupOrder] = useState(null);
+    const displayedOrderIdsRef = useRef(new Set());
+
+    const navigate = useNavigate();
+    const formatCurrency = (amount) => `₹${Number(amount || 0).toFixed(2)}`;
+
+    const playNotificationSound = () => {
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            const ctx = new AudioContext();
+            const oscillator = ctx.createOscillator();
+            const gain = ctx.createGain();
+            oscillator.type = 'sine';
+            oscillator.frequency.value = 540;
+            gain.gain.value = 0.05;
+            oscillator.connect(gain);
+            gain.connect(ctx.destination);
+            oscillator.start();
+            oscillator.stop(ctx.currentTime + 0.18);
+            setTimeout(() => {
+                if (ctx.state !== 'closed') ctx.close();
+            }, 200);
+        } catch (e) {
+            console.warn('Notification sound unavailable', e);
+        }
+    };
+
+    const fetchPendingOrders = async () => {
+        try {
+            const res = await api.get("/user-food-orders/chef");
+            const allOrders = Array.isArray(res.data) ? res.data : [];
+            const pendingOrders = allOrders.filter(order => order.status === 'Pending');
+
+            if (popupOrder) {
+                const stillPending = pendingOrders.some(order => Number(order.id) === Number(popupOrder.id));
+                if (!stillPending) {
+                    setPopupVisible(false);
+                    setPopupOrder(null);
+                }
+                return;
+            }
+
+            const nextOrder = pendingOrders.find(order => !displayedOrderIdsRef.current.has(Number(order.id)));
+            if (nextOrder) {
+                displayedOrderIdsRef.current.add(Number(nextOrder.id));
+                setPopupOrder(nextOrder);
+                setPopupVisible(true);
+                playNotificationSound();
+            }
+        } catch (error) {
+            console.error("Failed to load pending chef orders:", error);
+        }
+    };
 
     useEffect(() => {
         const handleResize = () => {
@@ -21,8 +81,73 @@ const AdminLayout = () => {
         return () => window.removeEventListener("resize", handleResize);
     }, []);
 
+    useEffect(() => {
+        fetchPendingOrders();
+        const interval = setInterval(fetchPendingOrders, 10000); // Poll every 10 seconds
+
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+        const socketBase = apiUrl.replace(/\/api\/?$/i, '') || 'http://localhost:5000';
+        const token = localStorage.getItem('token');
+        
+        console.log('🔌 Initializing socket connection to:', socketBase);
+        
+        const socket = io(socketBase, { 
+            auth: { token },
+            reconnection: true,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
+            reconnectionAttempts: 5
+        });
+        
+        socket.on('connect', () => {
+            console.log('✅ Chef socket connected successfully');
+        });
+
+        socket.on('new_order', (payload) => {
+            console.log('📦 New order received via socket:', payload);
+            fetchPendingOrders(); // trigger fetch to get full details and show popup safely
+        });
+
+        return () => {
+            clearInterval(interval);
+            socket.disconnect();
+        };
+    }, [popupOrder]); // Depend on popupOrder to ensure correct evaluation inside setInterval
+
+    const handleAccept = async () => {
+        if (!popupOrder) return;
+        try {
+            await api.patch(`/user-food-orders/status/${popupOrder.id}`, { status: 'Accepted' });
+            toast.success('Order accepted');
+            setPopupVisible(false);
+            setPopupOrder(null);
+        } catch (err) {
+            console.error(err);
+            toast.error('Failed to accept order');
+        }
+    };
+
+    const handleReject = async () => {
+        if (!popupOrder) return;
+        try {
+            await api.patch(`/user-food-orders/status/${popupOrder.id}`, { status: 'Cancelled' });
+            toast.success('Order rejected');
+            setPopupVisible(false);
+            setPopupOrder(null);
+        } catch (err) {
+            console.error(err);
+            toast.error('Failed to reject order');
+        }
+    };
+
+    const skipOrder = () => {
+        setPopupVisible(false);
+        setPopupOrder(null);
+    };
+
     return (
         <div className="admin-root flex min-h-screen bg-gray-50 text-slate-900">
+            <Toaster position="top-right" />
 
             {/* Sidebar */}
             <ChefSidebar
@@ -49,6 +174,90 @@ const AdminLayout = () => {
                         <Outlet />
                     </div>
                 </main>
+
+                {popupVisible && popupOrder && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4">
+                        <div className="absolute inset-0 bg-black/70" aria-hidden="true" onClick={skipOrder}></div>
+                        <div className="relative z-10 w-full max-w-2xl rounded-4xl bg-white shadow-2xl ring-1 ring-slate-900/10 overflow-hidden max-h-[90vh] flex flex-col">
+                            <div className="p-6 sm:p-8 overflow-y-auto">
+                                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                                    <div>
+                                        <p className="text-sm font-semibold uppercase tracking-[0.28em] text-emerald-600">🧑‍🍳 New Order Available</p>
+                                        <h2 className="mt-4 text-2xl font-black text-slate-900">A new food order is available.</h2>
+                                        <p className="mt-2 text-sm text-slate-500">Would you like to accept this order?</p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={skipOrder}
+                                        className="self-start rounded-full bg-slate-100 p-3 text-slate-700 hover:bg-slate-200 transition"
+                                        aria-label="Close popup"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+
+                                <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                                        <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Order ID</p>
+                                        <p className="mt-2 text-lg font-bold text-slate-900">{popupOrder.order_id || `#${popupOrder.id}`}</p>
+                                    </div>
+                                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                                        <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Amount</p>
+                                        <p className="mt-2 text-lg font-bold text-slate-900">{formatCurrency(popupOrder.chef_total_amount ?? popupOrder.total_amount ?? 0)}</p>
+                                    </div>
+                                    <div className="sm:col-span-2 rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                                        <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Customer</p>
+                                        <p className="mt-2 text-lg font-bold text-slate-900">{popupOrder.customer_name || 'Unknown'}</p>
+                                        <p className="mt-2 text-sm text-slate-500">{popupOrder.customer_phone || 'No contact details'}</p>
+                                    </div>
+
+                                    {/* Order Items Section for Chef */}
+                                    <div className="sm:col-span-2 rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Items in Order</p>
+                                            <p className="text-xs font-bold text-slate-500">{(popupOrder.items || []).length} items</p>
+                                        </div>
+                                        <div className="space-y-3 max-h-40 overflow-y-auto pr-2">
+                                            {(popupOrder.items || []).map((item, idx) => (
+                                                <div key={idx} className="rounded-2xl bg-white p-3 border border-slate-200 flex items-center justify-between">
+                                                    <div>
+                                                        <p className="font-bold text-slate-900">{item.name || item.title || item.product_name || 'Item'}</p>
+                                                        <p className="text-xs font-medium text-slate-500 mt-1">Qty: {item.quantity || item.qty || 1}</p>
+                                                    </div>
+                                                    <p className="font-bold text-slate-900">{formatCurrency(item.price || item.final_price || item.amount)}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="sm:col-span-2 rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                                        <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Order Time</p>
+                                        <p className="mt-2 text-sm text-slate-700">
+                                            {new Date(popupOrder.ordered_at || popupOrder.created_at || Date.now()).toLocaleString()}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-end">
+                                    <button
+                                        type="button"
+                                        onClick={handleReject}
+                                        className="inline-flex justify-center rounded-2xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-bold text-red-700 hover:bg-red-100 transition"
+                                    >
+                                        Reject Order
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleAccept}
+                                        className="inline-flex justify-center rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white hover:bg-emerald-500 transition"
+                                    >
+                                        Accept Order
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Footer */}
                 <footer className="glass-footer text-center py-4 mt-10 text-sm text-white/70">

@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const { getIo } = require('../utils/socket');
 
 const parseJson = (value) => {
   if (!value) return [];
@@ -126,6 +127,49 @@ const addUserFoodOrder = async (payload) => {
       ordered_by_phone || null
     ]
   );
+
+  // Fetch the inserted order to include items and full data
+  let orderRecord = null;
+  try {
+    orderRecord = await getOrderById(result.insertId);
+  } catch (err) {
+    // ignore fetch errors
+    orderRecord = null;
+  }
+
+  // Emit realtime notification to relevant chefs (if Socket.IO initialized)
+  try {
+    const io = getIo();
+    if (io) {
+      const chefIds = new Set();
+
+      if (chef_user_id) chefIds.add(String(chef_user_id));
+      if (chef_id) chefIds.add(String(chef_id));
+
+      // inspect items for chef references
+      const itemList = Array.isArray(items) ? items : (typeof items === 'string' ? JSON.parse(items || '[]') : []);
+      for (const it of itemList) {
+        if (it?.chef_user_id) chefIds.add(String(it.chef_user_id));
+        if (it?.chef_id) chefIds.add(String(it.chef_id));
+      }
+
+      const payload = {
+        order_id,
+        id: result.insertId,
+        order: orderRecord || { id: result.insertId, order_id, items: itemList }
+      };
+
+      for (const cid of chefIds) {
+        try {
+          io.to(`chef:${cid}`).emit('new_order', payload);
+        } catch (err) {
+          // continue
+        }
+      }
+    }
+  } catch (err) {
+    // ignore socket errors
+  }
 
   return { insertId: result.insertId, order_id };
 };

@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { TrendingUp, ShoppingCart, Users, Star } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { TrendingUp, ShoppingCart, Users, Star, AlertCircle } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -15,9 +15,53 @@ import {
   Pie,
   Cell,
 } from "recharts";
+import api from "../../api";
 
 const AnalyticsDashboard = () => {
+  const [stats, setStats] = useState({
+    totalOrders: 0,
+    totalRevenue: 0,
+    totalCustomers: 0,
+    avgRating: 0,
+    loading: true,
+    error: null,
+  });
   const [timeRange, setTimeRange] = useState("week");
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const [ordersRes, foodsRes] = await Promise.all([
+          api.get("/user-food-orders"),
+          api.get("/chef-foods"),
+        ]);
+
+        const orders = Array.isArray(ordersRes.data) ? ordersRes.data : [];
+        const revenue = orders.reduce((sum, order) => {
+          const amount = parseFloat(order.chef_total_amount || order.total_amount || 0);
+          return sum + amount;
+        }, 0);
+
+        setStats({
+          totalOrders: orders.length,
+          totalRevenue: revenue,
+          totalCustomers: new Set(orders.map(o => o.customer_id)).size,
+          avgRating: 4.8,
+          loading: false,
+          error: null,
+        });
+      } catch (err) {
+        console.error("Failed to fetch analytics", err);
+        setStats(prev => ({
+          ...prev,
+          loading: false,
+          error: "Failed to load analytics data",
+        }));
+      }
+    };
+
+    fetchStats();
+  }, []);
 
   // Sample data
   const chartData = [
@@ -37,31 +81,31 @@ const AnalyticsDashboard = () => {
     { name: "Others", value: 20, color: "#8B5CF6" },
   ];
 
-  const stats = [
+  const statsData = [
     {
       label: "Total Orders",
-      value: "178",
+      value: String(stats.totalOrders),
       change: "+12.5%",
       icon: ShoppingCart,
       color: "blue",
     },
     {
       label: "Total Revenue",
-      value: "₹53,400",
+      value: `₹${(stats.totalRevenue || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`,
       change: "+8.2%",
       icon: TrendingUp,
       color: "green",
     },
     {
       label: "Customers",
-      value: "124",
+      value: String(stats.totalCustomers),
       change: "+5.3%",
       icon: Users,
       color: "purple",
     },
     {
       label: "Avg Rating",
-      value: "4.8",
+      value: String(stats.avgRating),
       change: "+0.2",
       icon: Star,
       color: "yellow",
@@ -84,9 +128,17 @@ const AnalyticsDashboard = () => {
 
   return (
     <div className="space-y-6 pb-12">
+      {/* Error Alert */}
+      {stats.error && (
+        <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-lg p-4">
+          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
+          <p className="text-sm text-red-700">{stats.error}</p>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-black text-slate-900"> Dashboard</h1>
+          <h1 className="text-3xl font-black text-slate-900">Dashboard</h1>
           <p className="text-sm text-gray-500 mt-1">Track your food business performance</p>
         </div>
         <select
@@ -102,7 +154,7 @@ const AnalyticsDashboard = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, idx) => {
+        {statsData.map((stat, idx) => {
           const Icon = stat.icon;
           return (
             <div

@@ -210,6 +210,15 @@ const OrderManagement = () => {
                               <Check className="w-4 h-4" />
                             </button>
                           )}
+                          {(order.status === "Pending" || order.status === "Order Placed" || order.status === "New") && (
+                            <button
+                              onClick={() => handleStatusQuickChange(order.id, "Accepted")}
+                              className="p-2 hover:bg-emerald-500/10 text-emerald-400 rounded-xl transition"
+                              title="Accept Order"
+                            >
+                              <Check className="w-4 h-4" />
+                            </button>
+                          )}
                           {order.status === "Out for Delivery" && (
                             <button
                               onClick={() => handleStatusQuickChange(order.id, "Delivered")}

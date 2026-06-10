@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import api from "../../api";
 import PageHeader from "../CommenComponents/PageHeader";
@@ -65,6 +65,7 @@ const getItemSummary = (items) => {
 export default function MyFoodOrders() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -97,6 +98,29 @@ export default function MyFoodOrders() {
 
     fetchOrders();
   }, [user, navigate]);
+
+  // If navigated from checkout with a newly created order id, fetch and open it
+  useEffect(() => {
+    const newOrderId = location?.state?.newOrderId;
+    if (!newOrderId) return;
+
+    const fetchAndOpen = async () => {
+      try {
+        const res = await api.get(`/user-food-orders/${newOrderId}`);
+        if (res?.data) {
+          setSelectedOrder(res.data);
+        }
+      } catch (err) {
+        console.error('Failed to load newly created order', err);
+      } finally {
+        // Clear navigation state so popup doesn't reopen on refresh
+        navigate(location.pathname, { replace: true, state: null });
+      }
+    };
+
+    fetchAndOpen();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location?.state?.newOrderId]);
 
   const openOrder = (order) => {
     setSelectedOrder(order);

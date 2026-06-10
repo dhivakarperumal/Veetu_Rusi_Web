@@ -107,6 +107,55 @@ initDb().then(async () => {
     }
     throw err;
   });
+  // Initialize Socket.IO for realtime notifications
+  try {
+    const { Server } = require('socket.io');
+    const jwt = require('jsonwebtoken');
+    const { setIo } = require('./src/utils/socket');
+
+    const io = new Server(server, {
+      cors: {
+        origin: process.env.FRONTEND_ORIGIN || '*',
+        methods: ['GET', 'POST']
+      }
+    });
+
+    const JWT_SECRET = process.env.JWT_SECRET || 'default-secret';
+
+    io.use((socket, next) => {
+      const token = socket.handshake?.auth?.token;
+      if (!token) return next();
+      try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        socket.user = decoded;
+      } catch (err) {
+        // ignore invalid token for now
+      }
+      next();
+    });
+
+    io.on('connection', (socket) => {
+      // auto-join rooms based on authenticated user
+      const uid = socket.user?.user_id || socket.user?.id;
+      const role = socket.user?.role;
+      if (uid) {
+        socket.join(`user:${uid}`);
+        if (role && String(role).toLowerCase().includes('chef')) {
+          socket.join(`chef:${uid}`);
+        }
+      }
+
+      socket.on('join', (data) => {
+        if (!data) return;
+        if (data.room) socket.join(data.room);
+      });
+    });
+
+    setIo(io);
+    console.log('Socket.IO initialized');
+  } catch (err) {
+    console.error('Socket.IO init failed:', err.message || err);
+  }
 }).catch((err) => {
   console.error('Database initialization failed:', err);
   process.exit(1);

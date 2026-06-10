@@ -69,7 +69,7 @@ export default function FoodCheckout() {
     setIsSubmitting(true);
 
     try {
-      await placeFoodOrder({
+      const res = await placeFoodOrder({
         street_address: streetAddress,
         city,
         district,
@@ -82,7 +82,12 @@ export default function FoodCheckout() {
       });
 
       toast.success("Order placed successfully.");
-      navigate("/food-orders");
+      const newOrderId = res?.id || res?.insertId || null;
+      if (newOrderId) {
+        navigate("/food-orders", { state: { newOrderId } });
+      } else {
+        navigate("/food-orders");
+      }
     } catch (err) {
       toast.error("Unable to place the order. Please try again.");
     } finally {

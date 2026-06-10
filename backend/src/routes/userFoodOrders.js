@@ -3,6 +3,7 @@ const router = express.Router();
 const controller = require('../controllers/userFoodOrderController');
 const { verifyToken } = require('../middleware/authMiddleware');
 const pool = require('../config/db');
+const { getIo } = require('../utils/socket');
 
 const initUserFoodOrderTable = async () => {
   try {
@@ -99,6 +100,38 @@ router.post('/', verifyToken, async (req, res) => {
       } catch (clearErr) {
         console.error('Failed to clear food cart after order:', clearErr.message || clearErr);
       }
+    }
+
+    // 🔔 Emit socket event to notify chef of new order
+    try {
+      const io = getIo();
+      if (io && payload.chef_user_id) {
+        const chefRoom = `chef:${payload.chef_user_id}`;
+        const orderData = {
+          id: result.insertId,
+          order_id: result.order_id,
+          customer_name: payload.customer_name || 'Customer',
+          customer_phone: payload.customer_phone || '',
+          customer_email: payload.customer_email || '',
+          total_amount: payload.total_amount || 0,
+          chef_total_amount: payload.total_amount || 0,
+          status: 'Pending',
+          items: payload.items || [],
+          street_address: payload.street_address || '',
+          city: payload.city || '',
+          district: payload.district || '',
+          state: payload.state || '',
+          delivery_date: payload.delivery_date || '',
+          delivery_time: payload.delivery_time || '',
+          created_at: new Date().toISOString()
+        };
+        
+        console.log(`📤 Emitting new_order event to chef:${payload.chef_user_id}`, orderData);
+        io.to(chefRoom).emit('new_order', orderData);
+      }
+    } catch (socketErr) {
+      console.error('Failed to emit socket event:', socketErr.message || socketErr);
+      // Don't fail the order creation if socket fails
     }
 
     res.status(201).json({ message: 'Order placed successfully', order_id: result.order_id, id: result.insertId });
