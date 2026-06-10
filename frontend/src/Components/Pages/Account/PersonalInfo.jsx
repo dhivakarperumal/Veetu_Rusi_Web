@@ -17,9 +17,9 @@ export default function PersonalInfo() {
   useEffect(() => {
     if (user) {
       setForm({
-        username: user.username || "",
+        username: user.username || user.name || user.full_name || user.email || "",
         email: user.email || "",
-        phone: user.phone || "",
+        phone: user.phone || user.mobile || user.mobile_number || "",
         role: user.role || ""
       });
     }
