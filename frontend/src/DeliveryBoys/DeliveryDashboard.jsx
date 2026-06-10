@@ -52,8 +52,10 @@ const DeliveryDashboard = () => {
   const [data, setData] = useState(null);
   const [chartData, setChartData] = useState([]);
   const [chartLoading, setChartLoading] = useState(true);
+  const [todayOrders, setTodayOrders] = useState([]);
+  const [todayLoading, setTodayLoading] = useState(true);
 
-  useEffect(() => { fetchStats(); fetchChartData(); }, []);
+  useEffect(() => { fetchStats(); fetchChartData(); fetchTodayOrders(); }, []);
 
   const fetchStats = async () => {
     try {
@@ -104,6 +106,48 @@ const DeliveryDashboard = () => {
     } finally {
       setChartLoading(false);
     }
+  };
+
+  const fetchTodayOrders = async () => {
+    try {
+      setTodayLoading(true);
+      const res = await api.get("/delivery/orders");
+      const orders = Array.isArray(res.data) ? res.data : [];
+      
+      // Filter for today's orders
+      const today = new Date().toISOString().slice(0, 10);
+      const todaysOrders = orders.filter(order => {
+        const created = order.created_at || order.ordered_at || order.date || order.order_date || null;
+        if (!created) return false;
+        return new Date(created).toISOString().slice(0, 10) === today;
+      });
+      
+      setTodayOrders(todaysOrders);
+    } catch (err) {
+      console.error('Today orders fetch error', err);
+      setTodayOrders([]);
+    } finally {
+      setTodayLoading(false);
+    }
+  };
+
+  const getStatusStyle = (status) => {
+    const normalized = String(status || "").toLowerCase().trim();
+    const variants = {
+      "order placed": "bg-blue-100 text-blue-800 border-blue-200",
+      "new": "bg-blue-100 text-blue-800 border-blue-200",
+      "assigned": "bg-gray-100 text-gray-800 border-gray-200",
+      "packing": "bg-indigo-100 text-indigo-800 border-indigo-200",
+      "processing": "bg-indigo-100 text-indigo-800 border-indigo-200",
+      "shipping": "bg-amber-100 text-amber-800 border-amber-200",
+      "shipped": "bg-amber-100 text-amber-800 border-amber-200",
+      "picked up": "bg-amber-100 text-amber-800 border-amber-200",
+      "out for delivery": "bg-cyan-100 text-cyan-800 border-cyan-200",
+      "delivered": "bg-emerald-100 text-emerald-800 border-emerald-200",
+      "cancelled": "bg-red-100 text-red-800 border-red-200",
+      "canceled": "bg-red-100 text-red-800 border-red-200",
+    };
+    return variants[normalized] || "bg-gray-100 text-gray-800 border-gray-200";
   };
 
   if (loading) {
@@ -225,6 +269,70 @@ const DeliveryDashboard = () => {
             ))}
           </div>
         </div>
+      </div>
+
+      {/* Today's Orders Table */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-black text-slate-800 uppercase tracking-tight flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-pink-500 shadow-[0_0_10px_#EC4899]" />
+            Today's Orders
+          </h2>
+          <span className="text-xs font-bold text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+            {todayLoading ? "..." : todayOrders.length} orders
+          </span>
+        </div>
+
+        {todayLoading ? (
+          <div className="bg-white rounded-3xl p-8 flex items-center justify-center h-32 border border-gray-100">
+            <div className="w-6 h-6 border-3 border-pink-600/20 border-t-pink-600 rounded-full animate-spin"></div>
+          </div>
+        ) : todayOrders.length === 0 ? (
+          <div className="bg-white rounded-3xl p-8 text-center border border-gray-100">
+            <p className="text-gray-500 font-semibold">No orders for today</p>
+          </div>
+        ) : (
+          <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                    <th className="text-left p-4 font-bold text-gray-700 uppercase text-[10px] tracking-wider">Order ID</th>
+                    <th className="text-left p-4 font-bold text-gray-700 uppercase text-[10px] tracking-wider">Customer</th>
+                    <th className="text-left p-4 font-bold text-gray-700 uppercase text-[10px] tracking-wider">Amount</th>
+                    <th className="text-left p-4 font-bold text-gray-700 uppercase text-[10px] tracking-wider">Status</th>
+                    <th className="text-left p-4 font-bold text-gray-700 uppercase text-[10px] tracking-wider">Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {todayOrders.map((order) => (
+                    <tr key={order.id} className="border-b border-gray-100 hover:bg-gray-50 transition">
+                      <td className="p-4">
+                        <span className="font-bold text-gray-800">#{order.order_id || order.id}</span>
+                      </td>
+                      <td className="p-4">
+                        <span className="text-gray-700 font-semibold">{order.customer_name || "N/A"}</span>
+                      </td>
+                      <td className="p-4">
+                        <span className="font-bold text-gray-800">₹{Number(order.total_amount || 0).toLocaleString()}</span>
+                      </td>
+                      <td className="p-4">
+                        <span className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${getStatusStyle(order.status)}`}>
+                          {order.status || "Unknown"}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <span className="text-gray-600 text-xs font-semibold">
+                          {order.created_at ? new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "N/A"}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
