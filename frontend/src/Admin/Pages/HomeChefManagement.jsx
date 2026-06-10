@@ -95,6 +95,7 @@ const emptyForm = {
   approval_status: "Pending",
   rejection_reason: "",
   block_reason: "",
+  kyc_verification_notes: "",
 };
 
 const tabs = [
@@ -297,6 +298,7 @@ const HomeChefManagement = () => {
       approval_status: chef.approval_status || "Pending",
       rejection_reason: chef.rejection_reason || "",
       block_reason: chef.block_reason || "",
+      kyc_verification_notes: chef.kyc_verification_notes || "",
       address: chef.address || "",
     });
     setIsFormOpen(true);
@@ -364,9 +366,9 @@ const HomeChefManagement = () => {
   ).length;
 
   const inp =
-    "w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl outline-none font-medium text-gray-800 text-sm focus:border-emerald-500 transition-all placeholder:text-gray-400";
+    "w-full px-4 py-3 rounded-[1.75rem] bg-slate-950/85 border border-white/10 text-slate-100 outline-none placeholder:text-slate-500 text-sm font-medium transition focus:border-emerald-400 focus:bg-slate-900";
   const lbl =
-    "text-[10px] text-gray-600 font-bold uppercase tracking-widest block mb-1";
+    "text-[11px] text-slate-300 font-black uppercase tracking-[0.24em] block mb-2";
 
   const renderFileField = (fieldName, label, currentValue) => {
     return (
@@ -484,7 +486,7 @@ const HomeChefManagement = () => {
       </div>
 
       {/* Toolbar: Search on Left, View Mode Switcher on Right */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border border-slate-100 p-4 rounded-xl shadow-sm">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 superadmin-panel p-4 rounded-xl">
         {/* Left: Search input */}
         <div className="relative flex-1 max-w-md w-full">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -493,7 +495,7 @@ const HomeChefManagement = () => {
             placeholder="Search by name, email, mobile or kitchen..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-medium text-slate-800 text-sm focus:bg-white focus:border-emerald-600/40 transition-all placeholder:text-slate-400"
+            className="w-full pl-11 pr-4 py-3 bg-slate-950/80 border border-white/10 rounded-xl outline-none font-medium text-slate-100 text-sm focus:bg-slate-900 focus:border-emerald-600/40 transition-all placeholder:text-slate-500"
           />
         </div>
 
@@ -502,7 +504,7 @@ const HomeChefManagement = () => {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-xs uppercase tracking-widest text-slate-600 focus:bg-white focus:border-emerald-600/40 transition-all cursor-pointer"
+            className="px-3.5 py-2.5 bg-slate-950/80 border border-white/10 rounded-xl outline-none font-bold text-xs uppercase tracking-widest text-slate-100 focus:bg-slate-900 focus:border-emerald-600/40 transition-all cursor-pointer"
           >
             <option value="All">All Statuses</option>
             <option value="Pending">Pending</option>
@@ -511,13 +513,13 @@ const HomeChefManagement = () => {
             <option value="Rejected">Rejected</option>
           </select>
 
-          <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200/50">
+          <div className="flex bg-slate-950/80 p-1 rounded-xl border border-white/10">
             <button
               onClick={() => setViewMode("table")}
               className={`p-2 rounded-lg transition ${
                 viewMode === "table"
-                  ? "bg-white text-emerald-700 shadow-sm"
-                  : "text-slate-500 hover:text-emerald-700"
+                  ? "bg-emerald-500/15 text-emerald-300 shadow-[0_10px_30px_rgba(16,185,129,0.12)]"
+                  : "text-slate-400 hover:text-white"
               }`}
               title="Table View"
             >
@@ -527,7 +529,7 @@ const HomeChefManagement = () => {
               onClick={() => setViewMode("card")}
               className={`p-2 rounded-lg transition ${
                 viewMode === "card"
-                  ? "bg-white text-emerald-700 shadow-sm"
+                  ? "bg-slate-900/80 text-emerald-300 shadow-[0_10px_30px_rgba(16,185,129,0.12)]"
                   : "text-slate-500 hover:text-emerald-700"
               }`}
               title="Card View"
@@ -549,11 +551,13 @@ const HomeChefManagement = () => {
           ))}
         </div>
       ) : viewMode === "table" ? (
-        <div className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm animate-in fade-in duration-200">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+        <div className="bg-slate-950/90 border border-white/10 rounded-2xl overflow-hidden shadow-2xl animate-in fade-in duration-200">
+          <div className="superadmin-card overflow-hidden animate-in fade-in duration-200">
+            <div className="superadmin-card p-5 rounded-2xl flex flex-col justify-between transition-all duration-200">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-700 border-b border-slate-200">
+                <tr className="bg-slate-900/80 border-b border-white/10">
                   <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em] text-center w-16">
                     S.No
                   </th>
@@ -581,14 +585,14 @@ const HomeChefManagement = () => {
                 {filteredChefs.map((chef, index) => (
                   <tr
                     key={chef.id}
-                    className="hover:bg-slate-50/70 transition-colors"
+                    className="hover:bg-slate-900/80 transition-colors"
                   >
                     <td className="px-5 py-4 text-center text-sm font-black text-slate-400">
                       {index + 1}
                     </td>
                     <td className="px-5 py-4">
                       <div>
-                        <h4 className="text-sm font-bold text-slate-800">
+                        <h4 className="text-sm font-bold text-white">
                           {chef.name}
                         </h4>
                         <p className="text-xs text-slate-400 font-medium">
@@ -596,13 +600,13 @@ const HomeChefManagement = () => {
                         </p>
                       </div>
                     </td>
-                    <td className="px-5 py-4 text-sm font-semibold text-slate-600">
+                    <td className="px-5 py-4 text-sm font-semibold text-slate-300">
                       {chef.kitchen_name || "N/A"}
                     </td>
-                    <td className="px-5 py-4 text-sm font-semibold text-slate-600">
+                    <td className="px-5 py-4 text-sm font-semibold text-slate-300">
                       {chef.cuisine_type || "N/A"}
                     </td>
-                    <td className="px-5 py-4 text-sm font-semibold text-slate-600">
+                    <td className="px-5 py-4 text-sm font-semibold text-slate-300">
                       {chef.mobile}
                     </td>
                     <td className="px-5 py-4">
@@ -622,14 +626,14 @@ const HomeChefManagement = () => {
                       <div className="flex items-center justify-center gap-1">
                         <button
                           onClick={() => navigate(`/admin/homechefs/${chef.id}`)}
-                          className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-lg transition"
+                          className="p-1.5 hover:bg-slate-800/70 text-slate-300 hover:text-white rounded-lg transition"
                           title="View Details"
                         >
                           <Eye className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => openEditModal(chef)}
-                          className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-lg transition"
+                          className="p-1.5 hover:bg-slate-800/70 text-slate-300 hover:text-white rounded-lg transition"
                           title="Edit Chef"
                         >
                           <Edit2 className="w-4 h-4" />
@@ -639,7 +643,7 @@ const HomeChefManagement = () => {
                             onClick={() =>
                               handleStatusChange(chef.id, "Approved")
                             }
-                            className="p-1.5 hover:bg-emerald-50 text-emerald-500 hover:text-emerald-700 rounded-lg transition"
+                            className="p-1.5 hover:bg-emerald-500/10 text-emerald-300 hover:text-emerald-100 rounded-lg transition"
                             title="Approve Chef"
                           >
                             <Check className="w-4 h-4" />
@@ -650,7 +654,7 @@ const HomeChefManagement = () => {
                             onClick={() =>
                               handleStatusChange(chef.id, "Suspended")
                             }
-                            className="p-1.5 hover:bg-amber-50 text-amber-500 hover:text-amber-700 rounded-lg transition"
+                            className="p-1.5 hover:bg-amber-500/10 text-amber-300 hover:text-amber-100 rounded-lg transition"
                             title="Suspend Chef"
                           >
                             <ShieldAlert className="w-4 h-4" />
@@ -658,7 +662,7 @@ const HomeChefManagement = () => {
                         )}
                         <button
                           onClick={() => handleDelete(chef.id)}
-                          className="p-1.5 hover:bg-red-50 text-red-400 hover:text-red-600 rounded-lg transition"
+                          className="p-1.5 hover:bg-red-500/10 text-red-400 hover:text-red-200 rounded-lg transition"
                           title="Delete Chef"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -681,17 +685,19 @@ const HomeChefManagement = () => {
             </table>
           </div>
         </div>
+      </div>
+    </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {filteredChefs.map((chef) => (
             <div
               key={chef.id}
-              className="bg-white border border-slate-100 p-5 rounded-2xl flex flex-col justify-between shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+              className="bg-slate-950/90 border border-white/10 p-5 rounded-2xl flex flex-col justify-between shadow-2xl transition-all duration-200 hover:shadow-2xl/40"
             >
               <div className="space-y-4">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h4 className="text-base font-black text-slate-800">
+                    <h4 className="text-base font-black text-white">
                       {chef.name}
                     </h4>
                     <p className="text-xs text-slate-400 font-medium mt-0.5">
@@ -710,38 +716,38 @@ const HomeChefManagement = () => {
                     {chef.status}
                   </span>
                 </div>
-                <div className="space-y-1.5 text-xs text-slate-500">
+                <div className="space-y-1.5 text-xs text-slate-400">
                   <p>
-                    <strong className="text-slate-600">Mobile:</strong>{" "}
+                    <strong className="text-slate-300">Mobile:</strong>{" "}
                     {chef.mobile}
                   </p>
                   <p>
-                    <strong className="text-slate-600">Email:</strong>{" "}
+                    <strong className="text-slate-300">Email:</strong>{" "}
                     {chef.email}
                   </p>
                   <p>
-                    <strong className="text-slate-600">Cuisine:</strong>{" "}
+                    <strong className="text-slate-300">Cuisine:</strong>{" "}
                     {chef.cuisine_type || "N/A"}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 mt-5 pt-4 border-t border-slate-100">
+              <div className="flex items-center gap-2 mt-5 pt-4 border-t border-white/10">
                 <button
                   onClick={() => navigate(`/admin/homechefs/${chef.id}`)}
-                  className="flex-1 py-2 bg-slate-50 hover:bg-slate-100 rounded-xl font-bold text-xs uppercase tracking-wider text-slate-600 hover:text-slate-800 transition text-center border border-slate-200"
+                  className="flex-1 py-2 bg-white/5 hover:bg-slate-800/60 rounded-xl font-bold text-xs uppercase tracking-wider text-slate-200 hover:text-white transition text-center border border-white/10"
                 >
                   Details
                 </button>
                 <button
                   onClick={() => openEditModal(chef)}
-                  className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-xl transition border border-slate-200"
+                  className="p-2 bg-white/5 hover:bg-slate-800/60 text-slate-300 hover:text-white rounded-xl transition border border-white/10"
                   title="Edit"
                 >
                   <Edit2 className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => handleDelete(chef.id)}
-                  className="p-2 bg-slate-50 hover:bg-red-50 text-red-400 hover:text-red-600 rounded-xl transition border border-slate-200"
+                  className="p-2 bg-white/5 hover:bg-red-500/10 text-red-400 hover:text-red-200 rounded-xl transition border border-white/10"
                   title="Delete"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -786,16 +792,16 @@ const HomeChefManagement = () => {
               </div>
 
               {/* Tabs List */}
-              <div className="border-b border-gray-100 bg-white p-3 flex gap-2 overflow-x-auto whitespace-nowrap scrollbar-thin relative z-20">
+              <div className="border-b border-white/10 bg-slate-950/95 p-4 flex gap-2 overflow-x-auto whitespace-nowrap scrollbar-thin relative z-20">
                 {tabs.map((t) => (
                   <button
                     key={t.id}
                     type="button"
                     onClick={() => setActiveFormTab(t.id)}
-                    className={`flex-shrink-0 mx-1 px-4 py-2 text-xs font-black uppercase tracking-wider rounded-full transition focus:outline-none focus:ring-0 ${
+                    className={`flex-shrink-0 mx-1 px-5 py-2 text-xs font-black uppercase tracking-wider rounded-full transition focus:outline-none focus:ring-0 ${
                       activeFormTab === t.id
-                        ? "bg-emerald-800 text-white shadow-inner"
-                        : "text-gray-600 hover:text-gray-800 hover:bg-gray-100"
+                        ? "bg-emerald-500 text-slate-950 shadow-[0_15px_40px_rgba(16,185,129,0.18)]"
+                        : "text-slate-300 hover:text-white hover:bg-slate-900/80"
                     }`}
                   >
                     {t.label}
@@ -806,7 +812,7 @@ const HomeChefManagement = () => {
               {/* Form Fields container */}
               <form
                 onSubmit={handleSubmit}
-                className="flex-1 overflow-y-auto p-8 space-y-6 bg-white text-gray-800"
+                className="flex-1 overflow-y-auto p-8 space-y-6 bg-slate-950/95 text-slate-100"
               >
                 {activeFormTab === "basic" && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1069,7 +1075,7 @@ const HomeChefManagement = () => {
                         }
                         rows="2"
                         placeholder="Kitchen Address"
-                        className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl outline-none font-medium text-gray-800 text-sm focus:border-emerald-500 transition-all resize-none placeholder:text-gray-400"
+                        className={inp}
                       />
                     </div>
                     {renderFileField(
@@ -1325,7 +1331,7 @@ const HomeChefManagement = () => {
                         }
                         rows="2"
                         placeholder="Holiday Schedule / Special Closures"
-                        className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl outline-none font-medium text-gray-800 text-sm focus:border-emerald-500 transition-all resize-none placeholder:text-gray-400"
+                        className={inp}
                       />
                     </div>
                     <div className="md:col-span-2 flex gap-6 pt-2">
@@ -1467,7 +1473,66 @@ const HomeChefManagement = () => {
                       />
                     </div>
 
-                    
+                    <div className="md:col-span-2 grid gap-4 sm:grid-cols-2">
+                      <label className="group rounded-[1.75rem] border border-white/10 bg-slate-900/80 p-4 flex items-center justify-between gap-3 cursor-pointer transition hover:border-emerald-400">
+                        <div>
+                          <p className="text-[10px] text-slate-400 uppercase tracking-[0.24em] font-black mb-1">
+                            OTP Verified
+                          </p>
+                          <p className="text-sm text-slate-300">
+                            Mark if OTP verification is complete.
+                          </p>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={form.otp_verified}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              otp_verified: e.target.checked,
+                            })
+                          }
+                          className="h-5 w-5 rounded border border-white/10 text-emerald-500 bg-slate-950"
+                        />
+                      </label>
+                      <label className="group rounded-[1.75rem] border border-white/10 bg-slate-900/80 p-4 flex items-center justify-between gap-3 cursor-pointer transition hover:border-emerald-400">
+                        <div>
+                          <p className="text-[10px] text-slate-400 uppercase tracking-[0.24em] font-black mb-1">
+                            Email Verified
+                          </p>
+                          <p className="text-sm text-slate-300">
+                            Mark when the chef has completed email verification.
+                          </p>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={form.email_verified}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              email_verified: e.target.checked,
+                            })
+                          }
+                          className="h-5 w-5 rounded border border-white/10 text-emerald-500 bg-slate-950"
+                        />
+                      </label>
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className={lbl}>KYC Verification Notes</label>
+                      <textarea
+                        value={form.kyc_verification_notes}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            kyc_verification_notes: e.target.value,
+                          })
+                        }
+                        rows="3"
+                        placeholder="Notes on document review, pending issues, or verification comments"
+                        className={inp}
+                      />
+                    </div>
                   </div>
                 )}
 
@@ -1647,7 +1712,7 @@ const HomeChefManagement = () => {
                           }
                           rows="2"
                           placeholder="Rejection Reason"
-                          className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl outline-none font-medium text-gray-800 text-sm focus:border-emerald-500 transition-all resize-none placeholder:text-gray-400"
+                          className={inp}
                         />
                       </div>
                     )}
@@ -1663,7 +1728,7 @@ const HomeChefManagement = () => {
                           }
                           rows="2"
                           placeholder="Block Reason"
-                          className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl outline-none font-medium text-gray-800 text-sm focus:border-emerald-500 transition-all resize-none placeholder:text-gray-400"
+                          className={inp}
                         />
                       </div>
                     )}
@@ -1673,11 +1738,11 @@ const HomeChefManagement = () => {
                 )}
               </form>
 
-              <div className="p-8 border-t border-gray-100 bg-white flex justify-end gap-3 flex-shrink-0 rounded-b-[2.5rem]">
+              <div className="p-8 border-t border-white/10 bg-slate-950/95 flex justify-end gap-3 flex-shrink-0 rounded-b-[2.5rem]">
                 <button
                   type="button"
                   onClick={() => setIsFormOpen(false)}
-                  className="px-6 py-3 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 font-black text-xs uppercase tracking-widest rounded-2xl transition"
+                  className="px-6 py-3 bg-slate-900/80 border border-white/10 text-slate-200 hover:bg-slate-900 font-black text-xs uppercase tracking-widest rounded-2xl transition"
                 >
                   Cancel
                 </button>

@@ -192,7 +192,7 @@ const Reviews = () => {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
           <div className="hidden sm:flex items-center gap-3">
-            <div className="bg-white px-5 py-3 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3">
+            <div className="superadmin-card px-5 py-3 rounded-2xl flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
                 <MessageSquare className="w-5 h-5" />
               </div>
@@ -202,7 +202,7 @@ const Reviews = () => {
               </div>
             </div>
 
-            <div className="bg-white px-5 py-3 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3">
+            <div className="superadmin-card px-5 py-3 rounded-2xl flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-500">
                 <Star className="w-5 h-5 fill-amber-500" />
               </div>
@@ -212,7 +212,7 @@ const Reviews = () => {
               </div>
             </div>
 
-            <div className="bg-white px-5 py-3 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3">
+            <div className="superadmin-card px-5 py-3 rounded-2xl flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-red-600">
                 <ShieldAlert className="w-5 h-5" />
               </div>
@@ -239,7 +239,7 @@ const Reviews = () => {
 
       {/* FILTERS AND SEARCH BAR */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
-        <div className="xl:col-span-5 bg-white p-2 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-1 overflow-x-auto hide-scrollbar">
+        <div className="xl:col-span-5 p-2 rounded-2xl superadmin-panel flex items-center gap-1 overflow-x-auto hide-scrollbar">
           {["All", "Pending", "Published", "Flagged"].map((s) => (
             <button
               key={s}
@@ -261,11 +261,11 @@ const Reviews = () => {
             placeholder="Search reviews, products or users..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-full min-h-[56px] bg-white border border-slate-100 rounded-2xl pl-11 pr-4 text-sm font-semibold text-slate-700 focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500/30 transition-all placeholder:text-slate-300"
+            className="superadmin-input w-full h-full min-h-[56px] pl-11 pr-4 text-sm font-semibold"
           />
         </div>
 
-        <div className="xl:col-span-3 bg-white p-2 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-1">
+        <div className="xl:col-span-3 p-2 rounded-2xl superadmin-panel flex items-center gap-1">
           {[5, 4, 3, 2, 1].map((r) => (
             <button
               key={r}
@@ -284,15 +284,15 @@ const Reviews = () => {
 
       {/* REVIEWS GRID */}
       {loading ? (
-        <div className="min-h-[400px] flex flex-col items-center justify-center gap-4 bg-white/50 rounded-[2.5rem] border border-dashed border-slate-200">
+        <div className="min-h-[400px] flex flex-col items-center justify-center gap-4 bg-white/5 rounded-[2.5rem] border border-dashed border-white/10">
           <div className="relative">
             <div className="w-12 h-12 rounded-full border-4 border-slate-100 border-t-blue-600 animate-spin"></div>
           </div>
           <p className="text-slate-400 font-black text-xs uppercase tracking-widest animate-pulse">Synchronizing Feedback...</p>
         </div>
       ) : reviews.length === 0 ? (
-        <div className="min-h-[400px] flex flex-col items-center justify-center gap-4 bg-white rounded-[2.5rem] border border-slate-100 border-dashed">
-          <div className="w-20 h-20 rounded-3xl bg-slate-50 flex items-center justify-center text-slate-200 mb-2">
+        <div className="min-h-[400px] flex flex-col items-center justify-center gap-4 superadmin-panel rounded-[2.5rem] border border-dashed border-white/10">
+            <div className="w-20 h-20 rounded-3xl bg-white/5 flex items-center justify-center text-slate-200 mb-2">
             <MessageSquare className="w-10 h-10" />
           </div>
           <p className="text-slate-900 font-black text-lg">No reviews found</p>
@@ -309,8 +309,7 @@ const Reviews = () => {
           {reviews.map((item) => (
             <div
               key={item.id}
-              className={`group relative bg-white rounded-[2rem] border border-slate-100 flex flex-col overflow-hidden hover:shadow-2xl hover:shadow-blue-900/10 transition-all duration-500 hover:-translate-y-1
-                ${item.status === 'Pending' ? 'ring-2 ring-amber-500/20 shadow-lg shadow-amber-500/5' : ''}`}
+              className={`group relative superadmin-card rounded-[2rem] flex flex-col overflow-hidden transition-all duration-500 hover:-translate-y-1 ${item.status === 'Pending' ? 'ring-2 ring-amber-500/20 shadow-lg shadow-amber-500/5' : ''}`}
             >
               {/* Header: User & Rating */}
               <div className="p-6 pb-2 space-y-4">
@@ -389,13 +388,13 @@ const Reviews = () => {
               </div>
 
               {/* Footer: Actions */}
-              <div className="p-4 mt-4 bg-slate-50/50 border-t border-slate-50 flex items-center justify-between">
+              <div className="p-4 mt-4 superadmin-panel border-t border-white/10 flex items-center justify-between">
                 <div className="flex items-center gap-1">
                   {item.status !== "Published" && (
                     <button
                       onClick={() => handleStatusUpdate(item.id, "Published")}
                       title="Approve"
-                      className="p-2.5 bg-white text-emerald-500 border border-emerald-100 rounded-xl hover:bg-emerald-500 hover:text-white transition-all shadow-sm"
+                      className="p-2.5 bg-transparent text-emerald-500 border border-white/10 rounded-xl hover:bg-emerald-500/10 hover:text-white transition-all shadow-sm"
                     >
                       <CheckCircle className="w-4 h-4" />
                     </button>
@@ -404,35 +403,24 @@ const Reviews = () => {
                     <button
                       onClick={() => handleStatusUpdate(item.id, "Flagged")}
                       title="Flag"
-                      className="p-2.5 bg-white text-red-500 border border-red-100 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-sm"
+                      className="p-2.5 bg-transparent text-red-500 border border-white/10 rounded-xl hover:bg-red-500/10 hover:text-white transition-all shadow-sm"
                     >
                       <AlertCircle className="w-4 h-4" />
                     </button>
                   )}
-                  <button
-                    onClick={() => setActiveReplyId(activeReplyId === item.id ? null : item.id)}
-                    title="Reply"
-                    className={`p-2.5 rounded-xl border transition-all shadow-sm
-                      ${activeReplyId === item.id
-                        ? "bg-slate-900 text-white border-slate-900"
-                        : "bg-white text-blue-600 border-blue-100 hover:bg-blue-600 hover:text-white"}`}
-                  >
+                  <button onClick={() => setActiveReplyId(activeReplyId === item.id ? null : item.id)} title="Reply" className={`p-2.5 rounded-xl border transition-all shadow-sm ${activeReplyId === item.id ? "bg-slate-900 text-white border-slate-900" : "bg-transparent text-blue-600 border-white/10 hover:bg-blue-600/10 hover:text-white"}`}>
                     <Reply className="w-4 h-4" />
                   </button>
                 </div>
 
-                <button
-                  onClick={() => handleDelete(item.id)}
-                  title="Delete"
-                  className="p-2.5 text-slate-300 hover:text-red-500 hover:bg-white rounded-xl transition-all"
-                >
+                <button onClick={() => handleDelete(item.id)} title="Delete" className="p-2.5 text-slate-300 hover:text-red-500 hover:bg-white/10 rounded-xl transition-all">
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
 
               {/* REPLY OVERLAY */}
               {activeReplyId === item.id && (
-                <div className="absolute inset-0 z-20 bg-white p-6 flex flex-col animate-in slide-in-from-bottom-full duration-300">
+                <div className="absolute inset-0 z-20 superadmin-card p-6 flex flex-col animate-in slide-in-from-bottom-full duration-300">
                   <div className="flex items-center justify-between mb-4">
                     <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest">Official Reply</span>
                     <button onClick={() => setActiveReplyId(null)} className="text-slate-400 hover:text-slate-600">
@@ -464,9 +452,9 @@ const Reviews = () => {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 italic">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setShowAddModal(false)}></div>
 
-          <div className="relative w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
+          <div className="relative w-full max-w-2xl superadmin-card rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
             {/* Header */}
-            <div className="px-8 py-6 border-b border-slate-50 flex items-center justify-between bg-white sticky top-0 z-10">
+            <div className="px-8 py-6 border-b border-white/5 flex items-center justify-between superadmin-panel sticky top-0 z-10">
               <div>
                 <h2 className="text-xl font-black text-slate-800 uppercase tracking-tight">Create Manual Review</h2>
                 <p className="text-xs text-slate-400 font-bold mt-1 uppercase tracking-widest">Admin Control Panel</p>
@@ -575,7 +563,7 @@ const Reviews = () => {
                       </div>
                     ) : (
                       <>
-                        <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-slate-300 shadow-sm">
+                        <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-slate-300 shadow-sm">
                           <Camera className="w-6 h-6" />
                         </div>
                         <div className="text-center">

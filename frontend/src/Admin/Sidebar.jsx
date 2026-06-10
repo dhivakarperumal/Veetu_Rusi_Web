@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -10,8 +10,6 @@ import {
   X,
   ChevronDown,
   ChevronLeft,
-  Home,
-  Tag,
   PlusCircle,
   List,
   Layers,
@@ -19,13 +17,11 @@ import {
   XCircle,
   Archive,
   Handshake,
-  Video,
-  Image,
-  Store,
   ChefHat,
   Bike,
   ShoppingBag,
-  CreditCard
+  CreditCard,
+  ShieldCheck
 } from "lucide-react";
 
 import { useAuth } from "../PrivateRouter/AuthContext";
@@ -87,7 +83,7 @@ const navItems = [
 
 /* ================= SIDEBAR ================= */
 const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
-  const { profileName } = useAuth();
+  useAuth();
   const location = useLocation();
   const [openMenu, setOpenMenu] = useState(null);
 
@@ -99,13 +95,6 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
       return path.replace("/admin", prefix);
     }
     return path;
-  };
-
-  /* ================= ACTIVE ROUTE MAP ================= */
-  const activeRouteMap = {
-    "/admin/products": ["/admin/products/all", "/admin/products/add", "/admin/products/category"],
-    "/admin/orders": ["/admin/orders/all", "/admin/orders/new", "/admin/orders/create", "/admin/orders/delivery", "/admin/orders/cancelled"],
-    "/admin/users": ["/admin/users/all"],
   };
 
   /* ================= HELPERS & LOGIC ================= */
@@ -144,41 +133,36 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
       {/* ========== MOBILE OVERLAY ========== */}
       <div
         onClick={onClose}
-        className={`fixed inset-0 z-40 bg-black  lg:hidden
-        transition-opacity ${isOpen ? "opacity-100 visible" : "opacity-0 invisible"}`}
+        className={`fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden transition-opacity ${isOpen ? "opacity-100 visible" : "opacity-0 invisible"}`}
       />
 
       {/* ========== SIDEBAR ========== */}
       <aside
-        className={`
-        fixed top-0 left-0 z-50 h-full
-        bg-[#0B1120] border-r border-white/5
-        
-        flex flex-col transition-all duration-300
-        ${isOpen ? "translate-x-0" : "-translate-x-full"}
-        lg:translate-x-0
-        ${collapsed ? "w-20" : "w-72"}
-      `}
+        className={`fixed top-0 left-0 z-50 h-full flex flex-col overflow-x-hidden bg-gradient-to-b from-slate-950 via-[#06110f] to-slate-900 border-r border-white/10 shadow-2xl shadow-emerald-900/20 transition-all duration-300 ${isOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 ${collapsed ? "w-20" : "w-72"}`}
       >
         {/* ========== LOGO ========== */}
-        <div className="flex items-center gap-3 px-4 py-5 border-b border-white/5 overflow-hidden">
-          <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-lg shadow-blue-600/20 shrink-0 overflow-hidden">
-            <img
-              src="/logo.png"
-              alt="Logo"
-              className="w-8 h-8 object-contain"
-              onError={(e) => { e.target.src = "https://ui-avatars.com/api/?name=SP&background=2563EB&color=fff"; }}
-            />
-          </div>
-
-          {!collapsed && (
-            <div className="overflow-hidden">
-              <h1 className="text-md font-black text-white tracking-tighter uppercase leading-none">Veetu Rusi</h1>
-              <p className="text-[9px] text-blue-400 font-bold tracking-widest uppercase opacity-70 mt-1">
-                Artisan Admin
-              </p>
+        <div className="relative overflow-hidden px-4 pt-5 pb-5 border-b border-white/10">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-br from-emerald-500/15 via-transparent to-cyan-500/5" />
+          <div className="relative flex items-center gap-3">
+            <div className="w-11 h-11 rounded-3xl bg-emerald-400/10 border border-emerald-300/10 flex items-center justify-center shadow-2xl shadow-emerald-500/10 overflow-hidden">
+              <img
+                src="/logo.png"
+                alt="Logo"
+                className="w-8 h-8 object-contain"
+                onError={(e) => { e.target.src = "https://ui-avatars.com/api/?name=VR&background=1B4D22&color=fff"; }}
+              />
             </div>
-          )}
+            {!collapsed && (
+              <div className="overflow-hidden">
+                <p className="text-[10px] font-black uppercase tracking-[0.28em] text-emerald-300 mb-1">
+                  Platform Control
+                </p>
+                <h1 className="text-lg sm:text-xl font-black text-white tracking-tight leading-none">
+                  Admin
+                </h1>
+              </div>
+            )}
+          </div>
 
           <button
             onClick={onClose}
@@ -195,29 +179,23 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
 
             /* ===== DROPDOWN ITEM ===== */
             if (item.children) {
-              const isMenuOpen = openMenu === item.label;
               const isAnyChildActive = isActiveRoute(item);
+              const isMenuOpen = openMenu === item.label || isAnyChildActive;
 
               return (
                 <div key={item.label} className="space-y-1">
                   <button
                     onClick={() => toggleMenu(item.label)}
-                    className={`
-                      w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all
-                      ${isMenuOpen
-                        ? "bg-blue-600/10 text-white ring-1 ring-blue-500/30"
-                        : "text-white/50 hover:bg-white/5 hover:text-white"
-                      }
-                    `}
+                    className={`group relative w-full flex items-center gap-3 rounded-[1.75rem] px-4 py-3 transition-all duration-200 ${isMenuOpen ? "bg-emerald-500/15 text-emerald-300 shadow-[0_16px_50px_rgba(16,185,129,0.18)] ring-1 ring-emerald-400/20" : "text-slate-300 hover:bg-white/5 hover:text-white"}`}
                   >
+                    <span className={`absolute left-0 top-1/2 h-10 w-1 rounded-full transition-all ${isMenuOpen ? "opacity-100 -translate-x-0 bg-emerald-400/80" : "opacity-0 -translate-x-3 group-hover:opacity-100 group-hover:-translate-x-0 bg-emerald-400/80"}`} />
                     <Icon className="w-5 h-5 shrink-0" />
 
                     {!collapsed && (
                       <>
                         <span className="flex-1 text-left text-sm font-bold tracking-wide">{item.label}</span>
                         <ChevronDown
-                          className={`w-4 h-4 transition-transform ${isMenuOpen ? "rotate-180" : ""
-                            }`}
+                          className={`w-4 h-4 transition-transform ${isMenuOpen ? "rotate-180" : ""}`}
                         />
                       </>
                     )}
@@ -239,14 +217,9 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                             key={sub.path}
                             to={subPath}
                             onClick={() => isOpen && onClose()}
-                            className={`
-                              flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold transition-all
-                              ${(location.pathname === subPath || (subPath !== prefix && location.pathname.startsWith(subPath)))
-                                ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
-                                : "text-white/40 hover:text-white hover:bg-white/5"
-                              }
-                            `}
+                            className={`group relative flex items-center gap-3 px-4 py-2.5 rounded-[1.75rem] text-xs font-bold transition-all duration-200 ${isActive ? "bg-emerald-500/15 text-emerald-300 shadow-lg shadow-emerald-500/20" : "text-slate-300 hover:text-white hover:bg-white/5"}`}
                           >
+                            <span className={`absolute left-0 top-1/2 h-8 w-1 rounded-full transition-all ${isActive ? "opacity-100 -translate-x-0 bg-emerald-400/80" : "opacity-0 -translate-x-3 group-hover:opacity-100 group-hover:-translate-x-0 bg-emerald-400/80"}`} />
                             <SubIcon className="w-4 h-4 shrink-0" />
                             <span>{sub.label}</span>
                           </NavLink>
@@ -273,10 +246,10 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                 }}
                 className={`
                   flex items-center gap-3 px-4 py-3 rounded-xl transition-all
-                  ${isActive
-                    ? "bg-blue-600 text-white shadow-xl shadow-blue-600/20"
-                    : "text-white/50 hover:bg-white/5 hover:text-white"
-                  }
+                    ${isActive
+                      ? "group relative bg-emerald-500/10 text-emerald-300 shadow-[0_16px_50px_rgba(16,185,129,0.18)] ring-1 ring-emerald-400/20"
+                      : "text-white/50 hover:bg-white/5 hover:text-white"
+                    }
                 `}
               >
                 <Icon className="w-5 h-5 shrink-0" />
@@ -288,16 +261,20 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
 
         {/* ========== FOOTER / PROFILE ========== */}
         {!collapsed && (
-          <div className="p-4 mx-3 mb-6 bg-white/5 rounded-2xl border border-white/5">
-            <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-3 pl-1">System Identity</p>
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white text-xs font-black shadow-lg shadow-blue-600/40">
-                {profileName?.charAt(0) || "A"}
+          <div className="px-4 pb-5 space-y-3">
+            <div className="rounded-[2rem] border border-white/10 bg-[#071611]/90 p-4 shadow-2xl shadow-emerald-900/20">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 grid place-items-center rounded-2xl bg-slate-900/80 text-emerald-300">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-xs text-white/50 uppercase tracking-[0.25em]">Secure Mode</p>
+                  <p className="text-sm font-black text-white">Live protection enabled</p>
+                </div>
               </div>
-              <div className="overflow-hidden">
-                <p className="text-xs font-black text-white truncate">{profileName || "Administrator"}</p>
-                <p className="text-[9px] text-blue-400 font-bold uppercase truncate opacity-70">Master Control</p>
-              </div>
+              <p className="text-[10px] text-slate-300 leading-relaxed">
+                Manage platform events, monitor approvals, and keep the entire system running smoothly.
+              </p>
             </div>
           </div>
         )}
@@ -305,18 +282,10 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
         {/* ========== COLLAPSE BUTTON ========== */}
         <button
           onClick={onToggleCollapse}
-          className="
-            hidden lg:flex absolute -right-3 top-1/2 -translate-y-1/2
-            w-6 h-6 rounded-full
-            bg-white border border-slate-200
-            shadow-[0_4px_10px_rgba(0,0,0,0.1)]
-            items-center justify-center
-            text-slate-500 hover:text-blue-600 hover:scale-110 transition-all z-50
-          "
+          className="hidden lg:flex absolute -right-3 top-1/2 z-50 h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-[#061712] text-slate-300 shadow-xl shadow-black/20 transition-all hover:bg-[#0f2f1c] hover:text-emerald-400"
         >
           <ChevronLeft
-            className={`w-4 h-4 transition-transform ${collapsed ? "rotate-180" : ""
-              }`}
+            className={`w-5 h-5 transition-transform ${collapsed ? "rotate-180" : ""}`}
           />
         </button>
       </aside>

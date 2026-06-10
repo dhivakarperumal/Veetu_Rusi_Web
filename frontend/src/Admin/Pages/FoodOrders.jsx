@@ -35,12 +35,12 @@ const STATUS_OPTIONS = [
 ];
 
 const STATUS_STYLES = {
-  Pending: 'bg-amber-100 text-amber-700',
-  Confirmed: 'bg-blue-100 text-blue-700',
-  Preparing: 'bg-violet-100 text-violet-700',
-  'Out for Delivery': 'bg-orange-100 text-orange-700',
-  Delivered: 'bg-emerald-100 text-emerald-700',
-  Cancelled: 'bg-rose-100 text-rose-700',
+  Pending: 'bg-amber-500/15 text-amber-200 border border-amber-400/20',
+  Confirmed: 'bg-blue-500/15 text-blue-200 border border-blue-400/20',
+  Preparing: 'bg-violet-500/15 text-violet-200 border border-violet-400/20',
+  'Out for Delivery': 'bg-orange-500/15 text-orange-200 border border-orange-400/20',
+  Delivered: 'bg-emerald-500/15 text-emerald-200 border border-emerald-400/20',
+  Cancelled: 'bg-rose-500/15 text-rose-200 border border-rose-400/20',
 };
 
 const STATUS_ICONS = {
@@ -122,7 +122,7 @@ const InfoRow = ({ icon, label, value }) => (
         {label}
       </p>
 
-      <p className="text-sm font-semibold text-slate-700 truncate max-w-[160px]">
+      <p className="text-sm font-semibold text-slate-100 truncate max-w-[160px]">
         {value}
       </p>
     </div>
@@ -185,7 +185,7 @@ const OrderModal = ({ order, onClose, onStatusChange }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white shadow-2xl">
+      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl superadmin-card shadow-2xl">
 
         {/* HEADER */}
         <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-3xl bg-gradient-to-r from-slate-900 to-slate-800 px-7 py-5">
@@ -210,7 +210,7 @@ const OrderModal = ({ order, onClose, onStatusChange }) => {
         <div className="p-7 space-y-6">
 
           {/* STATUS */}
-          <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-slate-50 border border-slate-100 p-5">
+          <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-slate-950/90 border border-white/10 p-5">
             <div>
               <p className="text-xs uppercase tracking-widest text-slate-400">
                 Current Status
@@ -219,7 +219,7 @@ const OrderModal = ({ order, onClose, onStatusChange }) => {
               <span
                 className={`mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-black uppercase tracking-wide ${
                   STATUS_STYLES[order.status] ||
-                  'bg-slate-100 text-slate-600'
+                  'bg-slate-800 text-slate-200'
                 }`}
               >
                 {STATUS_ICONS[order.status]}
@@ -239,7 +239,7 @@ const OrderModal = ({ order, onClose, onStatusChange }) => {
           </div>
 
           {/* UPDATE STATUS */}
-          <div className="rounded-2xl border border-slate-200 p-5">
+          <div className="superadmin-card p-5 rounded-2xl bg-slate-950/90 border border-white/10">
             <p className="text-xs uppercase tracking-widest text-slate-400 mb-3">
               Update Status
             </p>
@@ -253,9 +253,9 @@ const OrderModal = ({ order, onClose, onStatusChange }) => {
                     status === s
                       ? `${
                           STATUS_STYLES[s] ||
-                          'bg-slate-200 text-slate-700'
-                        } ring-2 ring-offset-1 ring-current`
-                      : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                          'bg-slate-800 text-slate-200'
+                        } ring-2 ring-offset-1 ring-emerald-400/30`
+                      : 'bg-slate-900 text-slate-300 hover:bg-slate-800'
                   }`}
                 >
                   {s}
@@ -273,7 +273,7 @@ const OrderModal = ({ order, onClose, onStatusChange }) => {
           </div>
 
           {/* ORDER INFO */}
-          <div className="rounded-2xl border border-slate-200 p-5 space-y-3">
+          <div className="superadmin-card p-5 rounded-2xl space-y-3 bg-slate-950/90 border border-white/10">
             <p className="text-xs uppercase tracking-widest text-slate-400">
               Order Info
             </p>
@@ -314,7 +314,7 @@ const OrderModal = ({ order, onClose, onStatusChange }) => {
           </div>
 
           {/* CUSTOMER */}
-          <div className="rounded-2xl border border-slate-200 p-5 space-y-3">
+          <div className="superadmin-card p-5 rounded-2xl space-y-3 bg-slate-950/90 border border-white/10">
             <p className="text-xs uppercase tracking-widest text-slate-400">
               Customer
             </p>
@@ -384,37 +384,35 @@ const OrderModal = ({ order, onClose, onStatusChange }) => {
 
           {/* ITEMS */}
           {items.length > 0 && (
-            <div className="rounded-2xl border border-slate-200 overflow-hidden">
-              <div className="bg-slate-50 px-5 py-3">
+            <div className="rounded-2xl overflow-hidden superadmin-card bg-slate-950/90 border border-white/10">
+              <div className="bg-slate-900/80 px-5 py-3">
                 <p className="text-xs font-black uppercase tracking-widest text-slate-400">
                   Ordered Items ({items.length})
                 </p>
               </div>
 
-              <div className="divide-y divide-slate-100">
+              <div className="divide-y divide-white/10">
                 {items.map((item, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between px-5 py-3"
+                    className="flex items-center justify-between px-5 py-3 hover:bg-slate-900/70 transition"
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-slate-600 text-xs font-black">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800 text-slate-100 text-xs font-black">
                         {String(item.name || 'F')
                           .charAt(0)
                           .toUpperCase()}
                       </div>
 
-                      <div>
-                        <p className="text-sm font-bold text-slate-800">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-slate-100 truncate">
                           {item.name || 'Item'}
                         </p>
-
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-slate-400 mt-1">
                           Qty: {item.quantity || 1}
                           {` • Unit: ${formatAmount(getItemUnitPrice(item))}`}
                           {` • Total: ${formatAmount(getItemTotal(item))}`}
                         </p>
-
                         {(item.chef_name || item.chef || item.created_by_name) && (
                           <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400 mt-1">
                             {`Chef: ${item.chef_name || item.chef || item.created_by_name}`}
@@ -423,7 +421,7 @@ const OrderModal = ({ order, onClose, onStatusChange }) => {
                       </div>
                     </div>
 
-                    <p className="text-sm font-black text-emerald-600">
+                    <p className="text-sm font-black text-emerald-500">
                       {formatAmount(getItemTotal(item))}
                     </p>
                   </div>
@@ -539,11 +537,11 @@ const FoodOrders = () => {
       {/* HEADER */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-3xl font-black text-slate-900">
+          <h2 className="text-3xl font-black text-white">
             Food Orders
           </h2>
 
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-slate-400">
             Track and manage all home chef food orders
           </p>
         </div>
@@ -597,7 +595,7 @@ const FoodOrders = () => {
       </div>
 
       {/* FILTER */}
-      <div className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm md:flex-row md:items-center">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center justify-between superadmin-panel p-4 rounded-2xl">
 
         <div className="relative flex-1">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -607,7 +605,7 @@ const FoodOrders = () => {
             placeholder="Search by customer, order ID, chef..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+            className="w-full pl-11 pr-4 py-3 bg-slate-950/80 border border-white/10 rounded-xl text-sm text-slate-100 placeholder:text-slate-500 focus:bg-slate-900 focus:border-emerald-400/30"
           />
         </div>
 
@@ -619,7 +617,7 @@ const FoodOrders = () => {
               onChange={(e) =>
                 setChefFilter(e.target.value)
               }
-              className="px-3 py-3 rounded-xl border border-slate-200"
+              className="px-3 py-3 rounded-xl border border-white/10 bg-slate-950/80 text-slate-100"
             >
               <option value="All">All Chefs</option>
 
@@ -639,7 +637,7 @@ const FoodOrders = () => {
             onChange={(e) =>
               setStatusFilter(e.target.value)
             }
-            className="px-3 py-3 rounded-xl border border-slate-200"
+            className="px-3 py-3 rounded-xl border border-white/10 bg-slate-950/80 text-slate-100"
           >
             {STATUS_OPTIONS.map((s) => (
               <option key={s} value={s}>
@@ -651,7 +649,7 @@ const FoodOrders = () => {
       </div>
 
       {/* TABLE */}
-      <div className="rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden">
+      <div className="rounded-3xl border border-white/10 bg-slate-950/90 shadow-2xl overflow-hidden">
 
         {loading ? (
           <div className="flex items-center justify-center py-24">
@@ -666,22 +664,36 @@ const FoodOrders = () => {
 
             <table className="w-full text-left text-sm">
 
-              <thead className="bg-slate-50 border-b border-slate-100">
+              <thead className="bg-slate-900/80 border-b border-white/10">
                 <tr>
-                  <th className="px-5 py-4">Order</th>
-                  <th className="px-5 py-4">Customer</th>
-                  <th className="px-5 py-4">Chefs</th>
-                  <th className="px-5 py-4">Item Breakdown</th>
-                  <th className="px-5 py-4">Amount</th>
-                  <th className="px-5 py-4">Status</th>
-                  <th className="px-5 py-4">Date</th>
-                  <th className="px-5 py-4 text-right">
+                  <th className="px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-slate-400">
+                    Order
+                  </th>
+                  <th className="px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-slate-400">
+                    Customer
+                  </th>
+                  <th className="px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-slate-400">
+                    Chefs
+                  </th>
+                  <th className="px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-slate-400">
+                    Item Breakdown
+                  </th>
+                  <th className="px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-slate-400">
+                    Amount
+                  </th>
+                  <th className="px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-slate-400">
+                    Status
+                  </th>
+                  <th className="px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-slate-400">
+                    Date
+                  </th>
+                  <th className="px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-slate-400 text-right">
                     Actions
                   </th>
                 </tr>
               </thead>
 
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-white/10">
                 {orders.map((order) => {
                   const items = Array.isArray(order.items)
                     ? order.items
@@ -693,15 +705,15 @@ const FoodOrders = () => {
                   return (
                     <React.Fragment key={order.id}>
 
-                      <tr className="hover:bg-slate-50">
+                      <tr className="hover:bg-slate-900/70 transition-colors">
 
                         <td className="px-5 py-4">
-                          <p className="font-black">
+                          <p className="font-black text-white">
                             {order.order_id}
                           </p>
                         </td>
 
-                        <td className="px-5 py-4">
+                        <td className="px-5 py-4 text-slate-200">
                           {order.customer_name ||
                             order.ordered_by_name}
                         </td>
@@ -710,12 +722,12 @@ const FoodOrders = () => {
                           {chefGroups.map((group) => (
                             <div
                               key={group.name}
-                              className="rounded-2xl bg-slate-100 px-3 py-2"
+                              className="rounded-2xl bg-slate-900/80 px-3 py-2"
                             >
-                              <p className="text-sm font-semibold text-slate-900">
+                              <p className="text-sm font-semibold text-white">
                                 {group.name}
                               </p>
-                              <p className="text-xs text-slate-500">
+                              <p className="text-xs text-slate-400">
                                 Qty {group.total_quantity} · {group.items.length} product{group.items.length === 1 ? '' : 's'}
                               </p>
                             </div>
@@ -726,12 +738,12 @@ const FoodOrders = () => {
                           {chefGroups.map((group) => (
                             <div
                               key={`${group.name}-items`}
-                              className="rounded-2xl bg-slate-100 px-3 py-2"
+                              className="rounded-2xl bg-slate-900/80 px-3 py-2"
                             >
-                              <p className="text-sm font-semibold text-slate-900">
+                              <p className="text-sm font-semibold text-white">
                                 {group.name}
                               </p>
-                              <p className="text-xs text-slate-500">
+                              <p className="text-xs text-slate-400">
                                 {group.items.map((item) => `${item.name || 'Item'} x${item.quantity || 1}`).join(', ')}
                               </p>
                             </div>
@@ -771,7 +783,7 @@ const FoodOrders = () => {
                               onClick={() =>
                                 setSelectedOrder(order)
                               }
-                              className="rounded-xl bg-slate-900 p-2 text-white"
+                              className="rounded-xl bg-slate-800/80 p-2 text-slate-100 hover:bg-emerald-500/10 transition"
                             >
                               <Eye className="w-4 h-4" />
                             </button>
@@ -784,7 +796,7 @@ const FoodOrders = () => {
                                     : order.id
                                 )
                               }
-                              className="rounded-xl bg-slate-100 p-2"
+                              className="rounded-xl bg-slate-900/80 p-2 text-slate-300 hover:bg-slate-800 transition"
                             >
                               {isExpanded ? (
                                 <ChevronUp className="w-4 h-4" />
@@ -799,27 +811,27 @@ const FoodOrders = () => {
 
                       {isExpanded &&
                         chefGroups.length > 0 && (
-                          <tr className="bg-slate-50">
+                          <tr className="bg-slate-950/90">
                             <td
                               colSpan={8}
                               className="px-5 py-3"
                             >
-                              <div className="space-y-4">
+                                              <div className="space-y-4">
                                 {chefGroups.map((group) => (
                                   <div
                                     key={group.name}
-                                    className="rounded-2xl border border-slate-200 bg-white p-4"
+                                    className="rounded-2xl border border-white/10 bg-slate-900/80 p-4"
                                   >
                                     <div className="mb-3 flex items-center justify-between gap-3">
                                       <div>
-                                        <p className="font-semibold text-slate-900">
+                                        <p className="font-semibold text-white">
                                           {group.name}
                                         </p>
-                                        <p className="text-xs text-slate-500">
+                                        <p className="text-xs text-slate-400">
                                           {group.items.length} items · Qty {group.total_quantity}
                                         </p>
                                       </div>
-                                      <p className="text-sm font-black text-emerald-600">
+                                      <p className="text-sm font-black text-emerald-500">
                                         {formatAmount(group.total_amount)}
                                       </p>
                                     </div>
@@ -828,12 +840,12 @@ const FoodOrders = () => {
                                       {group.items.map((item, idx) => (
                                         <div
                                           key={idx}
-                                          className="rounded-2xl bg-slate-50 p-3"
+                                          className="rounded-2xl bg-slate-950/80 p-3"
                                         >
-                                          <p className="font-semibold text-slate-900">
+                                          <p className="font-semibold text-white">
                                             {item.name || 'Item'}
                                           </p>
-                                          <p className="text-xs text-slate-500">
+                                          <p className="text-xs text-slate-400">
                                             Qty {item.quantity || 1} × {formatAmount(item.price || item.final_price || item.mrp)}
                                           </p>
                                         </div>

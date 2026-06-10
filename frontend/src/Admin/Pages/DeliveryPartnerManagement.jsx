@@ -134,10 +134,8 @@ const emptyForm = {
   status: "Pending",
 };
 
-const inp =
-  "w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl outline-none font-medium text-gray-800 text-sm focus:border-emerald-500 transition-all placeholder:text-gray-400";
-const lbl =
-  "text-[10px] text-gray-600 font-bold uppercase tracking-widest block mb-1";
+const inp = "superadmin-input";
+const lbl = "text-[10px] text-slate-300 font-bold uppercase tracking-widest block mb-1";
 
 const DeliveryPartnerManagement = () => {
   const [partners, setPartners] = useState([]);
@@ -549,7 +547,7 @@ const DeliveryPartnerManagement = () => {
       </div>
 
       {/* Toolbar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border border-slate-100 p-4 rounded-xl shadow-sm">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 superadmin-panel p-4 rounded-xl">
         <div className="relative flex-1 max-w-md w-full">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
@@ -589,7 +587,7 @@ const DeliveryPartnerManagement = () => {
           {[1, 2, 3].map((i) => <div key={i} className="h-16 bg-white/5 rounded-2xl animate-pulse" />)}
         </div>
       ) : viewMode === "table" ? (
-        <div className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm animate-in fade-in duration-200">
+        <div className="superadmin-card rounded-2xl overflow-hidden animate-in fade-in duration-200">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -649,7 +647,7 @@ const DeliveryPartnerManagement = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {filteredPartners.map((partner) => (
-            <div key={partner.id} className="bg-white border border-slate-100 p-5 rounded-2xl flex flex-col justify-between shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+            <div key={partner.id} className="superadmin-card p-5 rounded-2xl flex flex-col justify-between transition-all duration-200">
               <div className="space-y-4">
                 <div className="flex justify-between items-start">
                   <div className="flex items-center gap-3">

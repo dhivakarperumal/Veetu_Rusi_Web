@@ -63,10 +63,7 @@ const ChartTooltip = ({ active, payload, label }) => {
 
 // ─── Stat Card ────────────────────────────────────────────────────────────────
 const StatCard = ({ icon: Icon, label, value, trend, positive, gradient, iconBg, delay }) => (
-  <div
-    className="relative overflow-hidden rounded-3xl p-6 border border-white/5 shadow-xl hover:-translate-y-1 transition-all duration-300 group"
-    style={{ background: gradient, animationDelay: `${delay}ms` }}
-  >
+  <div className="superadmin-card p-6" style={{ animationDelay: `${delay}ms`, background: gradient }}>
     <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full opacity-20 blur-2xl" style={{ background: iconBg }} />
 
     <div className="flex items-start justify-between mb-5 relative z-10">
@@ -83,18 +80,18 @@ const StatCard = ({ icon: Icon, label, value, trend, positive, gradient, iconBg,
       </span>
     </div>
 
-    <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.18em] leading-none mb-2 relative z-10">{label}</p>
+    <p className="text-[10px] font-black text-slate-100/60 uppercase tracking-[0.18em] leading-none mb-2 relative z-10">{label}</p>
     <h3 className="text-3xl font-black text-white tracking-tight relative z-10">{value}</h3>
   </div>
 );
 
 // ─── Chart Card wrapper ───────────────────────────────────────────────────────
 const ChartCard = ({ title, subtitle, icon: Icon, iconColor, children }) => (
-  <div className="bg-white rounded-[2rem] p-6 shadow-xl border border-gray-100">
+  <div className="superadmin-card p-6">
     <div className="flex items-center justify-between mb-5">
       <div>
-        <h3 className="text-sm font-black text-slate-800 uppercase tracking-tight">{title}</h3>
-        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">{subtitle}</p>
+        <h3 className="text-sm font-black text-slate-100 uppercase tracking-tight">{title}</h3>
+        <p className="text-[10px] text-slate-300 font-bold uppercase tracking-widest mt-0.5">{subtitle}</p>
       </div>
       {Icon && <Icon className={`w-5 h-5 ${iconColor}`} />}
     </div>

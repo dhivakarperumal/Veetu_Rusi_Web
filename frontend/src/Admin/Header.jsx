@@ -290,37 +290,36 @@ const Header = ({ onMenuClick }) => {
       : "Administrator";
 
   return (
-    <header className="sticky top-0 z-30 
-      bg-gradient-to-r from-white via-white to-blue-50/30 backdrop-blur-md
-      border-b border-slate-200/60
-      shadow-[0_4px_30px_rgba(0,0,0,0.04)]">
+    <header className="sticky top-0 z-30 bg-slate-950/95 backdrop-blur-xl border-b border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.35)]">
 
-      <div className="flex items-center justify-between px-4 py-3 sm:px-6">
+      <div className="relative flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
 
         {/* LEFT */}
         <div className="flex items-center gap-4 min-w-0">
           <button
             onClick={onMenuClick}
-            className="lg:hidden p-2 rounded-xl 
-            bg-white hover:bg-slate-50 
-            text-slate-600 border border-slate-200 shadow-sm transition-all active:scale-95"
+            className="lg:hidden p-2 rounded-2xl bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 shadow-xl shadow-emerald-500/10 hover:bg-emerald-500/15 transition-all active:scale-95"
           >
             <Menu className="w-6 h-6" />
           </button>
 
-          <div className="hidden sm:flex flex-col">
-            <h1 className="text-xl sm:text-2xl font-black 
-              text-slate-800 tracking-tight truncate leading-none">
+          <div className="hidden sm:flex flex-col min-w-0">
+            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight truncate leading-none">
               {getPageTitle()}
             </h1>
-            <p className="hidden sm:block text-[10px] text-blue-600 font-bold uppercase tracking-[0.2em] mt-1 opacity-70">
+            <p className="hidden sm:block text-[10px] text-emerald-300 font-bold uppercase tracking-[0.2em] mt-1 opacity-80">
               Veetu Rusi Artisan Admin
             </p>
           </div>
         </div>
 
+        <div className="hidden md:flex items-center gap-2 rounded-3xl border border-white/10 bg-white/5 px-3 py-2 shadow-inner text-[10px] uppercase tracking-[0.3em] text-slate-300">
+          <span className="text-emerald-300 font-black">Live</span>
+          <span className="text-slate-400">real-time insights</span>
+        </div>
+
         {/* RIGHT */}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
 
           {/* SEARCH */}
           <div className="relative flex items-center" ref={searchWrapperRef}>
@@ -334,21 +333,21 @@ const Header = ({ onMenuClick }) => {
                   onChange={handleSearchInput}
                   onFocus={() => searchQuery && setShowSearchResults(true)}
                   placeholder="Order ID, name, phone..."
-                  className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-8 py-3 text-sm focus:outline-none focus:ring-3 focus:ring-gray-500/10 focus:border-gray-300 text-slate-700 transition-all"
+                  className="w-full bg-slate-900/90 border border-slate-700 rounded-2xl pl-10 pr-10 py-3 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-400/40 focus:border-emerald-400 transition-all"
                 />
                 {searchQuery && (
-                  <button onClick={clearSearch} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700">
+                  <button onClick={clearSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200">
                     <X className="w-3.5 h-3.5" />
                   </button>
                 )}
 
                 {/* Search Results Dropdown */}
                 {showSearchResults && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-100 rounded-2xl shadow-2xl z-[200] overflow-hidden">
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl z-[200] overflow-hidden">
                     {searchLoading ? (
                       <div className="px-4 py-3 text-xs text-slate-400 font-bold">Searching...</div>
                     ) : searchResults.length > 0 ? (
-                      <div className="divide-y divide-slate-50 max-h-[320px] overflow-y-auto">
+                      <div className="divide-y divide-slate-800 max-h-[320px] overflow-y-auto">
                         <div className="px-4 py-2 bg-slate-50">
                           <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{searchResults.length} Result{searchResults.length > 1 ? 's' : ''} found</p>
                         </div>
@@ -396,8 +395,7 @@ const Header = ({ onMenuClick }) => {
             </div>
             <button
               onClick={() => { setShowSearch(p => !p); if (showSearch) clearSearch(); }}
-              className={`p-2 rounded-xl transition-all active:scale-95 border
-              ${showSearch ? 'text-blue-600 bg-white border-blue-100 shadow-md shadow-blue-500/10' : 'bg-white text-slate-500 hover:bg-slate-50 border-slate-200 shadow-sm'}`}
+              className={`p-2 rounded-2xl transition-all active:scale-95 border ${showSearch ? 'text-emerald-300 bg-emerald-500/10 border-emerald-300/20 shadow-xl shadow-emerald-500/10' : 'bg-slate-900/90 text-slate-300 hover:bg-slate-800 border-slate-700 shadow-lg'}`}
             >
               <Search className="w-5 h-5" />
             </button>
@@ -407,8 +405,7 @@ const Header = ({ onMenuClick }) => {
           <div className="relative" ref={lowStockRef}>
             <button
               onClick={() => { setShowLowStock(p => !p); setShowNotifications(false); }}
-              className={`relative p-2 rounded-xl transition-all active:scale-95 border
-              ${showLowStock ? 'bg-amber-50 text-amber-600 border-amber-200 shadow-md' : 'bg-white text-slate-500 hover:bg-amber-50 hover:text-amber-500 border-slate-200 shadow-sm'}`}
+              className={`relative p-2 rounded-2xl transition-all active:scale-95 border ${showLowStock ? 'bg-amber-500/10 text-amber-300 border-amber-400/20 shadow-xl shadow-amber-500/10' : 'bg-slate-900/90 text-slate-300 hover:bg-slate-800 border-slate-700 shadow-lg'}`}
               title="Low Stock Alerts"
             >
               <AlertTriangle className="w-5 h-5" />
@@ -488,8 +485,7 @@ const Header = ({ onMenuClick }) => {
           <div className="relative" ref={notifRef}>
             <button
               onClick={() => setShowNotifications(p => !p)}
-              className={`relative p-2 rounded-xl transition-all active:scale-95 border
-              ${showNotifications ? 'bg-white text-blue-600 border-blue-100 shadow-md shadow-blue-500/10' : 'bg-white text-slate-500 hover:bg-slate-50 border-slate-200 shadow-sm'}`}
+              className={`relative p-2 rounded-2xl transition-all active:scale-95 border ${showNotifications ? 'bg-slate-900/90 text-emerald-300 border-emerald-400/20 shadow-xl shadow-emerald-500/10' : 'bg-slate-900/90 text-slate-300 hover:bg-slate-800 border-slate-700 shadow-lg'}`}
             >
               <Bell className="w-5 h-5" />
               {unreadCount > 0 && (
@@ -619,67 +615,48 @@ const Header = ({ onMenuClick }) => {
           <div className="relative" ref={profileRef}>
             <button
               onClick={() => setShowDropdown(p => !p)}
-              className={`flex items-center gap-3 px-2 py-1.5 sm:px-3 rounded-2xl transition-all active:scale-95 border
-              ${showDropdown ? 'bg-blue-50 border-blue-100' : 'bg-slate-50 border-slate-100 hover:bg-slate-100'}`}
+              className={`flex items-center gap-3 px-2 py-1.5 sm:px-3 rounded-2xl transition-all active:scale-95 border ${showDropdown ? 'bg-slate-900 border-slate-700' : 'bg-slate-900/90 border-slate-700 hover:bg-slate-800'}`}
             >
-              <div className="w-8 h-8 rounded-xl 
-                bg-slate-900 flex items-center justify-center text-white text-xs font-black shadow-lg">
+              <div className="w-8 h-8 rounded-xl bg-slate-900 flex items-center justify-center text-white text-xs font-black shadow-lg">
                 {userName.charAt(0).toUpperCase()}
               </div>
 
               <div className="hidden md:block text-left leading-tight">
-                <p className="text-xs font-black text-slate-800">
+                <p className="text-xs font-black text-white">
                   {userName}
                 </p>
-                <p className="text-[9px] text-blue-600 font-bold uppercase tracking-widest opacity-70">
+                <p className="text-[9px] text-emerald-300 font-bold uppercase tracking-widest opacity-80">
                   {userRole}
                 </p>
               </div>
 
               <ChevronDown
-                className={`hidden sm:block w-3.5 h-3.5 text-slate-400 transition-transform duration-300
-                ${showDropdown ? "rotate-180" : ""}`}
+                className={`hidden sm:block w-3.5 h-3.5 text-slate-400 transition-transform duration-300 ${showDropdown ? "rotate-180" : ""}`}
               />
             </button>
 
             {showDropdown && (
-              <div className="absolute right-0 mt-4 w-52
-                  bg-white 
-                  border border-slate-100
-                  rounded-2xl shadow-2xl z-50 p-2 overflow-hidden">
+              <div className="absolute right-0 mt-4 w-52 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl z-50 p-2 overflow-hidden">
 
-                  <div className="px-3 py-2 border-b border-slate-50 mb-1">
-                    <p className="text-sm font-semibold text-black">
+                  <div className="px-3 py-2 border-b border-slate-800 mb-1">
+                    <p className="text-sm font-semibold text-white">
                       {userName}
                     </p>
-                    <p className="text-xs text-black/60">
+                    <p className="text-xs text-slate-400">
                       {email}
                     </p>
                   </div>
 
                   <Link
                     to={getDynamicPath("/admin/profile")}
-                    className="flex items-center gap-3 px-3 py-2.5 
-                    rounded-xl hover:bg-blue-50 hover:text-blue-600
-                    text-sm text-slate-600 transition font-bold"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-900 hover:text-emerald-300 text-sm text-slate-300 transition font-bold"
                   >
                     <User className="w-4 h-4 opacity-50" /> Profile
                   </Link>
 
-                  {/* <Link
-                    to="/admin/settings"
-                    className="flex items-center gap-3 px-3 py-2.5 
-                    rounded-xl hover:bg-blue-50 hover:text-blue-600
-                    text-sm text-slate-600 transition font-bold"
-                  >
-                    <Settings className="w-4 h-4 opacity-50" /> Settings
-                  </Link> */}
-
                   <button
                     onClick={handleLogout}
-                    className="flex items-center gap-3 px-3 py-2 
-                    rounded-xl hover:bg-red-500/20 
-                    text-sm text-red-400 w-full transition"
+                    className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-red-500/10 text-sm text-red-300 w-full transition"
                   >
                     <LogOut className="w-4 h-4" /> Logout
                   </button>

@@ -154,7 +154,7 @@ const FoodProducts = () => {
       </div>
 
       {/* Toolbar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border border-slate-100 p-4 rounded-xl shadow-sm">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 superadmin-panel p-4 rounded-xl">
         <div className="relative flex-1 max-w-md w-full">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
@@ -203,7 +203,7 @@ const FoodProducts = () => {
       </div>
 
       {viewMode === 'table' ? (
-        <div className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm animate-in fade-in duration-200">
+        <div className="rounded-2xl overflow-hidden superadmin-card animate-in fade-in duration-200">
           <div className="overflow-x-auto w-full">
             <table className="min-w-[960px] w-full text-left border-collapse">
               <thead>
