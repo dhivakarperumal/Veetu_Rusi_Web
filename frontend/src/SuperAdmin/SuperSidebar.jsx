@@ -27,12 +27,13 @@ const navItems = [
   // { path: "/superadmin/restaurants", label: "Restaurants", icon: Store },
  
   { path: "/superadmin/franchises", label: "Franchise Owners", icon: Landmark },
+  { path: "/superadmin/plans", label: "Subscription Plans", icon: CreditCard },
   { path: "/superadmin/areas", label: "Areas", icon: Activity },
-  { path: "/superadmin/users", label: "User Management", icon: Users },
+  // { path: "/superadmin/users", label: "User Management", icon: Users },
   { path: "/superadmin/orders", label: "Order Management", icon: ShoppingBag },
   { path: "/superadmin/earnings", label: "Wallet & Earnings", icon: Wallet },
   { path: "/superadmin/reviews", label: "All Reviews", icon: MessageSquare },
-  { path: "/superadmin/plans", label: "Subscription Plans", icon: CreditCard },
+  
   // { path: "/superadmin/notifications", label: "Notifications", icon: Bell },
   { path: "/superadmin/reports", label: "Reports & Analytics", icon: BarChart3 },
   // { path: "/", label: "Back to Website", icon: Home, exact: true }
