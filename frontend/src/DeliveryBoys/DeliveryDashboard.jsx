@@ -5,6 +5,10 @@ import {
   Bike, ShoppingBag, DollarSign,
   Clock, TrendingUp, ArrowUpRight, TrendingDown
 } from "lucide-react";
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+} from "recharts";
+import ChartCard from "./ChartCard";
 import { Link } from "react-router-dom";
 import { useAuth } from "../PrivateRouter/AuthContext";
 
@@ -46,13 +50,14 @@ const DeliveryDashboard = () => {
   const { profileName } = useAuth();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
+  const [chartData, setChartData] = useState([]);
+  const [chartLoading, setChartLoading] = useState(true);
 
-  useEffect(() => { fetchStats(); }, []);
+  useEffect(() => { fetchStats(); fetchChartData(); }, []);
 
   const fetchStats = async () => {
     try {
       setLoading(true);
-      // We will rely on a generic or mocked endpoint for now if the real one isn't available
       const res = await api.get("/delivery/dashboard-stats").catch(() => ({ data: FALLBACK }));
       setData(res.data);
     } catch {
@@ -60,6 +65,44 @@ const DeliveryDashboard = () => {
       setData(FALLBACK);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchChartData = async () => {
+    try {
+      setChartLoading(true);
+      const res = await api.get("/delivery/orders");
+      const orders = Array.isArray(res.data) ? res.data : [];
+
+      // Prepare last 7 days map
+      const days = 7;
+      const map = {};
+      for (let i = days - 1; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const key = d.toISOString().slice(0, 10);
+        const label = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+        map[key] = { date: label, deliveries: 0, earnings: 0 };
+      }
+
+      orders.forEach(order => {
+        const created = order.created_at || order.ordered_at || order.date || order.order_date || null;
+        if (!created) return;
+        const key = new Date(created).toISOString().slice(0, 10);
+        if (map[key]) {
+          map[key].deliveries += 1;
+          const amt = Number(order.total_amount || order.amount || 0) || 0;
+          map[key].earnings += amt;
+        }
+      });
+
+      const chartArr = Object.keys(map).map(k => ({ ...map[k], earnings: Math.round(map[k].earnings) }));
+      setChartData(chartArr);
+    } catch (err) {
+      console.error('Chart load error', err);
+      setChartData([]);
+    } finally {
+      setChartLoading(false);
     }
   };
 
@@ -136,16 +179,34 @@ const DeliveryDashboard = () => {
         ))}
       </div>
 
-      <div>
-        <h2 className="text-sm font-black text-slate-800 uppercase tracking-tight mb-4 flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_#10B981]" />
-          Quick Actions
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {[
-            { label: "My Deliveries", icon: Bike, path: "/delivery/orders", gradient: "linear-gradient(135deg,#052e16 0%,#0B1120 100%)", iconBg: "#10B981" },
-            { label: "Profile", icon: ShoppingBag, path: "/delivery/profile", gradient: "linear-gradient(135deg,#01140f 0%,#0B1120 100%)", iconBg: "#14B8A6" },
-          ].map((item, i) => (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ChartCard title="Deliveries & Earnings" subtitle="Last 7 days" icon={TrendingUp} iconColor="text-emerald-500">
+          <div style={{ width: '100%', height: 260 }}>
+            <ResponsiveContainer width="99%" height={260}>
+              <LineChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="date" stroke="#94a3b8" tick={{ fontSize: 11, fontWeight: 800 }} />
+                <YAxis yAxisId="left" stroke="#94a3b8" tick={{ fontSize: 11 }} allowDecimals={false} />
+                <YAxis yAxisId="right" orientation="right" stroke="#94a3b8" tickFormatter={v => `₹${(v/1000).toFixed(0)}k`} />
+                <Tooltip />
+                <Legend />
+                <Line yAxisId="left" type="monotone" dataKey="deliveries" name="Deliveries" stroke="#10B981" strokeWidth={3} dot={{ r: 4 }} />
+                <Line yAxisId="right" type="monotone" dataKey="earnings" name="Earnings" stroke="#3B82F6" strokeWidth={3} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </ChartCard>
+
+        <div>
+          <h2 className="text-sm font-black text-slate-800 uppercase tracking-tight mb-4 flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_#10B981]" />
+            Quick Actions
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {[
+              { label: "My Deliveries", icon: Bike, path: "/delivery/orders", gradient: "linear-gradient(135deg,#052e16 0%,#0B1120 100%)", iconBg: "#10B981" },
+              { label: "Profile", icon: ShoppingBag, path: "/delivery/profile", gradient: "linear-gradient(135deg,#01140f 0%,#0B1120 100%)", iconBg: "#14B8A6" },
+            ].map((item, i) => (
             <Link key={i} to={item.path}
               className="relative overflow-hidden group flex items-center gap-4 p-5 rounded-3xl border border-white/5 shadow-xl hover:-translate-y-1 transition-all duration-300"
               style={{ background: item.gradient }}
@@ -161,7 +222,8 @@ const DeliveryDashboard = () => {
               </div>
               <ArrowUpRight className="w-5 h-5 text-white/20 group-hover:text-white transition-colors relative z-10" />
             </Link>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </div>
