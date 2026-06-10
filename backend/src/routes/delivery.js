@@ -104,4 +104,63 @@ router.patch('/orders/:id/assign', async (req, res) => {
   }
 });
 
+// Get earnings breakdown
+router.get('/earnings', async (req, res) => {
+  try {
+    const deliveryBoyId = req.user.id;
+
+    // Total earnings (from delivered orders)
+    const [totalResult] = await pool.execute(
+      `SELECT SUM(total_amount) as total FROM user_food_order_table 
+       WHERE delivery_partner = ? AND status = 'Delivered'`,
+      [deliveryBoyId]
+    );
+
+    // Today's earnings
+    const [todayResult] = await pool.execute(
+      `SELECT SUM(total_amount) as today FROM user_food_order_table 
+       WHERE delivery_partner = ? AND status = 'Delivered' AND DATE(updated_at) = CURDATE()`,
+      [deliveryBoyId]
+    );
+
+    // Weekly earnings (last 7 days)
+    const [weeklyResult] = await pool.execute(
+      `SELECT SUM(total_amount) as weekly FROM user_food_order_table 
+       WHERE delivery_partner = ? AND status = 'Delivered' AND DATE(updated_at) >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)`,
+      [deliveryBoyId]
+    );
+
+    // Earnings by day (last 14 days)
+    const [dailyResult] = await pool.execute(
+      `SELECT DATE(updated_at) as date, COUNT(*) as deliveries, SUM(total_amount) as amount
+       FROM user_food_order_table 
+       WHERE delivery_partner = ? AND status = 'Delivered' AND DATE(updated_at) >= DATE_SUB(CURDATE(), INTERVAL 14 DAY)
+       GROUP BY DATE(updated_at) ORDER BY date DESC`,
+      [deliveryBoyId]
+    );
+
+    // Recent completed orders
+    const [recentOrders] = await pool.execute(
+      `SELECT id, order_id, customer_name, customer_phone, total_amount, updated_at, status
+       FROM user_food_order_table 
+       WHERE delivery_partner = ? AND status = 'Delivered'
+       ORDER BY updated_at DESC LIMIT 20`,
+      [deliveryBoyId]
+    );
+
+    res.json({
+      totals: {
+        totalEarnings: totalResult[0]?.total || 0,
+        todayEarnings: todayResult[0]?.today || 0,
+        weeklyEarnings: weeklyResult[0]?.weekly || 0
+      },
+      dailyEarnings: dailyResult || [],
+      recentDeliveries: recentOrders || []
+    });
+  } catch (err) {
+    console.error('Earnings Error:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 module.exports = router;
