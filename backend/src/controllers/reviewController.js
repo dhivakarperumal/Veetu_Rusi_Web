@@ -36,6 +36,34 @@ exports.getReviewsByProduct = async (req, res) => {
   }
 };
 
+exports.getAllReviews = async (req, res) => {
+  try {
+    const [rows] = await pool.execute('SELECT * FROM reviews ORDER BY created_at DESC');
+
+    const reviews = rows.map(r => ({
+      ...r,
+      review_image: parseJsonField(r.review_image)
+    }));
+
+    const total = reviews.length;
+    const avg = total === 0 ? 0 : (reviews.reduce((s, r) => s + (r.rating || 0), 0) / total);
+    const stats = {
+      total_reviews: total,
+      average_rating: Number(avg.toFixed(1)),
+      five_star: reviews.filter(r => r.rating === 5).length,
+      four_star: reviews.filter(r => r.rating === 4).length,
+      three_star: reviews.filter(r => r.rating === 3).length,
+      two_star: reviews.filter(r => r.rating === 2).length,
+      one_star: reviews.filter(r => r.rating === 1).length,
+    };
+
+    res.json({ reviews, stats });
+  } catch (error) {
+    console.error('Error fetching all reviews:', error);
+    res.status(500).json({ message: 'Failed to fetch reviews', error: error.message });
+  }
+};
+
 exports.checkUserReview = async (req, res) => {
   try {
     const { productId, userId } = req.params;
