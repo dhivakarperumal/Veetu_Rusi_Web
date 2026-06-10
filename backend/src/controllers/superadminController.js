@@ -924,6 +924,9 @@ exports.createDeliveryPartner = async (req, res) => {
       b.wallet_balance || 0, b.pending_earnings || 0, b.total_earnings || b.earnings || 0, b.daily_earnings || 0, b.weekly_earnings || 0, b.monthly_earnings || 0, b.incentive_amount || 0, b.bonus_amount || 0,
       b.online_status || 'Offline', b.availability_schedule || null, b.working_days || null, b.shift_timing || null, b.current_location || null, b.break_time_status || null,
       b.assigned_delivery_area || null, b.delivery_radius || null, b.preferred_delivery_zone || null, b.preferred_distance || '3 KM', b.city_coverage || null, b.area_coverage || null, b.zone_status || 'Active',
+      b.emergency_contact_name || null, b.emergency_contact_relationship || null, b.emergency_contact_mobile || null,
+      b.available_time_morning ? 1 : 0, b.available_time_afternoon ? 1 : 0, b.available_time_evening ? 1 : 0, b.available_time_night ? 1 : 0,
+      b.face_verified ? 1 : 0, b.location_verified ? 1 : 0,
       // created_by fields
       created_by_id, created_by_user_id, created_by_name, created_by_email, created_by_phone,
       b.status || 'Pending'
