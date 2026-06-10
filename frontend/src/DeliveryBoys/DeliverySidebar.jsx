@@ -26,17 +26,19 @@ const navItems = [
     icon: FaBox,
     children: [
       { path: "/delivery/new-orders", label: "New Orders", icon: FaBox },
+      { path: "/delivery/all-orders", label: "All Orders", icon: FaBox },
       { path: "/delivery/accepted-orders", label: "Accepted Orders", icon: FaCheckCircle },
       { path: "/delivery/picked-up-orders", label: "Picked Up Orders", icon: FaShoppingBag },
       { path: "/delivery/delivered-orders", label: "Delivered Orders", icon: FaTruck },
     ],
   },
-  { path: "/delivery/live-tracking", label: "Live Tracking", icon: FaMapMarkerAlt },
+  
   { path: "/delivery/earnings", label: "Earnings", icon: FaWallet },
+  { path: "/delivery/incentives", label: "Incentives", icon: FaStar },
   { path: "/delivery/ratings", label: "Ratings", icon: FaStar },
-  { path: "/delivery/notifications", label: "Notifications", icon: FaBell },
+  
   { path: "/delivery/attendance", label: "Attendance", icon: FaCalendarCheck },
-  { path: "/delivery/profile", label: "Profile", icon: FaUser },
+  
   { path: "/delivery/settings", label: "Settings", icon: FaCog },
 ];
 

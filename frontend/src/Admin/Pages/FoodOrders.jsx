@@ -21,8 +21,11 @@ import {
   CreditCard,
   ChefHat,
   Store,
-  RefreshCw
+  RefreshCw,
+  LayoutGrid,
+  List
 } from 'lucide-react';
+import { useNavigate } from "react-router-dom";
 
 const STATUS_OPTIONS = [
   'All',
@@ -219,7 +222,7 @@ const OrderModal = ({ order, onClose, onStatusChange }) => {
               <span
                 className={`mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-black uppercase tracking-wide ${
                   STATUS_STYLES[order.status] ||
-                  'bg-slate-800 text-slate-200'
+                  'bg-slate-100 text-slate-600'
                 }`}
               >
                 {STATUS_ICONS[order.status]}
@@ -253,9 +256,9 @@ const OrderModal = ({ order, onClose, onStatusChange }) => {
                     status === s
                       ? `${
                           STATUS_STYLES[s] ||
-                          'bg-slate-800 text-slate-200'
-                        } ring-2 ring-offset-1 ring-emerald-400/30`
-                      : 'bg-slate-900 text-slate-300 hover:bg-slate-800'
+                          'bg-slate-200 text-slate-700'
+                        } ring-2 ring-offset-1 ring-current`
+                      : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
                   }`}
                 >
                   {s}
@@ -454,6 +457,9 @@ const FoodOrders = () => {
 
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [expandedRow, setExpandedRow] = useState(null);
+  const [viewMode, setViewMode] = useState("table");
+
+  const navigate = useNavigate();
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -497,7 +503,7 @@ const FoodOrders = () => {
       .then((res) => {
         setChefs(Array.isArray(res.data) ? res.data : []);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const stats = useMemo(
@@ -595,9 +601,9 @@ const FoodOrders = () => {
       </div>
 
       {/* FILTER */}
-      <div className="flex flex-col gap-3 md:flex-row md:items-center justify-between superadmin-panel p-4 rounded-2xl">
+      <div className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm md:flex-row md:items-center">
 
-        <div className="relative flex-1">
+        <div className="relative flex-1 max-w-md w-full">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
 
           <input
@@ -605,11 +611,11 @@ const FoodOrders = () => {
             placeholder="Search by customer, order ID, chef..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 bg-slate-950/80 border border-white/10 rounded-xl text-sm text-slate-100 placeholder:text-slate-500 focus:bg-slate-900 focus:border-emerald-400/30"
+            className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm"
           />
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex items-center gap-3">
 
           {chefs.length > 0 && (
             <select
@@ -617,7 +623,7 @@ const FoodOrders = () => {
               onChange={(e) =>
                 setChefFilter(e.target.value)
               }
-              className="px-3 py-3 rounded-xl border border-white/10 bg-slate-950/80 text-slate-100"
+              className="px-3 py-3 rounded-xl border border-slate-200"
             >
               <option value="All">All Chefs</option>
 
@@ -637,7 +643,7 @@ const FoodOrders = () => {
             onChange={(e) =>
               setStatusFilter(e.target.value)
             }
-            className="px-3 py-3 rounded-xl border border-white/10 bg-slate-950/80 text-slate-100"
+            className="px-3 py-3 rounded-xl border border-slate-200"
           >
             {STATUS_OPTIONS.map((s) => (
               <option key={s} value={s}>
@@ -645,55 +651,65 @@ const FoodOrders = () => {
               </option>
             ))}
           </select>
+
+          <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
+            <button
+              onClick={() => setViewMode("table")}
+              className={`p-2 rounded-lg transition ${viewMode === "table"
+                ? "bg-white text-emerald-700 shadow-sm"
+                : "text-slate-500"
+                }`}
+            >
+              <List className="w-4 h-4" />
+            </button>
+
+            <button
+              onClick={() => setViewMode("card")}
+              className={`p-2 rounded-lg transition ${viewMode === "card"
+                ? "bg-white text-emerald-700 shadow-sm"
+                : "text-slate-500"
+                }`}
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+          </div>
+
         </div>
+
       </div>
 
       {/* TABLE */}
-      <div className="rounded-3xl border border-white/10 bg-slate-950/90 shadow-2xl overflow-hidden">
+      <div className="rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden">
 
-        {loading ? (
-          <div className="flex items-center justify-center py-24">
-            <div className="h-12 w-12 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin" />
-          </div>
-        ) : orders.length === 0 ? (
-          <div className="py-24 text-center">
-            No Orders Found
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
+                {loading ? (
+                  <div className="flex items-center justify-center py-24">
+                    <div className="h-12 w-12 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin" />
+                  </div>
+                ) : orders.length === 0 ? (
+                  <div className="py-24 text-center">
+                    No Orders Found
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
 
-            <table className="w-full text-left text-sm">
+                    <table className="w-full text-left text-sm">
 
-              <thead className="bg-slate-900/80 border-b border-white/10">
+              <thead className="bg-slate-50 border-b border-slate-100">
                 <tr>
-                  <th className="px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-slate-400">
-                    Order
-                  </th>
-                  <th className="px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-slate-400">
-                    Customer
-                  </th>
-                  <th className="px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-slate-400">
-                    Chefs
-                  </th>
-                  <th className="px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-slate-400">
-                    Item Breakdown
-                  </th>
-                  <th className="px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-slate-400">
-                    Amount
-                  </th>
-                  <th className="px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-slate-400">
-                    Status
-                  </th>
-                  <th className="px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-slate-400">
-                    Date
-                  </th>
-                  <th className="px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-slate-400 text-right">
+                  <th className="px-5 py-4">Order</th>
+                  <th className="px-5 py-4">Customer</th>
+                  <th className="px-5 py-4">Chefs</th>
+                  <th className="px-5 py-4">Item Breakdown</th>
+                  <th className="px-5 py-4">Amount</th>
+                  <th className="px-5 py-4">Status</th>
+                  <th className="px-5 py-4">Date</th>
+                  <th className="px-5 py-4 text-right">
                     Actions
                   </th>
                 </tr>
               </thead>
 
-              <tbody className="divide-y divide-white/10">
+              <tbody className="divide-y divide-slate-100">
                 {orders.map((order) => {
                   const items = Array.isArray(order.items)
                     ? order.items
@@ -702,18 +718,18 @@ const FoodOrders = () => {
                   const isExpanded =
                     expandedRow === order.id;
 
-                  return (
-                    <React.Fragment key={order.id}>
+                          return (
+                            <React.Fragment key={order.id}>
 
-                      <tr className="hover:bg-slate-900/70 transition-colors">
+                      <tr className="hover:bg-slate-50">
 
                         <td className="px-5 py-4">
-                          <p className="font-black text-white">
+                          <p className="font-black">
                             {order.order_id}
                           </p>
                         </td>
 
-                        <td className="px-5 py-4 text-slate-200">
+                        <td className="px-5 py-4">
                           {order.customer_name ||
                             order.ordered_by_name}
                         </td>
@@ -722,68 +738,67 @@ const FoodOrders = () => {
                           {chefGroups.map((group) => (
                             <div
                               key={group.name}
-                              className="rounded-2xl bg-slate-900/80 px-3 py-2"
+                              className="rounded-2xl bg-slate-100 px-3 py-2"
                             >
-                              <p className="text-sm font-semibold text-white">
+                              <p className="text-sm font-semibold text-slate-900">
                                 {group.name}
                               </p>
-                              <p className="text-xs text-slate-400">
+                              <p className="text-xs text-slate-500">
                                 Qty {group.total_quantity} · {group.items.length} product{group.items.length === 1 ? '' : 's'}
-                              </p>
-                            </div>
-                          ))}
-                        </td>
+                              </p> */}
+                                    </div>
+                                  ))}
+                                </td>
 
                         <td className="px-5 py-4 space-y-2">
                           {chefGroups.map((group) => (
                             <div
                               key={`${group.name}-items`}
-                              className="rounded-2xl bg-slate-900/80 px-3 py-2"
+                              className="rounded-2xl bg-slate-100 px-3 py-2"
                             >
-                              <p className="text-sm font-semibold text-white">
+                              <p className="text-sm font-semibold text-slate-900">
                                 {group.name}
                               </p>
-                              <p className="text-xs text-slate-400">
+                              <p className="text-xs text-slate-500">
                                 {group.items.map((item) => `${item.name || 'Item'} x${item.quantity || 1}`).join(', ')}
                               </p>
                             </div>
                           ))}
                         </td>
 
-                        <td className="px-5 py-4 font-black text-emerald-600">
-                          {formatAmount(order.total_amount)}
-                        </td>
+                                <td className="px-5 py-4 font-black text-emerald-600">
+                                  {formatAmount(order.total_amount)}
+                                </td>
 
-                        <td className="px-5 py-4">
-                          <span
-                            className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold ${
-                              STATUS_STYLES[
-                                order.status
-                              ]
-                            }`}
-                          >
-                            {
-                              STATUS_ICONS[
-                                order.status
-                              ]
-                            }
+                                <td className="px-5 py-4">
+                                  <span
+                                    className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold ${STATUS_STYLES[
+                                      order.status
+                                    ]
+                                      }`}
+                                  >
+                                    {
+                                      STATUS_ICONS[
+                                      order.status
+                                      ]
+                                    }
 
-                            {order.status}
-                          </span>
-                        </td>
+                                    {order.status}
+                                  </span>
+                                </td>
 
-                        <td className="px-5 py-4">
-                          {formatDate(order.ordered_at)}
-                        </td>
+                                <td className="px-5 py-4">
+                                  {formatDate(order.ordered_at)}
+                                </td>
 
-                        <td className="px-5 py-4">
-                          <div className="flex justify-end gap-2">
+                                <td className="px-5 py-4">
+                                  <div className="flex justify-end gap-2">
 
                             <button
                               onClick={() =>
                                 setSelectedOrder(order)
                               }
-                              className="rounded-xl bg-slate-800/80 p-2 text-slate-100 hover:bg-emerald-500/10 transition"
+                              className="rounded-xl bg-slate-900 p-2 text-white"
                             >
                               <Eye className="w-4 h-4" />
                             </button>
@@ -796,7 +811,7 @@ const FoodOrders = () => {
                                     : order.id
                                 )
                               }
-                              className="rounded-xl bg-slate-900/80 p-2 text-slate-300 hover:bg-slate-800 transition"
+                              className="rounded-xl bg-slate-100 p-2"
                             >
                               {isExpanded ? (
                                 <ChevronUp className="w-4 h-4" />
@@ -805,33 +820,33 @@ const FoodOrders = () => {
                               )}
                             </button>
 
-                          </div>
-                        </td>
-                      </tr>
+                                  </div>
+                                </td>
+                              </tr>
 
                       {isExpanded &&
                         chefGroups.length > 0 && (
-                          <tr className="bg-slate-950/90">
+                          <tr className="bg-slate-50">
                             <td
                               colSpan={8}
                               className="px-5 py-3"
                             >
-                                              <div className="space-y-4">
+                              <div className="space-y-4">
                                 {chefGroups.map((group) => (
                                   <div
                                     key={group.name}
-                                    className="rounded-2xl border border-white/10 bg-slate-900/80 p-4"
+                                    className="rounded-2xl border border-slate-200 bg-white p-4"
                                   >
                                     <div className="mb-3 flex items-center justify-between gap-3">
                                       <div>
-                                        <p className="font-semibold text-white">
+                                        <p className="font-semibold text-slate-900">
                                           {group.name}
                                         </p>
-                                        <p className="text-xs text-slate-400">
+                                        <p className="text-xs text-slate-500">
                                           {group.items.length} items · Qty {group.total_quantity}
                                         </p>
                                       </div>
-                                      <p className="text-sm font-black text-emerald-500">
+                                      <p className="text-sm font-black text-emerald-600">
                                         {formatAmount(group.total_amount)}
                                       </p>
                                     </div>
@@ -840,12 +855,12 @@ const FoodOrders = () => {
                                       {group.items.map((item, idx) => (
                                         <div
                                           key={idx}
-                                          className="rounded-2xl bg-slate-950/80 p-3"
+                                          className="rounded-2xl bg-slate-50 p-3"
                                         >
-                                          <p className="font-semibold text-white">
+                                          <p className="font-semibold text-slate-900">
                                             {item.name || 'Item'}
                                           </p>
-                                          <p className="text-xs text-slate-400">
+                                          <p className="text-xs text-slate-500">
                                             Qty {item.quantity || 1} × {formatAmount(item.price || item.final_price || item.mrp)}
                                           </p>
                                         </div>
@@ -867,17 +882,19 @@ const FoodOrders = () => {
       </div>
 
       {/* MODAL */}
-      {selectedOrder && (
-        <OrderModal
-          order={selectedOrder}
-          onClose={() =>
-            setSelectedOrder(null)
-          }
-          onStatusChange={handleStatusChange}
-        />
-      )}
+      {
+        selectedOrder && (
+          <OrderModal
+            order={selectedOrder}
+            onClose={() =>
+              setSelectedOrder(null)
+            }
+            onStatusChange={handleStatusChange}
+          />
+        )
+      }
 
-    </div>
+    </div >
   );
 };
 

@@ -337,13 +337,18 @@ const createSubscriptionPlansTable = async () => {
                 rating INT NOT NULL,
                 comment LONGTEXT,
                 review_image LONGTEXT,
+                status VARCHAR(50) DEFAULT 'Published',
+                admin_reply LONGTEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 KEY idx_product_id (product_id),
-                KEY idx_user_id (user_id)
+                KEY idx_user_id (user_id),
+                KEY idx_status (status)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
             `;
 
             await pool.execute(createTableSQL);
+            try { await pool.execute("ALTER TABLE reviews ADD COLUMN status VARCHAR(50) DEFAULT 'Published'"); } catch (e) {}
+            try { await pool.execute('ALTER TABLE reviews ADD COLUMN admin_reply LONGTEXT'); } catch (e) {}
             console.log('✓ Reviews table created or already exists');
         } catch (error) {
             console.error('✗ Error creating reviews table:', error.message);

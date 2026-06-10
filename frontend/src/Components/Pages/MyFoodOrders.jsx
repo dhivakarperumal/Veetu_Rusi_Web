@@ -68,6 +68,12 @@ export default function MyFoodOrders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewOrder, setReviewOrder] = useState(null);
+  const [reviewProductId, setReviewProductId] = useState('');
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
 
   useEffect(() => {
     if (user === null) {
@@ -98,6 +104,57 @@ export default function MyFoodOrders() {
 
   const closeDetails = () => {
     setSelectedOrder(null);
+  };
+
+  const openReviewModal = (order) => {
+    setReviewOrder(order);
+    const firstItem = order.items?.[0] || {};
+    setReviewProductId(firstItem.product_id || firstItem.id || "");
+    setReviewRating(5);
+    setReviewComment("");
+    setShowReviewModal(true);
+  };
+
+  const closeReviewModal = () => {
+    setShowReviewModal(false);
+    setReviewOrder(null);
+    setReviewProductId("");
+    setReviewRating(5);
+    setReviewComment("");
+    setReviewSubmitting(false);
+  };
+
+  const submitReview = async () => {
+    if (!reviewProductId) {
+      toast.error("Select a product to review.");
+      return;
+    }
+
+    if (!reviewRating || reviewRating < 1) {
+      toast.error("Please choose a rating.");
+      return;
+    }
+
+    setReviewSubmitting(true);
+
+    try {
+      await api.post("/reviews", {
+        product_id: reviewProductId,
+        user_id: user?.user_id || user?.id,
+        user_name: user?.name || user?.username || user?.email || "Customer",
+        user_email: user?.email || null,
+        rating: reviewRating,
+        comment: reviewComment || "",
+      });
+
+      toast.success("Review submitted successfully.");
+      closeReviewModal();
+    } catch (err) {
+      console.error("Failed to submit review", err);
+      toast.error(err.response?.data?.message || "Failed to submit review.");
+    } finally {
+      setReviewSubmitting(false);
+    }
   };
 
   return (
@@ -199,6 +256,14 @@ export default function MyFoodOrders() {
                         <Clock className="h-4 w-4" />
                         View details
                       </button>
+                      {order.status === "Delivered" && (
+                        <button
+                          onClick={() => openReviewModal(order)}
+                          className="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                        >
+                          Review
+                        </button>
+                      )}
                       <button
                         onClick={() => navigate("/food-cart")}
                         className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
@@ -326,6 +391,91 @@ export default function MyFoodOrders() {
                     ))}
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showReviewModal && reviewOrder && (
+        <div className="fixed inset-0 z-50 bg-black/50 p-4 overflow-y-auto">
+          <div className="mx-auto max-w-3xl rounded-[2rem] bg-white p-6 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+              <div>
+                <h3 className="text-xl font-black text-slate-900">Review your delivery</h3>
+                <p className="text-sm text-slate-500">Leave a rating for order {reviewOrder.order_id}</p>
+              </div>
+              <button
+                onClick={closeReviewModal}
+                className="rounded-full bg-slate-100 p-3 text-slate-700 hover:bg-slate-200"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-5 pt-6">
+              <div>
+                <label className="text-sm font-semibold text-slate-700">Select item</label>
+                <select
+                  value={reviewProductId}
+                  onChange={(e) => setReviewProductId(e.target.value)}
+                  className="mt-3 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-primary"
+                >
+                  {reviewOrder.items?.map((item, index) => (
+                    <option
+                      key={index}
+                      value={item.product_id || item.id || index}
+                    >
+                      {item.name || item.product_name || `Item ${index + 1}`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-sm font-semibold text-slate-700">Rating</label>
+                <div className="mt-3 flex items-center gap-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setReviewRating(star)}
+                      className={`rounded-full px-4 py-3 text-sm font-semibold transition ${reviewRating >= star ? 'bg-amber-400 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+                    >
+                      {star} ★
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-semibold text-slate-700">Comments</label>
+                <textarea
+                  value={reviewComment}
+                  onChange={(e) => setReviewComment(e.target.value)}
+                  rows={4}
+                  className="mt-3 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-primary"
+                  placeholder="Share feedback about your delivery experience"
+                />
+              </div>
+
+              <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={closeReviewModal}
+                  className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  onClick={submitReview}
+                  disabled={reviewSubmitting}
+                  className="inline-flex items-center justify-center rounded-2xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-400"
+                >
+                  {reviewSubmitting ? 'Submitting...' : 'Submit review'}
+                </button>
               </div>
             </div>
           </div>

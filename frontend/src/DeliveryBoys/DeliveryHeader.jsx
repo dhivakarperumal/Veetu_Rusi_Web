@@ -27,6 +27,7 @@ const pageTitles = {
   "/delivery/delivered-orders": "Delivered Orders",
   "/delivery/live-tracking": "Live Tracking",
   "/delivery/earnings": "Earnings",
+  "/delivery/incentives": "Incentives",
   "/delivery/ratings": "Ratings",
   "/delivery/notifications": "Notifications",
   "/delivery/attendance": "Attendance",

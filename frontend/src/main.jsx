@@ -60,6 +60,7 @@ const AdminOrderManagement = React.lazy(() => import("./Admin/Pages/OrderManagem
 const BannerManagement = React.lazy(() => import("./Admin/Pages/BannerManagement.jsx"));
 const ErrorPage = React.lazy(() => import("./Admin/Pages/ErrorPage.jsx"));
 const FoodOrders = React.lazy(() => import("./Admin/Pages/FoodOrders.jsx"));
+const FoodOrderDetails = React.lazy(() => import("./Admin/Pages/FoodOrderDetails.jsx"));
 const FoodProducts = React.lazy(() => import("./Admin/Pages/FoodProducts.jsx"));
 const FoodProductDetails = React.lazy(() => import("./Admin/Pages/FoodProductDetails.jsx"));
 const DeliveryPartnerManagement = React.lazy(() => import("./Admin/Pages/DeliveryPartnerManagement.jsx"));
@@ -117,8 +118,10 @@ const DeliveryNewOrders = React.lazy(() => import("./DeliveryBoys/Pages/NewOrder
 const DeliveryAcceptedOrders = React.lazy(() => import("./DeliveryBoys/Pages/AcceptedOrders.jsx"));
 const DeliveryPickedUpOrders = React.lazy(() => import("./DeliveryBoys/Pages/PickedUpOrders.jsx"));
 const DeliveryDeliveredOrders = React.lazy(() => import("./DeliveryBoys/Pages/DeliveredOrders.jsx"));
+const DeliveryAllOrders = React.lazy(() => import("./DeliveryBoys/Pages/AllOrders.jsx"));
 const DeliveryLiveTracking = React.lazy(() => import("./DeliveryBoys/Pages/LiveTracking.jsx"));
 const DeliveryEarnings = React.lazy(() => import("./DeliveryBoys/Pages/Earnings.jsx"));
+const DeliveryIncentives = React.lazy(() => import("./DeliveryBoys/Pages/Incentives.jsx"));
 const DeliveryRatings = React.lazy(() => import("./DeliveryBoys/Pages/Ratings.jsx"));
 const DeliveryNotifications = React.lazy(() => import("./DeliveryBoys/Pages/Notifications.jsx"));
 const DeliveryAttendance = React.lazy(() => import("./DeliveryBoys/Pages/Attendance.jsx"));
@@ -233,6 +236,7 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <DeliveryDashboard /> },
       { path: "orders", element: <DeliveryOrders /> },
+      { path: "all-orders", element: <DeliveryAllOrders /> },
       { path: "orders/:id", element: <DeliveryOrderDetail /> },
       { path: "new-orders", element: <DeliveryNewOrders /> },
       { path: "accepted-orders", element: <DeliveryAcceptedOrders /> },
@@ -240,6 +244,7 @@ const router = createBrowserRouter([
       { path: "delivered-orders", element: <DeliveryDeliveredOrders /> },
       { path: "live-tracking", element: <DeliveryLiveTracking /> },
       { path: "earnings", element: <DeliveryEarnings /> },
+      { path: "incentives", element: <DeliveryIncentives /> },
       { path: "ratings", element: <DeliveryRatings /> },
       { path: "notifications", element: <DeliveryNotifications /> },
       { path: "attendance", element: <DeliveryAttendance /> },
@@ -278,6 +283,7 @@ const router = createBrowserRouter([
       { path: "products/:id", element: <ProductDetail /> },
       // Food-specific
       { path: "food-orders", element: <FoodOrders /> },
+      { path: "food-orders/:id", element: <FoodOrderDetails /> },
       { path: "food-products", element: <FoodProducts /> },
       { path: "food-products/add", element: <FoodProductDetails /> },
       { path: "food-products/edit/:id", element: <FoodProductDetails /> },

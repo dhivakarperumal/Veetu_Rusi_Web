@@ -66,6 +66,7 @@ app.use('/api/wishlist', wishlistRouter);
 app.use('/api/dealers', dealersRouter);
 app.use('/api/user-food', userFoodRouter);
 app.use('/api/user-food-orders', userFoodOrdersRouter);
+app.use('/api/userFoodOrders', userFoodOrdersRouter);
 app.use('/api/delivery', deliveryRouter);
 
 app.get('/api/health', (req, res) => {
