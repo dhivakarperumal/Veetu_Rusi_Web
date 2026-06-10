@@ -657,7 +657,7 @@ const DeliveryPartnerManagement = () => {
                   <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em] text-center w-16">S.No</th>
                   <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em]">Partner Info</th>
                   <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em]">Vehicle Details</th>
-                  <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em]">Address / Verification</th>
+                  {/* <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em]">Address / Verification</th> */}
                   <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em]">Deliveries</th>
                   <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em]">Earnings</th>
                   <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em]">Status</th>
@@ -682,7 +682,7 @@ const DeliveryPartnerManagement = () => {
                     <td className="px-5 py-4 text-sm font-semibold text-slate-600">
                       {partner.vehicle_type} &bull; {partner.vehicle_number}
                     </td>
-                    <td className="px-5 py-4 text-sm text-slate-600">
+                    {/* <td className="px-5 py-4 text-sm text-slate-600">
                       <div className="space-y-1.5 text-[11px] leading-snug">
                         <p><span className="font-black text-slate-800">Current:</span> {partner.current_address || 'N/A'}</p>
                         <p><span className="font-black text-slate-800">Permanent:</span> {partner.permanent_address || 'N/A'}</p>
@@ -699,7 +699,7 @@ const DeliveryPartnerManagement = () => {
                         <p><span className="font-black text-slate-800">Verified:</span> {[partner.face_verified ? 'Face' : null, partner.location_verified ? 'Location' : null].filter(Boolean).join(', ') || 'N/A'}</p>
                         <p><span className="font-black text-slate-800">Selfies:</span> {[partner.selfie_with_vehicle ? 'Vehicle' : null, partner.selfie_with_aadhaar ? 'Aadhaar' : null].filter(Boolean).join(', ') || 'N/A'}</p>
                       </div>
-                    </td>
+                    </td> */}
                     <td className="px-5 py-4 text-sm font-black text-slate-700">{partner.total_deliveries || 0}</td>
                     <td className="px-5 py-4 text-sm font-black text-emerald-600">₹{parseFloat(partner.earnings || 0).toLocaleString()}</td>
                     <td className="px-5 py-4">
