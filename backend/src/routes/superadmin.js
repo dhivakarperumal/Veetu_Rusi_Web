@@ -23,6 +23,11 @@ const homechefUploadFields = upload.fields([
   { name: 'fssai_certificate_url', maxCount: 1 },
   { name: 'gst_certificate_url', maxCount: 1 },
   { name: 'signature_url', maxCount: 1 },
+  { name: 'kitchen_photo1', maxCount: 1 },
+  { name: 'kitchen_photo2', maxCount: 1 },
+  { name: 'kitchen_photo3', maxCount: 1 },
+  { name: 'cooking_area_photo', maxCount: 1 },
+  { name: 'storage_area_photo', maxCount: 1 },
   { name: 'selfie_verification_url', maxCount: 1 }
 ]);
 router.get('/homechefs', controller.getHomeChefs);

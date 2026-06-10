@@ -318,6 +318,11 @@ exports.createHomeChef = async (req, res) => {
     const fssai_certificate_url = req.files && req.files.fssai_certificate_url ? req.files.fssai_certificate_url[0].filename : null;
     const gst_certificate_url = req.files && req.files.gst_certificate_url ? req.files.gst_certificate_url[0].filename : null;
     const signature_url = req.files && req.files.signature_url ? req.files.signature_url[0].filename : null;
+    const kitchen_photo1 = req.files && req.files.kitchen_photo1 ? req.files.kitchen_photo1[0].filename : null;
+    const kitchen_photo2 = req.files && req.files.kitchen_photo2 ? req.files.kitchen_photo2[0].filename : null;
+    const kitchen_photo3 = req.files && req.files.kitchen_photo3 ? req.files.kitchen_photo3[0].filename : null;
+    const cooking_area_photo = req.files && req.files.cooking_area_photo ? req.files.cooking_area_photo[0].filename : null;
+    const storage_area_photo = req.files && req.files.storage_area_photo ? req.files.storage_area_photo[0].filename : null;
     const selfie_verification_url = req.files && req.files.selfie_verification_url ? req.files.selfie_verification_url[0].filename : null;
     
     const kitchen_photos = req.files && req.files.kitchen_photos ? req.files.kitchen_photos.map(f => f.filename).join(',') : null;
@@ -342,10 +347,10 @@ exports.createHomeChef = async (req, res) => {
         ifsc_code, account_holder_name, upi_id, username, password, otp_verified,
         email_verified, last_login, device_details, login_status, verification_status, approval_status,
         approved_by_admin, approval_date, rejection_reason, block_reason,
-        aadhaar_front_url, aadhaar_back_url, pan_card_url, fssai_certificate_url, gst_certificate_url, signature_url, selfie_verification_url,
+        aadhaar_front_url, aadhaar_back_url, pan_card_url, fssai_certificate_url, gst_certificate_url, signature_url, kitchen_photo1, kitchen_photo2, kitchen_photo3, cooking_area_photo, storage_area_photo, selfie_verification_url,
         instagram_url, facebook_url, youtube_url, website_url, fssai_available, gst_available,
         delivery_radius, preorder_available, cutoff_time, about_me, cooking_story, why_choose_me, languages_known
-      ) VALUES (${Array(100).fill('?').join(', ')})`;
+      ) VALUES (${Array(105).fill('?').join(', ')})`;
 
     const params = [
       name,
@@ -434,6 +439,11 @@ exports.createHomeChef = async (req, res) => {
       fssai_certificate_url,
       gst_certificate_url,
       signature_url,
+      kitchen_photo1,
+      kitchen_photo2,
+      kitchen_photo3,
+      cooking_area_photo,
+      storage_area_photo,
       selfie_verification_url,
       instagram_url || null,
       facebook_url || null,
@@ -497,6 +507,11 @@ exports.updateHomeChef = async (req, res) => {
     const fssai_certificate_url = req.files && req.files.fssai_certificate_url ? req.files.fssai_certificate_url[0].filename : null;
     const gst_certificate_url = req.files && req.files.gst_certificate_url ? req.files.gst_certificate_url[0].filename : null;
     const signature_url = req.files && req.files.signature_url ? req.files.signature_url[0].filename : null;
+    const kitchen_photo1 = req.files && req.files.kitchen_photo1 ? req.files.kitchen_photo1[0].filename : null;
+    const kitchen_photo2 = req.files && req.files.kitchen_photo2 ? req.files.kitchen_photo2[0].filename : null;
+    const kitchen_photo3 = req.files && req.files.kitchen_photo3 ? req.files.kitchen_photo3[0].filename : null;
+    const cooking_area_photo = req.files && req.files.cooking_area_photo ? req.files.cooking_area_photo[0].filename : null;
+    const storage_area_photo = req.files && req.files.storage_area_photo ? req.files.storage_area_photo[0].filename : null;
     const selfie_verification_url = req.files && req.files.selfie_verification_url ? req.files.selfie_verification_url[0].filename : null;
     
     const kitchen_photos = req.files && req.files.kitchen_photos ? req.files.kitchen_photos.map(f => f.filename).join(',') : null;
@@ -563,6 +578,11 @@ exports.updateHomeChef = async (req, res) => {
     if (fssai_certificate_url) { query += `, fssai_certificate_url = ?`; params.push(fssai_certificate_url); }
     if (gst_certificate_url) { query += `, gst_certificate_url = ?`; params.push(gst_certificate_url); }
     if (signature_url) { query += `, signature_url = ?`; params.push(signature_url); }
+    if (kitchen_photo1) { query += `, kitchen_photo1 = ?`; params.push(kitchen_photo1); }
+    if (kitchen_photo2) { query += `, kitchen_photo2 = ?`; params.push(kitchen_photo2); }
+    if (kitchen_photo3) { query += `, kitchen_photo3 = ?`; params.push(kitchen_photo3); }
+    if (cooking_area_photo) { query += `, cooking_area_photo = ?`; params.push(cooking_area_photo); }
+    if (storage_area_photo) { query += `, storage_area_photo = ?`; params.push(storage_area_photo); }
     if (selfie_verification_url) { query += `, selfie_verification_url = ?`; params.push(selfie_verification_url); }
     if (kitchen_photos) { query += `, kitchen_photos = ?`; params.push(kitchen_photos); }
     if (kitchen_videos) { query += `, kitchen_videos = ?`; params.push(kitchen_videos); }

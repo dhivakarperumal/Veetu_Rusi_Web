@@ -18,7 +18,12 @@ const storage = multer.diskStorage({
       'signature_url',
       'selfie_verification_url',
       'kitchen_photos',
-      'kitchen_videos'
+      'kitchen_videos',
+      'kitchen_photo1',
+      'kitchen_photo2',
+      'kitchen_photo3',
+      'cooking_area_photo',
+      'storage_area_photo'
     ];
     const restaurantFields = [
       'logo_url',

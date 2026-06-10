@@ -272,6 +272,11 @@ async function createDatabaseAndTables() {
       pan_card_url VARCHAR(255) DEFAULT NULL,
       fssai_certificate_url VARCHAR(255) DEFAULT NULL,
       gst_certificate_url VARCHAR(255) DEFAULT NULL,
+      kitchen_photo1 VARCHAR(255) DEFAULT NULL,
+      kitchen_photo2 VARCHAR(255) DEFAULT NULL,
+      kitchen_photo3 VARCHAR(255) DEFAULT NULL,
+      cooking_area_photo VARCHAR(255) DEFAULT NULL,
+      storage_area_photo VARCHAR(255) DEFAULT NULL,
       signature_url VARCHAR(255) DEFAULT NULL,
       selfie_verification_url VARCHAR(255) DEFAULT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -518,6 +523,11 @@ async function createDatabaseAndTables() {
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `pan_card_url` VARCHAR(255) DEFAULT NULL");
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `fssai_certificate_url` VARCHAR(255) DEFAULT NULL");
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `gst_certificate_url` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `kitchen_photo1` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `kitchen_photo2` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `kitchen_photo3` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `cooking_area_photo` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `storage_area_photo` VARCHAR(255) DEFAULT NULL");
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `signature_url` VARCHAR(255) DEFAULT NULL");
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `selfie_verification_url` VARCHAR(255) DEFAULT NULL");
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `instagram_url` VARCHAR(255) DEFAULT NULL");
