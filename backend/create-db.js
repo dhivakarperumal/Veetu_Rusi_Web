@@ -1101,7 +1101,8 @@ async function createDatabaseAndTables() {
     INSERT INTO \`delivery_partners\` (name, mobile, vehicle_type, vehicle_number, license_number, aadhaar_number, status)
     VALUES 
       ('Karthik Kumar', '9876543215', 'Bike', 'TN-37-AB-1234', 'DL-1234567', '1234-5678-9012', 'Approved'),
-      ('Suresh Raina', '9876543216', 'Bike', 'TN-01-XY-9876', 'DL-7654321', '9876-5432-1098', 'Pending')
+      ('Suresh Raina', '9876543216', 'Bike', 'TN-01-XY-9876', 'DL-7654321', '9876-5432-1098', 'Pending'),
+      ('Test Delivery Partner', '9876543217', 'Bike', 'TN-07-ZZ-1234', 'DL-9999999', '1122-3344-5566', 'Pending')
     ON DUPLICATE KEY UPDATE name = VALUES(name);
   `);
 
