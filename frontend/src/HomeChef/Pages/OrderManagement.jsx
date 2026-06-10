@@ -296,8 +296,13 @@ const OrderManagement = () => {
                   onChange={(e) => setEditingOrder({ ...editingOrder, status: e.target.value })}
                   className="w-full px-4 py-3 bg-[#070b13]/60 border border-white/5 rounded-2xl outline-none font-medium text-white text-sm focus:border-emerald-500/30 transition-all cursor-pointer"
                 >
-                  <option value="Pending">Pending</option>
+                  <option value="Pending">New Order</option>
                   <option value="Accepted">Accepted</option>
+                  <option value="Preparing">Preparing</option>
+                  <option value="Food Ready">Food Ready</option>
+                  <option value="Packing">Packing</option>
+                  <option value="Searching Delivery Partner">Searching Delivery Partner</option>
+                  <option value="Delivery Partner Assigned">Delivery Partner Assigned</option>
                   <option value="Out for Delivery">Out for Delivery</option>
                   <option value="Delivered">Delivered</option>
                   <option value="Cancelled">Cancelled</option>
