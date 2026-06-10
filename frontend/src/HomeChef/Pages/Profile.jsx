@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import api from "../../api";
 import { FiUser, FiMail, FiPhone, FiHash, FiShield, FiCalendar, FiMapPin } from "react-icons/fi";
@@ -15,6 +15,9 @@ const Profile = () => {
   const [homeChef, setHomeChef] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [orders, setOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(true);
+  const [ordersError, setOrdersError] = useState(null);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -34,6 +37,30 @@ const Profile = () => {
     };
 
     loadProfile();
+  }, [user]);
+
+  useEffect(() => {
+    const loadOrders = async () => {
+      if (!user) {
+        setOrdersLoading(false);
+        return;
+      }
+
+      setOrdersLoading(true);
+
+      try {
+        const res = await api.get("/orders/myorders");
+        setOrders(Array.isArray(res.data) ? res.data : []);
+        setOrdersError(null);
+      } catch (err) {
+        setOrders([]);
+        setOrdersError(err.response?.data?.message || "Unable to load order history from Chef_Order.");
+      } finally {
+        setOrdersLoading(false);
+      }
+    };
+
+    loadOrders();
   }, [user]);
 
   if (!user && !loading) {
@@ -135,6 +162,55 @@ const Profile = () => {
           <p className="text-sm text-slate-500">No home chef record was found for this account.</p>
         </div>
       )}
+
+      <div className="space-y-4">
+        <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-xl">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-xl font-black text-slate-900">My Recent Orders</h2>
+              <p className="mt-2 text-sm text-slate-500">Only orders assigned to your chef account are shown here.</p>
+            </div>
+            <a
+              href="/chef/orders?status=All"
+              className="inline-flex items-center justify-center rounded-3xl bg-slate-900 px-5 py-3 text-sm font-black text-white transition hover:bg-slate-800"
+            >
+              View All Orders
+            </a>
+          </div>
+
+          {ordersLoading ? (
+            <div className="mt-6 space-y-3">
+              {[1, 2, 3].map((index) => (
+                <div key={index} className="h-16 rounded-3xl bg-slate-100/70 animate-pulse" />
+              ))}
+            </div>
+          ) : ordersError ? (
+            <div className="mt-6 rounded-3xl bg-rose-50 p-4 text-rose-700">{ordersError}</div>
+          ) : orders.length === 0 ? (
+            <div className="mt-6 rounded-3xl bg-slate-50 p-6 text-slate-500">No orders found for your chef account yet.</div>
+          ) : (
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {orders.slice(0, 6).map((order) => (
+                <div key={order.id} className="rounded-[1.5rem] border border-slate-200 bg-slate-950/95 p-5 shadow-sm">
+                  <p className="text-xs uppercase tracking-[0.35em] text-slate-400">Order ID</p>
+                  <p className="mt-2 text-sm font-black text-white">{order.order_id || `#${order.id}`}</p>
+                  <div className="mt-4 space-y-2 text-sm text-slate-300">
+                    <p>
+                      <span className="font-semibold text-slate-100">Customer:</span> {order.customer_name || "—"}
+                    </p>
+                    <p>
+                      <span className="font-semibold text-slate-100">Amount:</span> ₹{Number(order.chef_total_amount ?? order.total_amount ?? 0).toLocaleString()}
+                    </p>
+                    <p>
+                      <span className="font-semibold text-slate-100">Status:</span> {order.status || "Unknown"}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
