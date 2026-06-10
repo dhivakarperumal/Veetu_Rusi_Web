@@ -704,15 +704,15 @@ const FoodOrders = () => {
                     <table className="w-full text-left text-sm">
 
                       <thead>
-                        <tr className="bg-slate-50 border-b border-slate-100">
-                          <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.33em] text-slate-300">Order</th>
-                          <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.33em] text-slate-300">Customer</th>
-                          <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.33em] text-slate-300">Chefs</th>
-                          <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.33em] text-slate-300">Item Breakdown</th>
-                          <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.33em] text-slate-300">Amount</th>
-                          <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.33em] text-slate-300">Status</th>
-                          <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.33em] text-slate-300">Date</th>
-                          <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.33em] text-slate-300 text-right">
+                        <tr className="bg-slate-700 border-b border-slate-200">
+                          <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-[0.25em] text-slate-300">Order</th>
+                          <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-[0.25em] text-slate-300">Customer</th>
+                          <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-[0.25em] text-slate-300">Chefs</th>
+                          <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-[0.25em] text-slate-300">Item Breakdown</th>
+                          <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-[0.25em] text-slate-300">Amount</th>
+                          <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-[0.25em] text-slate-300">Status</th>
+                          <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-[0.25em] text-slate-300">Date</th>
+                          <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-[0.25em] text-slate-300 text-right">
                             Actions
                           </th>
                         </tr>
