@@ -84,6 +84,7 @@ const ChefFoodAdd = React.lazy(() => import("./HomeChef/Pages/ChefFoodAdd.jsx"))
 const ChefFoodAll = React.lazy(() => import("./HomeChef/Pages/ChefFoodAll.jsx"));
 const ChefProfile = React.lazy(() => import("./HomeChef/Pages/Profile.jsx"));
 const ChefProducts = React.lazy(() => import("./HomeChef/Pages/MyProducts.jsx"));
+const ChefReviews = React.lazy(() => import("./HomeChef/Pages/ChefReviews.jsx"));
 const RecipeDetails = React.lazy(() => import("./HomeChef/Pages/RecipeDetails.jsx"));
 const UploadFoodVideos = React.lazy(() => import("./HomeChef/Pages/UploadFoodVideos.jsx"));
 const InstagramYouTubeIntegration = React.lazy(() => import("./HomeChef/Pages/InstagramYouTubeIntegration.jsx"));
@@ -204,6 +205,7 @@ const router = createBrowserRouter([
       { path: "add-products", element: <ChefAddProducts /> },
       { path: "add-products/:id", element: <ChefAddProducts /> },
       { path: "products", element: <ChefProducts /> },
+      { path: "products/stock", element: <ChefProducts /> },
       { path: "food/add", element: <ChefFoodAdd /> },
       { path: "food/edit/:id", element: <ChefFoodAdd /> },
       { path: "food/all", element: <ChefFoodAll /> },
@@ -211,7 +213,6 @@ const router = createBrowserRouter([
       { path: "upload-videos", element: <UploadFoodVideos /> },
       { path: "social-media", element: <InstagramYouTubeIntegration /> },
       { path: "daily-menu", element: <DailyMenuManagement /> },
-      { path: "meal-slots", element: <MealSlotManagement /> },
       { path: "preorders", element: <PreorderFoodSystem /> },
       { path: "delivery-settings", element: <DeliveryLimitSettings /> },
       { path: "categories", element: <ChefCategories /> },
@@ -220,6 +221,7 @@ const router = createBrowserRouter([
       { path: "analytics", element: <AnalyticsDashboard /> },
       { path: "earnings", element: <WalletAndEarnings /> },
       { path: "orders", element: <ChefOrderManagement /> },
+      { path: "reviews", element: <ChefReviews /> },
     ],
   },
 

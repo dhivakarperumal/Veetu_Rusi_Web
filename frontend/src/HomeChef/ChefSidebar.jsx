@@ -64,16 +64,18 @@ const navItems = [
       { path: "/chef/orders?status=Cancelled", label: "Cancelled Order", icon: XCircle }
     ]
   },
-  { path: "/chef/products", label: "All Products", icon: PlusCircle },
-  { path: "/chef/categories", label: "Categories", icon: Layers },
-  { path: "/chef/recipes", label: "Recipe Details", icon: BookOpen },
-  { path: "/chef/upload-videos", label: "Food Videos", icon: Upload },
-  { path: "/chef/social-media", label: "Social Media", icon: Share2 },
-  { path: "/chef/daily-menu", label: "Daily Menu", icon: Calendar },
-  { path: "/chef/meal-slots", label: "Meal Slots", icon: Clock },
-  { path: "/chef/preorders", label: "Preorders", icon: ShoppingCart },
-  { path: "/chef/delivery-settings", label: "Delivery Settings", icon: Truck },
-  
+
+  {
+    path: "/chef/products",
+    label: "Products",
+    icon: Package,
+    children: [
+      { path: "/chef/products", label: "All Products", icon: List },
+      { path: "/chef/categories", label: "Categories", icon: Layers },
+      { path: "/chef/products/stock", label: "Stock Details", icon: Archive }
+    ]
+  },
+  { path: "/chef/reviews", label: "Reviews", icon: MessageSquare },
   { path: "/chef/earnings", label: "Wallet & Earnings", icon: Wallet },
   { path: "/", label: "Back Home", icon: Home },
 ];
