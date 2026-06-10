@@ -345,7 +345,7 @@ exports.createHomeChef = async (req, res) => {
         aadhaar_front_url, aadhaar_back_url, pan_card_url, fssai_certificate_url, gst_certificate_url, signature_url, selfie_verification_url,
         instagram_url, facebook_url, youtube_url, website_url, fssai_available, gst_available,
         delivery_radius, preorder_available, cutoff_time, about_me, cooking_story, why_choose_me, languages_known
-      ) VALUES (${Array(96).fill('?').join(', ')})`;
+      ) VALUES (${Array(100).fill('?').join(', ')})`;
 
     const params = [
       name,
