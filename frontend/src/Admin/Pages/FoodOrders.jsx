@@ -892,7 +892,7 @@ const FoodOrders = () => {
 
       ) : (
 
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3 items-stretch">
 
           {orders.map((order) => {
 
@@ -905,26 +905,26 @@ const FoodOrders = () => {
             return (
               <div
                 key={order.id}
-                className="overflow-hidden rounded-3xl bg-white shadow-sm hover:shadow-lg transition-all"
+                className="flex h-full flex-col overflow-hidden rounded-3xl bg-white shadow-sm border border-slate-100 hover:shadow-lg transition-all duration-300"
               >
 
                 {/* Header */}
-                <div className="bg-slate-900 px-5 py-4">
+                <div className="bg-slate-900 px-6 py-5">
 
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-start justify-between gap-3">
 
                     <div>
-                      <p className="text-[10px] uppercase tracking-[0.25em] text-slate-400">
+                      <p className="text-[10px] uppercase tracking-[0.3em] text-slate-400">
                         Order ID
                       </p>
 
-                      <h3 className="mt-1 text-lg font-bold text-white">
+                      <h3 className="mt-2 text-xl font-semibold text-white break-all">
                         {order.order_id}
                       </h3>
                     </div>
 
                     <span
-                      className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ${STATUS_STYLES[order.status]
+                      className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap ${STATUS_STYLES[order.status]
                         }`}
                     >
                       {STATUS_ICONS[order.status]}
@@ -936,111 +936,125 @@ const FoodOrders = () => {
                 </div>
 
                 {/* Body */}
-                <div className="p-5 space-y-4">
+                <div className="flex flex-1 flex-col p-5">
 
-                  <div>
-                    <p className="text-xs uppercase tracking-wider text-slate-400">
-                      Customer
-                    </p>
+                  <div className="space-y-5 flex-1">
 
-                    <p className="mt-1 text-sm font-medium text-slate-900">
-                      {order.customer_name ||
-                        order.ordered_by_name}
-                    </p>
+                    {/* Customer */}
+                    <div>
+                      <p className="text-xs uppercase tracking-wider text-slate-400 mb-1">
+                        Customer
+                      </p>
+
+                      <p className="text-base font-medium text-slate-900">
+                        {order.customer_name ||
+                          order.ordered_by_name ||
+                          "Customer"}
+                      </p>
+                    </div>
+
+                    {/* Amount */}
+                    <div>
+                      <p className="text-xs uppercase tracking-wider text-slate-400 mb-1">
+                        Amount
+                      </p>
+
+                      <p className="text-3xl font-semibold text-emerald-600">
+                        {formatAmount(order.total_amount)}
+                      </p>
+                    </div>
+
+                    {/* Chefs */}
+                    <div>
+                      <p className="text-xs uppercase tracking-wider text-slate-400 mb-2">
+                        Chefs
+                      </p>
+
+                      <div className="flex flex-wrap gap-2 min-h-[38px]">
+
+                        {chefGroups.map((group) => (
+                          <span
+                            key={group.name}
+                            className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700"
+                          >
+                            {group.name}
+                          </span>
+                        ))}
+
+                      </div>
+                    </div>
+
+                    {/* Items */}
+                    <div>
+                      <p className="text-xs uppercase tracking-wider text-slate-400 mb-2">
+                        Items
+                      </p>
+
+                      <div className="space-y-2 min-h-[150px]">
+
+                        {items.slice(0, 3).map((item, idx) => (
+                          <div
+                            key={idx}
+                            className="rounded-2xl bg-slate-50 px-4 py-3"
+                          >
+                            <p className="text-sm font-medium text-slate-900">
+                              {item.name || "Item"}
+                            </p>
+
+                            <p className="text-xs text-slate-500 mt-1">
+                              Qty {item.quantity || 1}
+                            </p>
+                          </div>
+                        ))}
+
+                        {items.length > 3 && (
+                          <div className="text-xs text-slate-400 px-1">
+                            +{items.length - 3} more items
+                          </div>
+                        )}
+
+                      </div>
+                    </div>
+
+                    {/* Date */}
+                    <div>
+                      <p className="text-xs uppercase tracking-wider text-slate-400 mb-1">
+                        Date
+                      </p>
+
+                      <p className="text-sm text-slate-600">
+                        {formatDate(order.ordered_at)}
+                      </p>
+                    </div>
+
                   </div>
 
-                  <div>
-                    <p className="text-xs uppercase tracking-wider text-slate-400">
-                      Amount
-                    </p>
+                  {/* Footer Buttons */}
+                  <div className="mt-auto pt-5">
 
-                    <p className="mt-1 text-xl font-semibold text-emerald-600">
-                      {formatAmount(order.total_amount)}
-                    </p>
-                  </div>
+                    <div className="grid grid-cols-2 gap-3">
 
-                  <div>
-                    <p className="text-xs uppercase tracking-wider text-slate-400 mb-2">
-                      Chefs
-                    </p>
+                      <button
+                        onClick={() => setSelectedOrder(order)}
+                        className="flex items-center justify-center gap-2 rounded-2xl bg-slate-100 py-3 text-sm font-medium text-slate-700 hover:bg-slate-200 transition"
+                      >
+                        <Eye className="w-4 h-4" />
+                        View
+                      </button>
 
-                    <div className="flex flex-wrap gap-2">
-
-                      {chefGroups.map((group) => (
-                        <span
-                          key={group.name}
-                          className="rounded-xl bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700"
-                        >
-                          {group.name}
-                        </span>
-                      ))}
+                      <button
+                        onClick={() =>
+                          navigate(`/admin/food-orders/${order.id}`, {
+                            state: { order }
+                          })
+                        }
+                        className="flex items-center justify-center gap-2 rounded-2xl bg-emerald-50 py-3 text-sm font-medium text-emerald-700 hover:bg-emerald-100 transition"
+                      >
+                        <ChevronDown className="w-4 h-4" />
+                        Details
+                      </button>
 
                     </div>
-                  </div>
-
-                  <div>
-                    <p className="text-xs uppercase tracking-wider text-slate-400 mb-2">
-                      Items
-                    </p>
-
-                    <div className="space-y-2">
-
-                      {items.slice(0, 3).map((item, idx) => (
-                        <div
-                          key={idx}
-                          className="rounded-xl bg-slate-50 px-3 py-2"
-                        >
-                          <p className="text-sm font-medium text-slate-800">
-                            {item.name}
-                          </p>
-
-                          <p className="text-xs text-slate-500">
-                            Qty {item.quantity || 1}
-                          </p>
-                        </div>
-                      ))}
-
-                      {items.length > 3 && (
-                        <p className="text-xs text-slate-400">
-                          +{items.length - 3} more items
-                        </p>
-                      )}
-
-                    </div>
-                  </div>
-
-                  <div>
-                    <p className="text-xs uppercase tracking-wider text-slate-400">
-                      Date
-                    </p>
-
-                    <p className="text-sm text-slate-600 mt-1">
-                      {formatDate(order.ordered_at)}
-                    </p>
-                  </div>
-
-                  <div className="flex gap-2 pt-2">
-
-                    <button
-                      onClick={() => setSelectedOrder(order)}
-                      className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-slate-100 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200 transition"
-                    >
-                      <Eye className="w-4 h-4" />
-                      View
-                    </button>
-
-                    <button
-                      onClick={() =>
-                        navigate(
-                          `/admin/food-orders/${order.id}`,
-                          { state: { order } }
-                        )
-                      }
-                      className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-emerald-50 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-100 transition"
-                    >
-                      <ChevronDown className="w-4 h-4" />
-                      Details
-                    </button>
 
                   </div>
 
