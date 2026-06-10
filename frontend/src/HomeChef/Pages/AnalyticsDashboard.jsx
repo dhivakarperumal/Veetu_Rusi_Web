@@ -128,173 +128,132 @@ const AnalyticsDashboard = () => {
 
   return (
     <div className="space-y-6 pb-12">
-      {/* Error Alert */}
       {stats.error && (
-        <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-lg p-4">
-          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
-          <p className="text-sm text-red-700">{stats.error}</p>
+        <div className="flex items-center gap-3 rounded-3xl border border-red-500/20 bg-red-50/80 px-5 py-4 text-sm text-red-700">
+          <AlertCircle className="w-5 h-5 text-red-600" />
+          <span>{stats.error}</span>
         </div>
       )}
 
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-black text-slate-900">Dashboard</h1>
-          <p className="text-sm text-gray-500 mt-1">Track your food business performance</p>
-        </div>
-        <select
-          value={timeRange}
-          onChange={(e) => setTimeRange(e.target.value)}
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="week">This Week</option>
-          <option value="month">This Month</option>
-          <option value="year">This Year</option>
-        </select>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {statsData.map((stat, idx) => {
-          const Icon = stat.icon;
-          return (
-            <div
-              key={idx}
-              className={`bg-linear-to-br ${colorMap[stat.color]} rounded-2xl p-6 border`}
+      <div className="rounded-4xl border border-slate-200/20 bg-slate-950/80 p-6 shadow-2xl shadow-slate-900/40 backdrop-blur-xl">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.35em] text-emerald-300/90">Chef Dashboard</p>
+            <h1 className="mt-4 text-4xl font-black text-white sm:text-5xl">Welcome back, chef.</h1>
+            <p className="mt-3 max-w-2xl text-sm text-slate-300 sm:text-base">
+              See your sales performance, customer trends, stock health, and quick actions in one place.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <button className="rounded-3xl bg-emerald-500 px-5 py-3 text-sm font-black text-white shadow-xl shadow-emerald-500/20 transition hover:bg-emerald-400">
+              Refresh Data
+            </button>
+            <select
+              value={timeRange}
+              onChange={(e) => setTimeRange(e.target.value)}
+              className="rounded-3xl border border-slate-800 bg-slate-950/90 px-4 py-3 text-sm font-bold text-slate-100 outline-none transition focus:border-emerald-400"
             >
-              <div className="flex items-start justify-between mb-4">
-                <Icon className={`w-8 h-8 ${iconColorMap[stat.color]}`} />
-                <span className="text-xs font-bold text-green-600 bg-green-100 px-2 py-1 rounded">
-                  {stat.change}
-                </span>
-              </div>
-              <p className="text-xs font-bold text-gray-600 uppercase">{stat.label}</p>
-              <p className="text-2xl font-black text-slate-900 mt-2">{stat.value}</p>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Charts Row 1 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Line Chart - Orders & Revenue Trend */}
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-          <h3 className="text-lg font-bold text-slate-900 mb-4">Weekly Trend</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
-              <XAxis dataKey="date" stroke="#64748B" />
-              <YAxis stroke="#64748B" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#1E293B",
-                  border: "none",
-                  borderRadius: "8px",
-                  color: "#F1F5F9",
-                }}
-              />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="orders"
-                stroke="#3B82F6"
-                strokeWidth={2}
-                dot={{ fill: "#3B82F6", r: 4 }}
-              />
-              <Line
-                type="monotone"
-                dataKey="revenue"
-                stroke="#10B981"
-                strokeWidth={2}
-                dot={{ fill: "#10B981", r: 4 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Pie Chart - Top Items */}
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-          <h3 className="text-lg font-bold text-slate-900 mb-4">Top Selling Items</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={topItems}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, value }) => `${name}: ${value}%`}
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey="value"
-              >
-                {topItems.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* Charts Row 2 */}
-      <div className="bg-white rounded-2xl shadow-lg p-6">
-        <h3 className="text-lg font-bold text-slate-900 mb-4">Revenue vs Orders</h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
-            <XAxis dataKey="date" stroke="#64748B" />
-            <YAxis stroke="#64748B" />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "#1E293B",
-                border: "none",
-                borderRadius: "8px",
-                color: "#F1F5F9",
-              }}
-            />
-            <Legend />
-            <Bar dataKey="orders" fill="#3B82F6" radius={[8, 8, 0, 0]} />
-            <Bar dataKey="revenue" fill="#10B981" radius={[8, 8, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Customer Insights */}
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-          <h3 className="text-lg font-bold text-slate-900 mb-4">Customer Insights</h3>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between pb-4 border-b">
-              <span className="text-gray-700">New Customers</span>
-              <span className="text-xl font-bold text-blue-600">34</span>
-            </div>
-            <div className="flex items-center justify-between pb-4 border-b">
-              <span className="text-gray-700">Returning Customers</span>
-              <span className="text-xl font-bold text-green-600">90</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-700">Customer Retention Rate</span>
-              <span className="text-xl font-bold text-purple-600">72.6%</span>
-            </div>
+              <option value="week">This Week</option>
+              <option value="month">This Month</option>
+              <option value="year">This Year</option>
+            </select>
           </div>
         </div>
 
-        {/* Order Status Breakdown */}
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-          <h3 className="text-lg font-bold text-slate-900 mb-4">Order Status</h3>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between pb-4 border-b">
-              <span className="text-gray-700">Completed</span>
-              <span className="text-xl font-bold text-green-600">156</span>
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {statsData.map((stat, idx) => {
+            const Icon = stat.icon;
+            return (
+              <div
+                key={idx}
+                className="rounded-[1.75rem] border border-white/10 bg-slate-900/90 p-5 shadow-lg shadow-slate-950/20"
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-800/80 text-white shadow-inner">
+                    <Icon className={`w-6 h-6 ${iconColorMap[stat.color]}`} />
+                  </div>
+                  <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-slate-300">
+                    {stat.change}
+                  </span>
+                </div>
+                <p className="mt-6 text-sm font-semibold uppercase tracking-[0.18em] text-slate-400">{stat.label}</p>
+                <p className="mt-3 text-3xl font-black text-white">{stat.value}</p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-[1.4fr_0.8fr]">
+        <div className="rounded-4xl border border-slate-200/20 bg-slate-950/80 p-6 shadow-2xl shadow-slate-900/30 backdrop-blur-xl">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-lg font-bold text-white">Weekly Performance</h2>
+              <p className="mt-1 text-sm text-slate-400">Orders and revenue trends for the selected period.</p>
             </div>
-            <div className="flex items-center justify-between pb-4 border-b">
-              <span className="text-gray-700">In Progress</span>
-              <span className="text-xl font-bold text-yellow-600">18</span>
+            <div className="rounded-3xl bg-slate-800/80 px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-slate-200">
+              {timeRange === "week" ? "Last 7 days" : timeRange === "month" ? "Last 30 days" : "This year"}
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-700">Cancelled</span>
-              <span className="text-xl font-bold text-red-600">4</span>
+          </div>
+
+            <div className="mt-6 h-85">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                <XAxis dataKey="date" stroke="#94A3B8" tickLine={false} axisLine={false} />
+                <YAxis stroke="#94A3B8" tickLine={false} axisLine={false} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#0f172a",
+                    border: "1px solid rgba(148, 163, 184, 0.12)",
+                    borderRadius: "12px",
+                    color: "#f8fafc",
+                  }}
+                />
+                <Legend wrapperStyle={{ color: "#cbd5e1" }} />
+                <Line type="monotone" dataKey="orders" stroke="#3B82F6" strokeWidth={3} dot={{ r: 5, fill: "#3B82F6" }} />
+                <Line type="monotone" dataKey="revenue" stroke="#10B981" strokeWidth={3} dot={{ r: 5, fill: "#10B981" }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <div className="rounded-4xl border border-slate-200/20 bg-slate-950/80 p-6 shadow-2xl shadow-slate-900/30 backdrop-blur-xl">
+            <h3 className="text-lg font-bold text-white">Top Selling Items</h3>
+            <p className="mt-1 text-sm text-slate-400">Most popular dishes right now.</p>
+            <div className="mt-6 space-y-4">
+              {topItems.map((item) => (
+                <div key={item.name} className="rounded-3xl border border-slate-800/80 bg-slate-900/90 p-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-bold text-white">{item.name}</p>
+                      <p className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-500">{item.value}% of sales</p>
+                    </div>
+                    <div className="h-3.5 w-20 rounded-full bg-slate-800">
+                      <div className="h-3.5 rounded-full" style={{ width: `${item.value}%`, backgroundColor: item.color }} />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-4xl border border-slate-200/20 bg-slate-950/80 p-6 shadow-2xl shadow-slate-900/30 backdrop-blur-xl">
+            <h3 className="text-lg font-bold text-white">Order Status</h3>
+            <div className="mt-5 space-y-4">
+              <div className="flex items-center justify-between rounded-3xl bg-slate-900/90 px-4 py-4">
+                <span className="text-sm text-slate-300">Completed Orders</span>
+                <span className="text-lg font-black text-emerald-400">156</span>
+              </div>
+              <div className="flex items-center justify-between rounded-3xl bg-slate-900/90 px-4 py-4">
+                <span className="text-sm text-slate-300">In Progress</span>
+                <span className="text-lg font-black text-amber-400">18</span>
+              </div>
+              <div className="flex items-center justify-between rounded-3xl bg-slate-900/90 px-4 py-4">
+                <span className="text-sm text-slate-300">Cancelled</span>
+                <span className="text-lg font-black text-red-400">4</span>
+              </div>
             </div>
           </div>
         </div>
