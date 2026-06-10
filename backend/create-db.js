@@ -520,8 +520,19 @@ async function createDatabaseAndTables() {
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `gst_certificate_url` VARCHAR(255) DEFAULT NULL");
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `signature_url` VARCHAR(255) DEFAULT NULL");
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `selfie_verification_url` VARCHAR(255) DEFAULT NULL");
-
-  await connection.execute(`
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `instagram_url` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `facebook_url` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `youtube_url` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `website_url` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `fssai_available` VARCHAR(50) DEFAULT 'No'");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `gst_available` VARCHAR(50) DEFAULT 'No'");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `delivery_radius` VARCHAR(50) DEFAULT '5 KM'");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `preorder_available` TINYINT(1) DEFAULT 0");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `cutoff_time` TEXT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `about_me` LONGTEXT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `cooking_story` LONGTEXT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `why_choose_me` LONGTEXT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `languages_known` VARCHAR(255) DEFAULT NULL");
     CREATE TABLE IF NOT EXISTS franchise_category (
       id INT AUTO_INCREMENT PRIMARY KEY,
       catId VARCHAR(50) NOT NULL,

@@ -340,8 +340,10 @@ exports.createHomeChef = async (req, res) => {
         ifsc_code, account_holder_name, upi_id, username, password, otp_verified,
         email_verified, last_login, device_details, login_status, verification_status, approval_status,
         approved_by_admin, approval_date, rejection_reason, block_reason,
-        aadhaar_front_url, aadhaar_back_url, pan_card_url, fssai_certificate_url, gst_certificate_url, signature_url, selfie_verification_url
-      ) VALUES (${Array(87).fill('?').join(', ')})`;
+        aadhaar_front_url, aadhaar_back_url, pan_card_url, fssai_certificate_url, gst_certificate_url, signature_url, selfie_verification_url,
+        instagram_url, facebook_url, youtube_url, website_url, fssai_available, gst_available,
+        delivery_radius, preorder_available, cutoff_time, about_me, cooking_story, why_choose_me, languages_known
+      ) VALUES (${Array(96).fill('?').join(', ')})`;
 
     const params = [
       name,
@@ -430,7 +432,20 @@ exports.createHomeChef = async (req, res) => {
       fssai_certificate_url,
       gst_certificate_url,
       signature_url,
-      selfie_verification_url
+      selfie_verification_url,
+      instagram_url || null,
+      facebook_url || null,
+      youtube_url || null,
+      website_url || null,
+      fssai_available || 'No',
+      gst_available || 'No',
+      delivery_radius || '5 KM',
+      preorder_available === 'true' || preorder_available === true ? 1 : 0,
+      cutoff_time || null,
+      about_me || null,
+      cooking_story || null,
+      why_choose_me || null,
+      languages_known || null
     ];
 
     // Debug checks
@@ -467,7 +482,9 @@ exports.updateHomeChef = async (req, res) => {
       aadhaar_number, pan_number, fssai_number, gst_number, bank_account_number,
       ifsc_code, account_holder_name, upi_id, username, password, otp_verified,
       email_verified, login_status, verification_status, approval_status,
-      rejection_reason, block_reason, address
+      rejection_reason, block_reason, address,
+      fssai_available, gst_available, instagram_url, facebook_url, youtube_url, website_url,
+      delivery_radius, preorder_available, cutoff_time, about_me, cooking_story, why_choose_me, languages_known
     } = req.body;
 
     const profile_photo = req.files && req.files.profile_photo ? req.files.profile_photo[0].filename : null;
@@ -547,6 +564,25 @@ exports.updateHomeChef = async (req, res) => {
     if (selfie_verification_url) { query += `, selfie_verification_url = ?`; params.push(selfie_verification_url); }
     if (kitchen_photos) { query += `, kitchen_photos = ?`; params.push(kitchen_photos); }
     if (kitchen_videos) { query += `, kitchen_videos = ?`; params.push(kitchen_videos); }
+
+    // Social Media & Profile Fields
+    if (instagram_url) { query += `, instagram_url = ?`; params.push(instagram_url); }
+    if (facebook_url) { query += `, facebook_url = ?`; params.push(facebook_url); }
+    if (youtube_url) { query += `, youtube_url = ?`; params.push(youtube_url); }
+    if (website_url) { query += `, website_url = ?`; params.push(website_url); }
+
+    // Business Flags & Delivery
+    if (fssai_available) { query += `, fssai_available = ?`; params.push(fssai_available); }
+    if (gst_available) { query += `, gst_available = ?`; params.push(gst_available); }
+    if (delivery_radius) { query += `, delivery_radius = ?`; params.push(delivery_radius); }
+    if (preorder_available !== undefined) { query += `, preorder_available = ?`; params.push(preorder_available === 'true' || preorder_available === true ? 1 : 0); }
+    if (cutoff_time) { query += `, cutoff_time = ?`; params.push(cutoff_time); }
+
+    // Creator Profile
+    if (about_me) { query += `, about_me = ?`; params.push(about_me); }
+    if (cooking_story) { query += `, cooking_story = ?`; params.push(cooking_story); }
+    if (why_choose_me) { query += `, why_choose_me = ?`; params.push(why_choose_me); }
+    if (languages_known) { query += `, languages_known = ?`; params.push(languages_known); }
 
     if (password) {
       query += `, password = ?`;
