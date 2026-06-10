@@ -318,6 +318,14 @@ const HomeChefManagement = () => {
       setSaving(true);
       const formData = new FormData();
       const multiFileFields = ["kitchen_photos", "kitchen_videos"];
+      const fileFieldMap = {
+        introduction_video: "kitchen_videos",
+        kitchen_photo1: "kitchen_photos",
+        kitchen_photo2: "kitchen_photos",
+        kitchen_photo3: "kitchen_photos",
+        cooking_area_photo: "kitchen_photos",
+        storage_area_photo: "kitchen_photos",
+      };
 
       const payload = {
         ...form,
@@ -356,7 +364,18 @@ const HomeChefManagement = () => {
 
       Object.keys(payload).forEach((key) => {
         if (key === "confirmPassword") return;
+        const mappedKey = fileFieldMap[key] || key;
         const val = payload[key];
+
+        if (fileFieldMap[key]) {
+          if (val instanceof FileList && val.length > 0) {
+            for (let i = 0; i < val.length; i++) {
+              formData.append(mappedKey, val[i]);
+            }
+          }
+          return;
+        }
+
         if (val instanceof FileList) {
           if (multiFileFields.includes(key)) {
             for (let i = 0; i < val.length; i++) {

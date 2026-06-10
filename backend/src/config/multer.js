@@ -7,13 +7,51 @@ const storage = multer.diskStorage({
     let folder = 'uploads/';
     const fieldname = file.fieldname;
 
-    if (fieldname === 'banner_image') {
-      folder += 'banners/';
-    } else if (fieldname === 'restaurant_image' || fieldname === 'gst_doc' || fieldname === 'fssai_doc') {
-      folder += 'restaurants/';
-    } else if (fieldname === 'chef_image' || fieldname === 'aadhaar_doc' || fieldname === 'pan_doc') {
+    const homeChefFields = [
+      'profile_photo',
+      'cover_banner',
+      'aadhaar_front_url',
+      'aadhaar_back_url',
+      'pan_card_url',
+      'fssai_certificate_url',
+      'gst_certificate_url',
+      'signature_url',
+      'selfie_verification_url',
+      'kitchen_photos',
+      'kitchen_videos'
+    ];
+    const restaurantFields = [
+      'logo_url',
+      'banner_url',
+      'aadhaar_url',
+      'pan_url',
+      'gst_certificate_url',
+      'shop_license_url',
+      'restaurant_photos_urls',
+      'kitchen_photos_urls',
+      'signature_url'
+    ];
+    const deliveryFields = [
+      'profile_photo',
+      'cover_photo',
+      'aadhaar_front_url',
+      'aadhaar_back_url',
+      'pan_card_url',
+      'selfie_verification_url',
+      'police_verification_certificate',
+      'vehicle_front_photo',
+      'vehicle_back_photo',
+      'rc_book_image',
+      'insurance_document_image',
+      'license_front_image',
+      'license_back_image'
+    ];
+
+    if (homeChefFields.includes(fieldname)) {
       folder += 'homechefs/';
-    } else if (fieldname === 'partner_image' || fieldname === 'license_doc') {
+    } else if (restaurantFields.includes(fieldname)) {
+      folder += 'restaurants/';
+    } else if (deliveryFields.includes(fieldname)) {
       folder += 'deliverypartners/';
     }
 
@@ -31,12 +69,12 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  const allowedExtensions = ['.jpg', '.jpeg', '.png', '.pdf', '.webp'];
+  const allowedExtensions = ['.jpg', '.jpeg', '.png', '.pdf', '.webp', '.mp4', '.mov', '.webm'];
   const ext = path.extname(file.originalname).toLowerCase();
   if (allowedExtensions.includes(ext)) {
     cb(null, true);
   } else {
-    cb(new Error('Only images and PDF documents are allowed.'), false);
+    cb(new Error('Only images, videos, and PDF documents are allowed.'), false);
   }
 };
 
