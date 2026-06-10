@@ -32,12 +32,13 @@ const navItems = [
       { path: "/delivery/delivered-orders", label: "Delivered Orders", icon: FaTruck },
     ],
   },
-  { path: "/delivery/live-tracking", label: "Live Tracking", icon: FaMapMarkerAlt },
+  
   { path: "/delivery/earnings", label: "Earnings", icon: FaWallet },
+  { path: "/delivery/incentives", label: "Incentives", icon: FaStar },
   { path: "/delivery/ratings", label: "Ratings", icon: FaStar },
-  { path: "/delivery/notifications", label: "Notifications", icon: FaBell },
+  
   { path: "/delivery/attendance", label: "Attendance", icon: FaCalendarCheck },
-  { path: "/delivery/profile", label: "Profile", icon: FaUser },
+  
   { path: "/delivery/settings", label: "Settings", icon: FaCog },
 ];
 
