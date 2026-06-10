@@ -771,7 +771,7 @@ const HomeChefManagement = () => {
                       : "Add New Home Chef"}
                   </h3>
                   <p className="text-xs text-emerald-200 font-bold uppercase tracking-widest mt-1">
-                    Complete the 8-tab verification and setup details
+                    Complete the 9-tab verification and setup details
                   </p>
                 </div>
                 <button
@@ -1135,118 +1135,6 @@ const HomeChefManagement = () => {
                   </div>
                 )}
 
-                {activeFormTab === "food" && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className={lbl}>Specialty Food</label>
-                      <input
-                        type="text"
-                        value={form.specialty_food}
-                        onChange={(e) =>
-                          setForm({ ...form, specialty_food: e.target.value })
-                        }
-                        placeholder="e.g. Authentic Chettinad, Homemade Desserts"
-                        className={inp}
-                      />
-                    </div>
-                    <div>
-                      <label className={lbl}>Cuisine Type</label>
-                      <select
-                        value={form.cuisine_type}
-                        onChange={(e) =>
-                          setForm({ ...form, cuisine_type: e.target.value })
-                        }
-                        className={inp}
-                      >
-                        <option value="South Indian">South Indian</option>
-                        <option value="North Indian">North Indian</option>
-                        <option value="Chinese">Chinese</option>
-                        <option value="Arabic">Arabic</option>
-                        <option value="Bakery">Bakery</option>
-                        <option value="Fast Food">Fast Food</option>
-                        <option value="Healthy Food">Healthy Food</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className={lbl}>Signature Dish</label>
-                      <input
-                        type="text"
-                        value={form.signature_dish}
-                        onChange={(e) =>
-                          setForm({ ...form, signature_dish: e.target.value })
-                        }
-                        placeholder="Signature Dish"
-                        className={inp}
-                      />
-                    </div>
-                    <div>
-                      <label className={lbl}>Veg / Non-Veg</label>
-                      <select
-                        value={form.veg_nonveg}
-                        onChange={(e) =>
-                          setForm({ ...form, veg_nonveg: e.target.value })
-                        }
-                        className={inp}
-                      >
-                        <option value="Veg">Veg Only</option>
-                        <option value="Non-Veg">Non-Veg Only</option>
-                        <option value="Both">Both</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className={lbl}>Experience (Years)</label>
-                      <input
-                        type="number"
-                        value={form.experience_years}
-                        onChange={(e) =>
-                          setForm({ ...form, experience_years: e.target.value })
-                        }
-                        placeholder="Experience (Years)"
-                        className={inp}
-                      />
-                    </div>
-                    <div>
-                      <label className={lbl}>Cooking Style</label>
-                      <input
-                        type="text"
-                        value={form.cooking_style}
-                        onChange={(e) =>
-                          setForm({ ...form, cooking_style: e.target.value })
-                        }
-                        placeholder="e.g. Traditional clay pot, Low oil"
-                        className={inp}
-                      />
-                    </div>
-                    <div>
-                      <label className={lbl}>Preparation Time (mins)</label>
-                      <input
-                        type="text"
-                        value={form.preparation_time}
-                        onChange={(e) =>
-                          setForm({ ...form, preparation_time: e.target.value })
-                        }
-                        placeholder="e.g. 30-45 mins"
-                        className={inp}
-                      />
-                    </div>
-                    <div>
-                      <label className={lbl}>Daily Order Capacity</label>
-                      <input
-                        type="number"
-                        value={form.daily_order_capacity}
-                        onChange={(e) =>
-                          setForm({
-                            ...form,
-                            daily_order_capacity: e.target.value,
-                          })
-                        }
-                        placeholder="Daily Order Capacity"
-                        className={inp}
-                      />
-                    </div>
-                  </div>
-                )}
-
                 {activeFormTab === "availability" && (
                   <div className="space-y-8">
 
@@ -1448,7 +1336,6 @@ const HomeChefManagement = () => {
 
                   </div>
                 )}
-
 
                 {activeFormTab === "social" && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
