@@ -22,90 +22,91 @@ import {
 } from "lucide-react";
 
 const emptyForm = {
+  // Personal Information
   chef_unique_code: "",
-  name: "",
-  father_husband_name: "",
+  first_name: "",
+  last_name: "",
   gender: "Male",
   date_of_birth: "",
-  age: "",
-  profile_photo: null,
-  cover_banner: null,
   mobile: "",
-  alt_mobile: "",
-  whatsapp_number: "",
   email: "",
-  emergency_contact: "",
-  door_number: "",
-  street_name: "",
-  area_name: "",
-  landmark: "",
+  password: "",
+  confirmPassword: "",
+  profile_photo: null,
+
+  // Address Information
+  house_number: "",
+  street: "",
+  area: "",
   city: "",
-  district: "",
   state: "",
   pincode: "",
-  latitude: "",
-  longitude: "",
-  map_link: "",
+  landmark: "",
+  gps_location: "",
+  google_map_location: "",
+
+  // Kitchen Information
   kitchen_name: "",
-  kitchen_address: "",
   kitchen_type: "Home Kitchen",
-  kitchen_photos: null,
-  kitchen_videos: null,
-  seating_available: false,
-  dining_available: false,
-  takeaway_available: false,
-  delivery_available: false,
-  specialty_food: "",
-  cuisine_type: "South Indian",
-  signature_dish: "",
-  veg_nonveg: "Veg",
   experience_years: "",
-  cooking_style: "",
-  preparation_time: "",
+  speciality_cuisine: "",
   daily_order_capacity: "",
-  available_days: "",
-  opening_time: "",
-  closing_time: "",
-  holiday_schedule: "",
-  busy_hours: "",
-  instant_order: false,
-  pre_order: false,
-  aadhaar_number: "",
+
+  // Food Availability
+  available_days: [],
+  available_slots: [],
+
+  // Business Details
+  fssai_available: "No",
+  gst_available: "No",
   pan_number: "",
-  fssai_number: "",
-  gst_number: "",
   bank_account_number: "",
   ifsc_code: "",
-  account_holder_name: "",
   upi_id: "",
+
+  // Social Media
+  instagram_url: "",
+  facebook_url: "",
+  youtube_url: "",
+  website_url: "",
+
+  // Creator Profile
+  about_me: "",
+  cooking_story: "",
+  why_choose_me: "",
+  languages_known: "",
+  introduction_video: null,
+
+  // Kitchen Verification
   aadhaar_front_url: null,
   aadhaar_back_url: null,
   pan_card_url: null,
-  fssai_certificate_url: null,
-  gst_certificate_url: null,
-  signature_url: null,
+
+  kitchen_photo1: null,
+  kitchen_photo2: null,
+  kitchen_photo3: null,
+
+  cooking_area_photo: null,
+  storage_area_photo: null,
+
   selfie_verification_url: null,
-  username: "",
-  password: "",
-  confirmPassword: "",
-  otp_verified: false,
-  email_verified: false,
-  login_status: "Active",
-  verification_status: "Pending",
-  approval_status: "Pending",
-  rejection_reason: "",
-  block_reason: "",
+
+  // Delivery Preferences
+  delivery_radius: "5 KM",
+  preorder_available: false,
+  cutoff_time: "",
 };
 
 const tabs = [
-  { id: "basic", label: "Basic Info" },
-  { id: "address", label: "Address Details" },
-  { id: "kitchen", label: "Kitchen Info" },
-  { id: "food", label: "Food & Specialty" },
-  { id: "availability", label: "Availability" },
-  { id: "kyc", label: "Verification & KYC" },
-  { id: "documents", label: "Upload Documents KYC" },
-  { id: "account", label: "Account & Status" },
+  { id: "personal", label: "Personal Information" },
+  { id: "address", label: "Address Information" },
+  { id: "kitchen", label: "Kitchen Information" },
+  { id: "availability", label: "Food Availability" },
+  { id: "business", label: "Business Details" },
+  { id: "social", label: "Social Media" },
+  { id: "creator", label: "Creator Profile" },
+  { id: "verification", label: "Kitchen Verification" },
+  { id: "delivery", label: "Delivery Preferences" },
 ];
 
 const HomeChefManagement = () => {
@@ -125,7 +126,7 @@ const HomeChefManagement = () => {
   const [editingChef, setEditingChef] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
-  const [activeFormTab, setActiveFormTab] = useState("basic");
+  const [activeFormTab, setActiveFormTab] = useState("personal");
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -214,13 +215,13 @@ const HomeChefManagement = () => {
   const openAddModal = () => {
     setEditingChef(null);
     setForm(emptyForm);
-    setActiveFormTab("basic");
+    setActiveFormTab("personal");
     setIsFormOpen(true);
   };
 
   const openEditModal = (chef) => {
     setEditingChef(chef);
-    setActiveFormTab("basic");
+    setActiveFormTab("personal");
     setForm({
       chef_unique_code: chef.chef_unique_code || "",
       name: chef.name || "",
@@ -514,22 +515,20 @@ const HomeChefManagement = () => {
           <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200/50">
             <button
               onClick={() => setViewMode("table")}
-              className={`p-2 rounded-lg transition ${
-                viewMode === "table"
+              className={`p-2 rounded-lg transition ${viewMode === "table"
                   ? "bg-white text-emerald-700 shadow-sm"
                   : "text-slate-500 hover:text-emerald-700"
-              }`}
+                }`}
               title="Table View"
             >
               <List className="w-4 h-4" />
             </button>
             <button
               onClick={() => setViewMode("card")}
-              className={`p-2 rounded-lg transition ${
-                viewMode === "card"
+              className={`p-2 rounded-lg transition ${viewMode === "card"
                   ? "bg-white text-emerald-700 shadow-sm"
                   : "text-slate-500 hover:text-emerald-700"
-              }`}
+                }`}
               title="Card View"
             >
               <LayoutGrid className="w-4 h-4" />
@@ -607,13 +606,12 @@ const HomeChefManagement = () => {
                     </td>
                     <td className="px-5 py-4">
                       <span
-                        className={`text-[9px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider ${
-                          chef.status === "Approved"
+                        className={`text-[9px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider ${chef.status === "Approved"
                             ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                             : chef.status === "Pending"
                               ? "bg-amber-50 text-amber-700 border border-amber-200"
                               : "bg-red-50 text-red-700 border border-red-200"
-                        }`}
+                          }`}
                       >
                         {chef.status}
                       </span>
@@ -699,13 +697,12 @@ const HomeChefManagement = () => {
                     </p>
                   </div>
                   <span
-                    className={`text-[9px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider ${
-                      chef.status === "Approved"
+                    className={`text-[9px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider ${chef.status === "Approved"
                         ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                         : chef.status === "Pending"
                           ? "bg-amber-50 text-amber-700 border border-amber-200"
                           : "bg-red-50 text-red-700 border border-red-200"
-                    }`}
+                      }`}
                   >
                     {chef.status}
                   </span>
@@ -792,11 +789,10 @@ const HomeChefManagement = () => {
                     key={t.id}
                     type="button"
                     onClick={() => setActiveFormTab(t.id)}
-                    className={`flex-shrink-0 mx-1 px-4 py-2 text-xs font-black uppercase tracking-wider rounded-full transition focus:outline-none focus:ring-0 ${
-                      activeFormTab === t.id
+                    className={`flex-shrink-0 mx-1 px-4 py-2 text-xs font-black uppercase tracking-wider rounded-full transition focus:outline-none focus:ring-0 ${activeFormTab === t.id
                         ? "bg-emerald-800 text-white shadow-inner"
                         : "text-gray-600 hover:text-gray-800 hover:bg-gray-100"
-                    }`}
+                      }`}
                   >
                     {t.label}
                   </button>
@@ -1467,14 +1463,14 @@ const HomeChefManagement = () => {
                       />
                     </div>
 
-                    
+
                   </div>
                 )}
 
 
-                 {activeFormTab === "documents" && (
+                {activeFormTab === "documents" && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                   
+
                     {renderFileField(
                       "aadhaar_front_url",
                       "Aadhaar Front Image",
@@ -1516,7 +1512,7 @@ const HomeChefManagement = () => {
                 {activeFormTab === "account" && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                  <div>
+                    <div>
                       <label className={lbl}>Username</label>
                       <input
                         type="text"
@@ -1541,7 +1537,7 @@ const HomeChefManagement = () => {
                         className={inp}
                       />
                     </div>
-                   
+
                     <div>
                       <label className={lbl}>Email Address *</label>
                       <input
@@ -1555,8 +1551,8 @@ const HomeChefManagement = () => {
                         className={inp}
                       />
                     </div>
-                    
-                   
+
+
                     <div>
                       <label className={lbl}>
                         Password{" "}
@@ -1587,7 +1583,7 @@ const HomeChefManagement = () => {
                       />
                     </div>
 
-                     <div>
+                    <div>
                       <label className={lbl}>Login Status</label>
                       <select
                         value={form.login_status}
@@ -1654,21 +1650,21 @@ const HomeChefManagement = () => {
 
                     {(form.approval_status === "Blocked" ||
                       form.login_status === "Blocked") && (
-                      <div className="md:col-span-2">
-                        <label className={lbl}>Block Reason</label>
-                        <textarea
-                          value={form.block_reason}
-                          onChange={(e) =>
-                            setForm({ ...form, block_reason: e.target.value })
-                          }
-                          rows="2"
-                          placeholder="Block Reason"
-                          className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl outline-none font-medium text-gray-800 text-sm focus:border-emerald-500 transition-all resize-none placeholder:text-gray-400"
-                        />
-                      </div>
-                    )}
+                        <div className="md:col-span-2">
+                          <label className={lbl}>Block Reason</label>
+                          <textarea
+                            value={form.block_reason}
+                            onChange={(e) =>
+                              setForm({ ...form, block_reason: e.target.value })
+                            }
+                            rows="2"
+                            placeholder="Block Reason"
+                            className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl outline-none font-medium text-gray-800 text-sm focus:border-emerald-500 transition-all resize-none placeholder:text-gray-400"
+                          />
+                        </div>
+                      )}
 
-                    
+
                   </div>
                 )}
               </form>
