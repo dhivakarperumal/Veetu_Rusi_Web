@@ -533,6 +533,7 @@ async function createDatabaseAndTables() {
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `cooking_story` LONGTEXT DEFAULT NULL");
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `why_choose_me` LONGTEXT DEFAULT NULL");
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `languages_known` VARCHAR(255) DEFAULT NULL");
+  await connection.execute(`
     CREATE TABLE IF NOT EXISTS franchise_category (
       id INT AUTO_INCREMENT PRIMARY KEY,
       catId VARCHAR(50) NOT NULL,
@@ -551,7 +552,7 @@ async function createDatabaseAndTables() {
       INDEX(franchise_user_id),
       INDEX(franchise_id),
       INDEX(created_by_user_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
   console.log('Franchise category table created or already exists');
 
