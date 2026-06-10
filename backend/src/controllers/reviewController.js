@@ -38,8 +38,35 @@ exports.getReviewsByProduct = async (req, res) => {
 
 exports.getAllReviews = async (req, res) => {
   try {
-    const [rows] = await pool.execute('SELECT * FROM reviews ORDER BY created_at DESC');
+    const { status, rating, search } = req.query;
+    const params = [];
+    let query = `
+      SELECT r.*, COALESCE(cp.name, fp.name) AS product_name
+      FROM reviews r
+      LEFT JOIN chef_products cp ON r.product_id = cp.id
+      LEFT JOIN franchise_products fp ON r.product_id = fp.id
+      WHERE 1=1
+    `;
 
+    if (status && status !== 'All') {
+      query += ' AND r.status = ?';
+      params.push(status);
+    }
+
+    if (rating) {
+      query += ' AND r.rating = ?';
+      params.push(Number(rating));
+    }
+
+    if (search) {
+      const term = `%${search}%`;
+      query += ' AND (r.user_name LIKE ? OR r.user_email LIKE ? OR r.comment LIKE ? OR CAST(r.product_id AS CHAR) LIKE ?)';
+      params.push(term, term, term, term);
+    }
+
+    query += ' ORDER BY r.created_at DESC';
+
+    const [rows] = await pool.execute(query, params);
     const reviews = rows.map(r => ({
       ...r,
       review_image: parseJsonField(r.review_image)
@@ -50,6 +77,7 @@ exports.getAllReviews = async (req, res) => {
     const stats = {
       total_reviews: total,
       average_rating: Number(avg.toFixed(1)),
+      pending_count: reviews.filter(r => r.status === 'Pending').length,
       five_star: reviews.filter(r => r.rating === 5).length,
       four_star: reviews.filter(r => r.rating === 4).length,
       three_star: reviews.filter(r => r.rating === 3).length,
@@ -61,6 +89,47 @@ exports.getAllReviews = async (req, res) => {
   } catch (error) {
     console.error('Error fetching all reviews:', error);
     res.status(500).json({ message: 'Failed to fetch reviews', error: error.message });
+  }
+};
+
+exports.updateReviewStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!status) {
+      return res.status(400).json({ message: 'Missing status value' });
+    }
+
+    await pool.execute('UPDATE reviews SET status = ? WHERE id = ?', [status, id]);
+    res.json({ message: 'Review status updated' });
+  } catch (error) {
+    console.error('Error updating review status:', error);
+    res.status(500).json({ message: 'Failed to update review status', error: error.message });
+  }
+};
+
+exports.updateReviewReply = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { admin_reply } = req.body;
+
+    await pool.execute('UPDATE reviews SET admin_reply = ? WHERE id = ?', [admin_reply || null, id]);
+    res.json({ message: 'Review reply updated' });
+  } catch (error) {
+    console.error('Error updating review reply:', error);
+    res.status(500).json({ message: 'Failed to update review reply', error: error.message });
+  }
+};
+
+exports.deleteReview = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.execute('DELETE FROM reviews WHERE id = ?', [id]);
+    res.json({ message: 'Review deleted' });
+  } catch (error) {
+    console.error('Error deleting review:', error);
+    res.status(500).json({ message: 'Failed to delete review', error: error.message });
   }
 };
 
@@ -78,7 +147,7 @@ exports.checkUserReview = async (req, res) => {
 exports.createReview = async (req, res) => {
   try {
     const {
-      product_id, user_id, user_name, user_email, rating, comment, review_image
+      product_id, user_id, user_name, user_email, rating, comment, review_image, status, admin_reply
     } = req.body;
 
     if (!product_id || !rating) {
@@ -91,10 +160,12 @@ exports.createReview = async (req, res) => {
       if (existing.length > 0) return res.status(400).json({ message: 'You have already submitted a review for this product' });
     }
 
+    const finalStatus = status || 'Published';
+
     const [result] = await pool.execute(
-      `INSERT INTO reviews (product_id, user_id, user_name, user_email, rating, comment, review_image, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
-      [product_id, user_id || null, user_name || null, user_email || null, rating, comment || null, review_image || null]
+      `INSERT INTO reviews (product_id, user_id, user_name, user_email, rating, comment, review_image, status, admin_reply, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+      [product_id, user_id || null, user_name || null, user_email || null, rating, comment || null, review_image || null, finalStatus, admin_reply || null]
     );
 
     res.status(201).json({ message: 'Review created', id: result.insertId });
