@@ -928,43 +928,86 @@ const HomeChefManagement = () => {
                 )}
 
                 {activeFormTab === "address" && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
                     <div>
-                      <label className={lbl}>Door Number</label>
+                      <label className={lbl}>House Number *</label>
                       <input
                         type="text"
-                        value={form.door_number}
+                        value={form.house_number}
                         onChange={(e) =>
-                          setForm({ ...form, door_number: e.target.value })
+                          setForm({ ...form, house_number: e.target.value })
                         }
-                        placeholder="Door Number"
+                        placeholder="House Number"
                         className={inp}
                       />
                     </div>
+
                     <div>
-                      <label className={lbl}>Street Name</label>
+                      <label className={lbl}>Street *</label>
                       <input
                         type="text"
-                        value={form.street_name}
+                        value={form.street}
                         onChange={(e) =>
-                          setForm({ ...form, street_name: e.target.value })
+                          setForm({ ...form, street: e.target.value })
                         }
-                        placeholder="Street Name"
+                        placeholder="Street"
                         className={inp}
                       />
                     </div>
+
                     <div>
-                      <label className={lbl}>Area Name</label>
+                      <label className={lbl}>Area *</label>
                       <input
                         type="text"
-                        value={form.area_name}
+                        value={form.area}
                         onChange={(e) =>
-                          setForm({ ...form, area_name: e.target.value })
+                          setForm({ ...form, area: e.target.value })
                         }
-                        placeholder="Area Name"
+                        placeholder="Area"
                         className={inp}
                       />
                     </div>
+
+                    <div>
+                      <label className={lbl}>City *</label>
+                      <input
+                        type="text"
+                        value={form.city}
+                        onChange={(e) =>
+                          setForm({ ...form, city: e.target.value })
+                        }
+                        placeholder="City"
+                        className={inp}
+                      />
+                    </div>
+
+                    <div>
+                      <label className={lbl}>State *</label>
+                      <input
+                        type="text"
+                        value={form.state}
+                        onChange={(e) =>
+                          setForm({ ...form, state: e.target.value })
+                        }
+                        placeholder="State"
+                        className={inp}
+                      />
+                    </div>
+
+                    <div>
+                      <label className={lbl}>Pincode *</label>
+                      <input
+                        type="text"
+                        value={form.pincode}
+                        onChange={(e) =>
+                          setForm({ ...form, pincode: e.target.value })
+                        }
+                        placeholder="Pincode"
+                        className={inp}
+                      />
+                    </div>
+
                     <div>
                       <label className={lbl}>Landmark</label>
                       <input
@@ -977,95 +1020,41 @@ const HomeChefManagement = () => {
                         className={inp}
                       />
                     </div>
+
                     <div>
-                      <label className={lbl}>City</label>
+                      <label className={lbl}>Current GPS Location *</label>
                       <input
                         type="text"
-                        value={form.city}
+                        value={form.gps_location}
                         onChange={(e) =>
-                          setForm({ ...form, city: e.target.value })
+                          setForm({ ...form, gps_location: e.target.value })
                         }
-                        placeholder="City"
+                        placeholder="Latitude, Longitude"
                         className={inp}
                       />
                     </div>
-                    <div>
-                      <label className={lbl}>District</label>
-                      <input
-                        type="text"
-                        value={form.district}
-                        onChange={(e) =>
-                          setForm({ ...form, district: e.target.value })
-                        }
-                        placeholder="District"
-                        className={inp}
-                      />
-                    </div>
-                    <div>
-                      <label className={lbl}>State</label>
-                      <input
-                        type="text"
-                        value={form.state}
-                        onChange={(e) =>
-                          setForm({ ...form, state: e.target.value })
-                        }
-                        placeholder="State"
-                        className={inp}
-                      />
-                    </div>
-                    <div>
-                      <label className={lbl}>Pincode</label>
-                      <input
-                        type="text"
-                        value={form.pincode}
-                        onChange={(e) =>
-                          setForm({ ...form, pincode: e.target.value })
-                        }
-                        placeholder="Pincode"
-                        className={inp}
-                      />
-                    </div>
-                    <div>
-                      <label className={lbl}>Latitude</label>
-                      <input
-                        type="text"
-                        value={form.latitude}
-                        onChange={(e) =>
-                          setForm({ ...form, latitude: e.target.value })
-                        }
-                        className={inp}
-                      />
-                    </div>
-                    <div>
-                      <label className={lbl}>Longitude</label>
-                      <input
-                        type="text"
-                        value={form.longitude}
-                        onChange={(e) =>
-                          setForm({ ...form, longitude: e.target.value })
-                        }
-                        className={inp}
-                      />
-                    </div>
+
                     <div className="md:col-span-2">
-                      <label className={lbl}>Google Map Link</label>
+                      <label className={lbl}>Google Map Location *</label>
                       <input
                         type="url"
-                        value={form.map_link}
+                        value={form.google_map_location}
                         onChange={(e) =>
-                          setForm({ ...form, map_link: e.target.value })
+                          setForm({ ...form, google_map_location: e.target.value })
                         }
-                        placeholder="Google Map Link (https://...)"
+                        placeholder="https://maps.google.com/..."
                         className={inp}
                       />
                     </div>
+
                   </div>
                 )}
 
                 {activeFormTab === "kitchen" && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
                     <div>
-                      <label className={lbl}>Kitchen Name</label>
+                      <label className={lbl}>Kitchen Name *</label>
                       <input
                         type="text"
                         value={form.kitchen_name}
@@ -1076,8 +1065,9 @@ const HomeChefManagement = () => {
                         className={inp}
                       />
                     </div>
+
                     <div>
-                      <label className={lbl}>Kitchen Type</label>
+                      <label className={lbl}>Kitchen Type *</label>
                       <select
                         value={form.kitchen_type}
                         onChange={(e) =>
@@ -1086,101 +1076,62 @@ const HomeChefManagement = () => {
                         className={inp}
                       >
                         <option value="Home Kitchen">Home Kitchen</option>
-                        <option value="Commercial Kitchen">
-                          Commercial Kitchen
-                        </option>
                         <option value="Cloud Kitchen">Cloud Kitchen</option>
+                        <option value="Traditional Kitchen">Traditional Kitchen</option>
                       </select>
                     </div>
-                    <div className="md:col-span-2">
-                      <label className={lbl}>Kitchen Address</label>
-                      <textarea
-                        value={form.kitchen_address}
+
+                    <div>
+                      <label className={lbl}>Years Of Experience *</label>
+                      <input
+                        type="number"
+                        value={form.experience_years}
                         onChange={(e) =>
-                          setForm({ ...form, kitchen_address: e.target.value })
+                          setForm({ ...form, experience_years: e.target.value })
                         }
-                        rows="2"
-                        placeholder="Kitchen Address"
-                        className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl outline-none font-medium text-gray-800 text-sm focus:border-emerald-500 transition-all resize-none placeholder:text-gray-400"
+                        placeholder="Years Of Experience"
+                        className={inp}
                       />
                     </div>
-                    {renderFileField(
-                      "kitchen_photos",
-                      "Kitchen Photos (Multiple)",
-                      form.kitchen_photos,
-                    )}
-                    {renderFileField(
-                      "kitchen_videos",
-                      "Kitchen Videos (Multiple)",
-                      form.kitchen_videos,
-                    )}
 
-                    <div className="md:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4">
-                      <label className="flex items-center gap-2.5 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={form.seating_available}
-                          onChange={(e) =>
-                            setForm({
-                              ...form,
-                              seating_available: e.target.checked,
-                            })
-                          }
-                          className="rounded bg-[#070b13]/60 border border-white/10 text-emerald-600 focus:ring-0 focus:ring-offset-0 w-4.5 h-4.5"
-                        />
-                        <span className="text-xs font-bold uppercase tracking-wider">
-                          Seating Available
-                        </span>
-                      </label>
-                      <label className="flex items-center gap-2.5 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={form.dining_available}
-                          onChange={(e) =>
-                            setForm({
-                              ...form,
-                              dining_available: e.target.checked,
-                            })
-                          }
-                          className="rounded bg-[#070b13]/60 border border-white/10 text-emerald-600 focus:ring-0 focus:ring-offset-0 w-4.5 h-4.5"
-                        />
-                        <span className="text-xs font-bold uppercase tracking-wider">
-                          Dining Available
-                        </span>
-                      </label>
-                      <label className="flex items-center gap-2.5 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={form.takeaway_available}
-                          onChange={(e) =>
-                            setForm({
-                              ...form,
-                              takeaway_available: e.target.checked,
-                            })
-                          }
-                          className="rounded bg-[#070b13]/60 border border-white/10 text-emerald-600 focus:ring-0 focus:ring-offset-0 w-4.5 h-4.5"
-                        />
-                        <span className="text-xs font-bold uppercase tracking-wider">
-                          Takeaway Available
-                        </span>
-                      </label>
-                      <label className="flex items-center gap-2.5 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={form.delivery_available}
-                          onChange={(e) =>
-                            setForm({
-                              ...form,
-                              delivery_available: e.target.checked,
-                            })
-                          }
-                          className="rounded bg-[#070b13]/60 border border-white/10 text-emerald-600 focus:ring-0 focus:ring-offset-0 w-4.5 h-4.5"
-                        />
-                        <span className="text-xs font-bold uppercase tracking-wider">
-                          Delivery Available
-                        </span>
-                      </label>
+                    <div>
+                      <label className={lbl}>Speciality Cuisine *</label>
+                      <select
+                        value={form.speciality_cuisine}
+                        onChange={(e) =>
+                          setForm({ ...form, speciality_cuisine: e.target.value })
+                        }
+                        className={inp}
+                      >
+                        <option value="">Select Cuisine</option>
+                        <option value="South Indian">South Indian</option>
+                        <option value="North Indian">North Indian</option>
+                        <option value="Chinese">Chinese</option>
+                        <option value="Andhra">Andhra</option>
+                        <option value="Kerala">Kerala</option>
+                        <option value="Healthy Foods">Healthy Foods</option>
+                        <option value="Millet Foods">Millet Foods</option>
+                        <option value="Desserts">Desserts</option>
+                        <option value="Others">Others</option>
+                      </select>
                     </div>
+
+                    <div className="md:col-span-2">
+                      <label className={lbl}>Maximum Orders Per Day *</label>
+                      <input
+                        type="number"
+                        value={form.daily_order_capacity}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            daily_order_capacity: e.target.value,
+                          })
+                        }
+                        placeholder="Maximum Orders Per Day"
+                        className={inp}
+                      />
+                    </div>
+
                   </div>
                 )}
 
@@ -1297,119 +1248,145 @@ const HomeChefManagement = () => {
                 )}
 
                 {activeFormTab === "availability" && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-8">
+
+                    {/* Available Days */}
                     <div>
-                      <label className={lbl}>Available Days</label>
-                      <input
-                        type="text"
-                        value={form.available_days}
-                        onChange={(e) =>
-                          setForm({ ...form, available_days: e.target.value })
-                        }
-                        placeholder="e.g. Mon,Tue,Wed,Thu,Fri,Sat"
-                        className={inp}
-                      />
-                    </div>
-                    <div>
-                      <label className={lbl}>Busy Hours</label>
-                      <input
-                        type="text"
-                        value={form.busy_hours}
-                        onChange={(e) =>
-                          setForm({ ...form, busy_hours: e.target.value })
-                        }
-                        placeholder="e.g. 12:00 PM - 02:00 PM"
-                        className={inp}
-                      />
-                    </div>
-                    <div>
-                      <label className={lbl}>Opening Time</label>
-                      <input
-                        type="text"
-                        value={form.opening_time}
-                        onChange={(e) =>
-                          setForm({ ...form, opening_time: e.target.value })
-                        }
-                        placeholder="e.g. 08:00 AM"
-                        className={inp}
-                      />
-                    </div>
-                    <div>
-                      <label className={lbl}>Closing Time</label>
-                      <input
-                        type="text"
-                        value={form.closing_time}
-                        onChange={(e) =>
-                          setForm({ ...form, closing_time: e.target.value })
-                        }
-                        placeholder="e.g. 10:00 PM"
-                        className={inp}
-                      />
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className={lbl}>
-                        Holiday Schedule / Special Closures
+                      <label className={`${lbl} mb-3 block`}>
+                        Available Days
                       </label>
-                      <textarea
-                        value={form.holiday_schedule}
-                        onChange={(e) =>
-                          setForm({ ...form, holiday_schedule: e.target.value })
-                        }
-                        rows="2"
-                        placeholder="Holiday Schedule / Special Closures"
-                        className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl outline-none font-medium text-gray-800 text-sm focus:border-emerald-500 transition-all resize-none placeholder:text-gray-400"
-                      />
+
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+
+                        {[
+                          "Monday",
+                          "Tuesday",
+                          "Wednesday",
+                          "Thursday",
+                          "Friday",
+                          "Saturday",
+                          "Sunday",
+                        ].map((day) => (
+                          <label
+                            key={day}
+                            className="flex items-center gap-2 cursor-pointer"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={form.available_days.includes(day)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setForm({
+                                    ...form,
+                                    available_days: [...form.available_days, day],
+                                  });
+                                } else {
+                                  setForm({
+                                    ...form,
+                                    available_days: form.available_days.filter(
+                                      (d) => d !== day
+                                    ),
+                                  });
+                                }
+                              }}
+                            />
+
+                            <span>{day}</span>
+                          </label>
+                        ))}
+                      </div>
                     </div>
-                    <div className="md:col-span-2 flex gap-6 pt-2">
-                      <label className="flex items-center gap-2.5 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={form.instant_order}
-                          onChange={(e) =>
-                            setForm({
-                              ...form,
-                              instant_order: e.target.checked,
-                            })
-                          }
-                          className="rounded bg-[#070b13]/60 border border-white/10 text-emerald-600 focus:ring-0 focus:ring-offset-0 w-4.5 h-4.5"
-                        />
-                        <span className="text-xs font-bold uppercase tracking-wider">
-                          Instant Order Available
-                        </span>
+
+                    {/* Available Time Slots */}
+                    <div>
+                      <label className={`${lbl} mb-3 block`}>
+                        Available Time Slots
                       </label>
-                      <label className="flex items-center gap-2.5 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={form.pre_order}
-                          onChange={(e) =>
-                            setForm({ ...form, pre_order: e.target.checked })
-                          }
-                          className="rounded bg-[#070b13]/60 border border-white/10 text-emerald-600 focus:ring-0 focus:ring-offset-0 w-4.5 h-4.5"
-                        />
-                        <span className="text-xs font-bold uppercase tracking-wider">
-                          Pre-order Available
-                        </span>
-                      </label>
+
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+
+                        {[
+                          "Breakfast",
+                          "Lunch",
+                          "Dinner",
+                          "Evening Snacks",
+                        ].map((slot) => (
+                          <label
+                            key={slot}
+                            className="flex items-center gap-2 cursor-pointer"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={form.available_slots.includes(slot)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setForm({
+                                    ...form,
+                                    available_slots: [
+                                      ...form.available_slots,
+                                      slot,
+                                    ],
+                                  });
+                                } else {
+                                  setForm({
+                                    ...form,
+                                    available_slots:
+                                      form.available_slots.filter(
+                                        (s) => s !== slot
+                                      ),
+                                  });
+                                }
+                              }}
+                            />
+
+                            <span>{slot}</span>
+                          </label>
+                        ))}
+                      </div>
                     </div>
+
                   </div>
                 )}
 
-                {activeFormTab === "kyc" && (
+                {activeFormTab === "business" && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
                     <div>
-                      <label className={lbl}>Aadhaar Number</label>
-                      <input
-                        type="text"
-                        value={form.aadhaar_number}
+                      <label className={lbl}>FSSAI Available ?</label>
+                      <select
+                        value={form.fssai_available}
                         onChange={(e) =>
-                          setForm({ ...form, aadhaar_number: e.target.value })
+                          setForm({
+                            ...form,
+                            fssai_available: e.target.value,
+                          })
                         }
-                        placeholder="Aadhaar Number"
                         className={inp}
-                      />
+                      >
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                      </select>
                     </div>
+
                     <div>
-                      <label className={lbl}>PAN Number</label>
+                      <label className={lbl}>GST Available ?</label>
+                      <select
+                        value={form.gst_available}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            gst_available: e.target.value,
+                          })
+                        }
+                        className={inp}
+                      >
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className={lbl}>PAN Number *</label>
                       <input
                         type="text"
                         value={form.pan_number}
@@ -1420,32 +1397,9 @@ const HomeChefManagement = () => {
                         className={inp}
                       />
                     </div>
+
                     <div>
-                      <label className={lbl}>FSSAI License Number</label>
-                      <input
-                        type="text"
-                        value={form.fssai_number}
-                        onChange={(e) =>
-                          setForm({ ...form, fssai_number: e.target.value })
-                        }
-                        placeholder="FSSAI License Number"
-                        className={inp}
-                      />
-                    </div>
-                    <div>
-                      <label className={lbl}>GST Number</label>
-                      <input
-                        type="text"
-                        value={form.gst_number}
-                        onChange={(e) =>
-                          setForm({ ...form, gst_number: e.target.value })
-                        }
-                        placeholder="GST Number"
-                        className={inp}
-                      />
-                    </div>
-                    <div>
-                      <label className={lbl}>Bank Account Number</label>
+                      <label className={lbl}>Bank Account Number *</label>
                       <input
                         type="text"
                         value={form.bank_account_number}
@@ -1459,247 +1413,313 @@ const HomeChefManagement = () => {
                         className={inp}
                       />
                     </div>
+
                     <div>
-                      <label className={lbl}>IFSC Code</label>
+                      <label className={lbl}>IFSC Code *</label>
                       <input
                         type="text"
                         value={form.ifsc_code}
                         onChange={(e) =>
-                          setForm({ ...form, ifsc_code: e.target.value })
+                          setForm({
+                            ...form,
+                            ifsc_code: e.target.value,
+                          })
                         }
                         placeholder="IFSC Code"
                         className={inp}
                       />
                     </div>
+
                     <div>
-                      <label className={lbl}>Account Holder Name</label>
-                      <input
-                        type="text"
-                        value={form.account_holder_name}
-                        onChange={(e) =>
-                          setForm({
-                            ...form,
-                            account_holder_name: e.target.value,
-                          })
-                        }
-                        placeholder="Account Holder Name"
-                        className={inp}
-                      />
-                    </div>
-                    <div>
-                      <label className={lbl}>UPI ID</label>
+                      <label className={lbl}>UPI ID *</label>
                       <input
                         type="text"
                         value={form.upi_id}
                         onChange={(e) =>
-                          setForm({ ...form, upi_id: e.target.value })
+                          setForm({
+                            ...form,
+                            upi_id: e.target.value,
+                          })
                         }
-                        placeholder="username@okaxis"
+                        placeholder="username@upi"
                         className={inp}
                       />
                     </div>
-
 
                   </div>
                 )}
 
 
-                {activeFormTab === "documents" && (
+                {activeFormTab === "social" && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                    <div>
+                      <label className={lbl}>Instagram URL</label>
+                      <input
+                        type="url"
+                        value={form.instagram_url}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            instagram_url: e.target.value,
+                          })
+                        }
+                        placeholder="https://instagram.com/username"
+                        className={inp}
+                      />
+                    </div>
+
+                    <div>
+                      <label className={lbl}>Facebook URL</label>
+                      <input
+                        type="url"
+                        value={form.facebook_url}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            facebook_url: e.target.value,
+                          })
+                        }
+                        placeholder="https://facebook.com/page"
+                        className={inp}
+                      />
+                    </div>
+
+                    <div>
+                      <label className={lbl}>YouTube Channel URL</label>
+                      <input
+                        type="url"
+                        value={form.youtube_url}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            youtube_url: e.target.value,
+                          })
+                        }
+                        placeholder="https://youtube.com/@channel"
+                        className={inp}
+                      />
+                    </div>
+
+                    <div>
+                      <label className={lbl}>Website URL</label>
+                      <input
+                        type="url"
+                        value={form.website_url}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            website_url: e.target.value,
+                          })
+                        }
+                        placeholder="https://yourwebsite.com"
+                        className={inp}
+                      />
+                    </div>
+
+                  </div>
+                )}
+
+                {activeFormTab === "creator" && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                    <div className="md:col-span-2">
+                      <label className={lbl}>About Me *</label>
+                      <textarea
+                        rows="4"
+                        value={form.about_me}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            about_me: e.target.value,
+                          })
+                        }
+                        placeholder="Tell customers about yourself..."
+                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl outline-none text-sm resize-none"
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className={lbl}>Cooking Story *</label>
+                      <textarea
+                        rows="4"
+                        value={form.cooking_story}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            cooking_story: e.target.value,
+                          })
+                        }
+                        placeholder="Share your cooking journey..."
+                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl outline-none text-sm resize-none"
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className={lbl}>
+                        Why Customers Should Order From Me *
+                      </label>
+                      <textarea
+                        rows="4"
+                        value={form.why_choose_me}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            why_choose_me: e.target.value,
+                          })
+                        }
+                        placeholder="Tell customers why they should choose you..."
+                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl outline-none text-sm resize-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className={lbl}>Languages Known *</label>
+                      <input
+                        type="text"
+                        value={form.languages_known}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            languages_known: e.target.value,
+                          })
+                        }
+                        placeholder="Tamil, English, Telugu..."
+                        className={inp}
+                      />
+                    </div>
+
+                    <div>
+                      {renderFileField(
+                        "introduction_video",
+                        "Upload Introduction Video *",
+                        form.introduction_video
+                      )}
+                    </div>
+
+                  </div>
+                )}
+
+                {activeFormTab === "verification" && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                     {renderFileField(
                       "aadhaar_front_url",
-                      "Aadhaar Front Image",
-                      form.aadhaar_front_url,
+                      "Aadhaar Front *",
+                      form.aadhaar_front_url
                     )}
+
                     {renderFileField(
                       "aadhaar_back_url",
-                      "Aadhaar Back Image",
-                      form.aadhaar_back_url,
+                      "Aadhaar Back *",
+                      form.aadhaar_back_url
                     )}
+
                     {renderFileField(
                       "pan_card_url",
-                      "PAN Card Image",
-                      form.pan_card_url,
+                      "PAN Card *",
+                      form.pan_card_url
                     )}
+
                     {renderFileField(
-                      "fssai_certificate_url",
-                      "FSSAI Certificate",
-                      form.fssai_certificate_url,
+                      "kitchen_photo1",
+                      "Kitchen Photo 1 *",
+                      form.kitchen_photo1
                     )}
+
                     {renderFileField(
-                      "gst_certificate_url",
-                      "GST Certificate",
-                      form.gst_certificate_url,
+                      "kitchen_photo2",
+                      "Kitchen Photo 2 *",
+                      form.kitchen_photo2
                     )}
+
                     {renderFileField(
-                      "signature_url",
-                      "Chef Signature Image",
-                      form.signature_url,
+                      "kitchen_photo3",
+                      "Kitchen Photo 3 *",
+                      form.kitchen_photo3
                     )}
+
+                    {renderFileField(
+                      "cooking_area_photo",
+                      "Cooking Area Photo *",
+                      form.cooking_area_photo
+                    )}
+
+                    {renderFileField(
+                      "storage_area_photo",
+                      "Storage Area Photo *",
+                      form.storage_area_photo
+                    )}
+
                     {renderFileField(
                       "selfie_verification_url",
-                      "Selfie Verification Photo",
-                      form.selfie_verification_url,
+                      "Selfie With Aadhaar *",
+                      form.selfie_verification_url
                     )}
+
                   </div>
                 )}
 
-                {activeFormTab === "account" && (
+                {activeFormTab === "delivery" && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                     <div>
-                      <label className={lbl}>Username</label>
-                      <input
-                        type="text"
-                        value={form.username}
-                        onChange={(e) =>
-                          setForm({ ...form, username: e.target.value })
-                        }
-                        placeholder="Username"
-                        className={inp}
-                      />
-                    </div>
-                    <div>
-                      <label className={lbl}>Mobile Number *</label>
-                      <input
-                        type="tel"
-                        required
-                        value={form.mobile}
-                        onChange={(e) =>
-                          setForm({ ...form, mobile: e.target.value })
-                        }
-                        placeholder="Mobile Number"
-                        className={inp}
-                      />
-                    </div>
+                      <label className={lbl}>Maximum Delivery Radius *</label>
 
-                    <div>
-                      <label className={lbl}>Email Address *</label>
-                      <input
-                        type="email"
-                        required
-                        value={form.email}
-                        onChange={(e) =>
-                          setForm({ ...form, email: e.target.value })
-                        }
-                        placeholder="Email Address"
-                        className={inp}
-                      />
-                    </div>
-
-
-                    <div>
-                      <label className={lbl}>
-                        Password{" "}
-                        {editingChef && "(Leave blank to keep current)"}
-                      </label>
-                      <input
-                        type="password"
-                        required={!editingChef}
-                        value={form.password}
-                        onChange={(e) =>
-                          setForm({ ...form, password: e.target.value })
-                        }
-                        placeholder="Password"
-                        className={inp}
-                      />
-                    </div>
-                    <div>
-                      <label className={lbl}>Confirm Password</label>
-                      <input
-                        type="password"
-                        required={!editingChef}
-                        value={form.confirmPassword}
-                        onChange={(e) =>
-                          setForm({ ...form, confirmPassword: e.target.value })
-                        }
-                        placeholder="Confirm Password"
-                        className={inp}
-                      />
-                    </div>
-
-                    <div>
-                      <label className={lbl}>Login Status</label>
                       <select
-                        value={form.login_status}
-                        onChange={(e) =>
-                          setForm({ ...form, login_status: e.target.value })
-                        }
-                        className={inp}
-                      >
-                        <option value="Active">Active</option>
-                        <option value="Inactive">Inactive</option>
-                        <option value="Blocked">Blocked</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className={lbl}>Verification Status</label>
-                      <select
-                        value={form.verification_status}
+                        value={form.delivery_radius}
                         onChange={(e) =>
                           setForm({
                             ...form,
-                            verification_status: e.target.value,
+                            delivery_radius: e.target.value,
                           })
                         }
                         className={inp}
                       >
-                        <option value="Pending">Pending</option>
-                        <option value="Verified">Verified</option>
-                        <option value="Rejected">Rejected</option>
+                        <option value="2 KM">2 KM</option>
+                        <option value="3 KM">3 KM</option>
+                        <option value="5 KM">5 KM</option>
                       </select>
+
+                      <p className="text-xs text-gray-500 mt-2">
+                        Default: 5 KM
+                      </p>
                     </div>
+
                     <div>
-                      <label className={lbl}>Approval Status</label>
+                      <label className={lbl}>Preorder Available ?</label>
+
                       <select
-                        value={form.approval_status}
+                        value={form.preorder_available ? "Yes" : "No"}
                         onChange={(e) =>
-                          setForm({ ...form, approval_status: e.target.value })
+                          setForm({
+                            ...form,
+                            preorder_available: e.target.value === "Yes",
+                          })
                         }
                         className={inp}
                       >
-                        <option value="Pending">Pending</option>
-                        <option value="Approved">Approved</option>
-                        <option value="Suspended">Suspended</option>
-                        <option value="Blocked">Blocked</option>
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
                       </select>
                     </div>
 
-                    {form.verification_status === "Rejected" && (
-                      <div className="md:col-span-2">
-                        <label className={lbl}>Rejection Reason</label>
-                        <textarea
-                          value={form.rejection_reason}
-                          onChange={(e) =>
-                            setForm({
-                              ...form,
-                              rejection_reason: e.target.value,
-                            })
-                          }
-                          rows="2"
-                          placeholder="Rejection Reason"
-                          className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl outline-none font-medium text-gray-800 text-sm focus:border-emerald-500 transition-all resize-none placeholder:text-gray-400"
-                        />
-                      </div>
-                    )}
+                    <div className="md:col-span-2">
+                      <label className={lbl}>Cut-Off Time *</label>
 
-                    {(form.approval_status === "Blocked" ||
-                      form.login_status === "Blocked") && (
-                        <div className="md:col-span-2">
-                          <label className={lbl}>Block Reason</label>
-                          <textarea
-                            value={form.block_reason}
-                            onChange={(e) =>
-                              setForm({ ...form, block_reason: e.target.value })
-                            }
-                            rows="2"
-                            placeholder="Block Reason"
-                            className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl outline-none font-medium text-gray-800 text-sm focus:border-emerald-500 transition-all resize-none placeholder:text-gray-400"
-                          />
-                        </div>
-                      )}
-
+                      <input
+                        type="text"
+                        value={form.cutoff_time}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            cutoff_time: e.target.value,
+                          })
+                        }
+                        placeholder="Example: Order before 9 PM, Delivery tomorrow"
+                        className={inp}
+                      />
+                    </div>
 
                   </div>
                 )}
