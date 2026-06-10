@@ -238,17 +238,19 @@ const HomeChefManagement = () => {
       whatsapp_number: chef.whatsapp_number || "",
       email: chef.email || "",
       emergency_contact: chef.emergency_contact || "",
-      door_number: chef.door_number || "",
-      street_name: chef.street_name || "",
-      area_name: chef.area_name || "",
+      house_number: chef.door_number || "",
+      street: chef.street_name || "",
+      area: chef.area_name || "",
       landmark: chef.landmark || "",
       city: chef.city || "",
       district: chef.district || "",
       state: chef.state || "",
       pincode: chef.pincode || "",
-      latitude: chef.latitude || "",
-      longitude: chef.longitude || "",
-      map_link: chef.map_link || "",
+      gps_location:
+        chef.latitude && chef.longitude
+          ? `${chef.latitude}, ${chef.longitude}`
+          : "",
+      google_map_location: chef.map_link || "",
       kitchen_name: chef.kitchen_name || "",
       kitchen_address: chef.kitchen_address || "",
       kitchen_type: chef.kitchen_type || "Home Kitchen",
@@ -266,7 +268,10 @@ const HomeChefManagement = () => {
       cooking_style: chef.cooking_style || "",
       preparation_time: chef.preparation_time || "",
       daily_order_capacity: chef.daily_order_capacity || "",
-      available_days: chef.available_days || "",
+      available_days: chef.available_days
+        ? chef.available_days.split(",").map((item) => item.trim())
+        : [],
+      available_slots: chef.available_slots || [],
       opening_time: chef.opening_time || "",
       closing_time: chef.closing_time || "",
       holiday_schedule: chef.holiday_schedule || "",
@@ -314,6 +319,33 @@ const HomeChefManagement = () => {
       const formData = new FormData();
       const multiFileFields = ["kitchen_photos", "kitchen_videos"];
 
+      const payload = {
+        ...form,
+        door_number: form.house_number,
+        street_name: form.street,
+        area_name: form.area,
+        map_link: form.google_map_location,
+        available_days: Array.isArray(form.available_days)
+          ? form.available_days.join(",")
+          : form.available_days,
+      };
+
+      if (form.gps_location) {
+        const [lat, lng] = form.gps_location
+          .split(",")
+          .map((part) => part.trim());
+        if (lat && lng) {
+          payload.latitude = lat;
+          payload.longitude = lng;
+        }
+      }
+
+      delete payload.house_number;
+      delete payload.street;
+      delete payload.area;
+      delete payload.google_map_location;
+      delete payload.gps_location;
+
       if (user && !editingChef) {
         formData.append("created_by_id", user.id || "");
         formData.append("created_by_user_id", user.user_id || "");
@@ -322,9 +354,9 @@ const HomeChefManagement = () => {
         formData.append("created_by_phone", user.phone || "");
       }
 
-      Object.keys(form).forEach((key) => {
+      Object.keys(payload).forEach((key) => {
         if (key === "confirmPassword") return;
-        const val = form[key];
+        const val = payload[key];
         if (val instanceof FileList) {
           if (multiFileFields.includes(key)) {
             for (let i = 0; i < val.length; i++) {
@@ -1610,8 +1642,6 @@ const HomeChefManagement = () => {
 
                   </div>
                 )}
-              </form>
-
               <div className="p-8 border-t border-gray-100 bg-white flex justify-end gap-3 flex-shrink-0 rounded-b-[2.5rem]">
                 <button
                   type="button"
@@ -1623,12 +1653,12 @@ const HomeChefManagement = () => {
                 <button
                   type="submit"
                   disabled={saving}
-                  onClick={handleSubmit}
                   className="px-8 py-3 bg-emerald-600 hover:bg-emerald-500 disabled:bg-emerald-800 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl transition active:scale-95 flex items-center justify-center gap-2"
                 >
                   {saving ? "Saving..." : "Save Chef"}
                 </button>
               </div>
+            </form>
             </div>
           </div>,
           document.body,
