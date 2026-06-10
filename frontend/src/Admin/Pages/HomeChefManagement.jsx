@@ -127,6 +127,16 @@ const HomeChefManagement = () => {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [activeFormTab, setActiveFormTab] = useState("basic");
+  const stepIds = tabs.map((t) => t.id);
+  const currentFormStepIndex = stepIds.indexOf(activeFormTab);
+  const goToNextFormTab = () => {
+    const nextIndex = Math.min(currentFormStepIndex + 1, stepIds.length - 1);
+    setActiveFormTab(stepIds[nextIndex]);
+  };
+  const goToPreviousFormTab = () => {
+    const prevIndex = Math.max(currentFormStepIndex - 1, 0);
+    setActiveFormTab(stepIds[prevIndex]);
+  };
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -771,49 +781,121 @@ const HomeChefManagement = () => {
               className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
               onClick={() => setIsFormOpen(false)}
             ></div>
-            <div className="border border-white/10 w-full max-w-5xl rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden flex flex-col max-h-[90vh] bg-transparent">
-              <div className="p-8 text-white flex-shrink-0 flex justify-between items-center bg-emerald-800 rounded-t-[2.5rem] border-b border-white/5">
+            <div className="border border-white/10 w-full max-w-6xl rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden grid lg:grid-cols-[320px_1fr] max-h-[95vh] h-full bg-slate-950">
+              <div className="hidden lg:flex flex-col gap-6 p-6 bg-slate-950 border-r border-white/10 overflow-y-auto min-h-0 h-full">
                 <div>
-                  <h3 className="text-xl font-black uppercase italic tracking-tight">
-                    {editingChef
-                      ? "Edit Home Chef Profile"
-                      : "Add New Home Chef"}
+                  <p className="text-xs uppercase tracking-[0.35em] text-slate-500">
+                    Home Chef Onboarding
+                  </p>
+                  <h3 className="mt-4 text-3xl font-black text-white">
+                    Advanced Registration
                   </h3>
-                  <p className="text-xs text-emerald-200 font-bold uppercase tracking-widest mt-1">
-                    Complete the 8-tab verification and setup details
+                  <p className="mt-3 text-sm leading-6 text-slate-400">
+                    Eight guided steps to capture chef, kitchen, and verification data.
                   </p>
                 </div>
-                <button
-                  onClick={() => setIsFormOpen(false)}
-                  className="p-2 hover:bg-white/15 rounded-full text-white/70 hover:text-white transition"
-                >
-                  <X className="w-6 h-6" />
-                </button>
+                <div className="space-y-3">
+                  {tabs.map((step, index) => {
+                    const completed = index < currentFormStepIndex;
+                    const isActive = step.id === activeFormTab;
+                    return (
+                      <button
+                        key={step.id}
+                        type="button"
+                        onClick={() => setActiveFormTab(step.id)}
+                        className={`w-full text-left rounded-3xl border px-4 py-4 transition ${
+                          isActive
+                            ? "bg-emerald-700 text-white border-emerald-600 shadow-xl"
+                            : "bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700 hover:bg-slate-900/95"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <span
+                            className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-black ${
+                              isActive
+                                ? "bg-white text-emerald-700"
+                                : completed
+                                ? "bg-emerald-500 text-white"
+                                : "bg-slate-800 text-slate-400"
+                            }`}
+                          >
+                            {completed ? "✓" : index + 1}
+                          </span>
+                          <span className="text-xs uppercase tracking-[0.25em]">
+                            Step {index + 1}
+                          </span>
+                        </div>
+                        <p className="mt-3 text-sm leading-5 font-bold tracking-tight text-slate-200">
+                          {step.label}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="mt-auto rounded-3xl border border-white/10 bg-slate-900/90 p-5 text-sm text-slate-400">
+                  <p className="text-[11px] uppercase tracking-[0.35em] text-slate-500">
+                    Progress
+                  </p>
+                  <div className="mt-4 h-2.5 w-full overflow-hidden rounded-full bg-slate-800">
+                    <div
+                      className="h-full rounded-full bg-emerald-500 transition-all"
+                      style={{
+                        width: `${((currentFormStepIndex + 1) / tabs.length) * 100}%`,
+                      }}
+                    />
+                  </div>
+                  <p className="mt-4 text-slate-300">
+                    Finish each section for the fastest approval flow.
+                  </p>
+                </div>
               </div>
 
-              {/* Tabs List */}
-              <div className="border-b border-white/10 bg-slate-950/95 p-4 flex gap-2 overflow-x-auto whitespace-nowrap scrollbar-thin relative z-20">
-                {tabs.map((t) => (
+              <div className="flex flex-col overflow-hidden bg-slate-950 min-h-0 h-full">
+                <div className="flex items-center justify-between gap-4 border-b border-slate-800 bg-slate-900 p-6">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.4em] text-slate-500">
+                      Step {currentFormStepIndex + 1} of {tabs.length}
+                    </p>
+                    <h4 className="mt-3 text-2xl font-black tracking-tight text-white">
+                      {tabs[currentFormStepIndex]?.label}
+                    </h4>
+                    <p className="mt-2 text-sm text-slate-400 max-w-2xl">
+                      {tabs[currentFormStepIndex]?.description ||
+                        "Fill in the required details to continue."}
+                    </p>
+                  </div>
                   <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => setActiveFormTab(t.id)}
-                    className={`flex-shrink-0 mx-1 px-5 py-2 text-xs font-black uppercase tracking-wider rounded-full transition focus:outline-none focus:ring-0 ${
-                      activeFormTab === t.id
-                        ? "bg-emerald-500 text-slate-950 shadow-[0_15px_40px_rgba(16,185,129,0.18)]"
-                        : "text-slate-300 hover:text-white hover:bg-slate-900/80"
-                    }`}
+                    onClick={() => setIsFormOpen(false)}
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-700 bg-slate-800 text-slate-300 transition hover:bg-slate-700 hover:text-white"
                   >
-                    {t.label}
+                    <X className="w-5 h-5" />
                   </button>
-                ))}
-              </div>
+                </div>
 
-              {/* Form Fields container */}
-              <form
-                onSubmit={handleSubmit}
-                className="flex-1 overflow-y-auto p-8 space-y-6 bg-slate-950/95 text-slate-100"
-              >
+                <div className="lg:hidden border-b border-white/10 bg-slate-950/95 p-4 overflow-x-auto whitespace-nowrap scrollbar-thin">
+                  <div className="flex gap-2">
+                    {tabs.map((t) => (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => setActiveFormTab(t.id)}
+                        className={`flex-shrink-0 px-4 py-2 text-xs font-black uppercase tracking-wider rounded-full transition ${
+                          activeFormTab === t.id
+                            ? "bg-emerald-500 text-slate-950 shadow-[0_15px_40px_rgba(16,185,129,0.18)]"
+                            : "text-slate-300 hover:text-white hover:bg-slate-900/80"
+                        }`}
+                      >
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <form
+                  onSubmit={handleSubmit}
+                  className="flex flex-col flex-1 overflow-hidden bg-slate-950 min-h-0 h-full"
+                >
+                  <div className="flex-1 min-h-0 overflow-y-auto p-8 space-y-6">
                 {activeFormTab === "basic" && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
@@ -1736,24 +1818,49 @@ const HomeChefManagement = () => {
                     
                   </div>
                 )}
-              </form>
-
-              <div className="p-8 border-t border-white/10 bg-slate-950/95 flex justify-end gap-3 flex-shrink-0 rounded-b-[2.5rem]">
-                <button
-                  type="button"
-                  onClick={() => setIsFormOpen(false)}
-                  className="px-6 py-3 bg-slate-900/80 border border-white/10 text-slate-200 hover:bg-slate-900 font-black text-xs uppercase tracking-widest rounded-2xl transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  onClick={handleSubmit}
-                  className="px-8 py-3 bg-emerald-600 hover:bg-emerald-500 disabled:bg-emerald-800 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl transition active:scale-95 flex items-center justify-center gap-2"
-                >
-                  {saving ? "Saving..." : "Save Chef"}
-                </button>
+                  </div>
+                  <div className="p-8 border-t border-white/10 bg-slate-950/95 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between flex-shrink-0 rounded-b-[2.5rem]">
+                    <div className="flex flex-wrap gap-3">
+                      <button
+                        type="button"
+                        disabled={currentFormStepIndex === 0}
+                        onClick={goToPreviousFormTab}
+                        className="inline-flex items-center justify-center rounded-2xl border border-slate-700 bg-slate-900 px-5 py-3 text-sm font-black uppercase tracking-[0.18em] text-slate-200 transition disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-800"
+                      >
+                        Previous
+                      </button>
+                      {currentFormStepIndex < tabs.length - 1 ? (
+                        <button
+                          type="button"
+                          onClick={goToNextFormTab}
+                          className="inline-flex items-center justify-center rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-black uppercase tracking-[0.18em] text-white transition hover:bg-emerald-500"
+                        >
+                          Next Step
+                        </button>
+                      ) : null}
+                    </div>
+                    <div className="flex flex-wrap gap-3 justify-end">
+                      <button
+                        type="button"
+                        onClick={() => setIsFormOpen(false)}
+                        className="rounded-2xl bg-slate-900/80 px-5 py-3 text-sm font-black uppercase tracking-[0.18em] text-slate-200 transition hover:bg-slate-900"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={saving}
+                        className="px-8 py-3 bg-emerald-600 hover:bg-emerald-500 disabled:bg-emerald-800 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl transition active:scale-95 flex items-center justify-center gap-2"
+                      >
+                        {saving
+                          ? "Saving..."
+                          : editingChef
+                          ? "Update Chef"
+                          : "Save Chef"}
+                      </button>
+                    </div>
+                  </div>
+                </form>
               </div>
             </div>
           </div>,

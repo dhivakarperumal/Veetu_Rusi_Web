@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import api from "../../api";
 import { toast } from "react-hot-toast";
@@ -19,117 +19,83 @@ import {
 } from "lucide-react";
 
 const tabs = [
-  { id: "basic", label: "Basic Info" },
- 
-  { id: "address", label: "Address Details" },
-  { id: "login", label: "Login & Auth" },
-  { id: "vehicle", label: "Vehicle Info" },
-  { id: "license", label: "Driving License" },
-  { id: "kyc", label: "KYC & Aadhaar" },
-  { id: "bank", label: "Bank & Payment" },
-  { id: "availability", label: "Availability" },
-  { id: "zone", label: "Delivery Zone" },
+  { id: "personal", label: "Personal Information" },
+  { id: "address", label: "Address" },
+  { id: "emergency", label: "Emergency Contact" },
+  { id: "vehicle", label: "Vehicle Information" },
+  { id: "driving", label: "Driving Information" },
+  { id: "bank", label: "Bank Information" },
+  { id: "documents", label: "Document Upload" },
+  { id: "preferences", label: "Work Preferences" },
+  { id: "verification", label: "Verification" },
 ];
 
 const emptyForm = {
-  // Basic
+  // Personal
   delivery_partner_code: "",
+  first_name: "",
+  last_name: "",
   name: "",
-  father_husband_name: "",
   gender: "Male",
   date_of_birth: "",
-  age: "",
-  profile_photo: null,
-  cover_photo: null,
-  marital_status: "Single",
   blood_group: "",
-  // Contact
   mobile: "",
   email: "",
-  
-  // Address
-  door_number: "",
-  street_name: "",
-  area_name: "",
-  landmark: "",
-  city: "",
-  district: "",
-  state: "",
-  pincode: "",
-  country: "India",
-  latitude: "",
-  longitude: "",
-  map_link: "",
-  // Login
-  username: "",
   password: "",
   confirmPassword: "",
-  otp_verified: false,
-  email_verified: false,
-  device_id: "",
-  login_status: "Active",
-  account_status: "Pending",
+  profile_photo: null,
+  // Address
+  current_address: "",
+  permanent_address: "",
+  city: "",
+  state: "",
+  pincode: "",
+  latitude: "",
+  longitude: "",
+  live_location: "",
+  // Emergency
+  emergency_contact_name: "",
+  emergency_contact_relationship: "",
+  emergency_contact_mobile: "",
   // Vehicle
   vehicle_type: "Bike",
   vehicle_brand: "",
   vehicle_model: "",
-  vehicle_color: "",
   vehicle_number: "",
-  rc_book_number: "",
-  insurance_number: "",
-  insurance_expiry_date: "",
-  pollution_certificate_number: "",
-  vehicle_front_photo: null,
-  vehicle_back_photo: null,
-  rc_book_image: null,
-  insurance_document_image: null,
-  // License
+  vehicle_color: "",
+  // Driving
   license_number: "",
-  license_holder_name: "",
+  license_issue_date: "",
   license_expiry_date: "",
-  license_front_image: null,
-  license_back_image: null,
-  driving_experience: "",
-  // KYC
+  // Bank
+  account_holder_name: "",
+  bank_name: "",
+  bank_account_number: "",
+  ifsc_code: "",
+  upi_id: "",
+  // Documents
   aadhaar_number: "",
   pan_number: "",
   aadhaar_front_url: null,
   aadhaar_back_url: null,
   pan_card_url: null,
-  selfie_verification_url: null,
-  police_verification_certificate: null,
-  background_verification_status: "Pending",
-  kyc_verification_status: "Pending",
-  // Bank
-  bank_name: "",
-  account_holder_name: "",
-  bank_account_number: "",
-  ifsc_code: "",
-  branch_name: "",
-  upi_id: "",
-  wallet_balance: "",
-  pending_earnings: "",
-  total_earnings: "",
-  daily_earnings: "",
-  weekly_earnings: "",
-  monthly_earnings: "",
-  incentive_amount: "",
-  bonus_amount: "",
-  // Availability
-  online_status: "Offline",
-  availability_schedule: "",
-  working_days: "",
-  shift_timing: "",
-  current_location: "",
-  last_active_time: "",
-  break_time_status: "",
-  // Zone
-  assigned_delivery_area: "",
-  delivery_radius: "",
-  preferred_delivery_zone: "",
-  city_coverage: "",
-  area_coverage: "",
-  zone_status: "Active",
+  license_front_image: null,
+  license_back_image: null,
+  rc_book_image: null,
+  insurance_document_image: null,
+  selfie_with_vehicle: null,
+  selfie_with_aadhaar: null,
+  // Preferences
+  available_areas: "",
+  available_time_morning: false,
+  available_time_afternoon: false,
+  available_time_evening: false,
+  available_time_night: false,
+  preferred_distance: "3 KM",
+  // Verification
+  otp_verified: false,
+  face_verified: false,
+  location_verified: false,
   // Status
   status: "Pending",
 };
@@ -139,7 +105,6 @@ const lbl = "text-[10px] text-slate-300 font-bold uppercase tracking-widest bloc
 
 const DeliveryPartnerManagement = () => {
   const [partners, setPartners] = useState([]);
-  const [filteredPartners, setFilteredPartners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -152,16 +117,25 @@ const DeliveryPartnerManagement = () => {
   const [editingPartner, setEditingPartner] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState("basic");
+  const [activeTab, setActiveTab] = useState("personal");
+  const [validationErrors, setValidationErrors] = useState({});
 
-  useEffect(() => { fetchPartners(); }, []);
+  const stepIds = tabs.map((t) => t.id);
+  const currentStepIndex = stepIds.indexOf(activeTab);
+  const goToNextStep = () => {
+    const nextIndex = Math.min(currentStepIndex + 1, stepIds.length - 1);
+    setActiveTab(stepIds[nextIndex]);
+  };
+  const goToPreviousStep = () => {
+    const prevIndex = Math.max(currentStepIndex - 1, 0);
+    setActiveTab(stepIds[prevIndex]);
+  };
 
   const fetchPartners = async () => {
     try {
       setLoading(true);
       const res = await api.get("/superadmin/delivery-partners");
       setPartners(res.data);
-      setFilteredPartners(res.data);
     } catch {
       toast.error("Failed to load delivery partners.");
     } finally {
@@ -170,6 +144,13 @@ const DeliveryPartnerManagement = () => {
   };
 
   useEffect(() => {
+    const loadPartners = async () => {
+      await fetchPartners();
+    };
+    void loadPartners();
+  }, []);
+
+  const filteredPartners = useMemo(() => {
     let result = partners;
     if (search.trim()) {
       const lower = search.toLowerCase();
@@ -184,7 +165,7 @@ const DeliveryPartnerManagement = () => {
     if (statusFilter !== "All") {
       result = result.filter((p) => p.status === statusFilter);
     }
-    setFilteredPartners(result);
+    return result;
   }, [search, statusFilter, partners]);
 
   const handleDobChange = (e) => {
@@ -228,37 +209,95 @@ const DeliveryPartnerManagement = () => {
   const openAddModal = () => {
     setEditingPartner(null);
     setForm(emptyForm);
-    setActiveTab("basic");
+    setValidationErrors({});
+    setActiveTab("personal");
     setIsFormOpen(true);
   };
 
   const openEditModal = (partner) => {
     setEditingPartner(partner);
-    setActiveTab("basic");
+    setActiveTab("personal");
+    setValidationErrors({});
     const mapped = {};
     Object.keys(emptyForm).forEach((k) => {
       mapped[k] = partner[k] !== undefined ? partner[k] : emptyForm[k];
     });
+    mapped.first_name = partner.first_name || partner.name?.split(" ")[0] || "";
+    mapped.last_name = partner.last_name || partner.name?.split(" ").slice(1).join(" ") || "";
+    mapped.name = partner.name || `${mapped.first_name} ${mapped.last_name}`.trim();
     mapped.password = "";
     mapped.confirmPassword = "";
     if (partner.date_of_birth) mapped.date_of_birth = partner.date_of_birth.substring(0, 10);
+    if (partner.license_issue_date) mapped.license_issue_date = partner.license_issue_date.substring(0, 10);
     if (partner.license_expiry_date) mapped.license_expiry_date = partner.license_expiry_date.substring(0, 10);
     if (partner.insurance_expiry_date) mapped.insurance_expiry_date = partner.insurance_expiry_date.substring(0, 10);
     setForm(mapped);
     setIsFormOpen(true);
   };
 
+  const validateForm = () => {
+    const errors = {};
+    if (!form.first_name.trim()) errors.first_name = "First name is required.";
+    if (!form.last_name.trim()) errors.last_name = "Last name is required.";
+    if (!form.gender) errors.gender = "Please select gender.";
+    if (!form.date_of_birth) errors.date_of_birth = "Date of birth is required.";
+    if (!form.blood_group) errors.blood_group = "Blood group is required.";
+    if (!form.mobile.trim()) errors.mobile = "Mobile number is required.";
+    if (!form.email.trim()) errors.email = "Email address is required.";
+    if (!editingPartner && !form.password) errors.password = "Password is required.";
+    if (!editingPartner && form.password !== form.confirmPassword) errors.confirmPassword = "Passwords do not match.";
+    if (!form.current_address.trim()) errors.current_address = "Current address is required.";
+    if (!form.permanent_address.trim()) errors.permanent_address = "Permanent address is required.";
+    if (!form.city.trim()) errors.city = "City is required.";
+    if (!form.state.trim()) errors.state = "State is required.";
+    if (!form.pincode.trim()) errors.pincode = "Pincode is required.";
+    if (!form.live_location.trim()) errors.live_location = "Live GPS location is required.";
+    if (!form.emergency_contact_name.trim()) errors.emergency_contact_name = "Emergency contact name is required.";
+    if (!form.emergency_contact_relationship.trim()) errors.emergency_contact_relationship = "Relationship is required.";
+    if (!form.emergency_contact_mobile.trim()) errors.emergency_contact_mobile = "Emergency phone is required.";
+    if (!form.vehicle_brand.trim()) errors.vehicle_brand = "Vehicle brand is required.";
+    if (!form.vehicle_model.trim()) errors.vehicle_model = "Vehicle model is required.";
+    if (!form.vehicle_number.trim()) errors.vehicle_number = "Vehicle number is required.";
+    if (!form.vehicle_color.trim()) errors.vehicle_color = "Vehicle color is required.";
+    if (!form.license_number.trim()) errors.license_number = "License number is required.";
+    if (!form.license_issue_date) errors.license_issue_date = "License issue date is required.";
+    if (!form.license_expiry_date) errors.license_expiry_date = "License expiry date is required.";
+    if (!form.account_holder_name.trim()) errors.account_holder_name = "Account holder name is required.";
+    if (!form.bank_name.trim()) errors.bank_name = "Bank name is required.";
+    if (!form.bank_account_number.trim()) errors.bank_account_number = "Account number is required.";
+    if (!form.ifsc_code.trim()) errors.ifsc_code = "IFSC code is required.";
+    if (!form.upi_id.trim()) errors.upi_id = "UPI ID is required.";
+    if (!form.aadhaar_number.trim()) errors.aadhaar_number = "Aadhaar number is required.";
+    if (!form.pan_number.trim()) errors.pan_number = "PAN number is required.";
+    if (!form.available_areas.trim()) errors.available_areas = "Available areas are required.";
+    if (!form.preferred_distance.trim()) errors.preferred_distance = "Preferred distance is required.";
+    if (!form.available_time_morning && !form.available_time_afternoon && !form.available_time_evening && !form.available_time_night) {
+      errors.available_time = "Select at least one available time slot.";
+    }
+    if (!form.otp_verified) errors.otp_verified = "OTP verification is required.";
+    if (!form.face_verified) errors.face_verified = "Face verification is required.";
+    if (!form.location_verified) errors.location_verified = "Location verification is required.";
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!editingPartner && form.password !== form.confirmPassword) {
-      toast.error("Passwords do not match."); return;
+    if (!validateForm()) {
+      toast.error("Please resolve the highlighted fields before submitting.");
+      return;
     }
     try {
       setSaving(true);
       const formData = new FormData();
-      Object.keys(form).forEach((key) => {
+      const payload = {
+        ...form,
+        name: `${form.first_name || ""} ${form.last_name || ""}`.trim(),
+      };
+      Object.keys(payload).forEach((key) => {
         if (key === "confirmPassword") return;
-        const val = form[key];
+        if (editingPartner && key === "password" && !payload[key]) return;
+        const val = payload[key];
         if (val instanceof FileList) {
           if (val.length > 0) formData.append(key, val[0]);
         } else if (val !== null && val !== undefined) {
@@ -283,43 +322,57 @@ const DeliveryPartnerManagement = () => {
     }
   };
 
-  const f = (key, label, type = "text", opts = {}) => (
-    <div>
-      <label className={lbl}>{label}</label>
-      <input
-        type={type}
-        value={form[key] || ""}
-        onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-        className={inp}
-        placeholder={opts.placeholder || `Enter ${label}`}
-        {...opts}
-      />
-    </div>
-  );
 
-  const sel = (key, label, options) => (
-    <div>
-      <label className={lbl}>{label}</label>
-      <select value={form[key] || ""} onChange={(e) => setForm({ ...form, [key]: e.target.value })} className={inp}>
-        {(!form[key] || form[key] === "") && <option value="">Select {label}</option>}
-        {options.map((o) => (
-          <option key={o.value || o} value={o.value || o}>{o.label || o}</option>
-        ))}
-      </select>
-    </div>
-  );
+  const f = (key, label, type = "text", opts = {}) => {
+    const error = validationErrors[key];
+    return (
+      <div>
+        <label className={lbl}>{label}</label>
+        <input
+          type={type}
+          value={form[key] || ""}
+          onChange={(e) => setForm({ ...form, [key]: e.target.value })}
+          className={`${inp} ${error ? "border-rose-500 ring-1 ring-rose-500/20" : ""}`}
+          placeholder={opts.placeholder || `Enter ${label}`}
+          {...opts}
+        />
+        {error && <p className="mt-1 text-[10px] text-rose-400">{error}</p>}
+      </div>
+    );
+  };
 
-  const fileField = (key, label, currentVal) => (
-    <div>
-      <label className={lbl}>{label}</label>
-      <input type="file" title={`Choose ${label}`} onChange={(e) => setForm({ ...form, [key]: e.target.files })} className={inp} />
-      {currentVal && typeof currentVal === "string" && (
-        <a href={`${import.meta.env.VITE_API_URL}/../uploads/delivery/${currentVal}`} target="_blank" rel="noreferrer" className="text-[11px] text-emerald-500 hover:underline mt-1 block">
-          View Uploaded File
-        </a>
-      )}
-    </div>
-  );
+  const sel = (key, label, options) => {
+    const error = validationErrors[key];
+    return (
+      <div>
+        <label className={lbl}>{label}</label>
+        <select value={form[key] || ""} onChange={(e) => setForm({ ...form, [key]: e.target.value })} className={`${inp} ${error ? "border-rose-500 ring-1 ring-rose-500/20" : ""}`}>
+          {(!form[key] || form[key] === "") && <option value="">Select {label}</option>}
+          {options.map((o) => (
+            <option key={o.value || o} value={o.value || o}>{o.label || o}</option>
+          ))}
+        </select>
+        {error && <p className="mt-1 text-[10px] text-rose-400">{error}</p>}
+      </div>
+    );
+  };
+
+  const fileField = (key, label, currentVal) => {
+    const error = validationErrors[key];
+    return (
+      <div>
+        <label className={lbl}>{label}</label>
+        <input type="file" title={`Choose ${label}`} onChange={(e) => setForm({ ...form, [key]: e.target.files })} className={`${inp} ${error ? "border-rose-500 ring-1 ring-rose-500/20" : ""}`} />
+        {currentVal && typeof currentVal === "string" && (
+          <a href={`${import.meta.env.VITE_API_URL}/../uploads/delivery/${currentVal}`} target="_blank" rel="noreferrer" className="text-[11px] text-emerald-500 hover:underline mt-1 block">
+            View Uploaded File
+          </a>
+        )}
+        {error && <p className="mt-1 text-[10px] text-rose-400">{error}</p>}
+      </div>
+    );
+  };
+
 
   const toggle = (key, label) => (
     <div className="flex items-center gap-3">
@@ -329,159 +382,168 @@ const DeliveryPartnerManagement = () => {
   );
 
   const renderTabContent = () => {
-    switch (activeTab) {
-      case "basic":
-        return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {f("delivery_partner_code", "Delivery Partner Code")}
-            {f("name", "Full Name")}
-            {f("father_husband_name", "Father / Husband Name")}
-            {sel("gender", "Gender", ["Male", "Female", "Other"])}
-            <div>
-              <label className={lbl}>Date of Birth</label>
-              <input type="date" value={form.date_of_birth || ""} onChange={handleDobChange} className={inp} />
-            </div>
-            {f("age", "Age", "number")}
-            {sel("marital_status", "Marital Status", ["Single", "Married", "Divorced", "Widowed"])}
-            {f("blood_group", "Blood Group")}
-            {fileField("profile_photo", "Profile Photo", form.profile_photo)}
-            {fileField("cover_photo", "Cover Photo", form.cover_photo)}
+    const errorSummary = Object.keys(validationErrors).length > 0;
+    return (
+      <div className="space-y-5">
+        {errorSummary && (
+          <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-100">
+            Please resolve the highlighted fields before continuing.
           </div>
-        );
-      case "contact":
-        return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {/* Contact details moved to Login & Auth tab */}
-          </div>
-        );
-      case "address":
-        return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {f("door_number", "Door Number")}
-            {f("street_name", "Street Name")}
-            {f("area_name", "Area Name")}
-            {f("landmark", "Landmark")}
-            {f("city", "City")}
-            {f("district", "District")}
-            {f("state", "State")}
-            {f("pincode", "Pincode")}
-            {f("country", "Country")}
-            {f("latitude", "Latitude")}
-            {f("longitude", "Longitude")}
-            {f("map_link", "Google Map Link")}
-          </div>
-        );
-      case "login":
-        return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-           
-            {f("username", "Username")}
-             {f("mobile", "Mobile Number", "tel")}
-            {f("email", "Email Address", "email")}
-            {f("password", "Password", "password")}
-            {f("confirmPassword", "Confirm Password", "password")}
-            
-            {f("device_id", "Device ID")}
-            {f("last_login_time", "Last Login Time", "datetime-local")}
-            {sel("login_status", "Login Status", ["Active", "Inactive", "Blocked"])}
-            {sel("account_status", "Account Status", ["Pending", "Active", "Suspended", "Blocked"])}
-            {sel("status", "Application Status", ["Pending", "Approved", "Suspended", "Rejected"])}
-          </div>
-        );
-      case "vehicle":
-        return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {sel("vehicle_type", "Vehicle Type", ["Bike", "Scooter", "Bicycle", "Car", "Auto"])}
-            {f("vehicle_brand", "Vehicle Brand")}
-            {f("vehicle_model", "Vehicle Model")}
-            {f("vehicle_color", "Vehicle Color")}
-            {f("vehicle_number", "Vehicle Registration Number")}
-            {f("rc_book_number", "RC Book Number")}
-            {f("insurance_number", "Vehicle Insurance Number")}
-            <div>
-              <label className={lbl}>Insurance Expiry Date</label>
-              <input type="date" value={form.insurance_expiry_date || ""} onChange={(e) => setForm({ ...form, insurance_expiry_date: e.target.value })} className={inp} />
-            </div>
-            {f("pollution_certificate_number", "Pollution Certificate Number")}
-            {fileField("vehicle_front_photo", "Vehicle Front Photo", form.vehicle_front_photo)}
-            {fileField("vehicle_back_photo", "Vehicle Back Photo", form.vehicle_back_photo)}
-            {fileField("rc_book_image", "RC Book Image", form.rc_book_image)}
-            {fileField("insurance_document_image", "Insurance Document Image", form.insurance_document_image)}
-          </div>
-        );
-      case "license":
-        return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {f("license_number", "Driving License Number")}
-            {f("license_holder_name", "License Holder Name")}
-            <div>
-              <label className={lbl}>License Expiry Date</label>
-              <input type="date" value={form.license_expiry_date || ""} onChange={(e) => setForm({ ...form, license_expiry_date: e.target.value })} className={inp} />
-            </div>
-            {f("driving_experience", "Driving Experience (years)", "number")}
-            {fileField("license_front_image", "License Front Image", form.license_front_image)}
-            {fileField("license_back_image", "License Back Image", form.license_back_image)}
-          </div>
-        );
-      case "kyc":
-        return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {f("aadhaar_number", "Aadhaar Number")}
-            {f("pan_number", "PAN Number")}
-            {fileField("aadhaar_front_url", "Aadhaar Front Image", form.aadhaar_front_url)}
-            {fileField("aadhaar_back_url", "Aadhaar Back Image", form.aadhaar_back_url)}
-            {fileField("pan_card_url", "PAN Card Image", form.pan_card_url)}
-            {fileField("selfie_verification_url", "Selfie Verification Photo", form.selfie_verification_url)}
-            {fileField("police_verification_certificate", "Police Verification Certificate", form.police_verification_certificate)}
-            {sel("background_verification_status", "Background Verification Status", ["Pending", "Verified", "Rejected"])}
-            {sel("kyc_verification_status", "KYC Verification Status", ["Pending", "Verified", "Rejected"])}
-          </div>
-        );
-      case "bank":
-        return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {f("bank_name", "Bank Name")}
-            {f("account_holder_name", "Account Holder Name")}
-            {f("bank_account_number", "Account Number")}
-            {f("ifsc_code", "IFSC Code")}
-            {f("branch_name", "Branch Name")}
-            {f("upi_id", "UPI ID")}
-            {f("wallet_balance", "Wallet Balance", "number")}
-            {f("pending_earnings", "Pending Earnings", "number")}
-            {f("total_earnings", "Total Earnings", "number")}
-            {f("daily_earnings", "Daily Earnings", "number")}
-            {f("weekly_earnings", "Weekly Earnings", "number")}
-            {f("monthly_earnings", "Monthly Earnings", "number")}
-            {f("incentive_amount", "Incentive Amount", "number")}
-            {f("bonus_amount", "Bonus Amount", "number")}
-          </div>
-        );
-      case "availability":
-        return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {sel("online_status", "Online Status", ["Online", "Offline", "Busy"])}
-            {f("availability_schedule", "Availability Schedule")}
-            {f("working_days", "Working Days")}
-            {f("shift_timing", "Shift Timing")}
-            {f("current_location", "Current Location")}
-            {f("last_active_time", "Last Active Time", "datetime-local")}
-            {f("break_time_status", "Break Time Status")}
-          </div>
-        );
-      case "zone":
-        return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {f("assigned_delivery_area", "Assigned Delivery Area")}
-            {f("delivery_radius", "Delivery Radius (km)", "number")}
-            {f("preferred_delivery_zone", "Preferred Delivery Zone")}
-            {f("city_coverage", "City Coverage")}
-            {f("area_coverage", "Area Coverage")}
-            {sel("zone_status", "Zone Status", ["Active", "Inactive"])}
-          </div>
-        );
-      default:
-        return null;
-    }
+        )}
+        {(() => {
+          switch (activeTab) {
+            case "personal":
+              return (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {f("first_name", "First Name")}
+                  {f("last_name", "Last Name")}
+                  {sel("gender", "Gender", ["Male", "Female", "Other"])}
+                  <div>
+                    <label className={lbl}>DOB</label>
+                    <input
+                      type="date"
+                      value={form.date_of_birth || ""}
+                      onChange={handleDobChange}
+                      className={`${inp} ${validationErrors.date_of_birth ? "border-rose-500 ring-1 ring-rose-500/20" : ""}`}
+                    />
+                    {validationErrors.date_of_birth && <p className="mt-1 text-[10px] text-rose-400">{validationErrors.date_of_birth}</p>}
+                  </div>
+                  {f("blood_group", "Blood Group")}
+                  {f("mobile", "Mobile Number", "tel")}
+                  {f("email", "Email Address", "email")}
+                  {!editingPartner && f("password", "Password", "password")}
+                  {!editingPartner && f("confirmPassword", "Confirm Password", "password")}
+                  {fileField("profile_photo", "Profile Photo", form.profile_photo)}
+                </div>
+              );
+            case "address":
+              return (
+                <div className="grid grid-cols-1 gap-5">
+                  {f("current_address", "Current Address")}
+                  {f("permanent_address", "Permanent Address")}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {f("city", "City")}
+                    {f("state", "State")}
+                    {f("pincode", "Pincode")}
+                    {f("live_location", "Live GPS Location")}
+                  </div>
+                </div>
+              );
+            case "emergency":
+              return (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {f("emergency_contact_name", "Emergency Contact Name")}
+                  {f("emergency_contact_relationship", "Relationship")}
+                  {f("emergency_contact_mobile", "Mobile Number", "tel")}
+                </div>
+              );
+            case "vehicle":
+              return (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {sel("vehicle_type", "Vehicle Type", ["Bike", "Scooter", "Bicycle", "Electric Bike"])}
+                  {f("vehicle_brand", "Vehicle Brand")}
+                  {f("vehicle_model", "Vehicle Model")}
+                  {f("vehicle_number", "Vehicle Number")}
+                  {f("vehicle_color", "Vehicle Color")}
+                </div>
+              );
+            case "driving":
+              return (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {f("license_number", "Driving License Number")}
+                  <div>
+                    <label className={lbl}>Issue Date</label>
+                    <input
+                      type="date"
+                      value={form.license_issue_date || ""}
+                      onChange={(e) => setForm({ ...form, license_issue_date: e.target.value })}
+                      className={`${inp} ${validationErrors.license_issue_date ? "border-rose-500 ring-1 ring-rose-500/20" : ""}`}
+                    />
+                    {validationErrors.license_issue_date && <p className="mt-1 text-[10px] text-rose-400">{validationErrors.license_issue_date}</p>}
+                  </div>
+                  <div>
+                    <label className={lbl}>Expiry Date</label>
+                    <input
+                      type="date"
+                      value={form.license_expiry_date || ""}
+                      onChange={(e) => setForm({ ...form, license_expiry_date: e.target.value })}
+                      className={`${inp} ${validationErrors.license_expiry_date ? "border-rose-500 ring-1 ring-rose-500/20" : ""}`}
+                    />
+                    {validationErrors.license_expiry_date && <p className="mt-1 text-[10px] text-rose-400">{validationErrors.license_expiry_date}</p>}
+                  </div>
+                </div>
+              );
+            case "bank":
+              return (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {f("account_holder_name", "Account Holder Name")}
+                  {f("bank_name", "Bank Name")}
+                  {f("bank_account_number", "Account Number")}
+                  {f("ifsc_code", "IFSC Code")}
+                  {f("upi_id", "UPI ID")}
+                </div>
+              );
+            case "documents":
+              return (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {f("aadhaar_number", "Aadhaar Number")}
+                  {f("pan_number", "PAN Number")}
+                  {fileField("aadhaar_front_url", "Aadhaar Front")}
+                  {fileField("aadhaar_back_url", "Aadhaar Back")}
+                  {fileField("pan_card_url", "PAN Card")}
+                  {fileField("license_front_image", "Driving License")}
+                  {fileField("rc_book_image", "RC Book")}
+                  {fileField("insurance_document_image", "Vehicle Insurance")}
+                  {fileField("selfie_with_vehicle", "Selfie With Vehicle")}
+                  {fileField("selfie_with_aadhaar", "Selfie Holding Aadhaar")}
+                </div>
+              );
+            case "preferences":
+              return (
+                <div className="space-y-5">
+                  {f("available_areas", "Available Areas")}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="space-y-3 rounded-2xl border border-slate-700 bg-slate-900/90 p-4">
+                      <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Available Time</p>
+                      {toggle("available_time_morning", "Morning")}
+                      {toggle("available_time_afternoon", "Afternoon")}
+                      {toggle("available_time_evening", "Evening")}
+                      {toggle("available_time_night", "Night")}
+                      {validationErrors.available_time && <p className="mt-1 text-[10px] text-rose-400">{validationErrors.available_time}</p>}
+                    </div>
+                    <div className="space-y-3 rounded-2xl border border-slate-700 bg-slate-900/90 p-4">
+                      <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Preferred Distance</p>
+                      {['3 KM', '5 KM', '10 KM'].map((distance) => (
+                        <button
+                          type="button"
+                          key={distance}
+                          onClick={() => setForm({ ...form, preferred_distance: distance })}
+                          className={`w-full rounded-2xl border px-4 py-3 text-left text-sm font-black uppercase tracking-[0.18em] transition ${form.preferred_distance === distance ? 'border-emerald-500 bg-emerald-500/10 text-emerald-300' : 'border-slate-700 bg-slate-950 text-slate-300 hover:border-slate-500'}`}>
+                          {distance}
+                        </button>
+                      ))}
+                      {validationErrors.preferred_distance && <p className="mt-1 text-[10px] text-rose-400">{validationErrors.preferred_distance}</p>}
+                    </div>
+                  </div>
+                </div>
+              );
+            case "verification":
+              return (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {toggle("otp_verified", "OTP Verification")}
+                  {toggle("face_verified", "Face Verification")}
+                  {toggle("location_verified", "Location Verification")}
+                  {validationErrors.otp_verified && <p className="col-span-full text-[10px] text-rose-400">{validationErrors.otp_verified}</p>}
+                  {validationErrors.face_verified && <p className="col-span-full text-[10px] text-rose-400">{validationErrors.face_verified}</p>}
+                  {validationErrors.location_verified && <p className="col-span-full text-[10px] text-rose-400">{validationErrors.location_verified}</p>}
+                </div>
+              );
+            default:
+              return null;
+          }
+        })()}
+      </div>
+    );
   };
 
   const approvedCount = partners.filter((p) => p.status === "Approved").length;
@@ -685,53 +747,99 @@ const DeliveryPartnerManagement = () => {
       {isFormOpen && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={() => setIsFormOpen(false)} />
-          <div className="border border-white/10 w-full max-w-6xl rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden flex flex-col max-h-[95vh] bg-transparent">
-            {/* Form Header */}
-            <div className="p-4 text-white flex-shrink-0 flex justify-between items-center bg-emerald-800 rounded-t-[2.5rem] border-b border-white/5">
+          <div className="border border-white/10 w-full max-w-6xl rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden grid lg:grid-cols-[320px_1fr] max-h-[95vh] h-full bg-slate-900">
+            <div className="hidden lg:flex flex-col gap-6 p-6 bg-slate-950 border-r border-white/10 overflow-y-auto min-h-0 h-full">
               <div>
-                <h3 className="text-xl font-black uppercase italic tracking-tight">
-                  {editingPartner ? "Edit Delivery Partner" : "Add New Delivery Partner"}
-                </h3>
-                <p className="text-xs text-emerald-200 font-bold uppercase tracking-widest mt-1">
-                  Complete the 10-tab verification and setup details
-                </p>
+                <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Delivery Partner Onboarding</p>
+                <h3 className="mt-4 text-3xl font-black text-white">Advanced Registration</h3>
+                <p className="mt-3 text-sm leading-6 text-slate-400">Nine guided steps to capture identity, vehicle, and compliance details with clarity.</p>
               </div>
-              <button onClick={() => setIsFormOpen(false)} className="p-2 hover:bg-white/15 rounded-full text-white/70 hover:text-white transition">
-                <X className="w-6 h-6" />
-              </button>
+
+              <div className="space-y-3">
+                {tabs.map((step, index) => {
+                  const completed = index < currentStepIndex;
+                  const isActive = step.id === activeTab;
+                  return (
+                    <button
+                      key={step.id}
+                      type="button"
+                      onClick={() => setActiveTab(step.id)}
+                      className={`w-full text-left rounded-3xl border px-4 py-3 transition ${isActive ? "bg-emerald-700 text-white border-emerald-600 shadow-xl" : "bg-slate-900 text-slate-300 border-slate-800 hover:border-slate-700 hover:bg-slate-900/95"}`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <span className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-black ${isActive ? "bg-white text-emerald-700" : completed ? "bg-emerald-500 text-white" : "bg-slate-800 text-slate-400"}`}>
+                          {completed ? "✓" : index + 1}
+                        </span>
+                        <span className="text-xs uppercase tracking-[0.25em]">Step {index + 1}</span>
+                      </div>
+                      <p className="mt-3 text-sm leading-5 font-bold tracking-tight text-slate-200">{step.label}</p>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="mt-auto rounded-3xl border border-white/10 bg-slate-900/90 p-5 text-sm text-slate-400">
+                <p className="text-[11px] uppercase tracking-[0.35em] text-slate-500">Progress</p>
+                <div className="mt-4 h-2.5 w-full overflow-hidden rounded-full bg-slate-800">
+                  <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${((currentStepIndex + 1) / tabs.length) * 100}%` }} />
+                </div>
+                <p className="mt-4 text-slate-300">Complete each step to keep records accurate and approvals fast.</p>
+              </div>
             </div>
 
-            {/* Tab List */}
-            <div className="border-b border-gray-100 bg-white p-1 flex gap-2 overflow-x-auto whitespace-nowrap scrollbar-thin relative z-20">
-              {tabs.map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => setActiveTab(t.id)}
-                  className={`flex-shrink-0 mx-1 px-3 py-1.5 text-xs font-black uppercase tracking-wider rounded-full transition focus:outline-none ${activeTab === t.id ? "bg-emerald-800 text-white shadow-inner" : "text-gray-600 hover:text-gray-800 hover:bg-gray-100"}`}
-                >
-                  {t.label}
+            <div className="flex flex-col overflow-hidden bg-slate-950 min-h-0 h-full">
+              <div className="flex items-center justify-between gap-4 border-b border-slate-800 bg-slate-900 p-6">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.4em] text-slate-500">Step {currentStepIndex + 1} of {tabs.length}</p>
+                  <h4 className="mt-3 text-2xl font-black tracking-tight text-white">{tabs[currentStepIndex]?.label}</h4>
+                  <p className="mt-2 text-sm text-slate-400 max-w-2xl">{tabs[currentStepIndex]?.description || "Fill in the required fields below to continue."}</p>
+                </div>
+                <button onClick={() => setIsFormOpen(false)} className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-700 bg-slate-800 text-slate-300 transition hover:bg-slate-700 hover:text-white">
+                  <X className="w-5 h-5" />
                 </button>
-              ))}
-            </div>
-
-            {/* Tab Content */}
-            <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden bg-gray-50">
-              <div className="flex-1 overflow-y-auto p-6">{renderTabContent()}</div>
-              <div className="flex-shrink-0 p-4 bg-white border-t border-gray-100 rounded-b-[2.5rem] flex justify-between items-center gap-4">
-                <div className="flex gap-2">
-                  {tabs.map((t, i) => (
-                    <div key={t.id} className={`w-2 h-2 rounded-full transition-all ${activeTab === t.id ? "bg-emerald-700 w-5" : "bg-gray-200"}`} />
-                  ))}
-                </div>
-                <div className="flex gap-3">
-                  <button type="button" onClick={() => setIsFormOpen(false)} className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-black text-xs uppercase tracking-widest rounded-xl transition">Cancel</button>
-                  <button type="submit" disabled={saving} className="px-8 py-2.5 bg-emerald-700 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-lg transition active:scale-95 disabled:opacity-60">
-                    {saving ? "Saving..." : editingPartner ? "Update Partner" : "Create Partner"}
-                  </button>
-                </div>
               </div>
-            </form>
+
+              <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden bg-slate-950 min-h-0 h-full">
+                <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6">{renderTabContent()}</div>
+
+                <div className="flex flex-col gap-3 border-t border-slate-800 bg-slate-900 p-5 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex flex-wrap gap-3">
+                    <button
+                      type="button"
+                      disabled={currentStepIndex === 0}
+                      onClick={goToPreviousStep}
+                      className="inline-flex items-center justify-center rounded-2xl border border-slate-700 bg-slate-800 px-5 py-3 text-sm font-black uppercase tracking-[0.18em] text-slate-200 transition disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-700"
+                    >
+                      Previous
+                    </button>
+                    {currentStepIndex < tabs.length - 1 ? (
+                      <button
+                        type="button"
+                        onClick={goToNextStep}
+                        className="inline-flex items-center justify-center rounded-2xl bg-emerald-700 px-5 py-3 text-sm font-black uppercase tracking-[0.18em] text-white transition hover:bg-emerald-600"
+                      >
+                        Next
+                      </button>
+                    ) : null}
+                  </div>
+
+                  <div className="flex flex-wrap gap-3 justify-end">
+                    <button type="button" onClick={() => setIsFormOpen(false)} className="rounded-2xl bg-slate-800 px-5 py-3 text-sm font-black uppercase tracking-[0.18em] text-slate-200 transition hover:bg-slate-700">
+                      Cancel
+                    </button>
+                    {currentStepIndex === tabs.length - 1 ? (
+                      <button
+                        type="submit"
+                        disabled={saving}
+                        className="rounded-2xl bg-emerald-700 px-6 py-3 text-sm font-black uppercase tracking-[0.18em] text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {saving ? "Saving..." : editingPartner ? "Update Partner" : "Create Partner"}
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+              </form>
+            </div>
           </div>
         </div>,
         document.body

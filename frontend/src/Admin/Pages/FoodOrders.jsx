@@ -745,10 +745,10 @@ const FoodOrders = () => {
                               </p>
                               <p className="text-xs text-slate-500">
                                 Qty {group.total_quantity} · {group.items.length} product{group.items.length === 1 ? '' : 's'}
-                              </p> */}
-                                    </div>
-                                  ))}
-                                </td>
+                              </p>
+                            </div>
+                          ))}
+                        </td>
 
                         <td className="px-5 py-4 space-y-2">
                           {chefGroups.map((group) => (
