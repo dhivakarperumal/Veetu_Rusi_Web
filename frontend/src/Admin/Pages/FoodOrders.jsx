@@ -23,6 +23,7 @@ import {
   Store,
   RefreshCw
 } from 'lucide-react';
+import { useNavigate } from "react-router-dom";
 
 const STATUS_OPTIONS = [
   'All',
@@ -217,10 +218,9 @@ const OrderModal = ({ order, onClose, onStatusChange }) => {
               </p>
 
               <span
-                className={`mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-black uppercase tracking-wide ${
-                  STATUS_STYLES[order.status] ||
+                className={`mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-black uppercase tracking-wide ${STATUS_STYLES[order.status] ||
                   'bg-slate-100 text-slate-600'
-                }`}
+                  }`}
               >
                 {STATUS_ICONS[order.status]}
                 {order.status || 'Unknown'}
@@ -249,14 +249,12 @@ const OrderModal = ({ order, onClose, onStatusChange }) => {
                 <button
                   key={s}
                   onClick={() => setStatus(s)}
-                  className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-wide transition ${
-                    status === s
-                      ? `${
-                          STATUS_STYLES[s] ||
-                          'bg-slate-200 text-slate-700'
-                        } ring-2 ring-offset-1 ring-current`
-                      : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                  }`}
+                  className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-wide transition ${status === s
+                    ? `${STATUS_STYLES[s] ||
+                    'bg-slate-200 text-slate-700'
+                    } ring-2 ring-offset-1 ring-current`
+                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                    }`}
                 >
                   {s}
                 </button>
@@ -457,6 +455,8 @@ const FoodOrders = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [expandedRow, setExpandedRow] = useState(null);
 
+  const navigate = useNavigate();
+
   const fetchOrders = useCallback(async () => {
     setLoading(true);
 
@@ -499,7 +499,7 @@ const FoodOrders = () => {
       .then((res) => {
         setChefs(Array.isArray(res.data) ? res.data : []);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const stats = useMemo(
@@ -715,9 +715,9 @@ const FoodOrders = () => {
                               <p className="text-sm font-semibold text-slate-900">
                                 {group.name}
                               </p>
-                              <p className="text-xs text-slate-500">
+                              {/* <p className="text-xs text-slate-500">
                                 Qty {group.total_quantity} · {group.items.length} product{group.items.length === 1 ? '' : 's'}
-                              </p>
+                              </p> */}
                             </div>
                           ))}
                         </td>
@@ -744,15 +744,14 @@ const FoodOrders = () => {
 
                         <td className="px-5 py-4">
                           <span
-                            className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold ${
-                              STATUS_STYLES[
-                                order.status
-                              ]
-                            }`}
+                            className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold ${STATUS_STYLES[
+                              order.status
+                            ]
+                              }`}
                           >
                             {
                               STATUS_ICONS[
-                                order.status
+                              order.status
                               ]
                             }
 
@@ -778,94 +777,92 @@ const FoodOrders = () => {
 
                             <button
                               onClick={() =>
-                                setExpandedRow(
-                                  isExpanded
-                                    ? null
-                                    : order.id
-                                )
+                                navigate(`/admin/food-orders/${order.id}`, {
+                                  state: { order }
+                                })
                               }
-                              className="rounded-xl bg-slate-100 p-2"
+                            className="rounded-xl bg-slate-100 p-2"
                             >
-                              {isExpanded ? (
-                                <ChevronUp className="w-4 h-4" />
-                              ) : (
-                                <ChevronDown className="w-4 h-4" />
-                              )}
-                            </button>
+                            <ChevronDown className="w-4 h-4" />
+                          </button>
 
+                        </div>
+                      </td>
+                    </tr>
+
+                      {
+                    isExpanded &&
+                    chefGroups.length > 0 && (
+                      <tr className="bg-slate-50">
+                        <td
+                          colSpan={8}
+                          className="px-5 py-3"
+                        >
+                          <div className="space-y-4">
+                            {chefGroups.map((group) => (
+                              <div
+                                key={group.name}
+                                className="rounded-2xl border border-slate-200 bg-white p-4"
+                              >
+                                <div className="mb-3 flex items-center justify-between gap-3">
+                                  <div>
+                                    <p className="font-semibold text-slate-900">
+                                      {group.name}
+                                    </p>
+                                    <p className="text-xs text-slate-500">
+                                      {group.items.length} items · Qty {group.total_quantity}
+                                    </p>
+                                  </div>
+                                  <p className="text-sm font-black text-emerald-600">
+                                    {formatAmount(group.total_amount)}
+                                  </p>
+                                </div>
+
+                                <div className="grid gap-3 sm:grid-cols-2">
+                                  {group.items.map((item, idx) => (
+                                    <div
+                                      key={idx}
+                                      className="rounded-2xl bg-slate-50 p-3"
+                                    >
+                                      <p className="font-semibold text-slate-900">
+                                        {item.name || 'Item'}
+                                      </p>
+                                      <p className="text-xs text-slate-500">
+                                        Qty {item.quantity || 1} × {formatAmount(item.price || item.final_price || item.mrp)}
+                                      </p>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         </td>
                       </tr>
-
-                      {isExpanded &&
-                        chefGroups.length > 0 && (
-                          <tr className="bg-slate-50">
-                            <td
-                              colSpan={8}
-                              className="px-5 py-3"
-                            >
-                              <div className="space-y-4">
-                                {chefGroups.map((group) => (
-                                  <div
-                                    key={group.name}
-                                    className="rounded-2xl border border-slate-200 bg-white p-4"
-                                  >
-                                    <div className="mb-3 flex items-center justify-between gap-3">
-                                      <div>
-                                        <p className="font-semibold text-slate-900">
-                                          {group.name}
-                                        </p>
-                                        <p className="text-xs text-slate-500">
-                                          {group.items.length} items · Qty {group.total_quantity}
-                                        </p>
-                                      </div>
-                                      <p className="text-sm font-black text-emerald-600">
-                                        {formatAmount(group.total_amount)}
-                                      </p>
-                                    </div>
-
-                                    <div className="grid gap-3 sm:grid-cols-2">
-                                      {group.items.map((item, idx) => (
-                                        <div
-                                          key={idx}
-                                          className="rounded-2xl bg-slate-50 p-3"
-                                        >
-                                          <p className="font-semibold text-slate-900">
-                                            {item.name || 'Item'}
-                                          </p>
-                                          <p className="text-xs text-slate-500">
-                                            Qty {item.quantity || 1} × {formatAmount(item.price || item.final_price || item.mrp)}
-                                          </p>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </td>
-                          </tr>
-                        )}
+                    )
+                  }
                     </React.Fragment>
-                  );
+              );
                 })}
-              </tbody>
-            </table>
+            </tbody>
+          </table>
           </div>
         )}
-      </div>
-
-      {/* MODAL */}
-      {selectedOrder && (
-        <OrderModal
-          order={selectedOrder}
-          onClose={() =>
-            setSelectedOrder(null)
-          }
-          onStatusChange={handleStatusChange}
-        />
-      )}
-
     </div>
+
+      {/* MODAL */ }
+  {
+    selectedOrder && (
+      <OrderModal
+        order={selectedOrder}
+        onClose={() =>
+          setSelectedOrder(null)
+        }
+        onStatusChange={handleStatusChange}
+      />
+    )
+  }
+
+    </div >
   );
 };
 
