@@ -34,7 +34,7 @@ const SetPassword = () => {
 
       setLoading(true);
 
-      await api.put(`/auth/profile/${user?.id}/password`, {
+      await api.put(`/auth/profile/password`, {
         currentPassword: currentPwd,
         newPassword: newPwd
       });

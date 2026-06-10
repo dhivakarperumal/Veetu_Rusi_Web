@@ -10,6 +10,8 @@ router.post('/google-login', authController.googleLogin);
 router.post('/forgot-password', authController.forgotPassword);
 router.post('/reset-password', authController.resetPassword);
 router.get('/profile', verifyToken, authController.profile);
+router.put('/profile', verifyToken, authController.updateProfile);
+router.put('/profile/password', verifyToken, authController.changePassword);
 
 // Admin: list users (returns array expected by frontend)
 router.get('/users', verifyToken, requireRole(['superadmin', 'admin']), userController.listAllUsers);

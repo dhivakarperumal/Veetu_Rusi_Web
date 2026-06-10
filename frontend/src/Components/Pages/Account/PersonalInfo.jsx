@@ -34,7 +34,7 @@ export default function PersonalInfo() {
   const handleUpdate = async () => {
     try {
 
-      const res = await api.put(`/auth/profile/${user?.id}`, {
+      const res = await api.put(`/auth/profile`, {
         username: form.username,
         email: form.email,
         phone: form.phone

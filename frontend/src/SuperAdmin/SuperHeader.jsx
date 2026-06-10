@@ -622,7 +622,7 @@ const Header = ({ onMenuClick }) => {
                   </div>
 
                   <Link
-                    to="/admin/profile"
+                    to="/superadmin/profile"
                     className="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-white/5 hover:text-emerald-300 text-sm text-slate-300 transition font-bold"
                   >
                     <User className="w-4 h-4 opacity-70" /> Profile

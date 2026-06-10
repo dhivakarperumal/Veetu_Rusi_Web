@@ -129,9 +129,20 @@ exports.login = async (req, res) => {
 
 exports.profile = async (req, res) => {
   try {
-    const { email, role } = req.user;
+    const { id, role, email } = req.user;
+
+    const [users] = await pool.execute(
+      `SELECT id, user_id, full_name AS username, full_name AS name, email, mobile_number AS phone, role, status, profile_image, created_at, updated_at
+       FROM users WHERE id = ? LIMIT 1`,
+      [id]
+    );
+
+    if (users.length === 0) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
     const response = {
-      user: req.user,
+      user: users[0],
     };
 
     if (role === 'chef') {
@@ -152,6 +163,84 @@ exports.profile = async (req, res) => {
   } catch (error) {
     console.error('Profile error:', error);
     return res.status(500).json({ message: 'Server error while fetching profile.' });
+  }
+};
+
+exports.updateProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { username, name, email, phone, street_address, city, district, state, country, zip_code } = req.body;
+
+    if (!username || !email) {
+      return res.status(400).json({ message: 'Username and email are required.' });
+    }
+
+    const [existingEmail] = await pool.execute('SELECT id FROM users WHERE email = ? AND id <> ?', [email, userId]);
+    if (existingEmail.length > 0) {
+      return res.status(409).json({ message: 'Email is already in use.' });
+    }
+
+    const [columns] = await pool.execute('SHOW COLUMNS FROM `users`');
+    const availableColumns = columns.map((column) => column.Field);
+
+    const updateFields = [
+      { field: 'full_name', value: username },
+      { field: 'email', value: email },
+      { field: 'mobile_number', value: phone || null },
+    ];
+
+    if (availableColumns.includes('street_address')) updateFields.push({ field: 'street_address', value: street_address || null });
+    if (availableColumns.includes('city')) updateFields.push({ field: 'city', value: city || null });
+    if (availableColumns.includes('district')) updateFields.push({ field: 'district', value: district || null });
+    if (availableColumns.includes('state')) updateFields.push({ field: 'state', value: state || null });
+    if (availableColumns.includes('country')) updateFields.push({ field: 'country', value: country || null });
+    if (availableColumns.includes('zip_code')) updateFields.push({ field: 'zip_code', value: zip_code || null });
+
+    const setClause = updateFields.map((item) => `\\`${item.field}\\` = ?`).join(', ');
+    const values = updateFields.map((item) => item.value).concat([userId]);
+
+    await pool.execute(`UPDATE users SET ${setClause} WHERE id = ?`, values);
+
+    const [updatedRows] = await pool.execute(
+      'SELECT id, user_id, full_name AS username, full_name AS name, email, mobile_number AS phone, role, status, profile_image, created_at, updated_at FROM users WHERE id = ? LIMIT 1',
+      [userId]
+    );
+
+    return res.status(200).json({ message: 'Profile updated successfully', user: updatedRows[0] });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    return res.status(500).json({ message: 'Server error while updating profile.' });
+  }
+};
+
+exports.changePassword = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'Both current and new passwords are required.' });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: 'New password must be at least 6 characters.' });
+    }
+
+    const hashedCurrent = hashPassword(currentPassword);
+    const [rows] = await pool.execute('SELECT password FROM users WHERE id = ? LIMIT 1', [userId]);
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+    if (rows[0].password !== hashedCurrent) {
+      return res.status(401).json({ message: 'Current password is incorrect.' });
+    }
+
+    const hashedNew = hashPassword(newPassword);
+    await pool.execute('UPDATE users SET password = ? WHERE id = ?', [hashedNew, userId]);
+
+    return res.status(200).json({ message: 'Password changed successfully.' });
+  } catch (error) {
+    console.error('Change password error:', error);
+    return res.status(500).json({ message: 'Server error while changing password.' });
   }
 };
 

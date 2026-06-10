@@ -50,20 +50,21 @@ const Profile = () => {
     const fetchProfile = async () => {
         try {
             setLoading(true);
-            const res = await api.get(`/auth/profile/${user?.id}`);
+            const res = await api.get(`/auth/profile`);
+            const profile = res.data.user || res.data;
             setProfileData({
-                username: res.data.username || "",
-                name: res.data.name || "",
-                email: res.data.email || "",
-                phone: res.data.phone || "",
-                street_address: res.data.street_address || "",
-                city: res.data.city || "",
-                district: res.data.district || "",
-                state: res.data.state || "",
-                country: res.data.country || "India",
-                zip_code: res.data.zip_code || "",
-                role: res.data.role || "",
-                created_at: res.data.created_at || ""
+                username: profile.username || "",
+                name: profile.name || "",
+                email: profile.email || "",
+                phone: profile.phone || "",
+                street_address: profile.street_address || "",
+                city: profile.city || "",
+                district: profile.district || "",
+                state: profile.state || "",
+                country: profile.country || "India",
+                zip_code: profile.zip_code || "",
+                role: profile.role || "",
+                created_at: profile.created_at || ""
             });
         } catch (err) {
             console.error("Failed to load profile:", err);
@@ -118,7 +119,7 @@ const Profile = () => {
 
         try {
             setSaving(true);
-            const res = await api.put(`/auth/profile/${user?.id}`, {
+            const res = await api.put(`/auth/profile`, {
                 username: profileData.username,
                 name: profileData.name,
                 email: profileData.email,
@@ -162,7 +163,7 @@ const Profile = () => {
 
         try {
             setChangingPwd(true);
-            await api.put(`/auth/profile/${user?.id}/password`, {
+            await api.put(`/auth/profile/password`, {
                 currentPassword: currentPwd,
                 newPassword: newPwd
             });
