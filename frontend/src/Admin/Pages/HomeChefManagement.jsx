@@ -1895,7 +1895,6 @@ const HomeChefManagement = () => {
                   </div>
                 </form>
               </div>
-            </form>
             </div>
           </div>,
           document.body,
