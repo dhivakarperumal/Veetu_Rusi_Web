@@ -69,7 +69,7 @@ router.get('/orders/available', async (req, res) => {
   try {
     const [rows] = await pool.execute(
       `SELECT * FROM user_food_order_table
-       WHERE status = 'Pending'
+       WHERE status = 'Searching Delivery Partner'
          AND (delivery_partner IS NULL OR delivery_partner = '')
        ORDER BY ordered_at DESC`
     );
@@ -86,9 +86,9 @@ router.patch('/orders/:id/assign', async (req, res) => {
     const deliveryBoyId = req.user.id || req.user.user_id || null;
     const [result] = await pool.execute(
       `UPDATE user_food_order_table
-       SET status = 'Assigned', delivery_partner = ?, updated_at = NOW()
+       SET status = 'Delivery Partner Assigned', delivery_partner = ?, updated_at = NOW()
        WHERE id = ?
-         AND status = 'Pending'
+         AND status = 'Searching Delivery Partner'
          AND (delivery_partner IS NULL OR delivery_partner = '')`,
       [deliveryBoyId, orderId]
     );
