@@ -233,7 +233,9 @@ exports.createHomeChef = async (req, res) => {
       aadhaar_number, pan_number, fssai_number, gst_number, bank_account_number,
       ifsc_code, account_holder_name, upi_id, username, password, otp_verified,
       email_verified, login_status, verification_status, approval_status,
-      rejection_reason, block_reason, address
+      rejection_reason, block_reason, address,
+      fssai_available, gst_available, instagram_url, facebook_url, youtube_url, website_url,
+      delivery_radius, preorder_available, cutoff_time, about_me, cooking_story, why_choose_me, languages_known
     } = req.body;
 
     let createdById = req.user?.id || null;
