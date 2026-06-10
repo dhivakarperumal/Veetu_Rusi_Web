@@ -55,12 +55,51 @@ router.get('/orders', async (req, res) => {
       params.push(status);
     }
     
-    query += ' ORDER BY created_at DESC';
+    query += ' ORDER BY ordered_at DESC';
 
     const [rows] = await pool.execute(query, params);
     res.json(rows);
   } catch (err) {
     console.error('Orders Error:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+router.get('/orders/available', async (req, res) => {
+  try {
+    const [rows] = await pool.execute(
+      `SELECT * FROM user_food_order_table
+       WHERE status = 'Pending'
+         AND (delivery_partner IS NULL OR delivery_partner = '')
+       ORDER BY ordered_at DESC`
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('Available Orders Error:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+router.patch('/orders/:id/assign', async (req, res) => {
+  try {
+    const orderId = req.params.id;
+    const deliveryBoyId = req.user.id || req.user.user_id || null;
+    const [result] = await pool.execute(
+      `UPDATE user_food_order_table
+       SET status = 'Assigned', delivery_partner = ?, updated_at = NOW()
+       WHERE id = ?
+         AND status = 'Pending'
+         AND (delivery_partner IS NULL OR delivery_partner = '')`,
+      [deliveryBoyId, orderId]
+    );
+
+    if (!result.affectedRows) {
+      return res.status(409).json({ message: 'This order has already been assigned.' });
+    }
+
+    res.json({ message: 'Order assigned successfully.' });
+  } catch (err) {
+    console.error('Assign Order Error:', err);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
