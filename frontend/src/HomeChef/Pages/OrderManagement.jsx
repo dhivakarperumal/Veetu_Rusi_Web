@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import api from "../../api";
 import { toast } from "react-hot-toast";
 import { Search, Filter, Edit, Check } from "lucide-react";
 
 const OrderManagement = () => {
+  const location = useLocation();
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [partners, setPartners] = useState([]);
@@ -12,6 +14,14 @@ const OrderManagement = () => {
   const [statusFilter, setStatusFilter] = useState("All");
   const [editingOrder, setEditingOrder] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    const query = new URLSearchParams(location.search);
+    const statusParam = query.get("status");
+    if (statusParam) {
+      setStatusFilter(statusParam);
+    }
+  }, [location.search]);
 
   useEffect(() => {
     fetchOrders();
@@ -114,12 +124,17 @@ const OrderManagement = () => {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="appearance-none pl-4 pr-10 py-3 bg-[#070b13]/60 border border-white/5 rounded-2xl outline-none font-medium text-white text-sm focus:border-emerald-500/30 transition-all cursor-pointer"
             >
-              <option value="All">All Status</option>
-              <option value="Pending">Pending</option>
+              <option value="All">All Orders</option>
+              <option value="Pending">New Order</option>
               <option value="Accepted">Accepted</option>
+              <option value="Preparing">Preparing</option>
+              <option value="Food Ready">Food Ready</option>
+              <option value="Packing">Packing</option>
+              <option value="Searching Delivery Partner">Searching Delivery Partner</option>
+              <option value="Delivery Partner Assigned">Delivery Partner Assigned</option>
               <option value="Out for Delivery">Out for Delivery</option>
               <option value="Delivered">Delivered</option>
-              <option value="Cancelled">Cancelled</option>
+              <option value="Cancelled">Cancelled Order</option>
             </select>
             <Filter className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 pointer-events-none" />
           </div>
@@ -154,6 +169,21 @@ const OrderManagement = () => {
                 {filteredOrders.map((order) => {
                   const chefQuantity = order.chef_total_quantity ?? order.items?.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0);
                   const chefAmount = parseFloat((order.chef_total_amount ?? order.total_amount) || 0);
+                  
+                  const nextStatusMap = {
+                    "Pending": "Accepted",
+                    "Order Placed": "Accepted",
+                    "New": "Accepted",
+                    "Accepted": "Preparing",
+                    "Preparing": "Food Ready",
+                    "Food Ready": "Packing",
+                    "Packing": "Searching Delivery Partner",
+                    "Searching Delivery Partner": "Delivery Partner Assigned",
+                    "Delivery Partner Assigned": "Out for Delivery",
+                    "Out for Delivery": "Delivered"
+                  };
+                  const nextStatus = nextStatusMap[order.status];
+
                   return (
                     <tr key={order.id} className="hover:bg-white/5 transition-colors">
                       <td className="px-6 py-5 text-sm font-black text-white">{order.order_id}</td>
@@ -183,10 +213,12 @@ const OrderManagement = () => {
                               ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
                               : order.status === "Cancelled"
                               ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                              : order.status === "Pending" || order.status === "New Order"
+                              ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
                               : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
                           }`}
                         >
-                          {order.status}
+                          {order.status === "Pending" ? "New Order" : order.status}
                         </span>
                       </td>
                       <td className="px-6 py-5">
@@ -201,29 +233,11 @@ const OrderManagement = () => {
                           >
                             <Edit className="w-4 h-4" />
                           </button>
-                          {order.status === "Accepted" && (
+                          {nextStatus && (
                             <button
-                              onClick={() => handleStatusQuickChange(order.id, "Out for Delivery")}
-                              className="p-2 hover:bg-blue-500/10 text-blue-400 rounded-xl transition"
-                              title="Dispatch Order"
-                            >
-                              <Check className="w-4 h-4" />
-                            </button>
-                          )}
-                          {(order.status === "Pending" || order.status === "Order Placed" || order.status === "New") && (
-                            <button
-                              onClick={() => handleStatusQuickChange(order.id, "Accepted")}
+                              onClick={() => handleStatusQuickChange(order.id, nextStatus)}
                               className="p-2 hover:bg-emerald-500/10 text-emerald-400 rounded-xl transition"
-                              title="Accept Order"
-                            >
-                              <Check className="w-4 h-4" />
-                            </button>
-                          )}
-                          {order.status === "Out for Delivery" && (
-                            <button
-                              onClick={() => handleStatusQuickChange(order.id, "Delivered")}
-                              className="p-2 hover:bg-emerald-500/10 text-emerald-400 rounded-xl transition"
-                              title="Complete Order"
+                              title={`Update to: ${nextStatus}`}
                             >
                               <Check className="w-4 h-4" />
                             </button>

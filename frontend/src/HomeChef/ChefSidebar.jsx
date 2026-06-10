@@ -51,6 +51,19 @@ const navItems = [
       { path: "/chef/food/all", label: "All Food", icon: Package }
     ]
   },
+
+  {
+    path: "/chef/orders",
+    label: "Order Mangements",
+    icon: Package,
+    children: [
+      { path: "/chef/orders?status=All", label: "All Orders", icon: List },
+      { path: "/chef/orders?status=Pending", label: "New Order", icon: PlusCircle },
+      { path: "/chef/orders?status=Accepted", label: "Accept Order", icon: Handshake },
+      { path: "/chef/orders?status=Out for Delivery", label: "Delivery Order", icon: Truck },
+      { path: "/chef/orders?status=Cancelled", label: "Cancelled Order", icon: XCircle }
+    ]
+  },
   { path: "/chef/products", label: "All Products", icon: PlusCircle },
   { path: "/chef/categories", label: "Categories", icon: Layers },
   { path: "/chef/recipes", label: "Recipe Details", icon: BookOpen },
@@ -62,7 +75,6 @@ const navItems = [
   { path: "/chef/delivery-settings", label: "Delivery Settings", icon: Truck },
   
   { path: "/chef/earnings", label: "Wallet & Earnings", icon: Wallet },
-  { path: "/chef/orders", label: "Orders", icon: ShoppingBag },
   { path: "/", label: "Back Home", icon: Home },
 ];
 
