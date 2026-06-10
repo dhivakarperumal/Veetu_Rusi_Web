@@ -21,7 +21,9 @@ import {
   CreditCard,
   ChefHat,
   Store,
-  RefreshCw
+  RefreshCw,
+  LayoutGrid,
+  List
 } from 'lucide-react';
 import { useNavigate } from "react-router-dom";
 
@@ -454,6 +456,7 @@ const FoodOrders = () => {
 
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [expandedRow, setExpandedRow] = useState(null);
+  const [viewMode, setViewMode] = useState("table");
 
   const navigate = useNavigate();
 
@@ -597,9 +600,9 @@ const FoodOrders = () => {
       </div>
 
       {/* FILTER */}
-      <div className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm md:flex-row md:items-center">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border border-slate-100 p-4 rounded-xl shadow-sm">
 
-        <div className="relative flex-1">
+        <div className="relative flex-1 max-w-md w-full">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
 
           <input
@@ -607,19 +610,17 @@ const FoodOrders = () => {
             placeholder="Search by customer, order ID, chef..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+            className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-medium text-slate-800 text-sm focus:bg-white focus:border-emerald-600/40 transition-all"
           />
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex items-center gap-3">
 
           {chefs.length > 0 && (
             <select
               value={chefFilter}
-              onChange={(e) =>
-                setChefFilter(e.target.value)
-              }
-              className="px-3 py-3 rounded-xl border border-slate-200"
+              onChange={(e) => setChefFilter(e.target.value)}
+              className="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-xs uppercase tracking-widest text-slate-600"
             >
               <option value="All">All Chefs</option>
 
@@ -636,10 +637,8 @@ const FoodOrders = () => {
 
           <select
             value={statusFilter}
-            onChange={(e) =>
-              setStatusFilter(e.target.value)
-            }
-            className="px-3 py-3 rounded-xl border border-slate-200"
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-xs uppercase tracking-widest text-slate-600"
           >
             {STATUS_OPTIONS.map((s) => (
               <option key={s} value={s}>
@@ -647,220 +646,440 @@ const FoodOrders = () => {
               </option>
             ))}
           </select>
+
+          <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
+            <button
+              onClick={() => setViewMode("table")}
+              className={`p-2 rounded-lg transition ${viewMode === "table"
+                ? "bg-white text-emerald-700 shadow-sm"
+                : "text-slate-500"
+                }`}
+            >
+              <List className="w-4 h-4" />
+            </button>
+
+            <button
+              onClick={() => setViewMode("card")}
+              className={`p-2 rounded-lg transition ${viewMode === "card"
+                ? "bg-white text-emerald-700 shadow-sm"
+                : "text-slate-500"
+                }`}
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+          </div>
+
         </div>
+
       </div>
 
       {/* TABLE */}
-      <div className="rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden">
+      {viewMode === "table" ? (
 
-        {loading ? (
-          <div className="flex items-center justify-center py-24">
-            <div className="h-12 w-12 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin" />
-          </div>
-        ) : orders.length === 0 ? (
-          <div className="py-24 text-center">
-            No Orders Found
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
+        <div className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm">
 
-            <table className="w-full text-left text-sm">
+          {loading ? (
+            <div className="flex items-center justify-center py-24">
+              <div className="h-12 w-12 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin" />
+            </div>
+          ) : orders.length === 0 ? (
+            <div className="py-24 text-center">
+              No Orders Found
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <div className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm">
 
-              <thead className="bg-slate-50 border-b border-slate-100">
-                <tr>
-                  <th className="px-5 py-4">Order</th>
-                  <th className="px-5 py-4">Customer</th>
-                  <th className="px-5 py-4">Chefs</th>
-                  <th className="px-5 py-4">Item Breakdown</th>
-                  <th className="px-5 py-4">Amount</th>
-                  <th className="px-5 py-4">Status</th>
-                  <th className="px-5 py-4">Date</th>
-                  <th className="px-5 py-4 text-right">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
+                {loading ? (
+                  <div className="flex items-center justify-center py-24">
+                    <div className="h-12 w-12 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin" />
+                  </div>
+                ) : orders.length === 0 ? (
+                  <div className="py-24 text-center">
+                    No Orders Found
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
 
-              <tbody className="divide-y divide-slate-100">
-                {orders.map((order) => {
-                  const items = Array.isArray(order.items)
-                    ? order.items
-                    : [];
-                  const chefGroups = getChefGroups(items);
-                  const isExpanded =
-                    expandedRow === order.id;
+                    <table className="w-full text-left text-sm">
 
-                  return (
-                    <React.Fragment key={order.id}>
+                      <thead>
+                        <tr className="bg-slate-700 border-b border-slate-200">
+                          <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-[0.25em] text-slate-300">Order</th>
+                          <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-[0.25em] text-slate-300">Customer</th>
+                          <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-[0.25em] text-slate-300">Chefs</th>
+                          <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-[0.25em] text-slate-300">Item Breakdown</th>
+                          <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-[0.25em] text-slate-300">Amount</th>
+                          <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-[0.25em] text-slate-300">Status</th>
+                          <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-[0.25em] text-slate-300">Date</th>
+                          <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-[0.25em] text-slate-300 text-right">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
 
-                      <tr className="hover:bg-slate-50">
+                      <tbody className="divide-y divide-slate-100">
+                        {orders.map((order) => {
+                          const items = Array.isArray(order.items)
+                            ? order.items
+                            : [];
+                          const chefGroups = getChefGroups(items);
+                          const isExpanded =
+                            expandedRow === order.id;
 
-                        <td className="px-5 py-4">
-                          <p className="font-black">
-                            {order.order_id}
-                          </p>
-                        </td>
+                          return (
+                            <React.Fragment key={order.id}>
 
-                        <td className="px-5 py-4">
-                          {order.customer_name ||
-                            order.ordered_by_name}
-                        </td>
+                              <tr className="hover:bg-slate-50">
 
-                        <td className="px-5 py-4 space-y-2">
-                          {chefGroups.map((group) => (
-                            <div
-                              key={group.name}
-                              className="rounded-2xl bg-slate-100 px-3 py-2"
-                            >
-                              <p className="text-sm font-semibold text-slate-900">
-                                {group.name}
-                              </p>
-                              {/* <p className="text-xs text-slate-500">
+                                <td className="px-5 py-4">
+                                  <p className="font-black">
+                                    {order.order_id}
+                                  </p>
+                                </td>
+
+                                <td className="px-5 py-4">
+                                  {order.customer_name ||
+                                    order.ordered_by_name}
+                                </td>
+
+                                <td className="px-5 py-4 space-y-2">
+                                  {chefGroups.map((group) => (
+                                    <div
+                                      key={group.name}
+                                      className="rounded-2xl bg-slate-100 px-3 py-2"
+                                    >
+                                      <p className="text-sm font-semibold text-slate-900">
+                                        {group.name}
+                                      </p>
+                                      {/* <p className="text-xs text-slate-500">
                                 Qty {group.total_quantity} · {group.items.length} product{group.items.length === 1 ? '' : 's'}
                               </p> */}
-                            </div>
-                          ))}
-                        </td>
+                                    </div>
+                                  ))}
+                                </td>
 
-                        <td className="px-5 py-4 space-y-2">
-                          {chefGroups.map((group) => (
-                            <div
-                              key={`${group.name}-items`}
-                              className="rounded-2xl bg-slate-100 px-3 py-2"
-                            >
-                              <p className="text-sm font-semibold text-slate-900">
-                                {group.name}
-                              </p>
-                              <p className="text-xs text-slate-500">
-                                {group.items.map((item) => `${item.name || 'Item'} x${item.quantity || 1}`).join(', ')}
-                              </p>
-                            </div>
-                          ))}
-                        </td>
-
-                        <td className="px-5 py-4 font-black text-emerald-600">
-                          {formatAmount(order.total_amount)}
-                        </td>
-
-                        <td className="px-5 py-4">
-                          <span
-                            className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold ${STATUS_STYLES[
-                              order.status
-                            ]
-                              }`}
-                          >
-                            {
-                              STATUS_ICONS[
-                              order.status
-                              ]
-                            }
-
-                            {order.status}
-                          </span>
-                        </td>
-
-                        <td className="px-5 py-4">
-                          {formatDate(order.ordered_at)}
-                        </td>
-
-                        <td className="px-5 py-4">
-                          <div className="flex justify-end gap-2">
-
-                            <button
-                              onClick={() =>
-                                setSelectedOrder(order)
-                              }
-                              className="rounded-xl bg-slate-900 p-2 text-white"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </button>
-
-                            <button
-                              onClick={() =>
-                                navigate(`/admin/food-orders/${order.id}`, {
-                                  state: { order }
-                                })
-                              }
-                            className="rounded-xl bg-slate-100 p-2"
-                            >
-                            <ChevronDown className="w-4 h-4" />
-                          </button>
-
-                        </div>
-                      </td>
-                    </tr>
-
-                      {
-                    isExpanded &&
-                    chefGroups.length > 0 && (
-                      <tr className="bg-slate-50">
-                        <td
-                          colSpan={8}
-                          className="px-5 py-3"
-                        >
-                          <div className="space-y-4">
-                            {chefGroups.map((group) => (
-                              <div
-                                key={group.name}
-                                className="rounded-2xl border border-slate-200 bg-white p-4"
-                              >
-                                <div className="mb-3 flex items-center justify-between gap-3">
-                                  <div>
-                                    <p className="font-semibold text-slate-900">
-                                      {group.name}
-                                    </p>
-                                    <p className="text-xs text-slate-500">
-                                      {group.items.length} items · Qty {group.total_quantity}
-                                    </p>
-                                  </div>
-                                  <p className="text-sm font-black text-emerald-600">
-                                    {formatAmount(group.total_amount)}
-                                  </p>
-                                </div>
-
-                                <div className="grid gap-3 sm:grid-cols-2">
-                                  {group.items.map((item, idx) => (
+                                <td className="px-5 py-4 space-y-2">
+                                  {chefGroups.map((group) => (
                                     <div
-                                      key={idx}
-                                      className="rounded-2xl bg-slate-50 p-3"
+                                      key={`${group.name}-items`}
+                                      className="rounded-2xl bg-slate-100 px-3 py-2"
                                     >
-                                      <p className="font-semibold text-slate-900">
-                                        {item.name || 'Item'}
+                                      <p className="text-sm font-semibold text-slate-900">
+                                        {group.name}
                                       </p>
                                       <p className="text-xs text-slate-500">
-                                        Qty {item.quantity || 1} × {formatAmount(item.price || item.final_price || item.mrp)}
+                                        {group.items.map((item) => `${item.name || 'Item'} x${item.quantity || 1}`).join(', ')}
                                       </p>
                                     </div>
                                   ))}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </td>
-                      </tr>
-                    )
-                  }
-                    </React.Fragment>
-              );
-                })}
-            </tbody>
-          </table>
-          </div>
-        )}
-    </div>
+                                </td>
 
-      {/* MODAL */ }
-  {
-    selectedOrder && (
-      <OrderModal
-        order={selectedOrder}
-        onClose={() =>
-          setSelectedOrder(null)
-        }
-        onStatusChange={handleStatusChange}
-      />
-    )
-  }
+                                <td className="px-5 py-4 font-black text-emerald-600">
+                                  {formatAmount(order.total_amount)}
+                                </td>
+
+                                <td className="px-5 py-4">
+                                  <span
+                                    className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold ${STATUS_STYLES[
+                                      order.status
+                                    ]
+                                      }`}
+                                  >
+                                    {
+                                      STATUS_ICONS[
+                                      order.status
+                                      ]
+                                    }
+
+                                    {order.status}
+                                  </span>
+                                </td>
+
+                                <td className="px-5 py-4">
+                                  {formatDate(order.ordered_at)}
+                                </td>
+
+                                <td className="px-5 py-4">
+                                  <div className="flex justify-end gap-2">
+
+                                    <button
+                                      onClick={() =>
+                                        setSelectedOrder(order)
+                                      }
+                                      className="p-2 rounded-xl bg-slate-50 text-slate-500 hover:bg-slate-100 transition"
+                                    >
+                                      <Eye className="w-4 h-4" />
+                                    </button>
+
+                                    <button
+                                      onClick={() =>
+                                        navigate(`/admin/food-orders/${order.id}`, {
+                                          state: { order }
+                                        })
+                                      }
+                                      className="p-2 rounded-xl bg-slate-50 text-slate-500 hover:bg-slate-100 transition"
+                                    >
+                                      <ChevronDown className="w-4 h-4" />
+                                    </button>
+
+                                  </div>
+                                </td>
+                              </tr>
+
+                              {
+                                isExpanded &&
+                                chefGroups.length > 0 && (
+                                  <tr className="bg-slate-50">
+                                    <td
+                                      colSpan={8}
+                                      className="px-5 py-3"
+                                    >
+                                      <div className="space-y-4">
+                                        {chefGroups.map((group) => (
+                                          <div
+                                            key={group.name}
+                                            className="rounded-2xl border border-slate-200 bg-white p-4"
+                                          >
+                                            <div className="mb-3 flex items-center justify-between gap-3">
+                                              <div>
+                                                <p className="font-semibold text-slate-900">
+                                                  {group.name}
+                                                </p>
+                                                <p className="text-xs text-slate-500">
+                                                  {group.items.length} items · Qty {group.total_quantity}
+                                                </p>
+                                              </div>
+                                              <p className="text-sm font-black text-emerald-600">
+                                                {formatAmount(group.total_amount)}
+                                              </p>
+                                            </div>
+
+                                            <div className="grid gap-3 sm:grid-cols-2">
+                                              {group.items.map((item, idx) => (
+                                                <div
+                                                  key={idx}
+                                                  className="rounded-2xl bg-slate-50 p-3"
+                                                >
+                                                  <p className="font-semibold text-slate-900">
+                                                    {item.name || 'Item'}
+                                                  </p>
+                                                  <p className="text-xs text-slate-500">
+                                                    Qty {item.quantity || 1} × {formatAmount(item.price || item.final_price || item.mrp)}
+                                                  </p>
+                                                </div>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </td>
+                                  </tr>
+                                )
+                              }
+                            </React.Fragment>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+        </div>
+
+      ) : (
+
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3 items-stretch">
+
+          {orders.map((order) => {
+
+            const items = Array.isArray(order.items)
+              ? order.items
+              : [];
+
+            const chefGroups = getChefGroups(items);
+
+            return (
+              <div
+                key={order.id}
+                className="flex h-full flex-col overflow-hidden rounded-3xl bg-white shadow-sm border border-slate-100 hover:shadow-lg transition-all duration-300"
+              >
+
+                {/* Header */}
+                <div className="bg-slate-900 px-6 py-5">
+
+                  <div className="flex items-start justify-between gap-3">
+
+                    <div>
+                      <p className="text-[10px] uppercase tracking-[0.3em] text-slate-400">
+                        Order ID
+                      </p>
+
+                      <h3 className="mt-2 text-xl font-semibold text-white break-all">
+                        {order.order_id}
+                      </h3>
+                    </div>
+
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap ${STATUS_STYLES[order.status]
+                        }`}
+                    >
+                      {STATUS_ICONS[order.status]}
+                      {order.status}
+                    </span>
+
+                  </div>
+
+                </div>
+
+                {/* Body */}
+                <div className="flex flex-1 flex-col p-5">
+
+                  <div className="space-y-5 flex-1">
+
+                    {/* Customer */}
+                    <div>
+                      <p className="text-xs uppercase tracking-wider text-slate-400 mb-1">
+                        Customer
+                      </p>
+
+                      <p className="text-base font-medium text-slate-900">
+                        {order.customer_name ||
+                          order.ordered_by_name ||
+                          "Customer"}
+                      </p>
+                    </div>
+
+                    {/* Amount */}
+                    <div>
+                      <p className="text-xs uppercase tracking-wider text-slate-400 mb-1">
+                        Amount
+                      </p>
+
+                      <p className="text-3xl font-semibold text-emerald-600">
+                        {formatAmount(order.total_amount)}
+                      </p>
+                    </div>
+
+                    {/* Chefs */}
+                    <div>
+                      <p className="text-xs uppercase tracking-wider text-slate-400 mb-2">
+                        Chefs
+                      </p>
+
+                      <div className="flex flex-wrap gap-2 min-h-[38px]">
+
+                        {chefGroups.map((group) => (
+                          <span
+                            key={group.name}
+                            className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700"
+                          >
+                            {group.name}
+                          </span>
+                        ))}
+
+                      </div>
+                    </div>
+
+                    {/* Items */}
+                    <div>
+                      <p className="text-xs uppercase tracking-wider text-slate-400 mb-2">
+                        Items
+                      </p>
+
+                      <div className="space-y-2 min-h-[150px]">
+
+                        {items.slice(0, 3).map((item, idx) => (
+                          <div
+                            key={idx}
+                            className="rounded-2xl bg-slate-50 px-4 py-3"
+                          >
+                            <p className="text-sm font-medium text-slate-900">
+                              {item.name || "Item"}
+                            </p>
+
+                            <p className="text-xs text-slate-500 mt-1">
+                              Qty {item.quantity || 1}
+                            </p>
+                          </div>
+                        ))}
+
+                        {items.length > 3 && (
+                          <div className="text-xs text-slate-400 px-1">
+                            +{items.length - 3} more items
+                          </div>
+                        )}
+
+                      </div>
+                    </div>
+
+                    {/* Date */}
+                    <div>
+                      <p className="text-xs uppercase tracking-wider text-slate-400 mb-1">
+                        Date
+                      </p>
+
+                      <p className="text-sm text-slate-600">
+                        {formatDate(order.ordered_at)}
+                      </p>
+                    </div>
+
+                  </div>
+
+                  {/* Footer Buttons */}
+                  <div className="mt-auto pt-5">
+
+                    <div className="grid grid-cols-2 gap-3">
+
+                      <button
+                        onClick={() => setSelectedOrder(order)}
+                        className="flex items-center justify-center gap-2 rounded-2xl bg-slate-100 py-3 text-sm font-medium text-slate-700 hover:bg-slate-200 transition"
+                      >
+                        <Eye className="w-4 h-4" />
+                        View
+                      </button>
+
+                      <button
+                        onClick={() =>
+                          navigate(`/admin/food-orders/${order.id}`, {
+                            state: { order }
+                          })
+                        }
+                        className="flex items-center justify-center gap-2 rounded-2xl bg-emerald-50 py-3 text-sm font-medium text-emerald-700 hover:bg-emerald-100 transition"
+                      >
+                        <ChevronDown className="w-4 h-4" />
+                        Details
+                      </button>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </div>
+            );
+          })}
+
+        </div>
+
+      )}
+
+      {/* MODAL */}
+      {
+        selectedOrder && (
+          <OrderModal
+            order={selectedOrder}
+            onClose={() =>
+              setSelectedOrder(null)
+            }
+            onStatusChange={handleStatusChange}
+          />
+        )
+      }
 
     </div >
   );
