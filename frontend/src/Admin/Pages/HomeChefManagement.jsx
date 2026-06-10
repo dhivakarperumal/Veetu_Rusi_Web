@@ -49,7 +49,7 @@ const emptyForm = {
   kitchen_name: "",
   kitchen_type: "Home Kitchen",
   experience_years: "",
-  speciality_cuisine: "",
+  cuisine_type: "",
   daily_order_capacity: "",
 
   // Food Availability
@@ -196,6 +196,87 @@ const HomeChefManagement = () => {
     }
   };
 
+  const fillSampleChefData = () => {
+    setForm({
+      chef_unique_code: "CHEF-TEST-001",
+      first_name: "Priya",
+      last_name: "Rao",
+      name: "Priya Rao",
+      gender: "Female",
+      date_of_birth: "1992-08-15",
+      age: "31",
+      mobile: "9876543210",
+      alt_mobile: "9123456780",
+      whatsapp_number: "9876543210",
+      email: "priya.rao@example.com",
+      password: "Test@1234",
+      confirmPassword: "Test@1234",
+      profile_photo: null,
+      cover_banner: null,
+      house_number: "22B",
+      street: "Maple Avenue",
+      area: "Shanti Nagar",
+      landmark: "Near Lotus Park",
+      city: "Chennai",
+      district: "Chennai",
+      state: "Tamil Nadu",
+      pincode: "600042",
+      gps_location: "13.0827, 80.2707",
+      google_map_location: "https://maps.google.com/?q=13.0827,80.2707",
+      kitchen_name: "Priya's Home Kitchen",
+      kitchen_address: "22B, Maple Avenue, Shanti Nagar, Chennai",
+      kitchen_type: "Home Kitchen",
+      experience_years: "10",
+      cuisine_type: "South Indian",
+      daily_order_capacity: "40",
+      available_days: [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday",
+      ],
+      available_slots: [
+        "Breakfast",
+        "Lunch",
+        "Dinner",
+        "Evening Snacks",
+      ],
+      fssai_available: "Yes",
+      gst_available: "Yes",
+      pan_number: "ABCDE1234F",
+      bank_account_number: "123456789012",
+      ifsc_code: "SBIN0001234",
+      upi_id: "priya@okaxis",
+      instagram_url: "https://instagram.com/priya_chef",
+      facebook_url: "https://facebook.com/priyahomechef",
+      youtube_url: "https://youtube.com/@priyafood",
+      website_url: "https://priyahomekitchen.example.com",
+      about_me:
+        "I am a passionate home chef specializing in authentic South Indian meals.",
+      cooking_story:
+        "Cooking for family and friends inspired me to share home-cooked flavors with the neighborhood.",
+      why_choose_me:
+        "Fresh ingredients, traditional recipes, and fast delivery make every meal special.",
+      languages_known: "Tamil, English, Hindi",
+      introduction_video: null,
+      aadhaar_front_url: null,
+      aadhaar_back_url: null,
+      pan_card_url: null,
+      kitchen_photo1: null,
+      kitchen_photo2: null,
+      kitchen_photo3: null,
+      cooking_area_photo: null,
+      storage_area_photo: null,
+      selfie_verification_url: null,
+      delivery_radius: "5 KM",
+      preorder_available: true,
+      cutoff_time: "Order before 9 PM for next-day delivery",
+    });
+  };
+
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this home chef?"))
       return;
@@ -329,6 +410,9 @@ const HomeChefManagement = () => {
 
       const payload = {
         ...form,
+        name:
+          form.name ||
+          [form.first_name, form.last_name].filter(Boolean).join(" "),
         door_number: form.house_number,
         street_name: form.street,
         area_name: form.area,
@@ -834,20 +918,29 @@ const HomeChefManagement = () => {
               </div>
 
               {/* Tabs List */}
-              <div className="border-b border-gray-100 bg-white p-3 flex gap-2 overflow-x-auto whitespace-nowrap scrollbar-thin relative z-20">
-                {tabs.map((t) => (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => setActiveFormTab(t.id)}
-                    className={`flex-shrink-0 mx-1 px-4 py-2 text-xs font-black uppercase tracking-wider rounded-full transition focus:outline-none focus:ring-0 ${activeFormTab === t.id
-                      ? "bg-emerald-800 text-white shadow-inner"
-                      : "text-gray-600 hover:text-gray-800 hover:bg-gray-100"
-                      }`}
-                  >
-                    {t.label}
-                  </button>
-                ))}
+              <div className="border-b border-gray-100 bg-white p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3 relative z-20">
+                <div className="flex gap-2 overflow-x-auto whitespace-nowrap scrollbar-thin">
+                  {tabs.map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setActiveFormTab(t.id)}
+                      className={`flex-shrink-0 mx-1 px-4 py-2 text-xs font-black uppercase tracking-wider rounded-full transition focus:outline-none focus:ring-0 ${activeFormTab === t.id
+                        ? "bg-emerald-800 text-white shadow-inner"
+                        : "text-gray-600 hover:text-gray-800 hover:bg-gray-100"
+                        }`}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={fillSampleChefData}
+                  className="px-4 py-2 bg-emerald-600 text-white text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-emerald-500 transition"
+                >
+                  Fill Sample Chef Data
+                </button>
               </div>
 
               {/* Form Fields container */}
@@ -1148,9 +1241,9 @@ const HomeChefManagement = () => {
                     <div>
                       <label className={lbl}>Speciality Cuisine *</label>
                       <select
-                        value={form.speciality_cuisine}
+                        value={form.cuisine_type}
                         onChange={(e) =>
-                          setForm({ ...form, speciality_cuisine: e.target.value })
+                          setForm({ ...form, cuisine_type: e.target.value })
                         }
                         className={inp}
                       >
