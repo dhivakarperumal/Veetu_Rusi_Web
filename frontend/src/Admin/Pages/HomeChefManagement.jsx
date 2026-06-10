@@ -516,8 +516,8 @@ const HomeChefManagement = () => {
             <button
               onClick={() => setViewMode("table")}
               className={`p-2 rounded-lg transition ${viewMode === "table"
-                  ? "bg-white text-emerald-700 shadow-sm"
-                  : "text-slate-500 hover:text-emerald-700"
+                ? "bg-white text-emerald-700 shadow-sm"
+                : "text-slate-500 hover:text-emerald-700"
                 }`}
               title="Table View"
             >
@@ -526,8 +526,8 @@ const HomeChefManagement = () => {
             <button
               onClick={() => setViewMode("card")}
               className={`p-2 rounded-lg transition ${viewMode === "card"
-                  ? "bg-white text-emerald-700 shadow-sm"
-                  : "text-slate-500 hover:text-emerald-700"
+                ? "bg-white text-emerald-700 shadow-sm"
+                : "text-slate-500 hover:text-emerald-700"
                 }`}
               title="Card View"
             >
@@ -607,10 +607,10 @@ const HomeChefManagement = () => {
                     <td className="px-5 py-4">
                       <span
                         className={`text-[9px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider ${chef.status === "Approved"
-                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                            : chef.status === "Pending"
-                              ? "bg-amber-50 text-amber-700 border border-amber-200"
-                              : "bg-red-50 text-red-700 border border-red-200"
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                          : chef.status === "Pending"
+                            ? "bg-amber-50 text-amber-700 border border-amber-200"
+                            : "bg-red-50 text-red-700 border border-red-200"
                           }`}
                       >
                         {chef.status}
@@ -698,10 +698,10 @@ const HomeChefManagement = () => {
                   </div>
                   <span
                     className={`text-[9px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider ${chef.status === "Approved"
-                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                        : chef.status === "Pending"
-                          ? "bg-amber-50 text-amber-700 border border-amber-200"
-                          : "bg-red-50 text-red-700 border border-red-200"
+                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                      : chef.status === "Pending"
+                        ? "bg-amber-50 text-amber-700 border border-amber-200"
+                        : "bg-red-50 text-red-700 border border-red-200"
                       }`}
                   >
                     {chef.status}
@@ -790,8 +790,8 @@ const HomeChefManagement = () => {
                     type="button"
                     onClick={() => setActiveFormTab(t.id)}
                     className={`flex-shrink-0 mx-1 px-4 py-2 text-xs font-black uppercase tracking-wider rounded-full transition focus:outline-none focus:ring-0 ${activeFormTab === t.id
-                        ? "bg-emerald-800 text-white shadow-inner"
-                        : "text-gray-600 hover:text-gray-800 hover:bg-gray-100"
+                      ? "bg-emerald-800 text-white shadow-inner"
+                      : "text-gray-600 hover:text-gray-800 hover:bg-gray-100"
                       }`}
                   >
                     {t.label}
@@ -804,50 +804,47 @@ const HomeChefManagement = () => {
                 onSubmit={handleSubmit}
                 className="flex-1 overflow-y-auto p-8 space-y-6 bg-white text-gray-800"
               >
-                {activeFormTab === "basic" && (
+                {activeFormTab === "personal" && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
                     <div>
-                      <label className={lbl}>Chef Unique Code</label>
+                      <label className={lbl}>Chef Unique ID *</label>
                       <input
                         type="text"
                         value={form.chef_unique_code}
                         onChange={(e) =>
                           setForm({ ...form, chef_unique_code: e.target.value })
                         }
-                        placeholder="e.g. HC-9920"
                         className={inp}
                       />
                     </div>
+
                     <div>
-                      <label className={lbl}>Chef Name *</label>
+                      <label className={lbl}>First Name *</label>
                       <input
                         type="text"
-                        required
-                        value={form.name}
+                        value={form.first_name}
                         onChange={(e) =>
-                          setForm({ ...form, name: e.target.value })
+                          setForm({ ...form, first_name: e.target.value })
                         }
-                        placeholder="Chef Name"
                         className={inp}
                       />
                     </div>
+
                     <div>
-                      <label className={lbl}>Father / Husband Name</label>
+                      <label className={lbl}>Last Name *</label>
                       <input
                         type="text"
-                        value={form.father_husband_name}
+                        value={form.last_name}
                         onChange={(e) =>
-                          setForm({
-                            ...form,
-                            father_husband_name: e.target.value,
-                          })
+                          setForm({ ...form, last_name: e.target.value })
                         }
-                        placeholder="Father / Husband Name"
                         className={inp}
                       />
                     </div>
+
                     <div>
-                      <label className={lbl}>Gender</label>
+                      <label className={lbl}>Gender *</label>
                       <select
                         value={form.gender}
                         onChange={(e) =>
@@ -860,34 +857,73 @@ const HomeChefManagement = () => {
                         <option value="Other">Other</option>
                       </select>
                     </div>
+
                     <div>
-                      <label className={lbl}>Date of Birth</label>
+                      <label className={lbl}>Date Of Birth *</label>
                       <input
                         type="date"
                         value={form.date_of_birth}
-                        onChange={handleDobChange}
+                        onChange={(e) =>
+                          setForm({ ...form, date_of_birth: e.target.value })
+                        }
                         className={inp}
                       />
                     </div>
+
                     <div>
-                      <label className={lbl}>Age (Auto calculated)</label>
+                      <label className={lbl}>Mobile Number *</label>
                       <input
-                        type="number"
-                        readOnly
-                        value={form.age}
-                        className="w-full px-4 py-2.5 bg-[#070b13]/30 border border-white/5 rounded-xl outline-none font-medium text-white/50 text-sm cursor-not-allowed"
+                        type="tel"
+                        value={form.mobile}
+                        onChange={(e) =>
+                          setForm({ ...form, mobile: e.target.value })
+                        }
+                        className={inp}
                       />
                     </div>
+
+                    <div>
+                      <label className={lbl}>Email Address *</label>
+                      <input
+                        type="email"
+                        value={form.email}
+                        onChange={(e) =>
+                          setForm({ ...form, email: e.target.value })
+                        }
+                        className={inp}
+                      />
+                    </div>
+
+                    <div>
+                      <label className={lbl}>Password *</label>
+                      <input
+                        type="password"
+                        value={form.password}
+                        onChange={(e) =>
+                          setForm({ ...form, password: e.target.value })
+                        }
+                        className={inp}
+                      />
+                    </div>
+
+                    <div>
+                      <label className={lbl}>Confirm Password *</label>
+                      <input
+                        type="password"
+                        value={form.confirmPassword}
+                        onChange={(e) =>
+                          setForm({ ...form, confirmPassword: e.target.value })
+                        }
+                        className={inp}
+                      />
+                    </div>
+
                     {renderFileField(
                       "profile_photo",
-                      "Profile Photo",
-                      form.profile_photo,
+                      "Profile Photo *",
+                      form.profile_photo
                     )}
-                    {renderFileField(
-                      "cover_banner",
-                      "Cover Banner Image",
-                      form.cover_banner,
-                    )}
+
                   </div>
                 )}
 
