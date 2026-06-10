@@ -657,6 +657,7 @@ const DeliveryPartnerManagement = () => {
                   <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em] text-center w-16">S.No</th>
                   <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em]">Partner Info</th>
                   <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em]">Vehicle Details</th>
+                  <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em]">Address / Verification</th>
                   <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em]">Deliveries</th>
                   <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em]">Earnings</th>
                   <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em]">Status</th>
@@ -681,6 +682,24 @@ const DeliveryPartnerManagement = () => {
                     <td className="px-5 py-4 text-sm font-semibold text-slate-600">
                       {partner.vehicle_type} &bull; {partner.vehicle_number}
                     </td>
+                    <td className="px-5 py-4 text-sm text-slate-600">
+                      <div className="space-y-1.5 text-[11px] leading-snug">
+                        <p><span className="font-black text-slate-800">Current:</span> {partner.current_address || 'N/A'}</p>
+                        <p><span className="font-black text-slate-800">Permanent:</span> {partner.permanent_address || 'N/A'}</p>
+                        <p><span className="font-black text-slate-800">Live GPS:</span> {partner.live_location || 'N/A'}</p>
+                        <p><span className="font-black text-slate-800">Emergency:</span> {partner.emergency_contact_name ? `${partner.emergency_contact_name} (${partner.emergency_contact_relationship || 'N/A'}) ${partner.emergency_contact_mobile || ''}` : 'N/A'}</p>
+                        <p><span className="font-black text-slate-800">License Issue:</span> {partner.license_issue_date ? partner.license_issue_date.substring(0, 10) : 'N/A'}</p>
+                        <p><span className="font-black text-slate-800">Available:</span> {partner.available_areas || 'N/A'}</p>
+                        <p><span className="font-black text-slate-800">Time:</span> {[
+                          partner.available_time_morning ? 'Morning' : null,
+                          partner.available_time_afternoon ? 'Afternoon' : null,
+                          partner.available_time_evening ? 'Evening' : null,
+                          partner.available_time_night ? 'Night' : null,
+                        ].filter(Boolean).join(', ') || 'N/A'}</p>
+                        <p><span className="font-black text-slate-800">Verified:</span> {[partner.face_verified ? 'Face' : null, partner.location_verified ? 'Location' : null].filter(Boolean).join(', ') || 'N/A'}</p>
+                        <p><span className="font-black text-slate-800">Selfies:</span> {[partner.selfie_with_vehicle ? 'Vehicle' : null, partner.selfie_with_aadhaar ? 'Aadhaar' : null].filter(Boolean).join(', ') || 'N/A'}</p>
+                      </div>
+                    </td>
                     <td className="px-5 py-4 text-sm font-black text-slate-700">{partner.total_deliveries || 0}</td>
                     <td className="px-5 py-4 text-sm font-black text-emerald-600">₹{parseFloat(partner.earnings || 0).toLocaleString()}</td>
                     <td className="px-5 py-4">
@@ -700,7 +719,7 @@ const DeliveryPartnerManagement = () => {
                   </tr>
                 ))}
                 {filteredPartners.length === 0 && (
-                  <tr><td colSpan="7" className="px-6 py-8 text-center text-xs text-slate-400 italic">No delivery partners match your criteria.</td></tr>
+                  <tr><td colSpan="8" className="px-6 py-8 text-center text-xs text-slate-400 italic">No delivery partners match your criteria.</td></tr>
                 )}
               </tbody>
             </table>
@@ -862,9 +881,20 @@ const DeliveryPartnerManagement = () => {
                 {[
                   ["Mobile", selectedPartner.mobile],
                   ["Email", selectedPartner.email || "N/A"],
+                  ["Current Address", selectedPartner.current_address || "N/A"],
+                  ["Permanent Address", selectedPartner.permanent_address || "N/A"],
+                  ["Live GPS", selectedPartner.live_location || "N/A"],
+                  ["Emergency Contact", selectedPartner.emergency_contact_name ? `${selectedPartner.emergency_contact_name} (${selectedPartner.emergency_contact_relationship || 'N/A'}) ${selectedPartner.emergency_contact_mobile || ''}` : "N/A"],
                   ["Vehicle Type", selectedPartner.vehicle_type],
                   ["Vehicle Number", selectedPartner.vehicle_number],
+                  ["License Issue Date", selectedPartner.license_issue_date ? selectedPartner.license_issue_date.substring(0, 10) : "N/A"],
                   ["Driving License", selectedPartner.license_number || "N/A"],
+                  ["Available Areas", selectedPartner.available_areas || "N/A"],
+                  ["Available Time", [selectedPartner.available_time_morning ? 'Morning' : null, selectedPartner.available_time_afternoon ? 'Afternoon' : null, selectedPartner.available_time_evening ? 'Evening' : null, selectedPartner.available_time_night ? 'Night' : null].filter(Boolean).join(', ') || 'N/A'],
+                  ["Face Verified", selectedPartner.face_verified ? 'Yes' : 'No'],
+                  ["Location Verified", selectedPartner.location_verified ? 'Yes' : 'No'],
+                  ["Selfie Vehicle", selectedPartner.selfie_with_vehicle ? 'Uploaded' : 'Missing'],
+                  ["Selfie Aadhaar", selectedPartner.selfie_with_aadhaar ? 'Uploaded' : 'Missing'],
                   ["Aadhaar Number", selectedPartner.aadhaar_number || "N/A"],
                   ["Total Deliveries", selectedPartner.total_deliveries || 0],
                   ["Total Earnings", `₹${parseFloat(selectedPartner.earnings || 0).toLocaleString()}`],

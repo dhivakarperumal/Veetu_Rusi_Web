@@ -43,6 +43,8 @@ const storage = multer.diskStorage({
       'aadhaar_back_url',
       'pan_card_url',
       'selfie_verification_url',
+      'selfie_with_vehicle',
+      'selfie_with_aadhaar',
       'police_verification_certificate',
       'vehicle_front_photo',
       'vehicle_back_photo',
