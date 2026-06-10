@@ -520,7 +520,19 @@ async function createDatabaseAndTables() {
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `gst_certificate_url` VARCHAR(255) DEFAULT NULL");
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `signature_url` VARCHAR(255) DEFAULT NULL");
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `selfie_verification_url` VARCHAR(255) DEFAULT NULL");
-
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `instagram_url` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `facebook_url` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `youtube_url` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `website_url` VARCHAR(255) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `fssai_available` VARCHAR(50) DEFAULT 'No'");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `gst_available` VARCHAR(50) DEFAULT 'No'");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `delivery_radius` VARCHAR(50) DEFAULT '5 KM'");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `preorder_available` TINYINT(1) DEFAULT 0");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `cutoff_time` TEXT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `about_me` LONGTEXT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `cooking_story` LONGTEXT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `why_choose_me` LONGTEXT DEFAULT NULL");
+  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `languages_known` VARCHAR(255) DEFAULT NULL");
   await connection.execute(`
     CREATE TABLE IF NOT EXISTS franchise_category (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -540,7 +552,7 @@ async function createDatabaseAndTables() {
       INDEX(franchise_user_id),
       INDEX(franchise_id),
       INDEX(created_by_user_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
   console.log('Franchise category table created or already exists');
 
