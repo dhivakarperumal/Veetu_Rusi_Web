@@ -332,13 +332,7 @@ exports.createHomeChef = async (req, res) => {
     }
 
 
-    // Auto-generate chef_unique_code if not provided
-    function generateChefUniqueCode() {
-      const timestamp = Date.now().toString(36);
-      const randomPart = Math.random().toString(36).substring(2, 8).toUpperCase();
-      return `CHEF-${timestamp}-${randomPart}`;
-    }
-    const generatedChefCode = chef_unique_code || generateChefUniqueCode();
+    // chef_unique_code is removed as it does not exist in the database schema
 
     // Auto-calculate age from date_of_birth
     const calculateAgeFromDOB = (dob) => {
@@ -377,7 +371,7 @@ exports.createHomeChef = async (req, res) => {
 
     const sql = `INSERT INTO home_chefs (
         name, mobile, email, address, fssai_number, aadhaar_url, pan_url, status,
-        chef_unique_code, created_by_id, created_by_user_id, created_by_name, created_by_email, created_by_phone,
+        created_by_id, created_by_user_id, created_by_name, created_by_email, created_by_phone,
         franchise_id, franchise_user_id,
         father_husband_name, gender, date_of_birth, age,
         profile_photo, cover_banner, alt_mobile, whatsapp_number, emergency_contact,
@@ -394,7 +388,7 @@ exports.createHomeChef = async (req, res) => {
         aadhaar_front_url, aadhaar_back_url, pan_card_url, fssai_certificate_url, gst_certificate_url, signature_url, kitchen_photo1, kitchen_photo2, kitchen_photo3, cooking_area_photo, storage_area_photo, selfie_verification_url,
         instagram_url, facebook_url, youtube_url, website_url, fssai_available, gst_available,
         delivery_radius, preorder_available, cutoff_time, about_me, cooking_story, why_choose_me, languages_known
-      ) VALUES (${Array(105).fill('?').join(', ')})`;
+      ) VALUES (${Array(104).fill('?').join(', ')})`;
 
     const params = [
       name,
@@ -405,7 +399,6 @@ exports.createHomeChef = async (req, res) => {
       null, // aadhaar_url
       null, // pan_url
       approval_status || 'Pending', // status
-      generatedChefCode,
       createdById,
       createdByUserId,
       createdByName,
@@ -579,7 +572,7 @@ exports.updateHomeChef = async (req, res) => {
     const calculatedAgeForUpdate = calculateAgeFromDOB(date_of_birth);
 
     let query = `UPDATE home_chefs SET 
-      chef_unique_code = ?, name = ?, father_husband_name = ?, gender = ?, date_of_birth = ?, age = ?,
+      name = ?, father_husband_name = ?, gender = ?, date_of_birth = ?, age = ?,
       mobile = ?, alt_mobile = ?, whatsapp_number = ?, email = ?, emergency_contact = ?,
       door_number = ?, street_name = ?, area_name = ?, landmark = ?, city = ?, district = ?, state = ?, pincode = ?,
       latitude = ?, longitude = ?, map_link = ?, kitchen_name = ?, kitchen_address = ?, kitchen_type = ?,
@@ -593,7 +586,7 @@ exports.updateHomeChef = async (req, res) => {
       rejection_reason = ?, block_reason = ?, address = ?`;
 
     let params = [
-      chef_unique_code || null, name, father_husband_name || null, gender || null, date_of_birth || null, calculatedAgeForUpdate !== null ? calculatedAgeForUpdate : (age ? parseInt(age) : null),
+      name, father_husband_name || null, gender || null, date_of_birth || null, calculatedAgeForUpdate !== null ? calculatedAgeForUpdate : (age ? parseInt(age) : null),
       mobile, alt_mobile || null, whatsapp_number || null, email, emergency_contact || null,
       door_number || null, street_name || null, area_name || null, landmark || null, city || null, district || null, state || null, pincode || null,
       latitude || null, longitude || null, map_link || null, kitchen_name || null, kitchen_address || null, kitchen_type || 'Home Kitchen',
