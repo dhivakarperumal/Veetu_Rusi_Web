@@ -41,7 +41,16 @@ function Login() {
       }
     } catch (error) {
       console.error("Login Error:", error);
-      toast.error(error.response?.data?.message || "Login failed");
+      
+      let errorMessage = error.response?.data?.message || "Login failed";
+      
+      // If the user is inactive or deactivated (usually 403)
+      if (error.response?.status === 403) {
+        const currentTime = new Date().toLocaleString();
+        errorMessage = `${errorMessage} (Login attempt at: ${currentTime})`;
+      }
+      
+      toast.error(errorMessage, { position: "top-right" });
     }
   };
 
@@ -72,7 +81,16 @@ function Login() {
 
     } catch (error) {
       console.error("Google Login Error:", error);
-      toast.error(error.response?.data?.message || error.message || "Google Login Failed");
+      
+      let errorMessage = error.response?.data?.message || error.message || "Google Login Failed";
+      
+      // If the user is inactive or deactivated (usually 403)
+      if (error.response?.status === 403) {
+        const currentTime = new Date().toLocaleString();
+        errorMessage = `${errorMessage} (Login attempt at: ${currentTime})`;
+      }
+      
+      toast.error(errorMessage, { position: "top-right" });
     }
   };
 
