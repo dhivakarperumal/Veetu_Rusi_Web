@@ -9,6 +9,7 @@ import {
   X,
   ShieldAlert,
   Eye,
+  EyeOff,
   Bike,
   List,
   LayoutGrid,
@@ -119,6 +120,8 @@ const DeliveryPartnerManagement = () => {
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("personal");
   const [validationErrors, setValidationErrors] = useState({});
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const stepIds = tabs.map((t) => t.id);
   const currentStepIndex = stepIds.indexOf(activeTab);
@@ -411,8 +414,86 @@ const DeliveryPartnerManagement = () => {
                   {f("blood_group", "Blood Group")}
                   {f("mobile", "Mobile Number", "tel")}
                   {f("email", "Email Address", "email")}
-                  {!editingPartner && f("password", "Password", "password")}
-                  {!editingPartner && f("confirmPassword", "Confirm Password", "password")}
+                  {!editingPartner && (
+                    <div>
+                      <label className={lbl}>Password</label>
+
+                      <div className="relative">
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          value={form.password || ""}
+                          onChange={(e) =>
+                            setForm({ ...form, password: e.target.value })
+                          }
+                          className={`${inp} pr-12 ${validationErrors.password
+                              ? "border-rose-500 ring-1 ring-rose-500/20"
+                              : ""
+                            }`}
+                        />
+
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                        >
+                          {showPassword ? (
+                            <EyeOff className="w-5 h-5" />
+                          ) : (
+                            <Eye className="w-5 h-5" />
+                          )}
+                        </button>
+                      </div>
+
+                      {validationErrors.password && (
+                        <p className="mt-1 text-[10px] text-rose-400">
+                          {validationErrors.password}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {!editingPartner && (
+                    <div>
+                      <label className={lbl}>Confirm Password</label>
+
+                      <div className="relative">
+                        <input
+                          type={showConfirmPassword ? "text" : "password"}
+                          value={form.confirmPassword || ""}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              confirmPassword: e.target.value,
+                            })
+                          }
+                          className={`${inp} pr-12 ${validationErrors.confirmPassword
+                              ? "border-rose-500 ring-1 ring-rose-500/20"
+                              : ""
+                            }`}
+                        />
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setShowConfirmPassword(!showConfirmPassword)
+                          }
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff className="w-5 h-5" />
+                          ) : (
+                            <Eye className="w-5 h-5" />
+                          )}
+                        </button>
+                      </div>
+
+                      {validationErrors.confirmPassword && (
+                        <p className="mt-1 text-[10px] text-rose-400">
+                          {validationErrors.confirmPassword}
+                        </p>
+                      )}
+                    </div>
+                  )}
                   {fileField("profile_photo", "Profile Photo", form.profile_photo)}
                 </div>
               );
