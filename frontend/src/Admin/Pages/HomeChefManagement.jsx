@@ -1055,18 +1055,6 @@ const HomeChefManagement = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                         <div>
-                          <label className={lbl}>Chef Unique ID *</label>
-                          <input
-                            type="text"
-                            value={form.chef_unique_code}
-                            onChange={(e) =>
-                              setForm({ ...form, chef_unique_code: e.target.value })
-                            }
-                            className={inp}
-                          />
-                        </div>
-
-                        <div>
                           <label className={lbl}>First Name *</label>
                           <input
                             type="text"
