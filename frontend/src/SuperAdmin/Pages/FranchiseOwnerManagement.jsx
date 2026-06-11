@@ -16,19 +16,19 @@ const emptyForm = {
   franchise_name: "", owner_name: "", logo_url: "", banner_url: "",
   business_registration_number: "", gst_number: "", pan_number: "",
   start_date: "", expiry_date: "", status: "Pending",
-  
+
   // Contact Details
   mobile: "", alt_mobile: "", email: "", territory_pincodes: [],
-  
+
   // Address Details
   door_number: "", street_name: "", area: "", landmark: "",
   city: "", district: "", state: "", pincode: "", latitude: "",
   longitude: "", map_link: "",
-  
+
   // Login Details
   username: "", password: "", confirmPassword: "", role: "Admin",
   login_status: "Active",
-  
+
   // KYC Documents
   aadhaar_url: "", pan_url: "", gst_certificate_url: "",
   bank_passbook_url: "", signature_url: "",
@@ -36,7 +36,7 @@ const emptyForm = {
   image_upload_status: "Pending",
   email_verified: false,
   otp_verified: false,
-  
+
   // Other existing
   commission_percentage: "10.00"
 };
@@ -57,6 +57,9 @@ const FranchiseOwnerManagement = () => {
   const [linkedDeliveryPartnerCount, setLinkedDeliveryPartnerCount] = useState(0);
   const [linkedHomeChefs, setLinkedHomeChefs] = useState([]);
   const [linkedDeliveryPartners, setLinkedDeliveryPartners] = useState([]);
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Approve modal: holds the franchise being approved + password input
   const [approveModal, setApproveModal] = useState(null); // { franchise } | null
@@ -84,9 +87,9 @@ const FranchiseOwnerManagement = () => {
     const start = new Date(franchise.start_date);
     const expiry = new Date(franchise.expiry_date);
     const now = new Date();
-    
+
     expiry.setHours(23, 59, 59, 999);
-    
+
     if (expiry < now) return 'Inactive';
 
     const diffDays = Math.ceil((expiry - start) / (1000 * 60 * 60 * 24));
@@ -155,7 +158,7 @@ const FranchiseOwnerManagement = () => {
                 fetchFranchises();
               } catch { toast.error('Payment verification failed'); }
             },
-            modal: { ondismiss: function() { toast('Payment cancelled'); } }
+            modal: { ondismiss: function () { toast('Payment cancelled'); } }
           };
           const rz = new window.Razorpay(options);
           rz.open();
@@ -387,7 +390,7 @@ const FranchiseOwnerManagement = () => {
       toast.error("Enter a valid 6-digit pincode.");
       return;
     }
-    
+
     if (form.territory_pincodes.some(pin => pin === value || pin.startsWith(value + " -"))) {
       toast.error("Pincode already added.");
       return;
@@ -396,7 +399,7 @@ const FranchiseOwnerManagement = () => {
     try {
       const res = await api.get(`/superadmin/pincode/${value}`);
       const data = res.data;
-      
+
       let displayValue = value;
       if (data && data[0] && data[0].Status === "Success") {
         const postOffice = data[0].PostOffice[0];
@@ -405,7 +408,7 @@ const FranchiseOwnerManagement = () => {
       } else {
         toast.error("Invalid Pincode details, but adding anyway.");
       }
-      
+
       setForm(prev => ({ ...prev, territory_pincodes: [...prev.territory_pincodes, displayValue] }));
       setPincodeEntry("");
     } catch {
@@ -504,7 +507,7 @@ const FranchiseOwnerManagement = () => {
           >
             ← Back to List
           </button>
-          
+
           <div className="flex items-center gap-2 self-end sm:self-auto">
             <button
               onClick={() => {
@@ -540,13 +543,12 @@ const FranchiseOwnerManagement = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <span className={`text-[10px] font-black px-3 py-1.5 rounded-lg uppercase tracking-wider ${
-                viewDetailsFranchise.status === "Active"
+              <span className={`text-[10px] font-black px-3 py-1.5 rounded-lg uppercase tracking-wider ${viewDetailsFranchise.status === "Active"
                   ? "bg-emerald-50 text-emerald-700 border border-emerald-200/50"
                   : viewDetailsFranchise.status === "Inactive"
-                  ? "bg-red-50 text-red-700 border border-red-200/50"
-                  : "bg-amber-50 text-amber-700 border border-amber-200/50"
-              }`}>{viewDetailsFranchise.status}</span>
+                    ? "bg-red-50 text-red-700 border border-red-200/50"
+                    : "bg-amber-50 text-amber-700 border border-amber-200/50"
+                }`}>{viewDetailsFranchise.status}</span>
               <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/50 px-3 py-1.5 rounded-lg">
                 {viewDetailsFranchise.commission_percentage}% Commission
               </span>
@@ -591,55 +593,50 @@ const FranchiseOwnerManagement = () => {
             <div className="w-full md:w-64 flex-shrink-0 flex flex-col gap-2 border-r border-slate-100 pr-6">
               <button
                 onClick={() => setActiveDetailTab("franchise")}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all text-left ${
-                  activeDetailTab === "franchise"
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all text-left ${activeDetailTab === "franchise"
                     ? "bg-[#1B4D22] text-white shadow-sm shadow-[#1B4D22]/20"
                     : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
-                }`}
+                  }`}
               >
                 <Landmark className="w-4 h-4" />
                 Franchise Info
               </button>
               <button
                 onClick={() => setActiveDetailTab("owner")}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all text-left ${
-                  activeDetailTab === "owner"
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all text-left ${activeDetailTab === "owner"
                     ? "bg-[#1B4D22] text-white shadow-sm shadow-[#1B4D22]/20"
                     : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
-                }`}
+                  }`}
               >
                 <UserCheck className="w-4 h-4" />
                 Owner Profile
               </button>
               <button
                 onClick={() => setActiveDetailTab("homechefs")}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all text-left ${
-                  activeDetailTab === "homechefs"
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all text-left ${activeDetailTab === "homechefs"
                     ? "bg-[#1B4D22] text-white shadow-sm shadow-[#1B4D22]/20"
                     : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
-                }`}
+                  }`}
               >
                 <List className="w-4 h-4" />
                 Home Chefs
               </button>
               <button
                 onClick={() => setActiveDetailTab("deliverypartners")}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all text-left ${
-                  activeDetailTab === "deliverypartners"
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all text-left ${activeDetailTab === "deliverypartners"
                     ? "bg-[#1B4D22] text-white shadow-sm shadow-[#1B4D22]/20"
                     : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
-                }`}
+                  }`}
               >
                 <MapPin className="w-4 h-4" />
                 Delivery Partners
               </button>
               <button
                 onClick={() => setActiveDetailTab("credentials")}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all text-left ${
-                  activeDetailTab === "credentials"
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all text-left ${activeDetailTab === "credentials"
                     ? "bg-[#1B4D22] text-white shadow-sm shadow-[#1B4D22]/20"
                     : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
-                }`}
+                  }`}
               >
                 <KeyRound className="w-4 h-4" />
                 Credentials & Access
@@ -776,9 +773,8 @@ const FranchiseOwnerManagement = () => {
                               <td className="px-5 py-4 text-sm text-slate-600 truncate max-w-[220px]" title={chef.email}>{chef.email || "—"}</td>
                               <td className="px-5 py-4 text-sm text-slate-600">{chef.chef_unique_code || chef.chef_id || "—"}</td>
                               <td className="px-5 py-4">
-                                <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                                  chef.status === "Active" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
-                                }`}>
+                                <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${chef.status === "Active" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+                                  }`}>
                                   {getSubscriptionLabel(chef) === 'Trial' ? `Trial (${getTrialDaysLeft(chef)} days left)` : getSubscriptionLabel(chef)}
                                 </span>
                               </td>
@@ -823,9 +819,8 @@ const FranchiseOwnerManagement = () => {
                               <td className="px-5 py-4 text-sm text-slate-600 truncate max-w-[220px]" title={partner.email}>{partner.email || "—"}</td>
                               <td className="px-5 py-4 text-sm text-slate-600">{partner.vehicle_number || partner.vehicle_type || "—"}</td>
                               <td className="px-5 py-4">
-                                <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                                  partner.status === "Active" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
-                                }`}>
+                                <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${partner.status === "Active" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+                                  }`}>
                                   {partner.status || "Pending"}
                                 </span>
                               </td>
@@ -935,22 +930,20 @@ const FranchiseOwnerManagement = () => {
           <div className="flex bg-slate-950 border border-slate-800 p-1 rounded-2xl">
             <button
               onClick={() => setViewMode("table")}
-              className={`p-3 rounded-xl transition ${
-                viewMode === "table"
+              className={`p-3 rounded-xl transition ${viewMode === "table"
                   ? "bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20"
                   : "text-slate-400 hover:text-slate-100"
-              }`}
+                }`}
               title="Table View"
             >
               <List className="w-4 h-4" />
             </button>
             <button
               onClick={() => setViewMode("card")}
-              className={`p-3 rounded-xl transition ${
-                viewMode === "card"
+              className={`p-3 rounded-xl transition ${viewMode === "card"
                   ? "bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20"
                   : "text-slate-400 hover:text-slate-100"
-              }`}
+                }`}
               title="Card View"
             >
               <LayoutGrid className="w-4 h-4" />
@@ -964,116 +957,114 @@ const FranchiseOwnerManagement = () => {
         <div className="space-y-4">{[1, 2, 3].map(i => <div key={i} className="h-16 bg-slate-100 rounded-xl animate-pulse" />)}</div>
       ) : viewMode === "table" ? (
         <>
-        <div className="bg-white rounded-2xl overflow-hidden shadow-sm animate-in fade-in duration-200">
-          <div className="overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-slate-200 bg-slate-700">
-                  <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em] w-16 text-center">S.No</th>
-                  <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Franchise</th>
-                  <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Owner</th>
-                  <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Territory</th>
-                  <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Commission</th>
-                  <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Subscription</th>
-                  <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Status</th>
-                  <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em] text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {paginatedFranchises.map((f, index) => (
-                  <tr key={f.id} className="hover:bg-slate-50/50 transition-colors">
-                    {/* S.No */}
-                    <td className="px-6 py-4 text-xs font-bold text-slate-500 text-center">
-                      {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
-                    </td>
-                    {/* Franchise */}
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 border border-emerald-100/50">
-                          <Landmark className="w-4 h-4" />
+          <div className="bg-white rounded-2xl overflow-hidden shadow-sm animate-in fade-in duration-200">
+            <div className="overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-700">
+                    <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em] w-16 text-center">S.No</th>
+                    <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Franchise</th>
+                    <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Owner</th>
+                    <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Territory</th>
+                    <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Commission</th>
+                    <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Subscription</th>
+                    <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Status</th>
+                    <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em] text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {paginatedFranchises.map((f, index) => (
+                    <tr key={f.id} className="hover:bg-slate-50/50 transition-colors">
+                      {/* S.No */}
+                      <td className="px-6 py-4 text-xs font-bold text-slate-500 text-center">
+                        {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
+                      </td>
+                      {/* Franchise */}
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 border border-emerald-100/50">
+                            <Landmark className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-bold text-slate-800">{f.franchise_name}</h4>
+                            <p className="text-xs text-slate-400 font-semibold">{f.email}</p>
+                          </div>
                         </div>
-                        <div>
-                          <h4 className="text-sm font-bold text-slate-800">{f.franchise_name}</h4>
-                          <p className="text-xs text-slate-400 font-semibold">{f.email}</p>
+                      </td>
+                      {/* Owner */}
+                      <td className="px-5 py-4">
+                        <p className="text-sm font-semibold text-slate-700">{f.owner_name}</p>
+                        <p className="text-xs text-slate-400 font-semibold">{f.mobile}</p>
+                      </td>
+                      {/* Territory */}
+                      <td className="px-5 py-4 text-sm font-semibold text-slate-600">
+                        <div className="flex items-center gap-1.5">
+                          <MapPin className="w-3.5 h-3.5 text-rose-500" />
+                          <span>{f.city}, {f.state}</span>
                         </div>
-                      </div>
-                    </td>
-                    {/* Owner */}
-                    <td className="px-5 py-4">
-                      <p className="text-sm font-semibold text-slate-700">{f.owner_name}</p>
-                      <p className="text-xs text-slate-400 font-semibold">{f.mobile}</p>
-                    </td>
-                    {/* Territory */}
-                    <td className="px-5 py-4 text-sm font-semibold text-slate-600">
-                      <div className="flex items-center gap-1.5">
-                        <MapPin className="w-3.5 h-3.5 text-rose-500" />
-                        <span>{f.city}, {f.state}</span>
-                      </div>
-                    </td>
-                    {/* Commission */}
-                    <td className="px-5 py-4">
-                      <span className="inline-flex items-center text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/50 px-2.5 py-1 rounded-md">
-                        {f.commission_percentage}%
-                      </span>
-                    </td>
-                    {/* Subscription */}
-                    <td className="px-5 py-4">
-                      <span className={`inline-flex items-center text-[10px] font-black px-2.5 py-1 rounded-md uppercase tracking-widest ${
-                        getSubscriptionLabel(f) === 'Trial'
-                          ? 'bg-amber-50 text-amber-700 border border-amber-200/50'
-                          : getSubscriptionLabel(f) === 'Active'
-                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/50'
-                          : 'bg-red-50 text-red-700 border border-red-200/50'
-                      }`}>
-                        {getSubscriptionLabel(f)}
-                      </span>
-                    </td>
-                    {/* Status */}
-                    <td 
-                      className="px-5 py-4 cursor-pointer select-none" 
-                      onDoubleClick={() => handleToggleStatus(f)}
-                      title="Double-click to toggle status"
-                    >
-                      <div className="space-y-1">
-                        <span className={`inline-block text-[9px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider ${
-                          f.status === "Active"
-                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200/50"
-                            : f.status === "Inactive"
-                            ? "bg-red-50 text-red-700 border border-red-200/50"
-                            : "bg-amber-50 text-amber-700 border border-amber-200/50"
-                        }`}>{f.status}</span>
-                      </div>
-                    </td>
-                    {/* Actions */}
-                    <td className="px-5 py-4">
-                      <div className="flex items-center justify-end gap-1.5 flex-nowrap whitespace-nowrap">
-                        {/* Buy Subscription — shown for Trial / Expired / Inactive */}
-                        {needsSubscription(f) && (
-                          <button
-                            onClick={() => openSubModal(f)}
-                            className="flex items-center gap-1 px-2.5 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-lg text-[9px] font-black uppercase tracking-wider transition shadow-sm shadow-emerald-500/30"
-                            title="Buy Subscription"
-                          >
-                            <CreditCard className="w-3 h-3" />
-                            Buy 
-                          </button>
-                        )}
+                      </td>
+                      {/* Commission */}
+                      <td className="px-5 py-4">
+                        <span className="inline-flex items-center text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/50 px-2.5 py-1 rounded-md">
+                          {f.commission_percentage}%
+                        </span>
+                      </td>
+                      {/* Subscription */}
+                      <td className="px-5 py-4">
+                        <span className={`inline-flex items-center text-[10px] font-black px-2.5 py-1 rounded-md uppercase tracking-widest ${getSubscriptionLabel(f) === 'Trial'
+                            ? 'bg-amber-50 text-amber-700 border border-amber-200/50'
+                            : getSubscriptionLabel(f) === 'Active'
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/50'
+                              : 'bg-red-50 text-red-700 border border-red-200/50'
+                          }`}>
+                          {getSubscriptionLabel(f)}
+                        </span>
+                      </td>
+                      {/* Status */}
+                      <td
+                        className="px-5 py-4 cursor-pointer select-none"
+                        onDoubleClick={() => handleToggleStatus(f)}
+                        title="Double-click to toggle status"
+                      >
+                        <div className="space-y-1">
+                          <span className={`inline-block text-[9px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider ${f.status === "Active"
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200/50"
+                              : f.status === "Inactive"
+                                ? "bg-red-50 text-red-700 border border-red-200/50"
+                                : "bg-amber-50 text-amber-700 border border-amber-200/50"
+                            }`}>{f.status}</span>
+                        </div>
+                      </td>
+                      {/* Actions */}
+                      <td className="px-5 py-4">
+                        <div className="flex items-center justify-end gap-1.5 flex-nowrap whitespace-nowrap">
+                          {/* Buy Subscription — shown for Trial / Expired / Inactive */}
+                          {needsSubscription(f) && (
+                            <button
+                              onClick={() => openSubModal(f)}
+                              className="flex items-center gap-1 px-2.5 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-lg text-[9px] font-black uppercase tracking-wider transition shadow-sm shadow-emerald-500/30"
+                              title="Buy Subscription"
+                            >
+                              <CreditCard className="w-3 h-3" />
+                              Buy
+                            </button>
+                          )}
 
-                        {/* Approve */}
-                        {(!f.franch_user_id || f.status !== "Active") && (
-                          <button
-                            onClick={() => handleApprove(f)}
-                            disabled={approvingId === f.id}
-                            className="flex items-center gap-1 px-2.5 py-1.5 bg-[#1B4D22] hover:bg-[#153b1a] text-white rounded-lg text-[9px] font-black uppercase tracking-wider transition disabled:opacity-50"
-                            title="Approve & Create Credentials"
-                          >
-                            <UserCheck className="w-3 h-3" />
-                            {approvingId === f.id ? "…" : "Approve"}
-                          </button>
-                        )}
+                          {/* Approve */}
+                          {(!f.franch_user_id || f.status !== "Active") && (
+                            <button
+                              onClick={() => handleApprove(f)}
+                              disabled={approvingId === f.id}
+                              className="flex items-center gap-1 px-2.5 py-1.5 bg-[#1B4D22] hover:bg-[#153b1a] text-white rounded-lg text-[9px] font-black uppercase tracking-wider transition disabled:opacity-50"
+                              title="Approve & Create Credentials"
+                            >
+                              <UserCheck className="w-3 h-3" />
+                              {approvingId === f.id ? "…" : "Approve"}
+                            </button>
+                          )}
 
-                        {/* View Creds if linked */}
-                        {/* {f.franch_user_id && (
+                          {/* View Creds if linked */}
+                          {/* {f.franch_user_id && (
                           <button
                             onClick={() => setCredModal({ email: f.email, password: null, owner_name: f.owner_name, franchise_name: f.franchise_name, franch_user_id: f.franch_user_id })}
                             className="p-2 hover:bg-teal-50 text-teal-600 rounded-lg transition"
@@ -1083,108 +1074,107 @@ const FranchiseOwnerManagement = () => {
                           </button>
                         )}  */}
 
-                        {/* View Details */}
-                        <button
-                          onClick={() => navigate(`/superadmin/franchises/${f.id}`)}
-                          className="p-2 hover:bg-slate-100 text-slate-500 hover:text-slate-800 rounded-lg transition"
-                          title="View Details"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
+                          {/* View Details */}
+                          <button
+                            onClick={() => navigate(`/superadmin/franchises/${f.id}`)}
+                            className="p-2 hover:bg-slate-100 text-slate-500 hover:text-slate-800 rounded-lg transition"
+                            title="View Details"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
 
-                        {/* Edit */}
-                        <button
-                          onClick={() => handleEdit(f)}
-                          className="p-2 hover:bg-slate-100 text-slate-500 hover:text-slate-800 rounded-lg transition"
-                          title="Edit"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
+                          {/* Edit */}
+                          <button
+                            onClick={() => handleEdit(f)}
+                            className="p-2 hover:bg-slate-100 text-slate-500 hover:text-slate-800 rounded-lg transition"
+                            title="Edit"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
 
-                        {/* Delete */}
-                        <button onClick={() => handleDelete(f.id)} className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition" title="Delete">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {filteredFranchises.length === 0 && (
-                  <tr>
-                    <td colSpan="8" className="px-6 py-16 text-center">
-                      <Landmark className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-                      <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">No franchise owners registered yet</p>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                          {/* Delete */}
+                          <button onClick={() => handleDelete(f.id)} className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition" title="Delete">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {filteredFranchises.length === 0 && (
+                    <tr>
+                      <td colSpan="8" className="px-6 py-16 text-center">
+                        <Landmark className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                        <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">No franchise owners registered yet</p>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
 
-        {/* Buy Subscription Modal */}
-        {purchaseTarget && createPortal(
-          <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col border border-white/20">
-              {/* Header */}
-              <div className="bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-800 p-8 text-white relative overflow-hidden flex-shrink-0">
-                <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
-                <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-32 h-32 bg-black/10 rounded-full blur-2xl"></div>
-                <div className="relative z-10 flex justify-between items-start">
-                  <div>
-                    <p className="text-emerald-200 text-xs font-bold uppercase tracking-widest mb-1">Buy Subscription</p>
-                    <h3 className="text-2xl font-black tracking-tight">{purchaseTarget.franchise_name}</h3>
-                    <p className="text-emerald-100 font-medium mt-1">{purchaseTarget.owner_name}</p>
+          {/* Buy Subscription Modal */}
+          {purchaseTarget && createPortal(
+            <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+              <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col border border-white/20">
+                {/* Header */}
+                <div className="bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-800 p-8 text-white relative overflow-hidden flex-shrink-0">
+                  <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+                  <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-32 h-32 bg-black/10 rounded-full blur-2xl"></div>
+                  <div className="relative z-10 flex justify-between items-start">
+                    <div>
+                      <p className="text-emerald-200 text-xs font-bold uppercase tracking-widest mb-1">Buy Subscription</p>
+                      <h3 className="text-2xl font-black tracking-tight">{purchaseTarget.franchise_name}</h3>
+                      <p className="text-emerald-100 font-medium mt-1">{purchaseTarget.owner_name}</p>
+                    </div>
+                    <button onClick={() => setPurchaseTarget(null)} className="bg-black/10 hover:bg-black/20 text-white rounded-full p-2 transition-colors">
+                      <X className="w-5 h-5" />
+                    </button>
                   </div>
-                  <button onClick={() => setPurchaseTarget(null)} className="bg-black/10 hover:bg-black/20 text-white rounded-full p-2 transition-colors">
-                    <X className="w-5 h-5" />
+                </div>
+
+                {/* Plans Grid */}
+                <div className="p-8 bg-slate-50 overflow-y-auto max-h-[60vh]">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {subPlans.map(p => {
+                      const isSel = selectedSubPlan && selectedSubPlan.id === p.id;
+                      return (
+                        <label key={p.id} className={`relative p-5 border-2 rounded-2xl cursor-pointer transition-all duration-300 transform hover:-translate-y-1 bg-white ${isSel ? 'border-emerald-500 shadow-md shadow-emerald-100/50 bg-emerald-50/30' : 'border-slate-200 hover:border-emerald-300 hover:shadow-md'
+                          }`}>
+                          <input type="radio" name="subplan" className="hidden" checked={isSel} onChange={() => setSelectedSubPlan(p)} />
+                          <div className="flex justify-between items-start mb-4">
+                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${isSel ? 'border-emerald-600' : 'border-slate-300'}`}>
+                              {isSel && <div className="w-2.5 h-2.5 rounded-full bg-emerald-600"></div>}
+                            </div>
+                            {p.durationDays >= 90 && (
+                              <span className="bg-emerald-100 text-emerald-800 text-[9px] font-black px-2 py-1 rounded-full uppercase tracking-wider">Best Value</span>
+                            )}
+                          </div>
+                          <h4 className="font-bold text-slate-800 text-lg mb-1">{p.name}</h4>
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-2xl font-black text-emerald-700">₹{p.amount}</span>
+                          </div>
+                          <p className="text-sm font-medium text-slate-500 mt-2 flex items-center gap-1.5">
+                            <Clock className="w-4 h-4" /> {p.durationDays} Days Access
+                          </p>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="p-6 bg-white border-t border-slate-100 flex justify-end gap-3">
+                  <button onClick={() => setPurchaseTarget(null)} className="px-6 py-3 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors">
+                    Cancel
+                  </button>
+                  <button onClick={startSubCheckout} className="px-8 py-3 text-sm font-bold text-white bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl shadow-lg shadow-emerald-500/30 hover:-translate-y-0.5 transition-all flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4" /> Pay & Activate
                   </button>
                 </div>
               </div>
-
-              {/* Plans Grid */}
-              <div className="p-8 bg-slate-50 overflow-y-auto max-h-[60vh]">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  {subPlans.map(p => {
-                    const isSel = selectedSubPlan && selectedSubPlan.id === p.id;
-                    return (
-                      <label key={p.id} className={`relative p-5 border-2 rounded-2xl cursor-pointer transition-all duration-300 transform hover:-translate-y-1 bg-white ${
-                        isSel ? 'border-emerald-500 shadow-md shadow-emerald-100/50 bg-emerald-50/30' : 'border-slate-200 hover:border-emerald-300 hover:shadow-md'
-                      }`}>
-                        <input type="radio" name="subplan" className="hidden" checked={isSel} onChange={() => setSelectedSubPlan(p)} />
-                        <div className="flex justify-between items-start mb-4">
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${isSel ? 'border-emerald-600' : 'border-slate-300'}`}>
-                            {isSel && <div className="w-2.5 h-2.5 rounded-full bg-emerald-600"></div>}
-                          </div>
-                          {p.durationDays >= 90 && (
-                            <span className="bg-emerald-100 text-emerald-800 text-[9px] font-black px-2 py-1 rounded-full uppercase tracking-wider">Best Value</span>
-                          )}
-                        </div>
-                        <h4 className="font-bold text-slate-800 text-lg mb-1">{p.name}</h4>
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-2xl font-black text-emerald-700">₹{p.amount}</span>
-                        </div>
-                        <p className="text-sm font-medium text-slate-500 mt-2 flex items-center gap-1.5">
-                          <Clock className="w-4 h-4" /> {p.durationDays} Days Access
-                        </p>
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Footer */}
-              <div className="p-6 bg-white border-t border-slate-100 flex justify-end gap-3">
-                <button onClick={() => setPurchaseTarget(null)} className="px-6 py-3 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors">
-                  Cancel
-                </button>
-                <button onClick={startSubCheckout} className="px-8 py-3 text-sm font-bold text-white bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl shadow-lg shadow-emerald-500/30 hover:-translate-y-0.5 transition-all flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4" /> Pay & Activate
-                </button>
-              </div>
             </div>
-          </div>
-        , document.body)}
+            , document.body)}
         </>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-200">
@@ -1201,21 +1191,19 @@ const FranchiseOwnerManagement = () => {
                       <span className="text-xs text-slate-500 font-semibold">{f.city}, {f.state}</span>
                     </div>
                   </div>
-                  
-                  <span 
-                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black tracking-wide uppercase cursor-pointer select-none ${
-                      f.status === "Active"
+
+                  <span
+                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black tracking-wide uppercase cursor-pointer select-none ${f.status === "Active"
                         ? "bg-emerald-50 text-emerald-700"
                         : f.status === "Inactive"
-                        ? "bg-rose-50 text-rose-700"
-                        : "bg-amber-50 text-amber-700"
-                    }`}
+                          ? "bg-rose-50 text-rose-700"
+                          : "bg-amber-50 text-amber-700"
+                      }`}
                     onDoubleClick={() => handleToggleStatus(f)}
                     title="Double-click to toggle status"
                   >
-                    <span className={`w-1.5 h-1.5 rounded-full ${
-                      f.status === "Active" ? "bg-emerald-500" : f.status === "Inactive" ? "bg-rose-500" : "bg-amber-500"
-                    }`} />
+                    <span className={`w-1.5 h-1.5 rounded-full ${f.status === "Active" ? "bg-emerald-500" : f.status === "Inactive" ? "bg-rose-500" : "bg-amber-500"
+                      }`} />
                     {f.status}
                   </span>
                 </div>
@@ -1338,11 +1326,10 @@ const FranchiseOwnerManagement = () => {
               <button
                 key={page}
                 onClick={() => setCurrentPage(page)}
-                className={`w-9 h-9 text-[10px] font-black rounded-xl transition ${
-                  currentPage === page
+                className={`w-9 h-9 text-[10px] font-black rounded-xl transition ${currentPage === page
                     ? "bg-[#1B4D22] text-white shadow-sm shadow-[#1B4D22]/20"
                     : "text-slate-500 hover:text-slate-800 bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50/50"
-                }`}
+                  }`}
               >
                 {page}
               </button>
@@ -1374,33 +1361,32 @@ const FranchiseOwnerManagement = () => {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             <div className="flex overflow-x-auto border-b border-slate-800 shrink-0 custom-scrollbar bg-slate-950">
-                {[
-                  { id: "basic", label: "Basic Info" },
-                  { id: "contact", label: "Contact" },
-                  { id: "address", label: "Address" },
-                  { id: "login", label: "Login & Auth" },
-                  { id: "kyc", label: "KYC & Docs" },
-                ].map(tab => (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setActiveFormTab(tab.id)}
-                    className={`whitespace-nowrap px-6 py-4 text-[10px] font-black uppercase tracking-widest transition-all duration-200 ${
-                      activeFormTab === tab.id
-                        ? "text-emerald-200 border-b-[3px] border-emerald-500 bg-slate-950 shadow-[inset_0_-2px_0_rgba(16,185,129,0.3)]"
-                        : "text-slate-500 hover:text-slate-200 hover:bg-slate-900 border-b-[3px] border-transparent"
+              {[
+                { id: "basic", label: "Basic Info" },
+                { id: "contact", label: "Contact" },
+                { id: "address", label: "Address" },
+                { id: "login", label: "Login & Auth" },
+                { id: "kyc", label: "KYC & Docs" },
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveFormTab(tab.id)}
+                  className={`whitespace-nowrap px-6 py-4 text-[10px] font-black uppercase tracking-widest transition-all duration-200 ${activeFormTab === tab.id
+                      ? "text-emerald-200 border-b-[3px] border-emerald-500 bg-slate-950 shadow-[inset_0_-2px_0_rgba(16,185,129,0.3)]"
+                      : "text-slate-500 hover:text-slate-200 hover:bg-slate-900 border-b-[3px] border-transparent"
                     }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
-            
+
             <div className="overflow-y-auto flex-1 p-7 bg-slate-50/50">
               <div className="space-y-5">
-              
+
                 {/* Basic Info */}
                 {activeFormTab === "basic" && (
                   <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 shadow-lg shadow-slate-950/20 animate-in fade-in zoom-in-95 duration-200">
@@ -1479,7 +1465,7 @@ const FranchiseOwnerManagement = () => {
                     </div>
                   </div>
                 )}
-                
+
                 {/* Contact Details */}
                 {activeFormTab === "contact" && (
                   <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 shadow-lg shadow-slate-950/20 animate-in fade-in zoom-in-95 duration-200">
@@ -1535,7 +1521,7 @@ const FranchiseOwnerManagement = () => {
                     </div>
                   </div>
                 )}
-                
+
                 {/* Address Details */}
                 {activeFormTab === "address" && (
                   <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 shadow-lg shadow-slate-950/20 animate-in fade-in zoom-in-95 duration-200">
@@ -1588,7 +1574,7 @@ const FranchiseOwnerManagement = () => {
                     </div>
                   </div>
                 )}
-                
+
                 {/* Login & Auth */}
                 {activeFormTab === "login" && (
                   <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 shadow-lg shadow-slate-950/20 animate-in fade-in zoom-in-95 duration-200">
@@ -1632,7 +1618,7 @@ const FranchiseOwnerManagement = () => {
                     </div>
                   </div>
                 )}
-                
+
                 {/* KYC & Docs */}
                 {activeFormTab === "kyc" && (
                   <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 shadow-lg shadow-slate-950/20 animate-in fade-in zoom-in-95 duration-200">
@@ -1641,7 +1627,7 @@ const FranchiseOwnerManagement = () => {
                     {/* Email & Mobile Verification Section */}
                     <div className="mb-6 p-4 rounded-2xl border border-slate-700 bg-slate-900 space-y-4">
                       <p className="text-xs text-amber-300 uppercase tracking-[0.28em] font-black">Step 1: Contact Verification</p>
-                      
+
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {/* Email Verification */}
                         <div className="flex items-center gap-3 p-4 rounded-xl border border-slate-700 bg-slate-950">
@@ -1656,11 +1642,10 @@ const FranchiseOwnerManagement = () => {
                             <div className="text-xs font-black uppercase tracking-[0.24em] text-slate-300">Email Verified</div>
                             <div className="text-[11px] text-slate-400 mt-1">{form.email || "No email provided"}</div>
                           </label>
-                          <span className={`inline-flex items-center rounded-full px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em] ${
-                            form.email_verified 
-                              ? "bg-emerald-500/15 text-emerald-200 border border-emerald-500/30" 
+                          <span className={`inline-flex items-center rounded-full px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em] ${form.email_verified
+                              ? "bg-emerald-500/15 text-emerald-200 border border-emerald-500/30"
                               : "bg-slate-700/40 text-slate-300 border border-slate-600"
-                          }`}>
+                            }`}>
                             {form.email_verified ? "✓ Done" : "Pending"}
                           </span>
                         </div>
@@ -1678,11 +1663,10 @@ const FranchiseOwnerManagement = () => {
                             <div className="text-xs font-black uppercase tracking-[0.24em] text-slate-300">Mobile OTP Verified</div>
                             <div className="text-[11px] text-slate-400 mt-1">{form.mobile || "No mobile provided"}</div>
                           </label>
-                          <span className={`inline-flex items-center rounded-full px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em] ${
-                            form.otp_verified 
-                              ? "bg-emerald-500/15 text-emerald-200 border border-emerald-500/30" 
+                          <span className={`inline-flex items-center rounded-full px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em] ${form.otp_verified
+                              ? "bg-emerald-500/15 text-emerald-200 border border-emerald-500/30"
                               : "bg-slate-700/40 text-slate-300 border border-slate-600"
-                          }`}>
+                            }`}>
                             {form.otp_verified ? "✓ Done" : "Pending"}
                           </span>
                         </div>
@@ -1755,10 +1739,10 @@ const FranchiseOwnerManagement = () => {
                     </div>
                   </div>
                 )}
-                
+
               </div>
             </div>
-            
+
             <div className="p-6 border-t border-slate-800 bg-slate-950 flex gap-3 shrink-0">
               <button type="submit" className="flex-1 py-3 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs uppercase tracking-widest rounded-xl shadow-lg transition active:scale-95">
                 {editingFranchise ? "Update Franchise" : "Register Franchise"}
