@@ -497,7 +497,7 @@ const HomeChefManagement = () => {
         payload.created_by_phone = user.phone || null;
       }
 
-      const convertedPayload = await convertFileFieldsToBase64(payload);
+      const convertedPayload = payload;
 
       if (editingChef) {
         await api.put(`/superadmin/homechefs/${editingChef.id}`, convertedPayload);
@@ -531,28 +531,82 @@ const HomeChefManagement = () => {
     "text-[11px] text-slate-300 font-black uppercase tracking-[0.24em] block mb-2";
 
   const isDataUrl = (value) => typeof value === "string" && value.startsWith("data:");
+  const isImageDataUrl = (value) => typeof value === "string" && value.startsWith("data:image/");
+  const isVideoDataUrl = (value) => typeof value === "string" && value.startsWith("data:video/");
+  const isImageField = (fieldName) => fieldName !== "introduction_video";
+  const getPreviewUrl = (value) => {
+    if (typeof value !== "string") return null;
+    if (isDataUrl(value)) return value;
+    if (value.startsWith("http") || value.startsWith("blob:")) return value;
+    return `${import.meta.env.VITE_API_URL}/../uploads/homechefs/${value}`;
+  };
 
   const renderFileField = (fieldName, label, currentValue) => {
+    const previewUrl = getPreviewUrl(currentValue);
+    const showImagePreview = previewUrl && isImageField(fieldName);
+    const showVideoPreview = previewUrl && (fieldName === "introduction_video" || isVideoDataUrl(previewUrl));
+
     return (
       <div>
         <label className={lbl}>{label}</label>
         <input
           type="file"
-          onChange={(e) => setForm({ ...form, [fieldName]: e.target.files })}
+          onChange={async (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  try {
+    const compressed = await imageCompression(file, {
+      maxSizeMB: 0.2,
+      maxWidthOrHeight: 1200,
+      useWebWorker: true,
+    });
+
+    const base64 =
+      await imageCompression.getDataUrlFromFile(
+        compressed
+      );
+
+    setForm((prev) => ({
+      ...prev,
+      [fieldName]: base64,
+    }));
+  } catch (err) {
+    console.error(err);
+  }
+}}
           className={inp}
           multiple={
             fieldName === "kitchen_photos" || fieldName === "kitchen_videos"
           }
         />
+
         {currentValue instanceof FileList && currentValue.length > 0 && (
           <p className="mt-1 text-xs text-slate-300">
             Selected file: {currentValue.length > 1 ? `${currentValue.length} files` : currentValue[0].name}
           </p>
         )}
+
+        {showImagePreview && (
+          <img
+            src={previewUrl}
+            alt={label}
+            className="mt-3 max-h-40 w-full object-contain rounded-xl border border-white/10"
+          />
+        )}
+
+        {showVideoPreview && (
+          <video
+            controls
+            className="mt-3 w-full max-h-56 rounded-xl border border-white/10 bg-slate-950"
+            src={previewUrl}
+          />
+        )}
+
         {currentValue && typeof currentValue === "string" && !isDataUrl(currentValue) && (
-          <div className="mt-1 text-xs">
+          <div className="mt-2 text-xs">
             <a
-              href={`${import.meta.env.VITE_API_URL}/../uploads/homechefs/${currentValue}`}
+              href={previewUrl}
               target="_blank"
               rel="noreferrer"
               className="text-emerald-400 hover:underline"
@@ -561,9 +615,10 @@ const HomeChefManagement = () => {
             </a>
           </div>
         )}
-        {currentValue && typeof currentValue === "string" && isDataUrl(currentValue) && (
+
+        {currentValue && typeof currentValue === "string" && isDataUrl(currentValue) && !isImageDataUrl(currentValue) && !isVideoDataUrl(currentValue) && (
           <p className="mt-1 text-xs text-emerald-400">
-            File is stored as Base64 and will be submitted as a Data URL.
+            Stored as Base64 Data URL
           </p>
         )}
       </div>
@@ -1055,24 +1110,15 @@ const HomeChefManagement = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                         <div>
-                          <label className={lbl}>Chef Unique ID *</label>
-                          <input
-                            type="text"
-                            value={form.chef_unique_code}
-                            onChange={(e) =>
-                              setForm({ ...form, chef_unique_code: e.target.value })
-                            }
-                            className={inp}
-                          />
-                        </div>
-
-                        <div>
                           <label className={lbl}>First Name *</label>
                           <input
                             type="text"
                             value={form.first_name}
                             onChange={(e) =>
-                              setForm({ ...form, first_name: e.target.value })
+                              setForm({
+                                ...form,
+                                first_name: e.target.value,
+                              })
                             }
                             className={inp}
                           />
@@ -1197,12 +1243,7 @@ const HomeChefManagement = () => {
                           </div>
                         </div>
 
-                        {renderFileField(
-                          "profile_photo",
-                          "Profile Photo *",
-                          form.profile_photo
-                        )}
-
+  
                       </div>
                     )}
 
@@ -1539,22 +1580,22 @@ const HomeChefManagement = () => {
                           </select>
                         </div>
 
-                    <div>
-                      <label className={lbl}>GST Available ?</label>
-                      <select
-                        value={form.gst_available}
-                        onChange={(e) =>
-                          setForm({
-                            ...form,
-                            gst_available: e.target.value,
-                          })
-                        }
-                        className={inp}
-                      >
-                        <option value="Yes">Yes</option>
-                        <option value="No">No</option>
-                      </select>
-                    </div>
+                        <div>
+                          <label className={lbl}>GST Available ?</label>
+                          <select
+                            value={form.gst_available}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                gst_available: e.target.value,
+                              })
+                            }
+                            className={inp}
+                          >
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                          </select>
+                        </div>
 
                         <div>
                           <label className={lbl}>PAN Number *</label>
