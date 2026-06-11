@@ -23,7 +23,7 @@ const wishlistRouter = require('./src/routes/wishlist');
 const dealersRouter = require('./src/routes/dealers');
 const { verifyToken, requireRole } = require('./src/middleware/authMiddleware');
 const superadminController = require('./src/controllers/superadminController');
-const { createProductsTable, createRecipeDetailsTable, createFranchiseProductsTable, createChefFoodTable, createSubscriptionPlansTable, createReviewsTable, createDealersTable, createUserFoodCartTable, createChefFoodCategoryTable, createChefCategoryTable, createFranchiseCategoryTable, createUserFoodOrderTable } = require('./src/config/migrations');
+const { createProductsTable, createRecipeDetailsTable, createFranchiseProductsTable, createChefFoodTable, createSubscriptionPlansTable, createReviewsTable, createDealersTable, createUserFoodCartTable, createChefFoodCategoryTable, createChefCategoryTable, createFranchiseCategoryTable, createUserFoodOrderTable, ensureAuditColumns } = require('./src/config/migrations');
 const userFoodRouter = require('./src/routes/userFood');
 const userFoodOrdersRouter = require('./src/routes/userFoodOrders');
 const deliveryRouter = require('./src/routes/delivery');
@@ -92,6 +92,12 @@ initDb().then(async () => {
 
   try {
     await createRecipeDetailsTable();
+    // Ensure audit columns exist on all tables
+    try {
+      await ensureAuditColumns();
+    } catch (err) {
+      console.error('ensureAuditColumns failed:', err.message || err);
+    }
   } catch (err) {
     console.error('Recipe details migration error:', err.message || err);
   }

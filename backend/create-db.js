@@ -831,7 +831,26 @@ async function createDatabaseAndTables() {
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `assigned_delivery_area` TEXT");
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `delivery_radius` DECIMAL(8,2) DEFAULT NULL");
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `preferred_delivery_zone` TEXT");
-  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `preferred_distance` VARCHAR(50) DEFAULT '3 KM'");
+  await connection.execute("ALTER TABLE `delivery_partners` ROW_FORMAT=DYNAMIC");
+  const deliveryPartnerTextColumns = [
+    'father_husband_name', 'profile_photo', 'cover_photo', 'door_number', 'street_name', 'area_name', 'landmark',
+    'map_link', 'username', 'password', 'device_id', 'rc_book_number', 'insurance_number', 'pollution_certificate_number',
+    'vehicle_front_photo', 'vehicle_back_photo', 'rc_book_image', 'insurance_document_image', 'license_holder_name',
+    'license_front_image', 'license_back_image', 'driving_experience', 'aadhaar_front_url', 'aadhaar_back_url', 'pan_card_url',
+    'selfie_verification_url', 'police_verification_certificate', 'bank_name', 'account_holder_name', 'bank_account_number',
+    'branch_name', 'upi_id', 'availability_schedule', 'working_days', 'shift_timing', 'current_location', 'current_address',
+    'permanent_address', 'live_location', 'emergency_contact_name', 'emergency_contact_relationship', 'emergency_contact_mobile',
+    'available_areas', 'assigned_delivery_area', 'preferred_delivery_zone', 'city_coverage', 'area_coverage', 'break_time_status',
+    'selfie_with_vehicle', 'selfie_with_aadhaar', 'preferred_distance'
+  ];
+  for (const col of deliveryPartnerTextColumns) {
+    try {
+      await connection.execute(`ALTER TABLE \`delivery_partners\` MODIFY \`${col}\` TEXT`);
+    } catch (e) {
+      // ignore if the column does not exist or cannot be modified
+    }
+  }
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `preferred_distance` TEXT");
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `city_coverage` TEXT");
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `area_coverage` TEXT");
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `zone_status` VARCHAR(50) DEFAULT 'Active'");
@@ -1100,12 +1119,27 @@ async function createDatabaseAndTables() {
 
   await connection.execute(`
     INSERT INTO \`delivery_partners\` (name, mobile, vehicle_type, vehicle_number, license_number, aadhaar_number, status)
-    VALUES 
-      ('Karthik Kumar', '9876543215', 'Bike', 'TN-37-AB-1234', 'DL-1234567', '1234-5678-9012', 'Approved'),
-      ('Suresh Raina', '9876543216', 'Bike', 'TN-01-XY-9876', 'DL-7654321', '9876-5432-1098', 'Pending'),
-      ('Test Delivery Partner', '9876543217', 'Bike', 'TN-07-ZZ-1234', 'DL-9999999', '1122-3344-5566', 'Pending')
-    ON DUPLICATE KEY UPDATE name = VALUES(name);
-  `);
+    SELECT ?,?,?,?,?,?,? FROM DUAL
+    WHERE NOT EXISTS (SELECT 1 FROM \`delivery_partners\` WHERE mobile = ?)
+  `, ['Karthik Kumar', '9876543215', 'Bike', 'TN-37-AB-1234', 'DL-1234567', '1234-5678-9012', 'Approved', '9876543215']);
+
+  await connection.execute(`
+    INSERT INTO \`delivery_partners\` (name, mobile, vehicle_type, vehicle_number, license_number, aadhaar_number, status)
+    SELECT ?,?,?,?,?,?,? FROM DUAL
+    WHERE NOT EXISTS (SELECT 1 FROM \`delivery_partners\` WHERE mobile = ?)
+  `, ['Suresh Raina', '9876543216', 'Bike', 'TN-01-XY-9876', 'DL-7654321', '9876-5432-1098', 'Pending', '9876543216']);
+
+  await connection.execute(`
+    INSERT INTO \`delivery_partners\` (name, mobile, vehicle_type, vehicle_number, license_number, aadhaar_number, status)
+    SELECT ?,?,?,?,?,?,? FROM DUAL
+    WHERE NOT EXISTS (SELECT 1 FROM \`delivery_partners\` WHERE mobile = ?)
+  `, ['Test Delivery Partner', '9876543217', 'Bike', 'TN-07-ZZ-1234', 'DL-9999999', '1122-3344-5566', 'Pending', '9876543217']);
+
+  await connection.execute(`
+    INSERT INTO \`delivery_partners\` (name, mobile, vehicle_type, vehicle_number, license_number, aadhaar_number, status)
+    SELECT ?,?,?,?,?,?,? FROM DUAL
+    WHERE NOT EXISTS (SELECT 1 FROM \`delivery_partners\` WHERE mobile = ?)
+  `, ['Delivery Partner 1', '9876543218', 'Bike', 'TN-09-AA-5678', 'DL-8888888', '2233-4455-6677', 'Pending', '9876543218']);
 
   await connection.execute(`
     INSERT INTO \`orders\` (order_id, customer_name, restaurant_or_chef, delivery_partner, amount, payment_method, status)

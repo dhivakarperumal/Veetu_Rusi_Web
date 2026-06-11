@@ -920,16 +920,19 @@ exports.createDeliveryPartner = async (req, res) => {
     const params = [
       delivery_partner_code, b.name || null, b.father_husband_name || null, b.gender || 'Male', b.date_of_birth || null, b.age || null, b.profile_photo || null, b.cover_photo || null, b.marital_status || 'Single', b.blood_group || null,
       b.mobile || null, b.alt_mobile || null, b.whatsapp_number || null, b.email || null, b.emergency_contact || null,
-      b.door_number || null, b.street_name || null, b.area_name || null, b.landmark || null, b.city || null, b.district || null, b.state || null, b.pincode || null, b.country || 'India', b.latitude || null, b.longitude || null, b.map_link || null,
+      b.door_number || null, b.street_name || null, b.current_address || null, b.permanent_address || null, b.area_name || null, b.landmark || null, b.city || null, b.district || null, b.state || null, b.pincode || null, b.country || 'India', b.latitude || null, b.longitude || null, b.live_location || null, b.map_link || null,
       b.username || null, hashedPw, b.otp_verified ? 1 : 0, b.email_verified ? 1 : 0, b.device_id || null, b.login_status || 'Active', b.account_status || 'Pending',
       b.vehicle_type || null, b.vehicle_brand || null, b.vehicle_model || null, b.vehicle_color || null, b.vehicle_number || null, b.rc_book_number || null, b.insurance_number || null, b.insurance_expiry_date || null, b.pollution_certificate_number || null,
       b.vehicle_front_photo || null, b.vehicle_back_photo || null, b.rc_book_image || null, b.insurance_document_image || null,
-      b.license_number || null, b.license_holder_name || null, b.license_expiry_date || null, b.license_front_image || null, b.license_back_image || null, b.driving_experience || null,
-      b.aadhaar_number || null, b.pan_number || null, b.aadhaar_front_url || null, b.aadhaar_back_url || null, b.pan_card_url || null, b.selfie_verification_url || null, b.police_verification_certificate || null, b.background_verification_status || 'Pending', b.kyc_verification_status || 'Pending',
+      b.license_number || null, b.license_holder_name || null, b.license_issue_date || null, b.license_expiry_date || null, b.license_front_image || null, b.license_back_image || null, b.driving_experience || null,
+      b.aadhaar_number || null, b.pan_number || null, b.aadhaar_front_url || null, b.aadhaar_back_url || null, b.pan_card_url || null, b.selfie_verification_url || null, b.selfie_with_vehicle || null, b.selfie_with_aadhaar || null, b.police_verification_certificate || null, b.background_verification_status || 'Pending', b.kyc_verification_status || 'Pending',
       b.bank_name || null, b.account_holder_name || null, b.bank_account_number || null, b.ifsc_code || null, b.branch_name || null, b.upi_id || null,
       b.wallet_balance || 0, b.pending_earnings || 0, b.total_earnings || b.earnings || 0, b.daily_earnings || 0, b.weekly_earnings || 0, b.monthly_earnings || 0, b.incentive_amount || 0, b.bonus_amount || 0,
       b.online_status || 'Offline', b.availability_schedule || null, b.working_days || null, b.shift_timing || null, b.current_location || null, b.break_time_status || null,
       b.assigned_delivery_area || null, b.delivery_radius || null, b.preferred_delivery_zone || null, b.preferred_distance || '3 KM', b.city_coverage || null, b.area_coverage || null, b.zone_status || 'Active',
+      b.emergency_contact_name || null, b.emergency_contact_relationship || null, b.emergency_contact_mobile || null,
+      b.available_time_morning ? 1 : 0, b.available_time_afternoon ? 1 : 0, b.available_time_evening ? 1 : 0, b.available_time_night ? 1 : 0,
+      b.face_verified ? 1 : 0, b.location_verified ? 1 : 0,
       // created_by fields
       created_by_id, created_by_user_id, created_by_name, created_by_email, created_by_phone,
       b.status || 'Pending'
