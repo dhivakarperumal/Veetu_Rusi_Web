@@ -14,6 +14,22 @@ function hashPassword(password) {
   return crypto.createHash('sha256').update(password).digest('hex');
 }
 
+async function addColumnIfNotExists(connection, table, column, definition) {
+  const [rows] = await connection.execute(
+    "SELECT COUNT(*) AS count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?",
+    [DB_NAME, table, column]
+  );
+  if (rows[0].count === 0) {
+    try {
+      await connection.execute(`ALTER TABLE \`${table}\` ADD COLUMN \`${column}\` ${definition}`);
+      console.log(`Added ${column} to ${table}`);
+    } catch (err) {
+      console.warn(`Could not add column ${column} to ${table}: ${err.message}`);
+      // Don't throw - leave migration to manual fix if row size limits are reached
+    }
+  }
+}
+
 async function createDatabaseAndTables() {
   const connection = await mysql.createConnection({
     host: DB_HOST,
@@ -40,7 +56,7 @@ async function createDatabaseAndTables() {
       status VARCHAR(50) NOT NULL DEFAULT 'Active',
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC COLLATE=utf8mb4_unicode_ci;
   `);
   console.log('Users table created or already exists');
 
@@ -320,23 +336,33 @@ async function createDatabaseAndTables() {
     console.log('chef_unique_code column already exists');
   }
 
-  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `user_id` VARCHAR(255) DEFAULT NULL");
-  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `created_by_id` INT DEFAULT NULL");
+  await addColumnIfNotExists(connection, 'home_chefs', 'user_id', 'VARCHAR(255) DEFAULT NULL');
+  await addColumnIfNotExists(connection, 'home_chefs', 'created_by_id', 'INT DEFAULT NULL');
   try {
     await connection.execute("ALTER TABLE `home_chefs` MODIFY COLUMN `created_by_user_id` VARCHAR(255) DEFAULT NULL");
   } catch (err) {
     // Column may not exist yet, so we add it below.
   }
-  await  connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `franchise_id` VARCHAR(255) DEFAULT NULL");
-  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `franchise_user_id` VARCHAR(255) DEFAULT NULL");
-  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `father_husband_name` VARCHAR(255) DEFAULT NULL");
-  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `gender` VARCHAR(50) DEFAULT NULL");
-  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `date_of_birth` DATE DEFAULT NULL");
-  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `age` INT DEFAULT NULL");
-  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `profile_photo` VARCHAR(255) DEFAULT NULL");
-  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `cover_banner` VARCHAR(255) DEFAULT NULL");
-  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `alt_mobile` VARCHAR(50) DEFAULT NULL");
-  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `whatsapp_number` VARCHAR(50) DEFAULT NULL");
+
+  await addColumnIfNotExists(connection, 'home_chefs', 'created_by_user_id', 'VARCHAR(255) DEFAULT NULL');
+  await addColumnIfNotExists(connection, 'home_chefs', 'created_by_name', 'VARCHAR(255) DEFAULT NULL');
+  await addColumnIfNotExists(connection, 'home_chefs', 'created_by_email', 'VARCHAR(255) DEFAULT NULL');
+  await addColumnIfNotExists(connection, 'home_chefs', 'created_by_phone', 'TEXT DEFAULT NULL');
+  await addColumnIfNotExists(connection, 'home_chefs', 'franchise_id', 'VARCHAR(255) DEFAULT NULL');
+  const homeChefColumns = [
+    ['franchise_user_id', 'VARCHAR(255) DEFAULT NULL'],
+    ['father_husband_name', 'VARCHAR(255) DEFAULT NULL'],
+    ['gender', 'VARCHAR(50) DEFAULT NULL'],
+    ['date_of_birth', 'DATE DEFAULT NULL'],
+    ['age', 'INT DEFAULT NULL'],
+    ['profile_photo', 'VARCHAR(255) DEFAULT NULL'],
+    ['cover_banner', 'VARCHAR(255) DEFAULT NULL'],
+    ['alt_mobile', 'VARCHAR(50) DEFAULT NULL'],
+    ['whatsapp_number', 'VARCHAR(50) DEFAULT NULL'],
+  ];
+  for (const [column, definition] of homeChefColumns) {
+    await addColumnIfNotExists(connection, 'home_chefs', column, definition);
+  }
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `emergency_contact` VARCHAR(50) DEFAULT NULL");
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `door_number` VARCHAR(50) DEFAULT NULL");
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `street_name` VARCHAR(255) DEFAULT NULL");
@@ -1005,6 +1031,48 @@ async function createDatabaseAndTables() {
   if (territoryColumns[0].count === 0) {
     await connection.execute(`ALTER TABLE \`franchise_owners\` ADD COLUMN \`territory_pincodes\` TEXT`);
     console.log('Added territory_pincodes column to franchise_owners table');
+  }
+
+  // Add login_password column if it doesn't exist
+  const loginPwColumns = await connection.execute(
+    "SELECT COUNT(*) AS count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'franchise_owners' AND COLUMN_NAME = 'login_password'",
+    [DB_NAME]
+  );
+
+  if (loginPwColumns[0].count === 0) {
+    await connection.execute(`ALTER TABLE \`franchise_owners\` ADD COLUMN \`login_password\` VARCHAR(255)`);
+    console.log('Added login_password column to franchise_owners table');
+  }
+
+  // Add all missing franchise columns
+  const missingColumns = [
+    { name: 'business_registration_number', type: 'VARCHAR(255)' },
+    { name: 'gst_number', type: 'VARCHAR(100)' },
+    { name: 'pan_number', type: 'VARCHAR(100)' },
+    { name: 'start_date', type: 'DATE' },
+    { name: 'expiry_date', type: 'DATE' },
+    { name: 'alt_mobile', type: 'VARCHAR(50)' },
+    { name: 'whatsapp_number', type: 'VARCHAR(50)' },
+    { name: 'website_url', type: 'VARCHAR(255)' },
+    { name: 'emergency_contact_number', type: 'VARCHAR(50)' },
+    { name: 'door_number', type: 'VARCHAR(50)' },
+    { name: 'street_name', type: 'VARCHAR(255)' },
+    { name: 'area', type: 'VARCHAR(255)' },
+    { name: 'landmark', type: 'VARCHAR(255)' },
+    { name: 'district', type: 'VARCHAR(150)' },
+    { name: 'logo_url', type: 'VARCHAR(255)' },
+    { name: 'banner_url', type: 'VARCHAR(255)' }
+  ];
+
+  for (const col of missingColumns) {
+    const colCheck = await connection.execute(
+      `SELECT COUNT(*) AS count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'franchise_owners' AND COLUMN_NAME = ?`,
+      [DB_NAME, col.name]
+    );
+    if (colCheck[0].count === 0) {
+      await connection.execute(`ALTER TABLE \`franchise_owners\` ADD COLUMN \`${col.name}\` ${col.type}`);
+      console.log(`Added ${col.name} column to franchise_owners table`);
+    }
   }
 
   await connection.execute(`

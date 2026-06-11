@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 const crypto = require('crypto');
+const https = require('https');
 const { generateRoleId } = require('../utils/idGenerator');
 
 function hashPassword(password) {
@@ -108,6 +109,26 @@ async function syncUserForEntity(tableName, id, role) {
   }
 }
 
+async function fetchPincodeData(pincode) {
+  return new Promise((resolve, reject) => {
+    https.get(
+      `https://api.postalpincode.in/pincode/${encodeURIComponent(pincode)}`,
+      (response) => {
+        let rawData = '';
+        response.on('data', (chunk) => { rawData += chunk; });
+        response.on('end', () => {
+          try {
+            const parsedData = JSON.parse(rawData);
+            resolve(parsedData);
+          } catch (error) {
+            reject(error);
+          }
+        });
+      }
+    ).on('error', reject);
+  });
+}
+
 // ==================== DASHBOARD ANALYTICS ====================
 exports.getDashboardStats = async (req, res) => {
   try {
@@ -122,6 +143,9 @@ exports.getDashboardStats = async (req, res) => {
       "SELECT (SELECT COUNT(*) FROM restaurants WHERE status = 'Pending') + (SELECT COUNT(*) FROM home_chefs WHERE status = 'Pending') + (SELECT COUNT(*) FROM delivery_partners WHERE status = 'Pending') AS pendingApprovals"
     );
     const [[{ activeFranchises }]] = await pool.execute("SELECT COUNT(*) AS activeFranchises FROM franchise_owners WHERE status = 'Active'");
+    const [[{ totalFranchises }]] = await pool.execute("SELECT COUNT(*) AS totalFranchises FROM franchise_owners");
+    const [[{ expiredFranchises }]] = await pool.execute("SELECT COUNT(*) AS expiredFranchises FROM franchise_owners WHERE expiry_date IS NOT NULL AND expiry_date < CURDATE()");
+    const [[{ expiringSoonFranchises }]] = await pool.execute("SELECT COUNT(*) AS expiringSoonFranchises FROM franchise_owners WHERE expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)");
 
     // 2. Mock or computed historical analytics data for charts (recharts)
     // In a fully populated DB, we can query orders grouped by date/status.
@@ -163,7 +187,10 @@ exports.getDashboardStats = async (req, res) => {
         totalOrders,
         totalRevenue: parseFloat(totalRevenue),
         pendingApprovals,
-        activeFranchises
+        activeFranchises,
+        totalFranchises,
+        expiredFranchises,
+        expiringSoonFranchises
       },
       charts: {
         dailyOrders,
@@ -1294,6 +1321,13 @@ exports.getFranchiseById = async (req, res) => {
 
 exports.createFranchise = async (req, res) => {
   try {
+    // Ensure created_by columns exist (safe migration)
+    try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS created_by_id INT DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS created_by_user_id VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS created_by_name VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS created_by_email VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS created_by_phone VARCHAR(50) DEFAULT NULL"); } catch (_) {}
+
     const { 
       franchise_name, owner_name, mobile, email, city, state, commission_percentage, status, password,
       business_registration_number, gst_number, pan_number, start_date, expiry_date,
@@ -1384,13 +1418,50 @@ exports.createFranchise = async (req, res) => {
       created_by_phone
     };
 
-    const [result] = await pool.query("INSERT INTO franchise_owners SET ?", insertData);
+      // Filter out created_by fields that might not exist in older databases
+      const safeInsertData = {};
+      const allowedFields = [
+        'franchise_name', 'owner_name', 'mobile', 'email', 'city', 'state',
+        'commission_percentage', 'status', 'login_password', 'business_registration_number',
+        'gst_number', 'pan_number', 'start_date', 'expiry_date', 'alt_mobile',
+        'whatsapp_number', 'website_url', 'emergency_contact_number', 'door_number',
+        'street_name', 'area', 'landmark', 'district', 'territory_pincodes', 'pincode',
+        'latitude', 'longitude', 'map_link', 'username', 'role', 'otp_verified',
+        'email_verified', 'login_status', 'logo_url', 'banner_url', 'aadhaar_url',
+        'pan_url', 'gst_certificate_url', 'fssai_license_url', 'shop_license_url',
+        'vehicle_rc_url', 'driving_license_url', 'bank_passbook_url', 'signature_url'
+      ];
+    
+      allowedFields.forEach(field => {
+        if (field in insertData) {
+          safeInsertData[field] = insertData[field];
+        }
+      });
+    
+      // Try to add created_by fields, but don't fail if they don't exist
+      if (created_by_id) safeInsertData.created_by_id = created_by_id;
+      if (created_by_user_id) safeInsertData.created_by_user_id = created_by_user_id;
+      if (created_by_name) safeInsertData.created_by_name = created_by_name;
+      if (created_by_email) safeInsertData.created_by_email = created_by_email;
+      if (created_by_phone) safeInsertData.created_by_phone = created_by_phone;
+
+      // Build INSERT statement with column names
+      const columns = Object.keys(safeInsertData);
+      const placeholders = columns.map(() => '?').join(',');
+      const values = columns.map(col => safeInsertData[col]);
+      const columnList = columns.join(',');
+
+      const [result] = await pool.execute(
+        `INSERT INTO franchise_owners (${columnList}) VALUES (${placeholders})`,
+        values
+      );
     res.status(201).json({
       message: 'Franchise owner registered. Click Approve to create login credentials.',
       id: result.insertId,
       password: plainPw
     });
   } catch (error) {
+    console.error('Error creating franchise:', error);
     res.status(500).json({ message: 'Error registering franchise.', error: error.message });
   }
 };
@@ -1492,6 +1563,13 @@ exports.updateFranchise = async (req, res) => {
       username, role, otp_verified, email_verified, login_status
     } = req.body;
 
+    const [existingFranchiseRows] = await pool.execute('SELECT email, franch_user_id FROM franchise_owners WHERE id = ?', [id]);
+    if (!existingFranchiseRows.length) {
+      return res.status(404).json({ message: 'Franchise not found.' });
+    }
+    const oldEmail = existingFranchiseRows[0].email;
+    const franchiseUserId = existingFranchiseRows[0].franch_user_id;
+
     const logo_url = req.files && req.files.logo_url ? req.files.logo_url[0].filename : null;
     const banner_url = req.files && req.files.banner_url ? req.files.banner_url[0].filename : null;
     const aadhaar_url = req.files && req.files.aadhaar_url ? req.files.aadhaar_url[0].filename : null;
@@ -1535,10 +1613,27 @@ exports.updateFranchise = async (req, res) => {
     params.push(id);
 
     await pool.execute(query, params);
-    
+
     // Sync status to associated user's status field
-    const isActive = status === 'Active' ? 'Active' : 'Inactive';
-    await pool.execute("UPDATE users SET status = ? WHERE email = ?", [isActive, email]);
+    if (status !== undefined && status !== null) {
+      const isActive = status === 'Active' ? 'Active' : 'Inactive';
+      const emailsToUpdate = Array.from(new Set([oldEmail, email].filter(Boolean)));
+      const conditions = [];
+      const syncParams = [isActive];
+
+      if (emailsToUpdate.length > 0) {
+        conditions.push(`email IN (${emailsToUpdate.map(() => '?').join(', ')})`);
+        syncParams.push(...emailsToUpdate);
+      }
+      if (franchiseUserId) {
+        conditions.push('user_id = ?');
+        syncParams.push(franchiseUserId);
+      }
+
+      if (conditions.length > 0) {
+        await pool.execute(`UPDATE users SET status = ? WHERE ${conditions.join(' OR ')}`, syncParams);
+      }
+    }
 
     res.json({ message: 'Franchise updated successfully.' });
   } catch (error) {
@@ -1675,6 +1770,25 @@ exports.getReportsList = async (req, res) => {
 };
 
 // ==================== AREAS MANAGEMENT ====================
+exports.lookupPincode = async (req, res) => {
+  try {
+    const { value } = req.params;
+    if (!/^[0-9]{6}$/.test(value)) {
+      return res.status(400).json({ message: 'Invalid pincode format. Expected 6 digits.' });
+    }
+
+    const data = await fetchPincodeData(value);
+    if (!Array.isArray(data) || data.length === 0) {
+      return res.status(500).json({ message: 'Unexpected response from pincode service.' });
+    }
+
+    return res.json(data);
+  } catch (error) {
+    console.error('Error fetching pincode data:', error);
+    res.status(500).json({ message: 'Error fetching pincode information.', error: error.message });
+  }
+};
+
 exports.getAreas = async (req, res) => {
   try {
     const [rows] = await pool.execute('SELECT * FROM areas ORDER BY created_at DESC');

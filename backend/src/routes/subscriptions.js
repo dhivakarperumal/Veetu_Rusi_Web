@@ -120,6 +120,23 @@ router.post('/confirm', async (req, res) => {
       startDate.toISOString().slice(0,10), expiryDate.toISOString().slice(0,10), franchiseId
     ]);
 
+    const [[franchise]] = await pool.execute('SELECT email, franch_user_id FROM franchise_owners WHERE id = ? LIMIT 1', [franchiseId]);
+    if (franchise) {
+      const conditions = [];
+      const params = [];
+      if (franchise.email) {
+        conditions.push('email = ?');
+        params.push(franchise.email);
+      }
+      if (franchise.franch_user_id) {
+        conditions.push('user_id = ?');
+        params.push(franchise.franch_user_id);
+      }
+      if (conditions.length > 0) {
+        await pool.execute(`UPDATE users SET status = 'Active' WHERE ${conditions.join(' OR ')}`, params);
+      }
+    }
+
     // Optionally insert invoice record (create invoices table if needed)
 
     res.json({ message: 'Subscription activated', start_date: startDate, expiry_date: expiryDate });
