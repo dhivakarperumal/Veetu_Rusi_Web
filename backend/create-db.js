@@ -14,6 +14,17 @@ function hashPassword(password) {
   return crypto.createHash('sha256').update(password).digest('hex');
 }
 
+async function addColumnIfNotExists(connection, table, column, definition) {
+  const [rows] = await connection.execute(
+    "SELECT COUNT(*) AS count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?",
+    [DB_NAME, table, column]
+  );
+  if (rows[0].count === 0) {
+    await connection.execute(`ALTER TABLE \`${table}\` ADD COLUMN \`${column}\` ${definition}`);
+    console.log(`Added ${column} to ${table}`);
+  }
+}
+
 async function createDatabaseAndTables() {
   const connection = await mysql.createConnection({
     host: DB_HOST,
@@ -320,27 +331,32 @@ async function createDatabaseAndTables() {
     console.log('chef_unique_code column already exists');
   }
 
-  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `user_id` VARCHAR(255) DEFAULT NULL");
-  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `created_by_id` INT DEFAULT NULL");
+  await addColumnIfNotExists(connection, 'home_chefs', 'user_id', 'VARCHAR(255) DEFAULT NULL');
+  await addColumnIfNotExists(connection, 'home_chefs', 'created_by_id', 'INT DEFAULT NULL');
   try {
     await connection.execute("ALTER TABLE `home_chefs` MODIFY COLUMN `created_by_user_id` VARCHAR(255) DEFAULT NULL");
   } catch (err) {
     // Column may not exist yet, so we add it below.
   }
-  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `created_by_user_id` VARCHAR(255) DEFAULT NULL");
-  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `created_by_name` VARCHAR(255) DEFAULT NULL");
-  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `created_by_email` VARCHAR(255) DEFAULT NULL");
-  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `created_by_phone` VARCHAR(50) DEFAULT NULL");
-  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `franchise_id` VARCHAR(255) DEFAULT NULL");
-  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `franchise_user_id` VARCHAR(255) DEFAULT NULL");
-  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `father_husband_name` VARCHAR(255) DEFAULT NULL");
-  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `gender` VARCHAR(50) DEFAULT NULL");
-  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `date_of_birth` DATE DEFAULT NULL");
-  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `age` INT DEFAULT NULL");
-  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `profile_photo` VARCHAR(255) DEFAULT NULL");
-  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `cover_banner` VARCHAR(255) DEFAULT NULL");
-  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `alt_mobile` VARCHAR(50) DEFAULT NULL");
-  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `whatsapp_number` VARCHAR(50) DEFAULT NULL");
+  await addColumnIfNotExists(connection, 'home_chefs', 'created_by_user_id', 'VARCHAR(255) DEFAULT NULL');
+  await addColumnIfNotExists(connection, 'home_chefs', 'created_by_name', 'VARCHAR(255) DEFAULT NULL');
+  await addColumnIfNotExists(connection, 'home_chefs', 'created_by_email', 'VARCHAR(255) DEFAULT NULL');
+  await addColumnIfNotExists(connection, 'home_chefs', 'created_by_phone', 'VARCHAR(50) DEFAULT NULL');
+  await addColumnIfNotExists(connection, 'home_chefs', 'franchise_id', 'VARCHAR(255) DEFAULT NULL');
+  const homeChefColumns = [
+    ['franchise_user_id', 'VARCHAR(255) DEFAULT NULL'],
+    ['father_husband_name', 'VARCHAR(255) DEFAULT NULL'],
+    ['gender', 'VARCHAR(50) DEFAULT NULL'],
+    ['date_of_birth', 'DATE DEFAULT NULL'],
+    ['age', 'INT DEFAULT NULL'],
+    ['profile_photo', 'VARCHAR(255) DEFAULT NULL'],
+    ['cover_banner', 'VARCHAR(255) DEFAULT NULL'],
+    ['alt_mobile', 'VARCHAR(50) DEFAULT NULL'],
+    ['whatsapp_number', 'VARCHAR(50) DEFAULT NULL'],
+  ];
+  for (const [column, definition] of homeChefColumns) {
+    await addColumnIfNotExists(connection, 'home_chefs', column, definition);
+  }
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `emergency_contact` VARCHAR(50) DEFAULT NULL");
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `door_number` VARCHAR(50) DEFAULT NULL");
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `street_name` VARCHAR(255) DEFAULT NULL");
