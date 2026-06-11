@@ -594,5 +594,39 @@ const createUserFoodOrderTable = async () => {
         createDealersTable,
         createChefFoodCategoryTable,
         createChefCategoryTable,
-        createFranchiseCategoryTable
+        createFranchiseCategoryTable,
+        // Ensure audit columns exist on all tables
+        ensureAuditColumns: async () => {
+            try {
+                const [tables] = await pool.execute("SHOW TABLES");
+                const tableKey = Object.keys(tables[0] || {}).length ? Object.keys(tables[0])[0] : null;
+                if (!tableKey) return;
+
+                for (const row of tables) {
+                    const tableName = row[tableKey];
+                    // Skip internal/mysql tables
+                    if (!tableName || tableName.startsWith('mysql') || tableName.startsWith('sys') || tableName.startsWith('performance_schema') || tableName.startsWith('information_schema')) continue;
+
+                    // Remove previously added verbose audit columns (ignore errors)
+                    try { await pool.execute(`ALTER TABLE \`${tableName}\` DROP COLUMN created_by_id`); } catch (e) {}
+                    try { await pool.execute(`ALTER TABLE \`${tableName}\` DROP COLUMN created_by_user_id`); } catch (e) {}
+                    try { await pool.execute(`ALTER TABLE \`${tableName}\` DROP COLUMN created_by_name`); } catch (e) {}
+                    try { await pool.execute(`ALTER TABLE \`${tableName}\` DROP COLUMN created_by_email`); } catch (e) {}
+                    try { await pool.execute(`ALTER TABLE \`${tableName}\` DROP COLUMN updated_by_id`); } catch (e) {}
+                    try { await pool.execute(`ALTER TABLE \`${tableName}\` DROP COLUMN updated_by_user_id`); } catch (e) {}
+                    try { await pool.execute(`ALTER TABLE \`${tableName}\` DROP COLUMN updated_by_name`); } catch (e) {}
+                    try { await pool.execute(`ALTER TABLE \`${tableName}\` DROP COLUMN updated_by_email`); } catch (e) {}
+
+                    // Add only the desired compact audit columns
+                    try { await pool.execute(`ALTER TABLE \`${tableName}\` ADD COLUMN IF NOT EXISTS created_by VARCHAR(255) DEFAULT NULL`); } catch (e) {}
+                    try { await pool.execute(`ALTER TABLE \`${tableName}\` ADD COLUMN IF NOT EXISTS updated_by VARCHAR(255) DEFAULT NULL`); } catch (e) {}
+                    try { await pool.execute(`ALTER TABLE \`${tableName}\` ADD COLUMN IF NOT EXISTS created_at DATETIME DEFAULT CURRENT_TIMESTAMP`); } catch (e) {}
+                    try { await pool.execute(`ALTER TABLE \`${tableName}\` ADD COLUMN IF NOT EXISTS updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`); } catch (e) {}
+                }
+
+                console.log('✓ Ensured compact audit columns (created_by, updated_by, created_at, updated_at) on all tables');
+            } catch (err) {
+                console.error('✗ Error ensuring compact audit columns:', err.message || err);
+            }
+        }
     };

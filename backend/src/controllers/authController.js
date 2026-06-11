@@ -196,7 +196,7 @@ exports.updateProfile = async (req, res) => {
     if (availableColumns.includes('country')) updateFields.push({ field: 'country', value: country || null });
     if (availableColumns.includes('zip_code')) updateFields.push({ field: 'zip_code', value: zip_code || null });
 
-    const setClause = updateFields.map((item) => `\\`${item.field}\\` = ?`).join(', ');
+    const setClause = updateFields.map((item) => `\`${item.field}\` = ?`).join(', ');
     const values = updateFields.map((item) => item.value).concat([userId]);
 
     await pool.execute(`UPDATE users SET ${setClause} WHERE id = ?`, values);
