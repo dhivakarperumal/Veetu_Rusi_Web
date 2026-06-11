@@ -348,23 +348,23 @@ exports.createHomeChef = async (req, res) => {
     };
     const calculatedAge = calculateAgeFromDOB(date_of_birth);
 
-    const profile_photo = req.files && req.files.profile_photo ? req.files.profile_photo[0].filename : null;
-    const cover_banner = req.files && req.files.cover_banner ? req.files.cover_banner[0].filename : null;
-    const aadhaar_front_url = req.files && req.files.aadhaar_front_url ? req.files.aadhaar_front_url[0].filename : null;
-    const aadhaar_back_url = req.files && req.files.aadhaar_back_url ? req.files.aadhaar_back_url[0].filename : null;
-    const pan_card_url = req.files && req.files.pan_card_url ? req.files.pan_card_url[0].filename : null;
-    const fssai_certificate_url = req.files && req.files.fssai_certificate_url ? req.files.fssai_certificate_url[0].filename : null;
-    const gst_certificate_url = req.files && req.files.gst_certificate_url ? req.files.gst_certificate_url[0].filename : null;
-    const signature_url = req.files && req.files.signature_url ? req.files.signature_url[0].filename : null;
-    const kitchen_photo1 = req.files && req.files.kitchen_photo1 ? req.files.kitchen_photo1[0].filename : null;
-    const kitchen_photo2 = req.files && req.files.kitchen_photo2 ? req.files.kitchen_photo2[0].filename : null;
-    const kitchen_photo3 = req.files && req.files.kitchen_photo3 ? req.files.kitchen_photo3[0].filename : null;
-    const cooking_area_photo = req.files && req.files.cooking_area_photo ? req.files.cooking_area_photo[0].filename : null;
-    const storage_area_photo = req.files && req.files.storage_area_photo ? req.files.storage_area_photo[0].filename : null;
-    const selfie_verification_url = req.files && req.files.selfie_verification_url ? req.files.selfie_verification_url[0].filename : null;
+    const profile_photo = (req.files && req.files.profile_photo ? req.files.profile_photo[0].filename : null) || req.body.profile_photo || null;
+    const cover_banner = (req.files && req.files.cover_banner ? req.files.cover_banner[0].filename : null) || req.body.cover_banner || null;
+    const aadhaar_front_url = (req.files && req.files.aadhaar_front_url ? req.files.aadhaar_front_url[0].filename : null) || req.body.aadhaar_front_url || null;
+    const aadhaar_back_url = (req.files && req.files.aadhaar_back_url ? req.files.aadhaar_back_url[0].filename : null) || req.body.aadhaar_back_url || null;
+    const pan_card_url = (req.files && req.files.pan_card_url ? req.files.pan_card_url[0].filename : null) || req.body.pan_card_url || null;
+    const fssai_certificate_url = (req.files && req.files.fssai_certificate_url ? req.files.fssai_certificate_url[0].filename : null) || req.body.fssai_certificate_url || null;
+    const gst_certificate_url = (req.files && req.files.gst_certificate_url ? req.files.gst_certificate_url[0].filename : null) || req.body.gst_certificate_url || null;
+    const signature_url = (req.files && req.files.signature_url ? req.files.signature_url[0].filename : null) || req.body.signature_url || null;
+    const kitchen_photo1 = (req.files && req.files.kitchen_photo1 ? req.files.kitchen_photo1[0].filename : null) || req.body.kitchen_photo1 || null;
+    const kitchen_photo2 = (req.files && req.files.kitchen_photo2 ? req.files.kitchen_photo2[0].filename : null) || req.body.kitchen_photo2 || null;
+    const kitchen_photo3 = (req.files && req.files.kitchen_photo3 ? req.files.kitchen_photo3[0].filename : null) || req.body.kitchen_photo3 || null;
+    const cooking_area_photo = (req.files && req.files.cooking_area_photo ? req.files.cooking_area_photo[0].filename : null) || req.body.cooking_area_photo || null;
+    const storage_area_photo = (req.files && req.files.storage_area_photo ? req.files.storage_area_photo[0].filename : null) || req.body.storage_area_photo || null;
+    const selfie_verification_url = (req.files && req.files.selfie_verification_url ? req.files.selfie_verification_url[0].filename : null) || req.body.selfie_verification_url || null;
     
-    const kitchen_photos = req.files && req.files.kitchen_photos ? req.files.kitchen_photos.map(f => f.filename).join(',') : null;
-    const kitchen_videos = req.files && req.files.kitchen_videos ? req.files.kitchen_videos.map(f => f.filename).join(',') : null;
+    const kitchen_photos = req.files && req.files.kitchen_photos ? req.files.kitchen_photos.map(f => f.filename).join(',') : (req.body.kitchen_photos ? (Array.isArray(req.body.kitchen_photos) ? JSON.stringify(req.body.kitchen_photos) : req.body.kitchen_photos) : null);
+    const kitchen_videos = req.files && req.files.kitchen_videos ? req.files.kitchen_videos.map(f => f.filename).join(',') : (req.body.kitchen_videos ? (Array.isArray(req.body.kitchen_videos) ? JSON.stringify(req.body.kitchen_videos) : req.body.kitchen_videos) : null);
 
     const fullAddress = address || [door_number, street_name, area_name, landmark, city, district, state, pincode].filter(Boolean).join(', ') || '';
     const hashedPw = password ? hashPassword(password) : null;
@@ -536,23 +536,23 @@ exports.updateHomeChef = async (req, res) => {
       delivery_radius, preorder_available, cutoff_time, about_me, cooking_story, why_choose_me, languages_known
     } = req.body;
 
-    const profile_photo = req.files && req.files.profile_photo ? req.files.profile_photo[0].filename : null;
-    const cover_banner = req.files && req.files.cover_banner ? req.files.cover_banner[0].filename : null;
-    const aadhaar_front_url = req.files && req.files.aadhaar_front_url ? req.files.aadhaar_front_url[0].filename : null;
-    const aadhaar_back_url = req.files && req.files.aadhaar_back_url ? req.files.aadhaar_back_url[0].filename : null;
-    const pan_card_url = req.files && req.files.pan_card_url ? req.files.pan_card_url[0].filename : null;
-    const fssai_certificate_url = req.files && req.files.fssai_certificate_url ? req.files.fssai_certificate_url[0].filename : null;
-    const gst_certificate_url = req.files && req.files.gst_certificate_url ? req.files.gst_certificate_url[0].filename : null;
-    const signature_url = req.files && req.files.signature_url ? req.files.signature_url[0].filename : null;
-    const kitchen_photo1 = req.files && req.files.kitchen_photo1 ? req.files.kitchen_photo1[0].filename : null;
-    const kitchen_photo2 = req.files && req.files.kitchen_photo2 ? req.files.kitchen_photo2[0].filename : null;
-    const kitchen_photo3 = req.files && req.files.kitchen_photo3 ? req.files.kitchen_photo3[0].filename : null;
-    const cooking_area_photo = req.files && req.files.cooking_area_photo ? req.files.cooking_area_photo[0].filename : null;
-    const storage_area_photo = req.files && req.files.storage_area_photo ? req.files.storage_area_photo[0].filename : null;
-    const selfie_verification_url = req.files && req.files.selfie_verification_url ? req.files.selfie_verification_url[0].filename : null;
+    const profile_photo = (req.files && req.files.profile_photo ? req.files.profile_photo[0].filename : null) || req.body.profile_photo || null;
+    const cover_banner = (req.files && req.files.cover_banner ? req.files.cover_banner[0].filename : null) || req.body.cover_banner || null;
+    const aadhaar_front_url = (req.files && req.files.aadhaar_front_url ? req.files.aadhaar_front_url[0].filename : null) || req.body.aadhaar_front_url || null;
+    const aadhaar_back_url = (req.files && req.files.aadhaar_back_url ? req.files.aadhaar_back_url[0].filename : null) || req.body.aadhaar_back_url || null;
+    const pan_card_url = (req.files && req.files.pan_card_url ? req.files.pan_card_url[0].filename : null) || req.body.pan_card_url || null;
+    const fssai_certificate_url = (req.files && req.files.fssai_certificate_url ? req.files.fssai_certificate_url[0].filename : null) || req.body.fssai_certificate_url || null;
+    const gst_certificate_url = (req.files && req.files.gst_certificate_url ? req.files.gst_certificate_url[0].filename : null) || req.body.gst_certificate_url || null;
+    const signature_url = (req.files && req.files.signature_url ? req.files.signature_url[0].filename : null) || req.body.signature_url || null;
+    const kitchen_photo1 = (req.files && req.files.kitchen_photo1 ? req.files.kitchen_photo1[0].filename : null) || req.body.kitchen_photo1 || null;
+    const kitchen_photo2 = (req.files && req.files.kitchen_photo2 ? req.files.kitchen_photo2[0].filename : null) || req.body.kitchen_photo2 || null;
+    const kitchen_photo3 = (req.files && req.files.kitchen_photo3 ? req.files.kitchen_photo3[0].filename : null) || req.body.kitchen_photo3 || null;
+    const cooking_area_photo = (req.files && req.files.cooking_area_photo ? req.files.cooking_area_photo[0].filename : null) || req.body.cooking_area_photo || null;
+    const storage_area_photo = (req.files && req.files.storage_area_photo ? req.files.storage_area_photo[0].filename : null) || req.body.storage_area_photo || null;
+    const selfie_verification_url = (req.files && req.files.selfie_verification_url ? req.files.selfie_verification_url[0].filename : null) || req.body.selfie_verification_url || null;
     
-    const kitchen_photos = req.files && req.files.kitchen_photos ? req.files.kitchen_photos.map(f => f.filename).join(',') : null;
-    const kitchen_videos = req.files && req.files.kitchen_videos ? req.files.kitchen_videos.map(f => f.filename).join(',') : null;
+    const kitchen_photos = req.files && req.files.kitchen_photos ? req.files.kitchen_photos.map(f => f.filename).join(',') : (req.body.kitchen_photos ? (Array.isArray(req.body.kitchen_photos) ? JSON.stringify(req.body.kitchen_photos) : req.body.kitchen_photos) : null);
+    const kitchen_videos = req.files && req.files.kitchen_videos ? req.files.kitchen_videos.map(f => f.filename).join(',') : (req.body.kitchen_videos ? (Array.isArray(req.body.kitchen_videos) ? JSON.stringify(req.body.kitchen_videos) : req.body.kitchen_videos) : null).body.kitchen_videos ? (Array.isArray(req.body.kitchen_videos) ? JSON.stringify(req.body.kitchen_videos) : req.body.kitchen_videos) : null);
 
     const fullAddress = address || [door_number, street_name, area_name, landmark, city, district, state, pincode].filter(Boolean).join(', ') || '';
 
