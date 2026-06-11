@@ -59,6 +59,7 @@ const emptyForm = {
   // Business Details
   fssai_available: "No",
   gst_available: "No",
+  aadhaar_number: "",
   pan_number: "",
   bank_account_number: "",
   ifsc_code: "",
@@ -256,6 +257,7 @@ const HomeChefManagement = () => {
       ],
       fssai_available: "Yes",
       gst_available: "Yes",
+      aadhaar_number: "123456789012",
       pan_number: "ABCDE1234F",
       bank_account_number: "123456789012",
       ifsc_code: "SBIN0001234",
@@ -1494,6 +1496,19 @@ const HomeChefManagement = () => {
                         <option value="Yes">Yes</option>
                         <option value="No">No</option>
                       </select>
+                    </div>
+
+                    <div>
+                      <label className={lbl}>Aadhaar Number *</label>
+                      <input
+                        type="text"
+                        value={form.aadhaar_number}
+                        onChange={(e) =>
+                          setForm({ ...form, aadhaar_number: e.target.value })
+                        }
+                        placeholder="Aadhaar Number"
+                        className={inp}
+                      />
                     </div>
 
                     <div>

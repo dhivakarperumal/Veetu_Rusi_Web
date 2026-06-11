@@ -327,11 +327,7 @@ async function createDatabaseAndTables() {
   } catch (err) {
     // Column may not exist yet, so we add it below.
   }
-  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `created_by_user_id` VARCHAR(255) DEFAULT NULL");
-  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `created_by_name` VARCHAR(255) DEFAULT NULL");
-  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `created_by_email` VARCHAR(255) DEFAULT NULL");
-  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `created_by_phone` VARCHAR(50) DEFAULT NULL");
-  await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `franchise_id` VARCHAR(255) DEFAULT NULL");
+  await  connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `franchise_id` VARCHAR(255) DEFAULT NULL");
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `franchise_user_id` VARCHAR(255) DEFAULT NULL");
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `father_husband_name` VARCHAR(255) DEFAULT NULL");
   await connection.execute("ALTER TABLE `home_chefs` ADD COLUMN IF NOT EXISTS `gender` VARCHAR(50) DEFAULT NULL");
@@ -772,7 +768,7 @@ async function createDatabaseAndTables() {
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `device_id` TEXT");
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `login_status` VARCHAR(50) DEFAULT 'Active'");
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `account_status` VARCHAR(50) DEFAULT 'Pending'");
-  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `rc_book_number` TEXT");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `rc_book_number` VARCHAR(255)");
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `insurance_number` TEXT");
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `insurance_expiry_date` DATE DEFAULT NULL");
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `pollution_certificate_number` TEXT");
@@ -794,8 +790,18 @@ async function createDatabaseAndTables() {
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `kyc_verification_status` VARCHAR(50) DEFAULT 'Pending'");
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `bank_name` TEXT");
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `account_holder_name` TEXT");
-  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `bank_account_number` TEXT");
+  await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `bank_account_number` VARCHAR(255)");
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `ifsc_code` VARCHAR(50)");
+
+  // Add unique indexes for delivery_partner identity fields
+  try { await connection.execute("ALTER TABLE `delivery_partners` ADD UNIQUE INDEX idx_delivery_partners_user_id (user_id)"); } catch (e) {}
+  try { await connection.execute("ALTER TABLE `delivery_partners` ADD UNIQUE INDEX idx_delivery_partners_email (email)"); } catch (e) {}
+  try { await connection.execute("ALTER TABLE `delivery_partners` ADD UNIQUE INDEX idx_delivery_partners_vehicle_number (vehicle_number)"); } catch (e) {}
+  try { await connection.execute("ALTER TABLE `delivery_partners` ADD UNIQUE INDEX idx_delivery_partners_license_number (license_number)"); } catch (e) {}
+  try { await connection.execute("ALTER TABLE `delivery_partners` ADD UNIQUE INDEX idx_delivery_partners_aadhaar_number (aadhaar_number)"); } catch (e) {}
+  try { await connection.execute("ALTER TABLE `delivery_partners` ADD UNIQUE INDEX idx_delivery_partners_pan_number (pan_number)"); } catch (e) {}
+  try { await connection.execute("ALTER TABLE `delivery_partners` ADD UNIQUE INDEX idx_delivery_partners_rc_book_number (rc_book_number)"); } catch (e) {}
+  try { await connection.execute("ALTER TABLE `delivery_partners` ADD UNIQUE INDEX idx_delivery_partners_bank_account_number (bank_account_number)"); } catch (e) {}
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `branch_name` TEXT");
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `upi_id` TEXT");
   await connection.execute("ALTER TABLE `delivery_partners` ADD COLUMN IF NOT EXISTS `wallet_balance` DECIMAL(10,2) DEFAULT 0.00");
@@ -1094,28 +1100,16 @@ async function createDatabaseAndTables() {
     ON DUPLICATE KEY UPDATE name = VALUES(name);
   `);
 
-  // Function to generate unique chef code
-  function generateChefUniqueCode() {
-    const timestamp = Date.now().toString(36);
-    const randomPart = Math.random().toString(36).substring(2, 8).toUpperCase();
-    return `CHEF-${timestamp}-${randomPart}`;
-  }
-
-  // Insert home chefs with auto-generated unique codes
-  const chefCode1 = generateChefUniqueCode();
-  const chefCode2 = generateChefUniqueCode();
-
+  // Insert home chefs
   await connection.execute(`
-    INSERT INTO \`home_chefs\` (name, mobile, email, address, fssai_number, chef_unique_code, status)
+    INSERT INTO \`home_chefs\` (name, mobile, email, address, fssai_number, status)
     VALUES 
-      ('Anandhi Rao', '9876543213', 'anandhi.rao@gmail.com', '42 Green Park Lane, Madurai, Tamil Nadu 625001', '22345678901234', ?, 'Approved'),
-      ('Kavitha Sharma', '9876543214', 'kavitha.sharma@gmail.com', '15 Silk Street, Salem, Tamil Nadu 636001', '22345678905555', ?, 'Pending')
+      ('Anandhi Rao', '9876543213', 'anandhi.rao@gmail.com', '42 Green Park Lane, Madurai, Tamil Nadu 625001', '22345678901234', 'Approved'),
+      ('Kavitha Sharma', '9876543214', 'kavitha.sharma@gmail.com', '15 Silk Street, Salem, Tamil Nadu 636001', '22345678905555', 'Pending')
     ON DUPLICATE KEY UPDATE name = VALUES(name);
-  `, [chefCode1, chefCode2]);
+  `);
   
-  console.log('Home Chefs created with auto-generated codes:');
-  console.log(`Chef 1 - Anandhi Rao: ${chefCode1}`);
-  console.log(`Chef 2 - Kavitha Sharma: ${chefCode2}`);
+  console.log('Home Chefs created successfully');
 
   await connection.execute(`
     INSERT INTO \`delivery_partners\` (name, mobile, vehicle_type, vehicle_number, license_number, aadhaar_number, status)

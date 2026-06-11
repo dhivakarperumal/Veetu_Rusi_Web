@@ -582,6 +582,78 @@ const createUserFoodOrderTable = async () => {
     }
 };
 
+const cleanupHomeChefs = async () => {
+    try {
+        // Drop unwanted verbose audit columns from home_chefs
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN chef_id`); console.log('  Dropped: chef_id'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN chef_unique_code`); console.log('  Dropped: chef_unique_code'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN created_by_id`); console.log('  Dropped: created_by_id'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN created_by_user_id`); console.log('  Dropped: created_by_user_id'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN created_by_name`); console.log('  Dropped: created_by_name'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN created_by_email`); console.log('  Dropped: created_by_email'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN created_by_phone`); console.log('  Dropped: created_by_phone'); } catch (e) {}
+
+        // Add franchise_id if missing
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` ADD COLUMN IF NOT EXISTS franchise_id VARCHAR(255) DEFAULT NULL`); console.log('  Added: franchise_id'); } catch (e) {}
+
+        // Add compact audit columns (if not already added by ensureAuditColumns)
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` ADD COLUMN IF NOT EXISTS created_by VARCHAR(255) DEFAULT NULL`); console.log('  Added: created_by'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` ADD COLUMN IF NOT EXISTS updated_by VARCHAR(255) DEFAULT NULL`); console.log('  Added: updated_by'); } catch (e) {}
+
+        console.log('✓ Cleaned up home_chefs table: removed chef_id, chef_unique_code, created_by_id, created_by_user_id, created_by_name, created_by_email, created_by_phone; added franchise_id, created_by, updated_by');
+    } catch (err) {
+        console.error('✗ Error cleaning up home_chefs table:', err.message || err);
+    }
+};
+
+const addHomeChefUniqueConstraints = async () => {
+    try {
+        // Drop existing unique constraints if they exist (to re-create them)
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP INDEX IF EXISTS idx_user_id`); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP INDEX IF EXISTS idx_mobile`); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP INDEX IF EXISTS idx_email`); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP INDEX IF EXISTS idx_aadhaar_number`); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP INDEX IF EXISTS idx_pan_number`); } catch (e) {}
+
+        // Add unique constraints
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` ADD UNIQUE INDEX idx_user_id (user_id)`); console.log('  Added: UNIQUE user_id'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` ADD UNIQUE INDEX idx_mobile (mobile)`); console.log('  Added: UNIQUE mobile'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` ADD UNIQUE INDEX idx_email (email)`); console.log('  Added: UNIQUE email'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` ADD UNIQUE INDEX idx_aadhaar_number (aadhaar_number)`); console.log('  Added: UNIQUE aadhaar_number'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` ADD UNIQUE INDEX idx_pan_number (pan_number)`); console.log('  Added: UNIQUE pan_number'); } catch (e) {}
+
+        console.log('✓ Added unique constraints to home_chefs table: user_id, mobile, email, aadhaar_number, pan_number');
+    } catch (err) {
+        console.error('✗ Error adding unique constraints to home_chefs:', err.message || err);
+    }
+};
+
+const addDeliveryPartnerUniqueConstraints = async () => {
+    try {
+        try { await pool.execute(`ALTER TABLE \`delivery_partners\` DROP INDEX IF EXISTS idx_delivery_partners_user_id`); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`delivery_partners\` DROP INDEX IF EXISTS idx_delivery_partners_email`); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`delivery_partners\` DROP INDEX IF EXISTS idx_delivery_partners_vehicle_number`); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`delivery_partners\` DROP INDEX IF EXISTS idx_delivery_partners_license_number`); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`delivery_partners\` DROP INDEX IF EXISTS idx_delivery_partners_aadhaar_number`); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`delivery_partners\` DROP INDEX IF EXISTS idx_delivery_partners_pan_number`); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`delivery_partners\` DROP INDEX IF EXISTS idx_delivery_partners_rc_book_number`); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`delivery_partners\` DROP INDEX IF EXISTS idx_delivery_partners_bank_account_number`); } catch (e) {}
+
+        try { await pool.execute(`ALTER TABLE \`delivery_partners\` ADD UNIQUE INDEX idx_delivery_partners_user_id (user_id)`); console.log('  Added: UNIQUE user_id'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`delivery_partners\` ADD UNIQUE INDEX idx_delivery_partners_email (email)`); console.log('  Added: UNIQUE email'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`delivery_partners\` ADD UNIQUE INDEX idx_delivery_partners_vehicle_number (vehicle_number)`); console.log('  Added: UNIQUE vehicle_number'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`delivery_partners\` ADD UNIQUE INDEX idx_delivery_partners_license_number (license_number)`); console.log('  Added: UNIQUE license_number'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`delivery_partners\` ADD UNIQUE INDEX idx_delivery_partners_aadhaar_number (aadhaar_number)`); console.log('  Added: UNIQUE aadhaar_number'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`delivery_partners\` ADD UNIQUE INDEX idx_delivery_partners_pan_number (pan_number)`); console.log('  Added: UNIQUE pan_number'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`delivery_partners\` ADD UNIQUE INDEX idx_delivery_partners_rc_book_number (rc_book_number)`); console.log('  Added: UNIQUE rc_book_number'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`delivery_partners\` ADD UNIQUE INDEX idx_delivery_partners_bank_account_number (bank_account_number)`); console.log('  Added: UNIQUE bank_account_number'); } catch (e) {}
+
+        console.log('✓ Added unique constraints to delivery_partners table: user_id, email, vehicle_number, license_number, aadhaar_number, pan_number, rc_book_number, bank_account_number');
+    } catch (err) {
+        console.error('✗ Error adding unique constraints to delivery_partners:', err.message || err);
+    }
+};
+
     module.exports = {
         createProductsTable,
         createRecipeDetailsTable,
@@ -595,6 +667,9 @@ const createUserFoodOrderTable = async () => {
         createChefFoodCategoryTable,
         createChefCategoryTable,
         createFranchiseCategoryTable,
+        cleanupHomeChefs,
+        addHomeChefUniqueConstraints,
+        addDeliveryPartnerUniqueConstraints,
         // Ensure audit columns exist on all tables
         ensureAuditColumns: async () => {
             try {
@@ -604,8 +679,8 @@ const createUserFoodOrderTable = async () => {
 
                 for (const row of tables) {
                     const tableName = row[tableKey];
-                    // Skip internal/mysql tables
-                    if (!tableName || tableName.startsWith('mysql') || tableName.startsWith('sys') || tableName.startsWith('performance_schema') || tableName.startsWith('information_schema')) continue;
+                    // Skip internal/mysql tables and home_chefs (handled by cleanupHomeChefs)
+                    if (!tableName || tableName.startsWith('mysql') || tableName.startsWith('sys') || tableName.startsWith('performance_schema') || tableName.startsWith('information_schema') || tableName === 'home_chefs') continue;
 
                     // Remove previously added verbose audit columns (ignore errors)
                     try { await pool.execute(`ALTER TABLE \`${tableName}\` DROP COLUMN created_by_id`); } catch (e) {}
@@ -624,7 +699,7 @@ const createUserFoodOrderTable = async () => {
                     try { await pool.execute(`ALTER TABLE \`${tableName}\` ADD COLUMN IF NOT EXISTS updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`); } catch (e) {}
                 }
 
-                console.log('✓ Ensured compact audit columns (created_by, updated_by, created_at, updated_at) on all tables');
+                console.log('✓ Ensured compact audit columns (created_by, updated_by, created_at, updated_at) on all tables (except home_chefs)');
             } catch (err) {
                 console.error('✗ Error ensuring compact audit columns:', err.message || err);
             }

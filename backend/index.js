@@ -23,7 +23,7 @@ const wishlistRouter = require('./src/routes/wishlist');
 const dealersRouter = require('./src/routes/dealers');
 const { verifyToken, requireRole } = require('./src/middleware/authMiddleware');
 const superadminController = require('./src/controllers/superadminController');
-const { createProductsTable, createRecipeDetailsTable, createFranchiseProductsTable, createChefFoodTable, createSubscriptionPlansTable, createReviewsTable, createDealersTable, createUserFoodCartTable, createChefFoodCategoryTable, createChefCategoryTable, createFranchiseCategoryTable, createUserFoodOrderTable, ensureAuditColumns } = require('./src/config/migrations');
+const { createProductsTable, createRecipeDetailsTable, createFranchiseProductsTable, createChefFoodTable, createSubscriptionPlansTable, createReviewsTable, createDealersTable, createUserFoodCartTable, createChefFoodCategoryTable, createChefCategoryTable, createFranchiseCategoryTable, createUserFoodOrderTable, ensureAuditColumns, cleanupHomeChefs, addHomeChefUniqueConstraints, addDeliveryPartnerUniqueConstraints } = require('./src/config/migrations');
 const userFoodRouter = require('./src/routes/userFood');
 const userFoodOrdersRouter = require('./src/routes/userFoodOrders');
 const deliveryRouter = require('./src/routes/delivery');
@@ -97,6 +97,24 @@ initDb().then(async () => {
       await ensureAuditColumns();
     } catch (err) {
       console.error('ensureAuditColumns failed:', err.message || err);
+    }
+    // Cleanup home_chefs table: remove chef_id, chef_unique_code, created_by_phone; add franchise_id
+    try {
+      await cleanupHomeChefs();
+    } catch (err) {
+      console.error('cleanupHomeChefs failed:', err.message || err);
+    }
+    // Add unique constraints to home_chefs table
+    try {
+      await addHomeChefUniqueConstraints();
+    } catch (err) {
+      console.error('addHomeChefUniqueConstraints failed:', err.message || err);
+    }
+    // Add unique constraints to delivery_partners table
+    try {
+      await addDeliveryPartnerUniqueConstraints();
+    } catch (err) {
+      console.error('addDeliveryPartnerUniqueConstraints failed:', err.message || err);
     }
   } catch (err) {
     console.error('Recipe details migration error:', err.message || err);
