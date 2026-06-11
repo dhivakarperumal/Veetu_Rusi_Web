@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPortal } from "react-dom";
 import api from "../../api";
@@ -76,6 +76,18 @@ const FranchiseOwnerManagement = () => {
   const [form, setForm] = useState(emptyForm);
   const [pincodeEntry, setPincodeEntry] = useState("");
   const [activeFormTab, setActiveFormTab] = useState("basic");
+
+  const formSteps = [
+    { id: "basic", label: "Basic Info", description: "Owner and franchise details" },
+    { id: "contact", label: "Contact", description: "Phone, email and territory" },
+    { id: "address", label: "Address", description: "Location and map details" },
+    { id: "login", label: "Login & Auth", description: "Credential and access settings" },
+    { id: "kyc", label: "KYC & Docs", description: "Verification documents and status" },
+  ];
+  const currentFormIndex = formSteps.findIndex(step => step.id === activeFormTab);
+  const goToNextFormTab = () => setActiveFormTab(formSteps[Math.min(currentFormIndex + 1, formSteps.length - 1)].id);
+  const goToPrevFormTab = () => setActiveFormTab(formSteps[Math.max(currentFormIndex - 1, 0)].id);
+  const formRef = useRef(null);
 
   const getSubscriptionLabel = (franchise) => {
     if (!franchise) return 'Unknown';
@@ -1362,44 +1374,91 @@ const FranchiseOwnerManagement = () => {
       {isModalOpen && createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
-          <form onSubmit={handleSubmit} className="bg-slate-950 border border-slate-800 w-full max-w-3xl rounded-3xl shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[92vh] text-slate-100">
-            <div className="bg-gradient-to-r from-slate-900 via-slate-950 to-[#102c1e] p-7 text-white flex items-center justify-between flex-shrink-0 border-b border-slate-800">
+          <form onSubmit={handleSubmit} ref={formRef} className="border border-white/10 w-full max-w-6xl rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden grid lg:grid-cols-[320px_1fr] max-h-[95vh] h-full bg-slate-950 text-slate-100">
+            <div className="hidden lg:flex flex-col gap-6 p-6 bg-slate-950 border-r border-slate-800 overflow-y-auto min-h-0 h-full">
               <div>
-                <h3 className="text-lg font-black uppercase italic tracking-tight">
-                  {editingFranchise ? "Edit Franchise" : "Register New Franchise"}
-                </h3>
-                <p className="text-xs text-emerald-300 font-bold uppercase tracking-widest mt-0.5">Configure owner and territory details</p>
+                <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Franchise Onboarding</p>
+                <h3 className="mt-4 text-3xl font-black text-white">Register Franchise</h3>
+                <p className="mt-3 text-sm leading-6 text-slate-400">Five guided steps to capture franchise owner, contact, and verification details.</p>
               </div>
-              <button type="button" onClick={() => setIsModalOpen(false)} className="p-2 text-white/50 hover:text-white transition">
-                <X className="w-5 h-5" />
-              </button>
+              <div className="space-y-3">
+                {formSteps.map((step, index) => {
+                  const completed = index < currentFormIndex;
+                  const isActive = step.id === activeFormTab;
+                  return (
+                    <button
+                      key={step.id}
+                      type="button"
+                      onClick={() => setActiveFormTab(step.id)}
+                      className={`w-full text-left rounded-3xl border px-4 py-4 transition ${isActive
+                        ? "bg-emerald-700 text-white border-emerald-600 shadow-xl"
+                        : "bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700 hover:bg-slate-900/95"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <span className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-black ${isActive
+                          ? "bg-white text-emerald-700"
+                          : completed
+                            ? "bg-emerald-500 text-white"
+                            : "bg-slate-800 text-slate-400"
+                        }`}>
+                          {completed ? "✓" : index + 1}
+                        </span>
+                        <span className="text-xs uppercase tracking-[0.25em]">Step {index + 1}</span>
+                      </div>
+                      <p className="mt-3 text-sm leading-5 font-bold tracking-tight text-slate-200">{step.label}</p>
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="mt-auto rounded-3xl border border-white/10 bg-slate-900/90 p-5 text-sm text-slate-400">
+                <p className="text-[11px] uppercase tracking-[0.35em] text-slate-500">Progress</p>
+                <div className="mt-4 h-2.5 w-full overflow-hidden rounded-full bg-slate-800">
+                  <div
+                    className="h-full rounded-full bg-emerald-500 transition-all"
+                    style={{ width: `${((currentFormIndex + 1) / formSteps.length) * 100}%` }}
+                  />
+                </div>
+                <p className="mt-4 text-slate-300">Complete each section for faster approvals.</p>
+              </div>
             </div>
-            
-            <div className="flex overflow-x-auto border-b border-slate-800 shrink-0 custom-scrollbar bg-slate-950">
-                {[
-                  { id: "basic", label: "Basic Info" },
-                  { id: "contact", label: "Contact" },
-                  { id: "address", label: "Address" },
-                  { id: "login", label: "Login & Auth" },
-                  { id: "kyc", label: "KYC & Docs" },
-                ].map(tab => (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setActiveFormTab(tab.id)}
-                    className={`whitespace-nowrap px-6 py-4 text-[10px] font-black uppercase tracking-widest transition-all duration-200 ${
-                      activeFormTab === tab.id
-                        ? "text-emerald-200 border-b-[3px] border-emerald-500 bg-slate-950 shadow-[inset_0_-2px_0_rgba(16,185,129,0.3)]"
-                        : "text-slate-500 hover:text-slate-200 hover:bg-slate-900 border-b-[3px] border-transparent"
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-            </div>
-            
-            <div className="overflow-y-auto flex-1 p-7 bg-slate-50/50">
-              <div className="space-y-5">
+
+            <div className="flex flex-col overflow-hidden bg-slate-950 min-h-0 h-full">
+              <div className="flex items-center justify-between gap-4 border-b border-slate-800 bg-slate-900 p-6">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.4em] text-slate-500">Step {currentFormIndex + 1} of {formSteps.length}</p>
+                  <h4 className="mt-3 text-2xl font-black tracking-tight text-white">{formSteps[currentFormIndex]?.label}</h4>
+                  <p className="mt-2 text-sm text-slate-400 max-w-2xl">{formSteps[currentFormIndex]?.description}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-700 bg-slate-800 text-slate-300 transition hover:bg-slate-700 hover:text-white"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="lg:hidden border-b border-white/10 bg-slate-950/95 p-4 overflow-x-auto whitespace-nowrap scrollbar-thin">
+                <div className="flex gap-2">
+                  {formSteps.map(step => (
+                    <button
+                      key={step.id}
+                      type="button"
+                      onClick={() => setActiveFormTab(step.id)}
+                      className={`flex-shrink-0 px-4 py-2 text-xs font-black uppercase tracking-wider rounded-full transition ${activeFormTab === step.id
+                        ? "bg-emerald-500 text-slate-950 shadow-[0_15px_40px_rgba(16,185,129,0.18)]"
+                        : "text-slate-300 hover:text-white hover:bg-slate-900/80"
+                      }`}
+                    >
+                      {step.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="overflow-y-auto flex-1 p-7 bg-slate-50/5">
+                <div className="space-y-5">
               
                 {/* Basic Info */}
                 {activeFormTab === "basic" && (
@@ -1755,17 +1814,46 @@ const FranchiseOwnerManagement = () => {
                     </div>
                   </div>
                 )}
-                
+
               </div>
             </div>
-            
-            <div className="p-6 border-t border-slate-800 bg-slate-950 flex gap-3 shrink-0">
-              <button type="submit" className="flex-1 py-3 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs uppercase tracking-widest rounded-xl shadow-lg transition active:scale-95">
-                {editingFranchise ? "Update Franchise" : "Register Franchise"}
-              </button>
-              <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-slate-200 font-black text-xs uppercase tracking-widest rounded-xl transition">
-                Cancel
-              </button>
+
+              <div className="p-8 border-t border-white/10 bg-slate-950/95 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between flex-shrink-0">
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    disabled={currentFormIndex === 0}
+                    onClick={goToPrevFormTab}
+                    className="inline-flex items-center justify-center rounded-2xl border border-slate-700 bg-slate-900 px-5 py-3 text-sm font-black uppercase tracking-[0.18em] text-slate-200 transition disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-800"
+                  >
+                    Previous
+                  </button>
+                  {currentFormIndex < formSteps.length - 1 ? (
+                    <button
+                      type="button"
+                      onClick={goToNextFormTab}
+                      className="inline-flex items-center justify-center rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-black uppercase tracking-[0.18em] text-white transition hover:bg-emerald-500"
+                    >
+                      Next Step
+                    </button>
+                  ) : null}
+                </div>
+                <div className="flex flex-wrap gap-3 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    className="rounded-2xl bg-slate-900/80 px-5 py-3 text-sm font-black uppercase tracking-[0.18em] text-slate-200 transition hover:bg-slate-900"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-8 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl transition active:scale-95"
+                  >
+                    {editingFranchise ? "Update Franchise" : "Register Franchise"}
+                  </button>
+                </div>
+              </div>
             </div>
           </form>
         </div>,
