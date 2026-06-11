@@ -497,7 +497,7 @@ const HomeChefManagement = () => {
         payload.created_by_phone = user.phone || null;
       }
 
-      const convertedPayload = await convertFileFieldsToBase64(payload);
+      const convertedPayload = payload;
 
       if (editingChef) {
         await api.put(`/superadmin/homechefs/${editingChef.id}`, convertedPayload);
@@ -551,7 +551,30 @@ const HomeChefManagement = () => {
         <label className={lbl}>{label}</label>
         <input
           type="file"
-          onChange={(e) => setForm({ ...form, [fieldName]: e.target.files })}
+          onChange={async (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  try {
+    const compressed = await imageCompression(file, {
+      maxSizeMB: 0.2,
+      maxWidthOrHeight: 1200,
+      useWebWorker: true,
+    });
+
+    const base64 =
+      await imageCompression.getDataUrlFromFile(
+        compressed
+      );
+
+    setForm((prev) => ({
+      ...prev,
+      [fieldName]: base64,
+    }));
+  } catch (err) {
+    console.error(err);
+  }
+}}
           className={inp}
           multiple={
             fieldName === "kitchen_photos" || fieldName === "kitchen_videos"
@@ -1092,7 +1115,10 @@ const HomeChefManagement = () => {
                             type="text"
                             value={form.first_name}
                             onChange={(e) =>
-                              setForm({ ...form, first_name: e.target.value })
+                              setForm({
+                                ...form,
+                                first_name: e.target.value,
+                              })
                             }
                             className={inp}
                           />
@@ -1217,12 +1243,7 @@ const HomeChefManagement = () => {
                           </div>
                         </div>
 
-                        {renderFileField(
-                          "profile_photo",
-                          "Profile Photo *",
-                          form.profile_photo
-                        )}
-
+  
                       </div>
                     )}
 
@@ -1559,22 +1580,22 @@ const HomeChefManagement = () => {
                           </select>
                         </div>
 
-                    <div>
-                      <label className={lbl}>GST Available ?</label>
-                      <select
-                        value={form.gst_available}
-                        onChange={(e) =>
-                          setForm({
-                            ...form,
-                            gst_available: e.target.value,
-                          })
-                        }
-                        className={inp}
-                      >
-                        <option value="Yes">Yes</option>
-                        <option value="No">No</option>
-                      </select>
-                    </div>
+                        <div>
+                          <label className={lbl}>GST Available ?</label>
+                          <select
+                            value={form.gst_available}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                gst_available: e.target.value,
+                              })
+                            }
+                            className={inp}
+                          >
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                          </select>
+                        </div>
 
                         <div>
                           <label className={lbl}>PAN Number *</label>
