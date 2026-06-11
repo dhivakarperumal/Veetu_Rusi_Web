@@ -19,6 +19,7 @@ import {
   MapPin,
   CheckCircle,
   Clock,
+  EyeOff
 } from "lucide-react";
 
 const emptyForm = {
@@ -120,6 +121,10 @@ const HomeChefManagement = () => {
   // View Details Modal
   const [selectedChef, setSelectedChef] = useState(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+
+  // Show/Hide Password 
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Add / Edit Popup Modal
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -1116,26 +1121,58 @@ const HomeChefManagement = () => {
 
                         <div>
                           <label className={lbl}>Password *</label>
-                          <input
-                            type="password"
-                            value={form.password}
-                            onChange={(e) =>
-                              setForm({ ...form, password: e.target.value })
-                            }
-                            className={inp}
-                          />
+
+                          <div className="relative">
+                            <input
+                              type={showPassword ? "text" : "password"}
+                              value={form.password}
+                              onChange={(e) =>
+                                setForm({ ...form, password: e.target.value })
+                              }
+                              className={`${inp} pr-12`}
+                            />
+
+                            <button
+                              type="button"
+                              onClick={() => setShowPassword(!showPassword)}
+                              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                            >
+                              {showPassword ? (
+                                <EyeOff className="w-5 h-5" />
+                              ) : (
+                                <Eye className="w-5 h-5" />
+                              )}
+                            </button>
+                          </div>
                         </div>
 
                         <div>
                           <label className={lbl}>Confirm Password *</label>
-                          <input
-                            type="password"
-                            value={form.confirmPassword}
-                            onChange={(e) =>
-                              setForm({ ...form, confirmPassword: e.target.value })
-                            }
-                            className={inp}
-                          />
+
+                          <div className="relative">
+                            <input
+                              type={showConfirmPassword ? "text" : "password"}
+                              value={form.confirmPassword}
+                              onChange={(e) =>
+                                setForm({ ...form, confirmPassword: e.target.value })
+                              }
+                              className={`${inp} pr-12`}
+                            />
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setShowConfirmPassword(!showConfirmPassword)
+                              }
+                              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                            >
+                              {showConfirmPassword ? (
+                                <EyeOff className="w-5 h-5" />
+                              ) : (
+                                <Eye className="w-5 h-5" />
+                              )}
+                            </button>
+                          </div>
                         </div>
 
                         {renderFileField(
