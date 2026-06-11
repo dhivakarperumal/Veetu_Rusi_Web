@@ -9,6 +9,7 @@ const UserManagement = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [roleFilter, setRoleFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [editingRole, setEditingRole] = useState(null);
@@ -71,10 +72,14 @@ const UserManagement = () => {
       const lower = search.toLowerCase();
       result = result.filter(
         (u) =>
-          u.name.toLowerCase().includes(lower) ||
-          u.email.toLowerCase().includes(lower) ||
+          (u.name || "").toLowerCase().includes(lower) ||
+          (u.email || "").toLowerCase().includes(lower) ||
           (u.phone && u.phone.includes(lower))
       );
+    }
+
+    if (roleFilter !== "All") {
+      result = result.filter((u) => (u.role || "").toLowerCase() === roleFilter.toLowerCase());
     }
 
     if (statusFilter === "Active") {
@@ -84,7 +89,7 @@ const UserManagement = () => {
     }
 
     return result;
-  }, [search, statusFilter, users]);
+  }, [search, statusFilter, roleFilter, users]);
 
   const totalPages = Math.max(1, Math.ceil(filteredUsers.length / itemsPerPage));
   const currentPageIndex = Math.min(currentPage, totalPages);
@@ -214,6 +219,23 @@ const UserManagement = () => {
           </div>
           
           <div className="flex items-center gap-3 w-full md:w-auto">
+              <div className="relative flex-1 md:w-48">
+                  <select 
+                      value={roleFilter}
+                      onChange={(e) => { setRoleFilter(e.target.value); setCurrentPage(1); }}
+                      className="w-full appearance-none bg-slate-50 border border-slate-200 text-slate-600 text-xs font-bold uppercase tracking-widest rounded-xl px-5 py-3.5 pr-10 outline-none cursor-pointer focus:border-blue-400 transition-colors"
+                  >
+                      <option value="All">All Roles</option>
+                      <option value="user">User</option>
+                      <option value="admin">Admin</option>
+                      <option value="superadmin">Superadmin</option>
+                      <option value="chef">Chef</option>
+                      <option value="franchise">Franchise</option>
+                      <option value="delivery_partner">Delivery Partner</option>
+                  </select>
+                  <Filter className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none w-4 h-4" />
+              </div>
+
               <div className="relative flex-1 md:w-48">
                   <select 
                       value={statusFilter}

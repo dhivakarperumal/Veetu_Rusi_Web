@@ -207,6 +207,10 @@ exports.getDashboardStats = async (req, res) => {
 // ==================== HOME CHEF MANAGEMENT ====================
 exports.getHomeChefs = async (req, res) => {
   try {
+    // Ensure created_by columns exist (safe migration)
+    try { await pool.execute("ALTER TABLE home_chefs ADD COLUMN IF NOT EXISTS created_by_id INT DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE home_chefs ADD COLUMN IF NOT EXISTS created_by_user_id VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+
     const currentUserId = req.user?.user_id || null;
     let rows;
 
@@ -217,7 +221,7 @@ exports.getHomeChefs = async (req, res) => {
           [currentUserId, req.user.id]
         );
         rows = filtered;
-      } else if (req.user.id) {
+      } else if (req.user?.id) {
         const [filtered] = await pool.execute(
           "SELECT * FROM home_chefs WHERE created_by_id = ? ORDER BY created_at DESC",
           [req.user.id]
@@ -252,6 +256,15 @@ exports.getHomeChefById = async (req, res) => {
 
 exports.createHomeChef = async (req, res) => {
   try {
+    // Ensure created_by and franchise columns exist (safe migration)
+    try { await pool.execute("ALTER TABLE home_chefs ADD COLUMN IF NOT EXISTS created_by_id INT DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE home_chefs ADD COLUMN IF NOT EXISTS created_by_user_id VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE home_chefs ADD COLUMN IF NOT EXISTS created_by_name VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE home_chefs ADD COLUMN IF NOT EXISTS created_by_email VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE home_chefs ADD COLUMN IF NOT EXISTS created_by_phone VARCHAR(50) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE home_chefs ADD COLUMN IF NOT EXISTS franchise_id VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE home_chefs ADD COLUMN IF NOT EXISTS franchise_user_id VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+
     const {
       chef_unique_code, name, father_husband_name, gender, date_of_birth, age,
       mobile, alt_mobile, whatsapp_number, email, emergency_contact,
@@ -820,6 +833,10 @@ exports.deleteRestaurant = async (req, res) => {
 // ==================== DELIVERY PARTNER MANAGEMENT ====================
 exports.getDeliveryPartners = async (req, res) => {
   try {
+    // Ensure created_by columns exist (safe migration)
+    try { await pool.execute("ALTER TABLE delivery_partners ADD COLUMN IF NOT EXISTS created_by_id INT DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE delivery_partners ADD COLUMN IF NOT EXISTS created_by_user_id VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+
     const currentUserId = req.user?.user_id || null;
     let rows;
 
@@ -852,6 +869,18 @@ exports.getDeliveryPartners = async (req, res) => {
 
 exports.createDeliveryPartner = async (req, res) => {
   try {
+    // Ensure created_by columns exist (safe migration)
+    try { await pool.execute("ALTER TABLE delivery_partners ADD COLUMN IF NOT EXISTS created_by_id INT DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE delivery_partners ADD COLUMN IF NOT EXISTS created_by_user_id VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE delivery_partners ADD COLUMN IF NOT EXISTS created_by_name VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE delivery_partners ADD COLUMN IF NOT EXISTS created_by_email VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE delivery_partners ADD COLUMN IF NOT EXISTS created_by_phone VARCHAR(50) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE delivery_partners ADD COLUMN IF NOT EXISTS approved_by_id INT DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE delivery_partners ADD COLUMN IF NOT EXISTS approved_by_user_id VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE delivery_partners ADD COLUMN IF NOT EXISTS approved_by_name VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE delivery_partners ADD COLUMN IF NOT EXISTS approved_by_email VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE delivery_partners ADD COLUMN IF NOT EXISTS approval_date DATETIME DEFAULT NULL"); } catch (_) {}
+
     const b = { ...(req.body || {}) };
 
     // Basic validation
