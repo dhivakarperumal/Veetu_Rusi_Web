@@ -214,7 +214,10 @@ exports.getHomeChefs = async (req, res) => {
     const currentUserId = req.user?.user_id || null;
     let rows;
 
-    if (req.user?.role !== 'superadmin') {
+    if (req.user?.role === 'superadmin' || req.user?.role === 'admin') {
+      const [all] = await pool.execute("SELECT * FROM home_chefs ORDER BY created_at DESC");
+      rows = all;
+    } else {
       if (currentUserId) {
         const [filtered] = await pool.execute(
           "SELECT * FROM home_chefs WHERE created_by_user_id = ? OR created_by_id = ? ORDER BY created_at DESC",
@@ -230,9 +233,6 @@ exports.getHomeChefs = async (req, res) => {
       } else {
         rows = [];
       }
-    } else {
-      const [all] = await pool.execute("SELECT * FROM home_chefs ORDER BY created_at DESC");
-      rows = all;
     }
 
     res.json(rows);
@@ -833,7 +833,10 @@ exports.getDeliveryPartners = async (req, res) => {
     const currentUserId = req.user?.user_id || null;
     let rows;
 
-    if (req.user?.role !== 'superadmin') {
+    if (req.user?.role === 'superadmin' || req.user?.role === 'admin') {
+      const [all] = await pool.execute("SELECT * FROM delivery_partners ORDER BY created_at DESC");
+      rows = all;
+    } else {
       if (currentUserId) {
         const [filtered] = await pool.execute(
           "SELECT * FROM delivery_partners WHERE created_by_user_id = ? OR created_by_id = ? ORDER BY created_at DESC",
@@ -849,9 +852,6 @@ exports.getDeliveryPartners = async (req, res) => {
       } else {
         rows = [];
       }
-    } else {
-      const [all] = await pool.execute("SELECT * FROM delivery_partners ORDER BY created_at DESC");
-      rows = all;
     }
 
     res.json(rows);
