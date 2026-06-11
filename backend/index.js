@@ -36,8 +36,13 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+const bannersRouter = require('./src/routes/banners');
+const videosRouter = require('./src/routes/videos');
+
 app.use('/api/auth', authRouter);
 app.use('/api/superadmin', superadminRouter);
+app.use('/api/banners', bannersRouter);
+app.use('/api/videos', videosRouter);
 
 const areasRouter = express.Router();
 areasRouter.use(verifyToken);
