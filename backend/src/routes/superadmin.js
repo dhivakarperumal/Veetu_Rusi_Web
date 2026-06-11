@@ -10,6 +10,7 @@ router.use(requireRole(['superadmin', 'admin']));
 
 // Dashboard Analytics
 router.get('/dashboard-stats', controller.getDashboardStats);
+router.get('/pincode/:value', controller.lookupPincode);
 
 // Home Chef Management
 const homechefUploadFields = upload.fields([

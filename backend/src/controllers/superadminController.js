@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 const crypto = require('crypto');
+const https = require('https');
 const { generateRoleId } = require('../utils/idGenerator');
 
 function hashPassword(password) {
@@ -106,6 +107,26 @@ async function syncUserForEntity(tableName, id, role) {
     console.error(`Error syncing user for ${tableName}:`, err);
     return null;
   }
+}
+
+async function fetchPincodeData(pincode) {
+  return new Promise((resolve, reject) => {
+    https.get(
+      `https://api.postalpincode.in/pincode/${encodeURIComponent(pincode)}`,
+      (response) => {
+        let rawData = '';
+        response.on('data', (chunk) => { rawData += chunk; });
+        response.on('end', () => {
+          try {
+            const parsedData = JSON.parse(rawData);
+            resolve(parsedData);
+          } catch (error) {
+            reject(error);
+          }
+        });
+      }
+    ).on('error', reject);
+  });
 }
 
 // ==================== DASHBOARD ANALYTICS ====================
@@ -1390,13 +1411,23 @@ exports.createFranchise = async (req, res) => {
       created_by_phone
     };
 
-    const [result] = await pool.query("INSERT INTO franchise_owners SET ?", insertData);
+    // Build INSERT statement with column names
+    const columns = Object.keys(insertData);
+    const placeholders = columns.map(() => '?').join(',');
+    const values = columns.map(col => insertData[col]);
+    const columnList = columns.join(',');
+
+    const [result] = await pool.execute(
+      `INSERT INTO franchise_owners (${columnList}) VALUES (${placeholders})`,
+      values
+    );
     res.status(201).json({
       message: 'Franchise owner registered. Click Approve to create login credentials.',
       id: result.insertId,
       password: plainPw
     });
   } catch (error) {
+    console.error('Error creating franchise:', error);
     res.status(500).json({ message: 'Error registering franchise.', error: error.message });
   }
 };
@@ -1705,6 +1736,25 @@ exports.getReportsList = async (req, res) => {
 };
 
 // ==================== AREAS MANAGEMENT ====================
+exports.lookupPincode = async (req, res) => {
+  try {
+    const { value } = req.params;
+    if (!/^[0-9]{6}$/.test(value)) {
+      return res.status(400).json({ message: 'Invalid pincode format. Expected 6 digits.' });
+    }
+
+    const data = await fetchPincodeData(value);
+    if (!Array.isArray(data) || data.length === 0) {
+      return res.status(500).json({ message: 'Unexpected response from pincode service.' });
+    }
+
+    return res.json(data);
+  } catch (error) {
+    console.error('Error fetching pincode data:', error);
+    res.status(500).json({ message: 'Error fetching pincode information.', error: error.message });
+  }
+};
+
 exports.getAreas = async (req, res) => {
   try {
     const [rows] = await pool.execute('SELECT * FROM areas ORDER BY created_at DESC');

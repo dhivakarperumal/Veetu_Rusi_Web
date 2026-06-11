@@ -271,12 +271,12 @@ const FranchiseOwnerManagement = () => {
     }
     if (!editingFranchise) {
       if (!form.email_verified) {
-        toast.error("Verify the email before registering the franchise.");
+        toast.error("Check 'Email Verified' in KYC tab before registering.");
         setActiveFormTab("kyc");
         return;
       }
       if (!form.otp_verified) {
-        toast.error("Complete mobile OTP verification before registering.");
+        toast.error("Check 'Mobile OTP Verified' in KYC tab before registering.");
         setActiveFormTab("kyc");
         return;
       }
@@ -1637,6 +1637,59 @@ const FranchiseOwnerManagement = () => {
                 {activeFormTab === "kyc" && (
                   <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 shadow-lg shadow-slate-950/20 animate-in fade-in zoom-in-95 duration-200">
                     <p className="text-xs text-emerald-300 uppercase tracking-[0.25em] font-black mb-5">KYC & Verification Documents</p>
+
+                    {/* Email & Mobile Verification Section */}
+                    <div className="mb-6 p-4 rounded-2xl border border-slate-700 bg-slate-900 space-y-4">
+                      <p className="text-xs text-amber-300 uppercase tracking-[0.28em] font-black">Step 1: Contact Verification</p>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {/* Email Verification */}
+                        <div className="flex items-center gap-3 p-4 rounded-xl border border-slate-700 bg-slate-950">
+                          <input
+                            type="checkbox"
+                            id="email_verified"
+                            checked={form.email_verified}
+                            onChange={(e) => setForm({ ...form, email_verified: e.target.checked })}
+                            className="w-4 h-4 rounded cursor-pointer"
+                          />
+                          <label htmlFor="email_verified" className="flex-1 cursor-pointer">
+                            <div className="text-xs font-black uppercase tracking-[0.24em] text-slate-300">Email Verified</div>
+                            <div className="text-[11px] text-slate-400 mt-1">{form.email || "No email provided"}</div>
+                          </label>
+                          <span className={`inline-flex items-center rounded-full px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em] ${
+                            form.email_verified 
+                              ? "bg-emerald-500/15 text-emerald-200 border border-emerald-500/30" 
+                              : "bg-slate-700/40 text-slate-300 border border-slate-600"
+                          }`}>
+                            {form.email_verified ? "✓ Done" : "Pending"}
+                          </span>
+                        </div>
+
+                        {/* Mobile OTP Verification */}
+                        <div className="flex items-center gap-3 p-4 rounded-xl border border-slate-700 bg-slate-950">
+                          <input
+                            type="checkbox"
+                            id="otp_verified"
+                            checked={form.otp_verified}
+                            onChange={(e) => setForm({ ...form, otp_verified: e.target.checked })}
+                            className="w-4 h-4 rounded cursor-pointer"
+                          />
+                          <label htmlFor="otp_verified" className="flex-1 cursor-pointer">
+                            <div className="text-xs font-black uppercase tracking-[0.24em] text-slate-300">Mobile OTP Verified</div>
+                            <div className="text-[11px] text-slate-400 mt-1">{form.mobile || "No mobile provided"}</div>
+                          </label>
+                          <span className={`inline-flex items-center rounded-full px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em] ${
+                            form.otp_verified 
+                              ? "bg-emerald-500/15 text-emerald-200 border border-emerald-500/30" 
+                              : "bg-slate-700/40 text-slate-300 border border-slate-600"
+                          }`}>
+                            {form.otp_verified ? "✓ Done" : "Pending"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <p className="text-[10px] text-slate-400 pt-2">✓ Check the boxes once email and mobile numbers are verified</p>
+                    </div>
 
                     <div className="grid grid-cols-1 gap-4 mb-5 sm:grid-cols-2">
                       <div className="rounded-3xl border border-slate-800 bg-slate-900 p-4">

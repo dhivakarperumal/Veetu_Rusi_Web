@@ -1001,6 +1001,48 @@ async function createDatabaseAndTables() {
     console.log('Added territory_pincodes column to franchise_owners table');
   }
 
+  // Add login_password column if it doesn't exist
+  const loginPwColumns = await connection.execute(
+    "SELECT COUNT(*) AS count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'franchise_owners' AND COLUMN_NAME = 'login_password'",
+    [DB_NAME]
+  );
+
+  if (loginPwColumns[0].count === 0) {
+    await connection.execute(`ALTER TABLE \`franchise_owners\` ADD COLUMN \`login_password\` VARCHAR(255)`);
+    console.log('Added login_password column to franchise_owners table');
+  }
+
+  // Add all missing franchise columns
+  const missingColumns = [
+    { name: 'business_registration_number', type: 'VARCHAR(255)' },
+    { name: 'gst_number', type: 'VARCHAR(100)' },
+    { name: 'pan_number', type: 'VARCHAR(100)' },
+    { name: 'start_date', type: 'DATE' },
+    { name: 'expiry_date', type: 'DATE' },
+    { name: 'alt_mobile', type: 'VARCHAR(50)' },
+    { name: 'whatsapp_number', type: 'VARCHAR(50)' },
+    { name: 'website_url', type: 'VARCHAR(255)' },
+    { name: 'emergency_contact_number', type: 'VARCHAR(50)' },
+    { name: 'door_number', type: 'VARCHAR(50)' },
+    { name: 'street_name', type: 'VARCHAR(255)' },
+    { name: 'area', type: 'VARCHAR(255)' },
+    { name: 'landmark', type: 'VARCHAR(255)' },
+    { name: 'district', type: 'VARCHAR(150)' },
+    { name: 'logo_url', type: 'VARCHAR(255)' },
+    { name: 'banner_url', type: 'VARCHAR(255)' }
+  ];
+
+  for (const col of missingColumns) {
+    const colCheck = await connection.execute(
+      `SELECT COUNT(*) AS count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'franchise_owners' AND COLUMN_NAME = ?`,
+      [DB_NAME, col.name]
+    );
+    if (colCheck[0].count === 0) {
+      await connection.execute(`ALTER TABLE \`franchise_owners\` ADD COLUMN \`${col.name}\` ${col.type}`);
+      console.log(`Added ${col.name} column to franchise_owners table`);
+    }
+  }
+
   await connection.execute(`
     CREATE TABLE IF NOT EXISTS \`commissions\` (
       id INT AUTO_INCREMENT PRIMARY KEY,
