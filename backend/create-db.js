@@ -320,22 +320,8 @@ async function createDatabaseAndTables() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
   console.log('Dealers table created or already exists');
-  // Add chef_unique_code column if it doesn't exist
-  try {
-    const [codeColumns] = await connection.execute(
-      "SELECT COUNT(*) AS count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'home_chefs' AND COLUMN_NAME = 'chef_unique_code'",
-      [DB_NAME]
-    );
-    if (codeColumns[0].count === 0) {
-      await connection.execute(`
-        ALTER TABLE \`home_chefs\`
-        ADD COLUMN \`chef_unique_code\` VARCHAR(100) NOT NULL UNIQUE DEFAULT NULL
-      `);
-      console.log('Added chef_unique_code column to home_chefs table');
-    }
-  } catch (err) {
-    console.log('chef_unique_code column already exists');
-  }
+  // Ensure chef_unique_code exists on home_chefs before seeding data
+  await addColumnIfNotExists(connection, 'home_chefs', 'chef_unique_code', 'VARCHAR(100) UNIQUE DEFAULT NULL');
 
   await addColumnIfNotExists(connection, 'home_chefs', 'user_id', 'VARCHAR(255) DEFAULT NULL');
   await addColumnIfNotExists(connection, 'home_chefs', 'created_by_id', 'INT DEFAULT NULL');
