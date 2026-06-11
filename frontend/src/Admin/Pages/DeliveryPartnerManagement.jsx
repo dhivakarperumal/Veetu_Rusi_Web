@@ -9,6 +9,7 @@ import {
   X,
   ShieldAlert,
   Eye,
+  EyeOff,
   Bike,
   List,
   LayoutGrid,
@@ -17,6 +18,7 @@ import {
   Plus,
   Edit2,
 } from "lucide-react";
+import imageCompression from "browser-image-compression";
 
 const tabs = [
   { id: "personal", label: "Personal Information" },
@@ -29,6 +31,48 @@ const tabs = [
   { id: "preferences", label: "Work Preferences" },
   { id: "verification", label: "Verification" },
 ];
+
+const readFileAsDataURL = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+
+const base64FromFile = async (file) => {
+  if (!file) return null;
+  if (file.type.startsWith("image/")) {
+    try {
+      const compressed = await imageCompression(file, {
+        maxSizeMB: 0.2,
+        maxWidthOrHeight: 1200,
+        useWebWorker: true,
+      });
+      return readFileAsDataURL(compressed);
+    } catch (error) {
+      return readFileAsDataURL(file);
+    }
+  }
+  return readFileAsDataURL(file);
+};
+
+const convertFileFieldsToBase64 = async (payload) => {
+  const result = { ...payload };
+  for (const key of Object.keys(payload)) {
+    const value = payload[key];
+    if (value instanceof FileList) {
+      const files = Array.from(value);
+      if (files.length === 0) {
+        delete result[key];
+        continue;
+      }
+      const convertedFiles = await Promise.all(files.map(base64FromFile));
+      result[key] = convertedFiles.length === 1 ? convertedFiles[0] : convertedFiles;
+    }
+  }
+  return result;
+};
 
 const emptyForm = {
   // Personal
@@ -119,6 +163,8 @@ const DeliveryPartnerManagement = () => {
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("personal");
   const [validationErrors, setValidationErrors] = useState({});
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const stepIds = tabs.map((t) => t.id);
   const currentStepIndex = stepIds.indexOf(activeTab);
@@ -289,26 +335,20 @@ const DeliveryPartnerManagement = () => {
     }
     try {
       setSaving(true);
-      const formData = new FormData();
       const payload = {
         ...form,
         name: `${form.first_name || ""} ${form.last_name || ""}`.trim(),
       };
-      Object.keys(payload).forEach((key) => {
-        if (key === "confirmPassword") return;
-        if (editingPartner && key === "password" && !payload[key]) return;
-        const val = payload[key];
-        if (val instanceof FileList) {
-          if (val.length > 0) formData.append(key, val[0]);
-        } else if (val !== null && val !== undefined) {
-          formData.append(key, val);
-        }
-      });
+      delete payload.confirmPassword;
+      if (editingPartner && !payload.password) {
+        delete payload.password;
+      }
+      const convertedPayload = await convertFileFieldsToBase64(payload);
       if (editingPartner) {
-        await api.put(`/superadmin/delivery-partners/${editingPartner.id}`, formData);
+        await api.put(`/superadmin/delivery-partners/${editingPartner.id}`, convertedPayload);
         toast.success("Delivery partner updated.");
       } else {
-        await api.post("/superadmin/delivery-partners", formData);
+        await api.post("/superadmin/delivery-partners", convertedPayload);
         toast.success("Delivery partner created.");
       }
       setIsFormOpen(false);
@@ -357,16 +397,24 @@ const DeliveryPartnerManagement = () => {
     );
   };
 
+  const isDataUrl = (value) => typeof value === "string" && value.startsWith("data:");
+
   const fileField = (key, label, currentVal) => {
     const error = validationErrors[key];
     return (
       <div>
         <label className={lbl}>{label}</label>
         <input type="file" title={`Choose ${label}`} onChange={(e) => setForm({ ...form, [key]: e.target.files })} className={`${inp} ${error ? "border-rose-500 ring-1 ring-rose-500/20" : ""}`} />
-        {currentVal && typeof currentVal === "string" && (
+        {currentVal instanceof FileList && currentVal.length > 0 && (
+          <p className="mt-1 text-[11px] text-slate-300">Selected file: {currentVal[0].name}</p>
+        )}
+        {currentVal && typeof currentVal === "string" && !isDataUrl(currentVal) && (
           <a href={`${import.meta.env.VITE_API_URL}/../uploads/delivery/${currentVal}`} target="_blank" rel="noreferrer" className="text-[11px] text-emerald-500 hover:underline mt-1 block">
             View Uploaded File
           </a>
+        )}
+        {currentVal && typeof currentVal === "string" && isDataUrl(currentVal) && (
+          <p className="mt-1 text-[11px] text-emerald-500">Stored as Base64 Data URL</p>
         )}
         {error && <p className="mt-1 text-[10px] text-rose-400">{error}</p>}
       </div>
@@ -411,8 +459,86 @@ const DeliveryPartnerManagement = () => {
                   {f("blood_group", "Blood Group")}
                   {f("mobile", "Mobile Number", "tel")}
                   {f("email", "Email Address", "email")}
-                  {!editingPartner && f("password", "Password", "password")}
-                  {!editingPartner && f("confirmPassword", "Confirm Password", "password")}
+                  {!editingPartner && (
+                    <div>
+                      <label className={lbl}>Password</label>
+
+                      <div className="relative">
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          value={form.password || ""}
+                          onChange={(e) =>
+                            setForm({ ...form, password: e.target.value })
+                          }
+                          className={`${inp} pr-12 ${validationErrors.password
+                              ? "border-rose-500 ring-1 ring-rose-500/20"
+                              : ""
+                            }`}
+                        />
+
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                        >
+                          {showPassword ? (
+                            <EyeOff className="w-5 h-5" />
+                          ) : (
+                            <Eye className="w-5 h-5" />
+                          )}
+                        </button>
+                      </div>
+
+                      {validationErrors.password && (
+                        <p className="mt-1 text-[10px] text-rose-400">
+                          {validationErrors.password}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {!editingPartner && (
+                    <div>
+                      <label className={lbl}>Confirm Password</label>
+
+                      <div className="relative">
+                        <input
+                          type={showConfirmPassword ? "text" : "password"}
+                          value={form.confirmPassword || ""}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              confirmPassword: e.target.value,
+                            })
+                          }
+                          className={`${inp} pr-12 ${validationErrors.confirmPassword
+                              ? "border-rose-500 ring-1 ring-rose-500/20"
+                              : ""
+                            }`}
+                        />
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setShowConfirmPassword(!showConfirmPassword)
+                          }
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff className="w-5 h-5" />
+                          ) : (
+                            <Eye className="w-5 h-5" />
+                          )}
+                        </button>
+                      </div>
+
+                      {validationErrors.confirmPassword && (
+                        <p className="mt-1 text-[10px] text-rose-400">
+                          {validationErrors.confirmPassword}
+                        </p>
+                      )}
+                    </div>
+                  )}
                   {fileField("profile_photo", "Profile Photo", form.profile_photo)}
                 </div>
               );

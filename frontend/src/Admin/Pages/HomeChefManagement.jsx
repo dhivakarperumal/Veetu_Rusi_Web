@@ -19,7 +19,9 @@ import {
   MapPin,
   CheckCircle,
   Clock,
+  EyeOff
 } from "lucide-react";
+import imageCompression from "browser-image-compression";
 
 const emptyForm = {
   // Personal Information
@@ -110,6 +112,48 @@ const tabs = [
   { id: "delivery", label: "Delivery Preferences" },
 ];
 
+const readFileAsDataURL = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+
+const base64FromFile = async (file) => {
+  if (!file) return null;
+  if (file.type.startsWith("image/")) {
+    try {
+      const compressed = await imageCompression(file, {
+        maxSizeMB: 0.2,
+        maxWidthOrHeight: 1200,
+        useWebWorker: true,
+      });
+      return readFileAsDataURL(compressed);
+    } catch (error) {
+      return readFileAsDataURL(file);
+    }
+  }
+  return readFileAsDataURL(file);
+};
+
+const convertFileFieldsToBase64 = async (payload) => {
+  const result = { ...payload };
+  for (const key of Object.keys(payload)) {
+    const value = payload[key];
+    if (value instanceof FileList) {
+      const files = Array.from(value);
+      if (files.length === 0) {
+        delete result[key];
+        continue;
+      }
+      const convertedFiles = await Promise.all(files.map(base64FromFile));
+      result[key] = convertedFiles.length === 1 ? convertedFiles[0] : convertedFiles;
+    }
+  }
+  return result;
+};
+
 const HomeChefManagement = () => {
   const [chefs, setChefs] = useState([]);
   const [filteredChefs, setFilteredChefs] = useState([]);
@@ -121,6 +165,10 @@ const HomeChefManagement = () => {
   // View Details Modal
   const [selectedChef, setSelectedChef] = useState(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+
+  // Show/Hide Password 
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Add / Edit Popup Modal
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -410,17 +458,6 @@ const HomeChefManagement = () => {
     }
     try {
       setSaving(true);
-      const formData = new FormData();
-      const multiFileFields = ["kitchen_photos", "kitchen_videos"];
-      const fileFieldMap = {
-        introduction_video: "kitchen_videos",
-        kitchen_photo1: "kitchen_photos",
-        kitchen_photo2: "kitchen_photos",
-        kitchen_photo3: "kitchen_photos",
-        cooking_area_photo: "kitchen_photos",
-        storage_area_photo: "kitchen_photos",
-      };
-
       const payload = {
         ...form,
         name:
@@ -450,47 +487,23 @@ const HomeChefManagement = () => {
       delete payload.area;
       delete payload.google_map_location;
       delete payload.gps_location;
+      delete payload.confirmPassword;
 
       if (user && !editingChef) {
-        formData.append("created_by_id", user.id || "");
-        formData.append("created_by_user_id", user.user_id || "");
-        formData.append("created_by_name", user.name || "");
-        formData.append("created_by_email", user.email || "");
-        formData.append("created_by_phone", user.phone || "");
+        payload.created_by_id = user.id || null;
+        payload.created_by_user_id = user.user_id || null;
+        payload.created_by_name = user.name || null;
+        payload.created_by_email = user.email || null;
+        payload.created_by_phone = user.phone || null;
       }
 
-      Object.keys(payload).forEach((key) => {
-        if (key === "confirmPassword") return;
-        const mappedKey = fileFieldMap[key] || key;
-        const val = payload[key];
-
-        if (fileFieldMap[key]) {
-          if (val instanceof FileList && val.length > 0) {
-            for (let i = 0; i < val.length; i++) {
-              formData.append(mappedKey, val[i]);
-            }
-          }
-          return;
-        }
-
-        if (val instanceof FileList) {
-          if (multiFileFields.includes(key)) {
-            for (let i = 0; i < val.length; i++) {
-              formData.append(key, val[i]);
-            }
-          } else if (val.length > 0) {
-            formData.append(key, val[0]);
-          }
-        } else if (val !== null && val !== undefined) {
-          formData.append(key, val);
-        }
-      });
+      const convertedPayload = await convertFileFieldsToBase64(payload);
 
       if (editingChef) {
-        await api.put(`/superadmin/homechefs/${editingChef.id}`, formData);
+        await api.put(`/superadmin/homechefs/${editingChef.id}`, convertedPayload);
         toast.success("Home chef updated successfully.");
       } else {
-        await api.post("/superadmin/homechefs", formData);
+        await api.post("/superadmin/homechefs", convertedPayload);
         toast.success("Home chef created successfully.");
       }
       setIsFormOpen(false);
@@ -517,6 +530,8 @@ const HomeChefManagement = () => {
   const lbl =
     "text-[11px] text-slate-300 font-black uppercase tracking-[0.24em] block mb-2";
 
+  const isDataUrl = (value) => typeof value === "string" && value.startsWith("data:");
+
   const renderFileField = (fieldName, label, currentValue) => {
     return (
       <div>
@@ -529,7 +544,12 @@ const HomeChefManagement = () => {
             fieldName === "kitchen_photos" || fieldName === "kitchen_videos"
           }
         />
-        {currentValue && typeof currentValue === "string" && (
+        {currentValue instanceof FileList && currentValue.length > 0 && (
+          <p className="mt-1 text-xs text-slate-300">
+            Selected file: {currentValue.length > 1 ? `${currentValue.length} files` : currentValue[0].name}
+          </p>
+        )}
+        {currentValue && typeof currentValue === "string" && !isDataUrl(currentValue) && (
           <div className="mt-1 text-xs">
             <a
               href={`${import.meta.env.VITE_API_URL}/../uploads/homechefs/${currentValue}`}
@@ -540,6 +560,11 @@ const HomeChefManagement = () => {
               View Uploaded File
             </a>
           </div>
+        )}
+        {currentValue && typeof currentValue === "string" && isDataUrl(currentValue) && (
+          <p className="mt-1 text-xs text-emerald-400">
+            File is stored as Base64 and will be submitted as a Data URL.
+          </p>
         )}
       </div>
     );
@@ -1118,26 +1143,58 @@ const HomeChefManagement = () => {
 
                         <div>
                           <label className={lbl}>Password *</label>
-                          <input
-                            type="password"
-                            value={form.password}
-                            onChange={(e) =>
-                              setForm({ ...form, password: e.target.value })
-                            }
-                            className={inp}
-                          />
+
+                          <div className="relative">
+                            <input
+                              type={showPassword ? "text" : "password"}
+                              value={form.password}
+                              onChange={(e) =>
+                                setForm({ ...form, password: e.target.value })
+                              }
+                              className={`${inp} pr-12`}
+                            />
+
+                            <button
+                              type="button"
+                              onClick={() => setShowPassword(!showPassword)}
+                              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                            >
+                              {showPassword ? (
+                                <EyeOff className="w-5 h-5" />
+                              ) : (
+                                <Eye className="w-5 h-5" />
+                              )}
+                            </button>
+                          </div>
                         </div>
 
                         <div>
                           <label className={lbl}>Confirm Password *</label>
-                          <input
-                            type="password"
-                            value={form.confirmPassword}
-                            onChange={(e) =>
-                              setForm({ ...form, confirmPassword: e.target.value })
-                            }
-                            className={inp}
-                          />
+
+                          <div className="relative">
+                            <input
+                              type={showConfirmPassword ? "text" : "password"}
+                              value={form.confirmPassword}
+                              onChange={(e) =>
+                                setForm({ ...form, confirmPassword: e.target.value })
+                              }
+                              className={`${inp} pr-12`}
+                            />
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setShowConfirmPassword(!showConfirmPassword)
+                              }
+                              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                            >
+                              {showConfirmPassword ? (
+                                <EyeOff className="w-5 h-5" />
+                              ) : (
+                                <Eye className="w-5 h-5" />
+                              )}
+                            </button>
+                          </div>
                         </div>
 
                         {renderFileField(
