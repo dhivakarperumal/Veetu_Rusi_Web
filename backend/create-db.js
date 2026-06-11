@@ -19,6 +19,15 @@ async function addColumnIfNotExists(connection, table, column, definition) {
     "SELECT COUNT(*) AS count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?",
     [DB_NAME, table, column]
   );
+  if (rows[0].count == 0) {
+    try {
+      await connection.execute(`ALTER TABLE \`${table}\` ADD COLUMN \`${column}\` ${definition}`);
+      console.log(`Added ${column} to ${table}`);
+    } catch (err) {
+      if (err.code !== 'ER_DUP_FIELDNAME') {
+        throw err;
+      }
+    }
   if (rows[0].count === 0) {
     try {
       await connection.execute(`ALTER TABLE \`${table}\` ADD COLUMN \`${column}\` ${definition}`);
@@ -319,22 +328,8 @@ async function createDatabaseAndTables() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
   console.log('Dealers table created or already exists');
-  // Add chef_unique_code column if it doesn't exist
-  try {
-    const [codeColumns] = await connection.execute(
-      "SELECT COUNT(*) AS count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'home_chefs' AND COLUMN_NAME = 'chef_unique_code'",
-      [DB_NAME]
-    );
-    if (codeColumns[0].count === 0) {
-      await connection.execute(`
-        ALTER TABLE \`home_chefs\`
-        ADD COLUMN \`chef_unique_code\` VARCHAR(100) NOT NULL UNIQUE DEFAULT NULL
-      `);
-      console.log('Added chef_unique_code column to home_chefs table');
-    }
-  } catch (err) {
-    console.log('chef_unique_code column already exists');
-  }
+  // Ensure chef_unique_code exists on home_chefs before seeding data
+  await addColumnIfNotExists(connection, 'home_chefs', 'chef_unique_code', 'VARCHAR(100) UNIQUE DEFAULT NULL');
 
   await addColumnIfNotExists(connection, 'home_chefs', 'user_id', 'VARCHAR(255) DEFAULT NULL');
   await addColumnIfNotExists(connection, 'home_chefs', 'created_by_id', 'INT DEFAULT NULL');
@@ -1168,7 +1163,17 @@ async function createDatabaseAndTables() {
     ON DUPLICATE KEY UPDATE name = VALUES(name);
   `);
 
-  // Insert home chefs
+  // Function to generate unique chef code
+  function generateChefUniqueCode() {
+    const timestamp = Date.now().toString(36);
+    const randomPart = Math.random().toString(36).substring(2, 8).toUpperCase();
+    return `CHEF-${timestamp}-${randomPart}`;
+  }
+
+  // Insert home chefs with auto-generated unique codes
+  const chefCode1 = generateChefUniqueCode();
+  const chefCode2 = generateChefUniqueCode();
+
   await connection.execute(`
     INSERT INTO \`home_chefs\` (name, mobile, email, address, fssai_number, status)
     VALUES 
@@ -1177,7 +1182,9 @@ async function createDatabaseAndTables() {
     ON DUPLICATE KEY UPDATE name = VALUES(name);
   `);
   
-  console.log('Home Chefs created successfully');
+  console.log('Home Chefs created with auto-generated codes:');
+  console.log(`Chef 1 - Anandhi Rao: ${chefCode1}`);
+  console.log(`Chef 2 - Kavitha Sharma: ${chefCode2}`);
 
   await connection.execute(`
     INSERT INTO \`delivery_partners\` (name, mobile, vehicle_type, vehicle_number, license_number, aadhaar_number, status)
