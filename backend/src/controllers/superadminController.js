@@ -1321,6 +1321,13 @@ exports.getFranchiseById = async (req, res) => {
 
 exports.createFranchise = async (req, res) => {
   try {
+    // Ensure created_by columns exist (safe migration)
+    try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS created_by_id INT DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS created_by_user_id VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS created_by_name VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS created_by_email VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS created_by_phone VARCHAR(50) DEFAULT NULL"); } catch (_) {}
+
     const { 
       franchise_name, owner_name, mobile, email, city, state, commission_percentage, status, password,
       business_registration_number, gst_number, pan_number, start_date, expiry_date,
@@ -1411,16 +1418,43 @@ exports.createFranchise = async (req, res) => {
       created_by_phone
     };
 
-    // Build INSERT statement with column names
-    const columns = Object.keys(insertData);
-    const placeholders = columns.map(() => '?').join(',');
-    const values = columns.map(col => insertData[col]);
-    const columnList = columns.join(',');
+      // Filter out created_by fields that might not exist in older databases
+      const safeInsertData = {};
+      const allowedFields = [
+        'franchise_name', 'owner_name', 'mobile', 'email', 'city', 'state',
+        'commission_percentage', 'status', 'login_password', 'business_registration_number',
+        'gst_number', 'pan_number', 'start_date', 'expiry_date', 'alt_mobile',
+        'whatsapp_number', 'website_url', 'emergency_contact_number', 'door_number',
+        'street_name', 'area', 'landmark', 'district', 'territory_pincodes', 'pincode',
+        'latitude', 'longitude', 'map_link', 'username', 'role', 'otp_verified',
+        'email_verified', 'login_status', 'logo_url', 'banner_url', 'aadhaar_url',
+        'pan_url', 'gst_certificate_url', 'fssai_license_url', 'shop_license_url',
+        'vehicle_rc_url', 'driving_license_url', 'bank_passbook_url', 'signature_url'
+      ];
+    
+      allowedFields.forEach(field => {
+        if (field in insertData) {
+          safeInsertData[field] = insertData[field];
+        }
+      });
+    
+      // Try to add created_by fields, but don't fail if they don't exist
+      if (created_by_id) safeInsertData.created_by_id = created_by_id;
+      if (created_by_user_id) safeInsertData.created_by_user_id = created_by_user_id;
+      if (created_by_name) safeInsertData.created_by_name = created_by_name;
+      if (created_by_email) safeInsertData.created_by_email = created_by_email;
+      if (created_by_phone) safeInsertData.created_by_phone = created_by_phone;
 
-    const [result] = await pool.execute(
-      `INSERT INTO franchise_owners (${columnList}) VALUES (${placeholders})`,
-      values
-    );
+      // Build INSERT statement with column names
+      const columns = Object.keys(safeInsertData);
+      const placeholders = columns.map(() => '?').join(',');
+      const values = columns.map(col => safeInsertData[col]);
+      const columnList = columns.join(',');
+
+      const [result] = await pool.execute(
+        `INSERT INTO franchise_owners (${columnList}) VALUES (${placeholders})`,
+        values
+      );
     res.status(201).json({
       message: 'Franchise owner registered. Click Approve to create login credentials.',
       id: result.insertId,
