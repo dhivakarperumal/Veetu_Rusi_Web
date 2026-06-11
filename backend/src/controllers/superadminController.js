@@ -1354,7 +1354,7 @@ exports.createFranchise = async (req, res) => {
       franchise_name, owner_name, mobile, email, city, state, commission_percentage, status, password,
       business_registration_number, gst_number, pan_number, start_date, expiry_date,
       alt_mobile, whatsapp_number, website_url, emergency_contact_number,
-      territory_pincodes,
+      territory_pincodes, aadhaar_number,
       door_number, street_name, area, landmark, district, pincode, latitude, longitude, map_link,
       username, role, otp_verified, email_verified, login_status
     } = req.body;
@@ -1401,6 +1401,7 @@ exports.createFranchise = async (req, res) => {
       business_registration_number: business_registration_number || null,
       gst_number: gst_number || null,
       pan_number: pan_number || null,
+      aadhaar_number: aadhaar_number || null,
       start_date: start_date || null,
       expiry_date: expiry_date || null,
       alt_mobile: alt_mobile || null,
@@ -1445,7 +1446,7 @@ exports.createFranchise = async (req, res) => {
       const allowedFields = [
         'franchise_name', 'owner_name', 'mobile', 'email', 'city', 'state',
         'commission_percentage', 'status', 'login_password', 'business_registration_number',
-        'gst_number', 'pan_number', 'start_date', 'expiry_date', 'alt_mobile',
+        'gst_number', 'pan_number', 'aadhaar_number', 'start_date', 'expiry_date', 'alt_mobile',
         'whatsapp_number', 'website_url', 'emergency_contact_number', 'door_number',
         'street_name', 'area', 'landmark', 'district', 'territory_pincodes', 'pincode',
         'latitude', 'longitude', 'map_link', 'username', 'role', 'otp_verified',
@@ -1580,7 +1581,7 @@ exports.updateFranchise = async (req, res) => {
       franchise_name, owner_name, mobile, email, city, state, commission_percentage, status,
       business_registration_number, gst_number, pan_number, start_date, expiry_date,
       alt_mobile, whatsapp_number, website_url, emergency_contact_number,
-      territory_pincodes,
+      territory_pincodes, aadhaar_number,
       door_number, street_name, area, landmark, district, pincode, latitude, longitude, map_link,
       username, role, otp_verified, email_verified, login_status
     } = req.body;
@@ -1606,14 +1607,14 @@ exports.updateFranchise = async (req, res) => {
 
     let query = `UPDATE franchise_owners SET 
       franchise_name = ?, owner_name = ?, mobile = ?, email = ?, city = ?, state = ?, commission_percentage = ?, status = ?,
-      business_registration_number = ?, gst_number = ?, pan_number = ?, start_date = ?, expiry_date = ?,
+      business_registration_number = ?, gst_number = ?, pan_number = ?, aadhaar_number = ?, start_date = ?, expiry_date = ?,
       alt_mobile = ?, whatsapp_number = ?, website_url = ?, emergency_contact_number = ?,
       door_number = ?, street_name = ?, area = ?, landmark = ?, district = ?, territory_pincodes = ?, pincode = ?, latitude = ?, longitude = ?, map_link = ?,
       username = ?, role = ?, otp_verified = ?, email_verified = ?, login_status = ?`;
 
     let params = [
       franchise_name, owner_name, mobile, email, city, state, commission_percentage, status,
-      business_registration_number || null, gst_number || null, pan_number || null, start_date || null, expiry_date || null,
+      business_registration_number || null, gst_number || null, pan_number || null, aadhaar_number || null, start_date || null, expiry_date || null,
       alt_mobile || null, whatsapp_number || null, website_url || null, emergency_contact_number || null,
       door_number || null, street_name || null, area || null, landmark || null, district || null, territory_pincodes || null, pincode || null, latitude || null, longitude || null, map_link || null,
       username || null, role || 'Admin', otp_verified !== undefined ? (otp_verified ? 1 : 0) : 0, email_verified !== undefined ? (email_verified ? 1 : 0) : 0, login_status || 'Active'

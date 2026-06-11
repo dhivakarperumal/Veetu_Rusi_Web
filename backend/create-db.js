@@ -19,7 +19,8 @@ async function addColumnIfNotExists(connection, table, column, definition) {
     "SELECT COUNT(*) AS count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?",
     [DB_NAME, table, column]
   );
-  if (rows[0].count == 0) {
+
+  if (rows[0].count === 0) {
     try {
       await connection.execute(`ALTER TABLE \`${table}\` ADD COLUMN \`${column}\` ${definition}`);
       console.log(`Added ${column} to ${table}`);
@@ -27,14 +28,7 @@ async function addColumnIfNotExists(connection, table, column, definition) {
       if (err.code !== 'ER_DUP_FIELDNAME') {
         throw err;
       }
-    }
-  if (rows[0].count === 0) {
-    try {
-      await connection.execute(`ALTER TABLE \`${table}\` ADD COLUMN \`${column}\` ${definition}`);
-      console.log(`Added ${column} to ${table}`);
-    } catch (err) {
       console.warn(`Could not add column ${column} to ${table}: ${err.message}`);
-      // Don't throw - leave migration to manual fix if row size limits are reached
     }
   }
 }
@@ -971,6 +965,8 @@ async function createDatabaseAndTables() {
   await connection.execute("ALTER TABLE `franchise_owners` ADD COLUMN IF NOT EXISTS `created_by_name` VARCHAR(255) DEFAULT NULL");
   await connection.execute("ALTER TABLE `franchise_owners` ADD COLUMN IF NOT EXISTS `created_by_email` VARCHAR(255) DEFAULT NULL");
   await connection.execute("ALTER TABLE `franchise_owners` ADD COLUMN IF NOT EXISTS `created_by_phone` VARCHAR(50) DEFAULT NULL");
+  await connection.execute("ALTER TABLE `franchise_owners` ADD COLUMN IF NOT EXISTS `aadhaar_number` VARCHAR(12) UNIQUE DEFAULT NULL");
+  await connection.execute("ALTER TABLE `franchise_owners` ADD COLUMN IF NOT EXISTS `pan_unique` VARCHAR(10) UNIQUE DEFAULT NULL");
 
   const [franColumns] = await connection.execute(
     "SELECT COUNT(*) AS count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'franchise_owners' AND COLUMN_NAME = 'logo_url'",

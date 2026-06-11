@@ -14,11 +14,12 @@ const ITEMS_PER_PAGE = 8;
 const emptyForm = {
   // Basic Details
   franchise_name: "", owner_name: "", logo_url: "", banner_url: "",
-  business_registration_number: "", gst_number: "", pan_number: "",
+  business_registration_number: "", gst_number: "",
   start_date: "", expiry_date: "", status: "Pending",
   
   // Contact Details
   mobile: "", alt_mobile: "", email: "", territory_pincodes: [],
+  aadhaar_number: "", pan_number: "",
   
   // Address Details
   door_number: "", street_name: "", area: "", landmark: "",
@@ -1551,6 +1552,16 @@ const FranchiseOwnerManagement = () => {
                       <div className="space-y-1">
                         <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Alternate Mobile</label>
                         <input type="text" value={form.alt_mobile} onChange={e => setForm({ ...form, alt_mobile: e.target.value })} placeholder="Optional" className={inputCls} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Aadhaar Number *</label>
+                        <input type="text" required value={form.aadhaar_number} onChange={e => setForm({ ...form, aadhaar_number: e.target.value.replace(/\D/g, '').slice(0, 12) })} placeholder="123456789012" maxLength="12" className={inputCls} />
+                        <p className="text-[9px] text-slate-400 mt-1">Unique 12-digit Aadhaar number</p>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">PAN Number *</label>
+                        <input type="text" required value={form.pan_number} onChange={e => setForm({ ...form, pan_number: e.target.value.toUpperCase().slice(0, 10) })} placeholder="ABCDE1234F" maxLength="10" className={inputCls} />
+                        <p className="text-[9px] text-slate-400 mt-1">Unique 10-character PAN number</p>
                       </div>
                       <div className="space-y-3 sm:col-span-2">
                         <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Pincodes</label>
