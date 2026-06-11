@@ -131,9 +131,9 @@ const Dashboard = () => {
           console.log('🚨 Showing alert: Subscription expired or not active');
           setShowSubscriptionAlert(true);
         }
-        // Show warning if subscription is expiring soon (within 7 days)
-        else if (subInfo.daysRemaining && subInfo.daysRemaining <= 7) {
-          console.log('⏰ Showing alert: Subscription expiring in', subInfo.daysRemaining, 'days');
+        // Show warning if subscription is expiring soon (within 7 days), or days remaining is 0 or null
+        else if (subInfo.daysRemaining == null || subInfo.daysRemaining <= 7) {
+          console.log('⏰ Showing alert: Subscription expiring/expired. Days remaining:', subInfo.daysRemaining);
           setShowSubscriptionAlert(true);
         } else {
           console.log('✅ Subscription active with', subInfo.daysRemaining, 'days remaining');
