@@ -425,7 +425,7 @@ const DeliveryPartnerManagement = () => {
   const toggle = (key, label) => (
     <div className="flex items-center gap-3">
       <input type="checkbox" id={key} checked={!!form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.checked })} className="w-4 h-4 accent-emerald-600" />
-      <label htmlFor={key} className="text-sm font-semibold text-gray-700">{label}</label>
+      <label htmlFor={key} className="text-sm font-semibold text-white">{label}</label>
     </div>
   );
 
@@ -630,7 +630,7 @@ const DeliveryPartnerManagement = () => {
                   {f("available_areas", "Available Areas")}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div className="space-y-3 rounded-2xl border border-slate-700 bg-slate-900/90 p-4">
-                      <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Available Time</p>
+                      <p className="text-sm font-black uppercase tracking-[0.2em] text-white">Available Time</p>
                       {toggle("available_time_morning", "Morning")}
                       {toggle("available_time_afternoon", "Afternoon")}
                       {toggle("available_time_evening", "Evening")}
@@ -638,7 +638,7 @@ const DeliveryPartnerManagement = () => {
                       {validationErrors.available_time && <p className="mt-1 text-[10px] text-rose-400">{validationErrors.available_time}</p>}
                     </div>
                     <div className="space-y-3 rounded-2xl border border-slate-700 bg-slate-900/90 p-4">
-                      <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Preferred Distance</p>
+                      <p className="text-sm font-black uppercase tracking-[0.2em] text-white">Preferred Distance</p>
                       {['3 KM', '5 KM', '10 KM'].map((distance) => (
                         <button
                           type="button"
