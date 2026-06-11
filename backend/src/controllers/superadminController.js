@@ -552,7 +552,7 @@ exports.updateHomeChef = async (req, res) => {
     const selfie_verification_url = (req.files && req.files.selfie_verification_url ? req.files.selfie_verification_url[0].filename : null) || req.body.selfie_verification_url || null;
     
     const kitchen_photos = req.files && req.files.kitchen_photos ? req.files.kitchen_photos.map(f => f.filename).join(',') : (req.body.kitchen_photos ? (Array.isArray(req.body.kitchen_photos) ? JSON.stringify(req.body.kitchen_photos) : req.body.kitchen_photos) : null);
-    const kitchen_videos = req.files && req.files.kitchen_videos ? req.files.kitchen_videos.map(f => f.filename).join(',') : (req.body.kitchen_videos ? (Array.isArray(req.body.kitchen_videos) ? JSON.stringify(req.body.kitchen_videos) : req.body.kitchen_videos) : null).body.kitchen_videos ? (Array.isArray(req.body.kitchen_videos) ? JSON.stringify(req.body.kitchen_videos) : req.body.kitchen_videos) : null);
+    const kitchen_videos = req.files && req.files.kitchen_videos ? req.files.kitchen_videos.map(f => f.filename).join(',') : (req.body.kitchen_videos ? (Array.isArray(req.body.kitchen_videos) ? JSON.stringify(req.body.kitchen_videos) : req.body.kitchen_videos) : null);
 
     const fullAddress = address || [door_number, street_name, area_name, landmark, city, district, state, pincode].filter(Boolean).join(', ') || '';
 
