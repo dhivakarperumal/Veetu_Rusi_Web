@@ -531,8 +531,21 @@ const HomeChefManagement = () => {
     "text-[11px] text-slate-300 font-black uppercase tracking-[0.24em] block mb-2";
 
   const isDataUrl = (value) => typeof value === "string" && value.startsWith("data:");
+  const isImageDataUrl = (value) => typeof value === "string" && value.startsWith("data:image/");
+  const isVideoDataUrl = (value) => typeof value === "string" && value.startsWith("data:video/");
+  const isImageField = (fieldName) => fieldName !== "introduction_video";
+  const getPreviewUrl = (value) => {
+    if (typeof value !== "string") return null;
+    if (isDataUrl(value)) return value;
+    if (value.startsWith("http") || value.startsWith("blob:")) return value;
+    return `${import.meta.env.VITE_API_URL}/../uploads/homechefs/${value}`;
+  };
 
   const renderFileField = (fieldName, label, currentValue) => {
+    const previewUrl = getPreviewUrl(currentValue);
+    const showImagePreview = previewUrl && isImageField(fieldName);
+    const showVideoPreview = previewUrl && (fieldName === "introduction_video" || isVideoDataUrl(previewUrl));
+
     return (
       <div>
         <label className={lbl}>{label}</label>
@@ -544,15 +557,33 @@ const HomeChefManagement = () => {
             fieldName === "kitchen_photos" || fieldName === "kitchen_videos"
           }
         />
+
         {currentValue instanceof FileList && currentValue.length > 0 && (
           <p className="mt-1 text-xs text-slate-300">
             Selected file: {currentValue.length > 1 ? `${currentValue.length} files` : currentValue[0].name}
           </p>
         )}
+
+        {showImagePreview && (
+          <img
+            src={previewUrl}
+            alt={label}
+            className="mt-3 max-h-40 w-full object-contain rounded-xl border border-white/10"
+          />
+        )}
+
+        {showVideoPreview && (
+          <video
+            controls
+            className="mt-3 w-full max-h-56 rounded-xl border border-white/10 bg-slate-950"
+            src={previewUrl}
+          />
+        )}
+
         {currentValue && typeof currentValue === "string" && !isDataUrl(currentValue) && (
-          <div className="mt-1 text-xs">
+          <div className="mt-2 text-xs">
             <a
-              href={`${import.meta.env.VITE_API_URL}/../uploads/homechefs/${currentValue}`}
+              href={previewUrl}
               target="_blank"
               rel="noreferrer"
               className="text-emerald-400 hover:underline"
@@ -561,9 +592,10 @@ const HomeChefManagement = () => {
             </a>
           </div>
         )}
-        {currentValue && typeof currentValue === "string" && isDataUrl(currentValue) && (
+
+        {currentValue && typeof currentValue === "string" && isDataUrl(currentValue) && !isImageDataUrl(currentValue) && !isVideoDataUrl(currentValue) && (
           <p className="mt-1 text-xs text-emerald-400">
-            File is stored as Base64 and will be submitted as a Data URL.
+            Stored as Base64 Data URL
           </p>
         )}
       </div>
