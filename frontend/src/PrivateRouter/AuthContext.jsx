@@ -11,9 +11,14 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
+    const storedToken = localStorage.getItem("token");
 
     if (storedUser) {
       setUser(JSON.parse(storedUser));
+    }
+
+    if (!storedToken || storedToken === 'undefined' || storedToken === 'null') {
+      localStorage.removeItem("token");
     }
 
     setLoading(false);
@@ -22,7 +27,11 @@ export const AuthProvider = ({ children }) => {
   const login = (userData, token) => {
     setUser(userData);
     localStorage.setItem("user", JSON.stringify(userData));
-    localStorage.setItem("token", token);
+    if (token && token !== 'undefined' && token !== 'null') {
+      localStorage.setItem("token", token);
+    } else {
+      localStorage.removeItem("token");
+    }
   };
 
   const logout = () => {

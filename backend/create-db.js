@@ -922,18 +922,14 @@ async function createDatabaseAndTables() {
       id INT AUTO_INCREMENT PRIMARY KEY,
       franchise_id VARCHAR(255) NOT NULL UNIQUE DEFAULT (UUID()),
       franch_user_id VARCHAR(255) DEFAULT NULL,
-      user_id VARCHAR(255) DEFAULT NULL,
       franchise_name VARCHAR(255) NOT NULL,
       owner_name VARCHAR(255) NOT NULL,
-      mobile VARCHAR(50) NOT NULL,
+      mobile VARCHAR(50) NOT NULL UNIQUE,
       email VARCHAR(255) NOT NULL UNIQUE,
       city VARCHAR(100) NOT NULL,
-      state VARCHAR(100) NOT NULL,
-      commission_percentage DECIMAL(5,2) NOT NULL DEFAULT 10.00,
+      state VARCHAR(100) NOT NULL,    
       status VARCHAR(50) NOT NULL DEFAULT 'Pending',
-      pincode VARCHAR(20),
-      latitude VARCHAR(50),
-      longitude VARCHAR(50),
+      pincode VARCHAR(20), 
       map_link TEXT,
       username VARCHAR(255),
       role VARCHAR(50) DEFAULT 'Admin',
@@ -942,32 +938,31 @@ async function createDatabaseAndTables() {
       login_status VARCHAR(50) DEFAULT 'Active',
       aadhaar_url VARCHAR(255),
       pan_url VARCHAR(255),
-      gst_certificate_url VARCHAR(255),
-      fssai_license_url VARCHAR(255),
-      shop_license_url VARCHAR(255),
-      vehicle_rc_url VARCHAR(255),
-      driving_license_url VARCHAR(255),
       bank_passbook_url VARCHAR(255),
-      signature_url VARCHAR(255),
-      created_by_id INT DEFAULT NULL,
-      created_by_user_id VARCHAR(255) DEFAULT NULL,
-      created_by_name VARCHAR(255) DEFAULT NULL,
-      created_by_email VARCHAR(255) DEFAULT NULL,
-      created_by_phone VARCHAR(50) DEFAULT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      signature_url VARCHAR(255)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
   console.log('Franchise Owners table created or already exists');
 
-  await connection.execute("ALTER TABLE `franchise_owners` ADD COLUMN IF NOT EXISTS `user_id` VARCHAR(255) DEFAULT NULL");
-  await connection.execute("ALTER TABLE `franchise_owners` ADD COLUMN IF NOT EXISTS `created_by_id` INT DEFAULT NULL");
-  await connection.execute("ALTER TABLE `franchise_owners` ADD COLUMN IF NOT EXISTS `created_by_user_id` VARCHAR(255) DEFAULT NULL");
-  await connection.execute("ALTER TABLE `franchise_owners` ADD COLUMN IF NOT EXISTS `created_by_name` VARCHAR(255) DEFAULT NULL");
-  await connection.execute("ALTER TABLE `franchise_owners` ADD COLUMN IF NOT EXISTS `created_by_email` VARCHAR(255) DEFAULT NULL");
-  await connection.execute("ALTER TABLE `franchise_owners` ADD COLUMN IF NOT EXISTS `created_by_phone` VARCHAR(50) DEFAULT NULL");
-  await connection.execute("ALTER TABLE `franchise_owners` ADD COLUMN IF NOT EXISTS `aadhaar_number` VARCHAR(12) UNIQUE DEFAULT NULL");
-  await connection.execute("ALTER TABLE `franchise_owners` ADD COLUMN IF NOT EXISTS `pan_unique` VARCHAR(10) UNIQUE DEFAULT NULL");
-
+   await connection.execute("ALTER TABLE `franchise_owners` ADD COLUMN IF NOT EXISTS `aadhaar_number` VARCHAR(12) UNIQUE DEFAULT NULL");
+  
+  // Add UNIQUE constraints for mobile and pan_number
+  try {
+    await connection.execute("ALTER TABLE `franchise_owners` ADD UNIQUE INDEX idx_mobile (mobile)");
+  } catch (err) {
+    if (!err.message.includes('Duplicate entry')) {
+      console.log('UNIQUE constraint for mobile already exists or error:', err.message);
+    }
+  }
+  
+  try {
+    await connection.execute("ALTER TABLE `franchise_owners` ADD UNIQUE INDEX idx_pan_number (pan_number)");
+  } catch (err) {
+    if (!err.message.includes('Duplicate entry')) {
+      console.log('UNIQUE constraint for pan_number already exists or error:', err.message);
+    }
+  }
+  
   const [franColumns] = await connection.execute(
     "SELECT COUNT(*) AS count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'franchise_owners' AND COLUMN_NAME = 'logo_url'",
     [DB_NAME]
@@ -978,23 +973,19 @@ async function createDatabaseAndTables() {
       ALTER TABLE \`franchise_owners\`
       ADD COLUMN IF NOT EXISTS \`logo_url\` VARCHAR(255),
       ADD COLUMN IF NOT EXISTS \`banner_url\` VARCHAR(255),
-      ADD COLUMN IF NOT EXISTS \`business_registration_number\` VARCHAR(100),
-      ADD COLUMN IF NOT EXISTS \`gst_number\` VARCHAR(100),
-      ADD COLUMN IF NOT EXISTS \`pan_number\` VARCHAR(100),
+
+      ADD COLUMN IF NOT EXISTS \`pan_number\` VARCHAR(100) UNIQUE DEFAULT NULL,
       ADD COLUMN IF NOT EXISTS \`start_date\` DATE,
       ADD COLUMN IF NOT EXISTS \`expiry_date\` DATE,
       ADD COLUMN IF NOT EXISTS \`alt_mobile\` VARCHAR(50),
-      ADD COLUMN IF NOT EXISTS \`whatsapp_number\` VARCHAR(50),
-      ADD COLUMN IF NOT EXISTS \`website_url\` VARCHAR(255),
-      ADD COLUMN IF NOT EXISTS \`emergency_contact_number\` VARCHAR(50),
+     
       ADD COLUMN IF NOT EXISTS \`door_number\` VARCHAR(50),
       ADD COLUMN IF NOT EXISTS \`street_name\` VARCHAR(255),
       ADD COLUMN IF NOT EXISTS \`area\` VARCHAR(255),
       ADD COLUMN IF NOT EXISTS \`landmark\` VARCHAR(255),
       ADD COLUMN IF NOT EXISTS \`district\` VARCHAR(150),
       ADD COLUMN IF NOT EXISTS \`pincode\` VARCHAR(20),
-      ADD COLUMN IF NOT EXISTS \`latitude\` VARCHAR(50),
-      ADD COLUMN IF NOT EXISTS \`longitude\` VARCHAR(50),
+     
       ADD COLUMN IF NOT EXISTS \`map_link\` TEXT,
       ADD COLUMN IF NOT EXISTS \`username\` VARCHAR(255),
       ADD COLUMN IF NOT EXISTS \`role\` VARCHAR(50) DEFAULT 'Admin',
@@ -1003,11 +994,6 @@ async function createDatabaseAndTables() {
       ADD COLUMN IF NOT EXISTS \`login_status\` VARCHAR(50) DEFAULT 'Active',
       ADD COLUMN IF NOT EXISTS \`aadhaar_url\` VARCHAR(255),
       ADD COLUMN IF NOT EXISTS \`pan_url\` VARCHAR(255),
-      ADD COLUMN IF NOT EXISTS \`gst_certificate_url\` VARCHAR(255),
-      ADD COLUMN IF NOT EXISTS \`fssai_license_url\` VARCHAR(255),
-      ADD COLUMN IF NOT EXISTS \`shop_license_url\` VARCHAR(255),
-      ADD COLUMN IF NOT EXISTS \`vehicle_rc_url\` VARCHAR(255),
-      ADD COLUMN IF NOT EXISTS \`driving_license_url\` VARCHAR(255),
       ADD COLUMN IF NOT EXISTS \`bank_passbook_url\` VARCHAR(255),
       ADD COLUMN IF NOT EXISTS \`signature_url\` VARCHAR(255)
     `);

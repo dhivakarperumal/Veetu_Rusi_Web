@@ -14,7 +14,6 @@ const ITEMS_PER_PAGE = 8;
 const emptyForm = {
   // Basic Details
   franchise_name: "", owner_name: "", logo_url: "", banner_url: "",
-  business_registration_number: "", gst_number: "",
   start_date: "", expiry_date: "", status: "Pending",
 
   // Contact Details
@@ -23,23 +22,19 @@ const emptyForm = {
   
   // Address Details
   door_number: "", street_name: "", area: "", landmark: "",
-  city: "", district: "", state: "", pincode: "", latitude: "",
-  longitude: "", map_link: "",
+  city: "", district: "", state: "", pincode: "", map_link: "",
 
   // Login Details
   username: "", password: "", confirmPassword: "", role: "Admin",
   login_status: "Active",
 
   // KYC Documents
-  aadhaar_url: "", pan_url: "", gst_certificate_url: "",
+  aadhaar_url: "", pan_url: "",
   bank_passbook_url: "", signature_url: "",
   kyc_verification_status: "Pending",
   image_upload_status: "Pending",
   email_verified: false,
-  otp_verified: false,
-
-  // Other existing
-  commission_percentage: "10.00"
+  otp_verified: false
 };
 
 const FranchiseOwnerManagement = () => {
@@ -58,9 +53,6 @@ const FranchiseOwnerManagement = () => {
   const [linkedDeliveryPartnerCount, setLinkedDeliveryPartnerCount] = useState(0);
   const [linkedHomeChefs, setLinkedHomeChefs] = useState([]);
   const [linkedDeliveryPartners, setLinkedDeliveryPartners] = useState([]);
-
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Approve modal: holds the franchise being approved + password input
   const [approveModal, setApproveModal] = useState(null); // { franchise } | null
@@ -450,7 +442,6 @@ const FranchiseOwnerManagement = () => {
         email: franchise.email,
         city: franchise.city,
         state: franchise.state,
-        commission_percentage: franchise.commission_percentage,
         status: nextStatus
       };
       await api.put(`/superadmin/franchises/${franchise.id}`, updatedForm);
@@ -562,9 +553,6 @@ const FranchiseOwnerManagement = () => {
                     ? "bg-red-50 text-red-700 border border-red-200/50"
                     : "bg-amber-50 text-amber-700 border border-amber-200/50"
                 }`}>{viewDetailsFranchise.status}</span>
-              <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/50 px-3 py-1.5 rounded-lg">
-                {viewDetailsFranchise.commission_percentage}% Commission
-              </span>
             </div>
           </div>
 
@@ -665,12 +653,6 @@ const FranchiseOwnerManagement = () => {
                     <div className="space-y-1">
                       <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block">Franchise Name</span>
                       <span className="text-sm font-bold text-slate-800">{viewDetailsFranchise.franchise_name}</span>
-                    </div>
-                    <div className="space-y-1">
-                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block">Commission Rate</span>
-                      <span className="inline-flex items-center text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/50 px-2.5 py-1 rounded-md mt-0.5">
-                        {viewDetailsFranchise.commission_percentage}%
-                      </span>
                     </div>
                     <div className="space-y-1">
                       <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block">Territory Location</span>
@@ -1016,12 +998,6 @@ const FranchiseOwnerManagement = () => {
                           <span>{f.city}, {f.state}</span>
                         </div>
                       </td>
-                      {/* Commission */}
-                      <td className="px-5 py-4">
-                        <span className="inline-flex items-center text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/50 px-2.5 py-1 rounded-md">
-                          {f.commission_percentage}%
-                        </span>
-                      </td>
                       {/* Subscription */}
                       <td className="px-5 py-4">
                         <span className={`inline-flex items-center text-[10px] font-black px-2.5 py-1 rounded-md uppercase tracking-widest ${getSubscriptionLabel(f) === 'Trial'
@@ -1243,10 +1219,6 @@ const FranchiseOwnerManagement = () => {
                     <div>
                       <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Email Address</p>
                       <p className="text-xs font-semibold text-slate-700 mt-1 truncate" title={f.email}>{f.email}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Commission Rate</p>
-                      <p className="text-sm font-black text-emerald-700 mt-0.5">{f.commission_percentage}%</p>
                     </div>
                     <div>
                       <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Account Status</p>
@@ -1471,10 +1443,6 @@ const FranchiseOwnerManagement = () => {
                         <input type="file" accept="image/*" onChange={e => setForm({ ...form, banner_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Commission (%) *</label>
-                        <input type="number" step="0.01" required value={form.commission_percentage} onChange={e => setForm({ ...form, commission_percentage: e.target.value })} className={inputCls} />
-                      </div>
-                      <div className="space-y-1">
                         <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Start Date</label>
                         <input type="date" value={form.start_date} onChange={e => setForm({ ...form, start_date: e.target.value })} className={inputCls} />
                       </div>
@@ -1629,14 +1597,6 @@ const FranchiseOwnerManagement = () => {
                       <div className="space-y-1">
                         <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Pincode</label>
                         <input type="text" value={form.pincode} onChange={handlePincodeChange} placeholder="641001" className={inputCls} />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Latitude</label>
-                        <input type="text" value={form.latitude} onChange={e => setForm({ ...form, latitude: e.target.value })} placeholder="11.0168" className={inputCls} />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Longitude</label>
-                        <input type="text" value={form.longitude} onChange={e => setForm({ ...form, longitude: e.target.value })} placeholder="76.9558" className={inputCls} />
                       </div>
                       <div className="space-y-1 sm:col-span-2">
                         <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Google Map Link</label>

@@ -1,9 +1,9 @@
 const express = require('express');
 const cors = require('cors');
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const initDb = require('./create-db');
 
-const path = require('path');
 const authRouter = require('./src/routes/auth');
 const superadminRouter = require('./src/routes/superadmin');
 const subscriptionsRouter = require('./src/routes/subscriptions');
@@ -31,7 +31,14 @@ const deliveryRouter = require('./src/routes/delivery');
 const app = express();
 const port = process.env.PORT || 5000;
 
-app.use(cors());
+const corsOptions = {
+  origin: process.env.FRONTEND_ORIGIN || '*',
+  methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+};
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -78,7 +85,14 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-initDb().then(async () => {
+const startServer = async () => {
+  try {
+    await initDb();
+  } catch (err) {
+    console.error('Database initialization failed:', err);
+    console.error('Continuing to start the backend server in degraded mode. API calls will fail until the database is available.');
+  }
+
   try {
     await createProductsTable();
     await createFranchiseProductsTable();
@@ -136,7 +150,7 @@ initDb().then(async () => {
     }
     throw err;
   });
-  // Initialize Socket.IO for realtime notifications
+
   try {
     const { Server } = require('socket.io');
     const jwt = require('jsonwebtoken');
@@ -164,7 +178,6 @@ initDb().then(async () => {
     });
 
     io.on('connection', (socket) => {
-      // auto-join rooms based on authenticated user
       const uid = socket.user?.user_id || socket.user?.id;
       const role = socket.user?.role;
       if (uid) {
@@ -185,9 +198,10 @@ initDb().then(async () => {
   } catch (err) {
     console.error('Socket.IO init failed:', err.message || err);
   }
-}).catch((err) => {
-  console.error('Database initialization failed:', err);
-  process.exit(1);
+};
+
+startServer().catch((err) => {
+  console.error('Failed to start backend server:', err);
 });
 
 // Image generation proxy - do not expose your OpenAI key in frontend

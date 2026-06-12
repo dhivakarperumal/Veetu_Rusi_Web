@@ -1320,7 +1320,7 @@ exports.getFranchises = async (req, res) => {
     try { await pool.execute("ALTER TABLE franchise_owners MODIFY COLUMN franch_user_id VARCHAR(255) DEFAULT NULL"); } catch (_) {}
     try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS login_password VARCHAR(255) DEFAULT NULL"); } catch (_) {}
     await expireFranchiseSubscriptions();
-    const [rows] = await pool.execute("SELECT id, franchise_id, franch_user_id, franchise_name, owner_name, mobile, email, city, state, commission_percentage, status, start_date, expiry_date, territory_pincodes, created_at, login_password IS NOT NULL AS password_preset FROM franchise_owners ORDER BY created_at DESC");
+    const [rows] = await pool.execute("SELECT id, franchise_id, franch_user_id, franchise_name, owner_name, mobile, email, city, state, status, start_date, expiry_date, territory_pincodes, created_at, login_password IS NOT NULL AS password_preset FROM franchise_owners ORDER BY created_at DESC");
     res.json(rows);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving franchise owners.', error: error.message });
@@ -1348,14 +1348,12 @@ exports.createFranchise = async (req, res) => {
     try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS created_by_user_id VARCHAR(255) DEFAULT NULL"); } catch (_) {}
     try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS created_by_name VARCHAR(255) DEFAULT NULL"); } catch (_) {}
     try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS created_by_email VARCHAR(255) DEFAULT NULL"); } catch (_) {}
-    try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS created_by_phone VARCHAR(50) DEFAULT NULL"); } catch (_) {}
 
     const { 
-      franchise_name, owner_name, mobile, email, city, state, commission_percentage, status, password,
-      business_registration_number, gst_number, pan_number, start_date, expiry_date,
-      alt_mobile, whatsapp_number, website_url, emergency_contact_number,
+      franchise_name, owner_name, mobile, email, city, state, status, password,
+      pan_number, start_date, expiry_date,
       territory_pincodes, aadhaar_number,
-      door_number, street_name, area, landmark, district, pincode, latitude, longitude, map_link,
+      door_number, street_name, area, landmark, district, pincode, map_link,
       username, role, otp_verified, email_verified, login_status
     } = req.body;
 
@@ -1363,28 +1361,21 @@ exports.createFranchise = async (req, res) => {
     const banner_url = req.files && req.files.banner_url ? req.files.banner_url[0].filename : null;
     const aadhaar_url = req.files && req.files.aadhaar_url ? req.files.aadhaar_url[0].filename : null;
     const pan_url = req.files && req.files.pan_url ? req.files.pan_url[0].filename : null;
-    const gst_certificate_url = req.files && req.files.gst_certificate_url ? req.files.gst_certificate_url[0].filename : null;
-    const fssai_license_url = req.files && req.files.fssai_license_url ? req.files.fssai_license_url[0].filename : null;
-    const shop_license_url = req.files && req.files.shop_license_url ? req.files.shop_license_url[0].filename : null;
-    const vehicle_rc_url = req.files && req.files.vehicle_rc_url ? req.files.vehicle_rc_url[0].filename : null;
-    const driving_license_url = req.files && req.files.driving_license_url ? req.files.driving_license_url[0].filename : null;
     const bank_passbook_url = req.files && req.files.bank_passbook_url ? req.files.bank_passbook_url[0].filename : null;
     const signature_url = req.files && req.files.signature_url ? req.files.signature_url[0].filename : null;
 
     // Hash password if provided, else store null (will be auto-generated at approval)
     const hashedPw = password ? hashPassword(password) : null;
-    const plainPw  = password || null;
 
-    let created_by_id = null, created_by_user_id = null, created_by_name = null, created_by_email = null, created_by_phone = null;
+    let created_by_id = null, created_by_user_id = null, created_by_name = null, created_by_email = null;
     if (req.user && req.user.id) {
-      const [uRows] = await pool.execute('SELECT id, user_id, full_name AS name, email, mobile_number AS phone FROM users WHERE id = ?', [req.user.id]);
+      const [uRows] = await pool.execute('SELECT id, user_id, full_name AS name, email FROM users WHERE id = ?', [req.user.id]);
       if (uRows.length) {
         const cu = uRows[0];
         created_by_id = cu.id;
         created_by_user_id = cu.user_id || null;
         created_by_name = cu.name || null;
         created_by_email = cu.email || null;
-        created_by_phone = cu.phone || null;
       }
     }
 
@@ -1395,19 +1386,12 @@ exports.createFranchise = async (req, res) => {
       email,
       city,
       state,
-      commission_percentage: commission_percentage || 10.00,
       status: status || 'Pending',
       login_password: hashedPw,
-      business_registration_number: business_registration_number || null,
-      gst_number: gst_number || null,
       pan_number: pan_number || null,
       aadhaar_number: aadhaar_number || null,
       start_date: start_date || null,
       expiry_date: expiry_date || null,
-      alt_mobile: alt_mobile || null,
-      whatsapp_number: whatsapp_number || null,
-      website_url: website_url || null,
-      emergency_contact_number: emergency_contact_number || null,
       door_number: door_number || null,
       street_name: street_name || null,
       area: area || null,
@@ -1415,8 +1399,6 @@ exports.createFranchise = async (req, res) => {
       district: district || null,
       territory_pincodes: territory_pincodes || null,
       pincode: pincode || null,
-      latitude: latitude || null,
-      longitude: longitude || null,
       map_link: map_link || null,
       username: username || null,
       role: role || 'Admin',
@@ -1427,32 +1409,23 @@ exports.createFranchise = async (req, res) => {
       banner_url,
       aadhaar_url,
       pan_url,
-      gst_certificate_url,
-      fssai_license_url,
-      shop_license_url,
-      vehicle_rc_url,
-      driving_license_url,
       bank_passbook_url,
       signature_url,
       created_by_id,
       created_by_user_id,
       created_by_name,
-      created_by_email,
-      created_by_phone
+      created_by_email
     };
 
       // Filter out created_by fields that might not exist in older databases
       const safeInsertData = {};
       const allowedFields = [
         'franchise_name', 'owner_name', 'mobile', 'email', 'city', 'state',
-        'commission_percentage', 'status', 'login_password', 'business_registration_number',
-        'gst_number', 'pan_number', 'aadhaar_number', 'start_date', 'expiry_date', 'alt_mobile',
-        'whatsapp_number', 'website_url', 'emergency_contact_number', 'door_number',
-        'street_name', 'area', 'landmark', 'district', 'territory_pincodes', 'pincode',
-        'latitude', 'longitude', 'map_link', 'username', 'role', 'otp_verified',
+        'status', 'login_password', 'pan_number', 'aadhaar_number', 'start_date', 'expiry_date',
+        'door_number', 'street_name', 'area', 'landmark', 'district', 'territory_pincodes', 'pincode',
+        'map_link', 'username', 'role', 'otp_verified',
         'email_verified', 'login_status', 'logo_url', 'banner_url', 'aadhaar_url',
-        'pan_url', 'gst_certificate_url', 'fssai_license_url', 'shop_license_url',
-        'vehicle_rc_url', 'driving_license_url', 'bank_passbook_url', 'signature_url'
+        'pan_url', 'bank_passbook_url', 'signature_url'
       ];
     
       allowedFields.forEach(field => {
@@ -1466,7 +1439,6 @@ exports.createFranchise = async (req, res) => {
       if (created_by_user_id) safeInsertData.created_by_user_id = created_by_user_id;
       if (created_by_name) safeInsertData.created_by_name = created_by_name;
       if (created_by_email) safeInsertData.created_by_email = created_by_email;
-      if (created_by_phone) safeInsertData.created_by_phone = created_by_phone;
 
       // Build INSERT statement with column names
       const columns = Object.keys(safeInsertData);
@@ -1578,11 +1550,10 @@ exports.updateFranchise = async (req, res) => {
   try {
     const { id } = req.params;
     const { 
-      franchise_name, owner_name, mobile, email, city, state, commission_percentage, status,
-      business_registration_number, gst_number, pan_number, start_date, expiry_date,
-      alt_mobile, whatsapp_number, website_url, emergency_contact_number,
+      franchise_name, owner_name, mobile, email, city, state, status,
+      pan_number, start_date, expiry_date,
       territory_pincodes, aadhaar_number,
-      door_number, street_name, area, landmark, district, pincode, latitude, longitude, map_link,
+      door_number, street_name, area, landmark, district, pincode, map_link,
       username, role, otp_verified, email_verified, login_status
     } = req.body;
 
@@ -1597,26 +1568,19 @@ exports.updateFranchise = async (req, res) => {
     const banner_url = req.files && req.files.banner_url ? req.files.banner_url[0].filename : null;
     const aadhaar_url = req.files && req.files.aadhaar_url ? req.files.aadhaar_url[0].filename : null;
     const pan_url = req.files && req.files.pan_url ? req.files.pan_url[0].filename : null;
-    const gst_certificate_url = req.files && req.files.gst_certificate_url ? req.files.gst_certificate_url[0].filename : null;
-    const fssai_license_url = req.files && req.files.fssai_license_url ? req.files.fssai_license_url[0].filename : null;
-    const shop_license_url = req.files && req.files.shop_license_url ? req.files.shop_license_url[0].filename : null;
-    const vehicle_rc_url = req.files && req.files.vehicle_rc_url ? req.files.vehicle_rc_url[0].filename : null;
-    const driving_license_url = req.files && req.files.driving_license_url ? req.files.driving_license_url[0].filename : null;
     const bank_passbook_url = req.files && req.files.bank_passbook_url ? req.files.bank_passbook_url[0].filename : null;
     const signature_url = req.files && req.files.signature_url ? req.files.signature_url[0].filename : null;
 
     let query = `UPDATE franchise_owners SET 
-      franchise_name = ?, owner_name = ?, mobile = ?, email = ?, city = ?, state = ?, commission_percentage = ?, status = ?,
-      business_registration_number = ?, gst_number = ?, pan_number = ?, aadhaar_number = ?, start_date = ?, expiry_date = ?,
-      alt_mobile = ?, whatsapp_number = ?, website_url = ?, emergency_contact_number = ?,
-      door_number = ?, street_name = ?, area = ?, landmark = ?, district = ?, territory_pincodes = ?, pincode = ?, latitude = ?, longitude = ?, map_link = ?,
+      franchise_name = ?, owner_name = ?, mobile = ?, email = ?, city = ?, state = ?, status = ?,
+      pan_number = ?, aadhaar_number = ?, start_date = ?, expiry_date = ?,
+      door_number = ?, street_name = ?, area = ?, landmark = ?, district = ?, territory_pincodes = ?, pincode = ?, map_link = ?,
       username = ?, role = ?, otp_verified = ?, email_verified = ?, login_status = ?`;
 
     let params = [
-      franchise_name, owner_name, mobile, email, city, state, commission_percentage, status,
-      business_registration_number || null, gst_number || null, pan_number || null, aadhaar_number || null, start_date || null, expiry_date || null,
-      alt_mobile || null, whatsapp_number || null, website_url || null, emergency_contact_number || null,
-      door_number || null, street_name || null, area || null, landmark || null, district || null, territory_pincodes || null, pincode || null, latitude || null, longitude || null, map_link || null,
+      franchise_name, owner_name, mobile, email, city, state, status,
+      pan_number || null, aadhaar_number || null, start_date || null, expiry_date || null,
+      door_number || null, street_name || null, area || null, landmark || null, district || null, territory_pincodes || null, pincode || null, map_link || null,
       username || null, role || 'Admin', otp_verified !== undefined ? (otp_verified ? 1 : 0) : 0, email_verified !== undefined ? (email_verified ? 1 : 0) : 0, login_status || 'Active'
     ];
 
@@ -1624,11 +1588,6 @@ exports.updateFranchise = async (req, res) => {
     if (banner_url) { query += `, banner_url = ?`; params.push(banner_url); }
     if (aadhaar_url) { query += `, aadhaar_url = ?`; params.push(aadhaar_url); }
     if (pan_url) { query += `, pan_url = ?`; params.push(pan_url); }
-    if (gst_certificate_url) { query += `, gst_certificate_url = ?`; params.push(gst_certificate_url); }
-    if (fssai_license_url) { query += `, fssai_license_url = ?`; params.push(fssai_license_url); }
-    if (shop_license_url) { query += `, shop_license_url = ?`; params.push(shop_license_url); }
-    if (vehicle_rc_url) { query += `, vehicle_rc_url = ?`; params.push(vehicle_rc_url); }
-    if (driving_license_url) { query += `, driving_license_url = ?`; params.push(driving_license_url); }
     if (bank_passbook_url) { query += `, bank_passbook_url = ?`; params.push(bank_passbook_url); }
     if (signature_url) { query += `, signature_url = ?`; params.push(signature_url); }
 
