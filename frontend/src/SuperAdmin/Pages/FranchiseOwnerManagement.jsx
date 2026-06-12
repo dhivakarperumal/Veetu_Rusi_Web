@@ -196,6 +196,23 @@ const FranchiseOwnerManagement = () => {
 
   useEffect(() => { fetchFranchises(); }, []);
 
+  // Monitor editing state and populate form with properly formatted data
+  /* eslint-disable react-hooks/exhaustive-deps */
+  useEffect(() => {
+    if (editingFranchise && isModalOpen) {
+      console.log('Edit mode activated, form populated:', {
+        franchise_name: form.franchise_name,
+        start_date: form.start_date,
+        expiry_date: form.expiry_date,
+        logo_url: form.logo_url,
+        banner_url: form.banner_url,
+        aadhaar_url: form.aadhaar_url,
+        pan_url: form.pan_url
+      });
+    }
+  }, [editingFranchise, isModalOpen]);
+  /* eslint-enable react-hooks/exhaustive-deps */
+
   const fetchLinkedEntityCounts = async (franchise) => {
     if (!franchise) return;
     try {
@@ -353,16 +370,43 @@ const FranchiseOwnerManagement = () => {
       ? franchise.territory_pincodes.split(/\s*,\s*/).filter(Boolean)
       : franchise.territory_pincodes || [];
     const role = franchise.role === "Franchise Admin" ? "Admin" : franchise.role || "Admin";
-    setForm({
+    
+    // Format dates properly for HTML date inputs (YYYY-MM-DD)
+    const startDate = formatDateForInput(franchise.start_date);
+    const expiryDate = formatDateForInput(franchise.expiry_date);
+    
+    // Create form data with all fields from franchise, preserving image URLs from DB
+    const formData = {
       ...emptyForm,
       ...franchise,
+      start_date: startDate || "",
+      expiry_date: expiryDate || "",
       role,
       territory_pincodes,
       confirmPassword: "",
       email_verified: !!franchise.email_verified,
       otp_verified: !!franchise.otp_verified,
-      kyc_verification_status: franchise.kyc_verification_status || "Pending"
+      kyc_verification_status: franchise.kyc_verification_status || "Pending",
+      // Preserve existing file URLs from database (these are strings, not File objects)
+      logo_url: franchise.logo_url || "",
+      banner_url: franchise.banner_url || "",
+      aadhaar_url: franchise.aadhaar_url || "",
+      pan_url: franchise.pan_url || "",
+      bank_passbook_url: franchise.bank_passbook_url || "",
+      signature_url: franchise.signature_url || ""
+    };
+    
+    console.log('Loading franchise for edit:', {
+      franchise_name: franchise.franchise_name,
+      start_date: franchise.start_date,
+      formatted_start_date: startDate,
+      expiry_date: franchise.expiry_date,
+      formatted_expiry_date: expiryDate,
+      logo_url: franchise.logo_url,
+      banner_url: franchise.banner_url
     });
+    
+    setForm(formData);
     setPincodeEntry("");
     setActiveFormTab("basic");
     setIsModalOpen(true);
@@ -642,7 +686,61 @@ const FranchiseOwnerManagement = () => {
   const imageComplete = isLogoUploaded && isBannerUploaded;
   const getFileName = (file) => {
     if (!file) return "No file uploaded";
-    return typeof file === "string" ? file.split("/").pop() : file.name;
+    if (typeof file === "string") {
+      // Extract filename from URL path
+      const parts = file.split('/');
+      const filename = parts[parts.length - 1];
+      return filename && filename.length > 0 ? filename : file;
+    }
+    // It's a File object
+    return file.name || "File selected";
+  };
+
+  const formatDateForInput = (dateStr) => {
+    if (!dateStr) return "";
+    
+    // If already in YYYY-MM-DD format, return as-is
+    if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      return dateStr;
+    }
+    
+    let date;
+    
+    // Try parsing as ISO string or standard formats
+    if (typeof dateStr === 'string') {
+      // Remove time portion if present
+      const dateOnly = dateStr.split('T')[0] || dateStr.split(' ')[0];
+      date = new Date(dateOnly);
+    } else if (typeof dateStr === 'number') {
+      // Handle timestamp (milliseconds)
+      date = new Date(dateStr);
+    } else {
+      date = new Date(dateStr);
+    }
+    
+    if (isNaN(date.getTime())) {
+      console.warn('Invalid date format:', dateStr);
+      return "";
+    }
+    
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const getImageUrl = (imageField) => {
+    if (!imageField) return null;
+    if (typeof imageField === "string") {
+      // It's already a URL from the database
+      return imageField.startsWith("http") ? imageField : `/uploads/${imageField}`;
+    }
+    // It's a File object from upload
+    return URL.createObjectURL(imageField);
+  };
+
+  const isExistingFile = (fileField) => {
+    return typeof fileField === "string" && fileField.length > 0;
   };
 
   const inputCls = "w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-2xl outline-none font-medium text-slate-100 text-sm placeholder:text-slate-500 focus:bg-slate-800 focus:border-emerald-500/60 transition-all";
@@ -1596,11 +1694,47 @@ const FranchiseOwnerManagement = () => {
                       </div>
                       <div className="space-y-1">
                         <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Franchise Logo</label>
-                        <input type="file" accept="image/*" onChange={e => setForm({ ...form, logo_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
+                        <div className="space-y-2">
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            onChange={e => setForm({ ...form, logo_url: e.target.files[0] })} 
+                            className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} 
+                          />
+                          {getImageUrl(form.logo_url) && (
+                            <div className="rounded-lg border border-slate-700 overflow-hidden bg-slate-900 p-2">
+                              <img 
+                                src={getImageUrl(form.logo_url)} 
+                                alt="Logo preview" 
+                                className="w-full h-24 object-cover rounded" 
+                                onError={(e) => { e.target.style.display = 'none'; }}
+                              />
+                            </div>
+                          )}
+                          <p className="text-[9px] text-slate-500">{isExistingFile(form.logo_url) ? "✓ Existing file" : "New upload"}</p>
+                        </div>
                       </div>
                       <div className="space-y-1">
                         <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Franchise Banner Image</label>
-                        <input type="file" accept="image/*" onChange={e => setForm({ ...form, banner_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
+                        <div className="space-y-2">
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            onChange={e => setForm({ ...form, banner_url: e.target.files[0] })} 
+                            className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} 
+                          />
+                          {getImageUrl(form.banner_url) && (
+                            <div className="rounded-lg border border-slate-700 overflow-hidden bg-slate-900 p-2">
+                              <img 
+                                src={getImageUrl(form.banner_url)} 
+                                alt="Banner preview" 
+                                className="w-full h-24 object-cover rounded" 
+                                onError={(e) => { e.target.style.display = 'none'; }}
+                              />
+                            </div>
+                          )}
+                          <p className="text-[9px] text-slate-500">{isExistingFile(form.banner_url) ? "✓ Existing file" : "New upload"}</p>
+                        </div>
                       </div>
                       <div className="space-y-1">
                         <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Start Date</label>
@@ -2022,19 +2156,91 @@ const FranchiseOwnerManagement = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-1">
                         <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Aadhaar Card</label>
-                        <input type="file" accept="image/*,.pdf" onChange={e => setForm({ ...form, aadhaar_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
+                        <div className="space-y-2">
+                          <input 
+                            type="file" 
+                            accept="image/*,.pdf" 
+                            onChange={e => setForm({ ...form, aadhaar_url: e.target.files[0] })} 
+                            className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} 
+                          />
+                          {getImageUrl(form.aadhaar_url) && form.aadhaar_url && (typeof form.aadhaar_url === 'string' ? form.aadhaar_url.match(/\.(jpg|jpeg|png|gif)$/i) : true) && (
+                            <div className="rounded-lg border border-slate-700 overflow-hidden bg-slate-900 p-2">
+                              <img 
+                                src={getImageUrl(form.aadhaar_url)} 
+                                alt="Aadhaar preview" 
+                                className="w-full h-24 object-cover rounded" 
+                                onError={(e) => { e.target.style.display = 'none'; }}
+                              />
+                            </div>
+                          )}
+                          <p className="text-[9px] text-slate-500">{isExistingFile(form.aadhaar_url) ? "✓ Existing file" : "New upload"}</p>
+                        </div>
                       </div>
                       <div className="space-y-1">
                         <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">PAN Card</label>
-                        <input type="file" accept="image/*,.pdf" onChange={e => setForm({ ...form, pan_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
+                        <div className="space-y-2">
+                          <input 
+                            type="file" 
+                            accept="image/*,.pdf" 
+                            onChange={e => setForm({ ...form, pan_url: e.target.files[0] })} 
+                            className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} 
+                          />
+                          {getImageUrl(form.pan_url) && form.pan_url && (typeof form.pan_url === 'string' ? form.pan_url.match(/\.(jpg|jpeg|png|gif)$/i) : true) && (
+                            <div className="rounded-lg border border-slate-700 overflow-hidden bg-slate-900 p-2">
+                              <img 
+                                src={getImageUrl(form.pan_url)} 
+                                alt="PAN preview" 
+                                className="w-full h-24 object-cover rounded" 
+                                onError={(e) => { e.target.style.display = 'none'; }}
+                              />
+                            </div>
+                          )}
+                          <p className="text-[9px] text-slate-500">{isExistingFile(form.pan_url) ? "✓ Existing file" : "New upload"}</p>
+                        </div>
                       </div>
                       <div className="space-y-1">
                         <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Bank Passbook</label>
-                        <input type="file" accept="image/*,.pdf" onChange={e => setForm({ ...form, bank_passbook_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
+                        <div className="space-y-2">
+                          <input 
+                            type="file" 
+                            accept="image/*,.pdf" 
+                            onChange={e => setForm({ ...form, bank_passbook_url: e.target.files[0] })} 
+                            className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} 
+                          />
+                          {getImageUrl(form.bank_passbook_url) && form.bank_passbook_url && (typeof form.bank_passbook_url === 'string' ? form.bank_passbook_url.match(/\.(jpg|jpeg|png|gif)$/i) : true) && (
+                            <div className="rounded-lg border border-slate-700 overflow-hidden bg-slate-900 p-2">
+                              <img 
+                                src={getImageUrl(form.bank_passbook_url)} 
+                                alt="Passbook preview" 
+                                className="w-full h-24 object-cover rounded" 
+                                onError={(e) => { e.target.style.display = 'none'; }}
+                              />
+                            </div>
+                          )}
+                          <p className="text-[9px] text-slate-500">{isExistingFile(form.bank_passbook_url) ? "✓ Existing file" : "New upload"}</p>
+                        </div>
                       </div>
                       <div className="space-y-1">
                         <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Signature Image</label>
-                        <input type="file" accept="image/*" onChange={e => setForm({ ...form, signature_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
+                        <div className="space-y-2">
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            onChange={e => setForm({ ...form, signature_url: e.target.files[0] })} 
+                            className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} 
+                          />
+                          {getImageUrl(form.signature_url) && (
+                            <div className="rounded-lg border border-slate-700 overflow-hidden bg-slate-900 p-2">
+                              <img 
+                                src={getImageUrl(form.signature_url)} 
+                                alt="Signature preview" 
+                                className="w-full h-24 object-cover rounded" 
+                                onError={(e) => { e.target.style.display = 'none'; }}
+                              />
+                            </div>
+                          )}
+                          <p className="text-[9px] text-slate-500">{isExistingFile(form.signature_url) ? "✓ Existing file" : "New upload"}</p>
+                        </div>
                       </div>
                     </div>
                   </div>

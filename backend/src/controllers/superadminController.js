@@ -12,33 +12,63 @@ function normalizeBoolean(value) {
 }
 
 async function resolveCurrentUserAudit(req) {
-  if (!req.user) return null;
+  try {
+    if (!req.user) return null;
 
-  const candidateId = req.user.id || null;
-  const candidateUserId = req.user.user_id || null;
-  if (!candidateId && !candidateUserId) return null;
+    const candidateId = req.user.id || null;
+    const candidateUserId = req.user.user_id || null;
+    if (!candidateId && !candidateUserId) return null;
 
-  const [rows] = await pool.execute(
-    'SELECT id, user_id, full_name AS name, email FROM users WHERE id = ? OR user_id = ? LIMIT 1',
-    [candidateId, candidateUserId]
-  );
+    // Try to query with both possible column names for full name
+    let rows = [];
+    try {
+      const [result] = await pool.execute(
+        'SELECT id, user_id, full_name AS name, email FROM users WHERE (id = ? OR user_id = ?) LIMIT 1',
+        [candidateId, candidateUserId]
+      );
+      rows = result;
+    } catch (e) {
+      // Fallback: try with 'name' column instead of 'full_name'
+      try {
+        const [result] = await pool.execute(
+          'SELECT id, user_id, name, email FROM users WHERE (id = ? OR user_id = ?) LIMIT 1',
+          [candidateId, candidateUserId]
+        );
+        rows = result;
+      } catch (e2) {
+        // Users table might not exist or other issue - log it
+        console.warn('Could not query users table for audit data:', e2.message);
+        rows = [];
+      }
+    }
 
-  if (rows.length > 0) {
-    const user = rows[0];
+    if (rows.length > 0) {
+      const user = rows[0];
+      return {
+        id: user.id || null,
+        user_id: user.user_id || null,
+        name: user.name || null,
+        email: user.email || null,
+      };
+    }
+
+    // Fallback: use req.user data if available
     return {
-      id: user.id || null,
-      user_id: user.user_id || null,
-      name: user.name || null,
-      email: user.email || null,
+      id: candidateId,
+      user_id: candidateUserId,
+      name: req.user.name || req.user.full_name || req.user.username || null,
+      email: req.user.email || null,
+    };
+  } catch (error) {
+    console.error('Error in resolveCurrentUserAudit:', error);
+    // Return fallback with token values on error
+    return {
+      id: req.user?.id || null,
+      user_id: req.user?.user_id || null,
+      name: req.user?.name || req.user?.full_name || null,
+      email: req.user?.email || null,
     };
   }
-
-  return {
-    id: candidateId,
-    user_id: candidateUserId,
-    name: req.user.name || req.user.full_name || req.user.username || null,
-    email: req.user.email || null,
-  };
 }
 
 async function expireFranchiseSubscriptions() {
@@ -1350,7 +1380,21 @@ exports.getFranchises = async (req, res) => {
     try { await pool.execute("ALTER TABLE franchise_owners MODIFY COLUMN franch_user_id VARCHAR(255) DEFAULT NULL"); } catch (_) {}
     try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS login_password VARCHAR(255) DEFAULT NULL"); } catch (_) {}
     await expireFranchiseSubscriptions();
-    const [rows] = await pool.execute("SELECT id, franchise_id, franch_user_id, franchise_name, owner_name, mobile, email, city, state, status, start_date, expiry_date, territory_pincodes, created_at, login_password IS NOT NULL AS password_preset FROM franchise_owners ORDER BY created_at DESC");
+    // Select ALL columns needed for form editing and list display
+    const [rows] = await pool.execute(`
+      SELECT 
+        id, franchise_id, franch_user_id, franchise_name, owner_name, mobile, alt_mobile, email, 
+        city, state, district, pincode, status, 
+        start_date, expiry_date, territory_pincodes, 
+        logo_url, banner_url, aadhaar_url, pan_url, bank_passbook_url, signature_url,
+        aadhaar_number, pan_number, 
+        door_number, street_name, area, landmark, map_link,
+        bank_name, account_holder_name, account_number, ifsc_code, account_type,
+        username, role, login_status, email_verified, otp_verified, kyc_verification_status,
+        created_at, login_password IS NOT NULL AS password_preset 
+      FROM franchise_owners 
+      ORDER BY created_at DESC
+    `);
     res.json(rows);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving franchise owners.', error: error.message });
