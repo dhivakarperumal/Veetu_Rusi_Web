@@ -206,6 +206,28 @@ exports.getDashboardStats = async (req, res) => {
     const [[{ totalFranchises }]] = await pool.execute("SELECT COUNT(*) AS totalFranchises FROM franchise_owners");
     const [[{ expiredFranchises }]] = await pool.execute("SELECT COUNT(*) AS expiredFranchises FROM franchise_owners WHERE expiry_date IS NOT NULL AND expiry_date < CURDATE()");
     const [[{ expiringSoonFranchises }]] = await pool.execute("SELECT COUNT(*) AS expiringSoonFranchises FROM franchise_owners WHERE expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)");
+    // Additional subscription/payment summary values
+    const [[{ lastSubscriptionDate }]] = await pool.execute("SELECT MAX(start_date) AS lastSubscriptionDate FROM franchise_owners WHERE start_date IS NOT NULL");
+    const [[{ nextSubscriptionDue }]] = await pool.execute("SELECT MIN(expiry_date) AS nextSubscriptionDue FROM franchise_owners WHERE expiry_date > CURDATE()");
+    let lastPaymentDate = null;
+    try {
+      const [[{ lastPaymentDate: lpd }]] = await pool.execute(
+        `SELECT MAX(d) AS lastPaymentDate FROM (
+           SELECT ordered_date AS d FROM Chef_Order WHERE (LOWER(payment_status) = 'paid' OR LOWER(payment_status) = 'success' OR payment_method LIKE '%razorpay%')
+           UNION ALL
+           SELECT created_at AS d FROM subscription_payments
+         ) t`
+      );
+      lastPaymentDate = lpd || null;
+    } catch (err) {
+      // subscription_payments may not exist yet; fall back to last paid order
+      try {
+        const [[{ lastPaymentDate: lpd2 }]] = await pool.execute("SELECT MAX(ordered_date) AS lastPaymentDate FROM Chef_Order WHERE (LOWER(payment_status) = 'paid' OR LOWER(payment_status) = 'success' OR payment_method LIKE '%razorpay%')");
+        lastPaymentDate = lpd2 || null;
+      } catch (err2) {
+        lastPaymentDate = null;
+      }
+    }
 
     // 2. Mock or computed historical analytics data for charts (recharts)
     // In a fully populated DB, we can query orders grouped by date/status.
@@ -238,6 +260,15 @@ exports.getDashboardStats = async (req, res) => {
       { name: 'Week 4', customers: 450, chefs: 30, partners: 45 }
     ];
 
+    // Also include subscription payments sum if available
+    let subscriptionRevenue = 0;
+    try {
+      const [[{ subscriptionRevenue: sr }]] = await pool.execute("SELECT COALESCE(SUM(amount),0) AS subscriptionRevenue FROM subscription_payments");
+      subscriptionRevenue = parseFloat(sr) || 0;
+    } catch (err) {
+      subscriptionRevenue = 0;
+    }
+
     res.json({
       cards: {
         totalUsers,
@@ -245,13 +276,19 @@ exports.getDashboardStats = async (req, res) => {
         totalHomeChefs,
         totalDeliveryPartners,
         totalOrders,
-        totalRevenue: parseFloat(totalRevenue),
+        // combine order revenue + subscription revenue
+        totalRevenue: parseFloat(totalRevenue) + subscriptionRevenue,
         pendingApprovals,
         activeFranchises,
         totalFranchises,
         expiredFranchises,
-        expiringSoonFranchises
+        expiringSoonFranchises,
+        subscriptionRevenue
       },
+      // Dates (may be null)
+      lastSubscriptionDate: lastSubscriptionDate || null,
+      lastPaymentDate: lastPaymentDate || null,
+      nextSubscriptionDue: nextSubscriptionDue || null,
       charts: {
         dailyOrders,
         revenueAnalytics,
@@ -1438,14 +1475,9 @@ exports.createFranchise = async (req, res) => {
     const hashedPw = password ? hashPassword(password) : null;
     const plainPw = password || null;
 
-    let created_by_id = null, created_by_user_id = null, created_by_name = null, created_by_email = null;
+    // Get current user for audit trail
     const auditUser = await resolveCurrentUserAudit(req);
-    if (auditUser) {
-      created_by_id = auditUser.id;
-      created_by_user_id = auditUser.user_id;
-      created_by_name = auditUser.name;
-      created_by_email = auditUser.email;
-    }
+    const createdBy = auditUser ? auditUser.user_id : null;
 
     const insertData = {
       franchise_name,
@@ -1484,13 +1516,10 @@ exports.createFranchise = async (req, res) => {
       account_number: account_number || null,
       ifsc_code: ifsc_code || null,
       account_type: account_type || null,
-      created_by_id,
-      created_by_user_id,
-      created_by_name,
-      created_by_email
+      created_by: createdBy
     };
 
-      // Filter out created_by fields that might not exist in older databases
+      // Filter out fields that might not exist in older databases
       const safeInsertData = {};
       const allowedFields = [
         'franchise_name', 'owner_name', 'mobile', 'email', 'city', 'state',
@@ -1499,7 +1528,8 @@ exports.createFranchise = async (req, res) => {
         'map_link', 'username', 'role', 'otp_verified',
         'email_verified', 'login_status', 'logo_url', 'banner_url', 'aadhaar_url',
         'pan_url', 'bank_passbook_url', 'signature_url',
-        'bank_name', 'account_holder_name', 'account_number', 'ifsc_code', 'account_type'
+        'bank_name', 'account_holder_name', 'account_number', 'ifsc_code', 'account_type',
+        'created_by'
       ];
     
       allowedFields.forEach(field => {
@@ -1507,12 +1537,6 @@ exports.createFranchise = async (req, res) => {
           safeInsertData[field] = insertData[field];
         }
       });
-    
-      // Try to add created_by fields, but don't fail if they don't exist
-      if (created_by_id) safeInsertData.created_by_id = created_by_id;
-      if (created_by_user_id) safeInsertData.created_by_user_id = created_by_user_id;
-      if (created_by_name) safeInsertData.created_by_name = created_by_name;
-      if (created_by_email) safeInsertData.created_by_email = created_by_email;
 
       // Build INSERT statement with column names
       const columns = Object.keys(safeInsertData);
@@ -1599,10 +1623,14 @@ exports.approveFranchise = async (req, res) => {
       userId = created[0].user_id;
     }
 
-    // Update franchise: Active + link UUID + update login_password
+    // Get current user for audit trail
+    const auditUser = await resolveCurrentUserAudit(req);
+    const createdBy = auditUser ? auditUser.user_id : null;
+
+    // Update franchise: Active + link UUID + update login_password + audit trail
     await pool.execute(
-      "UPDATE franchise_owners SET status = 'Active', franch_user_id = ?, login_password = ?, start_date = ?, expiry_date = ? WHERE id = ?",
-      [userId, hashedPw, defaultStartDate, defaultExpiryDate, id]
+      "UPDATE franchise_owners SET status = 'Active', franch_user_id = ?, login_password = ?, start_date = ?, expiry_date = ?, created_by = ? WHERE id = ?",
+      [userId, hashedPw, defaultStartDate, defaultExpiryDate, createdBy, id]
     );
 
     return res.json({
@@ -1639,20 +1667,9 @@ exports.updateFranchise = async (req, res) => {
     const oldEmail = existingFranchiseRows[0].email;
     const franchiseUserId = existingFranchiseRows[0].franch_user_id;
 
-    // Ensure updated_by columns exist (safe migration)
-    try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS updated_by_id INT DEFAULT NULL"); } catch (_) {}
-    try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS updated_by_user_id VARCHAR(255) DEFAULT NULL"); } catch (_) {}
-    try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS updated_by_name VARCHAR(255) DEFAULT NULL"); } catch (_) {}
-    try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS updated_by_email VARCHAR(255) DEFAULT NULL"); } catch (_) {}
-
-    let updated_by_id = null, updated_by_user_id = null, updated_by_name = null, updated_by_email = null;
+    // Get current user for audit trail
     const auditUser = await resolveCurrentUserAudit(req);
-    if (auditUser) {
-      updated_by_id = auditUser.id;
-      updated_by_user_id = auditUser.user_id;
-      updated_by_name = auditUser.name;
-      updated_by_email = auditUser.email;
-    }
+    const updatedBy = auditUser ? auditUser.user_id : null;
 
     const logo_url = req.files && req.files.logo_url ? req.files.logo_url[0].filename : null;
     const banner_url = req.files && req.files.banner_url ? req.files.banner_url[0].filename : null;
@@ -1683,8 +1700,8 @@ exports.updateFranchise = async (req, res) => {
     if (bank_passbook_url) { query += `, bank_passbook_url = ?`; params.push(bank_passbook_url); }
     if (signature_url) { query += `, signature_url = ?`; params.push(signature_url); }
 
-    query += `, updated_by_id = ?, updated_by_user_id = ?, updated_by_name = ?, updated_by_email = ? WHERE id = ?`;
-    params.push(updated_by_id, updated_by_user_id, updated_by_name, updated_by_email, id);
+    query += `, updated_by = ? WHERE id = ?`;
+    params.push(updatedBy, id);
 
     await pool.execute(query, params);
 

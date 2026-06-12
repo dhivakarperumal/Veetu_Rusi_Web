@@ -108,29 +108,64 @@ router.post('/confirm', async (req, res) => {
       if (generated !== razorpay_signature) return res.status(400).json({ message: 'Invalid signature' });
     }
 
-    // Activate subscription in DB
+    // Activate or renew subscription in DB
     const [rows] = await pool.execute('SELECT * FROM subscription_plans WHERE id = ?', [planId]);
     if (rows.length === 0) return res.status(404).json({ message: 'Plan not found' });
     const plan = rows[0];
 
-    const startDate = new Date();
-    const expiryDate = new Date(startDate.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
+    const [franchiseRows] = await pool.execute('SELECT start_date, expiry_date, status FROM franchise_owners WHERE id = ? LIMIT 1', [franchiseId]);
+    const franchise = franchiseRows[0] || {};
+    const now = new Date();
+    let startDate = now;
+    let expiryDate = new Date(now.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
+
+    if (franchise.expiry_date) {
+      const currentExpiry = new Date(franchise.expiry_date);
+      if (!isNaN(currentExpiry.getTime()) && currentExpiry > now) {
+        startDate = currentExpiry;
+        expiryDate = new Date(currentExpiry.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
+      }
+    }
 
     await pool.execute("UPDATE franchise_owners SET status = 'Active', start_date = ?, expiry_date = ? WHERE id = ?", [
       startDate.toISOString().slice(0,10), expiryDate.toISOString().slice(0,10), franchiseId
     ]);
 
-    const [[franchise]] = await pool.execute('SELECT email, franch_user_id FROM franchise_owners WHERE id = ? LIMIT 1', [franchiseId]);
-    if (franchise) {
+    // Ensure a subscription_payments table exists and record this payment (for reporting)
+    try {
+      await pool.execute(`
+        CREATE TABLE IF NOT EXISTS subscription_payments (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          franchise_id INT,
+          plan_id VARCHAR(100),
+          amount DECIMAL(10,2),
+          currency VARCHAR(10),
+          payment_id VARCHAR(255),
+          razorpay_order_id VARCHAR(255),
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+
+      const paymentId = razorpay_payment_id || `TEST_${Date.now()}`;
+      await pool.execute(
+        'INSERT INTO subscription_payments (franchise_id, plan_id, amount, currency, payment_id, razorpay_order_id) VALUES (?, ?, ?, ?, ?, ?)',
+        [franchiseId, plan.id, plan.amount, plan.currency || 'INR', paymentId, razorpay_order_id || null]
+      );
+    } catch (err) {
+      console.error('Failed to record subscription payment:', err);
+    }
+
+    const [[franchiseUser]] = await pool.execute('SELECT email, franch_user_id FROM franchise_owners WHERE id = ? LIMIT 1', [franchiseId]);
+    if (franchiseUser) {
       const conditions = [];
       const params = [];
-      if (franchise.email) {
+      if (franchiseUser.email) {
         conditions.push('email = ?');
-        params.push(franchise.email);
+        params.push(franchiseUser.email);
       }
-      if (franchise.franch_user_id) {
+      if (franchiseUser.franch_user_id) {
         conditions.push('user_id = ?');
-        params.push(franchise.franch_user_id);
+        params.push(franchiseUser.franch_user_id);
       }
       if (conditions.length > 0) {
         await pool.execute(`UPDATE users SET status = 'Active' WHERE ${conditions.join(' OR ')}`, params);

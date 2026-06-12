@@ -1257,6 +1257,10 @@ const FranchiseOwnerManagement = () => {
                           <span>{f.city}, {f.state}</span>
                         </div>
                       </td>
+                      {/* Commission */}
+                      <td className="px-5 py-4 text-sm font-semibold text-slate-600">
+                        <span className="text-sm font-bold text-slate-700">{f.commission ?? '-'}</span>
+                      </td>
                       {/* Subscription */}
                       <td className="px-5 py-4">
                         <span className={`inline-flex items-center text-[10px] font-black px-2.5 py-1 rounded-md uppercase tracking-widest ${getSubscriptionLabel(f) === 'Trial'

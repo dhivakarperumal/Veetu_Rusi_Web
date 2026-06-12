@@ -1027,14 +1027,10 @@ async function createDatabaseAndTables() {
     { name: 'account_number', type: 'VARCHAR(20)' },
     { name: 'ifsc_code', type: 'VARCHAR(11)' },
     { name: 'account_type', type: 'VARCHAR(50)' },
-    { name: 'created_by_id', type: 'INT DEFAULT NULL' },
-    { name: 'created_by_user_id', type: 'VARCHAR(255)' },
-    { name: 'created_by_name', type: 'VARCHAR(255)' },
-    { name: 'created_by_email', type: 'VARCHAR(255)' },
-    { name: 'updated_by_id', type: 'INT DEFAULT NULL' },
-    { name: 'updated_by_user_id', type: 'VARCHAR(255)' },
-    { name: 'updated_by_name', type: 'VARCHAR(255)' },
-    { name: 'updated_by_email', type: 'VARCHAR(255)' }
+    // audit columns are handled centrally by migrations.ensureAuditColumns
+    // compact `created_by` and `updated_by` are added elsewhere; avoid adding verbose audit columns here
+    // (previously: created_by_id, created_by_user_id, created_by_name, created_by_email,
+    // updated_by_id, updated_by_user_id, updated_by_name, updated_by_email)
   ];
 
   for (const col of missingColumns) {
@@ -1047,6 +1043,16 @@ async function createDatabaseAndTables() {
       console.log(`Added ${col.name} column to franchise_owners table`);
     }
   }
+
+  // Ensure old verbose audit columns are removed from franchise_owners (keep only compact created_by / updated_by)
+  try { await connection.execute("ALTER TABLE `franchise_owners` DROP COLUMN IF EXISTS `created_by_id`"); } catch (e) {}
+  try { await connection.execute("ALTER TABLE `franchise_owners` DROP COLUMN IF EXISTS `created_by_user_id`"); } catch (e) {}
+  try { await connection.execute("ALTER TABLE `franchise_owners` DROP COLUMN IF EXISTS `created_by_name`"); } catch (e) {}
+  try { await connection.execute("ALTER TABLE `franchise_owners` DROP COLUMN IF EXISTS `created_by_email`"); } catch (e) {}
+  try { await connection.execute("ALTER TABLE `franchise_owners` DROP COLUMN IF EXISTS `updated_by_id`"); } catch (e) {}
+  try { await connection.execute("ALTER TABLE `franchise_owners` DROP COLUMN IF EXISTS `updated_by_user_id`"); } catch (e) {}
+  try { await connection.execute("ALTER TABLE `franchise_owners` DROP COLUMN IF EXISTS `updated_by_name`"); } catch (e) {}
+  try { await connection.execute("ALTER TABLE `franchise_owners` DROP COLUMN IF EXISTS `updated_by_email`"); } catch (e) {}
 
   await connection.execute(`
     CREATE TABLE IF NOT EXISTS \`commissions\` (
