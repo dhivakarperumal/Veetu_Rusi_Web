@@ -24,13 +24,17 @@ const emptyForm = {
   door_number: "", street_name: "", area: "", landmark: "",
   city: "", district: "", state: "", pincode: "", map_link: "",
 
+  // Bank Account Details
+  bank_name: "", account_holder_name: "", account_number: "", 
+  ifsc_code: "", account_type: "Savings", bank_passbook_url: "",
+
   // Login Details
   username: "", password: "", confirmPassword: "", role: "Admin",
   login_status: "Active",
 
   // KYC Documents
   aadhaar_url: "", pan_url: "",
-  bank_passbook_url: "", signature_url: "",
+  signature_url: "",
   kyc_verification_status: "Pending",
   image_upload_status: "Pending",
   email_verified: false,
@@ -77,6 +81,7 @@ const FranchiseOwnerManagement = () => {
     { id: "basic", label: "Basic Info", description: "Owner and franchise details" },
     { id: "contact", label: "Contact", description: "Phone, email and territory" },
     { id: "address", label: "Address", description: "Location and map details" },
+    { id: "bank", label: "Bank Account", description: "Banking and payment details" },
     { id: "login", label: "Login & Auth", description: "Credential and access settings" },
     { id: "kyc", label: "KYC & Docs", description: "Verification documents and status" },
   ];
@@ -273,37 +278,12 @@ const FranchiseOwnerManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!editingFranchise && form.password !== form.confirmPassword) {
-      toast.error("Passwords do not match.");
+    
+    // Run comprehensive validation
+    if (!validateFormData()) {
       return;
     }
-    if (!editingFranchise) {
-      if (!form.email_verified) {
-        toast.error("Check 'Email Verified' in KYC tab before registering.");
-        setActiveFormTab("kyc");
-        return;
-      }
-      if (!form.otp_verified) {
-        toast.error("Check 'Mobile OTP Verified' in KYC tab before registering.");
-        setActiveFormTab("kyc");
-        return;
-      }
-      if (form.kyc_verification_status !== "Verified") {
-        toast.error("Mark KYC as Verified in the KYC tab before adding the franchise.");
-        setActiveFormTab("kyc");
-        return;
-      }
-      if (!form.aadhaar_url || !form.pan_url) {
-        toast.error("Upload Aadhaar and PAN documents to complete KYC.");
-        setActiveFormTab("kyc");
-        return;
-      }
-      if (!form.logo_url || !form.banner_url) {
-        toast.error("Upload both franchise logo and banner before registering.");
-        setActiveFormTab("basic");
-        return;
-      }
-    }
+
     try {
       const submitForm = {
         ...form,
@@ -465,6 +445,186 @@ const FranchiseOwnerManagement = () => {
     setEditingFranchise(null);
     setForm(emptyForm);
     setActiveFormTab("basic");
+  };
+
+  // Validation helper functions
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validatePhone = (phone) => {
+    const phoneRegex = /^[\d\s+\-()]{10,15}$/;
+    return phoneRegex.test(phone.replace(/\s/g, ""));
+  };
+
+  const validateAadhaar = (aadhaar) => {
+    return /^\d{12}$/.test(aadhaar);
+  };
+
+  const validatePAN = (pan) => {
+    return /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(pan.toUpperCase());
+  };
+
+  const validateIFSC = (ifsc) => {
+    return /^[A-Z]{4}[0-9A-Z]{7}$/.test(ifsc.toUpperCase());
+  };
+
+  const validateAccountNumber = (accountNumber) => {
+    return /^\d{9,18}$/.test(accountNumber.replace(/\s/g, ""));
+  };
+
+  const validatePincode = (pincode) => {
+    return /^\d{6}$/.test(pincode);
+  };
+
+  // Main form validation
+  const validateFormData = () => {
+    // Basic Info validation
+    if (!form.franchise_name.trim()) {
+      toast.error("Franchise name is required.");
+      setActiveFormTab("basic");
+      return false;
+    }
+    if (!form.owner_name.trim()) {
+      toast.error("Owner name is required.");
+      setActiveFormTab("basic");
+      return false;
+    }
+    if (!editingFranchise && (!form.logo_url || !form.banner_url)) {
+      toast.error("Upload both franchise logo and banner.");
+      setActiveFormTab("basic");
+      return false;
+    }
+
+    // Contact Info validation
+    if (!form.mobile.trim()) {
+      toast.error("Mobile number is required.");
+      setActiveFormTab("contact");
+      return false;
+    }
+    if (!validatePhone(form.mobile)) {
+      toast.error("Invalid mobile number format.");
+      setActiveFormTab("contact");
+      return false;
+    }
+    if (!validateAadhaar(form.aadhaar_number)) {
+      toast.error("Aadhaar must be 12 digits.");
+      setActiveFormTab("contact");
+      return false;
+    }
+    if (!validatePAN(form.pan_number)) {
+      toast.error("Invalid PAN format (e.g., ABCDE1234F).");
+      setActiveFormTab("contact");
+      return false;
+    }
+    if (form.territory_pincodes.length === 0) {
+      toast.error("Add at least one territory pincode.");
+      setActiveFormTab("contact");
+      return false;
+    }
+
+    // Address validation
+    if (!form.city.trim()) {
+      toast.error("City is required.");
+      setActiveFormTab("address");
+      return false;
+    }
+    if (!form.state.trim()) {
+      toast.error("State is required.");
+      setActiveFormTab("address");
+      return false;
+    }
+    if (form.pincode && !validatePincode(form.pincode)) {
+      toast.error("Pincode must be 6 digits.");
+      setActiveFormTab("address");
+      return false;
+    }
+
+    // Bank Account validation
+    if (!form.bank_name.trim()) {
+      toast.error("Bank name is required.");
+      setActiveFormTab("bank");
+      return false;
+    }
+    if (!form.account_holder_name.trim()) {
+      toast.error("Account holder name is required.");
+      setActiveFormTab("bank");
+      return false;
+    }
+    if (!validateAccountNumber(form.account_number)) {
+      toast.error("Account number must be 9-18 digits.");
+      setActiveFormTab("bank");
+      return false;
+    }
+    if (!validateIFSC(form.ifsc_code)) {
+      toast.error("Invalid IFSC code format (e.g., SBIN0001234).");
+      setActiveFormTab("bank");
+      return false;
+    }
+    if (!form.account_type.trim()) {
+      toast.error("Account type is required.");
+      setActiveFormTab("bank");
+      return false;
+    }
+    if (!editingFranchise && !form.bank_passbook_url) {
+      toast.error("Upload bank passbook document.");
+      setActiveFormTab("bank");
+      return false;
+    }
+
+    // Login validation (only for new franchises)
+    if (!editingFranchise) {
+      if (!form.email.trim()) {
+        toast.error("Email is required.");
+        setActiveFormTab("login");
+        return false;
+      }
+      if (!validateEmail(form.email)) {
+        toast.error("Invalid email format.");
+        setActiveFormTab("login");
+        return false;
+      }
+      if (!form.username.trim()) {
+        toast.error("Username is required.");
+        setActiveFormTab("login");
+        return false;
+      }
+      if (!form.password || form.password.length < 6) {
+        toast.error("Password must be at least 6 characters.");
+        setActiveFormTab("login");
+        return false;
+      }
+      if (form.password !== form.confirmPassword) {
+        toast.error("Passwords do not match.");
+        setActiveFormTab("login");
+        return false;
+      }
+    }
+
+    // KYC validation
+    if (!form.email_verified) {
+      toast.error("Email must be verified in KYC tab.");
+      setActiveFormTab("kyc");
+      return false;
+    }
+    if (!form.otp_verified) {
+      toast.error("Mobile OTP must be verified in KYC tab.");
+      setActiveFormTab("kyc");
+      return false;
+    }
+    if (form.kyc_verification_status !== "Verified") {
+      toast.error("KYC must be verified before registration.");
+      setActiveFormTab("kyc");
+      return false;
+    }
+    if (!form.aadhaar_url || !form.pan_url) {
+      toast.error("Upload Aadhaar and PAN documents.");
+      setActiveFormTab("kyc");
+      return false;
+    }
+
+    return true;
   };
 
   const finalizeKycVerification = () => {
@@ -1601,6 +1761,115 @@ const FranchiseOwnerManagement = () => {
                       <div className="space-y-1 sm:col-span-2">
                         <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Google Map Link</label>
                         <input type="url" value={form.map_link} onChange={e => setForm({ ...form, map_link: e.target.value })} placeholder="https://maps.app.goo.gl/..." className={inputCls} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Bank Account Details */}
+                {activeFormTab === "bank" && (
+                  <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 shadow-lg shadow-slate-950/20 animate-in fade-in zoom-in-95 duration-200">
+                    <p className="text-xs text-emerald-300 uppercase tracking-[0.25em] font-black mb-5">Bank Account Details</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Bank Name *</label>
+                        <input 
+                          type="text" 
+                          required 
+                          value={form.bank_name} 
+                          onChange={e => setForm({ ...form, bank_name: e.target.value })} 
+                          placeholder="e.g. State Bank of India" 
+                          className={inputCls} 
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Account Holder Name *</label>
+                        <input 
+                          type="text" 
+                          required 
+                          value={form.account_holder_name} 
+                          onChange={e => setForm({ ...form, account_holder_name: e.target.value })} 
+                          placeholder="Name as per bank" 
+                          className={inputCls} 
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Account Number *</label>
+                        <input 
+                          type="text" 
+                          required 
+                          value={form.account_number} 
+                          onChange={e => setForm({ ...form, account_number: e.target.value.replace(/\D/g, '') })} 
+                          placeholder="9-18 digits" 
+                          maxLength="18"
+                          className={inputCls} 
+                        />
+                        <p className="text-[9px] text-slate-400 mt-1">9 to 18 digit account number</p>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">IFSC Code *</label>
+                        <input 
+                          type="text" 
+                          required 
+                          value={form.ifsc_code} 
+                          onChange={e => setForm({ ...form, ifsc_code: e.target.value.toUpperCase() })} 
+                          placeholder="e.g. SBIN0001234" 
+                          maxLength="11"
+                          className={inputCls} 
+                        />
+                        <p className="text-[9px] text-slate-400 mt-1">4 letters + 7 alphanumeric characters</p>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Account Type *</label>
+                        <select 
+                          required 
+                          value={form.account_type} 
+                          onChange={e => setForm({ ...form, account_type: e.target.value })} 
+                          className={inputCls}
+                        >
+                          <option value="Savings">Savings</option>
+                          <option value="Current">Current</option>
+                          <option value="Business">Business</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Bank Passbook / Statement</label>
+                        <input 
+                          type="file" 
+                          accept="image/*,.pdf" 
+                          onChange={e => setForm({ ...form, bank_passbook_url: e.target.files[0] })} 
+                          className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} 
+                        />
+                      </div>
+                    </div>
+
+                    {/* Validation Status */}
+                    <div className="mt-6 p-4 rounded-2xl border border-slate-700 bg-slate-900 space-y-3">
+                      <p className="text-xs text-amber-300 uppercase tracking-[0.28em] font-black">Bank Details Validation</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px]">
+                        <div className="flex items-center justify-between rounded-xl bg-slate-950 px-3 py-2 border border-slate-800">
+                          <span className="text-slate-400">Bank Name</span>
+                          <span className={form.bank_name ? "text-emerald-400 font-bold" : "text-slate-500"}>{form.bank_name ? "✓" : "—"}</span>
+                        </div>
+                        <div className="flex items-center justify-between rounded-xl bg-slate-950 px-3 py-2 border border-slate-800">
+                          <span className="text-slate-400">Account Number</span>
+                          <span className={validateAccountNumber(form.account_number) ? "text-emerald-400 font-bold" : "text-slate-500"}>
+                            {validateAccountNumber(form.account_number) ? "✓" : "—"}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between rounded-xl bg-slate-950 px-3 py-2 border border-slate-800">
+                          <span className="text-slate-400">IFSC Code</span>
+                          <span className={validateIFSC(form.ifsc_code) ? "text-emerald-400 font-bold" : "text-slate-500"}>
+                            {validateIFSC(form.ifsc_code) ? "✓" : "—"}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between rounded-xl bg-slate-950 px-3 py-2 border border-slate-800">
+                          <span className="text-slate-400">Passbook</span>
+                          <span className={form.bank_passbook_url ? "text-emerald-400 font-bold" : "text-slate-500"}>
+                            {form.bank_passbook_url ? "Uploaded" : "—"}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>

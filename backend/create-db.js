@@ -1021,7 +1021,20 @@ async function createDatabaseAndTables() {
     { name: 'landmark', type: 'VARCHAR(255)' },
     { name: 'district', type: 'VARCHAR(150)' },
     { name: 'logo_url', type: 'VARCHAR(255)' },
-    { name: 'banner_url', type: 'VARCHAR(255)' }
+    { name: 'banner_url', type: 'VARCHAR(255)' },
+    { name: 'bank_name', type: 'VARCHAR(255)' },
+    { name: 'account_holder_name', type: 'VARCHAR(255)' },
+    { name: 'account_number', type: 'VARCHAR(20)' },
+    { name: 'ifsc_code', type: 'VARCHAR(11)' },
+    { name: 'account_type', type: 'VARCHAR(50)' },
+    { name: 'created_by_id', type: 'INT DEFAULT NULL' },
+    { name: 'created_by_user_id', type: 'VARCHAR(255)' },
+    { name: 'created_by_name', type: 'VARCHAR(255)' },
+    { name: 'created_by_email', type: 'VARCHAR(255)' },
+    { name: 'updated_by_id', type: 'INT DEFAULT NULL' },
+    { name: 'updated_by_user_id', type: 'VARCHAR(255)' },
+    { name: 'updated_by_name', type: 'VARCHAR(255)' },
+    { name: 'updated_by_email', type: 'VARCHAR(255)' }
   ];
 
   for (const col of missingColumns) {

@@ -11,6 +11,36 @@ function normalizeBoolean(value) {
   return value === true || value === 'true' || value === '1' || value === 1 || value === 'on';
 }
 
+async function resolveCurrentUserAudit(req) {
+  if (!req.user) return null;
+
+  const candidateId = req.user.id || null;
+  const candidateUserId = req.user.user_id || null;
+  if (!candidateId && !candidateUserId) return null;
+
+  const [rows] = await pool.execute(
+    'SELECT id, user_id, full_name AS name, email FROM users WHERE id = ? OR user_id = ? LIMIT 1',
+    [candidateId, candidateUserId]
+  );
+
+  if (rows.length > 0) {
+    const user = rows[0];
+    return {
+      id: user.id || null,
+      user_id: user.user_id || null,
+      name: user.name || null,
+      email: user.email || null,
+    };
+  }
+
+  return {
+    id: candidateId,
+    user_id: candidateUserId,
+    name: req.user.name || req.user.full_name || req.user.username || null,
+    email: req.user.email || null,
+  };
+}
+
 async function expireFranchiseSubscriptions() {
   try {
     const today = new Date();
@@ -1348,13 +1378,21 @@ exports.createFranchise = async (req, res) => {
     try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS created_by_user_id VARCHAR(255) DEFAULT NULL"); } catch (_) {}
     try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS created_by_name VARCHAR(255) DEFAULT NULL"); } catch (_) {}
     try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS created_by_email VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+    
+    // Ensure bank columns exist (safe migration)
+    try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS bank_name VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS account_holder_name VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS account_number VARCHAR(20) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS ifsc_code VARCHAR(11) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS account_type VARCHAR(50) DEFAULT NULL"); } catch (_) {}
 
     const { 
       franchise_name, owner_name, mobile, email, city, state, status, password,
       pan_number, start_date, expiry_date,
       territory_pincodes, aadhaar_number,
       door_number, street_name, area, landmark, district, pincode, map_link,
-      username, role, otp_verified, email_verified, login_status
+      username, role, otp_verified, email_verified, login_status,
+      bank_name, account_holder_name, account_number, ifsc_code, account_type
     } = req.body;
 
     const logo_url = req.files && req.files.logo_url ? req.files.logo_url[0].filename : null;
@@ -1366,17 +1404,15 @@ exports.createFranchise = async (req, res) => {
 
     // Hash password if provided, else store null (will be auto-generated at approval)
     const hashedPw = password ? hashPassword(password) : null;
+    const plainPw = password || null;
 
     let created_by_id = null, created_by_user_id = null, created_by_name = null, created_by_email = null;
-    if (req.user && req.user.id) {
-      const [uRows] = await pool.execute('SELECT id, user_id, full_name AS name, email FROM users WHERE id = ?', [req.user.id]);
-      if (uRows.length) {
-        const cu = uRows[0];
-        created_by_id = cu.id;
-        created_by_user_id = cu.user_id || null;
-        created_by_name = cu.name || null;
-        created_by_email = cu.email || null;
-      }
+    const auditUser = await resolveCurrentUserAudit(req);
+    if (auditUser) {
+      created_by_id = auditUser.id;
+      created_by_user_id = auditUser.user_id;
+      created_by_name = auditUser.name;
+      created_by_email = auditUser.email;
     }
 
     const insertData = {
@@ -1411,6 +1447,11 @@ exports.createFranchise = async (req, res) => {
       pan_url,
       bank_passbook_url,
       signature_url,
+      bank_name: bank_name || null,
+      account_holder_name: account_holder_name || null,
+      account_number: account_number || null,
+      ifsc_code: ifsc_code || null,
+      account_type: account_type || null,
       created_by_id,
       created_by_user_id,
       created_by_name,
@@ -1425,7 +1466,8 @@ exports.createFranchise = async (req, res) => {
         'door_number', 'street_name', 'area', 'landmark', 'district', 'territory_pincodes', 'pincode',
         'map_link', 'username', 'role', 'otp_verified',
         'email_verified', 'login_status', 'logo_url', 'banner_url', 'aadhaar_url',
-        'pan_url', 'bank_passbook_url', 'signature_url'
+        'pan_url', 'bank_passbook_url', 'signature_url',
+        'bank_name', 'account_holder_name', 'account_number', 'ifsc_code', 'account_type'
       ];
     
       allowedFields.forEach(field => {
@@ -1554,7 +1596,8 @@ exports.updateFranchise = async (req, res) => {
       pan_number, start_date, expiry_date,
       territory_pincodes, aadhaar_number,
       door_number, street_name, area, landmark, district, pincode, map_link,
-      username, role, otp_verified, email_verified, login_status
+      username, role, otp_verified, email_verified, login_status,
+      bank_name, account_holder_name, account_number, ifsc_code, account_type
     } = req.body;
 
     const [existingFranchiseRows] = await pool.execute('SELECT email, franch_user_id FROM franchise_owners WHERE id = ?', [id]);
@@ -1563,6 +1606,21 @@ exports.updateFranchise = async (req, res) => {
     }
     const oldEmail = existingFranchiseRows[0].email;
     const franchiseUserId = existingFranchiseRows[0].franch_user_id;
+
+    // Ensure updated_by columns exist (safe migration)
+    try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS updated_by_id INT DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS updated_by_user_id VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS updated_by_name VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS updated_by_email VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+
+    let updated_by_id = null, updated_by_user_id = null, updated_by_name = null, updated_by_email = null;
+    const auditUser = await resolveCurrentUserAudit(req);
+    if (auditUser) {
+      updated_by_id = auditUser.id;
+      updated_by_user_id = auditUser.user_id;
+      updated_by_name = auditUser.name;
+      updated_by_email = auditUser.email;
+    }
 
     const logo_url = req.files && req.files.logo_url ? req.files.logo_url[0].filename : null;
     const banner_url = req.files && req.files.banner_url ? req.files.banner_url[0].filename : null;
@@ -1575,13 +1633,15 @@ exports.updateFranchise = async (req, res) => {
       franchise_name = ?, owner_name = ?, mobile = ?, email = ?, city = ?, state = ?, status = ?,
       pan_number = ?, aadhaar_number = ?, start_date = ?, expiry_date = ?,
       door_number = ?, street_name = ?, area = ?, landmark = ?, district = ?, territory_pincodes = ?, pincode = ?, map_link = ?,
-      username = ?, role = ?, otp_verified = ?, email_verified = ?, login_status = ?`;
+      username = ?, role = ?, otp_verified = ?, email_verified = ?, login_status = ?,
+      bank_name = ?, account_holder_name = ?, account_number = ?, ifsc_code = ?, account_type = ?`;
 
     let params = [
       franchise_name, owner_name, mobile, email, city, state, status,
       pan_number || null, aadhaar_number || null, start_date || null, expiry_date || null,
       door_number || null, street_name || null, area || null, landmark || null, district || null, territory_pincodes || null, pincode || null, map_link || null,
-      username || null, role || 'Admin', otp_verified !== undefined ? (otp_verified ? 1 : 0) : 0, email_verified !== undefined ? (email_verified ? 1 : 0) : 0, login_status || 'Active'
+      username || null, role || 'Admin', otp_verified !== undefined ? (otp_verified ? 1 : 0) : 0, email_verified !== undefined ? (email_verified ? 1 : 0) : 0, login_status || 'Active',
+      bank_name || null, account_holder_name || null, account_number || null, ifsc_code || null, account_type || null
     ];
 
     if (logo_url) { query += `, logo_url = ?`; params.push(logo_url); }
@@ -1591,8 +1651,8 @@ exports.updateFranchise = async (req, res) => {
     if (bank_passbook_url) { query += `, bank_passbook_url = ?`; params.push(bank_passbook_url); }
     if (signature_url) { query += `, signature_url = ?`; params.push(signature_url); }
 
-    query += ` WHERE id = ?`;
-    params.push(id);
+    query += `, updated_by_id = ?, updated_by_user_id = ?, updated_by_name = ?, updated_by_email = ? WHERE id = ?`;
+    params.push(updated_by_id, updated_by_user_id, updated_by_name, updated_by_email, id);
 
     await pool.execute(query, params);
 
