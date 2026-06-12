@@ -1380,21 +1380,9 @@ exports.getFranchises = async (req, res) => {
     try { await pool.execute("ALTER TABLE franchise_owners MODIFY COLUMN franch_user_id VARCHAR(255) DEFAULT NULL"); } catch (_) {}
     try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS login_password VARCHAR(255) DEFAULT NULL"); } catch (_) {}
     await expireFranchiseSubscriptions();
-    // Select ALL columns needed for form editing and list display
-    const [rows] = await pool.execute(`
-      SELECT 
-        id, franchise_id, franch_user_id, franchise_name, owner_name, mobile, alt_mobile, email, 
-        city, state, district, pincode, status, 
-        start_date, expiry_date, territory_pincodes, 
-        logo_url, banner_url, aadhaar_url, pan_url, bank_passbook_url, signature_url,
-        aadhaar_number, pan_number, 
-        door_number, street_name, area, landmark, map_link,
-        bank_name, account_holder_name, account_number, ifsc_code, account_type,
-        username, role, login_status, email_verified, otp_verified, kyc_verification_status,
-        created_at, login_password IS NOT NULL AS password_preset 
-      FROM franchise_owners 
-      ORDER BY created_at DESC
-    `);
+    // Use SELECT * here to avoid runtime errors when some columns are missing
+    // (safer for deployments with partial migrations). Frontend will pick needed fields.
+    const [rows] = await pool.execute(`SELECT * FROM franchise_owners ORDER BY created_at DESC`);
     res.json(rows);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving franchise owners.', error: error.message });

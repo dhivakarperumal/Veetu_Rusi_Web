@@ -49,6 +49,7 @@ const FranchiseOwnerManagement = () => {
   const [statusFilter, setStatusFilter] = useState("All");
   const [viewMode, setViewMode] = useState("table");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalLoading, setModalLoading] = useState(false);
   const [editingFranchise, setEditingFranchise] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [viewDetailsFranchise, setViewDetailsFranchise] = useState(null);
@@ -364,52 +365,52 @@ const FranchiseOwnerManagement = () => {
     } finally { setApprovingId(null); }
   };
 
-  const handleEdit = (franchise) => {
-    setEditingFranchise(franchise);
-    const territory_pincodes = typeof franchise.territory_pincodes === "string"
-      ? franchise.territory_pincodes.split(/\s*,\s*/).filter(Boolean)
-      : franchise.territory_pincodes || [];
-    const role = franchise.role === "Franchise Admin" ? "Admin" : franchise.role || "Admin";
-    
-    // Format dates properly for HTML date inputs (YYYY-MM-DD)
-    const startDate = formatDateForInput(franchise.start_date);
-    const expiryDate = formatDateForInput(franchise.expiry_date);
-    
-    // Create form data with all fields from franchise, preserving image URLs from DB
-    const formData = {
-      ...emptyForm,
-      ...franchise,
-      start_date: startDate || "",
-      expiry_date: expiryDate || "",
-      role,
-      territory_pincodes,
-      confirmPassword: "",
-      email_verified: !!franchise.email_verified,
-      otp_verified: !!franchise.otp_verified,
-      kyc_verification_status: franchise.kyc_verification_status || "Pending",
-      // Preserve existing file URLs from database (these are strings, not File objects)
-      logo_url: franchise.logo_url || "",
-      banner_url: franchise.banner_url || "",
-      aadhaar_url: franchise.aadhaar_url || "",
-      pan_url: franchise.pan_url || "",
-      bank_passbook_url: franchise.bank_passbook_url || "",
-      signature_url: franchise.signature_url || ""
-    };
-    
-    console.log('Loading franchise for edit:', {
-      franchise_name: franchise.franchise_name,
-      start_date: franchise.start_date,
-      formatted_start_date: startDate,
-      expiry_date: franchise.expiry_date,
-      formatted_expiry_date: expiryDate,
-      logo_url: franchise.logo_url,
-      banner_url: franchise.banner_url
-    });
-    
-    setForm(formData);
-    setPincodeEntry("");
-    setActiveFormTab("basic");
-    setIsModalOpen(true);
+  const handleEdit = async (franchise) => {
+    try {
+      setModalLoading(true);
+      setEditingFranchise(franchise);
+
+      // Fetch full record from backend to ensure images and all fields are present
+      const res = await api.get(`/superadmin/franchises/${franchise.id}`);
+      const full = res.data;
+
+      const territory_pincodes = typeof full.territory_pincodes === "string"
+        ? full.territory_pincodes.split(/\s*,\s*/).filter(Boolean)
+        : full.territory_pincodes || [];
+      const role = full.role === "Franchise Admin" ? "Admin" : full.role || "Admin";
+
+      const startDate = formatDateForInput(full.start_date);
+      const expiryDate = formatDateForInput(full.expiry_date);
+
+      const formData = {
+        ...emptyForm,
+        ...full,
+        start_date: startDate || "",
+        expiry_date: expiryDate || "",
+        role,
+        territory_pincodes,
+        confirmPassword: "",
+        email_verified: !!full.email_verified,
+        otp_verified: !!full.otp_verified,
+        kyc_verification_status: full.kyc_verification_status || "Pending",
+        logo_url: full.logo_url || "",
+        banner_url: full.banner_url || "",
+        aadhaar_url: full.aadhaar_url || "",
+        pan_url: full.pan_url || "",
+        bank_passbook_url: full.bank_passbook_url || "",
+        signature_url: full.signature_url || ""
+      };
+
+      setForm(formData);
+      setPincodeEntry("");
+      setActiveFormTab("basic");
+      setIsModalOpen(true);
+    } catch (err) {
+      console.error('Failed to load franchise for edit:', err);
+      toast.error(err?.response?.data?.message || 'Failed to load franchise details.');
+    } finally {
+      setModalLoading(false);
+    }
   };
 
   const addTerritoryPincode = async () => {
@@ -1592,6 +1593,11 @@ const FranchiseOwnerManagement = () => {
       {isModalOpen && createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
+          {modalLoading && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center">
+              <div className="rounded-xl bg-slate-900/90 text-white px-6 py-4 shadow-lg">Loading franchise details…</div>
+            </div>
+          )}
           <form onSubmit={handleSubmit} ref={formRef} className="border border-white/10 w-full max-w-6xl rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden grid lg:grid-cols-[320px_1fr] max-h-[95vh] h-full bg-slate-950 text-slate-100">
             <div className="hidden lg:flex flex-col gap-6 p-6 bg-slate-950 border-r border-slate-800 overflow-y-auto min-h-0 h-full">
               <div>
