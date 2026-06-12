@@ -946,23 +946,6 @@ async function createDatabaseAndTables() {
 
    await connection.execute("ALTER TABLE `franchise_owners` ADD COLUMN IF NOT EXISTS `aadhaar_number` VARCHAR(12) UNIQUE DEFAULT NULL");
   
-  // Add UNIQUE constraints for mobile and pan_number
-  try {
-    await connection.execute("ALTER TABLE `franchise_owners` ADD UNIQUE INDEX idx_mobile (mobile)");
-  } catch (err) {
-    if (!err.message.includes('Duplicate entry')) {
-      console.log('UNIQUE constraint for mobile already exists or error:', err.message);
-    }
-  }
-  
-  try {
-    await connection.execute("ALTER TABLE `franchise_owners` ADD UNIQUE INDEX idx_pan_number (pan_number)");
-  } catch (err) {
-    if (!err.message.includes('Duplicate entry')) {
-      console.log('UNIQUE constraint for pan_number already exists or error:', err.message);
-    }
-  }
-  
   const [franColumns] = await connection.execute(
     "SELECT COUNT(*) AS count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'franchise_owners' AND COLUMN_NAME = 'logo_url'",
     [DB_NAME]
