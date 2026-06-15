@@ -84,61 +84,52 @@ const ProductCard = ({ product }) => {
     <>
       <div
         onClick={handleClick}
-        className="relative bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition duration-300 group cursor-pointer"
+        className="group bg-white rounded-3xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 cursor-pointer border border-gray-100"
       >
-        {/* Icons */}
+        {/* Image Section */}
         <div
-          className="absolute top-3 right-3 flex flex-col gap-4 z-20"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div
-            onClick={() => toggleWishlist(product)}
-            className={`bg-primary rounded-full p-2 shadow-sm transition duration-300 ${isInWishlist
-                ? "text-red-500 scale-110"
-                : "text-white hover:bg-primary-light"
-              }`}
-          >
-            <FiHeart
-              className={`text-lg ${isInWishlist ? "fill-current" : ""}`}
-            />
-          </div>
-
-          {/* <div
-            onClick={() => addToCart(product)}
-            className="bg-primary rounded-full p-2 shadow hover:bg-primary-light text-white transition duration-300"
-          >
-            <FiPlus className="text-lg" />
-          </div> */}
-
-          <div
-            onClick={handleShare}
-            className="bg-primary rounded-full p-2 shadow-sm hover:bg-primary-light text-white transition duration-300"
-          >
-            <FiShare2 className="text-lg text-white" />
-          </div>
-
-          <div
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowQR(true);
-            }}
-            className="bg-primary rounded-full p-2 shadow-sm hover:bg-primary-light text-white transition duration-300"
-          >
-            <BsQrCode className="text-lg text-white" />
-          </div>
-        </div>
-
-        {/* Image */}
-        <div
-          className="relative h-80 overflow-hidden"
+          className="relative h-[300px] overflow-hidden"
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
         >
-          {/* Default Image */}
+          {/* Action Icons */}
+          <div
+            className="absolute top-4 right-4 flex flex-col gap-3 z-20"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => toggleWishlist(product)}
+              className={`w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center transition-all duration-300 ${isInWishlist
+                  ? "text-red-500 scale-110"
+                  : "text-gray-700 hover:text-primary"
+                }`}
+            >
+              <FiHeart className={`${isInWishlist ? "fill-current" : ""}`} />
+            </button>
+
+            <button
+              onClick={handleShare}
+              className="w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center text-gray-700 hover:text-primary transition-all"
+            >
+              <FiShare2 />
+            </button>
+
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowQR(true);
+              }}
+              className="w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center text-gray-700 hover:text-primary transition-all"
+            >
+              <BsQrCode />
+            </button>
+          </div>
+
+          {/* Main Image */}
           <img
             src={images[0]}
             alt={product?.name}
-            className={`absolute w-full h-full object-cover transition-opacity duration-700 ${hovered && images[1] ? "opacity-0" : "opacity-100"
+            className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 group-hover:scale-110 ${hovered && images[1] ? "opacity-0" : "opacity-100"
               }`}
           />
 
@@ -147,60 +138,69 @@ const ProductCard = ({ product }) => {
             <img
               src={images[1]}
               alt={product?.name}
-              className={`absolute w-full h-full object-cover transition-opacity duration-700 ${hovered ? "opacity-100" : "opacity-0"
+              className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 group-hover:scale-110 ${hovered ? "opacity-100" : "opacity-0"
                 }`}
             />
           )}
 
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setQuickView(true);
-            }}
-            className="absolute bottom-3 right-3 bg-primary text-white p-2 rounded-full shadow-md hover:bg-primary-light cursor-pointer"
-          >
-            <FiPlus className="text-lg" />
-          </button>
-
+          {/* Discount Badge */}
           {product?.offer && (
-            <span className="absolute top-3 left-3 bg-primary text-white text-xs px-3 py-1 rounded-full">
-              {Math.floor(product.offer)}% OFF
-            </span>
+            <div className="absolute bottom-4 left-4">
+              <span className="bg-primary text-white text-xs font-semibold px-4 py-2 rounded-full shadow-lg">
+                {Math.floor(product.offer)}% OFF
+              </span>
+            </div>
           )}
         </div>
 
         {/* Content */}
-        <div className="p-4">
-          <h2 className="font-semibold text-gray-800 line-clamp-1">
+        <div className="p-5">
+          {/* Product Name */}
+          <h3 className="text-lg font-bold text-gray-800 line-clamp-1">
             {product?.name}
-          </h2>
+          </h3>
 
           {/* Rating */}
-          <div className="flex items-center gap-1 mt-1">
+          <div className="flex items-center gap-1 mt-2">
             {[...Array(5)].map((_, i) => (
               <FaStar
                 key={i}
-                className={`text-xs ${i < Math.round(product?.rating || 0)
+                className={`text-sm ${i < Math.round(product?.rating || 0)
                     ? "text-yellow-400"
                     : "text-gray-300"
                   }`}
               />
             ))}
+
+            <span className="text-sm text-gray-500 ml-1">
+              ({product?.rating || "0.0"})
+            </span>
           </div>
 
           {/* Price */}
-          <div className="flex items-center mt-2">
-            <div className="flex items-center gap-3">
-              <span className="text-primary font-bold text-lg">
-                ₹{product?.offer_price || product?.price}
-              </span>
+          <div className="flex items-center gap-3 mt-4">
+            <span className="text-2xl font-bold text-primary">
+              ₹{product?.offer_price || product?.price}
+            </span>
 
-              {product?.mrp && (
-                <span className="text-gray-400 line-through text-sm">
-                  ₹{product?.mrp}
-                </span>
-              )}
-            </div>
+            {product?.mrp && (
+              <span className="text-gray-400 line-through">
+                ₹{product?.mrp}
+              </span>
+            )}
+          </div>
+
+          {/* Buttons */}
+          <div className="grid grid-cols-1 gap-3 mt-5">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setQuickView(true);
+              }}
+              className="w-full py-3 rounded-xl border border-primary text-primary font-medium hover:bg-primary hover:text-white transition-all duration-300"
+            >
+              Quick View
+            </button>
           </div>
         </div>
       </div>
