@@ -86,7 +86,7 @@ const QuickViewModal = ({ product, onClose }) => {
       <div
         className="relative bg-white w-full max-w-5xl rounded-3xl shadow-xl 
   overflow-y-auto md:overflow-hidden 
-  max-h-[95vh] flex flex-col"
+  max-h-[95vh] flex flex-col p-2"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}
@@ -150,8 +150,8 @@ const QuickViewModal = ({ product, onClose }) => {
                         setImgIndex(i);
                       }}
                       className={`w-24 h-24 rounded-xl object-cover cursor-pointer shrink-0 border-2 transition-all ${selectedImage === img
-                          ? "border-green-600 shadow-md"
-                          : "border-gray-200 hover:border-gray-300"
+                        ? "border-green-600 shadow-md"
+                        : "border-gray-200 hover:border-gray-300"
                         }`}
                     />
                   ))}
@@ -227,8 +227,8 @@ const QuickViewModal = ({ product, onClose }) => {
                           );
                         }}
                         className={`w-16 h-16 rounded-xl object-cover cursor-pointer border-2 ${selectedVariant?.color === variant.color
-                            ? "border-primary"
-                            : "border-gray-200"
+                          ? "border-primary"
+                          : "border-gray-200"
                           }`}
                       />
                     ))}
@@ -271,8 +271,8 @@ const QuickViewModal = ({ product, onClose }) => {
                                   setSelectedSize(size)
                                 }
                                 className={`px-4 py-2 rounded-xl ${selectedSize === size
-                                    ? "bg-primary text-white"
-                                    : "bg-gray-100"
+                                  ? "bg-primary text-white"
+                                  : "bg-gray-100"
                                   }`}
                               >
                                 {size}
@@ -377,8 +377,8 @@ const QuickViewModal = ({ product, onClose }) => {
                 <button
                   onClick={() => toggleWishlist(product)}
                   className={`p-3 rounded-xl border ${isInWishlist
-                      ? "text-red-500 border-red-300"
-                      : "border-gray-200"
+                    ? "text-red-500 border-red-300"
+                    : "border-gray-200"
                     }`}
                 >
                   <FiHeart
