@@ -6,13 +6,13 @@ import Heading from "../Heading";
 const AboutBrand = () => {
   return (
     <section className="py-24">
-        
+
       <PageContainer>
         <Heading
-  title="About Us"
-/>
+          title="About Us"
+        />
         <div className="grid lg:grid-cols-2 gap-20 items-center">
-          
+
           <div className="relative">
             <div className="absolute -top-10 -left-10 w-40 h-40 bg-red-100 rounded-full blur-3xl opacity-60 animate-subtle-float" />
 

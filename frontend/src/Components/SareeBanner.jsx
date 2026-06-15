@@ -7,23 +7,23 @@ export default function SareeBanner() {
   const sareeCategories = [
     {
       id: 1,
-      name: "Silk Sarees",
-      image: "/SareeBanner/subh_(147).jpg",
+      name: "South Indian",
+      image: "/assets/a1.jpg",
     },
     {
       id: 2,
-      name: "Wedding Sarees",
-      image: "/SareeBanner/subh_(180).jpg",
+      name: "North Indian",
+      image: "/assets/a2.jpg",
     },
     {
       id: 3,
-      name: "Designer Sarees",
-      image: "/SareeBanner/subh_(462).jpg",
+      name: "Delicious Sweets",
+      image: "/assets/a3.jpg",
     },
     {
       id: 4,
-      name: "Party Wear",
-      image: "/SareeBanner/subh_(569).jpg",
+      name: "Delicious Meals",
+      image: "/assets/a4.jpg",
     },
   ];
 
