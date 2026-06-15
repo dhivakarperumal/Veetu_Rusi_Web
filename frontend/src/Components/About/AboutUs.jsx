@@ -26,30 +26,42 @@ export default function AboutUs() {
                             />
                             {/* Floating UI Element */}
                             <div className="absolute -bottom-10 -right-6 md:-right-10 p-6 rounded-2xl shadow-xl z-20 max-w-[240px] bg-white/70 backdrop-blur-xl border border-white/30">
-                                <p className="font-playfair text-primary-dark text-xl font-bold mb-1">True Artistry</p>
-                                <p className="font-outfit text-xs text-gray-500 leading-relaxed uppercase tracking-widest">Every thread tells a story of a thousand hands.</p>
-                            </div>
+                                <p className="font-playfair text-primary-dark text-xl font-bold mb-1">
+                                    Taste of Home
+                                </p>
+                                <p className="font-outfit text-xs text-gray-500 leading-relaxed uppercase tracking-widest">
+                                    Freshly cooked meals made with love, delivered with care.
+                                </p>                            </div>
                         </div>
 
                         <div className="space-y-8">
                             <span className="font-outfit text-primary-dark font-bold uppercase tracking-widest text-sm">
-                                Our Philosophy
+                                Bringing Homemade Goodness to Every Doorstep
                             </span>
                             <h2 className="font-playfair text-4xl md:text-6xl text-stone-900 leading-[1.1]">
-                                Weaving dreams into <br />
-                                <em className="text-primary-light">timeless silhouettes</em>
+                                Freshly prepared <br />
+                                <em className="text-primary-light"> lovingly served</em>
                             </h2>
                             <p className="font-outfit text-gray-600 leading-[1.8] text-lg max-w-xl">
-                                At the heart of our craft lies a passion for preserving the ancient arts. We don't just sell sarees; we curate heritage. Each piece is meticulously hand-woven by master artisans who have inherited centuries of wisdom.
+                                At Veetu Rusi, we believe food should taste just like home. Our mission is to connect customers with passionate home chefs who prepare fresh, authentic meals using quality ingredients and traditional recipes. Every order supports local culinary talent while delivering wholesome food straight to your doorstep.
                             </p>
                             <div className="grid grid-cols-2 gap-8 pt-6">
                                 <div>
-                                    <p className="font-playfair text-3xl font-bold text-primary-dark">450+</p>
-                                    <p className="font-outfit text-xs text-gray-400 uppercase tracking-widest mt-1">Master Weavers</p>
+                                    <p className="font-playfair text-3xl font-bold text-primary-dark">
+                                        500+
+                                    </p>
+                                    <p className="font-outfit text-xs text-gray-400 uppercase tracking-widest mt-1">
+                                        Home Chefs
+                                    </p>
                                 </div>
+
                                 <div>
-                                    <p className="font-playfair text-3xl font-bold text-primary-dark">100%</p>
-                                    <p className="font-outfit text-xs text-gray-400 uppercase tracking-widest mt-1">Natural Fibers</p>
+                                    <p className="font-playfair text-3xl font-bold text-primary-dark">
+                                        10K+
+                                    </p>
+                                    <p className="font-outfit text-xs text-gray-400 uppercase tracking-widest mt-1">
+                                        Happy Customers
+                                    </p>
                                 </div>
                             </div>
                         </div>

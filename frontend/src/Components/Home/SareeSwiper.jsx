@@ -47,7 +47,7 @@ const SareeSwiper = () => {
     return (
       <PageContainer>
         <div className="py-5">
-          <Heading title="Latest Saree Collection" />
+          <Heading title="Latest Foods" />
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-6">
             {[1, 2, 3, 4, 5].map((i) => (
               <div key={i} className="bg-white rounded-3xl border border-gray-100 overflow-hidden animate-pulse">
