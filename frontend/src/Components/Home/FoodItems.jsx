@@ -75,7 +75,7 @@ const FoodItems = () => {
 
   return (
     <section className="bg-slate-50 py-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1800px] mx-auto px-6">
         <div className="mb-10">
           <Heading
             title="Food Items"
@@ -106,64 +106,123 @@ const FoodItems = () => {
             <p className="text-sm text-slate-500 mt-2">Check back soon for fresh chef creations.</p>
           </div>
         ) : (
-          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-            {foods.map((food) => (
-              <article
-                key={food.id}
-                className="group overflow-hidden rounded-4xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
-              >
-                <div className="relative overflow-hidden bg-slate-100">
-                  <img
-                    src={getFoodImage(food)}
-                    alt={food.name || "Chef Food"}
-                    className="h-72 w-full object-cover transition duration-700 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-x-0 top-4 flex items-center justify-between px-4">
-                    <span className={`rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.25em] ${getStatusClasses(food.status)}`}>
-                      {food.status || "Active"}
-                    </span>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+
+            {foods.map((food) => {
+              const firstVariant = food?.variants?.[0];
+
+              const mrp =
+                firstVariant?.mrp ||
+                food?.mrp;
+
+              const offerPrice =
+                firstVariant?.offerPrice ||
+                food?.offer_price;
+
+              return (
+                <article
+                  key={food.id}
+                  className="group overflow-hidden rounded-3xl bg-white border border-slate-100 shadow-md hover:shadow-2xl hover:-translate-y-2 transition-all duration-300"
+                >
+                  {/* Image */}
+                  <div className="relative overflow-hidden">
+                    <img
+                      src={getFoodImage(food)}
+                      alt={food.name || "Food"}
+                      className="h-56 w-full object-cover transition duration-700 group-hover:scale-110"
+                    />
+
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+
+                    {/* Status */}
+                    <div className="absolute top-3 left-3">
+                      <span
+                        className={`rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] ${getStatusClasses(
+                          food.status
+                        )}`}
+                      >
+                        {food.status || "Active"}
+                      </span>
+                    </div>
+
+                    {/* Quick View */}
                     <button
                       type="button"
                       onClick={() => openQuickView(food)}
-                      className="rounded-full bg-white/90 p-3 text-slate-900 shadow-sm transition hover:bg-white"
+                      className="absolute top-3 right-3 h-10 w-10 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center shadow-lg hover:scale-110 transition"
                     >
-                      <FiPlus size={16} />
+                      <FiPlus size={18} />
                     </button>
-                  </div>
-                </div>
 
-<div className="p-6 space-y-4">
-                    <div>
-                      <h3 className="text-xl font-black text-slate-900">{food.name || "Chef Special"}</h3>
-                      <p className="mt-2 text-sm leading-6 text-slate-500 line-clamp-3">
-                        {food.description || "A delightful homemade dish prepared by our chef."}
+                    {/* Title */}
+                    <div className="absolute bottom-4 left-4 right-4">
+                      <h3 className="text-white text-xl font-black line-clamp-1">
+                        {food.name || "Chef Special"}
+                      </h3>
+
+                      <p className="text-white/80 text-sm">
+                        👨‍🍳 {food.chef_name || food.created_by_name || "Chef"}
                       </p>
                     </div>
-
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div className="rounded-3xl bg-slate-50 p-4">
-                        <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Category</p>
-                        <p className="mt-2 font-black text-slate-900">{food.category || food.chef_category || "Uncategorized"}</p>
-                      </div>
-                      <div className="rounded-3xl bg-slate-50 p-4">
-                        <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Chef</p>
-                        <p className="mt-2 font-black text-slate-900">{food.chef_name || food.created_by_name || "Chef"}</p>
-                      </div>
-                    </div>
-
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div className="rounded-3xl bg-slate-50 p-4">
-                        <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">MRP</p>
-                        <p className="mt-2 font-black text-slate-900">₹{formatPrice(food.mrp)}</p>
-                      </div>
-                      <div className="rounded-3xl bg-slate-50 p-4">
-                        <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Price</p>
-                        <p className="mt-2 font-black text-emerald-700">₹{formatPrice(food.final_price || food.offer_price || food.mrp)}</p>
-                      </div>
-                    </div>
                   </div>
-              </article>
-            ))}
+
+                  {/* Content */}
+                  <div className="p-5">
+                    {/* Category */}
+                    <div className="mb-3">
+                      <span className="inline-flex rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-700">
+                        {food.category ||
+                          food.chef_category ||
+                          "Uncategorized"}
+                      </span>
+                    </div>
+
+                    {/* Description */}
+                    <p className="text-sm leading-6 text-slate-500 line-clamp-2 min-h-[48px]">
+                      {food.description ||
+                        "A delightful homemade dish prepared by our chef."}
+                    </p>
+
+                    {/* Price */}
+                    <div className="mt-5 flex items-center gap-2 flex-wrap">
+                      {offerPrice &&
+                        Number(offerPrice) < Number(mrp) ? (
+                        <>
+                          <span className="text-sm text-slate-400 line-through font-medium">
+                            ₹{formatPrice(mrp)}
+                          </span>
+
+                          <span className="text-2xl font-black text-emerald-600">
+                            ₹{formatPrice(offerPrice)}
+                          </span>
+
+                          <span className="rounded-full bg-red-100 px-2 py-1 text-[10px] font-bold text-red-600">
+                            {Math.round(
+                              ((Number(mrp) - Number(offerPrice)) /
+                                Number(mrp)) *
+                              100
+                            )}
+                            % OFF
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-2xl font-black text-emerald-600">
+                          ₹{formatPrice(mrp)}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Button */}
+                    <button
+                      onClick={() => openQuickView(food)}
+                      className="mt-5 w-full rounded-2xl bg-slate-900 py-3 text-sm font-bold text-white transition hover:bg-emerald-600"
+                    >
+                      View Details
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         )}
       </div>
