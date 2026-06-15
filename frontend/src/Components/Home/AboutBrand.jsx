@@ -1,5 +1,5 @@
 import React from "react";
-import artisanImg from "../../../public/about/artisan_weaving.png";
+import artisanImg from "../../../public/assets/about.jpg";
 import PageContainer from "../CommenComponents/PageContainer";
 import Heading from "../Heading";
 
