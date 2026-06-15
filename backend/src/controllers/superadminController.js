@@ -311,19 +311,29 @@ exports.getHomeChefs = async (req, res) => {
     const currentUserId = req.user?.user_id || null;
     let rows;
 
+    let orderClause = 'ORDER BY id DESC';
+    try {
+      const [columns] = await pool.execute("SHOW COLUMNS FROM home_chefs LIKE 'created_at'");
+      if (columns.length > 0) {
+        orderClause = 'ORDER BY created_at DESC';
+      }
+    } catch (_) {
+      // If the home_chefs table schema cannot be inspected, fall back to id ordering.
+    }
+
     if (req.user?.role === 'superadmin' || req.user?.role === 'admin') {
-      const [all] = await pool.execute("SELECT * FROM home_chefs ORDER BY created_at DESC");
+      const [all] = await pool.execute(`SELECT * FROM home_chefs ${orderClause}`);
       rows = all;
     } else {
       if (currentUserId) {
         const [filtered] = await pool.execute(
-          "SELECT * FROM home_chefs WHERE created_by_user_id = ? OR created_by_id = ? ORDER BY created_at DESC",
+          `SELECT * FROM home_chefs WHERE created_by_user_id = ? OR created_by_id = ? ${orderClause}`,
           [currentUserId, req.user.id]
         );
         rows = filtered;
       } else if (req.user?.id) {
         const [filtered] = await pool.execute(
-          "SELECT * FROM home_chefs WHERE created_by_id = ? ORDER BY created_at DESC",
+          `SELECT * FROM home_chefs WHERE created_by_id = ? ${orderClause}`,
           [req.user.id]
         );
         rows = filtered;

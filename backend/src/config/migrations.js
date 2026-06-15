@@ -245,6 +245,7 @@ const createDealersTable = async () => {
             // ensure optional columns exist
             try { await pool.execute('ALTER TABLE franchise_products ADD COLUMN images LONGTEXT'); } catch {}
             try { await pool.execute('ALTER TABLE franchise_products ADD COLUMN franchise_user_id VARCHAR(255)'); } catch {}
+            try { await pool.execute('ALTER TABLE franchise_products ADD COLUMN IF NOT EXISTS created_by_user_id VARCHAR(255)'); } catch {}
             console.log('✓ Franchise products table created or already exists');
         } catch (error) {
             console.error('✗ Error creating franchise_products table:', error.message);
@@ -683,14 +684,16 @@ const addDeliveryPartnerUniqueConstraints = async () => {
                     if (!tableName || tableName.startsWith('mysql') || tableName.startsWith('sys') || tableName.startsWith('performance_schema') || tableName.startsWith('information_schema') || tableName === 'home_chefs') continue;
 
                     // Remove previously added verbose audit columns (ignore errors)
-                    try { await pool.execute(`ALTER TABLE \`${tableName}\` DROP COLUMN created_by_id`); } catch (e) {}
-                    try { await pool.execute(`ALTER TABLE \`${tableName}\` DROP COLUMN created_by_user_id`); } catch (e) {}
-                    try { await pool.execute(`ALTER TABLE \`${tableName}\` DROP COLUMN created_by_name`); } catch (e) {}
-                    try { await pool.execute(`ALTER TABLE \`${tableName}\` DROP COLUMN created_by_email`); } catch (e) {}
-                    try { await pool.execute(`ALTER TABLE \`${tableName}\` DROP COLUMN updated_by_id`); } catch (e) {}
-                    try { await pool.execute(`ALTER TABLE \`${tableName}\` DROP COLUMN updated_by_user_id`); } catch (e) {}
-                    try { await pool.execute(`ALTER TABLE \`${tableName}\` DROP COLUMN updated_by_name`); } catch (e) {}
-                    try { await pool.execute(`ALTER TABLE \`${tableName}\` DROP COLUMN updated_by_email`); } catch (e) {}
+                    if (tableName !== 'franchise_products') {
+                        try { await pool.execute(`ALTER TABLE \`${tableName}\` DROP COLUMN created_by_id`); } catch (e) {}
+                        try { await pool.execute(`ALTER TABLE \`${tableName}\` DROP COLUMN created_by_user_id`); } catch (e) {}
+                        try { await pool.execute(`ALTER TABLE \`${tableName}\` DROP COLUMN created_by_name`); } catch (e) {}
+                        try { await pool.execute(`ALTER TABLE \`${tableName}\` DROP COLUMN created_by_email`); } catch (e) {}
+                        try { await pool.execute(`ALTER TABLE \`${tableName}\` DROP COLUMN updated_by_id`); } catch (e) {}
+                        try { await pool.execute(`ALTER TABLE \`${tableName}\` DROP COLUMN updated_by_user_id`); } catch (e) {}
+                        try { await pool.execute(`ALTER TABLE \`${tableName}\` DROP COLUMN updated_by_name`); } catch (e) {}
+                        try { await pool.execute(`ALTER TABLE \`${tableName}\` DROP COLUMN updated_by_email`); } catch (e) {}
+                    }
 
                     // Add only the desired compact audit columns
                     try { await pool.execute(`ALTER TABLE \`${tableName}\` ADD COLUMN IF NOT EXISTS created_by VARCHAR(255) DEFAULT NULL`); } catch (e) {}

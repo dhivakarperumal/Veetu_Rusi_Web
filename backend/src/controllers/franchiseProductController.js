@@ -235,8 +235,7 @@ exports.createProduct = async (req, res) => {
         const finalProductCode = product_code || await generateNextProductCode();
         const finalFranchiseUserId = franchise_user_id || req.user?.user_id || req.user?.id || null;
         const finalCreatedByUserId = created_by_user_id || req.user?.user_id || req.user?.id || null;
-        const finalCreatedByEmail = created_by_email || req.user?.email || null;
-        const finalCreatedByName = created_by_name || req.user?.name || null;
+        const finalCreatedBy = created_by_email || created_by_name || req.user?.email || req.user?.name || null;
         const finalCreatedByPhone = created_by_phone || req.user?.phone || null;
         const resolvedFranchiseId = franchise_id || await getFranchiseIdForUser(req.user);
         if (!resolvedFranchiseId && ['admin', 'chef'].includes(req.user?.role)) {
@@ -257,7 +256,7 @@ exports.createProduct = async (req, res) => {
             variants ? JSON.stringify(variants) : null,
             images ? JSON.stringify(images) : null,
             finalFranchiseUserId,
-            finalCreatedByName, finalCreatedByEmail, finalCreatedByPhone, finalCreatedByUserId,
+            finalCreatedByUserId, finalCreatedBy, finalCreatedByPhone,
             finalFranchiseId
         ];
 
@@ -266,7 +265,7 @@ exports.createProduct = async (req, res) => {
             presentation_style, portion_format, service_type, packaging_notes, dietary_tag, heat_profile,
             serving_size, prep_time, ingredients, spice_level, shelf_life_days, net_weight, package_count,
             packaging_type, manufacture_date, variants, images, franchise_user_id,
-            created_by_name, created_by_email, created_by_phone, created_by_user_id,
+            created_by_user_id, created_by, created_by_phone,
             franchise_id`;
 
         const placeholders = params.map(() => '?').join(', ');
@@ -301,6 +300,10 @@ exports.updateProduct = async (req, res) => {
             created_by_user_id, created_by_email, created_by_name, created_by_phone, franchise_id
         } = req.body;
 
+        const finalCreatedByUserId = created_by_user_id || req.user?.user_id || req.user?.id || null;
+        const finalCreatedBy = created_by_email || created_by_name || req.user?.email || req.user?.name || null;
+        const finalCreatedByPhone = created_by_phone || req.user?.phone || null;
+
         const [existing] = await pool.execute('SELECT id FROM franchise_products WHERE id = ?', [id]);
         if (existing.length === 0) {
             return res.status(404).json({ message: 'Franchise product not found' });
@@ -315,7 +318,7 @@ exports.updateProduct = async (req, res) => {
                 ingredients = ?, spice_level = ?, shelf_life_days = ?, net_weight = ?,
                 package_count = ?, packaging_type = ?, manufacture_date = ?, variants = ?, images = ?,
                 franchise_user_id = ?,
-                created_by_user_id = ?, created_by_email = ?, created_by_name = ?, created_by_phone = ?,
+                created_by_user_id = ?, created_by = ?, created_by_phone = ?,
                 franchise_id = ?, updated_at = NOW()
             WHERE id = ?`;
         const params = [
@@ -326,7 +329,7 @@ exports.updateProduct = async (req, res) => {
             packaging_type, manufacture_date, serializeJsonField(variants),
             images ? JSON.stringify(images) : null,
             franchise_user_id,
-            created_by_user_id, created_by_email, created_by_name, created_by_phone,
+            finalCreatedByUserId, finalCreatedBy, finalCreatedByPhone,
             franchise_id,
             id
         ];

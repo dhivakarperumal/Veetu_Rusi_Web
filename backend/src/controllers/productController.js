@@ -454,7 +454,7 @@ exports.getLatestProductCode = async (req, res) => {
 exports.getCategories = async (req, res) => {
     try {
         const { franchise_user_id, franchise_id } = req.query;
-        let query = 'SELECT id, catId, name, description, subcategory, images, franchise_user_id, franchise_id, created_by_user_id, created_by_email, created_by_name FROM franchise_category WHERE 1=1';
+        let query = 'SELECT id, catId, name, description, subcategory, images, franchise_user_id, franchise_id, created_by FROM franchise_category WHERE 1=1';
         const params = [];
 
         if (franchise_user_id) {
@@ -522,7 +522,7 @@ exports.createCategory = async (req, res) => {
         let finalCatId = await generateNextCategoryId(finalFranchiseUserId);
 
         const insertSql =
-            'INSERT INTO franchise_category (catId, name, description, subcategory, images, franchise_user_id, franchise_id, created_by_user_id, created_by_email, created_by_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+            'INSERT INTO franchise_category (catId, name, description, subcategory, images, franchise_user_id, franchise_id, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
 
         const insertParams = [
             finalCatId,
@@ -532,9 +532,7 @@ exports.createCategory = async (req, res) => {
             JSON.stringify(categoryImages),
             finalFranchiseUserId,
             finalFranchiseId,
-            finalCreatedByUserId,
-            req.user?.email || null,
-            req.user?.name || null
+            finalCreatedByUserId || req.user?.email || req.user?.name || null
         ];
 
         let result;
