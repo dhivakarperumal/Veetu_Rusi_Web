@@ -14,7 +14,6 @@ const ITEMS_PER_PAGE = 8;
 const emptyForm = {
   // Basic Details
   franchise_name: "", owner_name: "", logo_url: "", banner_url: "",
-  business_registration_number: "", gst_number: "",
   start_date: "", expiry_date: "", status: "Pending",
 
   // Contact Details
@@ -23,23 +22,23 @@ const emptyForm = {
   
   // Address Details
   door_number: "", street_name: "", area: "", landmark: "",
-  city: "", district: "", state: "", pincode: "", latitude: "",
-  longitude: "", map_link: "",
+  city: "", district: "", state: "", pincode: "", map_link: "",
+
+  // Bank Account Details
+  bank_name: "", account_holder_name: "", account_number: "", 
+  ifsc_code: "", account_type: "Savings", bank_passbook_url: "",
 
   // Login Details
   username: "", password: "", confirmPassword: "", role: "Admin",
   login_status: "Active",
 
   // KYC Documents
-  aadhaar_url: "", pan_url: "", gst_certificate_url: "",
-  bank_passbook_url: "", signature_url: "",
+  aadhaar_url: "", pan_url: "",
+  signature_url: "",
   kyc_verification_status: "Pending",
   image_upload_status: "Pending",
   email_verified: false,
-  otp_verified: false,
-
-  // Other existing
-  commission_percentage: "10.00"
+  otp_verified: false
 };
 
 const FranchiseOwnerManagement = () => {
@@ -50,6 +49,7 @@ const FranchiseOwnerManagement = () => {
   const [statusFilter, setStatusFilter] = useState("All");
   const [viewMode, setViewMode] = useState("table");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalLoading, setModalLoading] = useState(false);
   const [editingFranchise, setEditingFranchise] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [viewDetailsFranchise, setViewDetailsFranchise] = useState(null);
@@ -58,9 +58,6 @@ const FranchiseOwnerManagement = () => {
   const [linkedDeliveryPartnerCount, setLinkedDeliveryPartnerCount] = useState(0);
   const [linkedHomeChefs, setLinkedHomeChefs] = useState([]);
   const [linkedDeliveryPartners, setLinkedDeliveryPartners] = useState([]);
-
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Approve modal: holds the franchise being approved + password input
   const [approveModal, setApproveModal] = useState(null); // { franchise } | null
@@ -85,6 +82,7 @@ const FranchiseOwnerManagement = () => {
     { id: "basic", label: "Basic Info", description: "Owner and franchise details" },
     { id: "contact", label: "Contact", description: "Phone, email and territory" },
     { id: "address", label: "Address", description: "Location and map details" },
+    { id: "bank", label: "Bank Account", description: "Banking and payment details" },
     { id: "login", label: "Login & Auth", description: "Credential and access settings" },
     { id: "kyc", label: "KYC & Docs", description: "Verification documents and status" },
   ];
@@ -199,6 +197,23 @@ const FranchiseOwnerManagement = () => {
 
   useEffect(() => { fetchFranchises(); }, []);
 
+  // Monitor editing state and populate form with properly formatted data
+  /* eslint-disable react-hooks/exhaustive-deps */
+  useEffect(() => {
+    if (editingFranchise && isModalOpen) {
+      console.log('Edit mode activated, form populated:', {
+        franchise_name: form.franchise_name,
+        start_date: form.start_date,
+        expiry_date: form.expiry_date,
+        logo_url: form.logo_url,
+        banner_url: form.banner_url,
+        aadhaar_url: form.aadhaar_url,
+        pan_url: form.pan_url
+      });
+    }
+  }, [editingFranchise, isModalOpen]);
+  /* eslint-enable react-hooks/exhaustive-deps */
+
   const fetchLinkedEntityCounts = async (franchise) => {
     if (!franchise) return;
     try {
@@ -281,37 +296,12 @@ const FranchiseOwnerManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!editingFranchise && form.password !== form.confirmPassword) {
-      toast.error("Passwords do not match.");
+    
+    // Run comprehensive validation
+    if (!validateFormData()) {
       return;
     }
-    if (!editingFranchise) {
-      if (!form.email_verified) {
-        toast.error("Check 'Email Verified' in KYC tab before registering.");
-        setActiveFormTab("kyc");
-        return;
-      }
-      if (!form.otp_verified) {
-        toast.error("Check 'Mobile OTP Verified' in KYC tab before registering.");
-        setActiveFormTab("kyc");
-        return;
-      }
-      if (form.kyc_verification_status !== "Verified") {
-        toast.error("Mark KYC as Verified in the KYC tab before adding the franchise.");
-        setActiveFormTab("kyc");
-        return;
-      }
-      if (!form.aadhaar_url || !form.pan_url) {
-        toast.error("Upload Aadhaar and PAN documents to complete KYC.");
-        setActiveFormTab("kyc");
-        return;
-      }
-      if (!form.logo_url || !form.banner_url) {
-        toast.error("Upload both franchise logo and banner before registering.");
-        setActiveFormTab("basic");
-        return;
-      }
-    }
+
     try {
       const submitForm = {
         ...form,
@@ -375,25 +365,52 @@ const FranchiseOwnerManagement = () => {
     } finally { setApprovingId(null); }
   };
 
-  const handleEdit = (franchise) => {
-    setEditingFranchise(franchise);
-    const territory_pincodes = typeof franchise.territory_pincodes === "string"
-      ? franchise.territory_pincodes.split(/\s*,\s*/).filter(Boolean)
-      : franchise.territory_pincodes || [];
-    const role = franchise.role === "Franchise Admin" ? "Admin" : franchise.role || "Admin";
-    setForm({
-      ...emptyForm,
-      ...franchise,
-      role,
-      territory_pincodes,
-      confirmPassword: "",
-      email_verified: !!franchise.email_verified,
-      otp_verified: !!franchise.otp_verified,
-      kyc_verification_status: franchise.kyc_verification_status || "Pending"
-    });
-    setPincodeEntry("");
-    setActiveFormTab("basic");
-    setIsModalOpen(true);
+  const handleEdit = async (franchise) => {
+    try {
+      setModalLoading(true);
+      setEditingFranchise(franchise);
+
+      // Fetch full record from backend to ensure images and all fields are present
+      const res = await api.get(`/superadmin/franchises/${franchise.id}`);
+      const full = res.data;
+
+      const territory_pincodes = typeof full.territory_pincodes === "string"
+        ? full.territory_pincodes.split(/\s*,\s*/).filter(Boolean)
+        : full.territory_pincodes || [];
+      const role = full.role === "Franchise Admin" ? "Admin" : full.role || "Admin";
+
+      const startDate = formatDateForInput(full.start_date);
+      const expiryDate = formatDateForInput(full.expiry_date);
+
+      const formData = {
+        ...emptyForm,
+        ...full,
+        start_date: startDate || "",
+        expiry_date: expiryDate || "",
+        role,
+        territory_pincodes,
+        confirmPassword: "",
+        email_verified: !!full.email_verified,
+        otp_verified: !!full.otp_verified,
+        kyc_verification_status: full.kyc_verification_status || "Pending",
+        logo_url: full.logo_url || "",
+        banner_url: full.banner_url || "",
+        aadhaar_url: full.aadhaar_url || "",
+        pan_url: full.pan_url || "",
+        bank_passbook_url: full.bank_passbook_url || "",
+        signature_url: full.signature_url || ""
+      };
+
+      setForm(formData);
+      setPincodeEntry("");
+      setActiveFormTab("basic");
+      setIsModalOpen(true);
+    } catch (err) {
+      console.error('Failed to load franchise for edit:', err);
+      toast.error(err?.response?.data?.message || 'Failed to load franchise details.');
+    } finally {
+      setModalLoading(false);
+    }
   };
 
   const addTerritoryPincode = async () => {
@@ -450,7 +467,6 @@ const FranchiseOwnerManagement = () => {
         email: franchise.email,
         city: franchise.city,
         state: franchise.state,
-        commission_percentage: franchise.commission_percentage,
         status: nextStatus
       };
       await api.put(`/superadmin/franchises/${franchise.id}`, updatedForm);
@@ -476,6 +492,186 @@ const FranchiseOwnerManagement = () => {
     setActiveFormTab("basic");
   };
 
+  // Validation helper functions
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validatePhone = (phone) => {
+    const phoneRegex = /^[\d\s+\-()]{10,15}$/;
+    return phoneRegex.test(phone.replace(/\s/g, ""));
+  };
+
+  const validateAadhaar = (aadhaar) => {
+    return /^\d{12}$/.test(aadhaar);
+  };
+
+  const validatePAN = (pan) => {
+    return /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(pan.toUpperCase());
+  };
+
+  const validateIFSC = (ifsc) => {
+    return /^[A-Z]{4}[0-9A-Z]{7}$/.test(ifsc.toUpperCase());
+  };
+
+  const validateAccountNumber = (accountNumber) => {
+    return /^\d{9,18}$/.test(accountNumber.replace(/\s/g, ""));
+  };
+
+  const validatePincode = (pincode) => {
+    return /^\d{6}$/.test(pincode);
+  };
+
+  // Main form validation
+  const validateFormData = () => {
+    // Basic Info validation
+    if (!form.franchise_name.trim()) {
+      toast.error("Franchise name is required.");
+      setActiveFormTab("basic");
+      return false;
+    }
+    if (!form.owner_name.trim()) {
+      toast.error("Owner name is required.");
+      setActiveFormTab("basic");
+      return false;
+    }
+    if (!editingFranchise && (!form.logo_url || !form.banner_url)) {
+      toast.error("Upload both franchise logo and banner.");
+      setActiveFormTab("basic");
+      return false;
+    }
+
+    // Contact Info validation
+    if (!form.mobile.trim()) {
+      toast.error("Mobile number is required.");
+      setActiveFormTab("contact");
+      return false;
+    }
+    if (!validatePhone(form.mobile)) {
+      toast.error("Invalid mobile number format.");
+      setActiveFormTab("contact");
+      return false;
+    }
+    if (!validateAadhaar(form.aadhaar_number)) {
+      toast.error("Aadhaar must be 12 digits.");
+      setActiveFormTab("contact");
+      return false;
+    }
+    if (!validatePAN(form.pan_number)) {
+      toast.error("Invalid PAN format (e.g., ABCDE1234F).");
+      setActiveFormTab("contact");
+      return false;
+    }
+    if (form.territory_pincodes.length === 0) {
+      toast.error("Add at least one territory pincode.");
+      setActiveFormTab("contact");
+      return false;
+    }
+
+    // Address validation
+    if (!form.city.trim()) {
+      toast.error("City is required.");
+      setActiveFormTab("address");
+      return false;
+    }
+    if (!form.state.trim()) {
+      toast.error("State is required.");
+      setActiveFormTab("address");
+      return false;
+    }
+    if (form.pincode && !validatePincode(form.pincode)) {
+      toast.error("Pincode must be 6 digits.");
+      setActiveFormTab("address");
+      return false;
+    }
+
+    // Bank Account validation
+    if (!form.bank_name.trim()) {
+      toast.error("Bank name is required.");
+      setActiveFormTab("bank");
+      return false;
+    }
+    if (!form.account_holder_name.trim()) {
+      toast.error("Account holder name is required.");
+      setActiveFormTab("bank");
+      return false;
+    }
+    if (!validateAccountNumber(form.account_number)) {
+      toast.error("Account number must be 9-18 digits.");
+      setActiveFormTab("bank");
+      return false;
+    }
+    if (!validateIFSC(form.ifsc_code)) {
+      toast.error("Invalid IFSC code format (e.g., SBIN0001234).");
+      setActiveFormTab("bank");
+      return false;
+    }
+    if (!form.account_type.trim()) {
+      toast.error("Account type is required.");
+      setActiveFormTab("bank");
+      return false;
+    }
+    if (!editingFranchise && !form.bank_passbook_url) {
+      toast.error("Upload bank passbook document.");
+      setActiveFormTab("bank");
+      return false;
+    }
+
+    // Login validation (only for new franchises)
+    if (!editingFranchise) {
+      if (!form.email.trim()) {
+        toast.error("Email is required.");
+        setActiveFormTab("login");
+        return false;
+      }
+      if (!validateEmail(form.email)) {
+        toast.error("Invalid email format.");
+        setActiveFormTab("login");
+        return false;
+      }
+      if (!form.username.trim()) {
+        toast.error("Username is required.");
+        setActiveFormTab("login");
+        return false;
+      }
+      if (!form.password || form.password.length < 6) {
+        toast.error("Password must be at least 6 characters.");
+        setActiveFormTab("login");
+        return false;
+      }
+      if (form.password !== form.confirmPassword) {
+        toast.error("Passwords do not match.");
+        setActiveFormTab("login");
+        return false;
+      }
+    }
+
+    // KYC validation
+    if (!form.email_verified) {
+      toast.error("Email must be verified in KYC tab.");
+      setActiveFormTab("kyc");
+      return false;
+    }
+    if (!form.otp_verified) {
+      toast.error("Mobile OTP must be verified in KYC tab.");
+      setActiveFormTab("kyc");
+      return false;
+    }
+    if (form.kyc_verification_status !== "Verified") {
+      toast.error("KYC must be verified before registration.");
+      setActiveFormTab("kyc");
+      return false;
+    }
+    if (!form.aadhaar_url || !form.pan_url) {
+      toast.error("Upload Aadhaar and PAN documents.");
+      setActiveFormTab("kyc");
+      return false;
+    }
+
+    return true;
+  };
+
   const finalizeKycVerification = () => {
     if (!form.aadhaar_url || !form.pan_url) {
       toast.error("Upload Aadhaar and PAN to complete KYC.");
@@ -491,7 +687,61 @@ const FranchiseOwnerManagement = () => {
   const imageComplete = isLogoUploaded && isBannerUploaded;
   const getFileName = (file) => {
     if (!file) return "No file uploaded";
-    return typeof file === "string" ? file.split("/").pop() : file.name;
+    if (typeof file === "string") {
+      // Extract filename from URL path
+      const parts = file.split('/');
+      const filename = parts[parts.length - 1];
+      return filename && filename.length > 0 ? filename : file;
+    }
+    // It's a File object
+    return file.name || "File selected";
+  };
+
+  const formatDateForInput = (dateStr) => {
+    if (!dateStr) return "";
+    
+    // If already in YYYY-MM-DD format, return as-is
+    if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      return dateStr;
+    }
+    
+    let date;
+    
+    // Try parsing as ISO string or standard formats
+    if (typeof dateStr === 'string') {
+      // Remove time portion if present
+      const dateOnly = dateStr.split('T')[0] || dateStr.split(' ')[0];
+      date = new Date(dateOnly);
+    } else if (typeof dateStr === 'number') {
+      // Handle timestamp (milliseconds)
+      date = new Date(dateStr);
+    } else {
+      date = new Date(dateStr);
+    }
+    
+    if (isNaN(date.getTime())) {
+      console.warn('Invalid date format:', dateStr);
+      return "";
+    }
+    
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const getImageUrl = (imageField) => {
+    if (!imageField) return null;
+    if (typeof imageField === "string") {
+      // It's already a URL from the database
+      return imageField.startsWith("http") ? imageField : `/uploads/${imageField}`;
+    }
+    // It's a File object from upload
+    return URL.createObjectURL(imageField);
+  };
+
+  const isExistingFile = (fileField) => {
+    return typeof fileField === "string" && fileField.length > 0;
   };
 
   const inputCls = "w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-2xl outline-none font-medium text-slate-100 text-sm placeholder:text-slate-500 focus:bg-slate-800 focus:border-emerald-500/60 transition-all";
@@ -562,9 +812,6 @@ const FranchiseOwnerManagement = () => {
                     ? "bg-red-50 text-red-700 border border-red-200/50"
                     : "bg-amber-50 text-amber-700 border border-amber-200/50"
                 }`}>{viewDetailsFranchise.status}</span>
-              <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/50 px-3 py-1.5 rounded-lg">
-                {viewDetailsFranchise.commission_percentage}% Commission
-              </span>
             </div>
           </div>
 
@@ -665,12 +912,6 @@ const FranchiseOwnerManagement = () => {
                     <div className="space-y-1">
                       <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block">Franchise Name</span>
                       <span className="text-sm font-bold text-slate-800">{viewDetailsFranchise.franchise_name}</span>
-                    </div>
-                    <div className="space-y-1">
-                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block">Commission Rate</span>
-                      <span className="inline-flex items-center text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/50 px-2.5 py-1 rounded-md mt-0.5">
-                        {viewDetailsFranchise.commission_percentage}%
-                      </span>
                     </div>
                     <div className="space-y-1">
                       <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block">Territory Location</span>
@@ -1017,10 +1258,8 @@ const FranchiseOwnerManagement = () => {
                         </div>
                       </td>
                       {/* Commission */}
-                      <td className="px-5 py-4">
-                        <span className="inline-flex items-center text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/50 px-2.5 py-1 rounded-md">
-                          {f.commission_percentage}%
-                        </span>
+                      <td className="px-5 py-4 text-sm font-semibold text-slate-600">
+                        <span className="text-sm font-bold text-slate-700">{f.commission ?? '-'}</span>
                       </td>
                       {/* Subscription */}
                       <td className="px-5 py-4">
@@ -1245,10 +1484,6 @@ const FranchiseOwnerManagement = () => {
                       <p className="text-xs font-semibold text-slate-700 mt-1 truncate" title={f.email}>{f.email}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Commission Rate</p>
-                      <p className="text-sm font-black text-emerald-700 mt-0.5">{f.commission_percentage}%</p>
-                    </div>
-                    <div>
                       <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Account Status</p>
                       {f.franch_user_id ? (
                         <span className="inline-flex items-center gap-1 text-[10px] text-teal-700 font-bold bg-teal-50 border border-teal-200/20 px-2 py-0.5 rounded-md mt-1">
@@ -1362,6 +1597,11 @@ const FranchiseOwnerManagement = () => {
       {isModalOpen && createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
+          {modalLoading && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center">
+              <div className="rounded-xl bg-slate-900/90 text-white px-6 py-4 shadow-lg">Loading franchise details…</div>
+            </div>
+          )}
           <form onSubmit={handleSubmit} ref={formRef} className="border border-white/10 w-full max-w-6xl rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden grid lg:grid-cols-[320px_1fr] max-h-[95vh] h-full bg-slate-950 text-slate-100">
             <div className="hidden lg:flex flex-col gap-6 p-6 bg-slate-950 border-r border-slate-800 overflow-y-auto min-h-0 h-full">
               <div>
@@ -1464,15 +1704,47 @@ const FranchiseOwnerManagement = () => {
                       </div>
                       <div className="space-y-1">
                         <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Franchise Logo</label>
-                        <input type="file" accept="image/*" onChange={e => setForm({ ...form, logo_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
+                        <div className="space-y-2">
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            onChange={e => setForm({ ...form, logo_url: e.target.files[0] })} 
+                            className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} 
+                          />
+                          {getImageUrl(form.logo_url) && (
+                            <div className="rounded-lg border border-slate-700 overflow-hidden bg-slate-900 p-2">
+                              <img 
+                                src={getImageUrl(form.logo_url)} 
+                                alt="Logo preview" 
+                                className="w-full h-24 object-cover rounded" 
+                                onError={(e) => { e.target.style.display = 'none'; }}
+                              />
+                            </div>
+                          )}
+                          <p className="text-[9px] text-slate-500">{isExistingFile(form.logo_url) ? "✓ Existing file" : "New upload"}</p>
+                        </div>
                       </div>
                       <div className="space-y-1">
                         <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Franchise Banner Image</label>
-                        <input type="file" accept="image/*" onChange={e => setForm({ ...form, banner_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Commission (%) *</label>
-                        <input type="number" step="0.01" required value={form.commission_percentage} onChange={e => setForm({ ...form, commission_percentage: e.target.value })} className={inputCls} />
+                        <div className="space-y-2">
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            onChange={e => setForm({ ...form, banner_url: e.target.files[0] })} 
+                            className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} 
+                          />
+                          {getImageUrl(form.banner_url) && (
+                            <div className="rounded-lg border border-slate-700 overflow-hidden bg-slate-900 p-2">
+                              <img 
+                                src={getImageUrl(form.banner_url)} 
+                                alt="Banner preview" 
+                                className="w-full h-24 object-cover rounded" 
+                                onError={(e) => { e.target.style.display = 'none'; }}
+                              />
+                            </div>
+                          )}
+                          <p className="text-[9px] text-slate-500">{isExistingFile(form.banner_url) ? "✓ Existing file" : "New upload"}</p>
+                        </div>
                       </div>
                       <div className="space-y-1">
                         <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Start Date</label>
@@ -1630,17 +1902,118 @@ const FranchiseOwnerManagement = () => {
                         <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Pincode</label>
                         <input type="text" value={form.pincode} onChange={handlePincodeChange} placeholder="641001" className={inputCls} />
                       </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Latitude</label>
-                        <input type="text" value={form.latitude} onChange={e => setForm({ ...form, latitude: e.target.value })} placeholder="11.0168" className={inputCls} />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Longitude</label>
-                        <input type="text" value={form.longitude} onChange={e => setForm({ ...form, longitude: e.target.value })} placeholder="76.9558" className={inputCls} />
-                      </div>
                       <div className="space-y-1 sm:col-span-2">
                         <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Google Map Link</label>
                         <input type="url" value={form.map_link} onChange={e => setForm({ ...form, map_link: e.target.value })} placeholder="https://maps.app.goo.gl/..." className={inputCls} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Bank Account Details */}
+                {activeFormTab === "bank" && (
+                  <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 shadow-lg shadow-slate-950/20 animate-in fade-in zoom-in-95 duration-200">
+                    <p className="text-xs text-emerald-300 uppercase tracking-[0.25em] font-black mb-5">Bank Account Details</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Bank Name *</label>
+                        <input 
+                          type="text" 
+                          required 
+                          value={form.bank_name} 
+                          onChange={e => setForm({ ...form, bank_name: e.target.value })} 
+                          placeholder="e.g. State Bank of India" 
+                          className={inputCls} 
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Account Holder Name *</label>
+                        <input 
+                          type="text" 
+                          required 
+                          value={form.account_holder_name} 
+                          onChange={e => setForm({ ...form, account_holder_name: e.target.value })} 
+                          placeholder="Name as per bank" 
+                          className={inputCls} 
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Account Number *</label>
+                        <input 
+                          type="text" 
+                          required 
+                          value={form.account_number} 
+                          onChange={e => setForm({ ...form, account_number: e.target.value.replace(/\D/g, '') })} 
+                          placeholder="9-18 digits" 
+                          maxLength="18"
+                          className={inputCls} 
+                        />
+                        <p className="text-[9px] text-slate-400 mt-1">9 to 18 digit account number</p>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">IFSC Code *</label>
+                        <input 
+                          type="text" 
+                          required 
+                          value={form.ifsc_code} 
+                          onChange={e => setForm({ ...form, ifsc_code: e.target.value.toUpperCase() })} 
+                          placeholder="e.g. SBIN0001234" 
+                          maxLength="11"
+                          className={inputCls} 
+                        />
+                        <p className="text-[9px] text-slate-400 mt-1">4 letters + 7 alphanumeric characters</p>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Account Type *</label>
+                        <select 
+                          required 
+                          value={form.account_type} 
+                          onChange={e => setForm({ ...form, account_type: e.target.value })} 
+                          className={inputCls}
+                        >
+                          <option value="Savings">Savings</option>
+                          <option value="Current">Current</option>
+                          <option value="Business">Business</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Bank Passbook / Statement</label>
+                        <input 
+                          type="file" 
+                          accept="image/*,.pdf" 
+                          onChange={e => setForm({ ...form, bank_passbook_url: e.target.files[0] })} 
+                          className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} 
+                        />
+                      </div>
+                    </div>
+
+                    {/* Validation Status */}
+                    <div className="mt-6 p-4 rounded-2xl border border-slate-700 bg-slate-900 space-y-3">
+                      <p className="text-xs text-amber-300 uppercase tracking-[0.28em] font-black">Bank Details Validation</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px]">
+                        <div className="flex items-center justify-between rounded-xl bg-slate-950 px-3 py-2 border border-slate-800">
+                          <span className="text-slate-400">Bank Name</span>
+                          <span className={form.bank_name ? "text-emerald-400 font-bold" : "text-slate-500"}>{form.bank_name ? "✓" : "—"}</span>
+                        </div>
+                        <div className="flex items-center justify-between rounded-xl bg-slate-950 px-3 py-2 border border-slate-800">
+                          <span className="text-slate-400">Account Number</span>
+                          <span className={validateAccountNumber(form.account_number) ? "text-emerald-400 font-bold" : "text-slate-500"}>
+                            {validateAccountNumber(form.account_number) ? "✓" : "—"}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between rounded-xl bg-slate-950 px-3 py-2 border border-slate-800">
+                          <span className="text-slate-400">IFSC Code</span>
+                          <span className={validateIFSC(form.ifsc_code) ? "text-emerald-400 font-bold" : "text-slate-500"}>
+                            {validateIFSC(form.ifsc_code) ? "✓" : "—"}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between rounded-xl bg-slate-950 px-3 py-2 border border-slate-800">
+                          <span className="text-slate-400">Passbook</span>
+                          <span className={form.bank_passbook_url ? "text-emerald-400 font-bold" : "text-slate-500"}>
+                            {form.bank_passbook_url ? "Uploaded" : "—"}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1793,19 +2166,91 @@ const FranchiseOwnerManagement = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-1">
                         <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Aadhaar Card</label>
-                        <input type="file" accept="image/*,.pdf" onChange={e => setForm({ ...form, aadhaar_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
+                        <div className="space-y-2">
+                          <input 
+                            type="file" 
+                            accept="image/*,.pdf" 
+                            onChange={e => setForm({ ...form, aadhaar_url: e.target.files[0] })} 
+                            className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} 
+                          />
+                          {getImageUrl(form.aadhaar_url) && form.aadhaar_url && (typeof form.aadhaar_url === 'string' ? form.aadhaar_url.match(/\.(jpg|jpeg|png|gif)$/i) : true) && (
+                            <div className="rounded-lg border border-slate-700 overflow-hidden bg-slate-900 p-2">
+                              <img 
+                                src={getImageUrl(form.aadhaar_url)} 
+                                alt="Aadhaar preview" 
+                                className="w-full h-24 object-cover rounded" 
+                                onError={(e) => { e.target.style.display = 'none'; }}
+                              />
+                            </div>
+                          )}
+                          <p className="text-[9px] text-slate-500">{isExistingFile(form.aadhaar_url) ? "✓ Existing file" : "New upload"}</p>
+                        </div>
                       </div>
                       <div className="space-y-1">
                         <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">PAN Card</label>
-                        <input type="file" accept="image/*,.pdf" onChange={e => setForm({ ...form, pan_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
+                        <div className="space-y-2">
+                          <input 
+                            type="file" 
+                            accept="image/*,.pdf" 
+                            onChange={e => setForm({ ...form, pan_url: e.target.files[0] })} 
+                            className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} 
+                          />
+                          {getImageUrl(form.pan_url) && form.pan_url && (typeof form.pan_url === 'string' ? form.pan_url.match(/\.(jpg|jpeg|png|gif)$/i) : true) && (
+                            <div className="rounded-lg border border-slate-700 overflow-hidden bg-slate-900 p-2">
+                              <img 
+                                src={getImageUrl(form.pan_url)} 
+                                alt="PAN preview" 
+                                className="w-full h-24 object-cover rounded" 
+                                onError={(e) => { e.target.style.display = 'none'; }}
+                              />
+                            </div>
+                          )}
+                          <p className="text-[9px] text-slate-500">{isExistingFile(form.pan_url) ? "✓ Existing file" : "New upload"}</p>
+                        </div>
                       </div>
                       <div className="space-y-1">
                         <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Bank Passbook</label>
-                        <input type="file" accept="image/*,.pdf" onChange={e => setForm({ ...form, bank_passbook_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
+                        <div className="space-y-2">
+                          <input 
+                            type="file" 
+                            accept="image/*,.pdf" 
+                            onChange={e => setForm({ ...form, bank_passbook_url: e.target.files[0] })} 
+                            className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} 
+                          />
+                          {getImageUrl(form.bank_passbook_url) && form.bank_passbook_url && (typeof form.bank_passbook_url === 'string' ? form.bank_passbook_url.match(/\.(jpg|jpeg|png|gif)$/i) : true) && (
+                            <div className="rounded-lg border border-slate-700 overflow-hidden bg-slate-900 p-2">
+                              <img 
+                                src={getImageUrl(form.bank_passbook_url)} 
+                                alt="Passbook preview" 
+                                className="w-full h-24 object-cover rounded" 
+                                onError={(e) => { e.target.style.display = 'none'; }}
+                              />
+                            </div>
+                          )}
+                          <p className="text-[9px] text-slate-500">{isExistingFile(form.bank_passbook_url) ? "✓ Existing file" : "New upload"}</p>
+                        </div>
                       </div>
                       <div className="space-y-1">
                         <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Signature Image</label>
-                        <input type="file" accept="image/*" onChange={e => setForm({ ...form, signature_url: e.target.files[0] })} className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} />
+                        <div className="space-y-2">
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            onChange={e => setForm({ ...form, signature_url: e.target.files[0] })} 
+                            className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} 
+                          />
+                          {getImageUrl(form.signature_url) && (
+                            <div className="rounded-lg border border-slate-700 overflow-hidden bg-slate-900 p-2">
+                              <img 
+                                src={getImageUrl(form.signature_url)} 
+                                alt="Signature preview" 
+                                className="w-full h-24 object-cover rounded" 
+                                onError={(e) => { e.target.style.display = 'none'; }}
+                              />
+                            </div>
+                          )}
+                          <p className="text-[9px] text-slate-500">{isExistingFile(form.signature_url) ? "✓ Existing file" : "New upload"}</p>
+                        </div>
                       </div>
                     </div>
                   </div>

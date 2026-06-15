@@ -102,11 +102,6 @@ const franchiseUploadFields = upload.fields([
   { name: 'banner_url', maxCount: 1 },
   { name: 'aadhaar_url', maxCount: 1 },
   { name: 'pan_url', maxCount: 1 },
-  { name: 'gst_certificate_url', maxCount: 1 },
-  { name: 'fssai_license_url', maxCount: 1 },
-  { name: 'shop_license_url', maxCount: 1 },
-  { name: 'vehicle_rc_url', maxCount: 1 },
-  { name: 'driving_license_url', maxCount: 1 },
   { name: 'bank_passbook_url', maxCount: 1 },
   { name: 'signature_url', maxCount: 1 }
 ]);

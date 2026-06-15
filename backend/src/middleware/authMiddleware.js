@@ -1,3 +1,5 @@
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 const JWT_SECRET = process.env.JWT_SECRET || 'default-secret';
@@ -30,13 +32,15 @@ async function validateFranchiseAdminSubscription(user) {
 }
 
 exports.verifyToken = async (req, res, next) => {
-  const authHeader = req.headers['authorization'];
+  const authHeader = req.headers['authorization'] || req.headers['x-access-token'];
   if (!authHeader) {
+    console.warn(`verifyToken failed: missing Authorization header for ${req.method} ${req.originalUrl}`);
     return res.status(401).json({ message: 'No authorization header provided.' });
   }
 
-  const token = authHeader.split(' ')[1];
+  const token = authHeader.split(/\s+/).pop();
   if (!token) {
+    console.warn(`verifyToken failed: Bearer token missing for ${req.method} ${req.originalUrl}`);
     return res.status(401).json({ message: 'Access token is missing.' });
   }
 
@@ -45,10 +49,15 @@ exports.verifyToken = async (req, res, next) => {
     req.user = decoded;
     const subscriptionError = await validateFranchiseAdminSubscription(decoded);
     if (subscriptionError) {
+      console.warn(`verifyToken subscription failure for user ${decoded?.email || decoded?.user_id}: ${subscriptionError}`);
       return res.status(403).json({ message: subscriptionError });
     }
     next();
   } catch (error) {
+    console.error(`JWT verification failed for ${req.method} ${req.originalUrl}:`, error.name, error.message);
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ message: 'Unauthorized: Token expired.' });
+    }
     return res.status(401).json({ message: 'Unauthorized: Invalid token.' });
   }
 };

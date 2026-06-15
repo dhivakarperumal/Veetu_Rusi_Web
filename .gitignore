@@ -17,6 +17,16 @@ lerna-debug.log*
 .env
 .env.*
 
+# Zip files and archives
+*.zip
+*.rar
+*.7z
+*.tar.gz
+
+# Uploads directory (user-generated content)
+/backend/uploads/
+/frontend/public/uploads/
+
 # IDE/editor files
 .vscode/
 !.vscode/extensions.json
@@ -27,3 +37,7 @@ lerna-debug.log*
 *.njsproj
 *.sln
 *.sw?
+
+# OS files
+Thumbs.db
+.DS_Store

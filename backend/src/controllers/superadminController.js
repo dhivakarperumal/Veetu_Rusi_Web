@@ -11,6 +11,66 @@ function normalizeBoolean(value) {
   return value === true || value === 'true' || value === '1' || value === 1 || value === 'on';
 }
 
+async function resolveCurrentUserAudit(req) {
+  try {
+    if (!req.user) return null;
+
+    const candidateId = req.user.id || null;
+    const candidateUserId = req.user.user_id || null;
+    if (!candidateId && !candidateUserId) return null;
+
+    // Try to query with both possible column names for full name
+    let rows = [];
+    try {
+      const [result] = await pool.execute(
+        'SELECT id, user_id, full_name AS name, email FROM users WHERE (id = ? OR user_id = ?) LIMIT 1',
+        [candidateId, candidateUserId]
+      );
+      rows = result;
+    } catch (e) {
+      // Fallback: try with 'name' column instead of 'full_name'
+      try {
+        const [result] = await pool.execute(
+          'SELECT id, user_id, name, email FROM users WHERE (id = ? OR user_id = ?) LIMIT 1',
+          [candidateId, candidateUserId]
+        );
+        rows = result;
+      } catch (e2) {
+        // Users table might not exist or other issue - log it
+        console.warn('Could not query users table for audit data:', e2.message);
+        rows = [];
+      }
+    }
+
+    if (rows.length > 0) {
+      const user = rows[0];
+      return {
+        id: user.id || null,
+        user_id: user.user_id || null,
+        name: user.name || null,
+        email: user.email || null,
+      };
+    }
+
+    // Fallback: use req.user data if available
+    return {
+      id: candidateId,
+      user_id: candidateUserId,
+      name: req.user.name || req.user.full_name || req.user.username || null,
+      email: req.user.email || null,
+    };
+  } catch (error) {
+    console.error('Error in resolveCurrentUserAudit:', error);
+    // Return fallback with token values on error
+    return {
+      id: req.user?.id || null,
+      user_id: req.user?.user_id || null,
+      name: req.user?.name || req.user?.full_name || null,
+      email: req.user?.email || null,
+    };
+  }
+}
+
 async function expireFranchiseSubscriptions() {
   try {
     const today = new Date();
@@ -146,6 +206,28 @@ exports.getDashboardStats = async (req, res) => {
     const [[{ totalFranchises }]] = await pool.execute("SELECT COUNT(*) AS totalFranchises FROM franchise_owners");
     const [[{ expiredFranchises }]] = await pool.execute("SELECT COUNT(*) AS expiredFranchises FROM franchise_owners WHERE expiry_date IS NOT NULL AND expiry_date < CURDATE()");
     const [[{ expiringSoonFranchises }]] = await pool.execute("SELECT COUNT(*) AS expiringSoonFranchises FROM franchise_owners WHERE expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)");
+    // Additional subscription/payment summary values
+    const [[{ lastSubscriptionDate }]] = await pool.execute("SELECT MAX(start_date) AS lastSubscriptionDate FROM franchise_owners WHERE start_date IS NOT NULL");
+    const [[{ nextSubscriptionDue }]] = await pool.execute("SELECT MIN(expiry_date) AS nextSubscriptionDue FROM franchise_owners WHERE expiry_date > CURDATE()");
+    let lastPaymentDate = null;
+    try {
+      const [[{ lastPaymentDate: lpd }]] = await pool.execute(
+        `SELECT MAX(d) AS lastPaymentDate FROM (
+           SELECT ordered_date AS d FROM Chef_Order WHERE (LOWER(payment_status) = 'paid' OR LOWER(payment_status) = 'success' OR payment_method LIKE '%razorpay%')
+           UNION ALL
+           SELECT created_at AS d FROM subscription_payments
+         ) t`
+      );
+      lastPaymentDate = lpd || null;
+    } catch (err) {
+      // subscription_payments may not exist yet; fall back to last paid order
+      try {
+        const [[{ lastPaymentDate: lpd2 }]] = await pool.execute("SELECT MAX(ordered_date) AS lastPaymentDate FROM Chef_Order WHERE (LOWER(payment_status) = 'paid' OR LOWER(payment_status) = 'success' OR payment_method LIKE '%razorpay%')");
+        lastPaymentDate = lpd2 || null;
+      } catch (err2) {
+        lastPaymentDate = null;
+      }
+    }
 
     // 2. Mock or computed historical analytics data for charts (recharts)
     // In a fully populated DB, we can query orders grouped by date/status.
@@ -178,6 +260,15 @@ exports.getDashboardStats = async (req, res) => {
       { name: 'Week 4', customers: 450, chefs: 30, partners: 45 }
     ];
 
+    // Also include subscription payments sum if available
+    let subscriptionRevenue = 0;
+    try {
+      const [[{ subscriptionRevenue: sr }]] = await pool.execute("SELECT COALESCE(SUM(amount),0) AS subscriptionRevenue FROM subscription_payments");
+      subscriptionRevenue = parseFloat(sr) || 0;
+    } catch (err) {
+      subscriptionRevenue = 0;
+    }
+
     res.json({
       cards: {
         totalUsers,
@@ -185,13 +276,19 @@ exports.getDashboardStats = async (req, res) => {
         totalHomeChefs,
         totalDeliveryPartners,
         totalOrders,
-        totalRevenue: parseFloat(totalRevenue),
+        // combine order revenue + subscription revenue
+        totalRevenue: parseFloat(totalRevenue) + subscriptionRevenue,
         pendingApprovals,
         activeFranchises,
         totalFranchises,
         expiredFranchises,
-        expiringSoonFranchises
+        expiringSoonFranchises,
+        subscriptionRevenue
       },
+      // Dates (may be null)
+      lastSubscriptionDate: lastSubscriptionDate || null,
+      lastPaymentDate: lastPaymentDate || null,
+      nextSubscriptionDue: nextSubscriptionDue || null,
       charts: {
         dailyOrders,
         revenueAnalytics,
@@ -1320,7 +1417,9 @@ exports.getFranchises = async (req, res) => {
     try { await pool.execute("ALTER TABLE franchise_owners MODIFY COLUMN franch_user_id VARCHAR(255) DEFAULT NULL"); } catch (_) {}
     try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS login_password VARCHAR(255) DEFAULT NULL"); } catch (_) {}
     await expireFranchiseSubscriptions();
-    const [rows] = await pool.execute("SELECT id, franchise_id, franch_user_id, franchise_name, owner_name, mobile, email, city, state, commission_percentage, status, start_date, expiry_date, territory_pincodes, created_at, login_password IS NOT NULL AS password_preset FROM franchise_owners ORDER BY created_at DESC");
+    // Use SELECT * here to avoid runtime errors when some columns are missing
+    // (safer for deployments with partial migrations). Frontend will pick needed fields.
+    const [rows] = await pool.execute(`SELECT * FROM franchise_owners ORDER BY created_at DESC`);
     res.json(rows);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving franchise owners.', error: error.message });
@@ -1348,45 +1447,37 @@ exports.createFranchise = async (req, res) => {
     try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS created_by_user_id VARCHAR(255) DEFAULT NULL"); } catch (_) {}
     try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS created_by_name VARCHAR(255) DEFAULT NULL"); } catch (_) {}
     try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS created_by_email VARCHAR(255) DEFAULT NULL"); } catch (_) {}
-    try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS created_by_phone VARCHAR(50) DEFAULT NULL"); } catch (_) {}
+    
+    // Ensure bank columns exist (safe migration)
+    try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS bank_name VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS account_holder_name VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS account_number VARCHAR(20) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS ifsc_code VARCHAR(11) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS account_type VARCHAR(50) DEFAULT NULL"); } catch (_) {}
 
     const { 
-      franchise_name, owner_name, mobile, email, city, state, commission_percentage, status, password,
-      business_registration_number, gst_number, pan_number, start_date, expiry_date,
-      alt_mobile, whatsapp_number, website_url, emergency_contact_number,
+      franchise_name, owner_name, mobile, email, city, state, status, password,
+      pan_number, start_date, expiry_date,
       territory_pincodes, aadhaar_number,
-      door_number, street_name, area, landmark, district, pincode, latitude, longitude, map_link,
-      username, role, otp_verified, email_verified, login_status
+      door_number, street_name, area, landmark, district, pincode, map_link,
+      username, role, otp_verified, email_verified, login_status,
+      bank_name, account_holder_name, account_number, ifsc_code, account_type
     } = req.body;
 
     const logo_url = req.files && req.files.logo_url ? req.files.logo_url[0].filename : null;
     const banner_url = req.files && req.files.banner_url ? req.files.banner_url[0].filename : null;
     const aadhaar_url = req.files && req.files.aadhaar_url ? req.files.aadhaar_url[0].filename : null;
     const pan_url = req.files && req.files.pan_url ? req.files.pan_url[0].filename : null;
-    const gst_certificate_url = req.files && req.files.gst_certificate_url ? req.files.gst_certificate_url[0].filename : null;
-    const fssai_license_url = req.files && req.files.fssai_license_url ? req.files.fssai_license_url[0].filename : null;
-    const shop_license_url = req.files && req.files.shop_license_url ? req.files.shop_license_url[0].filename : null;
-    const vehicle_rc_url = req.files && req.files.vehicle_rc_url ? req.files.vehicle_rc_url[0].filename : null;
-    const driving_license_url = req.files && req.files.driving_license_url ? req.files.driving_license_url[0].filename : null;
     const bank_passbook_url = req.files && req.files.bank_passbook_url ? req.files.bank_passbook_url[0].filename : null;
     const signature_url = req.files && req.files.signature_url ? req.files.signature_url[0].filename : null;
 
     // Hash password if provided, else store null (will be auto-generated at approval)
     const hashedPw = password ? hashPassword(password) : null;
-    const plainPw  = password || null;
+    const plainPw = password || null;
 
-    let created_by_id = null, created_by_user_id = null, created_by_name = null, created_by_email = null, created_by_phone = null;
-    if (req.user && req.user.id) {
-      const [uRows] = await pool.execute('SELECT id, user_id, full_name AS name, email, mobile_number AS phone FROM users WHERE id = ?', [req.user.id]);
-      if (uRows.length) {
-        const cu = uRows[0];
-        created_by_id = cu.id;
-        created_by_user_id = cu.user_id || null;
-        created_by_name = cu.name || null;
-        created_by_email = cu.email || null;
-        created_by_phone = cu.phone || null;
-      }
-    }
+    // Get current user for audit trail
+    const auditUser = await resolveCurrentUserAudit(req);
+    const createdBy = auditUser ? auditUser.user_id : null;
 
     const insertData = {
       franchise_name,
@@ -1395,19 +1486,12 @@ exports.createFranchise = async (req, res) => {
       email,
       city,
       state,
-      commission_percentage: commission_percentage || 10.00,
       status: status || 'Pending',
       login_password: hashedPw,
-      business_registration_number: business_registration_number || null,
-      gst_number: gst_number || null,
       pan_number: pan_number || null,
       aadhaar_number: aadhaar_number || null,
       start_date: start_date || null,
       expiry_date: expiry_date || null,
-      alt_mobile: alt_mobile || null,
-      whatsapp_number: whatsapp_number || null,
-      website_url: website_url || null,
-      emergency_contact_number: emergency_contact_number || null,
       door_number: door_number || null,
       street_name: street_name || null,
       area: area || null,
@@ -1415,8 +1499,6 @@ exports.createFranchise = async (req, res) => {
       district: district || null,
       territory_pincodes: territory_pincodes || null,
       pincode: pincode || null,
-      latitude: latitude || null,
-      longitude: longitude || null,
       map_link: map_link || null,
       username: username || null,
       role: role || 'Admin',
@@ -1427,32 +1509,27 @@ exports.createFranchise = async (req, res) => {
       banner_url,
       aadhaar_url,
       pan_url,
-      gst_certificate_url,
-      fssai_license_url,
-      shop_license_url,
-      vehicle_rc_url,
-      driving_license_url,
       bank_passbook_url,
       signature_url,
-      created_by_id,
-      created_by_user_id,
-      created_by_name,
-      created_by_email,
-      created_by_phone
+      bank_name: bank_name || null,
+      account_holder_name: account_holder_name || null,
+      account_number: account_number || null,
+      ifsc_code: ifsc_code || null,
+      account_type: account_type || null,
+      created_by: createdBy
     };
 
-      // Filter out created_by fields that might not exist in older databases
+      // Filter out fields that might not exist in older databases
       const safeInsertData = {};
       const allowedFields = [
         'franchise_name', 'owner_name', 'mobile', 'email', 'city', 'state',
-        'commission_percentage', 'status', 'login_password', 'business_registration_number',
-        'gst_number', 'pan_number', 'aadhaar_number', 'start_date', 'expiry_date', 'alt_mobile',
-        'whatsapp_number', 'website_url', 'emergency_contact_number', 'door_number',
-        'street_name', 'area', 'landmark', 'district', 'territory_pincodes', 'pincode',
-        'latitude', 'longitude', 'map_link', 'username', 'role', 'otp_verified',
+        'status', 'login_password', 'pan_number', 'aadhaar_number', 'start_date', 'expiry_date',
+        'door_number', 'street_name', 'area', 'landmark', 'district', 'territory_pincodes', 'pincode',
+        'map_link', 'username', 'role', 'otp_verified',
         'email_verified', 'login_status', 'logo_url', 'banner_url', 'aadhaar_url',
-        'pan_url', 'gst_certificate_url', 'fssai_license_url', 'shop_license_url',
-        'vehicle_rc_url', 'driving_license_url', 'bank_passbook_url', 'signature_url'
+        'pan_url', 'bank_passbook_url', 'signature_url',
+        'bank_name', 'account_holder_name', 'account_number', 'ifsc_code', 'account_type',
+        'created_by'
       ];
     
       allowedFields.forEach(field => {
@@ -1460,13 +1537,6 @@ exports.createFranchise = async (req, res) => {
           safeInsertData[field] = insertData[field];
         }
       });
-    
-      // Try to add created_by fields, but don't fail if they don't exist
-      if (created_by_id) safeInsertData.created_by_id = created_by_id;
-      if (created_by_user_id) safeInsertData.created_by_user_id = created_by_user_id;
-      if (created_by_name) safeInsertData.created_by_name = created_by_name;
-      if (created_by_email) safeInsertData.created_by_email = created_by_email;
-      if (created_by_phone) safeInsertData.created_by_phone = created_by_phone;
 
       // Build INSERT statement with column names
       const columns = Object.keys(safeInsertData);
@@ -1553,10 +1623,14 @@ exports.approveFranchise = async (req, res) => {
       userId = created[0].user_id;
     }
 
-    // Update franchise: Active + link UUID + update login_password
+    // Get current user for audit trail
+    const auditUser = await resolveCurrentUserAudit(req);
+    const createdBy = auditUser ? auditUser.user_id : null;
+
+    // Update franchise: Active + link UUID + update login_password + audit trail
     await pool.execute(
-      "UPDATE franchise_owners SET status = 'Active', franch_user_id = ?, login_password = ?, start_date = ?, expiry_date = ? WHERE id = ?",
-      [userId, hashedPw, defaultStartDate, defaultExpiryDate, id]
+      "UPDATE franchise_owners SET status = 'Active', franch_user_id = ?, login_password = ?, start_date = ?, expiry_date = ?, created_by = ? WHERE id = ?",
+      [userId, hashedPw, defaultStartDate, defaultExpiryDate, createdBy, id]
     );
 
     return res.json({
@@ -1578,12 +1652,12 @@ exports.updateFranchise = async (req, res) => {
   try {
     const { id } = req.params;
     const { 
-      franchise_name, owner_name, mobile, email, city, state, commission_percentage, status,
-      business_registration_number, gst_number, pan_number, start_date, expiry_date,
-      alt_mobile, whatsapp_number, website_url, emergency_contact_number,
+      franchise_name, owner_name, mobile, email, city, state, status,
+      pan_number, start_date, expiry_date,
       territory_pincodes, aadhaar_number,
-      door_number, street_name, area, landmark, district, pincode, latitude, longitude, map_link,
-      username, role, otp_verified, email_verified, login_status
+      door_number, street_name, area, landmark, district, pincode, map_link,
+      username, role, otp_verified, email_verified, login_status,
+      bank_name, account_holder_name, account_number, ifsc_code, account_type
     } = req.body;
 
     const [existingFranchiseRows] = await pool.execute('SELECT email, franch_user_id FROM franchise_owners WHERE id = ?', [id]);
@@ -1593,47 +1667,41 @@ exports.updateFranchise = async (req, res) => {
     const oldEmail = existingFranchiseRows[0].email;
     const franchiseUserId = existingFranchiseRows[0].franch_user_id;
 
+    // Get current user for audit trail
+    const auditUser = await resolveCurrentUserAudit(req);
+    const updatedBy = auditUser ? auditUser.user_id : null;
+
     const logo_url = req.files && req.files.logo_url ? req.files.logo_url[0].filename : null;
     const banner_url = req.files && req.files.banner_url ? req.files.banner_url[0].filename : null;
     const aadhaar_url = req.files && req.files.aadhaar_url ? req.files.aadhaar_url[0].filename : null;
     const pan_url = req.files && req.files.pan_url ? req.files.pan_url[0].filename : null;
-    const gst_certificate_url = req.files && req.files.gst_certificate_url ? req.files.gst_certificate_url[0].filename : null;
-    const fssai_license_url = req.files && req.files.fssai_license_url ? req.files.fssai_license_url[0].filename : null;
-    const shop_license_url = req.files && req.files.shop_license_url ? req.files.shop_license_url[0].filename : null;
-    const vehicle_rc_url = req.files && req.files.vehicle_rc_url ? req.files.vehicle_rc_url[0].filename : null;
-    const driving_license_url = req.files && req.files.driving_license_url ? req.files.driving_license_url[0].filename : null;
     const bank_passbook_url = req.files && req.files.bank_passbook_url ? req.files.bank_passbook_url[0].filename : null;
     const signature_url = req.files && req.files.signature_url ? req.files.signature_url[0].filename : null;
 
     let query = `UPDATE franchise_owners SET 
-      franchise_name = ?, owner_name = ?, mobile = ?, email = ?, city = ?, state = ?, commission_percentage = ?, status = ?,
-      business_registration_number = ?, gst_number = ?, pan_number = ?, aadhaar_number = ?, start_date = ?, expiry_date = ?,
-      alt_mobile = ?, whatsapp_number = ?, website_url = ?, emergency_contact_number = ?,
-      door_number = ?, street_name = ?, area = ?, landmark = ?, district = ?, territory_pincodes = ?, pincode = ?, latitude = ?, longitude = ?, map_link = ?,
-      username = ?, role = ?, otp_verified = ?, email_verified = ?, login_status = ?`;
+      franchise_name = ?, owner_name = ?, mobile = ?, email = ?, city = ?, state = ?, status = ?,
+      pan_number = ?, aadhaar_number = ?, start_date = ?, expiry_date = ?,
+      door_number = ?, street_name = ?, area = ?, landmark = ?, district = ?, territory_pincodes = ?, pincode = ?, map_link = ?,
+      username = ?, role = ?, otp_verified = ?, email_verified = ?, login_status = ?,
+      bank_name = ?, account_holder_name = ?, account_number = ?, ifsc_code = ?, account_type = ?`;
 
     let params = [
-      franchise_name, owner_name, mobile, email, city, state, commission_percentage, status,
-      business_registration_number || null, gst_number || null, pan_number || null, aadhaar_number || null, start_date || null, expiry_date || null,
-      alt_mobile || null, whatsapp_number || null, website_url || null, emergency_contact_number || null,
-      door_number || null, street_name || null, area || null, landmark || null, district || null, territory_pincodes || null, pincode || null, latitude || null, longitude || null, map_link || null,
-      username || null, role || 'Admin', otp_verified !== undefined ? (otp_verified ? 1 : 0) : 0, email_verified !== undefined ? (email_verified ? 1 : 0) : 0, login_status || 'Active'
+      franchise_name, owner_name, mobile, email, city, state, status,
+      pan_number || null, aadhaar_number || null, start_date || null, expiry_date || null,
+      door_number || null, street_name || null, area || null, landmark || null, district || null, territory_pincodes || null, pincode || null, map_link || null,
+      username || null, role || 'Admin', otp_verified !== undefined ? (otp_verified ? 1 : 0) : 0, email_verified !== undefined ? (email_verified ? 1 : 0) : 0, login_status || 'Active',
+      bank_name || null, account_holder_name || null, account_number || null, ifsc_code || null, account_type || null
     ];
 
     if (logo_url) { query += `, logo_url = ?`; params.push(logo_url); }
     if (banner_url) { query += `, banner_url = ?`; params.push(banner_url); }
     if (aadhaar_url) { query += `, aadhaar_url = ?`; params.push(aadhaar_url); }
     if (pan_url) { query += `, pan_url = ?`; params.push(pan_url); }
-    if (gst_certificate_url) { query += `, gst_certificate_url = ?`; params.push(gst_certificate_url); }
-    if (fssai_license_url) { query += `, fssai_license_url = ?`; params.push(fssai_license_url); }
-    if (shop_license_url) { query += `, shop_license_url = ?`; params.push(shop_license_url); }
-    if (vehicle_rc_url) { query += `, vehicle_rc_url = ?`; params.push(vehicle_rc_url); }
-    if (driving_license_url) { query += `, driving_license_url = ?`; params.push(driving_license_url); }
     if (bank_passbook_url) { query += `, bank_passbook_url = ?`; params.push(bank_passbook_url); }
     if (signature_url) { query += `, signature_url = ?`; params.push(signature_url); }
 
-    query += ` WHERE id = ?`;
-    params.push(id);
+    query += `, updated_by = ? WHERE id = ?`;
+    params.push(updatedBy, id);
 
     await pool.execute(query, params);
 
