@@ -56,23 +56,24 @@ export default function SareeBanner() {
           {/* RIGHT CONTENT */}
           <div className="text-center lg:text-left">
             <p className="text-primary font-semibold tracking-widest uppercase">
-              Premium Collection
+              Freshly Prepared • Lovingly Served
             </p>
 
             <h2 className="mt-3 text-4xl md:text-5xl font-bold text-primary-light leading-tight">
-              Discover Elegant <br /> Saree Styles
+              Home-Cooked Meals
             </h2>
 
             <p className="mt-6 text-gray-600 text-lg max-w-lg">
-              Explore our exclusive saree collections crafted with tradition,
-              luxury fabrics, and timeless elegance designed for every special
-              moment.
+              Experience the warmth of authentic home-cooked meals prepared by
+              passionate home chefs. From traditional family recipes to daily
+              favorites, every dish is made with fresh ingredients, care, and
+              the true taste of home.
             </p>
 
             {/* BUTTON */}
             <div className="mt-8">
               <Link to="/shop">
-                <AnimatedButton text="View Collections" />
+                <AnimatedButton text="Order Now" />
               </Link>
             </div>
           </div>
