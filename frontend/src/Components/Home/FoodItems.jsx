@@ -106,33 +106,41 @@ const FoodItems = () => {
             <p className="text-sm text-slate-500 mt-2">Check back soon for fresh chef creations.</p>
           </div>
         ) : (
-          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4 ">
             {foods.map((food) => (
               <article
                 key={food.id}
-                className="group bg-white rounded-3xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                className="group  bg-white rounded-3xl overflow-hidden border border-green-800 border-0.4 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
               >
                 {/* Image */}
                 <div className="relative h-70 overflow-hidden">
                   <img
                     src={getFoodImage(food)}
                     alt={food.name}
-                    className="w-full h-full object-cover transition duration-500 group-hover:scale-110"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   />
 
-                  {/* Chef */}
-                  <div className="absolute top-3 left-3 bg-green-900/90 backdrop-blur-md rounded-full px-3 py-1.5 shadow-lg">
-                    <p className="text-[11px] font-semibold text-slate-100">
+                  {/* Chef Badge */}
+                  <div className="absolute top-3 left-3 bg-green-900/95 backdrop-blur-md rounded-full px-4 py-2 shadow-lg">
+                    <p className="text-xs font-medium text-white">
                       👨‍🍳 {food.chef_name || "Chef"}
                     </p>
                   </div>
 
-                  {/* Quick View */}
+                  {/* Rating */}
+                  {/* <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1">
+                    <span className="text-yellow-500">⭐</span>
+                    <span className="text-sm font-bold text-slate-800">
+                      {food.rating || "4.8"}
+                    </span>
+                  </div> */}
+
+                  {/* Plus Button - Bottom Right */}
                   <button
                     onClick={() => openQuickView(food)}
-                    className="absolute top-3 right-3 bg-green-900 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg hover:bg-black hover:scale-110 transition"
+                    className="absolute bottom-4 right-4 z-10 bg-green-900 text-white w-12 h-12 rounded-full flex items-center justify-center shadow-xl hover:bg-green-800 hover:scale-110 transition-all duration-300"
                   >
-                    <FiPlus size={18} />
+                    <FiPlus size={20} />
                   </button>
                 </div>
 
