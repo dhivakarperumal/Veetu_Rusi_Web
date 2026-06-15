@@ -3,6 +3,7 @@ import { FiPlus } from "react-icons/fi";
 import api from "../../api";
 import Heading from "../Heading";
 import QuickViewModal from "../Products/QuickModel";
+import PageContainer from "../CommenComponents/PageContainer";
 
 const parseJsonField = (value) => {
   if (!value) return [];
@@ -75,7 +76,7 @@ const FoodItems = () => {
 
   return (
     <section className="bg-slate-50 py-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <PageContainer>
         <div className="mb-10">
           <Heading
             title="Food Items"
@@ -84,7 +85,7 @@ const FoodItems = () => {
         </div>
 
         {loading ? (
-          <div className="grid gap-6 sm:grid-cols-4 xl:grid-cols-4">
+          <div className="grid gap-6 sm:grid-cols-5 xl:grid-cols-5">
             {[1, 2, 3].map((item) => (
               <div key={item} className="rounded-4xl border border-slate-200 bg-white shadow-sm overflow-hidden animate-pulse">
                 <div className="h-72 bg-slate-100" />
@@ -106,7 +107,7 @@ const FoodItems = () => {
             <p className="text-sm text-slate-500 mt-2">Check back soon for fresh chef creations.</p>
           </div>
         ) : (
-          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4 ">
+          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-5 ">
             {foods.map((food) => (
               <article
                 key={food.id}
@@ -184,7 +185,7 @@ const FoodItems = () => {
             ))}
           </div>
         )}
-      </div>
+      </PageContainer>
 
       {showQuickView && selectedFood && (
         <QuickViewModal product={selectedFood} onClose={closeQuickView} />
