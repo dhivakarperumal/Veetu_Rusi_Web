@@ -86,7 +86,7 @@ const QuickViewModal = ({ product, onClose }) => {
       <div
         className="relative bg-white w-full max-w-5xl rounded-3xl shadow-xl 
   overflow-y-auto md:overflow-hidden 
-  max-h-[95vh] flex flex-col"
+  max-h-[95vh] flex flex-col p-2"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}
@@ -99,231 +99,293 @@ const QuickViewModal = ({ product, onClose }) => {
 
         <div className="flex flex-col md:flex-row md:h-[95vh]">
           {/* LEFT IMAGE SECTION */}
-          <div className="md:w-1/2 w-full bg-gray-50 flex flex-col shrink-0">
-            <div className="relative w-full h-[320px] sm:h-[420px] md:h-full overflow-hidden group flex-1">
+          <div className="md:w-1/2 w-full bg-white flex flex-col border-r border-gray-400">
+
+            {/* Main Image */}
+            <div className="relative h-[500px] lg:h-[600px] overflow-hidden bg-gray-50">
               <img
                 src={selectedImage}
                 alt={product.name}
-                className="w-full h-full object-cover object-top"
+                className="w-full h-full object-cover"
               />
 
+              {/* Previous */}
               {allImages.length > 1 && (
                 <>
                   <button
                     onClick={prevImage}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 bg-white rounded-full p-2 shadow"
+                    className="absolute left-4 top-1/2 -translate-y-1/2 bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition"
                   >
                     <FiChevronLeft size={20} />
                   </button>
 
                   <button
                     onClick={nextImage}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 bg-white rounded-full p-2 shadow"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition"
                   >
                     <FiChevronRight size={20} />
                   </button>
                 </>
               )}
 
+              {/* Offer Badge */}
               {product.offer && (
-                <span className="absolute top-4 left-4 bg-red-500 text-white text-xs px-3 py-1 rounded-full">
+                <div className="absolute top-4 left-4 bg-red-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow">
                   {Math.floor(product.offer)}% OFF
-                </span>
+                </div>
               )}
             </div>
 
-            {/* Thumbnails */}
-            {/* <div className="flex gap-2 p-4 overflow-x-auto">
-              {allImages.map((img, i) => (
-                <img
-                  key={i}
-                  src={img}
-                  onClick={() => {
-                    setSelectedImage(img);
-                    setImgIndex(i);
-                  }}
-                  className={`w-16 h-16 object-cover rounded-lg cursor-pointer border-2 ${selectedImage === img ? "border-primary" : "border-gray-200"
-                    }`}
-                />
-              ))}
-            </div> */}
+            {/* Thumbnail Images */}
+            {allImages.length > 1 && (
+              <div className="p-4 border-t border-gray-100 bg-white">
+                <div className="flex gap-3 overflow-x-auto pb-2">
+                  {allImages.map((img, i) => (
+                    <img
+                      key={i}
+                      src={img}
+                      alt={`thumb-${i}`}
+                      onClick={() => {
+                        setSelectedImage(img);
+                        setImgIndex(i);
+                      }}
+                      className={`w-24 h-24 rounded-xl object-cover cursor-pointer shrink-0 border-2 transition-all ${selectedImage === img
+                        ? "border-green-600 shadow-md"
+                        : "border-gray-200 hover:border-gray-300"
+                        }`}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* RIGHT CONTENT */}
-          <div
-            className="md:w-1/2 w-full md:h-full md:overflow-y-auto min-h-0 p-3 flex flex-col gap-6 quickview-scroll"
-            style={{ scrollbarWidth: "none" }}
-          >
-            <div>
-              <h2 className="text-2xl font-bold">{product.name}</h2>
+          <div className="md:w-1/2 w-full h-full flex flex-col bg-white">
 
-              <div className="flex flex-col gap-2 mt-2">
+            {/* Fixed Header */}
+            <div className="sticky top-0 z-20 bg-white border-b border-gray-100 p-5">
+              <h2 className="text-2xl font-bold text-slate-900">
+                {product.name}
+              </h2>
+
+              <div className="flex flex-wrap gap-2 mt-3">
                 {product.category && (
-                  <span className="text-xs bg-gray-100 px-3 py-1 rounded-full w-fit">
+                  <span className="text-xs bg-gray-100 px-3 py-1 rounded-full">
                     Category : {product.category}
                   </span>
                 )}
+
                 {product.subcategory && (
-                  <span className="text-xs bg-gray-100 px-3 py-1 rounded-full w-fit">
+                  <span className="text-xs bg-gray-100 px-3 py-1 rounded-full">
                     Sub Category : {product.subcategory}
                   </span>
                 )}
               </div>
             </div>
 
-            {/* Price */}
-            <div className="flex flex-col gap-2 bg-gray-50 p-4 rounded-xl">
-              <div className="flex items-center gap-3">
-                <span className="text-3xl font-bold text-primary">
-                  ₹{unitPrice}
-                </span>
-                {product.mrp && (
-                  <span className="line-through text-gray-400">
-                    ₹{product.mrp}
+            {/* Scrollable Content */}
+            <div
+              className="flex-1 overflow-y-auto p-5 quickview-scroll"
+              style={{ scrollbarWidth: "none" }}
+            >
+              {/* Price */}
+              <div className="flex flex-col gap-2 bg-gray-50 p-4 rounded-2xl">
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl font-bold text-primary">
+                    ₹{unitPrice}
                   </span>
-                )}
-              </div>
-              <p className="text-sm text-gray-500">Total: ₹{totalPrice}</p>
-            </div>
 
-            {/* Colors */}
-            {product.variants?.length > 1 && (
-              <div>
-                <p className="font-semibold mb-2">Colors</p>
-                <div className="flex gap-3 flex-wrap">
-                  {product.variants.map((variant, i) => (
-                    <img
-                      key={i}
-                      src={variant.images?.[0]}
-                      onClick={() => {
-                        setSelectedVariant(variant);
-                        setSelectedImage(variant.images?.[0]);
-                        setImgIndex(0);
-                        setSelectedSize(variant.selectedSizes?.[0]);
-                      }}
-                      className={`w-14 h-14 rounded-lg object-cover cursor-pointer border-2 ${
-                        selectedVariant?.color === variant.color
+                  {product.mrp && (
+                    <span className="line-through text-gray-400">
+                      ₹{product.mrp}
+                    </span>
+                  )}
+                </div>
+
+                <p className="text-sm text-gray-500">
+                  Total : ₹{totalPrice}
+                </p>
+              </div>
+
+              {/* Colors */}
+              {product.variants?.length > 1 && (
+                <div className="mt-6">
+                  <p className="font-semibold mb-3">Colors</p>
+
+                  <div className="flex gap-3 flex-wrap">
+                    {product.variants.map((variant, i) => (
+                      <img
+                        key={i}
+                        src={variant.images?.[0]}
+                        onClick={() => {
+                          setSelectedVariant(variant);
+                          setSelectedImage(variant.images?.[0]);
+                          setImgIndex(0);
+                          setSelectedSize(
+                            variant.selectedSizes?.[0]
+                          );
+                        }}
+                        className={`w-16 h-16 rounded-xl object-cover cursor-pointer border-2 ${selectedVariant?.color === variant.color
                           ? "border-primary"
                           : "border-gray-200"
-                      }`}
-                    />
-                  ))}
+                          }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Description */}
+              {product.description && (
+                <div className="mt-6">
+                  <h3 className="font-bold mb-2">
+                    Description
+                  </h3>
+
+                  <p className="text-gray-600 text-sm leading-7">
+                    {product.description}
+                  </p>
+                </div>
+              )}
+
+              {/* Sizes */}
+              {selectedVariant?.selectedSizes?.length > 0 && (
+                <div className="mt-6">
+                  {!(
+                    selectedVariant.selectedSizes.length === 1 &&
+                    selectedVariant.selectedSizes[0].toLowerCase() ===
+                    "free size"
+                  ) && (
+                      <>
+                        <p className="font-bold mb-3">
+                          Select Size
+                        </p>
+
+                        <div className="flex gap-2 flex-wrap">
+                          {selectedVariant.selectedSizes.map(
+                            (size, i) => (
+                              <button
+                                key={i}
+                                onClick={() =>
+                                  setSelectedSize(size)
+                                }
+                                className={`px-4 py-2 rounded-xl ${selectedSize === size
+                                  ? "bg-primary text-white"
+                                  : "bg-gray-100"
+                                  }`}
+                              >
+                                {size}
+                              </button>
+                            )
+                          )}
+                        </div>
+                      </>
+                    )}
+
+                  {selectedSize && (
+                    <p className="text-sm text-gray-600 mt-4">
+                      Stock Available :
+                      <span className="font-semibold ml-1">
+                        {selectedVariant?.sizesStock?.[
+                          selectedSize
+                        ] || 0}
+                      </span>
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Quantity */}
+              <div className="mt-6">
+                <p className="font-bold mb-3">
+                  Quantity
+                </p>
+
+                <div className="flex items-center gap-3 bg-gray-100 w-fit rounded-xl px-3 py-2">
+                  <button
+                    onClick={() =>
+                      quantity > 1 &&
+                      setQuantity(quantity - 1)
+                    }
+                    className="text-lg font-bold px-2"
+                  >
+                    -
+                  </button>
+
+                  <span className="w-8 text-center font-semibold">
+                    {quantity}
+                  </span>
+
+                  <button
+                    onClick={() => {
+                      if (quantity < stock) {
+                        setQuantity(quantity + 1);
+                      }
+                    }}
+                    className="text-lg font-bold px-2"
+                  >
+                    +
+                  </button>
                 </div>
               </div>
-            )}
 
-            {/* Description */}
-            {product.description && (
-              <div>
-                <h3 className="font-bold mb-2">Description</h3>
-                <p className="text-gray-600 text-sm">{product.description}</p>
-              </div>
-            )}
-
-            {/* Sizes */}
-            {selectedVariant?.selectedSizes?.length > 0 && (
-              <div>
-                {!(selectedVariant?.selectedSizes?.length === 1 && selectedVariant?.selectedSizes[0].toLowerCase() === "free size") && (
-                  <>
-                    <p className="font-bold mb-2">Select Size</p>
-
-                    <div className="flex gap-2 flex-wrap">
-                      {selectedVariant.selectedSizes.map((size, i) => (
-                        <button
-                          key={i}
-                          onClick={() => setSelectedSize(size)}
-                          className={`px-4 py-2 rounded-lg ${
-                            selectedSize === size
-                              ? "bg-primary text-white"
-                              : "bg-gray-100"
-                          }`}
-                        >
-                          {size}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-
-                {/* STOCK DISPLAY */}
-                {selectedSize && (
-                  <p className="text-sm text-gray-600 mt-3">
-                    Stock Available :{" "}
-                    <span className="font-semibold">
-                      {selectedVariant?.sizesStock?.[selectedSize] || 0}
-                    </span>
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* Quantity */}
-            <div>
-              <p className="font-bold mb-2">Quantity</p>
-
-              <div className="flex items-center gap-3 bg-gray-100 w-fit rounded-xl px-3 py-2">
-                <button
-                  onClick={() => quantity > 1 && setQuantity(quantity - 1)}
-                  className="text-lg font-bold px-2 cursor-pointer"
-                >
-                  -
-                </button>
-
-                <span className="w-8 text-center font-semibold">
-                  {quantity}
-                </span>
-
-                <button
-                  onClick={() => {
-                    if (quantity < stock) {
-                      setQuantity(quantity + 1);
-                    }
-                  }}
-                  className="text-lg font-bold px-2 cursor-pointer"
-                >
-                  +
-                </button>
-              </div>
+              {/* Bottom spacing */}
+              <div className="h-20" />
             </div>
 
-            {/* Buttons */}
-            <div className="flex flex-col md:flex-row gap-3 md:sticky md:bottom-0 bg-white pt-4 border-t">
-              <button
-                onClick={() => {
-                  // if this is a chef food item, use food cart endpoint
-                  if (product.chef_id || product.chef_user_id || product.final_price) {
-                    addToFoodCart(product, selectedVariant, selectedSize, quantity);
-                  } else {
-                    addToCart(product, selectedVariant, selectedSize, quantity);
-                  }
-                  onClose();
-                }}
-                className="w-full md:flex-1 flex items-center justify-center gap-2 bg-primary text-white py-3 rounded-lg cursor-pointer"
-              >
-                <FiShoppingCart size={18} />
-                Add to Cart · ₹{totalPrice}
-              </button>
+            {/* Fixed Footer */}
+            <div className="sticky bottom-0 bg-white border-t border-gray-100 p-4 z-20">
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    if (
+                      product.chef_id ||
+                      product.chef_user_id ||
+                      product.final_price
+                    ) {
+                      addToFoodCart(
+                        product,
+                        selectedVariant,
+                        selectedSize,
+                        quantity
+                      );
+                    } else {
+                      addToCart(
+                        product,
+                        selectedVariant,
+                        selectedSize,
+                        quantity
+                      );
+                    }
 
-              {/* Buy Now + Wishlist */}
-              <div className="flex gap-3 w-full md:w-auto md:flex-1">
+                    onClose();
+                  }}
+                  className="flex-1 flex items-center justify-center gap-2 bg-primary text-white py-3 rounded-xl"
+                >
+                  <FiShoppingCart size={18} />
+                  Add To Cart · ₹{totalPrice}
+                </button>
+
                 <button
                   onClick={handleBuyNow}
-                  className="flex-1 bg-black text-white py-3 rounded-lg cursor-pointer"
+                  className="flex-1 bg-black text-white py-3 rounded-xl"
                 >
                   Buy Now
                 </button>
 
                 <button
                   onClick={() => toggleWishlist(product)}
-                  className={`p-3 rounded-lg border cursor-pointer ${
-                    isInWishlist
-                      ? "text-red-500 border-red-300"
-                      : "border-gray-200"
-                  }`}
+                  className={`p-3 rounded-xl border ${isInWishlist
+                    ? "text-red-500 border-red-300"
+                    : "border-gray-200"
+                    }`}
                 >
                   <FiHeart
                     size={20}
-                    className={isInWishlist ? "fill-current" : ""}
+                    className={
+                      isInWishlist ? "fill-current" : ""
+                    }
                   />
                 </button>
               </div>

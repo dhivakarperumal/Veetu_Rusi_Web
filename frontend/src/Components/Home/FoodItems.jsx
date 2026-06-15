@@ -3,6 +3,7 @@ import { FiPlus } from "react-icons/fi";
 import api from "../../api";
 import Heading from "../Heading";
 import QuickViewModal from "../Products/QuickModel";
+import PageContainer from "../CommenComponents/PageContainer";
 
 const parseJsonField = (value) => {
   if (!value) return [];
@@ -75,7 +76,7 @@ const FoodItems = () => {
 
   return (
     <section className="bg-slate-50 py-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <PageContainer>
         <div className="mb-10">
           <Heading
             title="Food Items"
@@ -84,7 +85,7 @@ const FoodItems = () => {
         </div>
 
         {loading ? (
-          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-5 xl:grid-cols-5">
             {[1, 2, 3].map((item) => (
               <div key={item} className="rounded-4xl border border-slate-200 bg-white shadow-sm overflow-hidden animate-pulse">
                 <div className="h-72 bg-slate-100" />
@@ -106,67 +107,85 @@ const FoodItems = () => {
             <p className="text-sm text-slate-500 mt-2">Check back soon for fresh chef creations.</p>
           </div>
         ) : (
-          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-5 ">
             {foods.map((food) => (
               <article
                 key={food.id}
-                className="group overflow-hidden rounded-4xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+                className="group  bg-white rounded-3xl overflow-hidden border border-green-800 border-0.4 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
               >
-                <div className="relative overflow-hidden bg-slate-100">
+                {/* Image */}
+                <div className="relative h-70 overflow-hidden">
                   <img
                     src={getFoodImage(food)}
-                    alt={food.name || "Chef Food"}
-                    className="h-72 w-full object-cover transition duration-700 group-hover:scale-105"
+                    alt={food.name}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   />
-                  <div className="absolute inset-x-0 top-4 flex items-center justify-between px-4">
-                    <span className={`rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.25em] ${getStatusClasses(food.status)}`}>
-                      {food.status || "Active"}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => openQuickView(food)}
-                      className="rounded-full bg-white/90 p-3 text-slate-900 shadow-sm transition hover:bg-white"
-                    >
-                      <FiPlus size={16} />
-                    </button>
+
+                  {/* Chef Badge */}
+                  <div className="absolute top-3 left-3 bg-green-900/95 backdrop-blur-md rounded-full px-4 py-2 shadow-lg">
+                    <p className="text-xs font-medium text-white">
+                      👨‍🍳 {food.chef_name || "Chef"}
+                    </p>
                   </div>
+
+                  {/* Rating */}
+                  {/* <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1">
+                    <span className="text-yellow-500">⭐</span>
+                    <span className="text-sm font-bold text-slate-800">
+                      {food.rating || "4.8"}
+                    </span>
+                  </div> */}
+
+                  {/* Plus Button - Bottom Right */}
+                  <button
+                    onClick={() => openQuickView(food)}
+                    className="absolute bottom-4 right-4 z-10 bg-green-900 text-white w-12 h-12 rounded-full flex items-center justify-center shadow-xl hover:bg-green-800 hover:scale-110 transition-all duration-300"
+                  >
+                    <FiPlus size={20} />
+                  </button>
                 </div>
 
-<div className="p-6 space-y-4">
-                    <div>
-                      <h3 className="text-xl font-black text-slate-900">{food.name || "Chef Special"}</h3>
-                      <p className="mt-2 text-sm leading-6 text-slate-500 line-clamp-3">
-                        {food.description || "A delightful homemade dish prepared by our chef."}
+                {/* Content */}
+                <div className="p-4">
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-black text-slate-900 text-lg truncate">
+                        {food.name}
+                      </h3>
+
+                      <p className="text-sm text-slate-500 mt-1">
+                        {food.category || food.chef_category || "Food Item"}
                       </p>
                     </div>
 
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div className="rounded-3xl bg-slate-50 p-4">
-                        <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Category</p>
-                        <p className="mt-2 font-black text-slate-900">{food.category || food.chef_category || "Uncategorized"}</p>
-                      </div>
-                      <div className="rounded-3xl bg-slate-50 p-4">
-                        <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Chef</p>
-                        <p className="mt-2 font-black text-slate-900">{food.chef_name || food.created_by_name || "Chef"}</p>
-                      </div>
-                    </div>
-
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div className="rounded-3xl bg-slate-50 p-4">
-                        <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">MRP</p>
-                        <p className="mt-2 font-black text-slate-900">₹{formatPrice(food.mrp)}</p>
-                      </div>
-                      <div className="rounded-3xl bg-slate-50 p-4">
-                        <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Price</p>
-                        <p className="mt-2 font-black text-emerald-700">₹{formatPrice(food.final_price || food.offer_price || food.mrp)}</p>
-                      </div>
+                    <div className="flex items-center gap-1 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-100">
+                      <span>⭐</span>
+                      <span className="text-sm font-bold text-slate-800">
+                        {food.rating || "4.8"}
+                      </span>
                     </div>
                   </div>
+
+                  {/* Price */}
+                  <div className="mt-4 flex items-center gap-3">
+                    <span className="text-slate-400 line-through font-medium text-sm">
+                      ₹{formatPrice(food.mrp)}
+                    </span>
+
+                    <span className="text-2xl font-black text-emerald-600">
+                      ₹{formatPrice(
+                        food.final_price ||
+                        food.offer_price ||
+                        food.mrp
+                      )}
+                    </span>
+                  </div>
+                </div>
               </article>
             ))}
           </div>
         )}
-      </div>
+      </PageContainer>
 
       {showQuickView && selectedFood && (
         <QuickViewModal product={selectedFood} onClose={closeQuickView} />

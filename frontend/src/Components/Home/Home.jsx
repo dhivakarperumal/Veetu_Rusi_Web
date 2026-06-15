@@ -2,7 +2,7 @@ import React from 'react'
 import Hero from "../Hero"
 import SareeBanner from '../SareeBanner'
 import Banner from '../Banner'
-import About from "../About/About"
+import AboutBrand from "./AboutBrand";
 import ProductsCard from '../Products/ProductsCard'
 import VideoSwiper from './VideoSwiper'
 import CategoryIcon from './CategoryIcon'
@@ -33,7 +33,7 @@ const Home = () => {
         <SareeSwiper />
       </div>
       <div>
-        <About />
+        <AboutBrand />
       </div>
       <div>
         <TrendingProducts />

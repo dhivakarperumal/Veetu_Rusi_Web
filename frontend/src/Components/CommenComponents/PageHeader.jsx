@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import defaultBg from "/assets/purpleph.jpg";
+import defaultBg from "/assets/foodheader.jpg";
 
 const PageHeader = ({ title, background }) => {
 
@@ -22,7 +22,7 @@ const PageHeader = ({ title, background }) => {
       {/* Content */}
       <div className="relative text-center px-4">
 
-        <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-2 md:mb-3">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-2 md:mb-3 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
           {title}
         </h1>
 
@@ -31,14 +31,14 @@ const PageHeader = ({ title, background }) => {
 
           <Link
             to="/"
-            className=" hover:text-white/80 transition"
+            className=" text-secondary hover:text-primary-light transition"
           >
             Home
           </Link>
 
-          <span>/</span>
+          <span className="text-primary-dark">/</span>
 
-          <span className="text-gray-200">{title}</span>
+          <span className="text-secondary">{title}</span>
 
         </div>
 
