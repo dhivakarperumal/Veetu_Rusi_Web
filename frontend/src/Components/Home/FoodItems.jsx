@@ -4,6 +4,7 @@ import api from "../../api";
 import Heading from "../Heading";
 import QuickViewModal from "../Products/QuickModel";
 import PageContainer from "../CommenComponents/PageContainer";
+import { useNavigate } from "react-router-dom";
 
 const parseJsonField = (value) => {
   if (!value) return [];
@@ -42,6 +43,11 @@ const FoodItems = () => {
   const [error, setError] = useState(null);
   const [selectedFood, setSelectedFood] = useState(null);
   const [showQuickView, setShowQuickView] = useState(false);
+  const navigate = useNavigate();
+
+  const goToDetails = (food) => {
+    navigate(`/food/${food.id}`);
+  };
 
   const openQuickView = (food) => {
     setSelectedFood(food);
@@ -118,7 +124,8 @@ const FoodItems = () => {
                   <img
                     src={getFoodImage(food)}
                     alt={food.name}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    onClick={() => goToDetails(food)}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 cursor-pointer"
                   />
 
                   {/* Chef Badge */}
@@ -148,7 +155,7 @@ const FoodItems = () => {
                 {/* Content */}
                 <div className="p-4">
                   <div className="flex justify-between items-start gap-2">
-                    <div className="flex-1 min-w-0">
+                    <div onClick={() => goToDetails(food)} className="flex-1 min-w-0 cursor-pointer">
                       <h3 className="font-black text-slate-900 text-lg truncate">
                         {food.name}
                       </h3>

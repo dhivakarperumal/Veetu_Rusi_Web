@@ -4,7 +4,6 @@ import Navbar from "./Components/CommenComponents/Navbar";
 import Header from "./Components/CommenComponents/Header";
 import Footer from "./Components/CommenComponents/Footer";
 
-
 import "react-toastify/dist/ReactToastify.css";
 import ScrollToTop from "./Components/CommenComponents/ScrollToTop";
 import ScrollNavigator from "./Components/CommenComponents/ScrollNavigator";
