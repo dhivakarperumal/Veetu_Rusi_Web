@@ -4,6 +4,7 @@ import { AuthContext } from "../../PrivateRouter/AuthContext";
 import api from "../../api";
 import { Printer } from "lucide-react";
 import PageContainer from "../CommenComponents/PageContainer";
+import PageHeader from "../CommenComponents/PageHeader";
 
 const StatusBadge = ({ status }) => {
 
@@ -246,210 +247,213 @@ ${itemsHtml}
   };
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] py-10">
-      <PageContainer>
-        <div className=" space-y-8">
-          <h1 className="text-3xl font-bold text-gray-900">My Orders</h1>
+    <>
+      <PageHeader title="My Orders" />
+      <div className="min-h-screen bg-[#FDFBF7] py-10">
 
-          {orders.length === 0 ? (
-            <p className="text-gray-500">No orders found</p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-              {orders.map((order) => (
-                <div
-                  key={order.id}
-                  onClick={() => openOrderDetails(order)}
-                  className="bg-white rounded-3xl border border-primary/10 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden group"
-                >
+        <PageContainer>
+          <div className=" space-y-8">
+            <h1 className="text-3xl font-bold text-gray-900">My Orders</h1>
 
-                  <div className="h-2 w-full bg-gradient-to-r from-primary-light via-primary-light to-secondary"></div>
+            {orders.length === 0 ? (
+              <p className="text-gray-500">No orders found</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                {orders.map((order) => (
+                  <div
+                    key={order.id}
+                    onClick={() => openOrderDetails(order)}
+                    className="bg-white rounded-3xl border border-primary/10 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden group"
+                  >
 
-                  {/* ORDER SUMMARY CARD */}
+                    <div className="h-2 w-full bg-gradient-to-r from-primary-light via-primary-light to-secondary"></div>
 
-                  <div className="bg-gradient-to-br from-primary-light/10 via-white to-secondary/10 pt-6 px-6 pb-4">
+                    {/* ORDER SUMMARY CARD */}
 
-                    {/* <div className="flex justify-between items-center mb-6">
+                    <div className="bg-gradient-to-br from-primary-light/10 via-white to-secondary/10 pt-6 px-6 pb-4">
+
+                      {/* <div className="flex justify-between items-center mb-6">
                       <h3 className="text-xl font-bold text-gray-800">
                         Order Summary
                       </h3>
                     </div> */}
 
-                    <div className="grid md:grid-cols-2 gap-x-12 gap-y-4 text-sm">
+                      <div className="grid md:grid-cols-2 gap-x-12 gap-y-4 text-sm">
 
-                      <div className="flex justify-between border-b border-primary/10 pb-2">
-                        <span className="text-gray-500">Order ID</span>
-                        <span className="font-semibold">
-                          {order.order_id || order.id}
-                        </span>
-                      </div>
+                        <div className="flex justify-between border-b border-primary/10 pb-2">
+                          <span className="text-gray-500">Order ID</span>
+                          <span className="font-semibold">
+                            {order.order_id || order.id}
+                          </span>
+                        </div>
 
-                      <div className="flex justify-between border-b border-primary/10 pb-2">
-                        <span className="text-gray-500">Date</span>
-                        <span className="font-semibold">
-                          {new Date(order.created_at).toLocaleDateString()}
-                        </span>
-                      </div>
+                        <div className="flex justify-between border-b border-primary/10 pb-2">
+                          <span className="text-gray-500">Date</span>
+                          <span className="font-semibold">
+                            {new Date(order.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
 
-                      <div className="flex justify-between border-b border-primary/10 pb-2">
-                        <span className="text-gray-500">Status</span>
-                        <StatusBadge status={order.status} />
-                      </div>
+                        <div className="flex justify-between border-b border-primary/10 pb-2">
+                          <span className="text-gray-500">Status</span>
+                          <StatusBadge status={order.status} />
+                        </div>
 
 
-                      <div className="flex justify-between pt-2 text-base font-bold bg-primary/5 px-3 py-2 rounded-lg">
-                        <span>Total Amount</span>
-                        <span className="text-primary">
-                          ₹{order.total_amount}
-                        </span>
+                        <div className="flex justify-between pt-2 text-base font-bold bg-primary/5 px-3 py-2 rounded-lg">
+                          <span>Total Amount</span>
+                          <span className="text-primary">
+                            ₹{order.total_amount}
+                          </span>
+                        </div>
+
                       </div>
 
                     </div>
 
-                  </div>
+                    {/* ITEMS */}
 
-                  {/* ITEMS */}
+                    <div className="px-6 pt-4 pb-0 space-y-6">
+                      {order.items?.map((item, index) => (
+                        <div
+                          key={index}
+                          className="flex gap-6 items-start border border-primary/10 rounded-2xl p-4 hover:shadow-lg hover:border-primary/30 transition bg-white group-hover:bg-primary/5"
+                        >
+                          <img
+                            src={item.image}
+                            alt={item.product_name}
+                            className="w-24 h-28 object-cover rounded-xl shadow-md border border-primary/10"
+                            onError={(e) => {
+                              e.target.src = "/placeholder.png";
+                            }}
+                          />
 
-                  <div className="px-6 pt-4 pb-0 space-y-6">
-                    {order.items?.map((item, index) => (
-                      <div
-                        key={index}
-                        className="flex gap-6 items-start border border-primary/10 rounded-2xl p-4 hover:shadow-lg hover:border-primary/30 transition bg-white group-hover:bg-primary/5"
-                      >
-                        <img
-                          src={item.image}
-                          alt={item.product_name}
-                          className="w-24 h-28 object-cover rounded-xl shadow-md border border-primary/10"
-                          onError={(e) => {
-                            e.target.src = "/placeholder.png";
-                          }}
-                        />
+                          <div className="flex-1">
+                            <div className="flex justify-between">
+                              <h3 className="font-semibold text-lg text-primary-dark group-hover:text-primary transition">
+                                {item.product_name}
+                              </h3>
 
-                        <div className="flex-1">
-                          <div className="flex justify-between">
-                            <h3 className="font-semibold text-lg text-primary-dark group-hover:text-primary transition">
-                              {item.product_name}
-                            </h3>
+                              <p className="font-bold text-primary text-lg bg-primary/10 px-3 py-1 rounded-lg">
+                                ₹{item.price}
+                              </p>
+                            </div>
 
-                            <p className="font-bold text-primary text-lg bg-primary/10 px-3 py-1 rounded-lg">
-                              ₹{item.price}
-                            </p>
-                          </div>
+                            <div className="text-sm text-gray-600 mt-2 space-y-1">
+                              {item.variant_color && (
+                                <p>Color: {item.variant_color}</p>
+                              )}
 
-                          <div className="text-sm text-gray-600 mt-2 space-y-1">
-                            {item.variant_color && (
-                              <p>Color: {item.variant_color}</p>
-                            )}
+                              {item.variant_size && <p>Size: {item.variant_size}</p>}
 
-                            {item.variant_size && <p>Size: {item.variant_size}</p>}
-
-                            <p>Quantity: {item.quantity}</p>
+                              <p>Quantity: {item.quantity}</p>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </PageContainer>
-
-      {/* POPUP */}
-
-      {showPopup && selectedOrder && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl w-full max-w-4xl shadow-2xl border border-gray-100 overflow-hidden max-h-[90vh] flex flex-col">
-            {/* HEADER */}
-
-            <div className="flex justify-between items-center px-8 py-6 bg-gradient-to-r from-primary-light to-secondary text-white">
-              <h2 className="text-2xl font-bold tracking-wide">
-                Order Details
-              </h2>
-
-              <button
-                onClick={() => setShowPopup(false)}
-                className="text-white text-2xl hover:scale-110 transition cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* CONTENT */}
-
-            <div className="p-8 overflow-y-auto space-y-8">
-
-              {/* ORDER SUMMARY CARD */}
-              <div className="print-area bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="font-bold text-lg text-gray-800">
-                    Order Summary
-                  </h3>
-
-                  <button
-                    onClick={handlePrint}
-                    className="flex items-center gap-1 text-xs bg-primary text-white px-3 py-1.5 rounded-md hover:opacity-90 transition"
-                  >
-                    <Printer className="w-4 h-4" />
-                    Print
-                  </button>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-y-3 gap-x-8 text-sm">
-
-                  <div className="flex justify-between border-b border-primary/10 pb-2">
-                    <span className="text-gray-500">Order ID</span>
-                    <span className="font-semibold">
-                      {selectedOrder.order_id || selectedOrder.id}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between border-b border-primary/10 pb-2">
-                    <span className="text-gray-500">Date</span>
-                    <span className="font-semibold">
-                      {new Date(selectedOrder.created_at).toLocaleDateString()}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between border-b border-primary/10 pb-2">
-                    <span className="text-gray-500">Status</span>
-                    <StatusBadge status={selectedOrder.status} />
-                  </div>
-
-                  <div className="flex justify-between border-b border-primary/10 pb-2">
-                    <span className="text-gray-500">Customer</span>
-                    <span className="font-semibold">
-                      {selectedOrder.customer_name}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between border-b border-primary/10 pb-2">
-                    <span className="text-gray-500">Phone</span>
-                    <span className="font-semibold">
-                      {selectedOrder.customer_phone}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between text-base font-bold pt-2">
-                    <span>Total Amount</span>
-                    <span className="text-primary">
-                      ₹{selectedOrder.total_amount}
-                    </span>
-                  </div>
-
-                </div>
-
+                ))}
               </div>
-              {loadingOrder ? (
-                <div className="flex justify-center py-16">
-                  <div className="animate-spin h-12 w-12 border-b-2 border-primary rounded-full"></div>
-                </div>
-              ) : (
-                <>
-                  {/* ORDER INFO */}
+            )}
+          </div>
+        </PageContainer>
 
-                  {/* <div className="grid grid-cols-2 md:grid-cols-3 gap-6 bg-gray-50 border border-gray-100 rounded-2xl p-6">
+        {/* POPUP */}
+
+        {showPopup && selectedOrder && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-3xl w-full max-w-4xl shadow-2xl border border-gray-100 overflow-hidden max-h-[90vh] flex flex-col">
+              {/* HEADER */}
+
+              <div className="flex justify-between items-center px-8 py-6 bg-gradient-to-r from-primary-light to-secondary text-white">
+                <h2 className="text-2xl font-bold tracking-wide">
+                  Order Details
+                </h2>
+
+                <button
+                  onClick={() => setShowPopup(false)}
+                  className="text-white text-2xl hover:scale-110 transition cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* CONTENT */}
+
+              <div className="p-8 overflow-y-auto space-y-8">
+
+                {/* ORDER SUMMARY CARD */}
+                <div className="print-area bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-bold text-lg text-gray-800">
+                      Order Summary
+                    </h3>
+
+                    <button
+                      onClick={handlePrint}
+                      className="flex items-center gap-1 text-xs bg-primary text-white px-3 py-1.5 rounded-md hover:opacity-90 transition"
+                    >
+                      <Printer className="w-4 h-4" />
+                      Print
+                    </button>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-y-3 gap-x-8 text-sm">
+
+                    <div className="flex justify-between border-b border-primary/10 pb-2">
+                      <span className="text-gray-500">Order ID</span>
+                      <span className="font-semibold">
+                        {selectedOrder.order_id || selectedOrder.id}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between border-b border-primary/10 pb-2">
+                      <span className="text-gray-500">Date</span>
+                      <span className="font-semibold">
+                        {new Date(selectedOrder.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between border-b border-primary/10 pb-2">
+                      <span className="text-gray-500">Status</span>
+                      <StatusBadge status={selectedOrder.status} />
+                    </div>
+
+                    <div className="flex justify-between border-b border-primary/10 pb-2">
+                      <span className="text-gray-500">Customer</span>
+                      <span className="font-semibold">
+                        {selectedOrder.customer_name}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between border-b border-primary/10 pb-2">
+                      <span className="text-gray-500">Phone</span>
+                      <span className="font-semibold">
+                        {selectedOrder.customer_phone}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between text-base font-bold pt-2">
+                      <span>Total Amount</span>
+                      <span className="text-primary">
+                        ₹{selectedOrder.total_amount}
+                      </span>
+                    </div>
+
+                  </div>
+
+                </div>
+                {loadingOrder ? (
+                  <div className="flex justify-center py-16">
+                    <div className="animate-spin h-12 w-12 border-b-2 border-primary rounded-full"></div>
+                  </div>
+                ) : (
+                  <>
+                    {/* ORDER INFO */}
+
+                    {/* <div className="grid grid-cols-2 md:grid-cols-3 gap-6 bg-gray-50 border border-gray-100 rounded-2xl p-6">
                     <div>
                       <p className="text-xs text-gray-400 uppercase font-semibold">
                         Order ID
@@ -512,151 +516,152 @@ ${itemsHtml}
                     </div>
                   </div> */}
 
-                  {/* SHIPPING ADDRESS */}
+                    {/* SHIPPING ADDRESS */}
 
-                  <div>
-                    <h3 className="text-lg font-bold text-primary-dark mb-4">
-                      Shipping Address
-                    </h3>
+                    <div>
+                      <h3 className="text-lg font-bold text-primary-dark mb-4">
+                        Shipping Address
+                      </h3>
 
-                    <div className="border border-gray-100 rounded-2xl p-6 bg-gradient-to-br from-primary/5 to-transparent shadow-sm">
-                      {address ? (
-                        <div className="text-sm text-gray-700 space-y-1">
-                          <p className="font-semibold">
-                            {address.customer_name}
-                          </p>
+                      <div className="border border-gray-100 rounded-2xl p-6 bg-gradient-to-br from-primary/5 to-transparent shadow-sm">
+                        {address ? (
+                          <div className="text-sm text-gray-700 space-y-1">
+                            <p className="font-semibold">
+                              {address.customer_name}
+                            </p>
 
-                          <p>{address.street_address}</p>
+                            <p>{address.street_address}</p>
 
-                          <p>
-                            {address.city}, {address.district}
-                          </p>
+                            <p>
+                              {address.city}, {address.district}
+                            </p>
 
-                          <p>
-                            {address.state} - {address.zip_code}
-                          </p>
+                            <p>
+                              {address.state} - {address.zip_code}
+                            </p>
 
-                          <p>{address.country}</p>
+                            <p>{address.country}</p>
 
-                          <p>Phone: {address.customer_phone}</p>
+                            <p>Phone: {address.customer_phone}</p>
 
-                          <p>Email: {address.customer_email}</p>
-                        </div>
-                      ) : (
-                        <p className="text-gray-500">Address not available</p>
-                      )}
+                            <p>Email: {address.customer_email}</p>
+                          </div>
+                        ) : (
+                          <p className="text-gray-500">Address not available</p>
+                        )}
+                      </div>
                     </div>
-                  </div>
 
-                  {/* PRODUCTS */}
+                    {/* PRODUCTS */}
 
-                  <div>
-                    <h3 className="text-lg font-bold text-primary-dark mb-4">
-                      Products
-                    </h3>
+                    <div>
+                      <h3 className="text-lg font-bold text-primary-dark mb-4">
+                        Products
+                      </h3>
 
-                    <div className="space-y-5">
-                      {selectedOrder.items && selectedOrder.items.length > 0 ? (
-                        selectedOrder.items.map((item, index) => {
-                          const subtotal = item.price * item.quantity;
+                      <div className="space-y-5">
+                        {selectedOrder.items && selectedOrder.items.length > 0 ? (
+                          selectedOrder.items.map((item, index) => {
+                            const subtotal = item.price * item.quantity;
 
-                          return (
-                            <div
-                              key={index}
-                              className="flex gap-5 border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition"
-                            >
-                              <img
-                                src={item.image}
-                                alt={item.product_name}
-                                className="w-24 h-28 object-cover rounded-xl"
-                                onError={(e) => {
-                                  e.target.src = "/placeholder.png";
-                                }}
-                              />
+                            return (
+                              <div
+                                key={index}
+                                className="flex gap-5 border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition"
+                              >
+                                <img
+                                  src={item.image}
+                                  alt={item.product_name}
+                                  className="w-24 h-28 object-cover rounded-xl"
+                                  onError={(e) => {
+                                    e.target.src = "/placeholder.png";
+                                  }}
+                                />
 
-                              <div className="flex-1">
-                                <div className="flex justify-between">
-                                  <h4 className="font-semibold text-lg text-primary-dark">
-                                    {item.product_name}
-                                  </h4>
+                                <div className="flex-1">
+                                  <div className="flex justify-between">
+                                    <h4 className="font-semibold text-lg text-primary-dark">
+                                      {item.product_name}
+                                    </h4>
 
-                                  <p className="font-bold text-primary text-lg">
-                                    ₹{item.price}
-                                  </p>
-                                </div>
+                                    <p className="font-bold text-primary text-lg">
+                                      ₹{item.price}
+                                    </p>
+                                  </div>
 
-                                <div className="text-sm text-gray-600 mt-3 space-y-1">
-                                  {(item.color || item.variant_color) && (
+                                  <div className="text-sm text-gray-600 mt-3 space-y-1">
+                                    {(item.color || item.variant_color) && (
+                                      <p>
+                                        <span className="font-medium">
+                                          Color:
+                                        </span>{" "}
+                                        {item.color || item.variant_color}
+                                      </p>
+                                    )}
+
+                                    {(item.size || item.variant_size) && (
+                                      <p>
+                                        <span className="font-medium">Size:</span>{" "}
+                                        {item.size || item.variant_size}
+                                      </p>
+                                    )}
+
                                     <p>
                                       <span className="font-medium">
-                                        Color:
+                                        Quantity:
                                       </span>{" "}
-                                      {item.color || item.variant_color}
+                                      {item.quantity}
                                     </p>
-                                  )}
 
-                                  {(item.size || item.variant_size) && (
                                     <p>
-                                      <span className="font-medium">Size:</span>{" "}
-                                      {item.size || item.variant_size}
+                                      <span className="font-medium">
+                                        Subtotal:
+                                      </span>{" "}
+                                      ₹{subtotal}
                                     </p>
-                                  )}
-
-                                  <p>
-                                    <span className="font-medium">
-                                      Quantity:
-                                    </span>{" "}
-                                    {item.quantity}
-                                  </p>
-
-                                  <p>
-                                    <span className="font-medium">
-                                      Subtotal:
-                                    </span>{" "}
-                                    ₹{subtotal}
-                                  </p>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          );
-                        })
-                      ) : (
-                        <p className="text-gray-500 text-center py-6">
-                          No items in this order
-                        </p>
-                      )}
+                            );
+                          })
+                        ) : (
+                          <p className="text-gray-500 text-center py-6">
+                            No items in this order
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  </div>
 
-                  {/* FOOTER */}
+                    {/* FOOTER */}
 
-                  <div className="mt-6 border-t border-gray-100 pt-6 flex justify-between items-center">
-                    <p className="text-xl font-bold text-primary-dark">
-                      Total: ₹{selectedOrder.total_amount}
-                    </p>
+                    <div className="mt-6 border-t border-gray-100 pt-6 flex justify-between items-center">
+                      <p className="text-xl font-bold text-primary-dark">
+                        Total: ₹{selectedOrder.total_amount}
+                      </p>
 
-                    <button
-                      onClick={() => setShowPopup(false)}
-                      className="bg-gradient-to-r from-primary to-secondary text-white px-8 py-2.5 rounded-xl font-semibold shadow-md hover:opacity-90 transition"
-                    >
-                      Close
-                    </button>
-                  </div>
-                </>
-              )}
+                      <button
+                        onClick={() => setShowPopup(false)}
+                        className="bg-gradient-to-r from-primary to-secondary text-white px-8 py-2.5 rounded-xl font-semibold shadow-md hover:opacity-90 transition"
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      <style>
-        {`
+        <style>
+          {`
         .animate-spin-slow {
           animation: spin 3s linear infinite;
         }
         `}
-      </style>
-    </div>
+        </style>
+      </div>
+    </>
   );
 };
 
