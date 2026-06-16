@@ -144,13 +144,13 @@ const ProductCard = ({ product }) => {
           )}
 
           {/* Discount Badge */}
-          {product?.offer && (
+          {/* {product?.offer && (
             <div className="absolute bottom-4 left-4">
               <span className="bg-primary text-white text-xs font-semibold px-4 py-2 rounded-full shadow-lg">
                 {Math.floor(product.offer)}% OFF
               </span>
             </div>
-          )}
+          )} */}
         </div>
 
         {/* Content */}
