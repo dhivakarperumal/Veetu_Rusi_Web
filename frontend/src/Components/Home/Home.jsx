@@ -47,9 +47,9 @@ const Home = () => {
       <div>
         <Banner />
       </div>
-      <div>
+      {/* <div>
         <VideoSwiper />
-      </div>
+      </div> */}
     </div>
   )
 }

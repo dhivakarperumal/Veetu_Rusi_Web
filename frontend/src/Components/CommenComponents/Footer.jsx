@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Mail,
@@ -15,7 +15,45 @@ import {
 import { FaFacebook, FaInstagram } from "react-icons/fa";
 import PageContainer from "./PageContainer";
 
+import api from "../.././api";
+
 const Footer = () => {
+  const [categories, setCategories] = useState([]);
+  const [homeChef, setHomeChef] = useState(null);
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const res = await api.get("/auth/profile");
+        setHomeChef(res.data.homeChef);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    loadProfile();
+  }, []);
+
+  useEffect(() => {
+    if (!homeChef?.created_by_user_id) return;
+
+    const fetchCategories = async () => {
+      try {
+        const res = await api.get("/categories");
+
+        const myCategories = res.data.filter(
+          (cat) => cat.created_by_user_id === homeChef.created_by_user_id
+        );
+
+        setCategories(myCategories);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchCategories();
+  }, [homeChef]);
+
   return (
     <footer className="bg-gradient-to-r from-primary via-secondary to-primary-dark text-white mt-20">
 
@@ -26,23 +64,22 @@ const Footer = () => {
           {/* Section 1 */}
           <div>
             <Link to="/" className="flex items-center gap-3 mb-4">
-
               <img
                 src="/logo.png"
-                alt="My Store"
+                alt="Veetu Rusi"
                 className="w-12 h-12 rounded-lg bg-white p-1"
               />
 
               <div>
-                <h2 className="text-xl font-bold">Saree</h2>
-                <p className="text-xs opacity-80">Premium Saree Collection</p>
+                <h2 className="text-xl font-bold">Veetu Rusi</h2>
+                <p className="text-xs opacity-80">Authentic Home-Style Restaurant</p>
               </div>
-
             </Link>
 
             <p className="text-sm opacity-90 leading-relaxed">
-              Discover premium sarees and traditional collections for weddings,
-              festivals, and special occasions. Quality and elegance in every design.
+              Experience the authentic taste of traditional South Indian cuisine.
+              Fresh ingredients, home-style recipes, and unforgettable flavors served
+              with love.
             </p>
           </div>
 
@@ -101,25 +138,21 @@ const Footer = () => {
 
             <ul className="space-y-3 text-sm">
 
-              <li className="flex items-center gap-2 hover:translate-x-1 transition">
-                <Sparkles size={16} />
-                Wedding Sarees
-              </li>
-
-              <li className="flex items-center gap-2 hover:translate-x-1 transition">
-                <Gem size={16} />
-                Silk Sarees
-              </li>
-
-              <li className="flex items-center gap-2 hover:translate-x-1 transition">
-                <Shirt size={16} />
-                Cotton Sarees
-              </li>
-
-              <li className="flex items-center gap-2 hover:translate-x-1 transition">
-                <ShoppingBag size={16} />
-                New Collection
-              </li>
+              {categories.length > 0 ? (
+                categories.map((cat) => (
+                  <li
+                    key={cat.id}
+                    className="flex items-center gap-2 hover:translate-x-1 transition"
+                  >
+                    <Utensils size={16} />
+                    {cat.name}
+                  </li>
+                ))
+              ) : (
+                <li className="text-white/70">
+                  No Categories Available
+                </li>
+              )}
 
             </ul>
           </div>
