@@ -29,8 +29,6 @@ const ProductDetails = () => {
   console.log("Logged User:", user);
   const navigate = useNavigate();
 
-
-
   const [product, setProduct] = useState(null);
 
   const [selectedVariant, setSelectedVariant] = useState(null);
