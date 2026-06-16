@@ -139,7 +139,7 @@ const Footer = () => {
             <ul className="space-y-3 text-sm">
 
               {categories.length > 0 ? (
-                categories.map((cat) => (
+                categories.slice(0,4).map((cat) => (
                   <li
                     key={cat.id}
                     className="flex items-center gap-2 hover:translate-x-1 transition"
