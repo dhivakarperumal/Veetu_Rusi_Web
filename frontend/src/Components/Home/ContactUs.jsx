@@ -687,7 +687,7 @@ const ContactUs = () => {
                     Experts
                   </h3>
                   <p className="text-gray-500 text-sm mb-6">
-                    Real people, passionate about sarees, ready to assist you.
+                    Our customer support, franchise operations, and chef management team are ready to assist you.
                   </p>
 
                   <div className="flex flex-wrap gap-4">
@@ -813,12 +813,12 @@ const ContactUs = () => {
                 </span>
                 <h2 className="text-3xl md:text-5xl font-bold text-gray-900">
                   Our{" "}
-                  <span className="text-primary-light">Flagship Store</span>
+                  <span className="text-primary-light">Head Office</span>
                 </h2>
               </div>
               <p className="text-gray-500 max-w-md text-sm md:text-base border-l-2 border-primary pl-4 py-1">
-                Experience the rich textures, vibrant colors, and unparalleled
-                craftsmanship of our sarees in person.
+                Visit our headquarters for franchise inquiries,
+                business partnerships, and platform support.
               </p>
             </div>
           </FadeIn>
@@ -845,8 +845,8 @@ const ContactUs = () => {
                 {/* Floating Store Card */}
                 <div className="absolute bottom-6 left-6 z-20 bg-white/95 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-2xl max-w-sm transform group-hover:-translate-y-2 transition-transform duration-500">
                   <h4 className="font-bold text-gray-900 text-lg mb-2 flex items-center gap-2">
-                    <MapPin className="w-5 h-5 text-primary" /> Saree Boutique
-                    Chennai
+                    <MapPin className="w-5 h-5 text-primary" /> Veetu Rusi 
+                    Headquarters
                   </h4>
                   <p className="text-gray-600 text-sm leading-relaxed mb-4 font-medium">
                     123, Silk Weaver Street, Usman Road,
