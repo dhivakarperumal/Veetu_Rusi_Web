@@ -147,89 +147,84 @@ const FoodDetails = () => {
                         </div>
 
                         {/* RIGHT */}
-                        <div>
+                        <div className="space-y-5">
 
-                            <span className="inline-flex items-center bg-green-100 text-green-700 px-4 py-2 rounded-full text-sm font-semibold">
-                                👨‍🍳 {food.chef_name}
-                            </span>
-
-                            <h1 className="text-4xl lg:text-5xl font-black text-slate-900 mt-5">
-                                {food.name}
-                            </h1>
-
-                            <div className="flex flex-wrap gap-2 mt-4">
-                                {food.category && (
-                                    <span className="bg-slate-100 px-4 py-2 rounded-full text-sm">
-                                        {food.category}
-                                    </span>
-                                )}
-
-                                {food.subcategory && (
-                                    <span className="bg-slate-100 px-4 py-2 rounded-full text-sm">
-                                        {food.subcategory}
-                                    </span>
-                                )}
-                            </div>
-
-                            <div className="mt-5 flex items-center gap-2">
-                                <span className="text-yellow-500 text-lg">
-                                    ⭐
-                                </span>
-
-                                <span className="font-semibold text-slate-800">
-                                    {food.rating || "4.8"}
+                            {/* Chef */}
+                            <div className="flex items-center gap-2">
+                                <span className="px-3 py-1 rounded-full bg-green-50 border-1  text-green-700 text-xs font-bold">
+                                    👨‍🍳 {food.chef_name}
                                 </span>
                             </div>
 
-                            <div className="flex items-center gap-4 mt-8">
-                                <span className="text-5xl font-black text-primary">
+                            {/* Title */}
+                            <div>
+                                <h1 className="text-2xl lg:text-5xl font-semibold text-slate-900 leading-tight">
+                                    {food.name}
+                                </h1>
+
+                                <div className="flex items-center gap-3 mt-2 text-sm text-slate-500">
+                                    <span>⭐ {food.rating || "4.8"}</span>
+
+                                    {food.category && (
+                                        <>
+                                            <span>•</span>
+                                            <span>{food.category}</span>
+                                        </>
+                                    )}
+
+                                    {food.subcategory && (
+                                        <>
+                                            <span>•</span>
+                                            <span>{food.subcategory}</span>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Price */}
+                            <div className="flex items-center gap-3">
+                                <span className="text-3xl font-semibold text-primary">
                                     ₹{unitPrice}
                                 </span>
 
                                 {food.mrp && (
-                                    <span className="text-2xl text-slate-400 line-through">
+                                    <span className="text-base text-slate-400 line-through">
                                         ₹{food.mrp}
+                                    </span>
+                                )}
+
+                                {food.offer && (
+                                    <span className="px-2 py-1 rounded-md bg-red-50 text-red-600 text-xs font-medium">
+                                        {food.offer}% OFF
                                     </span>
                                 )}
                             </div>
 
-                            <div className="mt-6">
-                                <h3 className="font-bold text-lg mb-2">
-                                    Description
-                                </h3>
-
-                                <p className="text-slate-600 leading-7">
+                            {/* Description Card */}
+                            <div className="rounded-2xl border border-slate-200 bg-white p-5">
+                                <p className="text-sm leading-7 text-slate-600">
                                     {food.description || "No description available"}
                                 </p>
                             </div>
 
-                            {food.offer && (
-                                <div className="mt-4">
-                                    <span className="bg-red-100 text-red-600 px-4 py-2 rounded-full text-sm font-semibold">
-                                        {food.offer}% OFF
-                                    </span>
-                                </div>
-                            )}
-
                             {/* Quantity */}
-
-                            <div className="mt-10">
-                                <h3 className="font-bold text-lg mb-4">
+                            <div className="flex items-center justify-between border border-slate-200 rounded-2xl p-4">
+                                <span className="text-sm font-medium text-slate-700">
                                     Quantity
-                                </h3>
+                                </span>
 
-                                <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-3">
                                     <button
                                         onClick={() =>
                                             quantity > 1 &&
                                             setQuantity(quantity - 1)
                                         }
-                                        className="w-12 h-12 rounded-full bg-slate-100 hover:bg-slate-200"
+                                        className="w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200"
                                     >
                                         -
                                     </button>
 
-                                    <span className="text-xl font-bold">
+                                    <span className="w-8 text-center font-medium">
                                         {quantity}
                                     </span>
 
@@ -237,16 +232,15 @@ const FoodDetails = () => {
                                         onClick={() =>
                                             setQuantity(quantity + 1)
                                         }
-                                        className="w-12 h-12 rounded-full bg-slate-100 hover:bg-slate-200"
+                                        className="w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200"
                                     >
                                         +
                                     </button>
                                 </div>
                             </div>
 
-                            {/* Buttons */}
-
-                            <div className="flex gap-4 mt-10">
+                            {/* Actions */}
+                            <div className="flex gap-3 pt-2">
                                 <button
                                     onClick={() =>
                                         addToFoodCart(
@@ -256,17 +250,17 @@ const FoodDetails = () => {
                                             quantity
                                         )
                                     }
-                                    className="flex-1 bg-primary text-white py-4 rounded-2xl flex items-center justify-center gap-2 font-semibold"
+                                    className="flex-1 h-12 rounded-xl bg-primary text-white flex items-center justify-center gap-2 text-sm font-medium"
                                 >
                                     <FiShoppingCart />
-                                    Add To Cart
+                                    Add to Cart
                                 </button>
 
                                 <button
                                     onClick={() => toggleWishlist(food)}
-                                    className={`w-14 rounded-2xl border flex items-center justify-center ${isInWishlist
-                                        ? "border-red-500 text-red-500"
-                                        : "border-slate-300"
+                                    className={`h-12 w-12 rounded-xl border flex items-center justify-center ${isInWishlist
+                                            ? "border-red-500 text-red-500"
+                                            : "border-slate-300"
                                         }`}
                                 >
                                     <FiHeart
@@ -274,6 +268,7 @@ const FoodDetails = () => {
                                     />
                                 </button>
                             </div>
+
                         </div>
                     </div>
 
