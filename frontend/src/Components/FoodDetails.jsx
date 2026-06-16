@@ -171,6 +171,16 @@ const FoodDetails = () => {
                                 )}
                             </div>
 
+                            <div className="mt-5 flex items-center gap-2">
+                                <span className="text-yellow-500 text-lg">
+                                    ⭐
+                                </span>
+
+                                <span className="font-semibold text-slate-800">
+                                    {food.rating || "4.8"}
+                                </span>
+                            </div>
+
                             <div className="flex items-center gap-4 mt-8">
                                 <span className="text-5xl font-black text-primary">
                                     ₹{unitPrice}
@@ -183,8 +193,15 @@ const FoodDetails = () => {
                                 )}
                             </div>
 
+                            <div className="mt-6">
+                                <h3 className="font-bold text-lg mb-2">
+                                    Description
+                                </h3>
 
-
+                                <p className="text-slate-600 leading-7">
+                                    {food.description || "No description available"}
+                                </p>
+                            </div>
 
                             {food.offer && (
                                 <div className="mt-4">
@@ -257,67 +274,6 @@ const FoodDetails = () => {
                                     />
                                 </button>
                             </div>
-                        </div>
-                    </div>
-
-                    {/* Description */}
-
-                    <div className="bg-white rounded-3xl p-8 mt-12 shadow-sm border border-slate-200">
-                        <h2 className="text-2xl font-black mb-4">
-                            Description
-                        </h2>
-
-                        <p className="text-slate-600 leading-8">
-                            {food.description ||
-                                "No description available"}
-                        </p>
-                    </div>
-
-                    {/* Product Info */}
-
-                    <div className="bg-white rounded-3xl p-8 mt-6 shadow-sm border border-slate-200">
-                        <h2 className="text-2xl font-black mb-6">
-                            Product Information
-                        </h2>
-
-                        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-
-                            <div>
-                                <p className="text-slate-500 text-sm">
-                                    Chef Name
-                                </p>
-                                <p className="font-bold mt-1">
-                                    {food.chef_name}
-                                </p>
-                            </div>
-
-                            <div>
-                                <p className="text-slate-500 text-sm">
-                                    Category
-                                </p>
-                                <p className="font-bold mt-1">
-                                    {food.category}
-                                </p>
-                            </div>
-
-                            <div>
-                                <p className="text-slate-500 text-sm">
-                                    Sub Category
-                                </p>
-                                <p className="font-bold mt-1">
-                                    {food.subcategory || "-"}
-                                </p>
-                            </div>
-
-                            <div>
-                                <p className="text-slate-500 text-sm">
-                                    Rating
-                                </p>
-                                <p className="font-bold mt-1">
-                                    ⭐ {food.rating || "4.8"}
-                                </p>
-                            </div>
-
                         </div>
                     </div>
 
