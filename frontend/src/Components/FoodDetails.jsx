@@ -147,7 +147,7 @@ const FoodDetails = () => {
                         </div>
 
                         {/* RIGHT */}
-                        <div className="space-y-5">
+                        <div className="flex flex-col h-[550px]">
 
                             {/* Chef */}
                             <div className="flex items-center gap-2">
@@ -158,7 +158,7 @@ const FoodDetails = () => {
 
                             {/* Title */}
                             <div>
-                                <h1 className="text-2xl lg:text-5xl font-semibold text-slate-900 leading-tight">
+                                <h1 className="text-2xl mt-3 lg:text-5xl font-semibold text-slate-900 leading-tight">
                                     {food.name}
                                 </h1>
 
@@ -182,7 +182,7 @@ const FoodDetails = () => {
                             </div>
 
                             {/* Price */}
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center mt-3 gap-3">
                                 <span className="text-3xl font-semibold text-primary">
                                     ₹{unitPrice}
                                 </span>
@@ -201,14 +201,14 @@ const FoodDetails = () => {
                             </div>
 
                             {/* Description Card */}
-                            <div className="rounded-2xl border border-slate-200 bg-white p-5">
+                            <div className="rounded-2xl mt-3 border border-slate-200 bg-white p-5">
                                 <p className="text-sm leading-7 text-slate-600">
                                     {food.description || "No description available"}
                                 </p>
                             </div>
 
                             {/* Quantity */}
-                            <div className="flex items-center justify-between border border-slate-200 rounded-2xl p-4">
+                            <div className="mt-6 flex items-center justify-between border border-slate-200 rounded-2xl p-4">
                                 <span className="text-sm font-medium text-slate-700">
                                     Quantity
                                 </span>
@@ -240,33 +240,41 @@ const FoodDetails = () => {
                             </div>
 
                             {/* Actions */}
-                            <div className="flex gap-3 pt-2">
-                                <button
-                                    onClick={() =>
-                                        addToFoodCart(
-                                            food,
-                                            null,
-                                            null,
-                                            quantity
-                                        )
-                                    }
-                                    className="flex-1 h-12 rounded-xl bg-primary text-white flex items-center justify-center gap-2 text-sm font-medium"
-                                >
-                                    <FiShoppingCart />
-                                    Add to Cart
-                                </button>
+                            {/* Bottom Actions */}
+                            <div className="mt-auto pt-5 border-t border-slate-200">
 
-                                <button
-                                    onClick={() => toggleWishlist(food)}
-                                    className={`h-12 w-12 rounded-xl border flex items-center justify-center ${isInWishlist
-                                            ? "border-red-500 text-red-500"
-                                            : "border-slate-300"
-                                        }`}
-                                >
-                                    <FiHeart
-                                        className={isInWishlist ? "fill-current" : ""}
-                                    />
-                                </button>
+                                <div className="flex gap-3">
+
+                                    <button
+                                        onClick={() =>
+                                            addToFoodCart(
+                                                food,
+                                                null,
+                                                null,
+                                                quantity
+                                            )
+                                        }
+                                        className="flex-1 h-12 rounded-xl bg-primary text-white flex items-center justify-center gap-2 text-sm font-medium hover:opacity-90 transition"
+                                    >
+                                        <FiShoppingCart size={18} />
+                                        Add to Cart
+                                    </button>
+
+                                    <button
+                                        onClick={() => toggleWishlist(food)}
+                                        className={`h-12 w-12 rounded-xl border flex items-center justify-center transition ${isInWishlist
+                                                ? "border-red-500 text-red-500 bg-red-50"
+                                                : "border-slate-300 text-slate-600 hover:border-slate-400"
+                                            }`}
+                                    >
+                                        <FiHeart
+                                            size={18}
+                                            className={isInWishlist ? "fill-current" : ""}
+                                        />
+                                    </button>
+
+                                </div>
+
                             </div>
 
                         </div>
