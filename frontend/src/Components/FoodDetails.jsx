@@ -3,6 +3,8 @@ import { useParams } from "react-router-dom";
 import { FiHeart, FiShoppingCart } from "react-icons/fi";
 import api from "../api";
 import { StoreContext } from "../PrivateRouter/StoreContext";
+import PageContainer from "../components/CommenComponents/PageContainer";
+import PageHeader from "../components/CommenComponents/PageHeader";
 
 const FoodDetails = () => {
   const { id } = useParams();
@@ -52,15 +54,18 @@ const FoodDetails = () => {
       item.id === food.id
   );
 
-  return (
-    <div className="bg-slate-50 min-h-screen py-10">
-      <div className="max-w-7xl mx-auto px-4">
+return (
+  <>
+    <PageHeader title={food?.name || "Food Details"} />
 
-        <div className="grid lg:grid-cols-2 gap-10">
+    <section className="bg-slate-50 py-12">
+      <PageContainer>
+
+        <div className="grid lg:grid-cols-2 gap-12">
 
           {/* LEFT */}
           <div>
-            <div className="overflow-hidden rounded-3xl border bg-white">
+            <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
               <img
                 src={selectedImage}
                 alt={food.name}
@@ -75,13 +80,11 @@ const FoodDetails = () => {
                     key={index}
                     src={img}
                     alt=""
-                    onClick={() =>
-                      setSelectedImage(img)
-                    }
-                    className={`w-24 h-24 rounded-xl object-cover cursor-pointer border-2 ${
+                    onClick={() => setSelectedImage(img)}
+                    className={`w-24 h-24 rounded-xl object-cover cursor-pointer border-2 transition ${
                       selectedImage === img
-                        ? "border-green-700"
-                        : "border-gray-200"
+                        ? "border-primary"
+                        : "border-slate-200"
                     }`}
                   />
                 ))}
@@ -92,41 +95,43 @@ const FoodDetails = () => {
           {/* RIGHT */}
           <div>
 
-            <span className="bg-green-100 text-green-700 px-4 py-2 rounded-full text-sm font-semibold">
+            <span className="inline-flex items-center bg-green-100 text-green-700 px-4 py-2 rounded-full text-sm font-semibold">
               👨‍🍳 {food.chef_name}
             </span>
 
-            <h1 className="text-4xl font-black text-slate-900 mt-4">
+            <h1 className="text-4xl lg:text-5xl font-black text-slate-900 mt-5">
               {food.name}
             </h1>
 
-            <div className="flex gap-2 mt-4">
-              <span className="bg-slate-100 px-4 py-2 rounded-full">
-                {food.category}
-              </span>
+            <div className="flex flex-wrap gap-2 mt-4">
+              {food.category && (
+                <span className="bg-slate-100 px-4 py-2 rounded-full text-sm">
+                  {food.category}
+                </span>
+              )}
 
               {food.subcategory && (
-                <span className="bg-slate-100 px-4 py-2 rounded-full">
+                <span className="bg-slate-100 px-4 py-2 rounded-full text-sm">
                   {food.subcategory}
                 </span>
               )}
             </div>
 
-            <div className="mt-6 flex items-center gap-4">
-              <span className="text-4xl font-black text-green-700">
+            <div className="flex items-center gap-4 mt-8">
+              <span className="text-5xl font-black text-primary">
                 ₹{unitPrice}
               </span>
 
               {food.mrp && (
-                <span className="text-xl line-through text-slate-400">
+                <span className="text-2xl text-slate-400 line-through">
                   ₹{food.mrp}
                 </span>
               )}
             </div>
 
             {food.offer && (
-              <div className="mt-3">
-                <span className="bg-red-100 text-red-600 px-3 py-1 rounded-full">
+              <div className="mt-4">
+                <span className="bg-red-100 text-red-600 px-4 py-2 rounded-full text-sm font-semibold">
                   {food.offer}% OFF
                 </span>
               </div>
@@ -134,23 +139,23 @@ const FoodDetails = () => {
 
             {/* Quantity */}
 
-            <div className="mt-8">
-              <h3 className="font-bold mb-3">
+            <div className="mt-10">
+              <h3 className="font-bold text-lg mb-4">
                 Quantity
               </h3>
 
-              <div className="flex items-center gap-5">
+              <div className="flex items-center gap-4">
                 <button
                   onClick={() =>
                     quantity > 1 &&
                     setQuantity(quantity - 1)
                   }
-                  className="w-10 h-10 rounded-full bg-gray-200"
+                  className="w-12 h-12 rounded-full bg-slate-100 hover:bg-slate-200"
                 >
                   -
                 </button>
 
-                <span className="font-bold text-lg">
+                <span className="text-xl font-bold">
                   {quantity}
                 </span>
 
@@ -158,7 +163,7 @@ const FoodDetails = () => {
                   onClick={() =>
                     setQuantity(quantity + 1)
                   }
-                  className="w-10 h-10 rounded-full bg-gray-200"
+                  className="w-12 h-12 rounded-full bg-slate-100 hover:bg-slate-200"
                 >
                   +
                 </button>
@@ -167,8 +172,7 @@ const FoodDetails = () => {
 
             {/* Buttons */}
 
-            <div className="flex gap-4 mt-8">
-
+            <div className="flex gap-4 mt-10">
               <button
                 onClick={() =>
                   addToFoodCart(
@@ -178,33 +182,32 @@ const FoodDetails = () => {
                     quantity
                   )
                 }
-                className="flex-1 bg-green-700 text-white py-4 rounded-2xl flex justify-center items-center gap-2"
+                className="flex-1 bg-primary text-white py-4 rounded-2xl flex items-center justify-center gap-2 font-semibold"
               >
                 <FiShoppingCart />
                 Add To Cart
               </button>
 
               <button
-                onClick={() =>
-                  toggleWishlist(food)
-                }
-                className={`w-14 rounded-2xl border ${
+                onClick={() => toggleWishlist(food)}
+                className={`w-14 rounded-2xl border flex items-center justify-center ${
                   isInWishlist
-                    ? "text-red-500 border-red-500"
-                    : ""
+                    ? "border-red-500 text-red-500"
+                    : "border-slate-300"
                 }`}
               >
-                <FiHeart />
+                <FiHeart
+                  className={isInWishlist ? "fill-current" : ""}
+                />
               </button>
             </div>
-
           </div>
         </div>
 
         {/* Description */}
 
-        <div className="bg-white rounded-3xl p-8 mt-10">
-          <h2 className="text-2xl font-bold mb-4">
+        <div className="bg-white rounded-3xl p-8 mt-12 shadow-sm border border-slate-200">
+          <h2 className="text-2xl font-black mb-4">
             Description
           </h2>
 
@@ -214,47 +217,58 @@ const FoodDetails = () => {
           </p>
         </div>
 
-        {/* Additional Details */}
+        {/* Product Info */}
 
-        <div className="bg-white rounded-3xl p-8 mt-6">
-          <h2 className="text-2xl font-bold mb-6">
+        <div className="bg-white rounded-3xl p-8 mt-6 shadow-sm border border-slate-200">
+          <h2 className="text-2xl font-black mb-6">
             Product Information
           </h2>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+
             <div>
-              <p className="font-semibold">
+              <p className="text-slate-500 text-sm">
                 Chef Name
               </p>
-              <p>{food.chef_name}</p>
+              <p className="font-bold mt-1">
+                {food.chef_name}
+              </p>
             </div>
 
             <div>
-              <p className="font-semibold">
+              <p className="text-slate-500 text-sm">
                 Category
               </p>
-              <p>{food.category}</p>
+              <p className="font-bold mt-1">
+                {food.category}
+              </p>
             </div>
 
             <div>
-              <p className="font-semibold">
+              <p className="text-slate-500 text-sm">
                 Sub Category
               </p>
-              <p>{food.subcategory || "-"}</p>
+              <p className="font-bold mt-1">
+                {food.subcategory || "-"}
+              </p>
             </div>
 
             <div>
-              <p className="font-semibold">
+              <p className="text-slate-500 text-sm">
                 Rating
               </p>
-              <p>{food.rating || "4.8"} ⭐</p>
+              <p className="font-bold mt-1">
+                ⭐ {food.rating || "4.8"}
+              </p>
             </div>
+
           </div>
         </div>
 
-      </div>
-    </div>
-  );
+      </PageContainer>
+    </section>
+  </>
+);
 };
 
 export default FoodDetails;
