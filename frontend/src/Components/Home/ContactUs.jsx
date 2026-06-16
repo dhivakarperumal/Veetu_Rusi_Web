@@ -28,6 +28,7 @@ import {
 import { FaFacebook, FaInstagram, FaTwitter, FaYoutube } from "react-icons/fa";
 import PageContainer from "../CommenComponents/PageContainer";
 import PageHeader from "../CommenComponents/PageHeader";
+import { ChefHat, Truck } from "lucide-react";
 
 // --- REUSABLE ANIMATION WRAPPER ---
 const FadeIn = ({ children, delay = 0, className = "", direction = "up" }) => {
@@ -85,109 +86,111 @@ const FloatingShape = ({ size, color, top, left, delay, duration = "6s" }) => (
 );
 
 // --- DATA ---
+
 const departments = [
   {
     icon: Headset,
     title: "Customer Support",
-    desc: "For order updates, tracking, and general queries.",
-    email: "support@sareeshop.com",
+    desc: "Order updates, payments, refunds and general support.",
+    email: "support@veeturusi.com",
     phone: "+91 98765 43210",
   },
   {
     icon: Briefcase,
-    title: "Wholesale & Bulk",
-    desc: "For B2B inquiries and bulk order discounts.",
-    email: "b2b@sareeshop.com",
+    title: "Franchise Support",
+    desc: "Franchise onboarding and regional operations support.",
+    email: "franchise@veeturusi.com",
     phone: "+91 98765 54321",
   },
   {
-    icon: Scissors,
-    title: "Custom Stitching",
-    desc: "Discuss your measurements and custom blouse requirements.",
-    email: "tailor@sareeshop.com",
+    icon: ChefHat,
+    title: "Home Chef Support",
+    desc: "Menu management, order handling and chef assistance.",
+    email: "chef@veeturusi.com",
     phone: "+91 98765 12345",
   },
   {
-    icon: Camera,
-    title: "Press & Media",
-    desc: "For PR, collaborations, and media inquiries.",
-    email: "pr@sareeshop.com",
+    icon: Truck,
+    title: "Delivery Support",
+    desc: "Delivery partner onboarding and delivery-related issues.",
+    email: "delivery@veeturusi.com",
     phone: "+91 98765 67890",
   },
 ];
 
 const team = [
   {
-    name: "Ananya Sharma",
-    role: "Senior Stylist",
-    img: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=256&q=80",
+    name: "Arun Kumar",
+    role: "Customer Support Manager",
+    img: "https://randomuser.me/api/portraits/men/32.jpg",
   },
   {
-    name: "Rahul Verma",
-    role: "Support Lead",
-    img: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-1.2.1&auto=format&fit=crop&w=256&q=80",
+    name: "Divya R",
+    role: "Franchise Operations Lead",
+    img: "https://randomuser.me/api/portraits/women/44.jpg",
   },
   {
-    name: "Priya Patel",
-    role: "Bridal Consultant",
-    img: "https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-1.2.1&auto=format&fit=crop&w=256&q=80",
+    name: "Karthik S",
+    role: "Home Chef Coordinator",
+    img: "https://randomuser.me/api/portraits/men/56.jpg",
   },
 ];
 
 const processSteps = [
   {
     step: "01",
-    title: "We Receive Your Message",
-    desc: "Your inquiry is instantly routed to the right specialist based on context.",
+    title: "We Receive Your Request",
+    desc: "Your inquiry is routed to the correct Veetu Rusi support team.",
   },
   {
     step: "02",
-    title: "Expert Review",
-    desc: "Our team assesses your requirements, checking inventory and best options.",
+    title: "Review & Verification",
+    desc: "Our team reviews the issue and gathers necessary information.",
   },
   {
     step: "03",
-    title: "Personalized Response",
-    desc: "You receive a tailored solution or consultation via email or phone call.",
-  },
-];
-
-const faqs = [
-  {
-    q: "What types of sarees do you offer?",
-    a: "We offer a wide range including Kanchipuram Silk, Banarasi, Chiffon, Georgette, Cotton, Linen, and designer sarees. Each piece is handpicked for quality and authenticity.",
-  },
-  {
-    q: "Do you provide international shipping?",
-    a: "Yes! We ship worldwide. International delivery typically takes 7-14 business days. Shipping charges vary by location and are calculated at checkout.",
-  },
-  {
-    q: "What is your return & exchange policy?",
-    a: "We offer a 7-day easy return and exchange policy. Items must be unworn, unwashed, and in original packaging with tags intact. Custom orders are non-returnable.",
-  },
-  {
-    q: "Can I get custom blouse stitching?",
-    a: "Absolutely! We provide custom blouse stitching services. Share your measurements and preferred design, and our expert tailors will craft the perfect blouse for you.",
-  },
-  {
-    q: "Do you offer bulk or wholesale pricing?",
-    a: "Yes, we offer special pricing for bulk orders and wholesale buyers. Please use the Wholesale department contact above to discuss your requirements.",
-  },
-  {
-    q: "How can I track my order?",
-    a: "Once your order is shipped, you'll receive a tracking link via email and SMS. You can also track your order from your account dashboard.",
+    title: "Resolution & Follow-up",
+    desc: "We provide a solution through email, phone, or WhatsApp.",
   },
 ];
 
 const subjectOptions = [
   "General Inquiry",
-  "Order Related",
-  "Product Information",
-  "Bulk / Wholesale Order",
-  "Returns & Exchange",
-  "Custom Stitching",
+  "Food Order Issue",
+  "Delivery Related",
+  "Payment Issue",
+  "Home Chef Support",
+  "Franchise Inquiry",
+  "Partnership Request",
   "Feedback & Suggestions",
   "Other",
+];
+
+const faqs = [
+  {
+    q: "How do I place an order?",
+    a: "Browse available food items, add them to your cart, and complete checkout using your preferred payment method.",
+  },
+  {
+    q: "Can I track my order?",
+    a: "Yes. Once your order is accepted, you can track its preparation and delivery status from your account.",
+  },
+  {
+    q: "How do refunds work?",
+    a: "Refunds are available for eligible cases such as failed deliveries, duplicate payments, or verified quality issues.",
+  },
+  {
+    q: "How can I become a Home Chef?",
+    a: "Contact your local Franchise Admin or reach out through the Home Chef Support department.",
+  },
+  {
+    q: "How can I become a Delivery Partner?",
+    a: "You can register through the Delivery Support team and complete the onboarding process.",
+  },
+  {
+    q: "How do I apply for a franchise?",
+    a: "Contact Franchise Support to learn about franchise opportunities and requirements.",
+  },
 ];
 
 const ContactUs = () => {
