@@ -7,6 +7,7 @@ import PageContainer from "../components/CommenComponents/PageContainer";
 import PageHeader from "../components/CommenComponents/PageHeader";
 
 const FoodDetails = () => {
+
     const { id } = useParams();
 
     const { addToFoodCart, toggleWishlist, wishlist } =
@@ -32,15 +33,32 @@ const FoodDetails = () => {
         setBackgroundPosition(`${x}% ${y}%`);
     };
 
+    const parseJsonField = (value) => {
+        if (!value) return [];
+
+        if (Array.isArray(value)) return value;
+
+        try {
+            return JSON.parse(value);
+        } catch {
+            return [value];
+        }
+    };
+
     useEffect(() => {
         const fetchFood = async () => {
             try {
                 const res = await api.get(`/chef-foods/${id}`);
 
-                setFood(res.data);
+                const foodData = {
+                    ...res.data,
+                    images: parseJsonField(res.data.images),
+                };
 
-                if (res.data.images?.length) {
-                    setSelectedImage(res.data.images[0]);
+                setFood(foodData);
+
+                if (foodData.images.length > 0) {
+                    setSelectedImage(foodData.images[0]);
                 }
             } catch (err) {
                 console.log(err);
@@ -51,6 +69,10 @@ const FoodDetails = () => {
 
         fetchFood();
     }, [id]);
+
+    useEffect(() => {
+        console.log("Selected Image:", selectedImage);
+    }, [selectedImage]);
 
     if (loading) return <p>Loading...</p>;
 
@@ -78,7 +100,7 @@ const FoodDetails = () => {
                     <div className="grid lg:grid-cols-2 gap-12">
 
                         {/* LEFT */}
-                        <div>
+                        <div className="lg:sticky lg:top-24 h-fit">
                             <div
                                 className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm h-[550px]"
                                 onMouseEnter={() => setZoomed(true)}
@@ -88,18 +110,20 @@ const FoodDetails = () => {
                                 <img
                                     src={selectedImage}
                                     alt={food.name}
-                                    className="w-full h-full object-cover"
+                                    className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                                 />
 
                                 {zoomed && (
+
                                     <div
-                                        className="absolute top-0 left-full ml-4 w-[550px] h-[550px] border border-slate-200 rounded-3xl overflow-hidden z-50 hidden lg:block bg-white shadow-2xl"
+                                        className="absolute top-0 left-full ml-4 w-[520px] h-[480px] border rounded-2xl overflow-hidden z-[9999] hidden lg:block bg-white shadow-lg"
                                         style={{
                                             backgroundImage: `url(${selectedImage})`,
                                             backgroundRepeat: "no-repeat",
                                             backgroundSize: `${zoomLevel * 100}%`,
-                                            backgroundPosition: backgroundPosition,
+                                            backgroundPosition,
                                         }}
+
                                     />
                                 )}
                             </div>
@@ -158,6 +182,9 @@ const FoodDetails = () => {
                                     </span>
                                 )}
                             </div>
+
+
+
 
                             {food.offer && (
                                 <div className="mt-4">
