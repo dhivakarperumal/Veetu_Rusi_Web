@@ -102,7 +102,7 @@ const FoodDetails = () => {
                         {/* LEFT */}
                         <div className="lg:sticky lg:top-24 h-fit">
                             <div
-                                className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm h-[550px]"
+                                className="relative rounded-3xl border border-slate-200 bg-white shadow-sm h-[550px]"
                                 onMouseEnter={() => setZoomed(true)}
                                 onMouseLeave={() => setZoomed(false)}
                                 onMouseMove={handleMouseMove}
