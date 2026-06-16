@@ -8,6 +8,12 @@ import weaverImg from "../../../public/about/master_weaver_portrait.png";
 import PageContainer from "../CommenComponents/PageContainer";
 import PageHeader from "../CommenComponents/PageHeader";
 import { FaCertificate, FaLandmark, FaHandsHelping, FaGem } from "react-icons/fa";
+import {
+  FaUtensils,
+  FaUsers,
+  FaMotorcycle,
+  FaHandshake,
+} from "react-icons/fa";
 
 export default function AboutUs() {
     return (
@@ -74,7 +80,12 @@ export default function AboutUs() {
                 <PageContainer>
                     <div className=" relative z-10">
                         <div className="text-center mb-16">
-                            <h2 className="font-playfair text-4xl md:text-6xl text-stone-900 mb-6">Details that <br /> <em className="italic text-primary-light font-light">define excellence</em></h2>
+                            <h2 className="font-playfair text-4xl md:text-6xl text-stone-900 mb-6">
+                                What Makes <br />
+                                <em className="italic text-primary-light font-light">
+                                    Veetu Rusi Special
+                                </em>
+                            </h2>
                             <div className="w-24 h-0.5 bg-primary-light mx-auto" />
                         </div>
 
@@ -84,9 +95,13 @@ export default function AboutUs() {
                                 <div className="overflow-hidden rounded-2xl mb-6 aspect-square">
                                     <img src={detailImg} alt="Fabric Detail" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                                 </div>
-                                <h3 className="font-playfair text-2xl mb-3 px-2 text-primary-dark">Ethereal Silk</h3>
+                                <h3 className="font-playfair text-2xl mb-3 px-2 text-primary-dark">
+                                    Authentic Homemade Food
+                                </h3>
+
                                 <p className="font-outfit text-gray-500 text-sm leading-relaxed px-2 pb-4">
-                                    Sourced from the heart of Banaras, our silk is mulberry-pure, offering a luster that deepens with every generation.
+                                    Freshly prepared meals crafted by passionate home chefs using
+                                    traditional recipes and quality ingredients.
                                 </p>
                             </div>
 
@@ -95,9 +110,12 @@ export default function AboutUs() {
                                 <div className="overflow-hidden rounded-2xl mb-6 aspect-square">
                                     <img src={weaverImg} alt="Master Weaver" className="w-full h-full object-cover hover:scale-110 transition-transform duration-700" />
                                 </div>
-                                <h3 className="font-playfair text-2xl mb-3 px-2 text-primary-dark">Artisan Empowerment</h3>
+                                <h3 className="font-playfair text-2xl mb-3 px-2 text-primary-dark">
+                                    Empowering Home Chefs
+                                </h3>
                                 <p className="font-outfit text-gray-500 text-sm leading-relaxed px-2 pb-4">
-                                    Every purchase supports local weaving communities, helping preserve traditional crafts and providing sustainable livelihoods for artisans.
+                                    Every order supports local home chefs, helping them grow
+                                    their business and reach more customers.
                                 </p>
 
                                 <div className="px-2 pt-2">
@@ -112,9 +130,10 @@ export default function AboutUs() {
                                 <div className="overflow-hidden rounded-2xl mb-6 aspect-square">
                                     <img src={sustainableImg} alt="Sustainable Heritage" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                                 </div>
-                                <h3 className="font-playfair text-2xl mb-3 px-2 text-primary-dark">Sustainable Heritage</h3>
+                                <h3 className="font-playfair text-2xl mb-3 px-2 text-primary-dark">Fast & Reliable Delivery</h3>
                                 <p className="font-outfit text-gray-500 text-sm leading-relaxed px-2 pb-4">
-                                    We use vegetable dyes and traditional methods that respect both the artisan and the Earth.
+                                    Our delivery partners ensure that every meal reaches
+                                    customers fresh, hot, and on time.
                                 </p>
                             </div>
                         </div>
@@ -152,24 +171,24 @@ export default function AboutUs() {
 
                             {[
                                 {
-                                    title: "Authenticity",
-                                    desc: "Every thread is verified for quality and pure silk certification.",
-                                    icon: <FaCertificate />,
+                                    title: "Quality Food",
+                                    desc: "Fresh ingredients and hygienic preparation standards in every meal.",
+                                    icon: <FaUtensils />,
                                 },
                                 {
-                                    title: "Heritage",
-                                    desc: "Preserving ancient weaving techniques for the next generation.",
-                                    icon: <FaLandmark />,
+                                    title: "Community",
+                                    desc: "Connecting customers with talented home chefs in their locality.",
+                                    icon: <FaUsers />,
                                 },
                                 {
-                                    title: "Ethical",
-                                    desc: "Ensuring fair wages and safe working conditions for all artisans.",
-                                    icon: <FaHandsHelping />,
+                                    title: "Reliable Delivery",
+                                    desc: "Ensuring meals reach customers quickly and safely.",
+                                    icon: <FaMotorcycle />,
                                 },
                                 {
-                                    title: "Quality",
-                                    desc: "Rigorous detail checks before any piece reaches your wardrobe.",
-                                    icon: <FaGem />,
+                                    title: "Partnership",
+                                    desc: "Supporting franchise owners, home chefs, and delivery partners to grow together.",
+                                    icon: <FaHandshake />,
                                 },
                             ].map((v, i) => (
                                 <div
