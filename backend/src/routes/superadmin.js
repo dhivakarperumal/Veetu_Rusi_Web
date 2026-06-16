@@ -12,32 +12,6 @@ router.use(requireRole(['superadmin', 'admin']));
 router.get('/dashboard-stats', controller.getDashboardStats);
 router.get('/pincode/:value', controller.lookupPincode);
 
-// Home Chef Management
-const homechefUploadFields = upload.fields([
-  { name: 'profile_photo', maxCount: 1 },
-  { name: 'cover_banner', maxCount: 1 },
-  { name: 'kitchen_photos', maxCount: 10 },
-  { name: 'kitchen_videos', maxCount: 5 },
-  { name: 'aadhaar_front_url', maxCount: 1 },
-  { name: 'aadhaar_back_url', maxCount: 1 },
-  { name: 'pan_card_url', maxCount: 1 },
-  { name: 'fssai_certificate_url', maxCount: 1 },
-  { name: 'gst_certificate_url', maxCount: 1 },
-  { name: 'signature_url', maxCount: 1 },
-  { name: 'kitchen_photo1', maxCount: 1 },
-  { name: 'kitchen_photo2', maxCount: 1 },
-  { name: 'kitchen_photo3', maxCount: 1 },
-  { name: 'cooking_area_photo', maxCount: 1 },
-  { name: 'storage_area_photo', maxCount: 1 },
-  { name: 'selfie_verification_url', maxCount: 1 }
-]);
-router.get('/homechefs', controller.getHomeChefs);
-router.get('/homechefs/:id', controller.getHomeChefById);
-router.post('/homechefs', homechefUploadFields, controller.createHomeChef);
-router.put('/homechefs/:id', homechefUploadFields, controller.updateHomeChef);
-router.patch('/homechefs/status/:id', controller.patchHomeChefStatus);
-router.delete('/homechefs/:id', controller.deleteHomeChef);
-
 // Restaurant Management
 const restaurantUploadFields = upload.fields([
   { name: 'logo_url', maxCount: 1 },
@@ -56,29 +30,7 @@ router.post('/restaurants', restaurantUploadFields, controller.createRestaurant)
 router.put('/restaurants/:id', restaurantUploadFields, controller.updateRestaurant);
 router.delete('/restaurants/:id', controller.deleteRestaurant);
 
-// Delivery Partner Management
-const deliveryUploadFields = upload.fields([
-  { name: 'profile_photo', maxCount: 1 },
-  { name: 'cover_photo', maxCount: 1 },
-  { name: 'aadhaar_front_url', maxCount: 1 },
-  { name: 'aadhaar_back_url', maxCount: 1 },
-  { name: 'pan_card_url', maxCount: 1 },
-  { name: 'selfie_verification_url', maxCount: 1 },
-  { name: 'selfie_with_vehicle', maxCount: 1 },
-  { name: 'selfie_with_aadhaar', maxCount: 1 },
-  { name: 'police_verification_certificate', maxCount: 1 },
-  { name: 'vehicle_front_photo', maxCount: 1 },
-  { name: 'vehicle_back_photo', maxCount: 1 },
-  { name: 'rc_book_image', maxCount: 1 },
-  { name: 'insurance_document_image', maxCount: 1 },
-  { name: 'license_front_image', maxCount: 1 },
-  { name: 'license_back_image', maxCount: 1 }
-]);
 
-router.get('/delivery-partners', controller.getDeliveryPartners);
-router.post('/delivery-partners', deliveryUploadFields, controller.createDeliveryPartner);
-router.put('/delivery-partners/:id', deliveryUploadFields, controller.updateDeliveryPartner);
-router.delete('/delivery-partners/:id', controller.deleteDeliveryPartner);
 
 // User Management
 router.get('/users', controller.getUsers);
