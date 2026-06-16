@@ -455,8 +455,7 @@ const ContactUs = () => {
               <FadeIn direction="right">
                 <div className="mb-10">
                   <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4 tracking-tight">
-                    Let's Start a{" "}
-                    <span className="text-primary-light">Conversation</span>
+                    Contact <span className="text-primary-light">Veetu Rusi</span>
                   </h2>
                   <p className="text-gray-500 text-lg">
                     Fill out the form below. We're excited to hear from you.
@@ -1001,7 +1000,7 @@ const ContactUs = () => {
         </PageContainer>
       </section>
 
-      
+
     </div>
   );
 };
