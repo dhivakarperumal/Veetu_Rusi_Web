@@ -1,18 +1,18 @@
 import React from "react";
 import Heading from "../Heading";
 import AnimatedButton from "../AnimatedButton";
-import artisanImg from "../../../public/about/artisan_weaving.png";
-import detailImg from "../../../public/about/fabric_detail.png";
-import sustainableImg from "../../../public/about/sustainable_craft.png";
-import weaverImg from "../../../public/about/master_weaver_portrait.png";
+import artisanImg from "../../../public/assets/abmain.jpg";
+import detailImg from "../../../public/assets/ab1.jpg";
+import sustainableImg from "../../../public/assets/ab3.jpg";
+import weaverImg from "../../../public/assets/ab2.jpg";
 import PageContainer from "../CommenComponents/PageContainer";
 import PageHeader from "../CommenComponents/PageHeader";
 import { FaCertificate, FaLandmark, FaHandsHelping, FaGem } from "react-icons/fa";
 import {
-  FaUtensils,
-  FaUsers,
-  FaMotorcycle,
-  FaHandshake,
+    FaUtensils,
+    FaUsers,
+    FaMotorcycle,
+    FaHandshake,
 } from "react-icons/fa";
 
 export default function AboutUs() {
@@ -149,21 +149,21 @@ export default function AboutUs() {
 
                     <div className="text-center">
 
-                        {/* Tag */}
+                        {/* Heading */}
                         <div className="inline-block px-6 py-2 border border-stone-200 rounded-full mb-6">
                             <span className="font-outfit text-[10px] uppercase tracking-[0.5em] text-stone-400">
-                                Our Core Principles
+                                Our Core Values
                             </span>
                         </div>
 
-                        {/* Heading */}
-                        <h2 className="font-playfair text-primary-light  text-4xl md:text-6xl mb-6">
-                            Crafting Sarees with Purpose
+                        <h2 className="font-playfair text-primary-light text-4xl md:text-6xl mb-6">
+                            Serving Communities with Purpose
                         </h2>
 
                         <p className="mt-4 max-w-2xl mx-auto text-gray-500 font-outfit">
-                            Every saree we create reflects our dedication to tradition,
-                            craftsmanship, and timeless elegance.
+                            At Veetu Rusi, we are committed to delivering authentic homemade food,
+                            empowering local home chefs, supporting franchise partners, and ensuring
+                            every customer enjoys a fresh and satisfying dining experience.
                         </p>
 
                         {/* Cards */}
