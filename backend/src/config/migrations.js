@@ -305,52 +305,24 @@ const createChefFoodTable = async () => {
     }
 };
 
-const cleanupHomeChefs = async () => {
-    try {
-        // Drop the entire home_chefs table as requested (destructive)
+ 
+    const createUserFoodCartTable = async () => {
         try {
-            await pool.execute(`DROP TABLE IF EXISTS \`home_chefs\``);
-            console.log('✓ Dropped table: home_chefs');
-        } catch (e) {
-            console.error('Could not drop home_chefs table:', e.message || e);
-        }
-
-        // Also remove any lingering unique/index cleanup that targeted home_chefs
-        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP INDEX IF EXISTS idx_user_id`); } catch (e) {}
-        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP INDEX IF EXISTS idx_mobile`); } catch (e) {}
-        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP INDEX IF EXISTS idx_email`); } catch (e) {}
-
-        console.log('✓ cleanupHomeChefs completed (home_chefs removed)');
-    } catch (err) {
-        console.error('✗ Error dropping home_chefs table:', err.message || err);
-    }
-};
+            const sql = `
+            CREATE TABLE IF NOT EXISTS user_food_cart (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                user_id VARCHAR(255),
+                product_id INT,
+                name VARCHAR(255),
+                image VARCHAR(255),
+                price DECIMAL(10,2) DEFAULT 0,
+                quantity INT DEFAULT 1,
+                total_price DECIMAL(10,2) DEFAULT 0,
+                created_by_user_id VARCHAR(255),
+                created_by_name VARCHAR(255),
                 created_by_email VARCHAR(255),
-                created_by_phone VARCHAR(20),
-
-                chef_user_id VARCHAR(255),
-                chef_id VARCHAR(255),
-                chef_name VARCHAR(255),
-                chef_phone VARCHAR(20),
-                chef_email VARCHAR(255),
-
-                franchise_id VARCHAR(255),
-                franchise_user_id VARCHAR(255),
-                franchise_email VARCHAR(255),
-                franchise_name VARCHAR(255),
-                franchise_phone VARCHAR(20),
-
-                ordered_by_name VARCHAR(255),
-                ordered_by_user_id VARCHAR(255),
-                ordered_by_email VARCHAR(255),
-                ordered_by_phone VARCHAR(20),
-
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
-                KEY idx_user_id (user_id),
-                KEY idx_product_id (product_id),
-                KEY idx_created_at (created_at)
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
             `;
 

@@ -17,8 +17,11 @@ export const AuthProvider = ({ children }) => {
       setUser(JSON.parse(storedUser));
     }
 
-    if (!storedToken || storedToken === 'undefined' || storedToken === 'null') {
+    const normalizedToken = typeof storedToken === 'string' ? storedToken.trim() : storedToken;
+    if (!normalizedToken || normalizedToken === 'undefined' || normalizedToken === 'null') {
       localStorage.removeItem("token");
+    } else {
+      localStorage.setItem("token", normalizedToken);
     }
 
     setLoading(false);
@@ -27,8 +30,9 @@ export const AuthProvider = ({ children }) => {
   const login = (userData, token) => {
     setUser(userData);
     localStorage.setItem("user", JSON.stringify(userData));
-    if (token && token !== 'undefined' && token !== 'null') {
-      localStorage.setItem("token", token);
+    const normalizedToken = typeof token === 'string' ? token.trim() : token;
+    if (normalizedToken && normalizedToken !== 'undefined' && normalizedToken !== 'null') {
+      localStorage.setItem("token", normalizedToken);
     } else {
       localStorage.removeItem("token");
     }

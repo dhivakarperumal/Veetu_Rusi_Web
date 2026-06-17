@@ -765,35 +765,6 @@ async function createDatabaseAndTables() {
   // The table is intentionally not created to ensure it remains removed by migrations.
   // If other tables rely on `home_chefs`, ensure foreign keys are handled separately.
   // (Previously: CREATE TABLE IF NOT EXISTS `home_chefs` ... )
-      password VARCHAR(255),
-      username VARCHAR(255),
-      gender VARCHAR(20),
-      date_of_birth DATE,
-      age INT,
-      country VARCHAR(100),
-      kitchen_videos TEXT,
-      daily_order_capacity INT,
-      available_days VARCHAR(255),
-      available_slots VARCHAR(255),
-      fssai_available VARCHAR(50),
-      gst_available VARCHAR(50),
-      bank_branch VARCHAR(255),
-      passbook_image VARCHAR(255),
-      introduction_video VARCHAR(255),
-      why_choose_me LONGTEXT,
-      delivery_radius VARCHAR(50),
-      verification_status VARCHAR(50) DEFAULT 'Pending',
-      approval_status VARCHAR(50) DEFAULT 'Pending',
-      created_by VARCHAR(255),
-      updated_by VARCHAR(255),
-      UNIQUE INDEX idx_user_id (user_id),
-      UNIQUE INDEX idx_mobile (mobile),
-      UNIQUE INDEX idx_email (email),
-      UNIQUE INDEX idx_aadhaar_number (aadhaar_number),
-      UNIQUE INDEX idx_pan_number (pan_number)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-  `);
-  console.log('Home_chefs table ensured (created if missing)');
 
   // Add missing columns to home_chefs if they don't exist
   const missingHomechefColumns = [

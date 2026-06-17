@@ -394,6 +394,8 @@ const HomeChefManagement = () => {
     setForm({
       chef_unique_code: chef.chef_unique_code || "",
       name: chef.name || "",
+      first_name: chef.first_name || (chef.name ? chef.name.split(" ").slice(0, 1).join(" ") : ""),
+      last_name: chef.last_name || (chef.name ? chef.name.split(" ").slice(1).join(" ") : ""),
       gender: chef.gender || "Male",
       date_of_birth: chef.date_of_birth
         ? chef.date_of_birth.substring(0, 10)
@@ -421,6 +423,11 @@ const HomeChefManagement = () => {
       veg_nonveg: chef.veg_nonveg || "Veg",
       experience_years: chef.experience_years || "",
       cooking_style: chef.cooking_style || "",
+      // Creator profile fields
+      about_me: chef.about_me || "",
+      cooking_story: chef.cooking_story || "",
+      why_choose_me: chef.why_choose_me || "",
+      languages_known: chef.languages_known || "",
      
       daily_order_capacity: chef.daily_order_capacity || "",
       available_days: chef.available_days
@@ -488,6 +495,14 @@ const HomeChefManagement = () => {
           : form.cuisine_type,
         preorder_available: form.preorder_available ? "1" : "0",
       };
+
+      // DEBUG: preview which fields will be sent (remove in production)
+      try {
+        const preview = Object.fromEntries(Object.entries(payload).filter(([k, v]) => v !== undefined));
+        console.debug('HomeChef update payload preview:', preview);
+      } catch (err) {
+        console.debug('Unable to build payload preview', err);
+      }
 
       delete payload.house_number;
       delete payload.street;

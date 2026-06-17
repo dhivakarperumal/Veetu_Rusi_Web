@@ -72,9 +72,17 @@ async function resolveCurrentUserAudit(req) {
 // ==================== HOME CHEF MANAGEMENT ====================
 exports.getHomeChefs = async (req, res) => {
   try {
-    const [rows] = await pool.execute(
-      "SELECT * FROM home_chefs ORDER BY created_at DESC"
-    );
+    const currentUserId = req.user?.user_id || req.user?.id || null;
+    let query = "SELECT * FROM home_chefs";
+    const params = [];
+
+    if (currentUserId) {
+      query += " WHERE created_by = ?";
+      params.push(currentUserId);
+    }
+
+    query += " ORDER BY created_at DESC";
+    const [rows] = await pool.execute(query, params);
     res.json(rows);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving home chefs.', error: error.message });
@@ -408,11 +416,48 @@ exports.updateHomeChef = async (req, res) => {
       updated_by: updatedBy
     };
 
+    // Only include fields that have actually been sent in the request (not just defaults from chef data)
+    const fieldsFromRequest = {
+      first_name, last_name, gender, date_of_birth, age,
+      mobile, alt_mobile, email,
+      house_number, street, area, city, district, state, pincode, country, google_map_location,
+      kitchen_name, kitchen_address, kitchen_type,
+      veg_nonveg, experience_years, cuisine_type,
+      daily_order_capacity, available_days, available_slots,
+      fssai_available, gst_available, aadhaar_number, pan_number,
+      bank_account_number, ifsc_code, account_holder_name, bank_branch, upi_id,
+      username, instagram_url, facebook_url, youtube_url, website_url,
+      about_me, cooking_story, why_choose_me, languages_known,
+      delivery_radius, preorder_available, cutoff_time,
+      verification_status, approval_status
+    };
+
     const filteredUpdate = Object.fromEntries(
       Object.entries(updateData).filter(([key, value]) => {
-        if (value === undefined || value === null || value === '') return false;
         if (!VALID_HOMECHEF_COLUMNS.includes(key)) return false;
-        return true;
+        
+        // Map database column names back to request field names
+        const requestFieldName = key === 'door_number' ? 'house_number' 
+                              : key === 'street_name' ? 'street'
+                              : key === 'area_name' ? 'area'
+                              : key === 'map_link' ? 'google_map_location'
+                              : key === 'name' ? ['first_name', 'last_name']
+                              : key;
+        
+        // Check if field was explicitly sent in the request
+        if (key === 'name') {
+          // name can be set if either first_name or last_name was sent
+          return fieldsFromRequest.first_name !== undefined || fieldsFromRequest.last_name !== undefined;
+        }
+        
+        if (Array.isArray(requestFieldName)) {
+          return requestFieldName.some(f => fieldsFromRequest[f] !== undefined);
+        }
+        
+        // Include if field was sent in request, or if it's a file/image field, or if it's the audit field
+        return fieldsFromRequest[requestFieldName] !== undefined || 
+               key.includes('_photo') || key.includes('_url') || key.includes('_video') ||
+               key === 'updated_by';
       })
     );
 

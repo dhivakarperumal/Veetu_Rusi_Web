@@ -8,7 +8,8 @@ const api = axios.create({
 // Automatically inject JWT token into requests
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
+    const rawToken = localStorage.getItem("token") || "";
+    const token = typeof rawToken === 'string' ? rawToken.trim() : "";
     if (token && token !== 'undefined' && token !== 'null') {
       config.headers = config.headers || {};
       config.headers["Authorization"] = `Bearer ${token}`;
