@@ -1496,7 +1496,7 @@ exports.updateHomeChefStatus = async (req, res) => {
       values.push(block_reason);
     }
 
-    const updatedBy = auditUser?.name || auditUser?.email || auditUser?.user_id || null;
+    const updatedBy = auditUser?.user_id || auditUser?.id || auditUser?.email || auditUser?.name || null;
     updates.push('updated_by = ?');
     values.push(updatedBy);
     updates.push('updated_at = NOW()');

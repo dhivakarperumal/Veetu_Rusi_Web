@@ -9,7 +9,6 @@ const storage = multer.diskStorage({
 
     const homeChefFields = [
       'profile_photo',
-      'cover_banner',
       'aadhaar_front_url',
       'aadhaar_back_url',
       'pan_card_url',
@@ -19,9 +18,6 @@ const storage = multer.diskStorage({
       'selfie_verification_url',
       'kitchen_photos',
       'kitchen_videos',
-      'kitchen_photo1',
-      'kitchen_photo2',
-      'kitchen_photo3',
       'cooking_area_photo',
       'storage_area_photo'
     ];

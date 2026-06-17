@@ -6,7 +6,6 @@ const upload = require('../config/multer');
 
 const homeChefUploadFields = upload.fields([
   { name: 'profile_photo', maxCount: 1 },
-  { name: 'cover_banner', maxCount: 1 },
   { name: 'kitchen_photos', maxCount: 10 },
   { name: 'kitchen_videos', maxCount: 5 },
   { name: 'cooking_area_photo', maxCount: 1 },
@@ -19,9 +18,6 @@ const homeChefUploadFields = upload.fields([
   { name: 'fssai_certificate_url', maxCount: 1 },
   { name: 'gst_certificate_url', maxCount: 1 },
   { name: 'signature_url', maxCount: 1 },
-  { name: 'kitchen_photo1', maxCount: 1 },
-  { name: 'kitchen_photo2', maxCount: 1 },
-  { name: 'kitchen_photo3', maxCount: 1 },
   { name: 'storage_area_photo', maxCount: 1 }
 ]);
 
