@@ -180,7 +180,7 @@ const DeliveryPartnerManagement = () => {
   const fetchPartners = async () => {
     try {
       setLoading(true);
-      const res = await api.get("/superadmin/delivery-partners");
+      const res = await api.get("/admin/delivery-partners");
       setPartners(res.data);
     } catch {
       toast.error("Failed to load delivery partners.");
@@ -231,7 +231,7 @@ const DeliveryPartnerManagement = () => {
     try {
       const target = partners.find((p) => p.id === id);
       if (!target) return;
-      await api.put(`/superadmin/delivery-partners/${id}`, { ...target, status: newStatus });
+      await api.put(`/admin/delivery-partners/${id}`, { ...target, status: newStatus });
       toast.success(`Status updated to ${newStatus}`);
       fetchPartners();
       if (selectedPartner?.id === id) setSelectedPartner((prev) => ({ ...prev, status: newStatus }));
@@ -243,7 +243,7 @@ const DeliveryPartnerManagement = () => {
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this delivery partner?")) return;
     try {
-      await api.delete(`/superadmin/delivery-partners/${id}`);
+      await api.delete(`/admin/delivery-partners/${id}`);
       toast.success("Delivery partner removed.");
       fetchPartners();
       if (selectedPartner?.id === id) { setSelectedPartner(null); setIsDetailOpen(false); }
@@ -345,10 +345,10 @@ const DeliveryPartnerManagement = () => {
       }
       const convertedPayload = await convertFileFieldsToBase64(payload);
       if (editingPartner) {
-        await api.put(`/superadmin/delivery-partners/${editingPartner.id}`, convertedPayload);
+        await api.put(`/admin/delivery-partners/${editingPartner.id}`, convertedPayload);
         toast.success("Delivery partner updated.");
       } else {
-        await api.post("/superadmin/delivery-partners", convertedPayload);
+        await api.post("/admin/delivery-partners", convertedPayload);
         toast.success("Delivery partner created.");
       }
       setIsFormOpen(false);

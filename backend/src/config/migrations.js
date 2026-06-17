@@ -593,6 +593,27 @@ const cleanupHomeChefs = async () => {
         try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN created_by_name`); console.log('  Dropped: created_by_name'); } catch (e) {}
         try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN created_by_email`); console.log('  Dropped: created_by_email'); } catch (e) {}
         try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN created_by_phone`); console.log('  Dropped: created_by_phone'); } catch (e) {}
+        // Additional columns to fully remove per request
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN IF EXISTS address`); console.log('  Dropped: address'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN IF EXISTS fssai_number`); console.log('  Dropped: fssai_number'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN IF EXISTS cover_banner`); console.log('  Dropped: cover_banner'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN IF EXISTS whatsapp_number`); console.log('  Dropped: whatsapp_number'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN IF EXISTS latitude`); console.log('  Dropped: latitude'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN IF EXISTS longitude`); console.log('  Dropped: longitude'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN IF EXISTS seating_available`); console.log('  Dropped: seating_available'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN IF EXISTS dining_available`); console.log('  Dropped: dining_available'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN IF EXISTS takeaway_available`); console.log('  Dropped: takeaway_available'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN IF EXISTS delivery_available`); console.log('  Dropped: delivery_available'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN IF EXISTS specialty_food`); console.log('  Dropped: specialty_food'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN IF EXISTS signature_dish`); console.log('  Dropped: signature_dish'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN IF EXISTS franchise_id`); console.log('  Dropped: franchise_id'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN IF EXISTS franchise_user_id`); console.log('  Dropped: franchise_user_id'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN IF EXISTS kitchen_photo1`); console.log('  Dropped: kitchen_photo1'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN IF EXISTS kitchen_photo2`); console.log('  Dropped: kitchen_photo2'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN IF EXISTS kitchen_photo3`); console.log('  Dropped: kitchen_photo3'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN IF EXISTS father_husband_name`); console.log('  Dropped: father_husband_name'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN IF EXISTS emergency_contact`); console.log('  Dropped: emergency_contact'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN IF EXISTS approved_by_admin`); console.log('  Dropped: approved_by_admin'); } catch (e) {}
 
         // Add franchise_id if missing
         try { await pool.execute(`ALTER TABLE \`home_chefs\` ADD COLUMN IF NOT EXISTS franchise_id VARCHAR(255) DEFAULT NULL`); console.log('  Added: franchise_id'); } catch (e) {}

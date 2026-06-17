@@ -494,18 +494,18 @@ const HomeChefManagement = () => {
       delete payload.area;
       delete payload.google_map_location;
       delete payload.confirmPassword;
+      delete payload.chef_unique_code; // Not a database field
 
       if (editingChef && !payload.password) {
         delete payload.password;
       }
 
-      if (user && !editingChef) {
-        payload.created_by_id = user.id || null;
-        payload.created_by_user_id = user.user_id || null;
-        payload.created_by_name = user.name || null;
-        payload.created_by_email = user.email || null;
-        payload.created_by_phone = user.phone || null;
-      }
+      // Remove fields that don't exist in the database
+      delete payload.created_by_id;
+      delete payload.created_by_user_id;
+      delete payload.created_by_name;
+      delete payload.created_by_email;
+      delete payload.created_by_phone;
 
       const convertedPayload = createFormDataPayload(payload);
 
