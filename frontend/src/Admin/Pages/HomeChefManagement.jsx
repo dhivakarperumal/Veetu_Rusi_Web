@@ -31,6 +31,7 @@ const emptyForm = {
   gender: "Male",
   date_of_birth: "",
   mobile: "",
+  alt_mobile: "",
   email: "",
   password: "",
   confirmPassword: "",
@@ -43,15 +44,15 @@ const emptyForm = {
   city: "",
   state: "",
   pincode: "",
-  landmark: "",
-  gps_location: "",
+  country: "India",
   google_map_location: "",
 
   // Kitchen Information
   kitchen_name: "",
   kitchen_type: "Home Kitchen",
+  veg_nonveg: "Veg",
   experience_years: "",
-  cuisine_type: "",
+  cuisine_type: [],
   daily_order_capacity: "",
 
   // Food Availability
@@ -65,7 +66,10 @@ const emptyForm = {
   pan_number: "",
   bank_account_number: "",
   ifsc_code: "",
+  account_holder_name: "",
+  bank_branch: "",
   upi_id: "",
+  passbook_image: null,
 
   // Social Media
   instagram_url: "",
@@ -84,14 +88,6 @@ const emptyForm = {
   aadhaar_front_url: null,
   aadhaar_back_url: null,
   pan_card_url: null,
-
-  kitchen_photo1: null,
-  kitchen_photo2: null,
-  kitchen_photo3: null,
-
-  cooking_area_photo: null,
-  storage_area_photo: null,
-
   selfie_verification_url: null,
 
   // Delivery Preferences
@@ -108,7 +104,7 @@ const tabs = [
   { id: "business", label: "Business Details" },
   { id: "social", label: "Social Media" },
   { id: "creator", label: "Creator Profile" },
-  { id: "verification", label: "Kitchen Verification" },
+  { id: "verification", label: "Proof Verification" },
   { id: "delivery", label: "Delivery Preferences" },
 ];
 
@@ -240,6 +236,37 @@ const HomeChefManagement = () => {
     setForm({ ...form, date_of_birth: dob, age: calculatedAge });
   };
 
+  const appendFormDataValue = (formData, key, value) => {
+    if (value === undefined || value === null) return;
+    if (value instanceof File) {
+      formData.append(key, value);
+      return;
+    }
+    if (value instanceof FileList) {
+      Array.from(value).forEach((file) => formData.append(key, file));
+      return;
+    }
+    if (Array.isArray(value)) {
+      value.forEach((item) => {
+        if (item instanceof File) {
+          formData.append(key, item);
+        } else {
+          formData.append(key, item);
+        }
+      });
+      return;
+    }
+    formData.append(key, value);
+  };
+
+  const createFormDataPayload = (payload) => {
+    const formData = new FormData();
+    Object.entries(payload).forEach(([key, value]) => {
+      appendFormDataValue(formData, key, value);
+    });
+    return formData;
+  };
+
   const handleStatusChange = async (id, newStatus) => {
     try {
       await api.patch(`/superadmin/homechefs/status/${id}`, {
@@ -275,18 +302,17 @@ const HomeChefManagement = () => {
       house_number: "22B",
       street: "Maple Avenue",
       area: "Shanti Nagar",
-      landmark: "Near Lotus Park",
       city: "Chennai",
       district: "Chennai",
       state: "Tamil Nadu",
       pincode: "600042",
-      gps_location: "13.0827, 80.2707",
+      country: "India",
       google_map_location: "https://maps.google.com/?q=13.0827,80.2707",
       kitchen_name: "Priya's Home Kitchen",
       kitchen_address: "22B, Maple Avenue, Shanti Nagar, Chennai",
       kitchen_type: "Home Kitchen",
       experience_years: "10",
-      cuisine_type: "South Indian",
+      cuisine_type: ["South Indian"],
       daily_order_capacity: "40",
       available_days: [
         "Monday",
@@ -309,6 +335,8 @@ const HomeChefManagement = () => {
       pan_number: "ABCDE1234F",
       bank_account_number: "123456789012",
       ifsc_code: "SBIN0001234",
+      account_holder_name: "Priya Rao",
+      bank_branch: "Anna Nagar Branch",
       upi_id: "priya@okaxis",
       instagram_url: "https://instagram.com/priya_chef",
       facebook_url: "https://facebook.com/priyahomechef",
@@ -366,59 +394,41 @@ const HomeChefManagement = () => {
     setForm({
       chef_unique_code: chef.chef_unique_code || "",
       name: chef.name || "",
-      father_husband_name: chef.father_husband_name || "",
       gender: chef.gender || "Male",
       date_of_birth: chef.date_of_birth
         ? chef.date_of_birth.substring(0, 10)
         : "",
-      age: chef.age || "",
       profile_photo: chef.profile_photo || null,
-      cover_banner: chef.cover_banner || null,
       mobile: chef.mobile || "",
       alt_mobile: chef.alt_mobile || "",
-      whatsapp_number: chef.whatsapp_number || "",
       email: chef.email || "",
-      emergency_contact: chef.emergency_contact || "",
       house_number: chef.door_number || "",
       street: chef.street_name || "",
       area: chef.area_name || "",
-      landmark: chef.landmark || "",
       city: chef.city || "",
       district: chef.district || "",
       state: chef.state || "",
       pincode: chef.pincode || "",
-      gps_location:
-        chef.latitude && chef.longitude
-          ? `${chef.latitude}, ${chef.longitude}`
-          : "",
+      country: chef.country || "India",
       google_map_location: chef.map_link || "",
       kitchen_name: chef.kitchen_name || "",
       kitchen_address: chef.kitchen_address || "",
       kitchen_type: chef.kitchen_type || "Home Kitchen",
       kitchen_photos: chef.kitchen_photos || null,
       kitchen_videos: chef.kitchen_videos || null,
-      seating_available: !!chef.seating_available,
-      dining_available: !!chef.dining_available,
-      takeaway_available: !!chef.takeaway_available,
-      delivery_available: !!chef.delivery_available,
       specialty_food: chef.specialty_food || "",
-      cuisine_type: chef.cuisine_type || "South Indian",
-      signature_dish: chef.signature_dish || "",
+      cuisine_type: chef.cuisine_type ? (Array.isArray(chef.cuisine_type) ? chef.cuisine_type : chef.cuisine_type.split(",").map((item) => item.trim())) : [],
       veg_nonveg: chef.veg_nonveg || "Veg",
       experience_years: chef.experience_years || "",
       cooking_style: chef.cooking_style || "",
-      preparation_time: chef.preparation_time || "",
+     
       daily_order_capacity: chef.daily_order_capacity || "",
       available_days: chef.available_days
         ? chef.available_days.split(",").map((item) => item.trim())
         : [],
       available_slots: chef.available_slots || [],
-      opening_time: chef.opening_time || "",
-      closing_time: chef.closing_time || "",
-      holiday_schedule: chef.holiday_schedule || "",
-      busy_hours: chef.busy_hours || "",
-      instant_order: !!chef.instant_order,
-      pre_order: !!chef.pre_order,
+    
+     
       aadhaar_number: chef.aadhaar_number || "",
       pan_number: chef.pan_number || "",
       fssai_number: chef.fssai_number || "",
@@ -426,12 +436,12 @@ const HomeChefManagement = () => {
       bank_account_number: chef.bank_account_number || "",
       ifsc_code: chef.ifsc_code || "",
       account_holder_name: chef.account_holder_name || "",
+      bank_branch: chef.bank_branch || "",
       upi_id: chef.upi_id || "",
+      passbook_image: chef.passbook_image || null,
       aadhaar_front_url: chef.aadhaar_front_url || null,
       aadhaar_back_url: chef.aadhaar_back_url || null,
       pan_card_url: chef.pan_card_url || null,
-      fssai_certificate_url: chef.fssai_certificate_url || null,
-      gst_certificate_url: chef.gst_certificate_url || null,
       signature_url: chef.signature_url || null,
       selfie_verification_url: chef.selfie_verification_url || null,
       username: chef.username || "",
@@ -470,24 +480,24 @@ const HomeChefManagement = () => {
         available_days: Array.isArray(form.available_days)
           ? form.available_days.join(",")
           : form.available_days,
+        available_slots: Array.isArray(form.available_slots)
+          ? form.available_slots.join(",")
+          : form.available_slots,
+        cuisine_type: Array.isArray(form.cuisine_type)
+          ? form.cuisine_type.join(",")
+          : form.cuisine_type,
+        preorder_available: form.preorder_available ? "1" : "0",
       };
-
-      if (form.gps_location) {
-        const [lat, lng] = form.gps_location
-          .split(",")
-          .map((part) => part.trim());
-        if (lat && lng) {
-          payload.latitude = lat;
-          payload.longitude = lng;
-        }
-      }
 
       delete payload.house_number;
       delete payload.street;
       delete payload.area;
       delete payload.google_map_location;
-      delete payload.gps_location;
       delete payload.confirmPassword;
+
+      if (editingChef && !payload.password) {
+        delete payload.password;
+      }
 
       if (user && !editingChef) {
         payload.created_by_id = user.id || null;
@@ -497,7 +507,7 @@ const HomeChefManagement = () => {
         payload.created_by_phone = user.phone || null;
       }
 
-      const convertedPayload = payload;
+      const convertedPayload = createFormDataPayload(payload);
 
       if (editingChef) {
         await api.put(`/superadmin/homechefs/${editingChef.id}`, convertedPayload);
@@ -535,6 +545,12 @@ const HomeChefManagement = () => {
   const isVideoDataUrl = (value) => typeof value === "string" && value.startsWith("data:video/");
   const isImageField = (fieldName) => fieldName !== "introduction_video";
   const getPreviewUrl = (value) => {
+    if (value instanceof File) {
+      return URL.createObjectURL(value);
+    }
+    if (Array.isArray(value) && value.length > 0 && value[0] instanceof File) {
+      return URL.createObjectURL(value[0]);
+    }
     if (typeof value !== "string") return null;
     if (isDataUrl(value)) return value;
     if (value.startsWith("http") || value.startsWith("blob:")) return value;
@@ -551,40 +567,28 @@ const HomeChefManagement = () => {
         <label className={lbl}>{label}</label>
         <input
           type="file"
-          onChange={async (e) => {
-  const file = e.target.files?.[0];
-  if (!file) return;
-
-  try {
-    const compressed = await imageCompression(file, {
-      maxSizeMB: 0.2,
-      maxWidthOrHeight: 1200,
-      useWebWorker: true,
-    });
-
-    const base64 =
-      await imageCompression.getDataUrlFromFile(
-        compressed
-      );
-
-    setForm((prev) => ({
-      ...prev,
-      [fieldName]: base64,
-    }));
-  } catch (err) {
-    console.error(err);
-  }
-}}
+          onChange={(e) => {
+            const files = e.target.files;
+            if (!files || files.length === 0) return;
+            const value =
+              fieldName === "kitchen_photos" || fieldName === "kitchen_videos"
+                ? Array.from(files)
+                : files[0];
+            setForm((prev) => ({ ...prev, [fieldName]: value }));
+          }}
           className={inp}
           multiple={
             fieldName === "kitchen_photos" || fieldName === "kitchen_videos"
           }
         />
 
-        {currentValue instanceof FileList && currentValue.length > 0 && (
+        {(currentValue instanceof FileList || Array.isArray(currentValue)) && currentValue.length > 0 && (
           <p className="mt-1 text-xs text-slate-300">
             Selected file: {currentValue.length > 1 ? `${currentValue.length} files` : currentValue[0].name}
           </p>
+        )}
+        {currentValue instanceof File && (
+          <p className="mt-1 text-xs text-slate-300">Selected file: {currentValue.name}</p>
         )}
 
         {showImagePreview && (
@@ -1136,6 +1140,8 @@ const HomeChefManagement = () => {
                           />
                         </div>
 
+                        {renderFileField("profile_photo", "Profile Photo", form.profile_photo)}
+
                         <div>
                           <label className={lbl}>Gender *</label>
                           <select
@@ -1170,6 +1176,18 @@ const HomeChefManagement = () => {
                             value={form.mobile}
                             onChange={(e) =>
                               setForm({ ...form, mobile: e.target.value })
+                            }
+                            className={inp}
+                          />
+                        </div>
+
+                        <div>
+                          <label className={lbl}>Alternate Number</label>
+                          <input
+                            type="tel"
+                            value={form.alt_mobile}
+                            onChange={(e) =>
+                              setForm({ ...form, alt_mobile: e.target.value })
                             }
                             className={inp}
                           />
@@ -1304,15 +1322,61 @@ const HomeChefManagement = () => {
 
                         <div>
                           <label className={lbl}>State *</label>
-                          <input
-                            type="text"
+                          <select
                             value={form.state}
                             onChange={(e) =>
                               setForm({ ...form, state: e.target.value })
                             }
-                            placeholder="State"
                             className={inp}
-                          />
+                          >
+                            <option value="">Select State</option>
+                            <option value="Andhra Pradesh">Andhra Pradesh</option>
+                            <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+                            <option value="Assam">Assam</option>
+                            <option value="Bihar">Bihar</option>
+                            <option value="Chhattisgarh">Chhattisgarh</option>
+                            <option value="Goa">Goa</option>
+                            <option value="Gujarat">Gujarat</option>
+                            <option value="Haryana">Haryana</option>
+                            <option value="Himachal Pradesh">Himachal Pradesh</option>
+                            <option value="Jharkhand">Jharkhand</option>
+                            <option value="Karnataka">Karnataka</option>
+                            <option value="Kerala">Kerala</option>
+                            <option value="Madhya Pradesh">Madhya Pradesh</option>
+                            <option value="Maharashtra">Maharashtra</option>
+                            <option value="Manipur">Manipur</option>
+                            <option value="Meghalaya">Meghalaya</option>
+                            <option value="Mizoram">Mizoram</option>
+                            <option value="Nagaland">Nagaland</option>
+                            <option value="Odisha">Odisha</option>
+                            <option value="Punjab">Punjab</option>
+                            <option value="Rajasthan">Rajasthan</option>
+                            <option value="Sikkim">Sikkim</option>
+                            <option value="Tamil Nadu">Tamil Nadu</option>
+                            <option value="Telangana">Telangana</option>
+                            <option value="Tripura">Tripura</option>
+                            <option value="Uttar Pradesh">Uttar Pradesh</option>
+                            <option value="Uttarakhand">Uttarakhand</option>
+                            <option value="West Bengal">West Bengal</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className={lbl}>Country *</label>
+                          <select
+                            value={form.country}
+                            onChange={(e) =>
+                              setForm({ ...form, country: e.target.value })
+                            }
+                            className={inp}
+                          >
+                            <option value="">Select Country</option>
+                            <option value="India">India</option>
+                            <option value="United States">United States</option>
+                            <option value="United Kingdom">United Kingdom</option>
+                            <option value="Australia">Australia</option>
+                            <option value="Canada">Canada</option>
+                          </select>
                         </div>
 
                         <div>
@@ -1329,32 +1393,6 @@ const HomeChefManagement = () => {
                         </div>
 
                         <div>
-                          <label className={lbl}>Landmark</label>
-                          <input
-                            type="text"
-                            value={form.landmark}
-                            onChange={(e) =>
-                              setForm({ ...form, landmark: e.target.value })
-                            }
-                            placeholder="Landmark"
-                            className={inp}
-                          />
-                        </div>
-
-                        <div>
-                          <label className={lbl}>Current GPS Location *</label>
-                          <input
-                            type="text"
-                            value={form.gps_location}
-                            onChange={(e) =>
-                              setForm({ ...form, gps_location: e.target.value })
-                            }
-                            placeholder="Latitude, Longitude"
-                            className={inp}
-                          />
-                        </div>
-
-                        <div className="md:col-span-2">
                           <label className={lbl}>Google Map Location *</label>
                           <input
                             type="url"
@@ -1415,25 +1453,58 @@ const HomeChefManagement = () => {
                         </div>
 
                         <div>
-                          <label className={lbl}>Speciality Cuisine *</label>
+                          <label className={lbl}>Select Veg or Non-Veg *</label>
                           <select
-                            value={form.cuisine_type}
+                            value={form.veg_nonveg}
                             onChange={(e) =>
-                              setForm({ ...form, cuisine_type: e.target.value })
+                              setForm({ ...form, veg_nonveg: e.target.value })
                             }
                             className={inp}
                           >
-                            <option value="">Select Cuisine</option>
-                            <option value="South Indian">South Indian</option>
-                            <option value="North Indian">North Indian</option>
-                            <option value="Chinese">Chinese</option>
-                            <option value="Andhra">Andhra</option>
-                            <option value="Kerala">Kerala</option>
-                            <option value="Healthy Foods">Healthy Foods</option>
-                            <option value="Millet Foods">Millet Foods</option>
-                            <option value="Desserts">Desserts</option>
-                            <option value="Others">Others</option>
+                            <option value="Veg">Veg</option>
+                            <option value="Non-Veg">Non-Veg</option>
                           </select>
+                        </div>
+
+                        <div className="md:col-span-2">
+                          <label className={`${lbl} mb-3 block`}>Speciality Cuisine *</label>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            {[
+                              "South Indian",
+                              "North Indian",
+                              "Chinese",
+                              "Andhra",
+                              "Kerala",
+                              "Healthy Foods",
+                              "Millet Foods",
+                              "Desserts",
+                              "Others",
+                            ].map((cuisine) => (
+                              <label key={cuisine} className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={form.cuisine_type.includes(cuisine)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setForm({
+                                        ...form,
+                                        cuisine_type: [...form.cuisine_type, cuisine],
+                                      });
+                                    } else {
+                                      setForm({
+                                        ...form,
+                                        cuisine_type: form.cuisine_type.filter(
+                                          (c) => c !== cuisine
+                                        ),
+                                      });
+                                    }
+                                  }}
+                                  className="w-4 h-4 cursor-pointer"
+                                />
+                                <span className="text-sm text-white">{cuisine}</span>
+                              </label>
+                            ))}
+                          </div>
                         </div>
 
                         <div className="md:col-span-2">
@@ -1450,6 +1521,36 @@ const HomeChefManagement = () => {
                             placeholder="Maximum Orders Per Day"
                             className={inp}
                           />
+                        </div>
+
+                        <div className="md:col-span-2">
+                          <label className={`${lbl} mb-3 block`}>Kitchen Photos *</label>
+                          <div className="grid grid-cols-1 gap-4">
+                            {renderFileField(
+                              "kitchen_photos",
+                              "Upload Kitchen Photos",
+                              form.kitchen_photos
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="md:col-span-2">
+                          <label className={`${lbl} mb-3 block`}>Kitchen Videos *</label>
+                          <div className="grid grid-cols-1 gap-4">
+                            {renderFileField(
+                              "kitchen_videos",
+                              "Upload Kitchen Videos",
+                              form.kitchen_videos
+                            )}
+                          </div>
+                        </div>
+
+                        <div>
+                          {renderFileField(
+                            "cooking_area_photo",
+                            "Cooking Area Photo *",
+                            form.cooking_area_photo
+                          )}
                         </div>
 
                       </div>
@@ -1611,6 +1712,38 @@ const HomeChefManagement = () => {
                         </div>
 
                         <div>
+                          <label className={lbl}>Account Holder Name *</label>
+                          <input
+                            type="text"
+                            value={form.account_holder_name}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                account_holder_name: e.target.value,
+                              })
+                            }
+                            placeholder="Account Holder Name"
+                            className={inp}
+                          />
+                        </div>
+
+                        <div>
+                          <label className={lbl}>Bank Branch *</label>
+                          <input
+                            type="text"
+                            value={form.bank_branch}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                bank_branch: e.target.value,
+                              })
+                            }
+                            placeholder="Bank Branch"
+                            className={inp}
+                          />
+                        </div>
+
+                        <div>
                           <label className={lbl}>Bank Account Number *</label>
                           <input
                             type="text"
@@ -1656,6 +1789,14 @@ const HomeChefManagement = () => {
                             placeholder="username@upi"
                             className={inp}
                           />
+                        </div>
+
+                        <div>
+                          {renderFileField(
+                            "passbook_image",
+                            "Passbook Image *",
+                            form.passbook_image
+                          )}
                         </div>
 
                       </div>
@@ -1830,36 +1971,6 @@ const HomeChefManagement = () => {
                           "pan_card_url",
                           "PAN Card *",
                           form.pan_card_url
-                        )}
-
-                        {renderFileField(
-                          "kitchen_photo1",
-                          "Kitchen Photo 1 *",
-                          form.kitchen_photo1
-                        )}
-
-                        {renderFileField(
-                          "kitchen_photo2",
-                          "Kitchen Photo 2 *",
-                          form.kitchen_photo2
-                        )}
-
-                        {renderFileField(
-                          "kitchen_photo3",
-                          "Kitchen Photo 3 *",
-                          form.kitchen_photo3
-                        )}
-
-                        {renderFileField(
-                          "cooking_area_photo",
-                          "Cooking Area Photo *",
-                          form.cooking_area_photo
-                        )}
-
-                        {renderFileField(
-                          "storage_area_photo",
-                          "Storage Area Photo *",
-                          form.storage_area_photo
                         )}
 
                         {renderFileField(

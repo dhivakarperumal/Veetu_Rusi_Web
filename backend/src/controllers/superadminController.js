@@ -1078,6 +1078,270 @@ exports.getReportsList = async (req, res) => {
   }
 };
 
+// ==================== HOME CHEF MANAGEMENT ====================
+exports.getHomeChefs = async (req, res) => {
+  try {
+    const [rows] = await pool.execute(
+      "SELECT * FROM home_chefs ORDER BY created_at DESC"
+    );
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving home chefs.', error: error.message });
+  }
+};
+
+exports.createHomeChef = async (req, res) => {
+  try {
+    const auditUser = await resolveCurrentUserAudit(req);
+    const {
+      first_name, last_name, gender, date_of_birth, age,
+      mobile, alt_mobile, whatsapp_number, email, password, emergency_contact,
+      house_number, street, area, city, district, state, pincode, country, google_map_location,
+      kitchen_name, kitchen_address, kitchen_type,
+      veg_nonveg, experience_years, cuisine_type,
+      daily_order_capacity, available_days, available_slots,
+      fssai_available, gst_available, aadhaar_number, pan_number,
+      bank_account_number, ifsc_code, account_holder_name, bank_branch, upi_id,
+      father_husband_name, username, instagram_url, facebook_url, youtube_url, website_url,
+      about_me, cooking_story, why_choose_me, languages_known,
+      delivery_radius, preorder_available, cutoff_time,
+      verification_status, approval_status, franchise_user_id
+    } = req.body;
+
+    const hashedPassword = password ? hashPassword(password) : hashPassword(`${email}@2024`);
+    const preorderAvailable = normalizeBoolean(preorder_available) ? 1 : 0;
+    const createdBy = auditUser?.name || auditUser?.email || auditUser?.user_id || null;
+    const fullName = [first_name, last_name].filter(Boolean).join(' ') || email.split('@')[0];
+
+    // Extract uploaded files
+    const files = req.files || {};
+    const profilePhoto = files.profile_photo?.[0]?.filename || null;
+    const coverBanner = files.cover_banner?.[0]?.filename || null;
+    const kitchenPhotos = files.kitchen_photos ? JSON.stringify(files.kitchen_photos.map(f => f.filename)) : null;
+    const kitchenVideos = files.kitchen_videos ? JSON.stringify(files.kitchen_videos.map(f => f.filename)) : null;
+    const cookingAreaPhoto = files.cooking_area_photo?.[0]?.filename || null;
+    const aadhaarFront = files.aadhaar_front_url?.[0]?.filename || null;
+    const aadhaarBack = files.aadhaar_back_url?.[0]?.filename || null;
+    const panCard = files.pan_card_url?.[0]?.filename || null;
+    const passbookImg = files.passbook_image?.[0]?.filename || null;
+    const selfieVerif = files.selfie_verification_url?.[0]?.filename || null;
+    const introVideo = files.introduction_video?.[0]?.filename || null;
+    const fssaiCertUrl = files.fssai_certificate_url?.[0]?.filename || null;
+    const gstCertUrl = files.gst_certificate_url?.[0]?.filename || null;
+    const sigUrl = files.signature_url?.[0]?.filename || null;
+    const kitchenPhoto1 = files.kitchen_photo1?.[0]?.filename || null;
+    const kitchenPhoto2 = files.kitchen_photo2?.[0]?.filename || null;
+    const kitchenPhoto3 = files.kitchen_photo3?.[0]?.filename || null;
+    const storagePhoto = files.storage_area_photo?.[0]?.filename || null;
+
+    const [result] = await pool.execute(
+      `INSERT INTO home_chefs (
+        name, mobile, email, password, username,
+        father_husband_name, gender, date_of_birth, age,
+        profile_photo, cover_banner, alt_mobile, whatsapp_number, emergency_contact,
+        door_number, street_name, area_name, city, district, state, pincode, country, map_link,
+        kitchen_name, kitchen_address, kitchen_type, kitchen_photos, kitchen_videos, cooking_area_photo,
+        veg_nonveg, experience_years, cuisine_type, daily_order_capacity, available_days, available_slots,
+        fssai_available, gst_available, aadhaar_number, pan_number,
+        bank_account_number, ifsc_code, account_holder_name, bank_branch, upi_id, passbook_image,
+        aadhaar_front_url, aadhaar_back_url, pan_card_url, selfie_verification_url, introduction_video,
+        instagram_url, facebook_url, youtube_url, website_url,
+        about_me, cooking_story, why_choose_me, languages_known,
+        delivery_radius, preorder_available, cutoff_time,
+        fssai_certificate_url, gst_certificate_url, signature_url,
+        kitchen_photo1, kitchen_photo2, kitchen_photo3, storage_area_photo,
+        verification_status, approval_status, franchise_user_id,
+        created_by, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+      [
+        fullName, mobile, email, hashedPassword, username || email,
+        father_husband_name, gender, date_of_birth, age,
+        profilePhoto, coverBanner, alt_mobile, whatsapp_number, emergency_contact,
+        house_number, street, area, city, district, state, pincode, country, google_map_location,
+        kitchen_name, kitchen_address, kitchen_type, kitchenPhotos, kitchenVideos, cookingAreaPhoto,
+        veg_nonveg, experience_years, cuisine_type, daily_order_capacity, available_days, available_slots,
+        fssai_available, gst_available, aadhaar_number, pan_number,
+        bank_account_number, ifsc_code, account_holder_name, bank_branch, upi_id, passbookImg,
+        aadhaarFront, aadhaarBack, panCard, selfieVerif, introVideo,
+        instagram_url, facebook_url, youtube_url, website_url,
+        about_me, cooking_story, why_choose_me, languages_known,
+        delivery_radius, preorderAvailable, cutoff_time,
+        fssaiCertUrl, gstCertUrl, sigUrl,
+        kitchenPhoto1, kitchenPhoto2, kitchenPhoto3, storagePhoto,
+        verification_status || 'Pending', approval_status || 'Pending', franchise_user_id,
+        createdBy
+      ]
+    );
+
+    console.log('✅ Home Chef created:', result.insertId);
+    res.status(201).json({ message: 'Home Chef created successfully.', id: result.insertId });
+  } catch (error) {
+    console.error('❌ Error creating home chef:', error.message, error.stack);
+    res.status(500).json({ message: 'Error creating home chef.', error: error.message });
+  }
+};
+
+exports.updateHomeChef = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const auditUser = await resolveCurrentUserAudit(req);
+    const {
+      first_name, last_name, gender, date_of_birth, age,
+      mobile, alt_mobile, whatsapp_number, email, emergency_contact,
+      house_number, street, area, city, district, state, pincode, country, google_map_location,
+      kitchen_name, kitchen_address, kitchen_type,
+      veg_nonveg, experience_years, cuisine_type,
+      daily_order_capacity, available_days, available_slots,
+      fssai_available, gst_available, aadhaar_number, pan_number,
+      bank_account_number, ifsc_code, account_holder_name, bank_branch, upi_id,
+      father_husband_name, username, instagram_url, facebook_url, youtube_url, website_url,
+      about_me, cooking_story, why_choose_me, languages_known,
+      delivery_radius, preorder_available, cutoff_time,
+      verification_status, approval_status, franchise_user_id
+    } = req.body;
+
+    // Get existing chef data
+    const [existing] = await pool.execute('SELECT * FROM home_chefs WHERE id = ?', [id]);
+    if (!existing || existing.length === 0) {
+      return res.status(404).json({ message: 'Home Chef not found.' });
+    }
+    const chef = existing[0];
+
+    // Extract uploaded files or keep existing
+    const files = req.files || {};
+    const profilePhoto = files.profile_photo?.[0]?.filename || chef.profile_photo;
+    const coverBanner = files.cover_banner?.[0]?.filename || chef.cover_banner;
+    const kitchenPhotos = files.kitchen_photos ? JSON.stringify(files.kitchen_photos.map(f => f.filename)) : chef.kitchen_photos;
+    const kitchenVideos = files.kitchen_videos ? JSON.stringify(files.kitchen_videos.map(f => f.filename)) : chef.kitchen_videos;
+    const cookingAreaPhoto = files.cooking_area_photo?.[0]?.filename || chef.cooking_area_photo;
+    const aadhaarFront = files.aadhaar_front_url?.[0]?.filename || chef.aadhaar_front_url;
+    const aadhaarBack = files.aadhaar_back_url?.[0]?.filename || chef.aadhaar_back_url;
+    const panCard = files.pan_card_url?.[0]?.filename || chef.pan_card_url;
+    const passbookImg = files.passbook_image?.[0]?.filename || chef.passbook_image;
+    const selfieVerif = files.selfie_verification_url?.[0]?.filename || chef.selfie_verification_url;
+    const introVideo = files.introduction_video?.[0]?.filename || chef.introduction_video;
+    const fssaiCertUrl = files.fssai_certificate_url?.[0]?.filename || chef.fssai_certificate_url;
+    const gstCertUrl = files.gst_certificate_url?.[0]?.filename || chef.gst_certificate_url;
+    const sigUrl = files.signature_url?.[0]?.filename || chef.signature_url;
+    const kitchenPhoto1 = files.kitchen_photo1?.[0]?.filename || chef.kitchen_photo1;
+    const kitchenPhoto2 = files.kitchen_photo2?.[0]?.filename || chef.kitchen_photo2;
+    const kitchenPhoto3 = files.kitchen_photo3?.[0]?.filename || chef.kitchen_photo3;
+    const storagePhoto = files.storage_area_photo?.[0]?.filename || chef.storage_area_photo;
+
+    const fullName = [first_name, last_name].filter(Boolean).join(' ') || chef.name;
+    const preorderAvailable = preorder_available !== undefined ? (normalizeBoolean(preorder_available) ? 1 : 0) : chef.preorder_available;
+    const updatedBy = auditUser?.name || auditUser?.email || auditUser?.user_id || null;
+
+    const normalizeValue = (val, fallback) => (val !== undefined && val !== null && val !== '') ? val : fallback;
+
+    const [result] = await pool.execute(
+      `UPDATE home_chefs SET
+        name = ?, mobile = ?, email = ?,
+        father_husband_name = ?, gender = ?, date_of_birth = ?, age = ?,
+        profile_photo = ?, cover_banner = ?, alt_mobile = ?, whatsapp_number = ?, emergency_contact = ?,
+        door_number = ?, street_name = ?, area_name = ?, city = ?, district = ?, state = ?, pincode = ?, country = ?, map_link = ?,
+        kitchen_name = ?, kitchen_address = ?, kitchen_type = ?, kitchen_photos = ?, kitchen_videos = ?, cooking_area_photo = ?,
+        veg_nonveg = ?, experience_years = ?, cuisine_type = ?, daily_order_capacity = ?, available_days = ?, available_slots = ?,
+        fssai_available = ?, gst_available = ?, aadhaar_number = ?, pan_number = ?,
+        bank_account_number = ?, ifsc_code = ?, account_holder_name = ?, bank_branch = ?, upi_id = ?, passbook_image = ?,
+        aadhaar_front_url = ?, aadhaar_back_url = ?, pan_card_url = ?, selfie_verification_url = ?, introduction_video = ?,
+        instagram_url = ?, facebook_url = ?, youtube_url = ?, website_url = ?,
+        about_me = ?, cooking_story = ?, why_choose_me = ?, languages_known = ?,
+        delivery_radius = ?, preorder_available = ?, cutoff_time = ?,
+        fssai_certificate_url = ?, gst_certificate_url = ?, signature_url = ?,
+        kitchen_photo1 = ?, kitchen_photo2 = ?, kitchen_photo3 = ?, storage_area_photo = ?,
+        verification_status = ?, approval_status = ?, franchise_user_id = ?,
+        updated_by = ?,
+        updated_at = NOW()
+      WHERE id = ?`,
+      [
+        fullName, normalizeValue(mobile, chef.mobile), normalizeValue(email, chef.email),
+        normalizeValue(father_husband_name, chef.father_husband_name), normalizeValue(gender, chef.gender), normalizeValue(date_of_birth, chef.date_of_birth), normalizeValue(age, chef.age),
+        profilePhoto, coverBanner, normalizeValue(alt_mobile, chef.alt_mobile), normalizeValue(whatsapp_number, chef.whatsapp_number), normalizeValue(emergency_contact, chef.emergency_contact),
+        normalizeValue(house_number, chef.door_number), normalizeValue(street, chef.street_name), normalizeValue(area, chef.area_name), normalizeValue(city, chef.city), normalizeValue(district, chef.district), normalizeValue(state, chef.state), normalizeValue(pincode, chef.pincode), normalizeValue(country, chef.country), normalizeValue(google_map_location, chef.map_link),
+        normalizeValue(kitchen_name, chef.kitchen_name), normalizeValue(kitchen_address, chef.kitchen_address), normalizeValue(kitchen_type, chef.kitchen_type), kitchenPhotos, kitchenVideos, cookingAreaPhoto,
+        normalizeValue(veg_nonveg, chef.veg_nonveg), normalizeValue(experience_years, chef.experience_years), normalizeValue(cuisine_type, chef.cuisine_type), normalizeValue(daily_order_capacity, chef.daily_order_capacity), normalizeValue(available_days, chef.available_days), normalizeValue(available_slots, chef.available_slots),
+        normalizeValue(fssai_available, chef.fssai_available), normalizeValue(gst_available, chef.gst_available), normalizeValue(aadhaar_number, chef.aadhaar_number), normalizeValue(pan_number, chef.pan_number),
+        normalizeValue(bank_account_number, chef.bank_account_number), normalizeValue(ifsc_code, chef.ifsc_code), normalizeValue(account_holder_name, chef.account_holder_name), normalizeValue(bank_branch, chef.bank_branch), normalizeValue(upi_id, chef.upi_id), passbookImg,
+        aadhaarFront, aadhaarBack, panCard, selfieVerif, introVideo,
+        normalizeValue(instagram_url, chef.instagram_url), normalizeValue(facebook_url, chef.facebook_url), normalizeValue(youtube_url, chef.youtube_url), normalizeValue(website_url, chef.website_url),
+        normalizeValue(about_me, chef.about_me), normalizeValue(cooking_story, chef.cooking_story), normalizeValue(why_choose_me, chef.why_choose_me), normalizeValue(languages_known, chef.languages_known),
+        normalizeValue(delivery_radius, chef.delivery_radius), preorderAvailable, normalizeValue(cutoff_time, chef.cutoff_time),
+        fssaiCertUrl, gstCertUrl, sigUrl,
+        kitchenPhoto1, kitchenPhoto2, kitchenPhoto3, storagePhoto,
+        normalizeValue(verification_status, chef.verification_status), normalizeValue(approval_status, chef.approval_status), normalizeValue(franchise_user_id, chef.franchise_user_id),
+        updatedBy,
+        id
+      ]
+    );
+
+    console.log('✅ Home Chef updated:', id);
+    res.json({ message: 'Home Chef updated successfully.' });
+  } catch (error) {
+    console.error('❌ Error updating home chef:', error.message, error.stack);
+    res.status(500).json({ message: 'Error updating home chef.', error: error.message });
+  }
+};
+
+exports.deleteHomeChef = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.execute("DELETE FROM home_chefs WHERE id = ?", [id]);
+    res.json({ message: 'Home Chef deleted successfully.' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting home chef.', error: error.message });
+  }
+};
+
+exports.updateHomeChefStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { verification_status, approval_status, rejection_reason, block_reason } = req.body;
+    const auditUser = await resolveCurrentUserAudit(req);
+
+    const updates = [];
+    const values = [];
+
+    if (verification_status) {
+      updates.push('verification_status = ?');
+      values.push(verification_status);
+    }
+    if (approval_status) {
+      updates.push('approval_status = ?');
+      values.push(approval_status);
+      if (approval_status === 'Approved') {
+        updates.push('approved_by_admin = ?');
+        values.push(auditUser?.name || 'Admin');
+        updates.push('approval_date = NOW()');
+      }
+    }
+    if (rejection_reason !== undefined) {
+      updates.push('rejection_reason = ?');
+      values.push(rejection_reason);
+    }
+    if (block_reason !== undefined) {
+      updates.push('block_reason = ?');
+      values.push(block_reason);
+    }
+
+    const updatedBy = auditUser?.name || auditUser?.email || auditUser?.user_id || null;
+    updates.push('updated_by = ?');
+    values.push(updatedBy);
+    updates.push('updated_at = NOW()');
+
+    values.push(id);
+
+    await pool.execute(
+      `UPDATE home_chefs SET ${updates.join(', ')} WHERE id = ?`,
+      values
+    );
+
+    res.json({ message: 'Home Chef status updated successfully.' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating home chef status.', error: error.message });
+  }
+};
+
 // ==================== AREAS MANAGEMENT ====================
 exports.lookupPincode = async (req, res) => {
   try {
