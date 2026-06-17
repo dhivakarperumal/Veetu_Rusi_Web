@@ -1147,7 +1147,7 @@ exports.createHomeChef = async (req, res) => {
     const hashedPassword = password ? hashPassword(password) : hashPassword(`${email}@2024`);
     const homeChefUserId = user_id || generateRoleId('chef');
     const preorderAvailable = normalizeBoolean(preorder_available) ? 1 : 0;
-    const createdBy = auditUser?.user_id || auditUser?.id || auditUser?.email || auditUser?.name || null;
+    const createdBy = auditUser?.user_id || auditUser?.id || null;
     const fullName = [first_name, last_name].filter(Boolean).join(' ') || email.split('@')[0];
 
     const files = req.files || {};
@@ -1355,7 +1355,7 @@ exports.updateHomeChef = async (req, res) => {
 
     const fullName = [first_name, last_name].filter(Boolean).join(' ') || chef.name;
     const preorderAvailable = preorder_available !== undefined ? (normalizeBoolean(preorder_available) ? 1 : 0) : chef.preorder_available;
-    const updatedBy = auditUser?.user_id || auditUser?.id || auditUser?.email || auditUser?.name || null;
+    const updatedBy = auditUser?.user_id || auditUser?.id || null;
 
     const normalizeValue = (val, fallback) => (val !== undefined && val !== null && val !== '') ? val : fallback;
 
@@ -1496,7 +1496,7 @@ exports.updateHomeChefStatus = async (req, res) => {
       values.push(block_reason);
     }
 
-    const updatedBy = auditUser?.user_id || auditUser?.id || auditUser?.email || auditUser?.name || null;
+    const updatedBy = auditUser?.user_id || auditUser?.id || null;
     updates.push('updated_by = ?');
     values.push(updatedBy);
     updates.push('updated_at = NOW()');
