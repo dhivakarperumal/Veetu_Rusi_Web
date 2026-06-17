@@ -1090,10 +1090,27 @@ exports.getHomeChefs = async (req, res) => {
   }
 };
 
+exports.getHomeChefById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [rows] = await pool.execute(
+      'SELECT * FROM home_chefs WHERE id = ? LIMIT 1',
+      [id]
+    );
+    if (!rows.length) {
+      return res.status(404).json({ message: 'Home Chef not found.' });
+    }
+    res.json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving home chef.', error: error.message });
+  }
+};
+
 exports.createHomeChef = async (req, res) => {
   try {
     const auditUser = await resolveCurrentUserAudit(req);
     const {
+      user_id,
       first_name, last_name, gender, date_of_birth, age,
       mobile, alt_mobile, whatsapp_number, email, password, emergency_contact,
       house_number, street, area, city, district, state, pincode, country, google_map_location,
@@ -1109,6 +1126,7 @@ exports.createHomeChef = async (req, res) => {
     } = req.body;
 
     const hashedPassword = password ? hashPassword(password) : hashPassword(`${email}@2024`);
+    const homeChefUserId = user_id || generateRoleId('chef');
     const preorderAvailable = normalizeBoolean(preorder_available) ? 1 : 0;
     const createdBy = auditUser?.name || auditUser?.email || auditUser?.user_id || null;
     const fullName = [first_name, last_name].filter(Boolean).join(' ') || email.split('@')[0];
@@ -1134,43 +1152,90 @@ exports.createHomeChef = async (req, res) => {
     const kitchenPhoto3 = files.kitchen_photo3?.[0]?.filename || null;
     const storagePhoto = files.storage_area_photo?.[0]?.filename || null;
 
+    const homeChefData = {
+      user_id: homeChefUserId,
+      name: fullName,
+      mobile,
+      email,
+      password: hashedPassword,
+      username: username || email,
+      father_husband_name,
+      gender,
+      date_of_birth,
+      age,
+      profile_photo: profilePhoto,
+      cover_banner: coverBanner,
+      alt_mobile,
+      whatsapp_number,
+      emergency_contact,
+      door_number: house_number,
+      street_name: street,
+      area_name: area,
+      city,
+      district,
+      state,
+      pincode,
+      country,
+      map_link: google_map_location,
+      kitchen_name,
+      kitchen_address,
+      kitchen_type,
+      kitchen_photos: kitchenPhotos,
+      kitchen_videos: kitchenVideos,
+      cooking_area_photo: cookingAreaPhoto,
+      veg_nonveg,
+      experience_years,
+      cuisine_type,
+      daily_order_capacity,
+      available_days,
+      available_slots,
+      fssai_available,
+      gst_available,
+      aadhaar_number,
+      pan_number,
+      bank_account_number,
+      ifsc_code,
+      account_holder_name,
+      bank_branch,
+      upi_id,
+      passbook_image: passbookImg,
+      aadhaar_front_url: aadhaarFront,
+      aadhaar_back_url: aadhaarBack,
+      pan_card_url: panCard,
+      selfie_verification_url: selfieVerif,
+      introduction_video: introVideo,
+      instagram_url,
+      facebook_url,
+      youtube_url,
+      website_url,
+      about_me,
+      cooking_story,
+      why_choose_me,
+      languages_known,
+      delivery_radius,
+      preorder_available: preorderAvailable,
+      cutoff_time,
+      fssai_certificate_url: fssaiCertUrl,
+      gst_certificate_url: gstCertUrl,
+      signature_url: sigUrl,
+      kitchen_photo1,
+      kitchen_photo2,
+      kitchen_photo3,
+      storage_area_photo: storagePhoto,
+      verification_status: verification_status || 'Pending',
+      approval_status: approval_status || 'Pending',
+      franchise_user_id,
+      created_by: createdBy
+    };
+
+    const insertColumns = Object.keys(homeChefData);
+    const placeholders = insertColumns.map(() => '?').join(', ');
+    const values = Object.values(homeChefData);
+
     const [result] = await pool.execute(
-      `INSERT INTO home_chefs (
-        name, mobile, email, password, username,
-        father_husband_name, gender, date_of_birth, age,
-        profile_photo, cover_banner, alt_mobile, whatsapp_number, emergency_contact,
-        door_number, street_name, area_name, city, district, state, pincode, country, map_link,
-        kitchen_name, kitchen_address, kitchen_type, kitchen_photos, kitchen_videos, cooking_area_photo,
-        veg_nonveg, experience_years, cuisine_type, daily_order_capacity, available_days, available_slots,
-        fssai_available, gst_available, aadhaar_number, pan_number,
-        bank_account_number, ifsc_code, account_holder_name, bank_branch, upi_id, passbook_image,
-        aadhaar_front_url, aadhaar_back_url, pan_card_url, selfie_verification_url, introduction_video,
-        instagram_url, facebook_url, youtube_url, website_url,
-        about_me, cooking_story, why_choose_me, languages_known,
-        delivery_radius, preorder_available, cutoff_time,
-        fssai_certificate_url, gst_certificate_url, signature_url,
-        kitchen_photo1, kitchen_photo2, kitchen_photo3, storage_area_photo,
-        verification_status, approval_status, franchise_user_id,
-        created_by, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-      [
-        fullName, mobile, email, hashedPassword, username || email,
-        father_husband_name, gender, date_of_birth, age,
-        profilePhoto, coverBanner, alt_mobile, whatsapp_number, emergency_contact,
-        house_number, street, area, city, district, state, pincode, country, google_map_location,
-        kitchen_name, kitchen_address, kitchen_type, kitchenPhotos, kitchenVideos, cookingAreaPhoto,
-        veg_nonveg, experience_years, cuisine_type, daily_order_capacity, available_days, available_slots,
-        fssai_available, gst_available, aadhaar_number, pan_number,
-        bank_account_number, ifsc_code, account_holder_name, bank_branch, upi_id, passbookImg,
-        aadhaarFront, aadhaarBack, panCard, selfieVerif, introVideo,
-        instagram_url, facebook_url, youtube_url, website_url,
-        about_me, cooking_story, why_choose_me, languages_known,
-        delivery_radius, preorderAvailable, cutoff_time,
-        fssaiCertUrl, gstCertUrl, sigUrl,
-        kitchenPhoto1, kitchenPhoto2, kitchenPhoto3, storagePhoto,
-        verification_status || 'Pending', approval_status || 'Pending', franchise_user_id,
-        createdBy
-      ]
+      `INSERT INTO home_chefs (${insertColumns.join(', ')}, created_at, updated_at)
+        VALUES (${placeholders}, NOW(), NOW())`,
+      values
     );
 
     console.log('✅ Home Chef created:', result.insertId);
@@ -1296,12 +1361,16 @@ exports.deleteHomeChef = async (req, res) => {
 exports.updateHomeChefStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { verification_status, approval_status, rejection_reason, block_reason } = req.body;
+    const { status, verification_status, approval_status, rejection_reason, block_reason } = req.body;
     const auditUser = await resolveCurrentUserAudit(req);
 
     const updates = [];
     const values = [];
 
+    if (status !== undefined) {
+      updates.push('status = ?');
+      values.push(status);
+    }
     if (verification_status) {
       updates.push('verification_status = ?');
       values.push(verification_status);

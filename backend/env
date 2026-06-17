@@ -1,0 +1,23 @@
+PORT=5000
+NODE_ENV=development
+BACKEND_URL=http://localhost:5000
+
+
+
+# DB_HOST=localhost
+# DB_PORT=5000
+# DB_NAME=veeturusi_db
+# DB_USER=veetu_rusi
+# DB_PASSWORD=Q-Techx@2025
+
+
+
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=
+DB_NAME=veetu_rusi
+DB_PORT=3306
+
+
+JWT_SECRET=6c287e12edf9b4677fd866990e5cbb12c406203947002d0de6f9a9eac61b72b5004261cd46508c3dcda3a457
+JWT_EXPIRES_IN=9d

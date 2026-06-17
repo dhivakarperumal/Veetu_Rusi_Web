@@ -32,7 +32,7 @@ const HomeChefDetail = () => {
     const fetchChef = async () => {
       try {
         setLoading(true);
-        const res = await api.get(`/superadmin/homechefs/${id}`);
+        const res = await api.get(`/admin/homechefs/${id}`);
         setChef(res.data);
       } catch {
         toast.error("Unable to load home chef details.");

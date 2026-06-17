@@ -6,7 +6,7 @@ const upload = require('../config/multer');
 
 // Apply JWT verification & superadmin role check to all superadmin endpoints
 router.use(verifyToken);
-router.use(requireRole(['superadmin', 'admin']));
+router.use(requireRole(['superadmin']));
 
 // Dashboard Analytics
 router.get('/dashboard-stats', controller.getDashboardStats);
@@ -100,6 +100,7 @@ const homeChefUploadFields = upload.fields([
   { name: 'storage_area_photo', maxCount: 1 }
 ]);
 router.get('/homechefs', controller.getHomeChefs);
+router.get('/homechefs/:id', controller.getHomeChefById);
 router.post('/homechefs', homeChefUploadFields, controller.createHomeChef);
 router.put('/homechefs/:id', homeChefUploadFields, controller.updateHomeChef);
 router.delete('/homechefs/:id', controller.deleteHomeChef);

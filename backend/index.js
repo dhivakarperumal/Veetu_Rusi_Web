@@ -6,6 +6,7 @@ const initDb = require('./create-db');
 
 const authRouter = require('./src/routes/auth');
 const superadminRouter = require('./src/routes/superadmin');
+const adminRouter = require('./src/routes/admin');
 const subscriptionsRouter = require('./src/routes/subscriptions');
 const dashboardRouter = require('./src/routes/dashboard');
 const productsRouter = require('./src/routes/products');
@@ -48,6 +49,7 @@ const videosRouter = require('./src/routes/videos');
 
 app.use('/api/auth', authRouter);
 app.use('/api/superadmin', superadminRouter);
+app.use('/api/admin', adminRouter);
 app.use('/api/banners', bannersRouter);
 app.use('/api/videos', videosRouter);
 

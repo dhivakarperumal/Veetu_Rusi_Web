@@ -192,7 +192,7 @@ const HomeChefManagement = () => {
   const fetchChefs = async () => {
     try {
       setLoading(true);
-      const res = await api.get("/superadmin/homechefs");
+      const res = await api.get("/admin/homechefs");
       setChefs(res.data);
       setFilteredChefs(res.data);
     } catch (error) {
@@ -269,7 +269,7 @@ const HomeChefManagement = () => {
 
   const handleStatusChange = async (id, newStatus) => {
     try {
-      await api.patch(`/superadmin/homechefs/status/${id}`, {
+      await api.patch(`/admin/homechefs/status/${id}`, {
         status: newStatus,
       });
       toast.success(`Home Chef status updated to ${newStatus}`);
@@ -369,7 +369,7 @@ const HomeChefManagement = () => {
     if (!window.confirm("Are you sure you want to delete this home chef?"))
       return;
     try {
-      await api.delete(`/superadmin/homechefs/${id}`);
+      await api.delete(`/admin/homechefs/${id}`);
       toast.success("Home chef profile removed.");
       fetchChefs();
       if (selectedChef?.id === id) {
@@ -510,10 +510,10 @@ const HomeChefManagement = () => {
       const convertedPayload = createFormDataPayload(payload);
 
       if (editingChef) {
-        await api.put(`/superadmin/homechefs/${editingChef.id}`, convertedPayload);
+        await api.put(`/admin/homechefs/${editingChef.id}`, convertedPayload);
         toast.success("Home chef updated successfully.");
       } else {
-        await api.post("/superadmin/homechefs", convertedPayload);
+        await api.post("/admin/homechefs", convertedPayload);
         toast.success("Home chef created successfully.");
       }
       setIsFormOpen(false);

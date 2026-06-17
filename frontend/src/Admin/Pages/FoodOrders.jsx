@@ -499,7 +499,7 @@ const FoodOrders = () => {
 
   useEffect(() => {
     api
-      .get('/superadmin/homechefs')
+      .get('/admin/homechefs')
       .then((res) => {
         setChefs(Array.isArray(res.data) ? res.data : []);
       })

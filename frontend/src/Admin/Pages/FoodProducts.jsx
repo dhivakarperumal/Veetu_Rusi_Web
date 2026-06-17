@@ -17,7 +17,7 @@ const FoodProducts = () => {
   useEffect(() => {
     const fetchChefs = async () => {
       try {
-        const res = await api.get('/superadmin/homechefs');
+        const res = await api.get('/admin/homechefs');
         setChefs(Array.isArray(res.data) ? res.data : []);
       } catch (err) {
         console.error('Failed to load chefs for filter', err);

@@ -596,6 +596,31 @@ const cleanupHomeChefs = async () => {
 
         // Add franchise_id if missing
         try { await pool.execute(`ALTER TABLE \`home_chefs\` ADD COLUMN IF NOT EXISTS franchise_id VARCHAR(255) DEFAULT NULL`); console.log('  Added: franchise_id'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` ADD COLUMN IF NOT EXISTS password VARCHAR(255) DEFAULT NULL`); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` ADD COLUMN IF NOT EXISTS username VARCHAR(255) DEFAULT NULL`); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` ADD COLUMN IF NOT EXISTS father_husband_name VARCHAR(255) DEFAULT NULL`); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` ADD COLUMN IF NOT EXISTS gender VARCHAR(20) DEFAULT NULL`); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` ADD COLUMN IF NOT EXISTS date_of_birth DATE DEFAULT NULL`); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` ADD COLUMN IF NOT EXISTS age INT DEFAULT NULL`); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` ADD COLUMN IF NOT EXISTS emergency_contact VARCHAR(50) DEFAULT NULL`); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` ADD COLUMN IF NOT EXISTS country VARCHAR(100) DEFAULT NULL`); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` ADD COLUMN IF NOT EXISTS kitchen_videos TEXT DEFAULT NULL`); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` ADD COLUMN IF NOT EXISTS daily_order_capacity INT DEFAULT NULL`); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` ADD COLUMN IF NOT EXISTS available_days TEXT DEFAULT NULL`); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` ADD COLUMN IF NOT EXISTS available_slots TEXT DEFAULT NULL`); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` ADD COLUMN IF NOT EXISTS fssai_available VARCHAR(50) DEFAULT NULL`); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` ADD COLUMN IF NOT EXISTS gst_available VARCHAR(50) DEFAULT NULL`); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` ADD COLUMN IF NOT EXISTS bank_branch VARCHAR(255) DEFAULT NULL`); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` ADD COLUMN IF NOT EXISTS passbook_image VARCHAR(255) DEFAULT NULL`); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` ADD COLUMN IF NOT EXISTS introduction_video VARCHAR(255) DEFAULT NULL`); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` ADD COLUMN IF NOT EXISTS why_choose_me LONGTEXT DEFAULT NULL`); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` ADD COLUMN IF NOT EXISTS delivery_radius VARCHAR(50) DEFAULT NULL`); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` ADD COLUMN IF NOT EXISTS verification_status VARCHAR(50) DEFAULT 'Pending'`); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` ADD COLUMN IF NOT EXISTS approval_status VARCHAR(50) DEFAULT 'Pending'`); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` ADD COLUMN IF NOT EXISTS approved_by_admin VARCHAR(255) DEFAULT NULL`); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` ADD COLUMN IF NOT EXISTS approval_date DATETIME DEFAULT NULL`); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` ADD COLUMN IF NOT EXISTS rejection_reason TEXT DEFAULT NULL`); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` ADD COLUMN IF NOT EXISTS block_reason TEXT DEFAULT NULL`); } catch (e) {}
 
         // Add compact audit columns (if not already added by ensureAuditColumns)
         try { await pool.execute(`ALTER TABLE \`home_chefs\` ADD COLUMN IF NOT EXISTS created_by VARCHAR(255) DEFAULT NULL`); console.log('  Added: created_by'); } catch (e) {}

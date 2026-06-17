@@ -835,6 +835,27 @@ async function createDatabaseAndTables() {
       kitchen_photo3 VARCHAR(255),
       cooking_area_photo VARCHAR(255),
       storage_area_photo VARCHAR(255),
+      password VARCHAR(255),
+      username VARCHAR(255),
+      gender VARCHAR(20),
+      date_of_birth DATE,
+      age INT,
+      father_husband_name VARCHAR(255),
+      country VARCHAR(100),
+      emergency_contact VARCHAR(50),
+      kitchen_videos TEXT,
+      daily_order_capacity INT,
+      available_days VARCHAR(255),
+      available_slots VARCHAR(255),
+      fssai_available VARCHAR(50),
+      gst_available VARCHAR(50),
+      bank_branch VARCHAR(255),
+      passbook_image VARCHAR(255),
+      introduction_video VARCHAR(255),
+      why_choose_me LONGTEXT,
+      delivery_radius VARCHAR(50),
+      verification_status VARCHAR(50) DEFAULT 'Pending',
+      approval_status VARCHAR(50) DEFAULT 'Pending',
       created_by VARCHAR(255),
       updated_by VARCHAR(255),
       UNIQUE INDEX idx_user_id (user_id),
@@ -846,6 +867,46 @@ async function createDatabaseAndTables() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
   `);
   console.log('Home_chefs table ensured (created if missing)');
+
+  // Add missing columns to home_chefs if they don't exist
+  const missingHomechefColumns = [
+    { name: 'password', type: 'VARCHAR(255)' },
+    { name: 'username', type: 'VARCHAR(255)' },
+    { name: 'gender', type: 'VARCHAR(20)' },
+    { name: 'date_of_birth', type: 'DATE' },
+    { name: 'age', type: 'INT' },
+    { name: 'father_husband_name', type: 'VARCHAR(255)' },
+    { name: 'country', type: 'VARCHAR(100)' },
+    { name: 'emergency_contact', type: 'VARCHAR(50)' },
+    { name: 'kitchen_videos', type: 'TEXT' },
+    { name: 'daily_order_capacity', type: 'INT' },
+    { name: 'available_days', type: 'VARCHAR(255)' },
+    { name: 'available_slots', type: 'VARCHAR(255)' },
+    { name: 'fssai_available', type: 'VARCHAR(50)' },
+    { name: 'gst_available', type: 'VARCHAR(50)' },
+    { name: 'bank_branch', type: 'VARCHAR(255)' },
+    { name: 'passbook_image', type: 'VARCHAR(255)' },
+    { name: 'introduction_video', type: 'VARCHAR(255)' },
+    { name: 'why_choose_me', type: 'LONGTEXT' },
+    { name: 'delivery_radius', type: 'VARCHAR(50)' },
+    { name: 'verification_status', type: 'VARCHAR(50)' },
+    { name: 'approval_status', type: 'VARCHAR(50)' }
+  ];
+
+  for (const col of missingHomechefColumns) {
+    try {
+      const colCheck = await connection.execute(
+        `SELECT COUNT(*) AS count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'home_chefs' AND COLUMN_NAME = ?`,
+        [DB_NAME, col.name]
+      );
+      if (colCheck[0][0].count === 0) {
+        await connection.execute(`ALTER TABLE \`home_chefs\` ADD COLUMN \`${col.name}\` ${col.type}`);
+        console.log(`✓ Added ${col.name} column to home_chefs table`);
+      }
+    } catch (err) {
+      console.warn(`Could not add ${col.name} to home_chefs:`, err.message);
+    }
+  }
 
   await connection.execute(`
     CREATE TABLE IF NOT EXISTS \`preorders\` (
@@ -986,6 +1047,103 @@ async function createDatabaseAndTables() {
     [generateRoleId('superadmin'), 'SuperAdmin', superadminEmail, hashedSuperPassword, 'superadmin']
   );
   console.log(`SuperAdmin user created or updated: ${superadminEmail}`);
+
+  // Seed demo home chef for testing
+  try {
+    const demoChefEmail = 'priya@homechef.com';
+    const demoChefPassword = hashPassword('priya@123');
+    const demoChefUserId = generateRoleId('chef');
+    
+    const demoHomeChef = {
+      user_id: demoChefUserId,
+      name: 'Priya Kumar',
+      mobile: '9876543210',
+      email: demoChefEmail,
+      password: demoChefPassword,
+      username: demoChefEmail,
+      father_husband_name: 'Kumar Sharma',
+      gender: 'Female',
+      date_of_birth: '1995-05-15',
+      age: 29,
+      profile_photo: null,
+      cover_banner: null,
+      alt_mobile: '9876543211',
+      whatsapp_number: '9876543210',
+      emergency_contact: '9876543212',
+      door_number: '123',
+      street_name: 'MG Road',
+      area_name: 'Indiranagar',
+      city: 'Bengaluru',
+      district: 'Bengaluru',
+      state: 'Karnataka',
+      pincode: '560038',
+      country: 'India',
+      map_link: 'https://maps.google.com/maps?q=Indiranagar,Bengaluru',
+      kitchen_name: 'Priya\'s Home Kitchen',
+      kitchen_address: '123, MG Road, Indiranagar, Bengaluru',
+      kitchen_type: 'Home Kitchen',
+      kitchen_photos: null,
+      kitchen_videos: null,
+      cooking_area_photo: null,
+      veg_nonveg: 'Mixed',
+      experience_years: 8,
+      cuisine_type: 'South Indian,North Indian,Continental',
+      daily_order_capacity: 20,
+      available_days: 'Monday,Tuesday,Wednesday,Thursday,Friday,Saturday',
+      available_slots: '11:00 AM - 2:00 PM,6:00 PM - 9:00 PM',
+      fssai_available: 'Yes',
+      gst_available: 'No',
+      aadhaar_number: '1234-5678-9012',
+      pan_number: 'ABCDE1234F',
+      bank_account_number: '1234567890123456',
+      ifsc_code: 'HDFC0001234',
+      account_holder_name: 'Priya Kumar',
+      bank_branch: 'Indiranagar',
+      upi_id: 'priya@okhdfcbank',
+      passbook_image: null,
+      aadhaar_front_url: null,
+      aadhaar_back_url: null,
+      pan_card_url: null,
+      selfie_verification_url: null,
+      introduction_video: null,
+      instagram_url: 'https://instagram.com/priyahomechef',
+      facebook_url: 'https://facebook.com/priyahomechef',
+      youtube_url: 'https://youtube.com/@priyahomechef',
+      website_url: 'https://priyahomechef.com',
+      about_me: 'Welcome to Priya\'s Home Kitchen! I cook authentic home-style food with fresh ingredients daily.',
+      cooking_story: 'Started cooking professionally after 8 years of passion for traditional Indian cuisine.',
+      why_choose_me: 'Homemade food with love, fresh ingredients, hygienic preparation, and affordable pricing.',
+      languages_known: 'English,Hindi,Kannada',
+      delivery_radius: '5 KM',
+      preorder_available: 1,
+      cutoff_time: '10:00 AM',
+      fssai_certificate_url: null,
+      gst_certificate_url: null,
+      signature_url: null,
+      kitchen_photo1: null,
+      kitchen_photo2: null,
+      kitchen_photo3: null,
+      storage_area_photo: null,
+      verification_status: 'Pending',
+      approval_status: 'Approved',
+      franchise_user_id: null,
+      created_by: 'System Seed'
+    };
+
+    const insertCols = Object.keys(demoHomeChef).filter(k => demoHomeChef[k] !== undefined);
+    const placeholders = insertCols.map(() => '?').join(', ');
+    const values = insertCols.map(k => demoHomeChef[k]);
+
+    await connection.execute(
+      `INSERT INTO home_chefs (${insertCols.join(', ')}, created_at, updated_at)
+       SELECT ${placeholders}, NOW(), NOW() FROM DUAL
+       WHERE NOT EXISTS (SELECT 1 FROM home_chefs WHERE email = ?)`,
+      [...values, demoChefEmail]
+    );
+    console.log(`✓ Demo home chef created: ${demoChefEmail}`);
+  } catch (err) {
+    console.warn('Could not seed demo home chef:', err.message || err);
+  }
 
   await connection.end();
 }
