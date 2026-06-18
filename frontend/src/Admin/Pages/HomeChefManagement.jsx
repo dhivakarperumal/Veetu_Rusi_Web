@@ -433,7 +433,11 @@ const HomeChefManagement = () => {
       available_days: chef.available_days
         ? chef.available_days.split(",").map((item) => item.trim())
         : [],
-      available_slots: chef.available_slots || [],
+      available_slots: chef.available_slots
+        ? Array.isArray(chef.available_slots)
+          ? chef.available_slots
+          : chef.available_slots.split(",").map((item) => item.trim())
+        : [],
     
      
       aadhaar_number: chef.aadhaar_number || "",
