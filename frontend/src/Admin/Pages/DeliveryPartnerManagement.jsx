@@ -29,7 +29,7 @@ const tabs = [
   { id: "bank", label: "Bank Information" },
   { id: "documents", label: "Document Upload" },
   { id: "preferences", label: "Work Preferences" },
-  { id: "verification", label: "Verification" },
+  // verification tab removed
 ];
 
 const readFileAsDataURL = (file) =>
@@ -128,6 +128,7 @@ const emptyForm = {
   rc_book_image: null,
   insurance_document_image: null,
   selfie_with_vehicle: null,
+  vehicle_front_photo: null,
   selfie_with_aadhaar: null,
   // Preferences
   available_areas: "",
@@ -137,9 +138,7 @@ const emptyForm = {
   available_time_night: false,
   preferred_distance: "3 KM",
   // Verification
-  otp_verified: false,
-  face_verified: false,
-  location_verified: false,
+  // verification fields removed
   // Status
   status: "Pending",
 };
@@ -274,9 +273,6 @@ const DeliveryPartnerManagement = () => {
     mapped.password = "";
     mapped.confirmPassword = "";
     if (partner.date_of_birth) mapped.date_of_birth = partner.date_of_birth.substring(0, 10);
-    if (partner.license_issue_date) mapped.license_issue_date = partner.license_issue_date.substring(0, 10);
-    if (partner.license_expiry_date) mapped.license_expiry_date = partner.license_expiry_date.substring(0, 10);
-    if (partner.insurance_expiry_date) mapped.insurance_expiry_date = partner.insurance_expiry_date.substring(0, 10);
     setForm(mapped);
     setIsFormOpen(true);
   };
@@ -305,24 +301,18 @@ const DeliveryPartnerManagement = () => {
     if (!form.vehicle_model.trim()) errors.vehicle_model = "Vehicle model is required.";
     if (!form.vehicle_number.trim()) errors.vehicle_number = "Vehicle number is required.";
     if (!form.vehicle_color.trim()) errors.vehicle_color = "Vehicle color is required.";
-    if (!form.license_number.trim()) errors.license_number = "License number is required.";
-    if (!form.license_issue_date) errors.license_issue_date = "License issue date is required.";
-    if (!form.license_expiry_date) errors.license_expiry_date = "License expiry date is required.";
     if (!form.account_holder_name.trim()) errors.account_holder_name = "Account holder name is required.";
     if (!form.bank_name.trim()) errors.bank_name = "Bank name is required.";
     if (!form.bank_account_number.trim()) errors.bank_account_number = "Account number is required.";
     if (!form.ifsc_code.trim()) errors.ifsc_code = "IFSC code is required.";
     if (!form.upi_id.trim()) errors.upi_id = "UPI ID is required.";
-    if (!form.aadhaar_number.trim()) errors.aadhaar_number = "Aadhaar number is required.";
-    if (!form.pan_number.trim()) errors.pan_number = "PAN number is required.";
+    // Aadhaar/PAN removed from required fields
     if (!form.available_areas.trim()) errors.available_areas = "Available areas are required.";
     if (!form.preferred_distance.trim()) errors.preferred_distance = "Preferred distance is required.";
     if (!form.available_time_morning && !form.available_time_afternoon && !form.available_time_evening && !form.available_time_night) {
       errors.available_time = "Select at least one available time slot.";
     }
-    if (!form.otp_verified) errors.otp_verified = "OTP verification is required.";
-    if (!form.face_verified) errors.face_verified = "Face verification is required.";
-    if (!form.location_verified) errors.location_verified = "Location verification is required.";
+    // verification checks removed
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -459,6 +449,7 @@ const DeliveryPartnerManagement = () => {
                   {f("blood_group", "Blood Group")}
                   {f("mobile", "Mobile Number", "tel")}
                   {f("email", "Email Address", "email")}
+                  {fileField("profile_photo", "Profile Photo", form.profile_photo)}
                   {!editingPartner && (
                     <div>
                       <label className={lbl}>Password</label>
@@ -539,7 +530,6 @@ const DeliveryPartnerManagement = () => {
                       )}
                     </div>
                   )}
-                  {fileField("profile_photo", "Profile Photo", form.profile_photo)}
                 </div>
               );
             case "address":
@@ -571,6 +561,7 @@ const DeliveryPartnerManagement = () => {
                   {f("vehicle_model", "Vehicle Model")}
                   {f("vehicle_number", "Vehicle Number")}
                   {f("vehicle_color", "Vehicle Color")}
+                  {fileField("vehicle_front_photo", "Vehicle Image", form.vehicle_front_photo)}
                 </div>
               );
             case "driving":
@@ -597,6 +588,12 @@ const DeliveryPartnerManagement = () => {
                     />
                     {validationErrors.license_expiry_date && <p className="mt-1 text-[10px] text-rose-400">{validationErrors.license_expiry_date}</p>}
                   </div>
+                  <div>
+                    {fileField("license_front_image", "Driving License - Front", form.license_front_image)}
+                  </div>
+                  <div>
+                    {fileField("license_back_image", "Driving License - Back", form.license_back_image)}
+                  </div>
                 </div>
               );
             case "bank":
@@ -612,16 +609,12 @@ const DeliveryPartnerManagement = () => {
             case "documents":
               return (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  {f("aadhaar_number", "Aadhaar Number")}
-                  {f("pan_number", "PAN Number")}
-                  {fileField("aadhaar_front_url", "Aadhaar Front")}
-                  {fileField("aadhaar_back_url", "Aadhaar Back")}
-                  {fileField("pan_card_url", "PAN Card")}
-                  {fileField("license_front_image", "Driving License")}
-                  {fileField("rc_book_image", "RC Book")}
-                  {fileField("insurance_document_image", "Vehicle Insurance")}
-                  {fileField("selfie_with_vehicle", "Selfie With Vehicle")}
-                  {fileField("selfie_with_aadhaar", "Selfie Holding Aadhaar")}
+                  {fileField("aadhaar_front_url", "Aadhaar Front", form.aadhaar_front_url)}
+                  {fileField("aadhaar_back_url", "Aadhaar Back", form.aadhaar_back_url)}
+                  {fileField("pan_card_url", "PAN Card", form.pan_card_url)}
+                  {fileField("rc_book_image", "RC Book", form.rc_book_image)}
+                  {fileField("insurance_document_image", "Vehicle Insurance", form.insurance_document_image)}
+                  {fileField("selfie_with_vehicle", "Selfie With Vehicle", form.selfie_with_vehicle)}
                 </div>
               );
             case "preferences":
@@ -653,17 +646,7 @@ const DeliveryPartnerManagement = () => {
                   </div>
                 </div>
               );
-            case "verification":
-              return (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  {toggle("otp_verified", "OTP Verification")}
-                  {toggle("face_verified", "Face Verification")}
-                  {toggle("location_verified", "Location Verification")}
-                  {validationErrors.otp_verified && <p className="col-span-full text-[10px] text-rose-400">{validationErrors.otp_verified}</p>}
-                  {validationErrors.face_verified && <p className="col-span-full text-[10px] text-rose-400">{validationErrors.face_verified}</p>}
-                  {validationErrors.location_verified && <p className="col-span-full text-[10px] text-rose-400">{validationErrors.location_verified}</p>}
-                </div>
-              );
+            // verification tab removed
             default:
               return null;
           }
@@ -1017,8 +1000,6 @@ const DeliveryPartnerManagement = () => {
                   ["Driving License", selectedPartner.license_number || "N/A"],
                   ["Available Areas", selectedPartner.available_areas || "N/A"],
                   ["Available Time", [selectedPartner.available_time_morning ? 'Morning' : null, selectedPartner.available_time_afternoon ? 'Afternoon' : null, selectedPartner.available_time_evening ? 'Evening' : null, selectedPartner.available_time_night ? 'Night' : null].filter(Boolean).join(', ') || 'N/A'],
-                  ["Face Verified", selectedPartner.face_verified ? 'Yes' : 'No'],
-                  ["Location Verified", selectedPartner.location_verified ? 'Yes' : 'No'],
                   ["Selfie Vehicle", selectedPartner.selfie_with_vehicle ? 'Uploaded' : 'Missing'],
                   ["Selfie Aadhaar", selectedPartner.selfie_with_aadhaar ? 'Uploaded' : 'Missing'],
                   ["Aadhaar Number", selectedPartner.aadhaar_number || "N/A"],

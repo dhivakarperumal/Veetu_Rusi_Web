@@ -130,7 +130,7 @@ exports.createHomeChef = async (req, res) => {
       user_id,
       first_name, last_name, gender, date_of_birth, age,
       mobile, alt_mobile, email, password,
-      house_number, street, area, city, district, state, pincode, country, google_map_location,
+      house_number, door_number, street, street_name, area, area_name, city, district, state, pincode, country, google_map_location, map_link,
       kitchen_name, kitchen_address, kitchen_type,
       veg_nonveg, experience_years, cuisine_type,
       daily_order_capacity, available_days, available_slots,
@@ -452,10 +452,10 @@ exports.updateHomeChef = async (req, res) => {
         if (!VALID_HOMECHEF_COLUMNS.includes(key)) return false;
 
         // Map database column names back to request field names
-        const requestFieldName = key === 'door_number' ? 'house_number'
-                              : key === 'street_name' ? 'street'
-                              : key === 'area_name' ? 'area'
-                              : key === 'map_link' ? 'google_map_location'
+        const requestFieldName = key === 'door_number' ? ['house_number', 'door_number']
+                              : key === 'street_name' ? ['street', 'street_name']
+                              : key === 'area_name' ? ['area', 'area_name']
+                              : key === 'map_link' ? ['google_map_location', 'map_link']
                               : key === 'name' ? ['first_name', 'last_name']
                               : key;
 
@@ -554,359 +554,27 @@ exports.updateHomeChefStatus = async (req, res) => {
   }
 };
 
-// ==================== DELIVERY PARTNER MANAGEMENT ====================
+// ==================== DELIVERY PARTNER MANAGEMENT (DISABLED - DB TABLE REMOVED) ====================
 exports.getDeliveryPartners = async (req, res) => {
-  try {
-    const [rows] = await pool.execute(
-      "SELECT * FROM delivery_partners ORDER BY created_at DESC"
-    );
-    res.json(rows);
-  } catch (error) {
-    res.status(500).json({ message: 'Error retrieving delivery partners.', error: error.message });
-  }
+  res.json([]); // Stub: return empty array
 };
 
 exports.getDeliveryPartnerById = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const [rows] = await pool.execute(
-      'SELECT * FROM delivery_partners WHERE id = ? LIMIT 1',
-      [id]
-    );
-    if (!rows.length) {
-      return res.status(404).json({ message: 'Delivery Partner not found.' });
-    }
-    res.json(rows[0]);
-  } catch (error) {
-    res.status(500).json({ message: 'Error retrieving delivery partner.', error: error.message });
-  }
+  res.status(404).json({ message: 'Delivery Partner feature is disabled.' });
 };
 
-const VALID_DELIVERY_PARTNER_COLUMNS = [
-  'id', 'user_id', 'delivery_partner_user_id', 'name', 'mobile', 'email', 'status', 'created_at', 'updated_at',
-  'profile_photo', 'cover_photo', 'gender', 'date_of_birth', 'age', 'blood_group', 'alt_mobile', 'whatsapp_number',
-  'emergency_contact', 'emergency_contact_name', 'emergency_contact_relationship', 'emergency_contact_mobile',
-  'current_address', 'permanent_address', 'city', 'state', 'pincode', 'latitude', 'longitude', 'live_location',
-  'vehicle_type', 'vehicle_brand', 'vehicle_model', 'vehicle_number', 'vehicle_color',
-  'license_number', 'license_holder_name', 'license_issue_date', 'license_expiry_date',
-  'license_front_image', 'license_back_image', 'rc_book_number', 'rc_book_image',
-  'insurance_number', 'insurance_expiry_date', 'insurance_document_image',
-  'aadhaar_number', 'aadhaar_front_url', 'aadhaar_back_url', 'pan_number', 'pan_card_url',
-  'selfie_verification_url', 'selfie_with_vehicle', 'selfie_with_aadhaar',
-  'vehicle_front_photo', 'vehicle_back_photo', 'police_verification_certificate',
-  'account_holder_name', 'bank_name', 'bank_account_number', 'ifsc_code', 'branch_name', 'upi_id',
-  'available_areas', 'available_time_morning', 'available_time_afternoon', 'available_time_evening', 'available_time_night',
-  'preferred_distance', 'delivery_radius', 'assigned_delivery_area', 'preferred_delivery_zone',
-  'otp_verified', 'face_verified', 'location_verified', 'email_verified',
-  'login_status', 'account_status', 'online_status', 'availability_schedule', 'working_days', 'shift_timing',
-  'password', 'username', 'father_husband_name', 'driving_experience',
-  'background_verification_status', 'kyc_verification_status',
-  'wallet_balance', 'pending_earnings', 'total_earnings', 'daily_earnings', 'weekly_earnings', 'monthly_earnings',
-  'incentive_amount', 'bonus_amount'
-];
-
 exports.createDeliveryPartner = async (req, res) => {
-  try {
-    const auditUser = await resolveCurrentUserAudit(req);
-    const {
-      user_id, first_name, last_name, gender, date_of_birth, age, blood_group,
-      mobile, alt_mobile, whatsapp_number, email, password,
-      emergency_contact_name, emergency_contact_relationship, emergency_contact_mobile,
-      current_address, permanent_address, city, state, pincode, live_location,
-      vehicle_type, vehicle_brand, vehicle_model, vehicle_number, vehicle_color,
-      license_number, license_holder_name, license_issue_date, license_expiry_date,
-      rc_book_number, insurance_number, insurance_expiry_date,
-      aadhaar_number, pan_number,
-      account_holder_name, bank_name, bank_account_number, ifsc_code, branch_name, upi_id,
-      available_areas, available_time_morning, available_time_afternoon, available_time_evening, available_time_night,
-      preferred_distance, delivery_radius, driving_experience,
-      status
-    } = req.body;
-
-    const hashedPassword = password ? hashPassword(password) : hashPassword(`${email}@2024`);
-    const deliveryPartnerUserId = user_id || generateRoleId('delivery_partner');
-    const createdBy = auditUser?.name || auditUser?.email || auditUser?.user_id || null;
-    const fullName = [first_name, last_name].filter(Boolean).join(' ') || email.split('@')[0];
-
-    const files = req.files || {};
-
-    const getFileFromArray = (fileArray) => {
-      if (Array.isArray(fileArray) && fileArray.length > 0) {
-        return fileArray[0]?.filename || null;
-      }
-      return null;
-    };
-
-    const partnerData = {
-      user_id: deliveryPartnerUserId,
-      delivery_partner_user_id: deliveryPartnerUserId,
-      name: fullName,
-      email,
-      mobile,
-      profile_photo: getFileFromArray(files.profile_photo),
-      cover_photo: getFileFromArray(files.cover_photo),
-      gender,
-      date_of_birth,
-      age,
-      blood_group,
-      alt_mobile,
-      whatsapp_number,
-      emergency_contact_name,
-      emergency_contact_relationship,
-      emergency_contact_mobile,
-      current_address,
-      permanent_address,
-      city,
-      state,
-      pincode,
-      live_location,
-      vehicle_type,
-      vehicle_brand,
-      vehicle_model,
-      vehicle_number,
-      vehicle_color,
-      license_number,
-      license_holder_name,
-      license_issue_date,
-      license_expiry_date,
-      license_front_image: getFileFromArray(files.license_front_image),
-      license_back_image: getFileFromArray(files.license_back_image),
-      rc_book_number,
-      rc_book_image: getFileFromArray(files.rc_book_image),
-      insurance_number,
-      insurance_expiry_date,
-      insurance_document_image: getFileFromArray(files.insurance_document_image),
-      aadhaar_number,
-      aadhaar_front_url: getFileFromArray(files.aadhaar_front_url),
-      aadhaar_back_url: getFileFromArray(files.aadhaar_back_url),
-      pan_number,
-      pan_card_url: getFileFromArray(files.pan_card_url),
-      selfie_verification_url: getFileFromArray(files.selfie_verification_url),
-      selfie_with_vehicle: getFileFromArray(files.selfie_with_vehicle),
-      selfie_with_aadhaar: getFileFromArray(files.selfie_with_aadhaar),
-      vehicle_front_photo: getFileFromArray(files.vehicle_front_photo),
-      vehicle_back_photo: getFileFromArray(files.vehicle_back_photo),
-      police_verification_certificate: getFileFromArray(files.police_verification_certificate),
-      account_holder_name,
-      bank_name,
-      bank_account_number,
-      ifsc_code,
-      branch_name,
-      upi_id,
-      available_areas,
-      available_time_morning: normalizeBoolean(available_time_morning) ? 1 : 0,
-      available_time_afternoon: normalizeBoolean(available_time_afternoon) ? 1 : 0,
-      available_time_evening: normalizeBoolean(available_time_evening) ? 1 : 0,
-      available_time_night: normalizeBoolean(available_time_night) ? 1 : 0,
-      preferred_distance,
-      delivery_radius,
-      driving_experience,
-      status: status || 'Pending',
-      password: hashedPassword,
-      father_husband_name: req.body.father_husband_name || '',
-      created_at: new Date(),
-      updated_at: new Date()
-    };
-
-    const filteredData = Object.fromEntries(
-      Object.entries(partnerData)
-        .filter(([key, value]) => {
-          if (value === undefined || value === null || value === '') return false;
-          if (!VALID_DELIVERY_PARTNER_COLUMNS.includes(key)) {
-            console.warn(`⚠️ Skipping invalid column: ${key}`);
-            return false;
-          }
-          return true;
-        })
-    );
-
-    if (!filteredData.email) throw new Error('Email is required');
-    if (!filteredData.mobile) throw new Error('Mobile number is required');
-    if (!filteredData.user_id) throw new Error('User ID is required');
-
-    const insertColumns = Object.keys(filteredData);
-    const placeholders = insertColumns.map(() => '?').join(', ');
-    const values = Object.values(filteredData);
-
-    if (insertColumns.length === 0) {
-      throw new Error('No valid data to insert. All fields are empty.');
-    }
-
-    const query = `INSERT INTO delivery_partners (${insertColumns.join(', ')}, created_at, updated_at)
-      VALUES (${placeholders}, NOW(), NOW())`;
-    
-    const [result] = await pool.execute(query, values);
-
-    res.status(201).json({ message: 'Delivery Partner created successfully.', id: result.insertId });
-  } catch (error) {
-    console.error('❌ Error creating delivery partner:', error.message);
-    res.status(500).json({ message: 'Error creating delivery partner.', error: error.message });
-  }
+  res.status(501).json({ message: 'Delivery Partner feature is disabled.' });
 };
 
 exports.updateDeliveryPartner = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const auditUser = await resolveCurrentUserAudit(req);
-    const {
-      first_name, last_name, gender, date_of_birth, age, blood_group,
-      mobile, alt_mobile, whatsapp_number, email,
-      emergency_contact_name, emergency_contact_relationship, emergency_contact_mobile,
-      current_address, permanent_address, city, state, pincode, live_location,
-      vehicle_type, vehicle_brand, vehicle_model, vehicle_number, vehicle_color,
-      license_number, license_holder_name, license_issue_date, license_expiry_date,
-      rc_book_number, insurance_number, insurance_expiry_date,
-      aadhaar_number, pan_number,
-      account_holder_name, bank_name, bank_account_number, ifsc_code, branch_name, upi_id,
-      available_areas, available_time_morning, available_time_afternoon, available_time_evening, available_time_night,
-      preferred_distance, delivery_radius, driving_experience,
-      status
-    } = req.body;
-
-    const [existing] = await pool.execute('SELECT * FROM delivery_partners WHERE id = ?', [id]);
-    if (!existing || existing.length === 0) {
-      return res.status(404).json({ message: 'Delivery Partner not found.' });
-    }
-    const partner = existing[0];
-
-    const files = req.files || {};
-
-    const getFileFromArray = (fileArray, fallback) => {
-      if (Array.isArray(fileArray) && fileArray.length > 0) {
-        return fileArray[0]?.filename || fallback;
-      }
-      return fallback;
-    };
-
-    const normalizeValue = (val, fallback) => (val !== undefined && val !== null && val !== '') ? val : fallback;
-
-    const [result] = await pool.execute(
-      `UPDATE delivery_partners SET
-        name = ?, mobile = ?, email = ?,
-        gender = ?, date_of_birth = ?, age = ?, blood_group = ?,
-        profile_photo = ?, cover_photo = ?,
-        alt_mobile = ?, whatsapp_number = ?,
-        emergency_contact_name = ?, emergency_contact_relationship = ?, emergency_contact_mobile = ?,
-        current_address = ?, permanent_address = ?, city = ?, state = ?, pincode = ?, live_location = ?,
-        vehicle_type = ?, vehicle_brand = ?, vehicle_model = ?, vehicle_number = ?, vehicle_color = ?,
-        license_number = ?, license_holder_name = ?, license_issue_date = ?, license_expiry_date = ?,
-        license_front_image = ?, license_back_image = ?,
-        rc_book_number = ?, rc_book_image = ?,
-        insurance_number = ?, insurance_expiry_date = ?, insurance_document_image = ?,
-        aadhaar_number = ?, aadhaar_front_url = ?, aadhaar_back_url = ?,
-        pan_number = ?, pan_card_url = ?,
-        selfie_verification_url = ?, selfie_with_vehicle = ?, selfie_with_aadhaar = ?,
-        vehicle_front_photo = ?, vehicle_back_photo = ?, police_verification_certificate = ?,
-        account_holder_name = ?, bank_name = ?, bank_account_number = ?, ifsc_code = ?, branch_name = ?, upi_id = ?,
-        available_areas = ?, available_time_morning = ?, available_time_afternoon = ?, available_time_evening = ?, available_time_night = ?,
-        preferred_distance = ?, delivery_radius = ?, driving_experience = ?,
-        status = ?,
-        updated_at = NOW()
-      WHERE id = ?`,
-      [
-        normalizeValue(first_name, '') && normalizeValue(last_name, '') ? `${normalizeValue(first_name, '')} ${normalizeValue(last_name, '')}`.trim() : partner.name,
-        normalizeValue(mobile, partner.mobile),
-        normalizeValue(email, partner.email),
-        normalizeValue(gender, partner.gender),
-        normalizeValue(date_of_birth, partner.date_of_birth),
-        normalizeValue(age, partner.age),
-        normalizeValue(blood_group, partner.blood_group),
-        getFileFromArray(files.profile_photo, partner.profile_photo),
-        getFileFromArray(files.cover_photo, partner.cover_photo),
-        normalizeValue(alt_mobile, partner.alt_mobile),
-        normalizeValue(whatsapp_number, partner.whatsapp_number),
-        normalizeValue(emergency_contact_name, partner.emergency_contact_name),
-        normalizeValue(emergency_contact_relationship, partner.emergency_contact_relationship),
-        normalizeValue(emergency_contact_mobile, partner.emergency_contact_mobile),
-        normalizeValue(current_address, partner.current_address),
-        normalizeValue(permanent_address, partner.permanent_address),
-        normalizeValue(city, partner.city),
-        normalizeValue(state, partner.state),
-        normalizeValue(pincode, partner.pincode),
-        normalizeValue(live_location, partner.live_location),
-        normalizeValue(vehicle_type, partner.vehicle_type),
-        normalizeValue(vehicle_brand, partner.vehicle_brand),
-        normalizeValue(vehicle_model, partner.vehicle_model),
-        normalizeValue(vehicle_number, partner.vehicle_number),
-        normalizeValue(vehicle_color, partner.vehicle_color),
-        normalizeValue(license_number, partner.license_number),
-        normalizeValue(license_holder_name, partner.license_holder_name),
-        normalizeValue(license_issue_date, partner.license_issue_date),
-        normalizeValue(license_expiry_date, partner.license_expiry_date),
-        getFileFromArray(files.license_front_image, partner.license_front_image),
-        getFileFromArray(files.license_back_image, partner.license_back_image),
-        normalizeValue(rc_book_number, partner.rc_book_number),
-        getFileFromArray(files.rc_book_image, partner.rc_book_image),
-        normalizeValue(insurance_number, partner.insurance_number),
-        normalizeValue(insurance_expiry_date, partner.insurance_expiry_date),
-        getFileFromArray(files.insurance_document_image, partner.insurance_document_image),
-        normalizeValue(aadhaar_number, partner.aadhaar_number),
-        getFileFromArray(files.aadhaar_front_url, partner.aadhaar_front_url),
-        getFileFromArray(files.aadhaar_back_url, partner.aadhaar_back_url),
-        normalizeValue(pan_number, partner.pan_number),
-        getFileFromArray(files.pan_card_url, partner.pan_card_url),
-        getFileFromArray(files.selfie_verification_url, partner.selfie_verification_url),
-        getFileFromArray(files.selfie_with_vehicle, partner.selfie_with_vehicle),
-        getFileFromArray(files.selfie_with_aadhaar, partner.selfie_with_aadhaar),
-        getFileFromArray(files.vehicle_front_photo, partner.vehicle_front_photo),
-        getFileFromArray(files.vehicle_back_photo, partner.vehicle_back_photo),
-        getFileFromArray(files.police_verification_certificate, partner.police_verification_certificate),
-        normalizeValue(account_holder_name, partner.account_holder_name),
-        normalizeValue(bank_name, partner.bank_name),
-        normalizeValue(bank_account_number, partner.bank_account_number),
-        normalizeValue(ifsc_code, partner.ifsc_code),
-        normalizeValue(branch_name, partner.branch_name),
-        normalizeValue(upi_id, partner.upi_id),
-        normalizeValue(available_areas, partner.available_areas),
-        normalizeBoolean(available_time_morning) ? 1 : 0,
-        normalizeBoolean(available_time_afternoon) ? 1 : 0,
-        normalizeBoolean(available_time_evening) ? 1 : 0,
-        normalizeBoolean(available_time_night) ? 1 : 0,
-        normalizeValue(preferred_distance, partner.preferred_distance),
-        normalizeValue(delivery_radius, partner.delivery_radius),
-        normalizeValue(driving_experience, partner.driving_experience),
-        normalizeValue(status, partner.status),
-        id
-      ]
-    );
-
-    res.json({ message: 'Delivery Partner updated successfully.' });
-  } catch (error) {
-    console.error('❌ Error updating delivery partner:', error.message);
-    res.status(500).json({ message: 'Error updating delivery partner.', error: error.message });
-  }
+  res.status(501).json({ message: 'Delivery Partner feature is disabled.' });
 };
 
 exports.deleteDeliveryPartner = async (req, res) => {
-  try {
-    const { id } = req.params;
-    await pool.execute("DELETE FROM delivery_partners WHERE id = ?", [id]);
-    res.json({ message: 'Delivery Partner deleted successfully.' });
-  } catch (error) {
-    res.status(500).json({ message: 'Error deleting delivery partner.', error: error.message });
-  }
+  res.status(501).json({ message: 'Delivery Partner feature is disabled.' });
 };
 
 exports.updateDeliveryPartnerStatus = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { status } = req.body;
-    const auditUser = await resolveCurrentUserAudit(req);
-
-    const updates = ['status = ?'];
-    const values = [status];
-
-    updates.push('updated_at = NOW()');
-
-    values.push(id);
-
-    await pool.execute(
-      `UPDATE delivery_partners SET ${updates.join(', ')} WHERE id = ?`,
-      values
-    );
-
-    res.json({ message: 'Delivery Partner status updated successfully.' });
-  } catch (error) {
-    res.status(500).json({ message: 'Error updating delivery partner status.', error: error.message });
-  }
+  res.status(501).json({ message: 'Delivery Partner feature is disabled.' });
 };

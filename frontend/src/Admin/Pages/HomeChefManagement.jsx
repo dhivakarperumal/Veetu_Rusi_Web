@@ -269,7 +269,7 @@ const HomeChefManagement = () => {
 
   const handleStatusChange = async (id, newStatus) => {
     try {
-      await api.patch(`/admin/homechefs/status/${id}`, {
+      await api.patch(`/admin/homechefs/${id}/status`, {
         status: newStatus,
       });
       toast.success(`Home Chef status updated to ${newStatus}`);
