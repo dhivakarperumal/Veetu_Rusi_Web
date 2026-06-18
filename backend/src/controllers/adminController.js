@@ -298,6 +298,7 @@ exports.updateHomeChef = async (req, res) => {
     const {
       first_name, last_name, gender, date_of_birth, age,
       mobile, alt_mobile, email,
+      password,
       house_number, street, area, city, district, state, pincode, country, google_map_location,
       kitchen_name, kitchen_address, kitchen_type,
       veg_nonveg, experience_years, cuisine_type,
@@ -318,6 +319,12 @@ exports.updateHomeChef = async (req, res) => {
     const chef = existing[0];
 
     const files = req.files || {};
+
+    // Hash password if one was sent
+    let hashedPassword = undefined;
+    if (password !== undefined && password !== null && password !== '') {
+      hashedPassword = hashPassword(password);
+    }
 
     const getFileFromArray = (fileArray, fallback) => {
       if (Array.isArray(fileArray) && fileArray.length > 0) {
@@ -400,6 +407,8 @@ exports.updateHomeChef = async (req, res) => {
       facebook_url: normalizeValue(facebook_url, chef.facebook_url),
       youtube_url: normalizeValue(youtube_url, chef.youtube_url),
       website_url: normalizeValue(website_url, chef.website_url),
+      // Only set password in updateData when provided; fallback keeps existing chef.password
+      password: hashedPassword !== undefined ? hashedPassword : chef.password,
       about_me: normalizeValue(about_me, chef.about_me),
       cooking_story: normalizeValue(cooking_story, chef.cooking_story),
       why_choose_me: normalizeValue(why_choose_me, chef.why_choose_me),
@@ -420,6 +429,7 @@ exports.updateHomeChef = async (req, res) => {
     const fieldsFromRequest = {
       first_name, last_name, gender, date_of_birth, age,
       mobile, alt_mobile, email,
+      password,
       house_number, street, area, city, district, state, pincode, country, google_map_location,
       kitchen_name, kitchen_address, kitchen_type,
       veg_nonveg, experience_years, cuisine_type,
@@ -432,32 +442,34 @@ exports.updateHomeChef = async (req, res) => {
       verification_status, approval_status
     };
 
+    // Helper to check if a file was uploaded for a given column/key
+    const hasFileForKey = (key) => {
+      return files && Object.prototype.hasOwnProperty.call(files, key) && Array.isArray(files[key]) && files[key].length > 0;
+    };
+
     const filteredUpdate = Object.fromEntries(
       Object.entries(updateData).filter(([key, value]) => {
         if (!VALID_HOMECHEF_COLUMNS.includes(key)) return false;
-        
+
         // Map database column names back to request field names
-        const requestFieldName = key === 'door_number' ? 'house_number' 
+        const requestFieldName = key === 'door_number' ? 'house_number'
                               : key === 'street_name' ? 'street'
                               : key === 'area_name' ? 'area'
                               : key === 'map_link' ? 'google_map_location'
                               : key === 'name' ? ['first_name', 'last_name']
                               : key;
-        
-        // Check if field was explicitly sent in the request
+
+        // name can be set if either first_name or last_name was sent
         if (key === 'name') {
-          // name can be set if either first_name or last_name was sent
           return fieldsFromRequest.first_name !== undefined || fieldsFromRequest.last_name !== undefined;
         }
-        
+
         if (Array.isArray(requestFieldName)) {
           return requestFieldName.some(f => fieldsFromRequest[f] !== undefined);
         }
-        
-        // Include if field was sent in request, or if it's a file/image field, or if it's the audit field
-        return fieldsFromRequest[requestFieldName] !== undefined || 
-               key.includes('_photo') || key.includes('_url') || key.includes('_video') ||
-               key === 'updated_by';
+
+        // Include if field was explicitly sent in request, or if a file was uploaded for this key, or if it's the audit field
+        return fieldsFromRequest[requestFieldName] !== undefined || hasFileForKey(key) || key === 'updated_by';
       })
     );
 
