@@ -708,29 +708,6 @@ async function createDatabaseAndTables() {
   console.log(`Chef 1 - Anandhi Rao: ${chefCode1}`);
   console.log(`Chef 2 - Kavitha Sharma: ${chefCode2}`);
 
-  await connection.execute(`
-    INSERT INTO \`delivery_partners\` (name, mobile, vehicle_type, vehicle_number, license_number, aadhaar_number, status)
-    SELECT ?,?,?,?,?,?,? FROM DUAL
-    WHERE NOT EXISTS (SELECT 1 FROM \`delivery_partners\` WHERE mobile = ?)
-  `, ['Karthik Kumar', '9876543215', 'Bike', 'TN-37-AB-1234', 'DL-1234567', '1234-5678-9012', 'Approved', '9876543215']);
-
-  await connection.execute(`
-    INSERT INTO \`delivery_partners\` (name, mobile, vehicle_type, vehicle_number, license_number, aadhaar_number, status)
-    SELECT ?,?,?,?,?,?,? FROM DUAL
-    WHERE NOT EXISTS (SELECT 1 FROM \`delivery_partners\` WHERE mobile = ?)
-  `, ['Suresh Raina', '9876543216', 'Bike', 'TN-01-XY-9876', 'DL-7654321', '9876-5432-1098', 'Pending', '9876543216']);
-
-  await connection.execute(`
-    INSERT INTO \`delivery_partners\` (name, mobile, vehicle_type, vehicle_number, license_number, aadhaar_number, status)
-    SELECT ?,?,?,?,?,?,? FROM DUAL
-    WHERE NOT EXISTS (SELECT 1 FROM \`delivery_partners\` WHERE mobile = ?)
-  `, ['Test Delivery Partner', '9876543217', 'Bike', 'TN-07-ZZ-1234', 'DL-9999999', '1122-3344-5566', 'Pending', '9876543217']);
-
-  await connection.execute(`
-    INSERT INTO \`delivery_partners\` (name, mobile, vehicle_type, vehicle_number, license_number, aadhaar_number, status)
-    SELECT ?,?,?,?,?,?,? FROM DUAL
-    WHERE NOT EXISTS (SELECT 1 FROM \`delivery_partners\` WHERE mobile = ?)
-  `, ['Delivery Partner 1', '9876543218', 'Bike', 'TN-09-AA-5678', 'DL-8888888', '2233-4455-6677', 'Pending', '9876543218']);
 
   await connection.execute(`
     INSERT INTO \`orders\` (order_id, customer_name, restaurant_or_chef, delivery_partner, amount, payment_method, status)

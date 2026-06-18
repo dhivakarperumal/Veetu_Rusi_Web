@@ -604,6 +604,8 @@ const DeliveryPartnerManagement = () => {
                   {f("bank_account_number", "Account Number")}
                   {f("ifsc_code", "IFSC Code")}
                   {f("upi_id", "UPI ID")}
+                  {f("aadhaar_number", "Aadhaar Number")}
+                  {f("pan_number", "PAN Number")}
                 </div>
               );
             case "documents":
