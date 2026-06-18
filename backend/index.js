@@ -71,7 +71,7 @@ const port = process.env.PORT || 5000;
 const corsOptions = {
   origin: process.env.FRONTEND_ORIGIN || '*',
   methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-access-token'],
   credentials: true,
 };
 app.use(cors(corsOptions));
