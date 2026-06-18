@@ -463,6 +463,12 @@ const HomeChefManagement = () => {
       block_reason: chef.block_reason || "",
       kyc_verification_notes: chef.kyc_verification_notes || "",
       address: chef.address || "",
+      delivery_radius: chef.delivery_radius || "5 KM",
+      preorder_available:
+        chef.preorder_available === true ||
+        chef.preorder_available === "1" ||
+        chef.preorder_available === 1,
+      cutoff_time: chef.cutoff_time || "",
     });
     setIsFormOpen(true);
   };
@@ -494,11 +500,13 @@ const HomeChefManagement = () => {
           ? form.cuisine_type.join(",")
           : form.cuisine_type,
         preorder_available: form.preorder_available ? "1" : "0",
+        delivery_radius: form.delivery_radius,
+        cutoff_time: form.cutoff_time,
       };
 
       // DEBUG: preview which fields will be sent (remove in production)
       try {
-        const preview = Object.fromEntries(Object.entries(payload).filter(([k, v]) => v !== undefined));
+        const preview = Object.fromEntries(Object.entries(payload).filter(([, v]) => v !== undefined));
         console.debug('HomeChef update payload preview:', preview);
       } catch (err) {
         console.debug('Unable to build payload preview', err);
@@ -2027,7 +2035,7 @@ const HomeChefManagement = () => {
                           <label className={lbl}>Preorder Available ?</label>
 
                           <select
-                            value={form.preorder_available ? "Yes" : "No"}
+                            value={String(form.preorder_available) === "true" ? "Yes" : "No"}
                             onChange={(e) =>
                               setForm({
                                 ...form,
