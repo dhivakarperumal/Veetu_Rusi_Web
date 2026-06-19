@@ -23,18 +23,13 @@ const homeChefUploadFields = upload.fields([
 
 const deliveryPartnerUploadFields = upload.fields([
   { name: 'profile_photo', maxCount: 1 },
-  { name: 'cover_photo', maxCount: 1 },
   { name: 'aadhaar_front_url', maxCount: 1 },
   { name: 'aadhaar_back_url', maxCount: 1 },
   { name: 'pan_card_url', maxCount: 1 },
   { name: 'selfie_verification_url', maxCount: 1 },
   { name: 'selfie_with_vehicle', maxCount: 1 },
   { name: 'selfie_with_aadhaar', maxCount: 1 },
-  { name: 'police_verification_certificate', maxCount: 1 },
   { name: 'vehicle_front_photo', maxCount: 1 },
-  { name: 'vehicle_back_photo', maxCount: 1 },
-  { name: 'rc_book_image', maxCount: 1 },
-  { name: 'insurance_document_image', maxCount: 1 },
   { name: 'license_front_image', maxCount: 1 },
   { name: 'license_back_image', maxCount: 1 }
 ]);

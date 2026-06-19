@@ -32,46 +32,35 @@ const tabs = [
   // verification tab removed
 ];
 
-const readFileAsDataURL = (file) =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-
-const base64FromFile = async (file) => {
-  if (!file) return null;
-  if (file.type.startsWith("image/")) {
-    try {
-      const compressed = await imageCompression(file, {
-        maxSizeMB: 0.2,
-        maxWidthOrHeight: 1200,
-        useWebWorker: true,
-      });
-      return readFileAsDataURL(compressed);
-    } catch (error) {
-      return readFileAsDataURL(file);
-    }
+const appendFormDataValue = (formData, key, value) => {
+  if (value === undefined || value === null || value === '') return;
+  if (value instanceof File) {
+    formData.append(key, value);
+    return;
   }
-  return readFileAsDataURL(file);
+  if (value instanceof FileList) {
+    Array.from(value).forEach((file) => {
+      formData.append(key, file);
+    });
+    return;
+  }
+  if (Array.isArray(value)) {
+    value.forEach((item) => {
+      if (item instanceof File) {
+        formData.append(key, item);
+      } else {
+        formData.append(key, item);
+      }
+    });
+    return;
+  }
+  formData.append(key, value);
 };
 
-const convertFileFieldsToBase64 = async (payload) => {
-  const result = { ...payload };
-  for (const key of Object.keys(payload)) {
-    const value = payload[key];
-    if (value instanceof FileList) {
-      const files = Array.from(value);
-      if (files.length === 0) {
-        delete result[key];
-        continue;
-      }
-      const convertedFiles = await Promise.all(files.map(base64FromFile));
-      result[key] = convertedFiles.length === 1 ? convertedFiles[0] : convertedFiles;
-    }
-  }
-  return result;
+const createFormDataPayload = (payload) => {
+  const formData = new FormData();
+  Object.entries(payload).forEach(([key, value]) => appendFormDataValue(formData, key, value));
+  return formData;
 };
 
 const emptyForm = {
@@ -84,10 +73,14 @@ const emptyForm = {
   date_of_birth: "",
   blood_group: "",
   mobile: "",
+  alt_mobile: "",
   email: "",
   password: "",
   confirmPassword: "",
   profile_photo: null,
+  cover_photo: null,
+  age: "",
+  
   // Address
   current_address: "",
   permanent_address: "",
@@ -107,8 +100,12 @@ const emptyForm = {
   vehicle_model: "",
   vehicle_number: "",
   vehicle_color: "",
+  vehicle_front_photo: null,
+  vehicle_back_photo: null,
+  police_verification_certificate: null,
   // Driving
   license_number: "",
+  license_holder_name: "",
   license_issue_date: "",
   license_expiry_date: "",
   // Bank
@@ -116,6 +113,7 @@ const emptyForm = {
   bank_name: "",
   bank_account_number: "",
   ifsc_code: "",
+  branch_name: "",
   upi_id: "",
   // Documents
   aadhaar_number: "",
@@ -128,8 +126,11 @@ const emptyForm = {
   rc_book_image: null,
   insurance_document_image: null,
   selfie_with_vehicle: null,
-  vehicle_front_photo: null,
   selfie_with_aadhaar: null,
+  selfie_verification_url: null,
+  rc_book_number: "",
+  insurance_number: "",
+  insurance_expiry_date: "",
   // Preferences
   available_areas: "",
   available_time_morning: false,
@@ -137,14 +138,10 @@ const emptyForm = {
   available_time_evening: false,
   available_time_night: false,
   preferred_distance: "3 KM",
-  // Verification
-  // verification fields removed
-  // Status
+  delivery_radius: "",
+  driving_experience: "",
   status: "Pending",
 };
-
-const inp = "superadmin-input";
-const lbl = "text-[10px] text-slate-300 font-bold uppercase tracking-widest block mb-1";
 
 const DeliveryPartnerManagement = () => {
   const [partners, setPartners] = useState([]);
@@ -164,6 +161,9 @@ const DeliveryPartnerManagement = () => {
   const [validationErrors, setValidationErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const lbl = "block text-sm font-semibold text-slate-300 mb-2";
+  const inp = "w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20";
 
   const stepIds = tabs.map((t) => t.id);
   const currentStepIndex = stepIds.indexOf(activeTab);
@@ -228,9 +228,7 @@ const DeliveryPartnerManagement = () => {
 
   const handleStatusChange = async (id, newStatus) => {
     try {
-      const target = partners.find((p) => p.id === id);
-      if (!target) return;
-      await api.put(`/admin/delivery-partners/${id}`, { ...target, status: newStatus });
+      await api.patch(`/admin/delivery-partners/${id}/status`, { status: newStatus });
       toast.success(`Status updated to ${newStatus}`);
       fetchPartners();
       if (selectedPartner?.id === id) setSelectedPartner((prev) => ({ ...prev, status: newStatus }));
@@ -333,12 +331,12 @@ const DeliveryPartnerManagement = () => {
       if (editingPartner && !payload.password) {
         delete payload.password;
       }
-      const convertedPayload = await convertFileFieldsToBase64(payload);
+      const formData = createFormDataPayload(payload);
       if (editingPartner) {
-        await api.put(`/admin/delivery-partners/${editingPartner.id}`, convertedPayload);
+        await api.put(`/admin/delivery-partners/${editingPartner.id}`, formData);
         toast.success("Delivery partner updated.");
       } else {
-        await api.post("/admin/delivery-partners", convertedPayload);
+        await api.post("/admin/delivery-partners", formData);
         toast.success("Delivery partner created.");
       }
       setIsFormOpen(false);
@@ -399,7 +397,7 @@ const DeliveryPartnerManagement = () => {
           <p className="mt-1 text-[11px] text-slate-300">Selected file: {currentVal[0].name}</p>
         )}
         {currentVal && typeof currentVal === "string" && !isDataUrl(currentVal) && (
-          <a href={`${import.meta.env.VITE_API_URL}/../uploads/delivery/${currentVal}`} target="_blank" rel="noreferrer" className="text-[11px] text-emerald-500 hover:underline mt-1 block">
+          <a href={`${import.meta.env.VITE_API_URL}/../uploads/deliverypartners/${currentVal}`} target="_blank" rel="noreferrer" className="text-[11px] text-emerald-500 hover:underline mt-1 block">
             View Uploaded File
           </a>
         )}
@@ -448,7 +446,9 @@ const DeliveryPartnerManagement = () => {
                   </div>
                   {f("blood_group", "Blood Group")}
                   {f("mobile", "Mobile Number", "tel")}
+                  {f("alt_mobile", "Alternate Mobile", "tel")}
                   {f("email", "Email Address", "email")}
+                  
                   {fileField("profile_photo", "Profile Photo", form.profile_photo)}
                   {!editingPartner && (
                     <div>
@@ -568,6 +568,7 @@ const DeliveryPartnerManagement = () => {
               return (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   {f("license_number", "Driving License Number")}
+                  {f("license_holder_name", "License Holder Name")}
                   <div>
                     <label className={lbl}>Issue Date</label>
                     <input
@@ -603,6 +604,7 @@ const DeliveryPartnerManagement = () => {
                   {f("bank_name", "Bank Name")}
                   {f("bank_account_number", "Account Number")}
                   {f("ifsc_code", "IFSC Code")}
+                  {f("branch_name", "Branch Name")}
                   {f("upi_id", "UPI ID")}
                   {f("aadhaar_number", "Aadhaar Number")}
                   {f("pan_number", "PAN Number")}
@@ -610,13 +612,18 @@ const DeliveryPartnerManagement = () => {
               );
             case "documents":
               return (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  {fileField("aadhaar_front_url", "Aadhaar Front", form.aadhaar_front_url)}
-                  {fileField("aadhaar_back_url", "Aadhaar Back", form.aadhaar_back_url)}
-                  {fileField("pan_card_url", "PAN Card", form.pan_card_url)}
-                  {fileField("rc_book_image", "RC Book", form.rc_book_image)}
-                  {fileField("insurance_document_image", "Vehicle Insurance", form.insurance_document_image)}
-                  {fileField("selfie_with_vehicle", "Selfie With Vehicle", form.selfie_with_vehicle)}
+                <div className="space-y-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {/* Insurance fields removed per schema change */}
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {fileField("aadhaar_front_url", "Aadhaar Front", form.aadhaar_front_url)}
+                    {fileField("aadhaar_back_url", "Aadhaar Back", form.aadhaar_back_url)}
+                    {fileField("pan_card_url", "PAN Card", form.pan_card_url)}
+                    {fileField("selfie_verification_url", "Identity Selfie", form.selfie_verification_url)}
+                    {fileField("selfie_with_vehicle", "Selfie With Vehicle", form.selfie_with_vehicle)}
+                    {fileField("selfie_with_aadhaar", "Selfie With Aadhaar", form.selfie_with_aadhaar)}
+                  </div>
                 </div>
               );
             case "preferences":
@@ -644,6 +651,10 @@ const DeliveryPartnerManagement = () => {
                         </button>
                       ))}
                       {validationErrors.preferred_distance && <p className="mt-1 text-[10px] text-rose-400">{validationErrors.preferred_distance}</p>}
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      {f("delivery_radius", "Delivery Radius (KM)")}
+                      {f("driving_experience", "Driving Experience")}
                     </div>
                   </div>
                 </div>

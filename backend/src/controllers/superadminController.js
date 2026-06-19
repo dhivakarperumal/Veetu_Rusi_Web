@@ -1649,12 +1649,11 @@ exports.createDeliveryPartner = async (req, res) => {
     const auditUser = await resolveCurrentUserAudit(req);
     const {
       user_id, first_name, last_name, gender, date_of_birth, age, blood_group,
-      mobile, alt_mobile, whatsapp_number, email, password,
+      mobile, alt_mobile, email, password,
       emergency_contact_name, emergency_contact_relationship, emergency_contact_mobile,
       current_address, permanent_address, city, state, pincode, live_location,
       vehicle_type, vehicle_brand, vehicle_model, vehicle_number, vehicle_color,
       license_number, license_holder_name, license_issue_date, license_expiry_date,
-      rc_book_number, insurance_number, insurance_expiry_date,
       aadhaar_number, pan_number,
       account_holder_name, bank_name, bank_account_number, ifsc_code, branch_name, upi_id,
       available_areas, available_time_morning, available_time_afternoon, available_time_evening, available_time_night,
@@ -1678,44 +1677,40 @@ exports.createDeliveryPartner = async (req, res) => {
 
     const insertColumns = [
       'user_id', 'delivery_partner_user_id', 'name', 'email', 'mobile', 'status',
-      'profile_photo', 'cover_photo', 'gender', 'date_of_birth', 'age', 'blood_group',
-      'alt_mobile', 'whatsapp_number', 'emergency_contact_name', 'emergency_contact_relationship',
+      'profile_photo', 'gender', 'date_of_birth', 'age', 'blood_group',
+      'alt_mobile', 'emergency_contact_name', 'emergency_contact_relationship',
       'emergency_contact_mobile', 'current_address', 'permanent_address', 'city', 'state', 'pincode',
       'live_location', 'vehicle_type', 'vehicle_brand', 'vehicle_model', 'vehicle_number', 'vehicle_color',
       'license_number', 'license_holder_name', 'license_issue_date', 'license_expiry_date',
-      'license_front_image', 'license_back_image', 'rc_book_number', 'rc_book_image',
-      'insurance_number', 'insurance_expiry_date', 'insurance_document_image',
+      'license_front_image', 'license_back_image',
       'aadhaar_number', 'aadhaar_front_url', 'aadhaar_back_url', 'pan_number', 'pan_card_url',
       'selfie_verification_url', 'selfie_with_vehicle', 'selfie_with_aadhaar',
-      'vehicle_front_photo', 'vehicle_back_photo', 'police_verification_certificate',
+      'vehicle_front_photo',
       'account_holder_name', 'bank_name', 'bank_account_number', 'ifsc_code', 'branch_name', 'upi_id',
       'available_areas', 'available_time_morning', 'available_time_afternoon', 'available_time_evening',
       'available_time_night', 'preferred_distance', 'delivery_radius', 'driving_experience',
-      'password', 'father_husband_name'
+      'password'
     ];
 
     const values = [
       deliveryPartnerUserId, deliveryPartnerUserId, fullName, email, mobile, status || 'Pending',
-      getFileFromArray(files.profile_photo), getFileFromArray(files.cover_photo),
+      getFileFromArray(files.profile_photo),
       gender, date_of_birth, age, blood_group,
-      alt_mobile, whatsapp_number, emergency_contact_name, emergency_contact_relationship,
+      alt_mobile, emergency_contact_name, emergency_contact_relationship,
       emergency_contact_mobile, current_address, permanent_address, city, state, pincode,
       live_location, vehicle_type, vehicle_brand, vehicle_model, vehicle_number, vehicle_color,
       license_number, license_holder_name, license_issue_date, license_expiry_date,
       getFileFromArray(files.license_front_image), getFileFromArray(files.license_back_image),
-      rc_book_number, getFileFromArray(files.rc_book_image),
-      insurance_number, insurance_expiry_date, getFileFromArray(files.insurance_document_image),
       aadhaar_number, getFileFromArray(files.aadhaar_front_url), getFileFromArray(files.aadhaar_back_url),
       pan_number, getFileFromArray(files.pan_card_url),
       getFileFromArray(files.selfie_verification_url), getFileFromArray(files.selfie_with_vehicle),
       getFileFromArray(files.selfie_with_aadhaar),
-      getFileFromArray(files.vehicle_front_photo), getFileFromArray(files.vehicle_back_photo),
-      getFileFromArray(files.police_verification_certificate),
+      getFileFromArray(files.vehicle_front_photo),
       account_holder_name, bank_name, bank_account_number, ifsc_code, branch_name, upi_id,
       available_areas, normalizeBoolean(available_time_morning) ? 1 : 0,
       normalizeBoolean(available_time_afternoon) ? 1 : 0, normalizeBoolean(available_time_evening) ? 1 : 0,
       normalizeBoolean(available_time_night) ? 1 : 0, preferred_distance, delivery_radius, driving_experience,
-      hashedPassword, req.body.father_husband_name || ''
+      hashedPassword
     ];
 
     // Include created_by and updated_by audit fields
@@ -1730,7 +1725,10 @@ exports.createDeliveryPartner = async (req, res) => {
 
     res.status(201).json({ message: 'Delivery Partner created successfully.', id: result.insertId });
   } catch (error) {
-    console.error('❌ Error creating delivery partner:', error.message);
+    console.error('❌ Error creating delivery partner:', error.stack || error);
+    if (error.code === 'ER_DUP_ENTRY') {
+      return res.status(400).json({ message: 'Duplicate delivery partner field value detected.', error: error.sqlMessage || error.message });
+    }
     res.status(500).json({ message: 'Error creating delivery partner.', error: error.message });
   }
 };
@@ -1742,12 +1740,11 @@ exports.updateDeliveryPartner = async (req, res) => {
     const updatedBy = auditUser?.name || auditUser?.email || auditUser?.user_id || null;
     const {
       first_name, last_name, gender, date_of_birth, age, blood_group,
-      mobile, alt_mobile, whatsapp_number, email,
+      mobile, alt_mobile, email,
       emergency_contact_name, emergency_contact_relationship, emergency_contact_mobile,
       current_address, permanent_address, city, state, pincode, live_location,
       vehicle_type, vehicle_brand, vehicle_model, vehicle_number, vehicle_color,
       license_number, license_holder_name, license_issue_date, license_expiry_date,
-      rc_book_number, insurance_number, insurance_expiry_date,
       aadhaar_number, pan_number,
       account_holder_name, bank_name, bank_account_number, ifsc_code, branch_name, upi_id,
       available_areas, available_time_morning, available_time_afternoon, available_time_evening, available_time_night,
@@ -1776,19 +1773,17 @@ exports.updateDeliveryPartner = async (req, res) => {
       `UPDATE delivery_partners SET
         name = ?, mobile = ?, email = ?,
         gender = ?, date_of_birth = ?, age = ?, blood_group = ?,
-        profile_photo = ?, cover_photo = ?,
-        alt_mobile = ?, whatsapp_number = ?,
+        profile_photo = ?,
+        alt_mobile = ?,
         emergency_contact_name = ?, emergency_contact_relationship = ?, emergency_contact_mobile = ?,
         current_address = ?, permanent_address = ?, city = ?, state = ?, pincode = ?, live_location = ?,
         vehicle_type = ?, vehicle_brand = ?, vehicle_model = ?, vehicle_number = ?, vehicle_color = ?,
         license_number = ?, license_holder_name = ?, license_issue_date = ?, license_expiry_date = ?,
         license_front_image = ?, license_back_image = ?,
-        rc_book_number = ?, rc_book_image = ?,
-        insurance_number = ?, insurance_expiry_date = ?, insurance_document_image = ?,
         aadhaar_number = ?, aadhaar_front_url = ?, aadhaar_back_url = ?,
         pan_number = ?, pan_card_url = ?,
         selfie_verification_url = ?, selfie_with_vehicle = ?, selfie_with_aadhaar = ?,
-        vehicle_front_photo = ?, vehicle_back_photo = ?, police_verification_certificate = ?,
+        vehicle_front_photo = ?,
         account_holder_name = ?, bank_name = ?, bank_account_number = ?, ifsc_code = ?, branch_name = ?, upi_id = ?,
         available_areas = ?, available_time_morning = ?, available_time_afternoon = ?, available_time_evening = ?, available_time_night = ?,
         preferred_distance = ?, delivery_radius = ?, driving_experience = ?,
@@ -1805,9 +1800,7 @@ exports.updateDeliveryPartner = async (req, res) => {
         normalizeValue(age, partner.age),
         normalizeValue(blood_group, partner.blood_group),
         getFileFromArray(files.profile_photo, partner.profile_photo),
-        getFileFromArray(files.cover_photo, partner.cover_photo),
         normalizeValue(alt_mobile, partner.alt_mobile),
-        normalizeValue(whatsapp_number, partner.whatsapp_number),
         normalizeValue(emergency_contact_name, partner.emergency_contact_name),
         normalizeValue(emergency_contact_relationship, partner.emergency_contact_relationship),
         normalizeValue(emergency_contact_mobile, partner.emergency_contact_mobile),
@@ -1828,11 +1821,6 @@ exports.updateDeliveryPartner = async (req, res) => {
         normalizeValue(license_expiry_date, partner.license_expiry_date),
         getFileFromArray(files.license_front_image, partner.license_front_image),
         getFileFromArray(files.license_back_image, partner.license_back_image),
-        normalizeValue(rc_book_number, partner.rc_book_number),
-        getFileFromArray(files.rc_book_image, partner.rc_book_image),
-        normalizeValue(insurance_number, partner.insurance_number),
-        normalizeValue(insurance_expiry_date, partner.insurance_expiry_date),
-        getFileFromArray(files.insurance_document_image, partner.insurance_document_image),
         normalizeValue(aadhaar_number, partner.aadhaar_number),
         getFileFromArray(files.aadhaar_front_url, partner.aadhaar_front_url),
         getFileFromArray(files.aadhaar_back_url, partner.aadhaar_back_url),
@@ -1842,8 +1830,6 @@ exports.updateDeliveryPartner = async (req, res) => {
         getFileFromArray(files.selfie_with_vehicle, partner.selfie_with_vehicle),
         getFileFromArray(files.selfie_with_aadhaar, partner.selfie_with_aadhaar),
         getFileFromArray(files.vehicle_front_photo, partner.vehicle_front_photo),
-        getFileFromArray(files.vehicle_back_photo, partner.vehicle_back_photo),
-        getFileFromArray(files.police_verification_certificate, partner.police_verification_certificate),
         normalizeValue(account_holder_name, partner.account_holder_name),
         normalizeValue(bank_name, partner.bank_name),
         normalizeValue(bank_account_number, partner.bank_account_number),
@@ -1866,7 +1852,10 @@ exports.updateDeliveryPartner = async (req, res) => {
 
     res.json({ message: 'Delivery Partner updated successfully.' });
   } catch (error) {
-    console.error('❌ Error updating delivery partner:', error.message);
+    console.error('❌ Error updating delivery partner:', error.stack || error);
+    if (error.code === 'ER_DUP_ENTRY') {
+      return res.status(400).json({ message: 'Duplicate delivery partner field value detected.', error: error.sqlMessage || error.message });
+    }
     res.status(500).json({ message: 'Error updating delivery partner.', error: error.message });
   }
 };
