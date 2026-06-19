@@ -486,6 +486,29 @@ exports.updateHomeChef = async (req, res) => {
       values
     );
 
+    if (filteredUpdate.status === 'Approved' || filteredUpdate.approval_status === 'Approved') {
+      const [chefRows] = await pool.execute('SELECT * FROM home_chefs WHERE id = ?', [id]);
+      if (chefRows.length > 0) {
+        const chef = chefRows[0];
+        if (chef.email) {
+          const [userRows] = await pool.execute('SELECT id FROM users WHERE email = ?', [chef.email]);
+          if (userRows.length === 0) {
+            const homeChefUserId = chef.user_id || 'CHEF-' + Date.now();
+            const chefName = chef.name || chef.first_name || 'Home Chef';
+            await pool.execute(
+              'INSERT INTO users (user_id, full_name, email, mobile_number, password, role, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+              [homeChefUserId, chefName, chef.email, chef.mobile || null, chef.password, 'homechef', 'Active']
+            );
+          } else {
+            await pool.execute(
+              'UPDATE users SET status = ?, role = ? WHERE email = ?',
+              ['Active', 'homechef', chef.email]
+            );
+          }
+        }
+      }
+    }
+
     res.json({ message: 'Home Chef updated successfully.' });
   } catch (error) {
     console.error('❌ Error updating home chef:', error.message);
@@ -547,6 +570,29 @@ exports.updateHomeChefStatus = async (req, res) => {
       `UPDATE home_chefs SET ${updates.join(', ')} WHERE id = ?`,
       values
     );
+
+    if (status === 'Approved' || approval_status === 'Approved') {
+      const [chefRows] = await pool.execute('SELECT * FROM home_chefs WHERE id = ?', [id]);
+      if (chefRows.length > 0) {
+        const chef = chefRows[0];
+        if (chef.email) {
+          const [userRows] = await pool.execute('SELECT id FROM users WHERE email = ?', [chef.email]);
+          if (userRows.length === 0) {
+            const homeChefUserId = chef.user_id || 'CHEF-' + Date.now();
+            const chefName = chef.name || chef.first_name || 'Home Chef';
+            await pool.execute(
+              'INSERT INTO users (user_id, full_name, email, mobile_number, password, role, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+              [homeChefUserId, chefName, chef.email, chef.mobile || null, chef.password, 'homechef', 'Active']
+            );
+          } else {
+            await pool.execute(
+              'UPDATE users SET status = ?, role = ? WHERE email = ?',
+              ['Active', 'homechef', chef.email]
+            );
+          }
+        }
+      }
+    }
 
     res.json({ message: 'Home Chef status updated successfully.' });
   } catch (error) {

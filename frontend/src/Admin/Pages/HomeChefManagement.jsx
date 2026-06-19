@@ -836,6 +836,9 @@ const HomeChefManagement = () => {
                       <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em]">
                         Status
                       </th>
+                      <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em]">
+                        Login Credentials
+                      </th>
                       <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em] text-center">
                         Actions
                       </th>
@@ -880,6 +883,16 @@ const HomeChefManagement = () => {
                           >
                             {chef.status}
                           </span>
+                        </td>
+                        <td className="px-5 py-4">
+                          {chef.status === "Approved" ? (
+                            <div className="text-xs text-slate-300">
+                              <p><span className="font-semibold text-slate-400">User:</span> {chef.username || chef.email}</p>
+                              <p><span className="font-semibold text-slate-400">Pass:</span> ********</p>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-slate-500 italic">N/A</span>
+                          )}
                         </td>
                         <td className="px-5 py-4">
                           <div className="flex items-center justify-center gap-1">
