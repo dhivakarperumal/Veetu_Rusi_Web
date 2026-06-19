@@ -378,9 +378,9 @@ const Navbar = () => {
                         Admin Panel
                       </Link>
                     )}
-                    {user.role === "chef" && (
+                    {user.role === "homechef" && (
                       <Link
-                        to="chef"
+                        to="/chef"
                         className="block px-4 py-3 text-sm hover:bg-gray-100"
                         onClick={() => setUserMenu(false)}
                       >
