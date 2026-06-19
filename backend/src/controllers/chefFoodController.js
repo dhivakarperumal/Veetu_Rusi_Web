@@ -195,11 +195,7 @@ exports.createFood = async (req, res) => {
       ingredients,
       instructions,
       images,
-      status,
-      created_by_user_id,
-      created_by_name,
-      created_by_email,
-      created_by_phone
+      status
     } = req.body;
 
     if (!category || !name || !description || !mrp) {
@@ -220,10 +216,7 @@ exports.createFood = async (req, res) => {
       finalFranchisePhone
     } = metadata;
 
-    const finalCreatedByUserId = created_by_user_id || req.user?.user_id || req.user?.id || null;
-    const finalCreatedByEmail = created_by_email || req.user?.email || null;
-    const finalCreatedByName = created_by_name || finalChefName || req.user?.name || null;
-    const finalCreatedByPhone = created_by_phone || finalChefPhone || null;
+    // created_by_* columns removed from chef_food_table schema; skipping population
 
     const computedFinalPrice = Number(final_price) || (Number(mrp) - (Number(offer) || 0) * Number(mrp) / 100) || Number(mrp);
 
@@ -231,9 +224,9 @@ exports.createFood = async (req, res) => {
       (category, name, description, cuisine, prep_time, shelf_life_days, mrp, offer, final_price,
        dietary_tag, net_weight, packaging_type, ingredients, instructions, images, status,
        chef_id, chef_user_id, chef_name, chef_phone, chef_email,
-       franchise_id, franchise_user_id, franchise_name, franchise_email, franchise_phone,
-       created_by_user_id, created_by_email, created_by_name, created_by_phone)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+      franchise_id, franchise_user_id, franchise_name, franchise_email, franchise_phone
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
     const params = [
       category,
@@ -261,11 +254,7 @@ exports.createFood = async (req, res) => {
       finalFranchiseUserId,
       finalFranchiseName,
       finalFranchiseEmail,
-      finalFranchisePhone,
-      finalCreatedByUserId,
-      finalCreatedByEmail,
-      finalCreatedByName,
-      finalCreatedByPhone
+      finalFranchisePhone
     ];
 
     const [result] = await pool.execute(insertSql, params);
@@ -288,8 +277,7 @@ exports.updateFood = async (req, res) => {
       'offer', 'final_price', 'dietary_tag', 'net_weight', 'packaging_type',
       'ingredients', 'instructions', 'images', 'status', 'chef_id', 'chef_user_id', 'chef_name',
       'chef_phone', 'chef_email', 'franchise_id', 'franchise_user_id', 'franchise_name',
-      'franchise_email', 'franchise_phone', 'created_by_user_id', 'created_by_email',
-      'created_by_name', 'created_by_phone'
+      'franchise_email', 'franchise_phone'
     ];
 
     allowed.forEach((key) => {
