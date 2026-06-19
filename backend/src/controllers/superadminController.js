@@ -1718,6 +1718,10 @@ exports.createDeliveryPartner = async (req, res) => {
       hashedPassword, req.body.father_husband_name || ''
     ];
 
+    // Include created_by and updated_by audit fields
+    insertColumns.push('created_by', 'updated_by');
+    values.push(createdBy, createdBy);
+
     const placeholders = insertColumns.map(() => '?').join(', ');
     const query = `INSERT INTO delivery_partners (${insertColumns.join(', ')}, created_at, updated_at)
       VALUES (${placeholders}, NOW(), NOW())`;
@@ -1734,6 +1738,8 @@ exports.createDeliveryPartner = async (req, res) => {
 exports.updateDeliveryPartner = async (req, res) => {
   try {
     const { id } = req.params;
+    const auditUser = await resolveCurrentUserAudit(req);
+    const updatedBy = auditUser?.name || auditUser?.email || auditUser?.user_id || null;
     const {
       first_name, last_name, gender, date_of_birth, age, blood_group,
       mobile, alt_mobile, whatsapp_number, email,
@@ -1787,7 +1793,8 @@ exports.updateDeliveryPartner = async (req, res) => {
         available_areas = ?, available_time_morning = ?, available_time_afternoon = ?, available_time_evening = ?, available_time_night = ?,
         preferred_distance = ?, delivery_radius = ?, driving_experience = ?,
         status = ?,
-        updated_at = NOW()
+          updated_by = ?,
+          updated_at = NOW()
       WHERE id = ?`,
       [
         normalizeValue(first_name, '') && normalizeValue(last_name, '') ? `${normalizeValue(first_name, '')} ${normalizeValue(last_name, '')}`.trim() : partner.name,
@@ -1852,6 +1859,7 @@ exports.updateDeliveryPartner = async (req, res) => {
         normalizeValue(delivery_radius, partner.delivery_radius),
         normalizeValue(driving_experience, partner.driving_experience),
         normalizeValue(status, partner.status),
+        updatedBy,
         id
       ]
     );
@@ -1878,9 +1886,12 @@ exports.updateDeliveryPartnerStatus = async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
 
+    const auditUser = await resolveCurrentUserAudit(req);
+    const updatedBy = auditUser?.name || auditUser?.email || auditUser?.user_id || null;
+
     await pool.execute(
-      `UPDATE delivery_partners SET status = ?, updated_at = NOW() WHERE id = ?`,
-      [status, id]
+      `UPDATE delivery_partners SET status = ?, updated_by = ?, updated_at = NOW() WHERE id = ?`,
+      [status, updatedBy, id]
     );
 
     res.json({ message: 'Delivery Partner status updated successfully.' });

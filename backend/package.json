@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "create-db": "node create-db.js"
+    "create-db": "node create-db.js",
+    "migrate:delivery": "node run-migrations.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

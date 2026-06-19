@@ -28,6 +28,7 @@ let createProductsTable = async () => {};
 let createRecipeDetailsTable = async () => {};
 let createFranchiseProductsTable = async () => {};
 let createChefFoodTable = async () => {};
+let createDeliveryPartnersTable = async () => {};
 let createSubscriptionPlansTable = async () => {};
 let createReviewsTable = async () => {};
 let createDealersTable = async () => {};
@@ -46,6 +47,7 @@ try {
   createRecipeDetailsTable = migrations.createRecipeDetailsTable || createRecipeDetailsTable;
   createFranchiseProductsTable = migrations.createFranchiseProductsTable || createFranchiseProductsTable;
   createChefFoodTable = migrations.createChefFoodTable || createChefFoodTable;
+  createDeliveryPartnersTable = migrations.createDeliveryPartnersTable || createDeliveryPartnersTable;
   createSubscriptionPlansTable = migrations.createSubscriptionPlansTable || createSubscriptionPlansTable;
   createReviewsTable = migrations.createReviewsTable || createReviewsTable;
   createDealersTable = migrations.createDealersTable || createDealersTable;
@@ -135,6 +137,7 @@ const startServer = async () => {
     await createProductsTable();
     await createFranchiseProductsTable();
     await createChefFoodTable();
+    await createDeliveryPartnersTable();
     await createSubscriptionPlansTable();
     await createReviewsTable();
     await createUserFoodCartTable();

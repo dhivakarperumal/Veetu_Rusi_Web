@@ -305,6 +305,115 @@ const createChefFoodTable = async () => {
     }
 };
 
+const createDeliveryPartnersTable = async () => {
+    try {
+        const createTableSQL = `
+        CREATE TABLE IF NOT EXISTS delivery_partners (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            user_id VARCHAR(255),
+            delivery_partner_user_id VARCHAR(255),
+            name VARCHAR(255),
+            email VARCHAR(255),
+            mobile VARCHAR(50),
+            status VARCHAR(50) DEFAULT 'Pending',
+
+            profile_photo VARCHAR(255),
+            cover_photo VARCHAR(255),
+            gender VARCHAR(50),
+            date_of_birth DATE,
+            age INT,
+            blood_group VARCHAR(10),
+            alt_mobile VARCHAR(50),
+            whatsapp_number VARCHAR(50),
+
+            emergency_contact_name VARCHAR(255),
+            emergency_contact_relationship VARCHAR(100),
+            emergency_contact_mobile VARCHAR(50),
+
+            current_address LONGTEXT,
+            permanent_address LONGTEXT,
+            city VARCHAR(255),
+            state VARCHAR(255),
+            pincode VARCHAR(50),
+            live_location VARCHAR(255),
+
+            vehicle_type VARCHAR(100),
+            vehicle_brand VARCHAR(255),
+            vehicle_model VARCHAR(255),
+            vehicle_number VARCHAR(100),
+            vehicle_color VARCHAR(100),
+
+            license_number VARCHAR(100),
+            license_holder_name VARCHAR(255),
+            license_issue_date DATE,
+            license_expiry_date DATE,
+            license_front_image VARCHAR(255),
+            license_back_image VARCHAR(255),
+
+            rc_book_number VARCHAR(100),
+            rc_book_image VARCHAR(255),
+
+            insurance_number VARCHAR(100),
+            insurance_expiry_date DATE,
+            insurance_document_image VARCHAR(255),
+
+            aadhaar_number VARCHAR(20),
+            aadhaar_front_url VARCHAR(255),
+            aadhaar_back_url VARCHAR(255),
+            pan_number VARCHAR(100),
+            pan_card_url VARCHAR(255),
+
+            selfie_verification_url VARCHAR(255),
+            selfie_with_vehicle VARCHAR(255),
+            selfie_with_aadhaar VARCHAR(255),
+            vehicle_front_photo VARCHAR(255),
+            vehicle_back_photo VARCHAR(255),
+            police_verification_certificate VARCHAR(255),
+
+            account_holder_name VARCHAR(255),
+            bank_name VARCHAR(255),
+            bank_account_number VARCHAR(255),
+            ifsc_code VARCHAR(50),
+            branch_name VARCHAR(255),
+            upi_id VARCHAR(255),
+
+            available_areas LONGTEXT,
+            available_time_morning TINYINT(1) DEFAULT 0,
+            available_time_afternoon TINYINT(1) DEFAULT 0,
+            available_time_evening TINYINT(1) DEFAULT 0,
+            available_time_night TINYINT(1) DEFAULT 0,
+            preferred_distance VARCHAR(50),
+            delivery_radius VARCHAR(50),
+            driving_experience VARCHAR(255),
+
+            password VARCHAR(255),
+            father_husband_name VARCHAR(255),
+
+            created_by VARCHAR(255) DEFAULT NULL,
+            updated_by VARCHAR(255) DEFAULT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+            KEY idx_user_id (user_id),
+            KEY idx_created_at (created_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `;
+
+        await pool.execute(createTableSQL);
+
+        // ensure optional columns exist
+        try { await pool.execute('ALTER TABLE delivery_partners ADD COLUMN profile_photo VARCHAR(255)'); } catch {}
+        try { await pool.execute('ALTER TABLE delivery_partners ADD COLUMN cover_photo VARCHAR(255)'); } catch {}
+        try { await pool.execute('ALTER TABLE delivery_partners ADD COLUMN delivery_partner_user_id VARCHAR(255)'); } catch {}
+        try { await pool.execute('ALTER TABLE delivery_partners ADD COLUMN created_by VARCHAR(255)'); } catch {}
+        try { await pool.execute('ALTER TABLE delivery_partners ADD COLUMN updated_by VARCHAR(255)'); } catch {}
+
+        console.log('✓ delivery_partners table created or already exists');
+    } catch (error) {
+        console.error('✗ Error creating delivery_partners table:', error.message);
+    }
+};
+
  
     const createUserFoodCartTable = async () => {
         try {
@@ -583,6 +692,7 @@ const addDeliveryPartnerUniqueConstraints = async () => {
         createRecipeDetailsTable,
         createFranchiseProductsTable,
         createChefFoodTable,
+        createDeliveryPartnersTable,
         createSubscriptionPlansTable,
         createReviewsTable,
         createUserFoodCartTable,
