@@ -554,27 +554,13 @@ exports.updateHomeChefStatus = async (req, res) => {
   }
 };
 
-// ==================== DELIVERY PARTNER MANAGEMENT (DISABLED - DB TABLE REMOVED) ====================
-exports.getDeliveryPartners = async (req, res) => {
-  res.json([]); // Stub: return empty array
-};
+const superadminController = require('./superadminController');
 
-exports.getDeliveryPartnerById = async (req, res) => {
-  res.status(404).json({ message: 'Delivery Partner feature is disabled.' });
-};
+// ==================== DELIVERY PARTNER MANAGEMENT ====================
+exports.getDeliveryPartners = superadminController.getDeliveryPartners;
+exports.getDeliveryPartnerById = superadminController.getDeliveryPartnerById;
+exports.createDeliveryPartner = superadminController.createDeliveryPartner;
+exports.updateDeliveryPartner = superadminController.updateDeliveryPartner;
+exports.deleteDeliveryPartner = superadminController.deleteDeliveryPartner;
+exports.updateDeliveryPartnerStatus = superadminController.updateDeliveryPartnerStatus;
 
-exports.createDeliveryPartner = async (req, res) => {
-  res.status(501).json({ message: 'Delivery Partner feature is disabled.' });
-};
-
-exports.updateDeliveryPartner = async (req, res) => {
-  res.status(501).json({ message: 'Delivery Partner feature is disabled.' });
-};
-
-exports.deleteDeliveryPartner = async (req, res) => {
-  res.status(501).json({ message: 'Delivery Partner feature is disabled.' });
-};
-
-exports.updateDeliveryPartnerStatus = async (req, res) => {
-  res.status(501).json({ message: 'Delivery Partner feature is disabled.' });
-};

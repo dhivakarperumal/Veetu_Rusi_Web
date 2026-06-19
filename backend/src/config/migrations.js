@@ -305,6 +305,14 @@ const createChefFoodTable = async () => {
     }
 };
 
+const createSubscriptionPlansTable = async () => {
+    try {
+        console.log('✓ createSubscriptionPlansTable is a no-op placeholder');
+    } catch (error) {
+        console.error('✗ Error in createSubscriptionPlansTable placeholder:', error.message);
+    }
+};
+
 const createDeliveryPartnersTable = async () => {
     try {
         const createTableSQL = `
@@ -318,13 +326,11 @@ const createDeliveryPartnersTable = async () => {
             status VARCHAR(50) DEFAULT 'Pending',
 
             profile_photo VARCHAR(255),
-            cover_photo VARCHAR(255),
             gender VARCHAR(50),
             date_of_birth DATE,
             age INT,
             blood_group VARCHAR(10),
             alt_mobile VARCHAR(50),
-            whatsapp_number VARCHAR(50),
 
             emergency_contact_name VARCHAR(255),
             emergency_contact_relationship VARCHAR(100),
@@ -348,14 +354,6 @@ const createDeliveryPartnersTable = async () => {
             license_issue_date DATE,
             license_expiry_date DATE,
             license_front_image VARCHAR(255),
-            license_back_image VARCHAR(255),
-
-            rc_book_number VARCHAR(100),
-            rc_book_image VARCHAR(255),
-
-            insurance_number VARCHAR(100),
-            insurance_expiry_date DATE,
-            insurance_document_image VARCHAR(255),
 
             aadhaar_number VARCHAR(20),
             aadhaar_front_url VARCHAR(255),
@@ -365,10 +363,6 @@ const createDeliveryPartnersTable = async () => {
 
             selfie_verification_url VARCHAR(255),
             selfie_with_vehicle VARCHAR(255),
-            selfie_with_aadhaar VARCHAR(255),
-            vehicle_front_photo VARCHAR(255),
-            vehicle_back_photo VARCHAR(255),
-            police_verification_certificate VARCHAR(255),
 
             account_holder_name VARCHAR(255),
             bank_name VARCHAR(255),
@@ -387,7 +381,9 @@ const createDeliveryPartnersTable = async () => {
             driving_experience VARCHAR(255),
 
             password VARCHAR(255),
-            father_husband_name VARCHAR(255),
+            license_back_image VARCHAR(255),
+            selfie_with_aadhaar VARCHAR(255),
+            vehicle_front_photo VARCHAR(255),
 
             created_by VARCHAR(255) DEFAULT NULL,
             updated_by VARCHAR(255) DEFAULT NULL,
@@ -403,14 +399,54 @@ const createDeliveryPartnersTable = async () => {
 
         // ensure optional columns exist
         try { await pool.execute('ALTER TABLE delivery_partners ADD COLUMN profile_photo VARCHAR(255)'); } catch {}
-        try { await pool.execute('ALTER TABLE delivery_partners ADD COLUMN cover_photo VARCHAR(255)'); } catch {}
         try { await pool.execute('ALTER TABLE delivery_partners ADD COLUMN delivery_partner_user_id VARCHAR(255)'); } catch {}
         try { await pool.execute('ALTER TABLE delivery_partners ADD COLUMN created_by VARCHAR(255)'); } catch {}
         try { await pool.execute('ALTER TABLE delivery_partners ADD COLUMN updated_by VARCHAR(255)'); } catch {}
 
         console.log('✓ delivery_partners table created or already exists');
+
+        // Seed a sample delivery partner row if table is empty
+        try {
+            const [countRows] = await pool.execute("SELECT COUNT(*) AS cnt FROM delivery_partners");
+            const cnt = (countRows && countRows[0] && (countRows[0].cnt || countRows[0]['COUNT(*)'] || countRows[0].count)) || 0;
+            if (cnt === 0) {
+                const now = new Date().toISOString().slice(0,19).replace('T',' ');
+                try {
+                    await pool.execute(`INSERT INTO delivery_partners (
+                        user_id, delivery_partner_user_id, name, email, mobile, status,
+                        gender, date_of_birth, age, blood_group, current_address, city, state, pincode,
+                        vehicle_type, vehicle_brand, vehicle_model, vehicle_number,
+                        license_number, aadhaar_number, pan_number,
+                        account_holder_name, bank_name, bank_account_number, ifsc_code, upi_id,
+                        available_areas, available_time_morning, preferred_distance, delivery_radius, driving_experience,
+                        password, created_by, updated_by, created_at, updated_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [
+                        'dp_sample_001','dp_sample_001','Sample Delivery Partner','dp_sample@example.com','9999999999','Pending',
+                        'Male','1990-01-01',30,'O+','123 Sample Street','Sample City','Sample State','123456',
+                        'Bike','Honda','CBR500','MH12AB1234','LIC123456','111122223333','ABCDE1234F',
+                        'Sample Account','Sample Bank','123456789012','IFSC000','sample@upi',
+                        'Area1,Area2', 1, '5 KM', '10 KM', '5 years',
+                        null, 'system', 'system', now, now
+                    ]);
+                    console.log('✓ Seeded sample delivery_partner row');
+                } catch (seedErr) {
+                    console.warn('Could not insert sample delivery_partner:', seedErr.message || seedErr);
+                }
+            }
+        } catch (e) {
+            console.warn('Could not check delivery_partners count for seeding:', e.message || e);
+        }
     } catch (error) {
         console.error('✗ Error creating delivery_partners table:', error.message);
+    }
+};
+
+const createReviewsTable = async () => {
+    try {
+        console.log('✓ createReviewsTable is a no-op placeholder');
+    } catch (error) {
+        console.error('✗ Error in createReviewsTable placeholder:', error.message);
     }
 };
 
@@ -678,7 +714,7 @@ const addDeliveryPartnerUniqueConstraints = async () => {
         try { await pool.execute(`ALTER TABLE \`delivery_partners\` ADD UNIQUE INDEX idx_delivery_partners_license_number (license_number)`); console.log('  Added: UNIQUE license_number'); } catch (e) {}
         try { await pool.execute(`ALTER TABLE \`delivery_partners\` ADD UNIQUE INDEX idx_delivery_partners_aadhaar_number (aadhaar_number)`); console.log('  Added: UNIQUE aadhaar_number'); } catch (e) {}
         try { await pool.execute(`ALTER TABLE \`delivery_partners\` ADD UNIQUE INDEX idx_delivery_partners_pan_number (pan_number)`); console.log('  Added: UNIQUE pan_number'); } catch (e) {}
-        try { await pool.execute(`ALTER TABLE \`delivery_partners\` ADD UNIQUE INDEX idx_delivery_partners_rc_book_number (rc_book_number)`); console.log('  Added: UNIQUE rc_book_number'); } catch (e) {}
+        // rc_book_number and related columns removed per schema change
         try { await pool.execute(`ALTER TABLE \`delivery_partners\` ADD UNIQUE INDEX idx_delivery_partners_bank_account_number (bank_account_number)`); console.log('  Added: UNIQUE bank_account_number'); } catch (e) {}
 
         console.log('✓ Added unique constraints to delivery_partners table: user_id, email, vehicle_number, license_number, aadhaar_number, pan_number, rc_book_number, bank_account_number');
