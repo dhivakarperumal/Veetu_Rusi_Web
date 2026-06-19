@@ -32,6 +32,80 @@ const tabs = [
   // verification tab removed
 ];
 
+const indiaStates = [
+  "Andhra Pradesh",
+  "Arunachal Pradesh",
+  "Assam",
+  "Bihar",
+  "Chhattisgarh",
+  "Goa",
+  "Gujarat",
+  "Haryana",
+  "Himachal Pradesh",
+  "Jharkhand",
+  "Karnataka",
+  "Kerala",
+  "Madhya Pradesh",
+  "Maharashtra",
+  "Manipur",
+  "Meghalaya",
+  "Mizoram",
+  "Nagaland",
+  "Odisha",
+  "Punjab",
+  "Rajasthan",
+  "Sikkim",
+  "Tamil Nadu",
+  "Telangana",
+  "Tripura",
+  "Uttar Pradesh",
+  "Uttarakhand",
+  "West Bengal",
+  "Andaman and Nicobar Islands",
+  "Chandigarh",
+  "Dadra and Nagar Haveli and Daman and Diu",
+  "Delhi",
+  "Jammu and Kashmir",
+  "Ladakh",
+  "Lakshadweep",
+  "Puducherry",
+];
+
+const vehicleBrands = [
+  "Honda",
+  "Yamaha",
+  "Bajaj",
+  "Hero",
+  "TVS",
+  "Suzuki",
+  "Royal Enfield",
+  "KTM",
+  "Kawasaki",
+  "Harley-Davidson",
+  "Piaggio",
+  "Ather",
+  "Okinawa",
+  "Pure EV",
+  "Revolt",
+];
+
+const vehicleColors = [
+  "Black",
+  "White",
+  "Silver",
+  "Grey",
+  "Red",
+  "Blue",
+  "Green",
+  "Yellow",
+  "Orange",
+  "Maroon",
+  "Brown",
+  "Gold",
+  "Purple",
+  "Beige",
+];
+
 const appendFormDataValue = (formData, key, value) => {
   if (value === undefined || value === null || value === '') return;
   if (value instanceof File) {
@@ -237,6 +311,15 @@ const DeliveryPartnerManagement = () => {
     }
   };
 
+  const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  const isValidPhone = (value) => /^[0-9]{10}$/.test(value);
+  const isValidIFSC = (value) => /^[A-Za-z]{4}[0-9]{7}$/.test(value);
+  const isValidPAN = (value) => /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(value.toUpperCase());
+  const isValidAadhaar = (value) => /^[0-9]{12}$/.test(value);
+  const isValidDrivingLicense = (value) => /^[A-Z0-9\- ]{8,25}$/i.test(value.trim());
+  const isValidVehicleNumber = (value) => /^[A-Z]{2}\s?\d{1,2}\s?[A-Z]{1,2}\s?\d{1,4}$/i.test(value.trim());
+  const isNumeric = (value) => /^[0-9]+$/.test(String(value).trim());
+
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this delivery partner?")) return;
     try {
@@ -277,40 +360,145 @@ const DeliveryPartnerManagement = () => {
 
   const validateForm = () => {
     const errors = {};
+
     if (!form.first_name.trim()) errors.first_name = "First name is required.";
     if (!form.last_name.trim()) errors.last_name = "Last name is required.";
     if (!form.gender) errors.gender = "Please select gender.";
-    if (!form.date_of_birth) errors.date_of_birth = "Date of birth is required.";
+    if (!form.date_of_birth) {
+      errors.date_of_birth = "Date of birth is required.";
+    } else if (new Date(form.date_of_birth) > new Date()) {
+      errors.date_of_birth = "Date of birth cannot be in the future.";
+    }
     if (!form.blood_group) errors.blood_group = "Blood group is required.";
-    if (!form.mobile.trim()) errors.mobile = "Mobile number is required.";
-    if (!form.email.trim()) errors.email = "Email address is required.";
-    if (!editingPartner && !form.password) errors.password = "Password is required.";
-    if (!editingPartner && form.password !== form.confirmPassword) errors.confirmPassword = "Passwords do not match.";
+
+    if (!form.mobile.trim()) {
+      errors.mobile = "Mobile number is required.";
+    } else if (!isValidPhone(form.mobile.trim())) {
+      errors.mobile = "Enter a valid 10-digit mobile number.";
+    }
+
+    if (form.alt_mobile?.trim() && !isValidPhone(form.alt_mobile.trim())) {
+      errors.alt_mobile = "Enter a valid 10-digit alternate mobile number.";
+    }
+
+    if (!form.email.trim()) {
+      errors.email = "Email address is required.";
+    } else if (!isValidEmail(form.email.trim())) {
+      errors.email = "Enter a valid email address.";
+    }
+
+    if (!editingPartner && !form.password) {
+      errors.password = "Password is required.";
+    }
+    if (form.password) {
+      if (!form.confirmPassword) {
+        errors.confirmPassword = "Please confirm the password.";
+      } else if (form.password !== form.confirmPassword) {
+        errors.confirmPassword = "Passwords do not match.";
+      }
+    }
+
     if (!form.current_address.trim()) errors.current_address = "Current address is required.";
     if (!form.permanent_address.trim()) errors.permanent_address = "Permanent address is required.";
     if (!form.city.trim()) errors.city = "City is required.";
     if (!form.state.trim()) errors.state = "State is required.";
-    if (!form.pincode.trim()) errors.pincode = "Pincode is required.";
+    if (!form.pincode.trim()) {
+      errors.pincode = "Pincode is required.";
+    } else if (!isNumeric(form.pincode.trim())) {
+      errors.pincode = "Enter a valid numeric pincode.";
+    }
     if (!form.live_location.trim()) errors.live_location = "Live GPS location is required.";
+
     if (!form.emergency_contact_name.trim()) errors.emergency_contact_name = "Emergency contact name is required.";
     if (!form.emergency_contact_relationship.trim()) errors.emergency_contact_relationship = "Relationship is required.";
-    if (!form.emergency_contact_mobile.trim()) errors.emergency_contact_mobile = "Emergency phone is required.";
+    if (!form.emergency_contact_mobile.trim()) {
+      errors.emergency_contact_mobile = "Emergency phone is required.";
+    } else if (!isValidPhone(form.emergency_contact_mobile.trim())) {
+      errors.emergency_contact_mobile = "Enter a valid 10-digit emergency mobile number.";
+    }
+
     if (!form.vehicle_brand.trim()) errors.vehicle_brand = "Vehicle brand is required.";
     if (!form.vehicle_model.trim()) errors.vehicle_model = "Vehicle model is required.";
-    if (!form.vehicle_number.trim()) errors.vehicle_number = "Vehicle number is required.";
+    if (!form.vehicle_number.trim()) {
+      errors.vehicle_number = "Vehicle number is required.";
+    } else if (!isValidVehicleNumber(form.vehicle_number.trim())) {
+      errors.vehicle_number = "Enter a valid vehicle number (e.g. KA01AB1234).";
+    }
     if (!form.vehicle_color.trim()) errors.vehicle_color = "Vehicle color is required.";
+
+    if (!form.license_number.trim()) {
+      errors.license_number = "Driving license number is required.";
+    } else if (!isValidDrivingLicense(form.license_number.trim())) {
+      errors.license_number = "Enter a valid driving license number (e.g. MH1234567890123).";
+    }
+    if (!form.license_holder_name.trim()) errors.license_holder_name = "License holder name is required.";
+    if (!form.license_issue_date) errors.license_issue_date = "License issue date is required.";
+    if (!form.license_expiry_date) errors.license_expiry_date = "License expiry date is required.";
+
     if (!form.account_holder_name.trim()) errors.account_holder_name = "Account holder name is required.";
     if (!form.bank_name.trim()) errors.bank_name = "Bank name is required.";
-    if (!form.bank_account_number.trim()) errors.bank_account_number = "Account number is required.";
-    if (!form.ifsc_code.trim()) errors.ifsc_code = "IFSC code is required.";
+    if (!form.bank_account_number.trim()) {
+      errors.bank_account_number = "Account number is required.";
+    } else if (!isNumeric(form.bank_account_number.trim())) {
+      errors.bank_account_number = "Enter a valid account number.";
+    }
+    if (!form.ifsc_code.trim()) {
+      errors.ifsc_code = "IFSC code is required.";
+    } else if (!isValidIFSC(form.ifsc_code.trim())) {
+      errors.ifsc_code = "Enter a valid IFSC code.";
+    }
+    if (!form.branch_name.trim()) errors.branch_name = "Branch name is required.";
     if (!form.upi_id.trim()) errors.upi_id = "UPI ID is required.";
-    // Aadhaar/PAN removed from required fields
+
+    if (!form.aadhaar_number.trim()) {
+      errors.aadhaar_number = "Aadhaar number is required.";
+    } else if (!isValidAadhaar(form.aadhaar_number.trim())) {
+      errors.aadhaar_number = "Enter a valid 12-digit Aadhaar number.";
+    }
+    if (!form.pan_number.trim()) {
+      errors.pan_number = "PAN number is required.";
+    } else if (!isValidPAN(form.pan_number.trim())) {
+      errors.pan_number = "Enter a valid PAN number like ABCDE1234F.";
+    }
+
     if (!form.available_areas.trim()) errors.available_areas = "Available areas are required.";
     if (!form.preferred_distance.trim()) errors.preferred_distance = "Preferred distance is required.";
     if (!form.available_time_morning && !form.available_time_afternoon && !form.available_time_evening && !form.available_time_night) {
       errors.available_time = "Select at least one available time slot.";
     }
-    // verification checks removed
+
+    if (!form.delivery_radius.trim()) {
+      errors.delivery_radius = "Delivery radius is required.";
+    } else if (!isNumeric(form.delivery_radius.trim())) {
+      errors.delivery_radius = "Enter a valid delivery radius.";
+    }
+    if (!form.driving_experience.trim()) {
+      errors.driving_experience = "Driving experience is required.";
+    } else if (!isNumeric(form.driving_experience.trim())) {
+      errors.driving_experience = "Enter a valid number of years.";
+    }
+
+    const fileRequired = [
+      ["profile_photo", "Profile photo is required."],
+      ["vehicle_front_photo", "Vehicle image is required."],
+      ["license_front_image", "License front image is required."],
+      ["license_back_image", "License back image is required."],
+      ["aadhaar_front_url", "Aadhaar front upload is required."],
+      ["aadhaar_back_url", "Aadhaar back upload is required."],
+      ["pan_card_url", "PAN card upload is required."],
+      ["selfie_with_vehicle", "Selfie with vehicle is required."],
+      ["selfie_with_aadhaar", "Selfie with Aadhaar is required."],
+      ["selfie_verification_url", "Identity selfie is required."],
+    ];
+
+    fileRequired.forEach(([key, message]) => {
+      const value = form[key];
+      const hasFile = value && (!(value instanceof FileList) || value.length > 0);
+      if (!hasFile) {
+        errors[key] = message;
+      }
+    });
+
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -431,8 +619,8 @@ const DeliveryPartnerManagement = () => {
             case "personal":
               return (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  {f("first_name", "First Name")}
-                  {f("last_name", "Last Name")}
+                  {f("first_name", "First Name", "text", { placeholder: "Enter first name" })}
+                  {f("last_name", "Last Name", "text", { placeholder: "Enter last name" })}
                   {sel("gender", "Gender", ["Male", "Female", "Other"])}
                   <div>
                     <label className={lbl}>DOB</label>
@@ -444,12 +632,14 @@ const DeliveryPartnerManagement = () => {
                     />
                     {validationErrors.date_of_birth && <p className="mt-1 text-[10px] text-rose-400">{validationErrors.date_of_birth}</p>}
                   </div>
-                  {f("blood_group", "Blood Group")}
-                  {f("mobile", "Mobile Number", "tel")}
-                  {f("alt_mobile", "Alternate Mobile", "tel")}
-                  {f("email", "Email Address", "email")}
+                  {sel("blood_group", "Blood Group", ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-", "Unknown"])}
+                  {f("mobile", "Mobile Number", "tel", { placeholder: "Enter 10-digit mobile number" })}
+                  {f("alt_mobile", "Alternate Mobile", "tel", { placeholder: "Enter alternate mobile number" })}
+                  {f("email", "Email ID", "email", { placeholder: "Enter email address" })}
                   
-                  {fileField("profile_photo", "Profile Photo", form.profile_photo)}
+                  <div className="md:col-span-2">
+                    {fileField("profile_photo", "Profile Photo", form.profile_photo)}
+                  </div>
                   {!editingPartner && (
                     <div>
                       <label className={lbl}>Password</label>
@@ -535,40 +725,40 @@ const DeliveryPartnerManagement = () => {
             case "address":
               return (
                 <div className="grid grid-cols-1 gap-5">
-                  {f("current_address", "Current Address")}
-                  {f("permanent_address", "Permanent Address")}
+                  {f("current_address", "Current Address", "text", { placeholder: "Enter current address" })}
+                  {f("permanent_address", "Permanent Address", "text", { placeholder: "Enter permanent address" })}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    {f("city", "City")}
-                    {f("state", "State")}
-                    {f("pincode", "Pincode")}
-                    {f("live_location", "Live GPS Location")}
+                    {f("city", "City", "text", { placeholder: "Enter city" })}
+                    {sel("state", "State", indiaStates)}
+                    {f("pincode", "Pincode", "text", { placeholder: "Enter pincode" })}
+                    {f("live_location", "Live GPS Location", "text", { placeholder: "Enter live GPS coordinates or location" })}
                   </div>
                 </div>
               );
             case "emergency":
               return (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  {f("emergency_contact_name", "Emergency Contact Name")}
-                  {f("emergency_contact_relationship", "Relationship")}
-                  {f("emergency_contact_mobile", "Mobile Number", "tel")}
+                  {f("emergency_contact_name", "Emergency Contact Name", "text", { placeholder: "Enter emergency contact name" })}
+                  {sel("emergency_contact_relationship", "Relationship", ["Parent", "Spouse", "Sibling", "Friend", "Colleague", "Other"]) }
+                  {f("emergency_contact_mobile", "Mobile Number", "tel", { placeholder: "Enter emergency contact mobile" })}
                 </div>
               );
             case "vehicle":
               return (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   {sel("vehicle_type", "Vehicle Type", ["Bike", "Scooter", "Bicycle", "Electric Bike"])}
-                  {f("vehicle_brand", "Vehicle Brand")}
-                  {f("vehicle_model", "Vehicle Model")}
-                  {f("vehicle_number", "Vehicle Number")}
-                  {f("vehicle_color", "Vehicle Color")}
+                  {sel("vehicle_brand", "Vehicle Brand", vehicleBrands)}
+                  {f("vehicle_model", "Vehicle Model", "text", { placeholder: "Enter vehicle model" })}
+                  {f("vehicle_number", "Vehicle Number", "text", { placeholder: "Enter vehicle number e.g. KA01AB1234" })}
+                  {sel("vehicle_color", "Vehicle Color", vehicleColors)}
                   {fileField("vehicle_front_photo", "Vehicle Image", form.vehicle_front_photo)}
                 </div>
               );
             case "driving":
               return (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  {f("license_number", "Driving License Number")}
-                  {f("license_holder_name", "License Holder Name")}
+                  {f("license_number", "Driving License Number", "text", { placeholder: "Enter driving license number e.g. MH1234567890123" })}
+                  {f("license_holder_name", "License Holder Name", "text", { placeholder: "Enter license holder name" })}
                   <div>
                     <label className={lbl}>Issue Date</label>
                     <input
@@ -576,6 +766,7 @@ const DeliveryPartnerManagement = () => {
                       value={form.license_issue_date || ""}
                       onChange={(e) => setForm({ ...form, license_issue_date: e.target.value })}
                       className={`${inp} ${validationErrors.license_issue_date ? "border-rose-500 ring-1 ring-rose-500/20" : ""}`}
+                      placeholder="Select license issue date"
                     />
                     {validationErrors.license_issue_date && <p className="mt-1 text-[10px] text-rose-400">{validationErrors.license_issue_date}</p>}
                   </div>
@@ -586,6 +777,7 @@ const DeliveryPartnerManagement = () => {
                       value={form.license_expiry_date || ""}
                       onChange={(e) => setForm({ ...form, license_expiry_date: e.target.value })}
                       className={`${inp} ${validationErrors.license_expiry_date ? "border-rose-500 ring-1 ring-rose-500/20" : ""}`}
+                      placeholder="Select license expiry date"
                     />
                     {validationErrors.license_expiry_date && <p className="mt-1 text-[10px] text-rose-400">{validationErrors.license_expiry_date}</p>}
                   </div>
@@ -600,14 +792,14 @@ const DeliveryPartnerManagement = () => {
             case "bank":
               return (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  {f("account_holder_name", "Account Holder Name")}
-                  {f("bank_name", "Bank Name")}
-                  {f("bank_account_number", "Account Number")}
-                  {f("ifsc_code", "IFSC Code")}
-                  {f("branch_name", "Branch Name")}
-                  {f("upi_id", "UPI ID")}
-                  {f("aadhaar_number", "Aadhaar Number")}
-                  {f("pan_number", "PAN Number")}
+                  {f("account_holder_name", "Account Holder Name", "text", { placeholder: "Enter account holder name" })}
+                  {f("bank_name", "Bank Name", "text", { placeholder: "Enter bank name" })}
+                  {f("bank_account_number", "Account Number", "text", { placeholder: "Enter account number" })}
+                  {f("ifsc_code", "IFSC Code", "text", { placeholder: "Enter IFSC code" })}
+                  {f("branch_name", "Branch", "text", { placeholder: "Enter branch name" })}
+                  {f("upi_id", "UPI ID", "text", { placeholder: "Enter UPI ID" })}
+                  {f("aadhaar_number", "Aadhaar Number", "text", { placeholder: "Enter Aadhaar number (12 digits)" })}
+                  {f("pan_number", "PAN Number", "text", { placeholder: "Enter PAN number e.g. ABCDE1234F" })}
                 </div>
               );
             case "documents":
@@ -629,7 +821,7 @@ const DeliveryPartnerManagement = () => {
             case "preferences":
               return (
                 <div className="space-y-5">
-                  {f("available_areas", "Available Areas")}
+                  {f("available_areas", "Available Areas", "text", { placeholder: "Enter delivery areas or zones" })}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div className="space-y-3 rounded-2xl border border-slate-700 bg-slate-900/90 p-4">
                       <p className="text-sm font-black uppercase tracking-[0.2em] text-white">Available Time</p>
@@ -653,8 +845,8 @@ const DeliveryPartnerManagement = () => {
                       {validationErrors.preferred_distance && <p className="mt-1 text-[10px] text-rose-400">{validationErrors.preferred_distance}</p>}
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                      {f("delivery_radius", "Delivery Radius (KM)")}
-                      {f("driving_experience", "Driving Experience")}
+                      {f("delivery_radius", "Delivery Radius (KM)", "number", { placeholder: "Enter delivery radius in KM" })}
+                      {f("driving_experience", "Driving Experience", "number", { placeholder: "Enter years of driving experience" })}
                     </div>
                   </div>
                 </div>
