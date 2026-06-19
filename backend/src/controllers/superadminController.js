@@ -1,4 +1,4 @@
-﻿const pool = require('../config/db');
+const pool = require('../config/db');
 const crypto = require('crypto');
 const https = require('https');
 const { generateRoleId } = require('../utils/idGenerator');
@@ -1717,11 +1717,14 @@ exports.createDeliveryPartner = async (req, res) => {
     insertColumns.push('created_by', 'updated_by');
     values.push(createdBy, createdBy);
 
+    // Replace undefined with null — MySQL2 rejects undefined bind params
+    const sanitizedValues = values.map(v => v === undefined ? null : v);
+
     const placeholders = insertColumns.map(() => '?').join(', ');
     const query = `INSERT INTO delivery_partners (${insertColumns.join(', ')}, created_at, updated_at)
       VALUES (${placeholders}, NOW(), NOW())`;
     
-    const [result] = await pool.execute(query, values);
+    const [result] = await pool.execute(query, sanitizedValues);
 
     res.status(201).json({ message: 'Delivery Partner created successfully.', id: result.insertId });
   } catch (error) {
