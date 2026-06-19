@@ -315,6 +315,10 @@ async function createDatabaseAndTables() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
   console.log('Chef food category table created or already exists');
+  await addColumnIfNotExists(connection, 'cheffoodcategorytable', 'created_by_user_id', 'VARCHAR(255)');
+  await addColumnIfNotExists(connection, 'cheffoodcategorytable', 'created_by_email', 'VARCHAR(255)');
+  await addColumnIfNotExists(connection, 'cheffoodcategorytable', 'created_by_name', 'VARCHAR(255)');
+  await addColumnIfNotExists(connection, 'cheffoodcategorytable', 'created_by_phone', 'VARCHAR(50)');
 
   try { await connection.execute('ALTER TABLE chef_category DROP INDEX catId'); } catch (err) {
     // Ignore if the old single-column catId unique index does not exist.

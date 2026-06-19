@@ -144,7 +144,7 @@ exports.createRecipe = async (req, res) => {
                 `SELECT hc.*, u.id AS chef_user_id, hc.created_by_id AS franchise_user_id, hc.created_by_user_id AS franchise_created_by_user_id
                 FROM home_chefs hc
                 LEFT JOIN users u ON (u.email = hc.email OR u.phone = hc.mobile)
-                WHERE hc.chef_id = ?
+                WHERE hc.user_id = ?
                    OR hc.email = ?
                    OR hc.mobile = ?
                    OR u.user_id = ?

@@ -1,4 +1,4 @@
-﻿const pool = require('../config/db');
+const pool = require('../config/db');
 const crypto = require('crypto');
 const https = require('https');
 const { generateRoleId } = require('../utils/idGenerator');
@@ -1717,11 +1717,14 @@ exports.createDeliveryPartner = async (req, res) => {
     insertColumns.push('created_by', 'updated_by');
     values.push(createdBy, createdBy);
 
+    // Replace undefined with null — MySQL2 rejects undefined bind params
+    const sanitizedValues = values.map(v => v === undefined ? null : v);
+
     const placeholders = insertColumns.map(() => '?').join(', ');
     const query = `INSERT INTO delivery_partners (${insertColumns.join(', ')}, created_at, updated_at)
       VALUES (${placeholders}, NOW(), NOW())`;
     
-    const [result] = await pool.execute(query, values);
+    const [result] = await pool.execute(query, sanitizedValues);
 
     res.status(201).json({ message: 'Delivery Partner created successfully.', id: result.insertId });
   } catch (error) {
@@ -1883,8 +1886,41 @@ exports.updateDeliveryPartnerStatus = async (req, res) => {
       [status, updatedBy, id]
     );
 
+    // Sync credentials to users table on approval / suspension
+    if (status === 'Approved') {
+      const [partnerRows] = await pool.execute('SELECT * FROM delivery_partners WHERE id = ?', [id]);
+      if (partnerRows.length > 0) {
+        const partner = partnerRows[0];
+        if (partner.email) {
+          const [userRows] = await pool.execute('SELECT id FROM users WHERE email = ?', [partner.email]);
+          if (userRows.length === 0) {
+            const dpUserId = partner.user_id || partner.delivery_partner_user_id || generateRoleId('delivery_partner');
+            const dpName = partner.name || 'Delivery Partner';
+            await pool.execute(
+              'INSERT INTO users (user_id, full_name, email, mobile_number, password, role, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+              [dpUserId, dpName, partner.email, partner.mobile || null, partner.password, 'delivery_partner', 'Active']
+            );
+          } else {
+            await pool.execute(
+              'UPDATE users SET status = ?, role = ? WHERE email = ?',
+              ['Active', 'delivery_partner', partner.email]
+            );
+          }
+        }
+      }
+    } else if (status === 'Suspended' || status === 'Rejected') {
+      const [partnerRows] = await pool.execute('SELECT email FROM delivery_partners WHERE id = ?', [id]);
+      if (partnerRows.length > 0 && partnerRows[0].email) {
+        await pool.execute(
+          'UPDATE users SET status = ? WHERE email = ? AND role = ?',
+          ['Inactive', partnerRows[0].email, 'delivery_partner']
+        );
+      }
+    }
+
     res.json({ message: 'Delivery Partner status updated successfully.' });
   } catch (error) {
+    console.error('❌ Error updating delivery partner status:', error.stack || error);
     res.status(500).json({ message: 'Error updating delivery partner status.', error: error.message });
   }
 };

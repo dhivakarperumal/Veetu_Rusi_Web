@@ -518,6 +518,10 @@ const createReviewsTable = async () => {
 
             await pool.execute(sql);
             console.log('✓ cheffoodcategorytable created or already exists');
+            try { await pool.execute('ALTER TABLE cheffoodcategorytable ADD COLUMN IF NOT EXISTS created_by_user_id VARCHAR(255)'); } catch (e) {}
+            try { await pool.execute('ALTER TABLE cheffoodcategorytable ADD COLUMN IF NOT EXISTS created_by_email VARCHAR(255)'); } catch (e) {}
+            try { await pool.execute('ALTER TABLE cheffoodcategorytable ADD COLUMN IF NOT EXISTS created_by_name VARCHAR(255)'); } catch (e) {}
+            try { await pool.execute('ALTER TABLE cheffoodcategorytable ADD COLUMN IF NOT EXISTS created_by_phone VARCHAR(20)'); } catch (e) {}
         } catch (err) {
             console.error('✗ Error creating cheffoodcategorytable:', err.message || err);
         }
