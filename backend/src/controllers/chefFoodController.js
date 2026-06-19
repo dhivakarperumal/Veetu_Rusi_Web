@@ -50,7 +50,7 @@ const resolveChefFoodMetadata = async (req, body) => {
       `SELECT hc.*, u.id AS user_id, u.user_id AS user_user_id, u.full_name AS user_name, u.mobile_number AS user_phone, u.email AS user_email
        FROM home_chefs hc
        LEFT JOIN users u ON (u.email = hc.email OR u.mobile_number = hc.mobile)
-       WHERE hc.chef_id = ? OR hc.email = ? OR hc.mobile = ? OR u.user_id = ? OR u.id = ?
+       WHERE hc.user_id = ? OR hc.email = ? OR hc.mobile = ? OR u.user_id = ? OR u.id = ?
        LIMIT 1`,
       [candidateChefId, candidateChefEmail, candidateChefPhone, candidateChefId, candidateChefId]
     );
@@ -58,7 +58,7 @@ const resolveChefFoodMetadata = async (req, body) => {
   }
 
   const finalChefUserId = chef_user_id || req.user?.user_id || req.user?.id || homeChef?.user_user_id || homeChef?.user_id || null;
-  const finalChefId = chef_id || homeChef?.chef_id || null;
+  const finalChefId = chef_id || homeChef?.chef_id || homeChef?.user_id || homeChef?.user_user_id || null;
   const finalChefName = chef_name || homeChef?.name || req.user?.name || homeChef?.user_name || null;
   const finalChefPhone = chef_phone || homeChef?.mobile || req.user?.phone || homeChef?.user_phone || null;
   const finalChefEmail = chef_email || homeChef?.email || req.user?.email || homeChef?.user_email || null;
