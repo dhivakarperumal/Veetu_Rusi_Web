@@ -109,7 +109,7 @@ const FoodItems = () => {
           </div>
         ) : foods.length === 0 ? (
           <div className="rounded-4xl bg-white border border-slate-200 p-10 text-center shadow-sm">
-            <p className="text-lg font-black text-slate-800"></p>
+            <p className="text-lg font-black text-slate-800">No Food Items Available.</p>
             <p className="text-sm text-slate-500 mt-2">Check back soon for fresh chef creations.</p>
           </div>
         ) : (
