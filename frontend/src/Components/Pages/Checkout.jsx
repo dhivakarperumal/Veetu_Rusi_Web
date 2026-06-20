@@ -33,7 +33,7 @@ const Checkout = () => {
       if (Array.isArray(parsed) && parsed.length > 0) {
         cleanUrl = parsed[0];
       }
-    } catch(e) {}
+    } catch (e) { }
     if (cleanUrl.startsWith('http') || cleanUrl.startsWith('data:')) return cleanUrl;
     const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
     const cleanPath = cleanUrl.replace(/\\/g, '/');
@@ -50,6 +50,26 @@ const Checkout = () => {
     }
   };
 
+  useEffect(() => {
+    if (user) {
+      setForm((prev) => ({
+        ...prev,
+        user_id: user.user_id || "",
+        customer_name:
+          user.username ||
+          user.name ||
+          user.full_name ||
+          "",
+        customer_email: user.email || "",
+        customer_phone:
+          user.phone ||
+          user.mobile ||
+          user.mobile_number ||
+          "",
+      }));
+    }
+  }, [user]);
+  
   useEffect(() => {
     if (user?.user_id) {
       fetchAddresses();
