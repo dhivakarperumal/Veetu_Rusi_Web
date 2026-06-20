@@ -147,8 +147,8 @@ const ChefSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
       <aside
         className={`
         fixed top-0 left-0 z-50 h-full
-        bg-[#0B1120] border-r border-white/5
-        
+        bg-[#071219] border-r border-slate-900/80
+        shadow-[0_35px_80px_rgba(0,0,0,0.35)]
         flex flex-col transition-all duration-300
         ${isOpen ? "translate-x-0" : "-translate-x-full"}
         lg:translate-x-0
@@ -156,8 +156,8 @@ const ChefSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
       `}
       >
         {/* ========== LOGO ========== */}
-        <div className="flex items-center gap-3 px-4 py-5 border-b border-white/5 overflow-hidden">
-          <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-lg shadow-blue-600/20 shrink-0 overflow-hidden">
+        <div className="flex items-center gap-3 px-5 py-6 border-b border-slate-800/70 overflow-hidden">
+          <div className="w-11 h-11 rounded-2xl bg-[#0f1216] flex items-center justify-center shadow-lg shadow-emerald-500/10 shrink-0 overflow-hidden">
             <img
               src="/logo.png"
               alt="Logo"
@@ -168,16 +168,14 @@ const ChefSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
 
           {!collapsed && (
             <div className="overflow-hidden">
-              <h1 className="text-md font-black text-white tracking-tighter uppercase leading-none">Veetu Rusi</h1>
-              <p className="text-[9px] text-blue-400 font-bold tracking-widest uppercase opacity-70 mt-1">
-                Home Chef Portal
-              </p>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-emerald-400 opacity-80 mb-1">Platform Control</p>
+              <h1 className="text-lg font-black text-white tracking-tight">Veetu Rusi</h1>
             </div>
           )}
 
           <button
             onClick={onClose}
-            className="ml-auto p-2 rounded-xl text-white/40 hover:bg-white/5 lg:hidden border border-transparent hover:border-white/10 transition-all"
+            className="ml-auto p-2 rounded-2xl text-white/40 hover:bg-slate-800/70 lg:hidden border border-transparent hover:border-slate-700 transition-all"
           >
             <X className="w-5 h-5" />
           </button>
@@ -194,25 +192,25 @@ const ChefSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
               const isAnyChildActive = isActiveRoute(item);
 
               return (
-                <div key={item.label} className="space-y-1">
+                <div key={item.label} className="space-y-2">
                   <button
                     onClick={() => toggleMenu(item.label)}
                     className={`
-                      w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all
+                      relative w-full flex items-center gap-3 px-4 py-3 rounded-3xl transition-all duration-200
                       ${isMenuOpen
-                        ? "bg-blue-600/10 text-white ring-1 ring-blue-500/30"
-                        : "text-white/50 hover:bg-white/5 hover:text-white"
+                        ? "bg-slate-900/80 text-white ring-1 ring-emerald-500/25"
+                        : "text-slate-300 hover:bg-slate-800/80 hover:text-white"
                       }
                     `}
                   >
-                    <Icon className="w-5 h-5 shrink-0" />
+                    <span className={`absolute left-0 top-1/2 h-10 w-1.5 -translate-y-1/2 rounded-r-full transition-all ${isMenuOpen ? 'bg-emerald-400' : 'bg-transparent'}`} />
+                    <Icon className="w-5 h-5 shrink-0 text-emerald-300" />
 
                     {!collapsed && (
                       <>
-                        <span className="flex-1 text-left text-sm font-bold tracking-wide">{item.label}</span>
+                        <span className="flex-1 text-left text-sm font-semibold tracking-wide">{item.label}</span>
                         <ChevronDown
-                          className={`w-4 h-4 transition-transform ${isMenuOpen ? "rotate-180" : ""
-                            }`}
+                          className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isMenuOpen ? "rotate-180 text-white" : ""}`}
                         />
                       </>
                     )}
@@ -221,8 +219,8 @@ const ChefSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                   {/* ===== SUB MENU ===== */}
                   {!collapsed && (
                     <div
-                      className={`ml-4 pl-4 border-l border-white/5 space-y-1 overflow-y-auto hide-scrollbar transition-all duration-300
-                      ${isMenuOpen ? "max-h-60 opacity-100 py-1" : "max-h-0 opacity-0"}`}
+                      className={`ml-4 pl-4 border-l border-slate-800/60 space-y-2 overflow-hidden transition-all duration-300
+                      ${isMenuOpen ? "max-h-72 opacity-100 py-2" : "max-h-0 opacity-0"}`}
                     >
                       {item.children.map((sub) => {
                         const SubIcon = sub.icon;
@@ -235,15 +233,15 @@ const ChefSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                             to={subPath}
                             onClick={() => isOpen && onClose()}
                             className={`
-                              flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold transition-all
-                              ${(location.pathname === subPath || (subPath !== prefix && location.pathname.startsWith(subPath)))
-                                ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
-                                : "text-white/40 hover:text-white hover:bg-white/5"
+                              flex items-center gap-3 px-4 py-2.5 rounded-3xl text-xs font-semibold transition-all duration-200
+                              ${isActive
+                                ? "bg-emerald-500/10 text-white shadow-lg shadow-emerald-500/10"
+                                : "text-slate-400 hover:text-white hover:bg-slate-800/80"
                               }
                             `}
                           >
                             <SubIcon className="w-4 h-4 shrink-0" />
-                            <span>{sub.label}</span>
+                            <span className="truncate">{sub.label}</span>
                           </NavLink>
                         );
                       })}
@@ -267,15 +265,16 @@ const ChefSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                   if (isOpen) onClose();
                 }}
                 className={`
-                  flex items-center gap-3 px-4 py-3 rounded-xl transition-all
+                  relative flex items-center gap-3 px-4 py-3 rounded-3xl transition-all duration-200
                   ${isActive
-                    ? "bg-blue-600 text-white shadow-xl shadow-blue-600/20"
-                    : "text-white/50 hover:bg-white/5 hover:text-white"
+                    ? "bg-slate-900/90 text-white shadow-xl shadow-slate-950/40"
+                    : "text-slate-300 hover:bg-slate-800/80 hover:text-white"
                   }
                 `}
               >
-                <Icon className="w-5 h-5 shrink-0" />
-                {!collapsed && <span className="text-sm font-bold tracking-wide">{item.label}</span>}
+                <span className={`absolute left-0 top-1/2 h-10 w-1.5 -translate-y-1/2 rounded-r-full transition-all ${isActive ? 'bg-emerald-400' : 'bg-transparent'}`} />
+                <Icon className="w-5 h-5 shrink-0 text-emerald-300" />
+                {!collapsed && <span className="text-sm font-semibold tracking-wide">{item.label}</span>}
               </NavLink>
             );
           })}
@@ -283,17 +282,20 @@ const ChefSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
 
         {/* ========== FOOTER / PROFILE ========== */}
         {!collapsed && (
-          <div className="p-4 mx-3 mb-6 bg-white/5 rounded-2xl border border-white/5">
-            <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-3 pl-1">System Identity</p>
+          <div className="p-4 mx-3 mb-6 bg-[#0f141a] rounded-[2rem] border border-slate-800 shadow-inner shadow-slate-950/30">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-300 mb-3">Secure Mode</p>
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white text-xs font-black shadow-lg shadow-blue-600/40">
+              <div className="w-11 h-11 rounded-3xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-300 text-sm font-black shadow-sm">
                 {profileName?.charAt(0) || "A"}
               </div>
               <div className="overflow-hidden">
-                <p className="text-xs font-black text-white truncate">{profileName || "Administrator"}</p>
-                <p className="text-[9px] text-blue-400 font-bold uppercase truncate opacity-70">Master Control</p>
+                <p className="text-sm font-black text-white truncate">{profileName || "Administrator"}</p>
+                <p className="text-[10px] text-slate-400 uppercase tracking-[0.18em] mt-1">Live protection enabled</p>
               </div>
             </div>
+            <p className="mt-4 text-xs leading-5 text-slate-500">
+              Monitor menus, orders, and earnings from a secure command center.
+            </p>
           </div>
         )}
 
@@ -302,11 +304,11 @@ const ChefSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
           onClick={onToggleCollapse}
           className="
             hidden lg:flex absolute -right-3 top-1/2 -translate-y-1/2
-            w-6 h-6 rounded-full
-            bg-white border border-slate-200
-            shadow-[0_4px_10px_rgba(0,0,0,0.1)]
+            w-8 h-8 rounded-full
+            bg-[#0b0d10] border border-slate-800
+            shadow-[0_8px_18px_rgba(2,6,23,0.6)]
             items-center justify-center
-            text-slate-500 hover:text-blue-600 hover:scale-110 transition-all z-50
+            text-slate-300 hover:text-white hover:scale-110 transition-all z-50
           "
         >
           <ChevronLeft

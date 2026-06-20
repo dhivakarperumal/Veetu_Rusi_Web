@@ -146,7 +146,7 @@ const AdminLayout = () => {
     };
 
     return (
-        <div className="admin-root flex min-h-screen bg-gray-50 text-slate-900">
+        <div className="admin-root homechef-root flex min-h-screen bg-[#0b0d10] text-slate-200 font-sans">
             <Toaster position="top-right" />
 
             {/* Sidebar */}
@@ -177,62 +177,62 @@ const AdminLayout = () => {
 
                 {popupVisible && popupOrder && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4">
-                        <div className="absolute inset-0 bg-black/70" aria-hidden="true" onClick={skipOrder}></div>
-                        <div className="relative z-10 w-full max-w-2xl rounded-4xl bg-white shadow-2xl ring-1 ring-slate-900/10 overflow-hidden max-h-[90vh] flex flex-col">
+                            <div className="absolute inset-0 bg-black/70" aria-hidden="true" onClick={skipOrder}></div>
+                            <div className="relative z-10 w-full max-w-2xl rounded-4xl bg-[#0f1418] shadow-2xl ring-1 ring-slate-900/10 overflow-hidden max-h-[90vh] flex flex-col text-slate-200">
                             <div className="p-6 sm:p-8 overflow-y-auto">
                                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                                    <div>
-                                        <p className="text-sm font-semibold uppercase tracking-[0.28em] text-emerald-600">🧑‍🍳 New Order Available</p>
-                                        <h2 className="mt-4 text-2xl font-black text-slate-900">A new food order is available.</h2>
-                                        <p className="mt-2 text-sm text-slate-500">Would you like to accept this order?</p>
+                                        <div>
+                                            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-emerald-400">🧑‍🍳 New Order Available</p>
+                                            <h2 className="mt-4 text-2xl font-black text-white">A new food order is available.</h2>
+                                            <p className="mt-2 text-sm text-slate-300">Would you like to accept this order?</p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={skipOrder}
+                                            className="self-start rounded-full bg-[#0b0d10] p-3 text-slate-300 hover:bg-slate-900/40 transition"
+                                            aria-label="Close popup"
+                                        >
+                                            ×
+                                        </button>
                                     </div>
-                                    <button
-                                        type="button"
-                                        onClick={skipOrder}
-                                        className="self-start rounded-full bg-slate-100 p-3 text-slate-700 hover:bg-slate-200 transition"
-                                        aria-label="Close popup"
-                                    >
-                                        ×
-                                    </button>
-                                </div>
 
-                                <div className="mt-8 grid gap-4 sm:grid-cols-2">
-                                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                                    <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                                    <div className="rounded-3xl border border-slate-800 bg-[#0b0d10] p-5">
                                         <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Order ID</p>
-                                        <p className="mt-2 text-lg font-bold text-slate-900">{popupOrder.order_id || `#${popupOrder.id}`}</p>
+                                        <p className="mt-2 text-lg font-bold text-white">{popupOrder.order_id || `#${popupOrder.id}`}</p>
                                     </div>
-                                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                                    <div className="rounded-3xl border border-slate-800 bg-[#0b0d10] p-5">
                                         <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Amount</p>
-                                        <p className="mt-2 text-lg font-bold text-slate-900">{formatCurrency(popupOrder.chef_total_amount ?? popupOrder.total_amount ?? 0)}</p>
+                                        <p className="mt-2 text-lg font-bold text-white">{formatCurrency(popupOrder.chef_total_amount ?? popupOrder.total_amount ?? 0)}</p>
                                     </div>
-                                    <div className="sm:col-span-2 rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                                        <div className="sm:col-span-2 rounded-3xl border border-slate-800 bg-[#0b0d10] p-5">
                                         <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Customer</p>
-                                        <p className="mt-2 text-lg font-bold text-slate-900">{popupOrder.customer_name || 'Unknown'}</p>
-                                        <p className="mt-2 text-sm text-slate-500">{popupOrder.customer_phone || 'No contact details'}</p>
+                                        <p className="mt-2 text-lg font-bold text-white">{popupOrder.customer_name || 'Unknown'}</p>
+                                        <p className="mt-2 text-sm text-slate-300">{popupOrder.customer_phone || 'No contact details'}</p>
                                     </div>
 
                                     {/* Order Items Section for Chef */}
-                                    <div className="sm:col-span-2 rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                                        <div className="sm:col-span-2 rounded-3xl border border-slate-800 bg-[#0b0d10] p-5">
                                         <div className="flex items-center justify-between mb-3">
                                             <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Items in Order</p>
                                             <p className="text-xs font-bold text-slate-500">{(popupOrder.items || []).length} items</p>
                                         </div>
                                         <div className="space-y-3 max-h-40 overflow-y-auto pr-2">
                                             {(popupOrder.items || []).map((item, idx) => (
-                                                <div key={idx} className="rounded-2xl bg-white p-3 border border-slate-200 flex items-center justify-between">
+                                                <div key={idx} className="rounded-2xl bg-[#0b0d10] p-3 border border-slate-800 flex items-center justify-between text-slate-200">
                                                     <div>
-                                                        <p className="font-bold text-slate-900">{item.name || item.title || item.product_name || 'Item'}</p>
-                                                        <p className="text-xs font-medium text-slate-500 mt-1">Qty: {item.quantity || item.qty || 1}</p>
+                                                        <p className="font-bold text-white">{item.name || item.title || item.product_name || 'Item'}</p>
+                                                        <p className="text-xs font-medium text-slate-400 mt-1">Qty: {item.quantity || item.qty || 1}</p>
                                                     </div>
-                                                    <p className="font-bold text-slate-900">{formatCurrency(item.price || item.final_price || item.amount)}</p>
+                                                    <p className="font-bold text-white">{formatCurrency(item.price || item.final_price || item.amount)}</p>
                                                 </div>
                                             ))}
                                         </div>
                                     </div>
                                     
-                                    <div className="sm:col-span-2 rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                                    <div className="sm:col-span-2 rounded-3xl border border-slate-800 bg-[#0b0d10] p-5 text-slate-200">
                                         <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Order Time</p>
-                                        <p className="mt-2 text-sm text-slate-700">
+                                        <p className="mt-2 text-sm text-slate-300">
                                             {new Date(popupOrder.ordered_at || popupOrder.created_at || Date.now()).toLocaleString()}
                                         </p>
                                     </div>
@@ -242,7 +242,7 @@ const AdminLayout = () => {
                                     <button
                                         type="button"
                                         onClick={handleReject}
-                                        className="inline-flex justify-center rounded-2xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-bold text-red-700 hover:bg-red-100 transition"
+                                        className="inline-flex justify-center rounded-2xl border border-red-700/30 bg-transparent px-5 py-3 text-sm font-bold text-red-400 hover:bg-red-900/10 transition"
                                     >
                                         Reject Order
                                     </button>

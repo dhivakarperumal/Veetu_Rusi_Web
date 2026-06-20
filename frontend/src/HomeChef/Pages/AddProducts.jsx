@@ -467,7 +467,7 @@ const AddProducts = () => {
             {/* Premium Sticky Header Overlay */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-2">
                 <div className="flex items-center gap-3 sm:gap-4">
-                    <button onClick={() => navigate(-1)} className="p-3 bg-white border border-gray-100 rounded-2xl text-gray-400 hover:text-blue-600 transition-all shadow-sm active:scale-95 shadow-blue-500/5">
+                    <button onClick={() => navigate(-1)} className="p-3 bg-[#0f1216] border border-slate-800 rounded-2xl text-slate-300 hover:text-blue-400 transition-all shadow-sm active:scale-95">
                         <FiArrowLeft size={20} />
                     </button>
                     <div>
@@ -479,7 +479,7 @@ const AddProducts = () => {
             <form onSubmit={handleSubmit} className="w-full">
                 <div className="space-y-8">
                     {/* Primary Categorization & Identity */}
-                    <div className="bg-white p-6 sm:p-10 rounded-[2.5rem] border border-gray-100 shadow-sm relative overflow-hidden group">
+                    <div className="bg-[#111319] p-6 sm:p-10 rounded-[2.5rem] border border-slate-800 shadow-sm relative overflow-hidden group text-slate-200">
                         <div className="absolute -top-10 -right-10 p-8 opacity-[0.03] text-blue-600">
                             <FiLayers size={200} />
                         </div>
@@ -499,7 +499,7 @@ const AddProducts = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div className="space-y-4">
                                     <label className="text-[10px] sm:text-xs  font-black text-gray-400 uppercase tracking-widest ml-1">Food Category *</label>
-                                    <select name="category" value={formData.category} onChange={handleFormChange} className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-3xl outline-none focus:bg-white focus:border-emerald-500/20 transition-all text-base font-black text-slate-800 shadow-inner cursor-pointer appearance-none">
+                                    <select name="category" value={formData.category} onChange={handleFormChange} className="w-full px-6 py-4 bg-[#0b0d10] border-2 border-transparent rounded-3xl outline-none focus:bg-[#0f1216] focus:border-emerald-500/20 transition-all text-base font-black text-white shadow-inner cursor-pointer appearance-none">
                                         {categories.length > 0 ? categories.map(cat => <option key={cat.id} value={cat.name}>{cat.name}</option>) : (
                                             <>
                                                 <option>Cooked Food</option>

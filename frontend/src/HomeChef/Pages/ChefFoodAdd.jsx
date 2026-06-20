@@ -254,49 +254,49 @@ const ChefFoodAdd = () => {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 p-4 md:p-8">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 p-4 md:p-8 bg-gradient-to-br from-[#0c1116] to-[#171a20] min-h-screen text-white">
       <div className="max-w-7xl mx-auto">
         {/* Premium Sticky Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-2">
-          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="flex items-center gap-3 sm:gap-4">
             <button 
               onClick={() => window.history.back()} 
-              className="p-3 bg-white border border-gray-100 rounded-2xl text-gray-400 hover:text-blue-600 transition-all shadow-sm active:scale-95"
+              className="p-3 bg-[#0f1216] border border-slate-800 rounded-2xl text-slate-300 hover:text-white transition-all shadow-sm active:scale-95"
             >
               <FiArrowLeft size={20} />
             </button>
             <div>
-              <h1 className="text-3xl font-black text-slate-900">{editId ? "Edit" : "Add"} Chef Food</h1>
-              <p className="text-sm text-slate-500 mt-1">Create and manage your food catalog items</p>
+              <h1 className="text-3xl font-black text-white">{editId ? "Edit" : "Add"} Chef Food</h1>
+              <p className="text-sm text-slate-300 mt-1">Create and manage your food catalog items</p>
             </div>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="w-full space-y-8">
           {/* Food Details Section */}
-          <div className="bg-white p-6 sm:p-10 rounded-[2.5rem] border border-gray-100 shadow-sm relative overflow-hidden group">
+          <div className="bg-[#111319] p-6 sm:p-10 rounded-[2.5rem] border border-slate-800 shadow-sm relative overflow-hidden group text-slate-200">
             <div className="absolute -top-10 -right-10 p-8 opacity-[0.03] text-emerald-600">
               <FiLayers size={200} />
             </div>
 
             <div className="relative z-10 space-y-8">
               <div className="flex items-center gap-3">
-                <span className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl">
+                <span className="p-2.5 bg-emerald-900/20 text-emerald-400 rounded-xl">
                   <FiLayers size={20} />
                 </span>
-                <h2 className="text-2xl font-black text-slate-800 tracking-tight">Food Details</h2>
+                <h2 className="text-2xl font-black text-white tracking-tight">Food Details</h2>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-4">
-                  <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">
+                  <label className="text-[10px] sm:text-xs font-black text-slate-300 uppercase tracking-widest ml-1">
                     Food Category *
                   </label>
                   <select
                     value={form.category}
                     onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value }))}
                     required
-                    className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-3xl outline-none focus:bg-white focus:border-emerald-500/20 transition-all text-base font-black text-slate-800 shadow-inner cursor-pointer appearance-none"
+                    className="w-full px-6 py-4 bg-[#0b0d10] border-2 border-transparent rounded-3xl outline-none focus:bg-[#0f1216] focus:border-emerald-500/20 transition-all text-base font-black text-white shadow-inner cursor-pointer appearance-none"
                   >
                     <option value="">Select category</option>
                     {categories.map((cat) => (
@@ -317,13 +317,13 @@ const ChefFoodAdd = () => {
                     onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
                     placeholder="e.g., Hyderabadi Biryani"
                     required
-                    className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-3xl outline-none focus:bg-white focus:border-emerald-500/20 transition-all text-base font-black text-slate-800 shadow-inner"
+                    className="w-full px-6 py-4 bg-[#0b0d10] border-2 border-transparent rounded-3xl outline-none focus:bg-[#0f1216] focus:border-emerald-500/20 transition-all text-base font-black text-white shadow-inner"
                   />
                 </div>
               </div>
 
               <div className="space-y-4">
-                <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">
+                <label className="text-[10px] sm:text-xs font-black text-slate-300 uppercase tracking-widest ml-1">
                   Food Description *
                 </label>
                 <textarea
@@ -332,7 +332,7 @@ const ChefFoodAdd = () => {
                   rows={3}
                   placeholder="Describe the food, flavors and serving suggestions..."
                   required
-                  className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-3xl outline-none focus:bg-white focus:border-emerald-500/20 transition-all text-sm font-medium text-gray-600 shadow-inner resize-none"
+                  className="w-full px-6 py-4 bg-[#0b0d10] border-2 border-transparent rounded-3xl outline-none focus:bg-[#0f1216] focus:border-emerald-500/20 transition-all text-sm font-medium text-slate-300 shadow-inner resize-none"
                 />
               </div>
 
@@ -344,7 +344,7 @@ const ChefFoodAdd = () => {
                   <select
                     value={form.cuisine || ""}
                     onChange={(e) => setForm((prev) => ({ ...prev, cuisine: e.target.value }))}
-                    className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-3xl outline-none focus:bg-white focus:border-emerald-500/20 transition-all text-base font-bold text-slate-800 shadow-inner cursor-pointer appearance-none"
+                    className="w-full px-6 py-4 bg-[#0b0d10] border-2 border-transparent rounded-3xl outline-none focus:bg-[#0f1216] focus:border-emerald-500/20 transition-all text-base font-bold text-white shadow-inner cursor-pointer appearance-none"
                   >
                     <option value="">Select Cuisine</option>
                     <option>North Indian</option>
@@ -364,7 +364,7 @@ const ChefFoodAdd = () => {
                     value={form.prep_time}
                     onChange={(e) => setForm((prev) => ({ ...prev, prep_time: e.target.value }))}
                     placeholder="e.g., 20 mins"
-                    className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-3xl outline-none focus:bg-white focus:border-emerald-500/20 transition-all text-base font-bold text-slate-800 shadow-inner"
+                    className="w-full px-6 py-4 bg-[#0b0d10] border-2 border-transparent rounded-3xl outline-none focus:bg-[#0f1216] focus:border-emerald-500/20 transition-all text-base font-bold text-white shadow-inner"
                   />
                 </div>
 
@@ -378,7 +378,7 @@ const ChefFoodAdd = () => {
                     value={form.shelf_life_days}
                     onChange={(e) => setForm((prev) => ({ ...prev, shelf_life_days: e.target.value }))}
                     placeholder="e.g., 2"
-                    className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-3xl outline-none focus:bg-white focus:border-emerald-500/20 transition-all text-base font-bold text-slate-800 shadow-inner"
+                    className="w-full px-6 py-4 bg-[#0b0d10] border-2 border-transparent rounded-3xl outline-none focus:bg-[#0f1216] focus:border-emerald-500/20 transition-all text-base font-bold text-white shadow-inner"
                   />
                 </div>
               </div>
@@ -386,17 +386,17 @@ const ChefFoodAdd = () => {
           </div>
 
           {/* Pricing & Packaging Section */}
-          <div className="bg-white p-6 sm:p-10 rounded-[2.5rem] border border-gray-100 shadow-sm relative overflow-hidden group">
+          <div className="bg-[#111319] p-6 sm:p-10 rounded-[2.5rem] border border-slate-800 shadow-sm relative overflow-hidden group text-slate-200">
             <div className="absolute -top-10 -right-10 p-8 opacity-[0.03] text-amber-600">
               <FaRupeeSign size={200} />
             </div>
 
             <div className="relative z-10 space-y-8">
               <div className="flex items-center gap-3">
-                <span className="p-2.5 bg-amber-50 text-amber-600 rounded-xl">
+                <span className="p-2.5 bg-amber-900/20 text-amber-400 rounded-xl">
                   <FaRupeeSign size={20} />
                 </span>
-                <h2 className="text-2xl font-black text-slate-800 tracking-tight">Pricing & Packaging</h2>
+                <h2 className="text-2xl font-black text-white tracking-tight">Pricing & Packaging</h2>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -410,7 +410,7 @@ const ChefFoodAdd = () => {
                     onChange={(e) => setForm((prev) => ({ ...prev, mrp: e.target.value }))}
                     placeholder="0.00"
                     required
-                    className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-3xl outline-none focus:bg-white focus:border-emerald-500/20 transition-all text-base font-black text-slate-800 shadow-inner"
+                    className="w-full px-6 py-4 bg-[#0b0d10] border-2 border-transparent rounded-3xl outline-none focus:bg-[#0f1216] focus:border-emerald-500/20 transition-all text-base font-black text-white shadow-inner"
                   />
                 </div>
 
@@ -423,7 +423,7 @@ const ChefFoodAdd = () => {
                     value={form.offer}
                     onChange={(e) => setForm((prev) => ({ ...prev, offer: e.target.value }))}
                     placeholder="0"
-                    className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-3xl outline-none focus:bg-white focus:border-amber-500/20 transition-all text-base font-black text-amber-600 shadow-inner"
+                    className="w-full px-6 py-4 bg-[#0b0d10] border-2 border-transparent rounded-3xl outline-none focus:bg-[#0f1216] focus:border-amber-500/20 transition-all text-base font-black text-amber-300 shadow-inner"
                   />
                 </div>
 
@@ -435,7 +435,7 @@ const ChefFoodAdd = () => {
                     type="number"
                     value={form.final_price}
                     readOnly
-                    className="w-full px-6 py-4 bg-emerald-50 border-2 border-emerald-200 rounded-3xl text-base font-black text-emerald-600 shadow-inner cursor-not-allowed"
+                    className="w-full px-6 py-4 bg-[#0f1216] border border-emerald-500/20 rounded-3xl text-base font-black text-emerald-300 shadow-inner cursor-not-allowed"
                   />
                 </div>
               </div>
@@ -450,7 +450,7 @@ const ChefFoodAdd = () => {
                     value={form.net_weight}
                     onChange={(e) => setForm((prev) => ({ ...prev, net_weight: e.target.value }))}
                     placeholder="e.g., 200g"
-                    className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-3xl outline-none focus:bg-white focus:border-emerald-500/20 transition-all text-base font-bold text-slate-800 shadow-inner"
+                    className="w-full px-6 py-4 bg-[#0b0d10] border-2 border-transparent rounded-3xl outline-none focus:bg-[#0f1216] focus:border-emerald-500/20 transition-all text-base font-bold text-white shadow-inner"
                   />
                 </div>
 
@@ -461,7 +461,7 @@ const ChefFoodAdd = () => {
                   <select
                     value={form.packaging_type}
                     onChange={(e) => setForm((prev) => ({ ...prev, packaging_type: e.target.value }))}
-                    className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-3xl outline-none focus:bg-white focus:border-emerald-500/20 transition-all text-base font-bold text-slate-800 shadow-inner cursor-pointer appearance-none"
+                    className="w-full px-6 py-4 bg-[#0b0d10] border-2 border-transparent rounded-3xl outline-none focus:bg-[#0f1216] focus:border-emerald-500/20 transition-all text-base font-bold text-white shadow-inner cursor-pointer appearance-none"
                   >
                     {packagingOptions.map((opt) => (
                       <option key={opt} value={opt}>
@@ -478,7 +478,7 @@ const ChefFoodAdd = () => {
                   <select
                     value={form.dietary_tag}
                     onChange={(e) => setForm((prev) => ({ ...prev, dietary_tag: e.target.value }))}
-                    className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-3xl outline-none focus:bg-white focus:border-emerald-500/20 transition-all text-base font-bold text-slate-800 shadow-inner cursor-pointer appearance-none"
+                    className="w-full px-6 py-4 bg-[#0b0d10] border-2 border-transparent rounded-3xl outline-none focus:bg-[#0f1216] focus:border-emerald-500/20 transition-all text-base font-bold text-white shadow-inner cursor-pointer appearance-none"
                   >
                     {dietaryOptions.map((opt) => (
                       <option key={opt} value={opt}>
@@ -492,17 +492,17 @@ const ChefFoodAdd = () => {
           </div>
 
           {/* Ingredients & Instructions Section */}
-          <div className="bg-white p-6 sm:p-10 rounded-[2.5rem] border border-gray-100 shadow-sm relative overflow-hidden group">
+          <div className="bg-[#111319] p-6 sm:p-10 rounded-[2.5rem] border border-slate-800 shadow-sm relative overflow-hidden group text-slate-200">
             <div className="absolute -top-10 -right-10 p-8 opacity-[0.03] text-blue-600">
               <FiBox size={200} />
             </div>
 
             <div className="relative z-10 space-y-8">
               <div className="flex items-center gap-3">
-                <span className="p-2.5 bg-blue-50 text-blue-600 rounded-xl">
+                <span className="p-2.5 bg-blue-900/20 text-blue-400 rounded-xl">
                   <FiBox size={20} />
                 </span>
-                <h2 className="text-2xl font-black text-slate-800 tracking-tight">Ingredients & Instructions</h2>
+                <h2 className="text-2xl font-black text-white tracking-tight">Ingredients & Instructions</h2>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -515,7 +515,7 @@ const ChefFoodAdd = () => {
                     onChange={(e) => setForm((prev) => ({ ...prev, ingredients: e.target.value }))}
                     rows={4}
                     placeholder="List main ingredients..."
-                    className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-3xl outline-none focus:bg-white focus:border-emerald-500/20 transition-all text-sm font-medium text-gray-600 shadow-inner resize-none"
+                    className="w-full px-6 py-4 bg-[#0b0d10] border-2 border-transparent rounded-3xl outline-none focus:bg-[#0f1216] focus:border-emerald-500/20 transition-all text-sm font-medium text-slate-300 shadow-inner resize-none"
                   />
                 </div>
 
@@ -528,7 +528,7 @@ const ChefFoodAdd = () => {
                     onChange={(e) => setForm((prev) => ({ ...prev, instructions: e.target.value }))}
                     rows={4}
                     placeholder="Step-by-step cooking instructions..."
-                    className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-3xl outline-none focus:bg-white focus:border-emerald-500/20 transition-all text-sm font-medium text-gray-600 shadow-inner resize-none"
+                    className="w-full px-6 py-4 bg-[#0b0d10] border-2 border-transparent rounded-3xl outline-none focus:bg-[#0f1216] focus:border-emerald-500/20 transition-all text-sm font-medium text-slate-300 shadow-inner resize-none"
                   />
                 </div>
               </div>
@@ -536,23 +536,23 @@ const ChefFoodAdd = () => {
           </div>
 
           {/* Image Upload Section */}
-          <div className="bg-white p-6 sm:p-10 rounded-[2.5rem] border border-gray-100 shadow-sm relative overflow-hidden group">
+          <div className="bg-[#111319] p-6 sm:p-10 rounded-[2.5rem] border border-slate-800 shadow-sm relative overflow-hidden group text-slate-200">
             <div className="absolute -top-10 -right-10 p-8 opacity-[0.03] text-rose-600">
               <FiUploadCloud size={200} />
             </div>
 
             <div className="relative z-10 space-y-8">
               <div className="flex items-center gap-3">
-                <span className="p-2.5 bg-rose-50 text-rose-600 rounded-xl">
+                <span className="p-2.5 bg-rose-900/20 text-rose-400 rounded-xl">
                   <FiUploadCloud size={20} />
                 </span>
-                <h2 className="text-2xl font-black text-slate-800 tracking-tight">Food Images</h2>
+                <h2 className="text-2xl font-black text-white tracking-tight">Food Images</h2>
               </div>
 
-              <label className="flex flex-col items-center justify-center w-full p-8 border-2 border-dashed border-gray-300 rounded-2xl cursor-pointer hover:border-emerald-400 transition-all bg-gray-50 hover:bg-white group/upload">
-                <FiUploadCloud size={40} className="text-gray-300 group-hover/upload:text-emerald-500 transition mb-3" />
-                <span className="text-sm font-black text-gray-700">Click to upload images</span>
-                <span className="text-xs text-gray-500 mt-1">or drag and drop (PNG, JPG up to 5MB each)</span>
+              <label className="flex flex-col items-center justify-center w-full p-8 border-2 border-dashed border-slate-700 rounded-2xl cursor-pointer hover:border-emerald-400 transition-all bg-[#0b0d10] group/upload">
+                <FiUploadCloud size={40} className="text-slate-400 group-hover/upload:text-emerald-400 transition mb-3" />
+                <span className="text-sm font-black text-slate-200">Click to upload images</span>
+                <span className="text-xs text-slate-400 mt-1">or drag and drop (PNG, JPG up to 5MB each)</span>
                 <input
                   type="file"
                   multiple
@@ -564,7 +564,7 @@ const ChefFoodAdd = () => {
 
               {form.images && form.images.length > 0 && (
                 <div className="space-y-4">
-                  <p className="text-sm font-bold text-slate-700">{form.images.length} image(s) selected</p>
+                  <p className="text-sm font-bold text-slate-200">{form.images.length} image(s) selected</p>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {form.images.map((img, idx) => (
                       <div key={idx} className="relative rounded-2xl overflow-hidden bg-gray-100 aspect-square group/image">
@@ -577,7 +577,7 @@ const ChefFoodAdd = () => {
                               images: prev.images.filter((_, i) => i !== idx)
                             }))
                           }
-                          className="absolute inset-0 bg-red-600/70 flex items-center justify-center opacity-0 group-hover/image:opacity-100 transition text-white"
+                          className="absolute inset-0 bg-rose-600/70 flex items-center justify-center opacity-0 group-hover/image:opacity-100 transition text-white"
                         >
                           <FiTrash2 size={20} />
                         </button>
@@ -594,7 +594,7 @@ const ChefFoodAdd = () => {
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 flex items-center justify-center gap-2 bg-slate-900 hover:bg-black disabled:bg-slate-400 text-white py-4 px-6 rounded-3xl font-black text-lg transition active:scale-95 shadow-sm"
+              className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-600 text-white py-4 px-6 rounded-3xl font-black text-lg transition active:scale-95 shadow-sm"
             >
               <FiSave size={20} />
               {loading ? "Saving..." : editId ? "Update Food Item" : "Add Food Item"}
@@ -603,7 +603,7 @@ const ChefFoodAdd = () => {
               <button
                 type="button"
                 onClick={resetForm}
-                className="px-6 py-4 rounded-3xl border-2 border-gray-200 text-gray-700 font-bold hover:bg-gray-50 transition"
+                className="px-6 py-4 rounded-3xl border-2 border-white/10 text-slate-200 font-bold hover:bg-slate-800 transition"
               >
                 Clear
               </button>

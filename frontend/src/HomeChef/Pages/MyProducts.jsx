@@ -219,7 +219,7 @@ const MyProducts = () => {
         filteredProducts.length > 0 ? (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full text-left border-collapse text-slate-200">
                 <thead>
                   <tr className="bg-slate-50/50">
                     <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Product Name</th>
