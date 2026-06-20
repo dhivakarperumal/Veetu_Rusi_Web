@@ -138,6 +138,9 @@ const FranchiseDetails = () => {
           api.get('/user-food-orders', { params: { franchise_user_id: res.data.franch_user_id, franchise_id: res.data.franchise_id } }),
           api.get('/user-food-orders', { params: { franchise_user_id: res.data.franch_user_id, franchise_id: res.data.franchise_id } })
         ]);
+        console.log("Franchise data:", res.data);
+        console.log("Delivery Partners data (first 2):", deliveryRes.data.slice(0, 2));
+
         const matcher = (item) => {
           const chefFranchiseUserId = String(item.franchise_user_id || '');
           const chefCreatedByUserId = String(item.created_by_user_id || item.created_by || '');
@@ -148,7 +151,8 @@ const FranchiseDetails = () => {
           return (
             chefCreatedByUserId === franchiseUserId ||
             chefFranchiseUserId === franchiseUserId ||
-            chefFranchiseId === franchiseId
+            chefFranchiseId === franchiseId ||
+            chefCreatedByUserId === franchiseId
           );
         };
         const homeChefs = homeChefRes.data.filter(matcher);

@@ -1622,13 +1622,8 @@ exports.getDeliveryPartners = async (req, res) => {
     const auditUser = await resolveCurrentUserAudit(req);
     const currentUserId = auditUser?.user_id || auditUser?.id || null;
 
-    let query = "SELECT * FROM delivery_partners";
+    let query = "SELECT * FROM delivery_partners ORDER BY created_at DESC";
     const params = [];
-    if (currentUserId) {
-      query += " WHERE created_by = ?";
-      params.push(currentUserId);
-    }
-    query += " ORDER BY created_at DESC";
 
     const [rows] = await pool.execute(query, params);
     res.json(rows);
