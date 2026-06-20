@@ -378,7 +378,7 @@ const RecipeDetails = () => {
           </div>
         ) : (
           <div className="overflow-hidden rounded-3xl border border-slate-200">
-            <table className="min-w-full divide-y divide-slate-200 bg-white text-sm">
+            <table className="min-w-full divide-y divide-slate-800 bg-transparent text-sm text-slate-200">
               <thead className="bg-slate-50 text-left text-xs uppercase tracking-[0.2em] text-slate-500">
                 <tr>
                   <th className="px-4 py-4">Recipe</th>

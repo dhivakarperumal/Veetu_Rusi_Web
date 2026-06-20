@@ -349,7 +349,7 @@ const WalletAndEarnings = () => {
         </div>
 
         <div className="mt-8 overflow-x-auto">
-          <table className="min-w-full border-separate border-spacing-y-3 text-left text-sm text-slate-600">
+          <table className="min-w-full border-separate border-spacing-y-3 text-left text-sm text-slate-200">
             <thead>
               <tr>
                 <th className="pb-3 pl-6 pr-4 font-semibold uppercase tracking-[0.2em] text-slate-500">Description</th>

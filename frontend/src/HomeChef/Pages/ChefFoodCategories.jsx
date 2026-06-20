@@ -195,8 +195,8 @@ const ChefFoodCategories = () => {
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-black text-slate-900">Food Categories</h1>
-            <p className="text-sm text-slate-500 mt-2">Manage food categories for your chef profile.</p>
+            <h1 className="text-3xl font-black text-white">Food Categories</h1>
+            <p className="text-sm text-slate-300 mt-2">Manage food categories for your chef profile.</p>
           </div>
           <button
             type="button"
@@ -208,28 +208,28 @@ const ChefFoodCategories = () => {
         </div>
 
         {categories.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-slate-200 p-12 text-center text-slate-500">
+          <div className="rounded-3xl border border-dashed border-slate-800 p-12 text-center text-slate-400 bg-[#0b0d10]">
             No categories yet. Use the button above to create your first food category.
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {categories.map((cat) => (
-              <div key={cat.id} className="bg-white rounded-4xl border border-slate-200 p-6 shadow-sm">
+              <div key={cat.id} className="bg-[#0f1216] rounded-4xl border border-slate-800 p-6 shadow-sm text-slate-200">
                 <div className="flex items-start justify-between gap-3 mb-4">
                   <div>
                     <p className="text-xs uppercase text-slate-400 tracking-[0.2em]">{cat.catId}</p>
-                    <h2 className="text-xl font-bold text-slate-900 mt-2">{cat.name}</h2>
+                    <h2 className="text-xl font-bold text-white mt-2">{cat.name}</h2>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => handleEdit(cat)} className="text-slate-500 hover:text-slate-900">
+                    <button onClick={() => handleEdit(cat)} className="text-slate-300 hover:text-white">
                       <FaEdit />
                     </button>
-                    <button onClick={() => handleDelete(cat)} className="text-rose-500 hover:text-rose-700">
+                    <button onClick={() => handleDelete(cat)} className="text-rose-400 hover:text-rose-600">
                       <FaTrash />
                     </button>
                   </div>
                 </div>
-                <p className="text-sm text-slate-600 mb-4">{cat.description}</p>
+                <p className="text-sm text-slate-300 mb-4">{cat.description}</p>
                 {cat.images?.length > 0 && (
                   <div className="grid grid-cols-2 gap-3">
                     {cat.images.map((img, idx) => (
@@ -244,67 +244,67 @@ const ChefFoodCategories = () => {
 
         {showModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="w-full max-w-3xl overflow-y-auto rounded-4xl bg-white p-6 shadow-2xl">
+            <div className="w-full max-w-3xl overflow-y-auto rounded-4xl bg-[#111319] p-6 shadow-2xl text-slate-200">
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h2 className="text-2xl font-black">{editId ? 'Edit' : 'Add'} Food Category</h2>
-                  <p className="text-sm text-slate-500">Create a category that is visible only for your chef account.</p>
+                  <h2 className="text-2xl font-black text-white">{editId ? 'Edit' : 'Add'} Food Category</h2>
+                  <p className="text-sm text-slate-300">Create a category that is visible only for your chef account.</p>
                 </div>
-                <button onClick={() => { setShowModal(false); resetForm(); }} className="text-slate-500 hover:text-slate-900">
+                <button onClick={() => { setShowModal(false); resetForm(); }} className="text-slate-300 hover:text-white">
                   <FaTimes />
                 </button>
               </div>
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                   <div>
-                    <label className="text-sm font-bold text-slate-700">Category ID</label>
+                    <label className="text-sm font-bold text-slate-300">Category ID</label>
                     <input
                       type="text"
                       name="catId"
                       value={category.catId}
                       disabled
-                      className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-100 px-5 py-4 text-sm text-slate-700"
+                      className="mt-2 w-full rounded-3xl border border-slate-800 bg-[#0b0d10] px-5 py-4 text-sm text-slate-200"
                     />
                   </div>
                   <div>
-                    <label className="text-sm font-bold text-slate-700">Category Name</label>
+                    <label className="text-sm font-bold text-slate-300">Category Name</label>
                     <input
                       type="text"
                       name="name"
                       value={category.name}
                       onChange={(e) => setCategory((prev) => ({ ...prev, name: e.target.value }))}
-                      className="mt-2 w-full rounded-3xl border border-slate-200 px-5 py-4 text-sm text-slate-700"
+                      className="mt-2 w-full rounded-3xl border border-slate-800 px-5 py-4 text-sm text-white bg-[#0b0d10]"
                       required
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="text-sm font-bold text-slate-700">Description</label>
+                  <label className="text-sm font-bold text-slate-300">Description</label>
                   <textarea
                     name="description"
                     value={category.description}
                     onChange={(e) => setCategory((prev) => ({ ...prev, description: e.target.value }))}
                     rows={4}
-                    className="mt-2 w-full rounded-3xl border border-slate-200 px-5 py-4 text-sm text-slate-700"
+                    className="mt-2 w-full rounded-3xl border border-slate-800 px-5 py-4 text-sm text-white bg-[#0b0d10]"
                     required
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-bold text-slate-700">Images</label>
+                  <label className="text-sm font-bold text-slate-300">Images</label>
                   <div className="mt-2 flex items-center gap-3 flex-wrap">
-                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 hover:border-slate-400">
+                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-3xl border border-dashed border-slate-700 bg-[#0b0d10] px-4 py-3 text-sm font-bold text-slate-200 hover:border-slate-500">
                       <FaImage /> Add Images
                       <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageChange} />
                     </label>
                     {previewImages.length > 0 && (
                       <div className="grid grid-cols-4 gap-3 w-full">
                         {previewImages.map((img, idx) => (
-                          <div key={idx} className="relative overflow-hidden rounded-2xl border border-slate-200">
+                          <div key={idx} className="relative overflow-hidden rounded-2xl border border-slate-800 bg-[#0b0d10]">
                             <img src={img} alt={`preview-${idx}`} className="h-24 w-full object-cover" />
                             <button
                               type="button"
                               onClick={() => removeImage(idx)}
-                              className="absolute right-2 top-2 rounded-full bg-white/90 p-1 text-rose-600 hover:text-rose-800"
+                              className="absolute right-2 top-2 rounded-full bg-white/10 p-1 text-rose-400 hover:text-rose-600"
                             >
                               <FaTimes />
                             </button>
@@ -318,7 +318,7 @@ const ChefFoodCategories = () => {
                   <button
                     type="button"
                     onClick={() => { setShowModal(false); resetForm(); }}
-                    className="rounded-3xl border border-slate-200 px-6 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50"
+                    className="rounded-3xl border border-slate-800 px-6 py-3 text-sm font-bold text-slate-300 hover:bg-[#0b0d10]"
                   >
                     Cancel
                   </button>

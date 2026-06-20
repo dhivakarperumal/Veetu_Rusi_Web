@@ -280,10 +280,7 @@ const ChefHeader = ({ onMenuClick }) => {
       : "Administrator";
 
   return (
-    <header className="sticky top-0 z-30 
-      bg-linear-to-r from-white via-white to-blue-50/30 backdrop-blur-md
-      border-b border-slate-200/60
-      shadow-[0_4px_30px_rgba(0,0,0,0.04)]">
+    <header className="sticky top-0 z-30 bg-[#0b0d10] border-b border-slate-800/60 shadow-[0_6px_30px_rgba(2,6,23,0.6)]">
 
       <div className="flex items-center justify-between px-4 py-3 sm:px-6">
 
@@ -292,15 +289,15 @@ const ChefHeader = ({ onMenuClick }) => {
           <button
             onClick={onMenuClick}
             className="lg:hidden p-2 rounded-xl 
-            bg-white hover:bg-slate-50 
-            text-slate-600 border border-slate-200 shadow-sm transition-all active:scale-95"
+            bg-[#0f1216] hover:bg-[#131418] 
+            text-slate-200 border border-slate-800 shadow-sm transition-all active:scale-95"
           >
             <Menu className="w-6 h-6" />
           </button>
 
           <div className="hidden sm:flex flex-col">
             <h1 className="text-xl sm:text-2xl font-black 
-              text-slate-800 tracking-tight truncate leading-none">
+              text-white tracking-tight truncate leading-none">
               {getPageTitle()}
             </h1>
             <p className="hidden sm:block text-[10px] text-emerald-600 font-bold uppercase tracking-[0.2em] mt-1 opacity-70">
@@ -324,29 +321,29 @@ const ChefHeader = ({ onMenuClick }) => {
                   onChange={handleSearchInput}
                   onFocus={() => searchQuery && setShowSearchResults(true)}
                   placeholder="Search recipes, orders, customers..."
-                  className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-8 py-3 text-sm focus:outline-none focus:ring-3 focus:ring-emerald-500/10 focus:border-emerald-300 text-slate-700 transition-all"
+                  className="w-full bg-[#0b0d10] border border-slate-800 rounded-xl pl-9 pr-8 py-3 text-sm focus:outline-none focus:ring-3 focus:ring-emerald-500/10 focus:border-emerald-300 text-slate-200 transition-all"
                 />
                 {searchQuery && (
-                  <button onClick={clearSearch} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700">
+                  <button onClick={clearSearch} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200">
                     <X className="w-3.5 h-3.5" />
                   </button>
                 )}
 
                 {/* Search Results Dropdown */}
                 {showSearchResults && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-100 rounded-2xl shadow-2xl z-200 overflow-hidden">
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-[#0f1216] border border-slate-800 rounded-2xl shadow-2xl z-200 overflow-hidden text-slate-200">
                     {searchLoading ? (
                       <div className="px-4 py-3 text-xs text-slate-400 font-bold">Searching...</div>
                     ) : searchResults.length > 0 ? (
-                      <div className="divide-y divide-slate-50 max-h-80 overflow-y-auto">
-                        <div className="px-4 py-2 bg-slate-50">
+                      <div className="divide-y divide-slate-800 max-h-80 overflow-y-auto">
+                        <div className="px-4 py-2 bg-[#0b0d10]">
                           <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{searchResults.length} Result{searchResults.length > 1 ? 's' : ''} found</p>
                         </div>
                         {searchResults.map(order => (
                           <button
                             key={order.id}
                             onClick={() => handleSearchResultClick(order.id)}
-                            className="w-full px-4 py-3 flex items-center gap-3 hover:bg-blue-50/50 transition-all text-left group"
+                            className="w-full px-4 py-3 flex items-center gap-3 hover:bg-blue-900/10 transition-all text-left group"
                           >
                             {/* Avatar */}
                             <div className="w-9 h-9 rounded-xl bg-slate-900 flex items-center justify-center text-white text-xs font-black shrink-0 shadow">
@@ -354,8 +351,8 @@ const ChefHeader = ({ onMenuClick }) => {
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between gap-2">
-                                <p className="text-xs font-black text-slate-800 truncate">{order.customer_name || "Unknown"}</p>
-                                <span className="text-[9px] font-black text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded shrink-0">ORD-0{order.id}</span>
+                                <p className="text-xs font-black text-white truncate">{order.customer_name || "Unknown"}</p>
+                                <span className="text-[9px] font-black text-blue-300 bg-blue-900/20 px-1.5 py-0.5 rounded shrink-0">ORD-0{order.id}</span>
                               </div>
                               <div className="flex items-center gap-2 mt-0.5">
                                 <span className="text-[10px] text-slate-400 font-bold truncate">{order.customer_phone || "No phone"}</span>
@@ -364,10 +361,10 @@ const ChefHeader = ({ onMenuClick }) => {
                               </div>
                             </div>
                             <div>
-                              <span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider ${order.status === 'Order Placed' ? 'bg-blue-100 text-blue-700' :
-                                order.status === 'Delivered' ? 'bg-emerald-100 text-emerald-700' :
-                                  order.status === 'Cancelled' ? 'bg-red-100 text-red-700' :
-                                    'bg-amber-100 text-amber-700'
+                              <span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider ${order.status === 'Order Placed' ? 'bg-blue-900/20 text-blue-300' :
+                                order.status === 'Delivered' ? 'bg-emerald-900/20 text-emerald-300' :
+                                  order.status === 'Cancelled' ? 'bg-red-900/20 text-red-300' :
+                                    'bg-amber-900/20 text-amber-300'
                                 }`}>{order.status}</span>
                             </div>
                           </button>
@@ -387,7 +384,7 @@ const ChefHeader = ({ onMenuClick }) => {
             <button
               onClick={() => { setShowSearch(p => !p); if (showSearch) clearSearch(); }}
               className={`p-2 rounded-xl transition-all active:scale-95 border
-              ${showSearch ? 'text-blue-600 bg-white border-blue-100 shadow-md shadow-blue-500/10' : 'bg-white text-slate-500 hover:bg-slate-50 border-slate-200 shadow-sm'}`}
+              ${showSearch ? 'text-blue-300 bg-[#0f1216] border-slate-800 shadow-md shadow-blue-900/20' : 'bg-[#0b0d10] text-slate-300 hover:bg-[#111319] border-slate-800 shadow-sm'}`}
             >
               <Search className="w-5 h-5" />
             </button>
@@ -398,7 +395,7 @@ const ChefHeader = ({ onMenuClick }) => {
             <button
               onClick={() => { setShowLowStock(p => !p); setShowNotifications(false); }}
               className={`relative p-2 rounded-xl transition-all active:scale-95 border
-              ${showLowStock ? 'bg-emerald-50 text-emerald-600 border-emerald-200 shadow-md' : 'bg-white text-slate-500 hover:bg-emerald-50 hover:text-emerald-500 border-slate-200 shadow-sm'}`}
+              ${showLowStock ? 'bg-emerald-900/10 text-emerald-300 border-emerald-800 shadow-md' : 'bg-[#0b0d10] text-slate-300 hover:bg-emerald-900/10 hover:text-emerald-300 border-slate-800 shadow-sm'}`}
               title="Menu Alerts"
             >
               <ChefHat className="w-5 h-5" />
@@ -410,20 +407,20 @@ const ChefHeader = ({ onMenuClick }) => {
             </button>
 
             {showLowStock && (
-              <div className="absolute right-0 mt-4 w-80 bg-white border border-slate-100 rounded-2xl shadow-2xl z-50 overflow-hidden">
+              <div className="absolute right-0 mt-4 w-80 bg-[#0f1216] border border-slate-800 rounded-2xl shadow-2xl z-50 overflow-hidden text-slate-200">
 
                   {/* Header */}
-                  <div className="px-5 py-4 border-b border-slate-50 flex items-center justify-between bg-emerald-50">
+                  <div className="px-5 py-4 border-b border-slate-800 flex items-center justify-between bg-[#0b0d10]">
                     <div className="flex items-center gap-2">
-                      <ChefHat className="w-4 h-4 text-emerald-500" />
-                      <h3 className="text-sm font-black text-slate-800 uppercase tracking-tight">Menu Alerts</h3>
+                      <ChefHat className="w-4 h-4 text-emerald-400" />
+                      <h3 className="text-sm font-black text-white uppercase tracking-tight">Menu Alerts</h3>
                     </div>
-                    <span className="text-[10px] font-black bg-emerald-100 text-emerald-700 px-2.5 py-0.5 rounded-lg uppercase">
+                    <span className="text-[10px] font-black bg-emerald-900/20 text-emerald-300 px-2.5 py-0.5 rounded-lg uppercase">
                       {lowStockItems.length} Alert{lowStockItems.length !== 1 ? 's' : ''}
                     </span>
                   </div>
 
-                  <div className="max-h-100 overflow-y-auto divide-y divide-slate-50">
+                  <div className="max-h-100 overflow-y-auto divide-y divide-slate-800">
                     {lowStockItems.length > 0 ? lowStockItems.map(product => {
                       const stock = parseInt(product.total_stock ?? product.stock ?? 0);
                       const isOut = stock <= 0;
@@ -434,21 +431,21 @@ const ChefHeader = ({ onMenuClick }) => {
                         <button
                           key={product.id}
                           onClick={() => { navigate(getDynamicPath('/admin/products/stock')); setShowLowStock(false); }}
-                          className="w-full px-4 py-3 flex items-center gap-3 hover:bg-amber-50/40 transition-all text-left group"
+                          className="w-full px-4 py-3 flex items-center gap-3 hover:bg-amber-500/10 transition-all text-left group"
                         >
                           {/* Product image */}
-                          <div className="w-10 h-10 rounded-xl overflow-hidden bg-gray-100 border border-gray-100 shrink-0">
+                          <div className="w-10 h-10 rounded-xl overflow-hidden bg-[#0f1216] border border-slate-800 shrink-0">
                             <img src={img} alt={product.name} className="w-full h-full object-cover" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-xs font-black text-slate-800 truncate">{product.name}</p>
+                            <p className="text-xs font-black text-white truncate">{product.name}</p>
                             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider truncate mt-0.5">{product.category || product.product_code || '—'}</p>
                           </div>
                           <div className="text-right shrink-0">
-                            <p className={`text-sm font-black ${isOut ? 'text-red-600' : 'text-amber-600'}`}>
+                            <p className={`text-sm font-black ${isOut ? 'text-red-400' : 'text-amber-300'}`}>
                               {stock}
                             </p>
-                            <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded ${isOut ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'
+                            <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded ${isOut ? 'bg-red-900/10 text-red-400' : 'bg-amber-900/10 text-amber-300'
                               }`}>
                               {isOut ? 'Out' : 'Low'}
                             </span>
@@ -466,7 +463,7 @@ const ChefHeader = ({ onMenuClick }) => {
                   <Link
                     to={getDynamicPath("/admin/products/stock")}
                     onClick={() => setShowLowStock(false)}
-                    className="block w-full py-3.5 text-center text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] bg-emerald-50/60 hover:bg-emerald-50 transition-colors border-t border-slate-50"
+                    className="block w-full py-3.5 text-center text-[10px] font-black text-emerald-300 uppercase tracking-[0.2em] bg-emerald-900/10 hover:bg-emerald-900/20 transition-colors border-t border-slate-800"
                   >
                     View Menu Report →
                   </Link>
@@ -479,7 +476,7 @@ const ChefHeader = ({ onMenuClick }) => {
             <button
               onClick={() => setShowNotifications(p => !p)}
               className={`relative p-2 rounded-xl transition-all active:scale-95 border
-              ${showNotifications ? 'bg-white text-blue-600 border-blue-100 shadow-md shadow-blue-500/10' : 'bg-white text-slate-500 hover:bg-slate-50 border-slate-200 shadow-sm'}`}
+              ${showNotifications ? 'bg-[#0f1216] text-blue-300 border-slate-800 shadow-md shadow-blue-900/20' : 'bg-[#0b0d10] text-slate-300 hover:bg-[#111319] border-slate-800 shadow-sm'}`}
             >
               <Bell className="w-5 h-5" />
               {unreadCount > 0 && (
@@ -490,16 +487,13 @@ const ChefHeader = ({ onMenuClick }) => {
             </button>
 
             {showNotifications && (
-              <div className="absolute right-0 mt-4 w-80 
-              bg-white 
-              border border-slate-100
-              rounded-2xl shadow-2xl z-50 overflow-hidden">
+              <div className="absolute right-0 mt-4 w-80 bg-[#0f1216] border border-slate-800 rounded-2xl shadow-2xl z-50 overflow-hidden text-slate-200">
 
-                  <div className="px-5 py-4 border-b border-slate-50 flex items-center justify-between bg-white sticky top-0">
-                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-tight">
+                  <div className="px-5 py-4 border-b border-slate-800 flex items-center justify-between bg-[#0b0d10] sticky top-0">
+                    <h3 className="text-sm font-black text-white uppercase tracking-tight">
                       Chef Orders
                     </h3>
-                    <span className="text-[10px] font-black bg-emerald-50 text-emerald-600 px-2.5 py-1 rounded-lg uppercase">
+                    <span className="text-[10px] font-black bg-emerald-900/20 text-emerald-300 px-2.5 py-1 rounded-lg uppercase">
                       {(notifications.today?.length || 0) + (notifications.earlier?.length || 0)} Pending
                     </span>
                   </div>
@@ -510,28 +504,28 @@ const ChefHeader = ({ onMenuClick }) => {
                         {/* Today Section */}
                         {notifications.today?.length > 0 && (
                           <>
-                            <div className="px-5 py-2 bg-slate-50/50 sticky top-0 z-10 backdrop-blur-sm">
-                              <p className="text-[9px] font-black text-blue-600 uppercase tracking-[0.2em]">Today's Orders</p>
+                            <div className="px-5 py-2 bg-slate-900/80 sticky top-0 z-10 backdrop-blur-sm">
+                              <p className="text-[9px] font-black text-blue-300 uppercase tracking-[0.2em]">Today's Orders</p>
                             </div>
                             {notifications.today.map((order) => (
                               <button
                                 key={order.id}
                                 onClick={() => handleNotificationClick(order.id)}
-                                className="w-full px-5 py-4 flex items-start gap-4 hover:bg-blue-50/30 transition-all text-left group  "
+                                className="w-full px-5 py-4 flex items-start gap-4 hover:bg-blue-900/20 transition-all text-left group"
                               >
-                                <div className="w-10 h-10 rounded-xl bg-blue-100/50 flex items-center justify-center text-blue-600 shrink-0 group-hover:scale-110 transition-transform shadow-sm">
+                                <div className="w-10 h-10 rounded-xl bg-[#0b0d10] border border-slate-800 flex items-center justify-center text-blue-300 shrink-0 group-hover:scale-110 transition-transform shadow-sm">
                                   <ShoppingBag className="w-5 h-5" />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center justify-between mb-0.5">
-                                    <p className="text-sm font-black text-slate-800 tracking-tight">ORD-0{order.id}</p>
-                                    <p className="text-[12px] text-blue-600 font-black">₹{Number(order.total_amount).toLocaleString('en-IN')}</p>
+                                    <p className="text-sm font-black text-white tracking-tight">ORD-0{order.id}</p>
+                                    <p className="text-[12px] text-blue-300 font-black">₹{Number(order.total_amount).toLocaleString('en-IN')}</p>
                                   </div>
                                   <div className="flex items-center justify-between">
-                                    <p className="text-[10px] text-slate-500 font-bold truncate">
+                                    <p className="text-[10px] text-slate-300 font-bold truncate">
                                       {order.customer_name || "New Customer"}
                                     </p>
-                                    <span className="text-[9px] bg-blue-50 text-green-600 font-black px-1.5 py-0.5 rounded uppercase">
+                                    <span className="text-[9px] bg-blue-900/10 text-green-300 font-black px-1.5 py-0.5 rounded uppercase">
                                       {order.status}
                                     </span>
                                   </div>
@@ -546,28 +540,28 @@ const ChefHeader = ({ onMenuClick }) => {
                         {/* Earlier Section */}
                         {notifications.earlier?.length > 0 && (
                           <>
-                            <div className="px-5 py-2 bg-slate-50/50 sticky top-0 z-10 backdrop-blur-sm">
+                            <div className="px-5 py-2 bg-slate-900/80 sticky top-0 z-10 backdrop-blur-sm">
                               <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Earlier Pending</p>
                             </div>
                             {notifications.earlier.map((order) => (
                               <button
                                 key={order.id}
                                 onClick={() => handleNotificationClick(order.id)}
-                                className="w-full px-5 py-4 flex items-start gap-4 hover:bg-slate-50 transition-all text-left group opacity-80 hover:opacity-100"
+                                className="w-full px-5 py-4 flex items-start gap-4 hover:bg-slate-800/70 transition-all text-left group opacity-80 hover:opacity-100"
                               >
-                                <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 shrink-0 group-hover:scale-110 transition-transform">
+                                <div className="w-10 h-10 rounded-xl bg-[#0b0d10] border border-slate-800 flex items-center justify-center text-slate-300 shrink-0 group-hover:scale-110 transition-transform">
                                   <ShoppingBag className="w-5 h-5" />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center justify-between mb-0.5">
-                                    <p className="text-sm font-black text-slate-800 tracking-tight">#ORD-0{order.id}</p>
-                                    <p className="text-[12px] text-slate-600 font-black">₹{Number(order.total_amount).toLocaleString('en-IN')}</p>
+                                    <p className="text-sm font-black text-white tracking-tight">#ORD-0{order.id}</p>
+                                    <p className="text-[12px] text-slate-300 font-black">₹{Number(order.total_amount).toLocaleString('en-IN')}</p>
                                   </div>
                                   <div className="flex items-center justify-between">
-                                    <p className="text-[10px] text-slate-400 font-bold truncate">
+                                    <p className="text-[10px] text-slate-300 font-bold truncate">
                                       {order.customer_name || "New Customer"}
                                     </p>
-                                    <span className="text-[9px] bg-slate-100 text-slate-500 font-black px-1.5 py-0.5 rounded uppercase">
+                                    <span className="text-[9px] bg-slate-900/70 text-slate-300 font-black px-1.5 py-0.5 rounded uppercase">
                                       {order.status}
                                     </span>
                                   </div>
@@ -584,8 +578,8 @@ const ChefHeader = ({ onMenuClick }) => {
                       </div>
                     ) : (
                       <div className="px-6 py-12 text-center text-slate-400">
-                        <Package className="mx-auto w-12 h-12 opacity-10 mb-3" />
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-50">
+                        <Package className="mx-auto w-12 h-12 opacity-20 mb-3" />
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60">
                           All orders processed
                         </p>
                       </div>
@@ -596,7 +590,7 @@ const ChefHeader = ({ onMenuClick }) => {
                     <Link
                       to={getDynamicPath("/admin/orders/new")}
                       onClick={() => setShowNotifications(false)}
-                      className="block w-full py-4 text-center text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] bg-emerald-50/50 hover:bg-emerald-50 transition-colors border-t border-slate-50"
+                      className="block w-full py-4 text-center text-[10px] font-black text-emerald-300 uppercase tracking-[0.2em] bg-emerald-900/10 hover:bg-emerald-900/20 transition-colors border-t border-slate-800"
                     >
                       View All Orders
                     </Link>
@@ -610,7 +604,7 @@ const ChefHeader = ({ onMenuClick }) => {
             <button
               onClick={() => setShowDropdown(p => !p)}
               className={`flex items-center gap-3 px-2 py-1.5 sm:px-3 rounded-2xl transition-all active:scale-95 border
-              ${showDropdown ? 'bg-blue-50 border-blue-100' : 'bg-slate-50 border-slate-100 hover:bg-slate-100'}`}
+              ${showDropdown ? 'bg-[#0f1216] border-slate-800' : 'bg-[#0b0d10] border-slate-800 hover:bg-[#111319]'}`}
             >
               <div className="w-8 h-8 rounded-xl 
                 bg-slate-900 flex items-center justify-center text-white text-xs font-black shadow-lg">
@@ -618,10 +612,10 @@ const ChefHeader = ({ onMenuClick }) => {
               </div>
 
               <div className="hidden md:block text-left leading-tight">
-                <p className="text-xs font-black text-slate-800">
+                <p className="text-xs font-black text-white">
                   {userName}
                 </p>
-                <p className="text-[9px] text-blue-600 font-bold uppercase tracking-widest opacity-70">
+                <p className="text-[9px] text-emerald-300 font-bold uppercase tracking-widest opacity-75">
                   {userRole}
                 </p>
               </div>
@@ -633,43 +627,27 @@ const ChefHeader = ({ onMenuClick }) => {
             </button>
 
             {showDropdown && (
-              <div className="absolute right-0 mt-4 w-52
-                  bg-white 
-                  border border-slate-100
-                  rounded-2xl shadow-2xl z-50 p-2 overflow-hidden">
+              <div className="absolute right-0 mt-4 w-52 bg-[#0f1216] border border-slate-800 rounded-2xl shadow-2xl z-50 p-2 overflow-hidden text-slate-200">
 
-                  <div className="px-3 py-2 border-b border-slate-50 mb-1">
-                    <p className="text-sm font-semibold text-black">
+                  <div className="px-3 py-2 border-b border-slate-800 mb-1">
+                    <p className="text-sm font-semibold text-white">
                       {userName}
                     </p>
-                    <p className="text-xs text-black/60">
+                    <p className="text-xs text-slate-300">
                       {email}
                     </p>
                   </div>
 
                   <Link
                     to={getDynamicPath("/admin/profile")}
-                    className="flex items-center gap-3 px-3 py-2.5 
-                    rounded-xl hover:bg-blue-50 hover:text-blue-600
-                    text-sm text-slate-600 transition font-bold"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[#0b1720] text-sm text-slate-300 transition font-bold"
                   >
                     <User className="w-4 h-4 opacity-50" /> Profile
                   </Link>
 
-                  {/* <Link
-                    to="/admin/settings"
-                    className="flex items-center gap-3 px-3 py-2.5 
-                    rounded-xl hover:bg-blue-50 hover:text-blue-600
-                    text-sm text-slate-600 transition font-bold"
-                  >
-                    <Settings className="w-4 h-4 opacity-50" /> Settings
-                  </Link> */}
-
                   <button
                     onClick={handleLogout}
-                    className="flex items-center gap-3 px-3 py-2 
-                    rounded-xl hover:bg-red-500/20 
-                    text-sm text-red-400 w-full transition"
+                    className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-red-900/10 text-sm text-red-400 w-full transition"
                   >
                     <LogOut className="w-4 h-4" /> Logout
                   </button>

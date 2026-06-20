@@ -130,12 +130,12 @@ const ChefFoodCategoryAdd = () => {
       <div className="max-w-4xl mx-auto">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-black text-slate-900">Add Food Category</h1>
-            <p className="text-sm text-slate-500 mt-2">Create a new food category for your chef profile.</p>
+            <h1 className="text-3xl font-black text-white">Add Food Category</h1>
+            <p className="text-sm text-slate-300 mt-2">Create a new food category for your chef profile.</p>
           </div>
         </div>
 
-        <div className="rounded-4xl border border-slate-200 bg-white p-8 shadow-sm">
+        <div className="rounded-4xl border border-slate-800 bg-[#111319] p-8 shadow-sm text-slate-200">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
               <div>
@@ -144,7 +144,7 @@ const ChefFoodCategoryAdd = () => {
                   type="text"
                   value={category.catId}
                   disabled
-                  className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-100 px-5 py-4 text-sm text-slate-700"
+                  className="mt-2 w-full rounded-3xl border border-slate-800 bg-[#0b0d10] px-5 py-4 text-sm text-slate-200"
                 />
               </div>
               <div>
@@ -154,7 +154,7 @@ const ChefFoodCategoryAdd = () => {
                   value={category.name}
                   onChange={(e) => setCategory((prev) => ({ ...prev, name: e.target.value }))}
                   placeholder="Enter category name"
-                  className="mt-2 w-full rounded-3xl border border-slate-200 px-5 py-4 text-sm text-slate-700"
+                  className="mt-2 w-full rounded-3xl border border-slate-800 px-5 py-4 text-sm text-slate-200 bg-[#0b0d10]"
                   required
                 />
               </div>

@@ -124,44 +124,44 @@ const ChefReviews = () => {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 mb-3">
-            <div className="rounded-2xl bg-slate-900/5 p-3 text-slate-900">
+            <div className="rounded-2xl bg-[#0b0d10] p-3 text-slate-200">
               <MessageSquare className="w-5 h-5" />
             </div>
             <div>
               <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Chef Reviews</p>
-              <h1 className="text-3xl font-black text-slate-900">Customer feedback</h1>
+              <h1 className="text-3xl font-black text-white">Customer feedback</h1>
             </div>
           </div>
-          <p className="max-w-2xl text-sm text-slate-500">
+          <p className="max-w-2xl text-sm text-slate-300">
             Review details for products from your assigned franchise.
             Search, filter by product, and inspect customer ratings here.
           </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full sm:w-auto">
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-3xl border border-slate-800 bg-[#0f1216] p-5 shadow-sm text-slate-200">
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Total reviews</p>
-            <p className="mt-3 text-3xl font-black text-slate-900">{reviewStats.total_reviews}</p>
+            <p className="mt-3 text-3xl font-black text-white">{reviewStats.total_reviews}</p>
           </div>
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-3xl border border-slate-800 bg-[#0f1216] p-5 shadow-sm text-slate-200">
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Average rating</p>
-            <p className="mt-3 text-3xl font-black text-slate-900 flex items-center gap-2">
+            <p className="mt-3 text-3xl font-black text-white flex items-center gap-2">
               {reviewStats.average_rating}
               <Star className="w-5 h-5 text-amber-500" />
             </p>
           </div>
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-3xl border border-slate-800 bg-[#0f1216] p-5 shadow-sm text-slate-200">
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Products</p>
-            <p className="mt-3 text-3xl font-black text-slate-900">{products.length}</p>
+            <p className="mt-3 text-3xl font-black text-white">{products.length}</p>
           </div>
         </div>
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[360px_1fr]">
-        <div className="space-y-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="space-y-4 rounded-3xl border border-slate-800 bg-[#0f1216] p-5 shadow-sm text-slate-200">
           <div className="space-y-2">
-            <h2 className="text-lg font-black text-slate-900">Filters</h2>
-            <p className="text-sm text-slate-500">Narrow the review results by product, rating, or keyword.</p>
+            <h2 className="text-lg font-black text-white">Filters</h2>
+            <p className="text-sm text-slate-300">Narrow the review results by product, rating, or keyword.</p>
           </div>
 
           <div className="space-y-4">
@@ -170,7 +170,7 @@ const ChefReviews = () => {
               <select
                 value={selectedProduct}
                 onChange={(e) => setSelectedProduct(e.target.value)}
-                className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400"
+                className="mt-2 w-full rounded-2xl border border-slate-800 bg-[#0b0d10] px-4 py-3 text-sm text-white outline-none transition focus:border-slate-600"
               >
                 <option value="">All products</option>
                 {products.map((product) => (
@@ -190,10 +190,10 @@ const ChefReviews = () => {
                     type="button"
                     onClick={() => setSelectedRating(rating === 'All' ? null : rating)}
                     className={`rounded-2xl px-4 py-2 text-sm font-black uppercase tracking-[0.16em] transition ${
-                      selectedRating === rating || (rating === 'All' && selectedRating === null)
-                        ? 'bg-slate-900 text-white'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                    }`}
+                          selectedRating === rating || (rating === 'All' && selectedRating === null)
+                            ? 'bg-slate-900 text-white'
+                            : 'bg-[#0b0d10] text-slate-300 hover:bg-[#0f1216]'
+                        }`}
                   >
                     {rating}
                   </button>
@@ -210,74 +210,74 @@ const ChefReviews = () => {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search by customer, comment or product"
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 pl-11 pr-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400"
+                  className="w-full rounded-2xl border border-slate-800 bg-[#0b0d10] pl-11 pr-4 py-3 text-sm text-white outline-none transition focus:border-slate-600"
                 />
               </div>
             </div>
 
-            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
-              <p className="font-black text-slate-900">Chef user</p>
+            <div className="rounded-3xl border border-slate-800 bg-[#0b0d10] p-4 text-sm text-slate-300">
+              <p className="font-black text-white">Chef user</p>
               <p>{user?.name || user?.username || user?.email || 'Unknown user'}</p>
             </div>
           </div>
         </div>
 
         <div className="space-y-4">
-          <div className="flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-4 rounded-3xl border border-slate-800 bg-[#0f1216] p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between text-slate-200">
             <div>
-              <p className="text-sm font-black text-slate-900">Review results</p>
-              <p className="text-sm text-slate-500">{filteredReviews.length} reviews shown</p>
+              <p className="text-sm font-black text-white">Review results</p>
+              <p className="text-sm text-slate-300">{filteredReviews.length} reviews shown</p>
             </div>
             <div className="grid grid-cols-3 gap-3 sm:grid-cols-3">
-              <div className="rounded-3xl bg-slate-50 p-3 text-center">
+              <div className="rounded-3xl bg-[#0b0d10] p-3 text-center">
                 <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400">5-star</p>
-                <p className="mt-2 text-lg font-black text-slate-900">{reviewStats.five_star}</p>
+                <p className="mt-2 text-lg font-black text-white">{reviewStats.five_star}</p>
               </div>
-              <div className="rounded-3xl bg-slate-50 p-3 text-center">
+              <div className="rounded-3xl bg-[#0b0d10] p-3 text-center">
                 <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400">4-star</p>
-                <p className="mt-2 text-lg font-black text-slate-900">{reviewStats.four_star}</p>
+                <p className="mt-2 text-lg font-black text-white">{reviewStats.four_star}</p>
               </div>
-              <div className="rounded-3xl bg-slate-50 p-3 text-center">
+              <div className="rounded-3xl bg-[#0b0d10] p-3 text-center">
                 <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400">3-star+</p>
-                <p className="mt-2 text-lg font-black text-slate-900">{reviewStats.three_star + reviewStats.four_star + reviewStats.five_star}</p>
+                <p className="mt-2 text-lg font-black text-white">{reviewStats.three_star + reviewStats.four_star + reviewStats.five_star}</p>
               </div>
             </div>
           </div>
 
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-3xl border border-slate-800 bg-[#0f1216] p-5 shadow-sm text-slate-200">
             {loadingProducts || loadingReviews ? (
               <div className="flex flex-col items-center justify-center gap-3 py-20 text-slate-500">
                 <Loader2 className="h-8 w-8 animate-spin" />
                 <p className="text-sm font-medium">Loading reviews...</p>
               </div>
             ) : !products.length ? (
-              <div className="rounded-3xl border border-dashed border-slate-300 p-10 text-center text-slate-500">
+              <div className="rounded-3xl border border-dashed border-slate-800 p-10 text-center text-slate-400 bg-[#0b0d10]">
                 No products found for your profile yet. Add items or check with your franchise owner.
               </div>
             ) : filteredReviews.length === 0 ? (
-              <div className="rounded-3xl border border-dashed border-slate-300 p-10 text-center text-slate-500">
+              <div className="rounded-3xl border border-dashed border-slate-800 p-10 text-center text-slate-400 bg-[#0b0d10]">
                 No reviews match your filters. Try another product, rating, or keyword.
               </div>
             ) : (
               <div className="space-y-4">
                 {filteredReviews.map((review) => (
-                  <div key={review.id} className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                  <div key={review.id} className="rounded-3xl border border-slate-800 bg-[#0b0d10] p-5 text-slate-200">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
-                        <p className="text-sm font-black uppercase tracking-[0.2em] text-slate-500">{review.product_name}</p>
-                        <h3 className="mt-2 text-lg font-black text-slate-900">{review.user_name || review.user_email || 'Customer'}</h3>
+                        <p className="text-sm font-black uppercase tracking-[0.2em] text-slate-400">{review.product_name}</p>
+                        <h3 className="mt-2 text-lg font-black text-white">{review.user_name || review.user_email || 'Customer'}</h3>
                       </div>
                       <div className="text-right">
                         <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Rating</p>
-                        <p className="mt-2 text-lg font-black text-amber-500">{review.rating || 0} / 5</p>
-                        <p className="mt-2 text-xs text-slate-500">{formatDate(review.created_at)}</p>
+                        <p className="mt-2 text-lg font-black text-amber-400">{review.rating || 0} / 5</p>
+                        <p className="mt-2 text-xs text-slate-300">{formatDate(review.created_at)}</p>
                       </div>
                     </div>
-                    <div className="mt-4 flex flex-wrap gap-2 text-sm text-slate-500">
-                      <span className="rounded-full bg-white px-3 py-1 border border-slate-200">{review.user_email || 'No email'}</span>
-                      <span className="rounded-full bg-white px-3 py-1 border border-slate-200">Status: {review.status || 'Published'}</span>
+                    <div className="mt-4 flex flex-wrap gap-2 text-sm text-slate-300">
+                      <span className="rounded-full bg-[#0f1216] px-3 py-1 border border-slate-800">{review.user_email || 'No email'}</span>
+                      <span className="rounded-full bg-[#0f1216] px-3 py-1 border border-slate-800">Status: {review.status || 'Published'}</span>
                     </div>
-                    <p className="mt-4 text-sm leading-relaxed text-slate-700">{review.comment || 'No review comment available.'}</p>
+                    <p className="mt-4 text-sm leading-relaxed text-slate-300">{review.comment || 'No review comment available.'}</p>
                   </div>
                 ))}
               </div>

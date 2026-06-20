@@ -151,7 +151,7 @@ const OrderManagement = () => {
       ) : (
         <div className="bg-[#0B1120]/40 backdrop-blur-md border border-white/5 rounded-[2.5rem] overflow-hidden shadow-xl">
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
+            <table className="w-full text-left text-slate-200">
               <thead>
                 <tr className="border-b border-white/5 bg-[#070b13]/30">
                       <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Order ID</th>
