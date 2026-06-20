@@ -595,6 +595,13 @@ exports.updateCategory = async (req, res) => {
             params.push(JSON.stringify(updates.images !== undefined ? updates.images : updates.cimgs));
         }
 
+        // Always update the updated_by field with the user's ID, not their name
+        const updatedByUserId = req.user?.user_id || req.user?.id || req.body?.updated_by || null;
+        if (updatedByUserId) {
+            fields.push('updated_by = ?');
+            params.push(updatedByUserId);
+        }
+
         if (fields.length === 0) {
             return res.status(400).json({ message: 'No fields to update' });
         }

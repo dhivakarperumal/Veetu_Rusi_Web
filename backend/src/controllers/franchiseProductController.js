@@ -157,7 +157,7 @@ exports.createProduct = async (req, res) => {
 
         const finalProductCode = product_code || await generateNextProductCode();
 
-        const createdBy = req.user?.user_id || req.user?.id || req.user?.email || req.body.created_by || 'Admin';
+        const createdBy = req.user?.user_id || req.user?.id || req.body?.created_by || req.user?.email || 'Admin';
 
         const params = [
             name, description || null, category, product_type || 'Cooked Food', subcategory || null,
@@ -215,7 +215,7 @@ exports.updateProduct = async (req, res) => {
             return res.status(404).json({ message: 'Franchise product not found' });
         }
 
-        const updatedBy = req.user?.user_id || req.user?.id || req.user?.email || req.body.updated_by || 'Admin';
+        const updatedBy = req.user?.user_id || req.user?.id || req.body?.updated_by || req.user?.email || 'Admin';
 
         const updateQuery = `UPDATE franchise_products SET
                 name = ?, description = ?, category = ?, product_type = ?, subcategory = ?,

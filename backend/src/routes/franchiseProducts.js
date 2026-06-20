@@ -16,9 +16,9 @@ router.get('/:id', attachUser, franchiseProductController.getProductById);
 router.post('/', attachUser, franchiseProductController.createProduct);
 
 // Update franchise product
-router.put('/:id', franchiseProductController.updateProduct);
+router.put('/:id', attachUser, franchiseProductController.updateProduct);
 
 // Delete franchise product
-router.delete('/:id', franchiseProductController.deleteProduct);
+router.delete('/:id', attachUser, franchiseProductController.deleteProduct);
 
 module.exports = router;
