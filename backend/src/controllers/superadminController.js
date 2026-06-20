@@ -530,14 +530,14 @@ exports.getOrders = async (req, res) => {
     
     // Role-based filtering:
     // - superadmin → see all orders unless franchise_user_id is provided
-    // - admin/franchise → see only orders where their franchise_user_id matches, or where query param is provided for a specific franchise
+    // - admin/franchise → see only orders where their franchise user matches, or where query param is provided for a specific franchise
     // - user → see only their own orders by user_id
     // - chef → filter in JS below by product ownership
     if (franchise_user_id) {
-      query += " AND franchise_user_id = ?";
+      query += " AND created_by = ?";
       params.push(franchise_user_id);
     } else if (role === 'franchise' || role === 'admin') {
-      query += " AND franchise_user_id = ?";
+      query += " AND created_by = ?";
       params.push(currentUserId);
     } else if (role === 'user') {
       query += " AND user_id = ?";
