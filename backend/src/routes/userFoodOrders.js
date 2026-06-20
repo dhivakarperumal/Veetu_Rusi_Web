@@ -28,10 +28,6 @@ const initUserFoodOrderTable = async () => {
         total_amount DECIMAL(10,2) DEFAULT 0,
         items JSON,
         delivery_partner VARCHAR(255),
-        created_by_user_id VARCHAR(255),
-        created_by_name VARCHAR(255),
-        created_by_email VARCHAR(255),
-        created_by_phone VARCHAR(20),
         chef_user_id VARCHAR(255),
         chef_id VARCHAR(255),
         chef_name VARCHAR(255),
@@ -64,7 +60,7 @@ initUserFoodOrderTable();
 
 router.get('/', verifyToken, async (req, res) => {
   try {
-    const { status, chef_id, franchise_user_id, franchise_id, created_by_user_id, ordered_by_user_id, user_id, search } = req.query;
+    const { status, chef_id, franchise_user_id, franchise_id, ordered_by_user_id, user_id, search } = req.query;
     const orders = await controller.getAllOrders({
       role: req.user?.role,
       userId: req.user?.user_id,
@@ -74,7 +70,6 @@ router.get('/', verifyToken, async (req, res) => {
       franchise_user_id,
       franchise_id,
       user_id,
-      created_by_user_id,
       ordered_by_user_id,
       search
     });
