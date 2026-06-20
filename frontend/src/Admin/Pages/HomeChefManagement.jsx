@@ -781,8 +781,17 @@ const HomeChefManagement = () => {
 
   const renderFileField = (fieldName, label, currentValue) => {
     const previewUrl = getPreviewUrl(currentValue);
-    const showImagePreview = previewUrl && isImageField(fieldName);
-    const showVideoPreview = previewUrl && (fieldName === "introduction_video" || isVideoDataUrl(previewUrl));
+    // Determine MIME type when the value is a File (single or array)
+    const fileType = currentValue instanceof File
+      ? currentValue.type
+      : Array.isArray(currentValue) && currentValue.length > 0 && currentValue[0] instanceof File
+        ? currentValue[0].type
+        : null;
+    const isImageMime = fileType ? fileType.startsWith('image/') : false;
+    const isVideoMime = fileType ? fileType.startsWith('video/') : false;
+
+    const showImagePreview = previewUrl && (isImageField(fieldName) && (isImageMime || isImageDataUrl(previewUrl) || previewUrl.startsWith('http') && (previewUrl.match(/\.(jpg|jpeg|png|webp)$/i))));
+    const showVideoPreview = previewUrl && (fieldName === "introduction_video" || isVideoDataUrl(previewUrl) || isVideoMime || previewUrl.startsWith('blob:'));
     const fieldError = validationErrors[fieldName];
 
     return (
