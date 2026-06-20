@@ -38,13 +38,24 @@ const generateNextProductCode = async () => {
 
 exports.getAllProducts = async (req, res) => {
     try {
-        const { category, status } = req.query;
+        const { category, status, franchise_user_id, search } = req.query;
         let query = 'SELECT * FROM franchise_products WHERE 1=1';
         const params = [];
 
         if (category) {
             query += ' AND category = ?';
             params.push(category);
+        }
+
+        if (franchise_user_id) {
+            query += ' AND created_by = ?';
+            params.push(franchise_user_id);
+        } else if (req.user && (req.user.role === 'franchise' || req.user.role === 'Franchise')) {
+            const loggedInUserId = req.user.user_id || req.user.id;
+            if (loggedInUserId) {
+                query += ' AND created_by = ?';
+                params.push(loggedInUserId);
+            }
         }
 
         // Only apply status filter if explicitly requested; default to showing Active products
@@ -54,6 +65,11 @@ exports.getAllProducts = async (req, res) => {
         } else if (!status) {
             // For public shop, show only Active products by default
             query += ' AND status = \'Active\'';
+        }
+
+        if (search) {
+            query += ' AND (name LIKE ? OR product_code LIKE ?)';
+            params.push(`%${search}%`, `%${search}%`);
         }
 
         query += ' ORDER BY created_at DESC';
@@ -141,6 +157,8 @@ exports.createProduct = async (req, res) => {
 
         const finalProductCode = product_code || await generateNextProductCode();
 
+        const createdBy = req.user?.user_id || req.user?.id || req.user?.email || req.body.created_by || 'Admin';
+
         const params = [
             name, description || null, category, product_type || 'Cooked Food', subcategory || null,
             mrp, offer || 0, offer_price || mrp, finalProductCode, total_stock || 0,
@@ -152,14 +170,15 @@ exports.createProduct = async (req, res) => {
             shelf_life_days || null, net_weight || null, package_count || null,
             packaging_type || 'Pouch', manufacture_date || null,
             variants ? JSON.stringify(variants) : null,
-            images ? JSON.stringify(images) : null
+            images ? JSON.stringify(images) : null,
+            createdBy
         ];
 
         const columns = `name, description, category, product_type, subcategory, mrp, offer, offer_price,
             product_code, total_stock, rating, status, material, nutrition_info, storage_instructions,
             presentation_style, portion_format, service_type, packaging_notes, dietary_tag, heat_profile,
             serving_size, prep_time, ingredients, spice_level, shelf_life_days, net_weight, package_count,
-            packaging_type, manufacture_date, variants, images`;
+            packaging_type, manufacture_date, variants, images, created_by`;
 
         const placeholders = params.map(() => '?').join(', ');
         const insertParams = params.map(v => v === undefined ? null : v);
@@ -196,6 +215,8 @@ exports.updateProduct = async (req, res) => {
             return res.status(404).json({ message: 'Franchise product not found' });
         }
 
+        const updatedBy = req.user?.user_id || req.user?.id || req.user?.email || req.body.updated_by || 'Admin';
+
         const updateQuery = `UPDATE franchise_products SET
                 name = ?, description = ?, category = ?, product_type = ?, subcategory = ?,
                 mrp = ?, offer = ?, offer_price = ?, product_code = ?, total_stock = ?,
@@ -204,7 +225,7 @@ exports.updateProduct = async (req, res) => {
                 dietary_tag = ?, heat_profile = ?, serving_size = ?, prep_time = ?,
                 ingredients = ?, spice_level = ?, shelf_life_days = ?, net_weight = ?,
                 package_count = ?, packaging_type = ?, manufacture_date = ?, variants = ?, images = ?,
-                updated_at = NOW()
+                updated_by = ?, updated_at = NOW()
             WHERE id = ?`;
         const params = [
             name, description, category, product_type, subcategory, mrp, offer, offer_price,
@@ -213,7 +234,7 @@ exports.updateProduct = async (req, res) => {
             serving_size, prep_time, ingredients, spice_level, shelf_life_days, net_weight, package_count,
             packaging_type, manufacture_date, serializeJsonField(variants),
             images ? JSON.stringify(images) : null,
-            id
+            updatedBy, id
         ];
 
         const sanitized = params.map(v => v === undefined ? null : v);

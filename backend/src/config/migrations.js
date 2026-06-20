@@ -564,9 +564,6 @@ const createReviewsTable = async () => {
                 description LONGTEXT,
                 images LONGTEXT,
                 subcategory LONGTEXT,
-
-                franchise_user_id VARCHAR(255),
-                franchise_id VARCHAR(255),
                 
                 created_by_user_id VARCHAR(255),
                 created_by_email VARCHAR(255),
@@ -575,12 +572,19 @@ const createReviewsTable = async () => {
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
-                KEY idx_catId (catId),
-                KEY idx_franchise_user_id (franchise_user_id)
+                KEY idx_catId (catId)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
             `;
 
             await pool.execute(sql);
+            
+            // Drop index if it exists before dropping column
+            try { await pool.execute('ALTER TABLE franchise_category DROP INDEX idx_franchise_user_id'); } catch {}
+            
+            // Drop columns if they exist
+            try { await pool.execute('ALTER TABLE franchise_category DROP COLUMN franchise_user_id'); } catch {}
+            try { await pool.execute('ALTER TABLE franchise_category DROP COLUMN franchise_id'); } catch {}
+
             console.log('✓ franchise_category table created or already exists');
         } catch (err) {
             console.error('✗ Error creating franchise_category table:', err.message || err);

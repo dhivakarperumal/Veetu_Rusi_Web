@@ -270,6 +270,8 @@ exports.createProduct = async (req, res) => {
         const finalCreatedByPhone = created_by_phone || finalChefPhone || null;
         const finalFranchiseIdResolved = franchise_id || finalFranchiseId || null;
 
+        const createdBy = req.user?.user_id || req.user?.id || req.user?.email || req.user?.name || req.body.created_by || finalCreatedByUserId || finalCreatedByEmail || finalCreatedByName || 'Admin';
+
         const params = [
             name, description || null, category, product_type || 'Cooked Food', subcategory || null,
             mrp, offer || 0, offer_price || mrp, finalProductCode, total_stock || 0,
@@ -285,7 +287,7 @@ exports.createProduct = async (req, res) => {
             finalChefId, finalChefUserId, finalChefName, finalChefPhone, finalChefEmail,
             finalFranchiseUserId, finalFranchiseName, finalFranchiseEmail, finalFranchisePhone,
             finalCreatedByUserId, finalCreatedByEmail, finalCreatedByName, finalCreatedByPhone,
-            finalFranchiseIdResolved
+            finalFranchiseIdResolved, createdBy
         ];
 
         const columns = `name, description, category, product_type, subcategory, mrp, offer, offer_price,
@@ -295,7 +297,7 @@ exports.createProduct = async (req, res) => {
             packaging_type, manufacture_date, variants, images, chef_id, chef_user_id, chef_name, chef_phone, chef_email,
             franchise_user_id, franchise_name, franchise_email, franchise_phone,
             created_by_user_id, created_by_email, created_by_name, created_by_phone,
-            franchise_id`;
+            franchise_id, created_by`;
 
         const placeholders = params.map(() => '?').join(', ');
         // Sanitize undefined -> null for insert params as well
@@ -370,6 +372,8 @@ exports.updateProduct = async (req, res) => {
         const finalCreatedByName = created_by_name || finalChefNameResolved || null;
         const finalCreatedByPhone = created_by_phone || finalChefPhoneResolved || null;
 
+        const updatedBy = req.user?.user_id || req.user?.id || req.user?.email || req.user?.name || req.body.updated_by || 'Admin';
+
         // Update product
         const updateQuery = `UPDATE chef_products SET
                 name = ?, description = ?, category = ?, product_type = ?, subcategory = ?,
@@ -382,7 +386,7 @@ exports.updateProduct = async (req, res) => {
                 chef_id = ?, chef_user_id = ?, chef_name = ?, chef_phone = ?, chef_email = ?,
                 franchise_user_id = ?, franchise_name = ?, franchise_email = ?, franchise_phone = ?,
                 created_by_user_id = ?, created_by_email = ?, created_by_name = ?, created_by_phone = ?,
-                franchise_id = ?, updated_at = NOW()
+                franchise_id = ?, updated_by = ?, updated_at = NOW()
             WHERE id = ?`;
         const params = [
             name, description, category, product_type, subcategory, mrp, offer, offer_price,
@@ -394,7 +398,7 @@ exports.updateProduct = async (req, res) => {
             finalChefIdResolved, finalChefUserIdResolved, finalChefNameResolved, finalChefPhoneResolved, finalChefEmailResolved,
             finalFranchiseUserIdResolved, finalFranchiseNameResolved, finalFranchiseEmailResolved, finalFranchisePhoneResolved,
             finalCreatedByUserId, finalCreatedByEmail, finalCreatedByName, finalCreatedByPhone,
-            finalFranchiseIdResolved,
+            finalFranchiseIdResolved, updatedBy,
             id
         ];
 
@@ -453,17 +457,13 @@ exports.getLatestProductCode = async (req, res) => {
 // Get categories - optionally filtered by franchise
 exports.getCategories = async (req, res) => {
     try {
-        const { franchise_user_id, franchise_id } = req.query;
-        let query = 'SELECT id, catId, name, description, subcategory, images, franchise_user_id, franchise_id, created_by FROM franchise_category WHERE 1=1';
+        const { franchise_user_id } = req.query;
+        let query = 'SELECT id, catId, name, description, subcategory, images, created_by FROM franchise_category WHERE 1=1';
         const params = [];
 
         if (franchise_user_id) {
-            query += ' AND (franchise_user_id = ? OR franchise_user_id IS NULL)';
+            query += ' AND (created_by = ? OR created_by IS NULL)';
             params.push(franchise_user_id);
-        }
-        if (franchise_id) {
-            query += ' AND (franchise_id = ? OR franchise_id IS NULL)';
-            params.push(franchise_id);
         }
 
         query += ' ORDER BY id DESC';
@@ -485,7 +485,7 @@ exports.getCategories = async (req, res) => {
 
 const generateNextCategoryId = async (franchiseUserId) => {
     const [rows] = await pool.execute(
-        'SELECT catId FROM franchise_category WHERE franchise_user_id <=> ?',
+        'SELECT catId FROM franchise_category WHERE created_by <=> ?',
         [franchiseUserId]
     );
 
@@ -519,10 +519,10 @@ exports.createCategory = async (req, res) => {
         const finalFranchiseId = franchise_id || null;
 
         // Ignore client-supplied catId for creates; generate franchise-scoped IDs server-side.
-        let finalCatId = await generateNextCategoryId(finalFranchiseUserId);
+        let finalCatId = await generateNextCategoryId(finalCreatedByUserId);
 
         const insertSql =
-            'INSERT INTO franchise_category (catId, name, description, subcategory, images, franchise_user_id, franchise_id, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+            'INSERT INTO franchise_category (catId, name, description, subcategory, images, created_by) VALUES (?, ?, ?, ?, ?, ?)';
 
         const insertParams = [
             finalCatId,
@@ -530,8 +530,6 @@ exports.createCategory = async (req, res) => {
             categoryDescription,
             JSON.stringify(subcategory),
             JSON.stringify(categoryImages),
-            finalFranchiseUserId,
-            finalFranchiseId,
             finalCreatedByUserId || req.user?.email || req.user?.name || null
         ];
 
@@ -546,7 +544,7 @@ exports.createCategory = async (req, res) => {
             } catch (insertErr) {
                 if (insertErr.code === 'ER_DUP_ENTRY') {
                     attempt += 1;
-                    finalCatId = await generateNextCategoryId(finalFranchiseUserId);
+                    finalCatId = await generateNextCategoryId(finalCreatedByUserId);
                     insertParams[0] = finalCatId;
                     continue;
                 }
@@ -595,14 +593,6 @@ exports.updateCategory = async (req, res) => {
         if (updates.images !== undefined || updates.cimgs !== undefined) {
             fields.push('images = ?');
             params.push(JSON.stringify(updates.images !== undefined ? updates.images : updates.cimgs));
-        }
-        if (updates.franchise_user_id !== undefined) {
-            fields.push('franchise_user_id = ?');
-            params.push(updates.franchise_user_id);
-        }
-        if (updates.franchise_id !== undefined) {
-            fields.push('franchise_id = ?');
-            params.push(updates.franchise_id);
         }
 
         if (fields.length === 0) {
