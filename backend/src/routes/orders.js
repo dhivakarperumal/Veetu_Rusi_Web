@@ -26,17 +26,24 @@ const initOrderTable = async () => {
         payment_id VARCHAR(255),
         total_amount DECIMAL(10,2) NOT NULL,
         items JSON,
-        franchise_user_id VARCHAR(100),
-        franchise_user_name VARCHAR(255),
-        franchise_user_email VARCHAR(255),
+        created_by VARCHAR(100),
+        updated_by VARCHAR(100),
         status VARCHAR(50) NOT NULL DEFAULT 'Order Placed',
         ordered_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
   } catch (err) {
     console.error("Error creating Chef_Order table:", err);
   }
+
+  try { await pool.execute('ALTER TABLE `Chef_Order` DROP COLUMN franchise_user_id'); } catch (_) {}
+  try { await pool.execute('ALTER TABLE `Chef_Order` DROP COLUMN franchise_user_name'); } catch (_) {}
+  try { await pool.execute('ALTER TABLE `Chef_Order` DROP COLUMN franchise_user_email'); } catch (_) {}
+  try { await pool.execute('ALTER TABLE `Chef_Order` ADD COLUMN IF NOT EXISTS created_by VARCHAR(100)'); } catch (_) {}
+  try { await pool.execute('ALTER TABLE `Chef_Order` ADD COLUMN IF NOT EXISTS updated_by VARCHAR(100)'); } catch (_) {}
+  try { await pool.execute('ALTER TABLE `Chef_Order` ADD COLUMN IF NOT EXISTS updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'); } catch (_) {}
 };
 initOrderTable();
 
@@ -47,54 +54,26 @@ router.post('/', verifyToken, async (req, res) => {
       user_id, customer_name, customer_email, customer_phone, 
       street_address, city, district, state, country, zip_code, 
       payment_method, payment_status, payment_id, total_amount, items,
-      franchise_user_id, franchise_user_name, franchise_user_email
+      franchise_user_id, created_by
     } = req.body;
 
-    let final_franchise_user_id = franchise_user_id || null;
-    let final_franchise_user_name = franchise_user_name || null;
-    let final_franchise_user_email = franchise_user_email || null;
-
-    if (!final_franchise_user_id && items && items.length > 0) {
+    let finalCreatedBy = created_by || franchise_user_id || null;
+    if (!finalCreatedBy && items && items.length > 0) {
       const firstProductId = items[0].product_id;
       if (firstProductId) {
-        let productFranchiseId = null;
-        let productFranchiseName = null;
-        let productFranchiseEmail = null;
-
         const [products] = await pool.execute(
-          'SELECT franchise_user_id, franchise_name, franchise_email FROM chef_products WHERE id = ?',
+          'SELECT franchise_user_id FROM chef_products WHERE id = ?',
           [firstProductId]
         );
         if (products.length > 0) {
-          productFranchiseId = products[0].franchise_user_id;
-          productFranchiseName = products[0].franchise_name;
-          productFranchiseEmail = products[0].franchise_email;
+          finalCreatedBy = products[0].franchise_user_id || null;
         } else {
           const [fProducts] = await pool.execute(
-            'SELECT franchise_user_id, franchise_name, franchise_email FROM franchise_products WHERE id = ?',
+            'SELECT created_by FROM franchise_products WHERE id = ?',
             [firstProductId]
           );
           if (fProducts.length > 0) {
-            productFranchiseId = fProducts[0].franchise_user_id;
-            productFranchiseName = fProducts[0].franchise_name;
-            productFranchiseEmail = fProducts[0].franchise_email;
-          }
-        }
-
-        if (productFranchiseId) {
-          final_franchise_user_id = productFranchiseId;
-          final_franchise_user_name = productFranchiseName;
-          final_franchise_user_email = productFranchiseEmail;
-
-          if (!final_franchise_user_name || !final_franchise_user_email) {
-            const [franchiseUsers] = await pool.execute(
-              'SELECT full_name, email FROM users WHERE user_id = ? OR id = ? LIMIT 1',
-              [productFranchiseId, productFranchiseId]
-            );
-            if (franchiseUsers.length > 0) {
-              final_franchise_user_name = final_franchise_user_name || franchiseUsers[0].full_name;
-              final_franchise_user_email = final_franchise_user_email || franchiseUsers[0].email;
-            }
+            finalCreatedBy = fProducts[0].created_by || null;
           }
         }
       }
@@ -104,14 +83,14 @@ router.post('/', verifyToken, async (req, res) => {
 
     const [result] = await pool.execute(
       `INSERT INTO \`Chef_Order\` 
-      (order_id, user_id, customer_name, customer_email, customer_phone, street_address, city, district, state, country, zip_code, payment_method, payment_status, payment_id, total_amount, items, franchise_user_id, franchise_user_name, franchise_user_email, status) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Order Placed')`,
+      (order_id, user_id, customer_name, customer_email, customer_phone, street_address, city, district, state, country, zip_code, payment_method, payment_status, payment_id, total_amount, items, created_by, updated_by, status) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Order Placed')`,
       [
         order_id, user_id || null, customer_name, customer_email || null, customer_phone || null,
         street_address || null, city || null, district || null, state || null, country || null,
         zip_code || null, payment_method || null, payment_status || 'pending', payment_id || null,
         total_amount, JSON.stringify(items),
-        final_franchise_user_id, final_franchise_user_name, final_franchise_user_email
+        finalCreatedBy, finalCreatedBy
       ]
     );
 
