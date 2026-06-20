@@ -625,7 +625,24 @@ exports.updateHomeChefStatus = async (req, res) => {
 const superadminController = require('./superadminController');
 
 // ==================== DELIVERY PARTNER MANAGEMENT ====================
-exports.getDeliveryPartners = superadminController.getDeliveryPartners;
+exports.getDeliveryPartners = async (req, res) => {
+  try {
+    const currentUserId = req.user?.user_id || req.user?.id || null;
+    let query = "SELECT * FROM delivery_partners";
+    const params = [];
+
+    if (currentUserId) {
+      query += " WHERE created_by = ?";
+      params.push(currentUserId);
+    }
+
+    query += " ORDER BY created_at DESC";
+    const [rows] = await pool.execute(query, params);
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving delivery partners.', error: error.message });
+  }
+};
 exports.getDeliveryPartnerById = superadminController.getDeliveryPartnerById;
 exports.createDeliveryPartner = superadminController.createDeliveryPartner;
 exports.updateDeliveryPartner = superadminController.updateDeliveryPartner;
