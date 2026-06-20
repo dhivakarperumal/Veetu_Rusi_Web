@@ -73,11 +73,11 @@ const resolveFoodCategoryMetadata = async (req, body) => {
   const finalChefPhone = chef_phone || homeChef?.mobile || req.user?.phone || homeChef?.user_phone || null;
   const finalChefEmail = chef_email || homeChef?.email || req.user?.email || homeChef?.user_email || null;
 
-  const finalFranchiseUserId = franchise_user_id || homeChef?.created_by_user_id || null;
-  const finalFranchiseId = franchise_id || homeChef?.created_by_id || null;
-  let finalFranchiseName = franchise_name || homeChef?.created_by_name || null;
-  let finalFranchiseEmail = franchise_email || homeChef?.created_by_email || null;
-  let finalFranchisePhone = franchise_phone || homeChef?.created_by_phone || null;
+  const finalFranchiseUserId = franchise_user_id || homeChef?.created_by || homeChef?.franchise_user_id || homeChef?.created_by_user_id || null;
+  const finalFranchiseId = franchise_id || homeChef?.franchise_id || homeChef?.created_by_id || null;
+  let finalFranchiseName = franchise_name || homeChef?.franchise_name || homeChef?.created_by_name || null;
+  let finalFranchiseEmail = franchise_email || homeChef?.franchise_email || homeChef?.created_by_email || null;
+  let finalFranchisePhone = franchise_phone || homeChef?.franchise_phone || homeChef?.created_by_phone || null;
 
   if (finalFranchiseUserId) {
     const [franchiseUsers] = await pool.execute(

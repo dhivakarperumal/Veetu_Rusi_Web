@@ -162,11 +162,8 @@ exports.createRecipe = async (req, res) => {
         const finalChefName = chef_name || homeChef?.name || null;
         const finalChefPhone = chef_phone || homeChef?.mobile || null;
         const finalChefEmail = chef_email || homeChef?.email || null;
-        const finalFranchiseId =
-            franchise_id || homeChef?.created_by_id || null;
-        
-        
-        const finalFranchiseUserId = franchise_user_id || homeChef?.created_by_user_id || null;
+        const finalFranchiseId = franchise_id || homeChef?.franchise_id || homeChef?.created_by_id || null;
+        const finalFranchiseUserId = franchise_user_id || homeChef?.created_by || homeChef?.franchise_user_id || homeChef?.created_by_user_id || null;
 
         // Fetch franchise admin details from users table if franchise_user_id exists
         let franchiseAdminDetails = null;

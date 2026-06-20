@@ -146,11 +146,11 @@ const ChefCategory = () => {
         chef_name: profile?.name || profile?.username || null,
         chef_phone: profile?.phone || null,
         chef_email: profile?.email || null,
-        franchise_user_id: profile?.created_by_user_id || null,
-        franchise_id: profile?.franchise_id || null,
-        franchise_name: profile?.created_by_name || null,
-        franchise_email: profile?.created_by_email || null,
-        franchise_phone: profile?.created_by_phone || null,
+        franchise_user_id: profile?.homeChef?.created_by || profile?.homeChef?.franchise_user_id || profile?.homeChef?.created_by_user_id || profile?.created_by_user_id || profile?.created_by || null,
+        franchise_id: profile?.homeChef?.franchise_id || profile?.franchise_id || null,
+        franchise_name: profile?.homeChef?.franchise_name || profile?.homeChef?.created_by_name || profile?.created_by_name || null,
+        franchise_email: profile?.homeChef?.franchise_email || profile?.homeChef?.created_by_email || profile?.created_by_email || null,
+        franchise_phone: profile?.homeChef?.franchise_phone || profile?.homeChef?.created_by_phone || profile?.created_by_phone || null,
         created_by_user_id: profile?.user_id || profile?.id || null,
       };
 
