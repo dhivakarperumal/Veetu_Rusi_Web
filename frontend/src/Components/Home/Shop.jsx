@@ -57,10 +57,10 @@ const Shop = ({ defaultCategory = "" }) => {
     const role = currentUser?.role?.toLowerCase() || '';
     if (role === 'admin' || role === 'franchise') {
       userToMatch = currentUser?.user_id;
-    } else if (role === 'chef') {
+    } else if (role === 'chef' || role === 'homechef') {
       // Wait for homeChef to load before proceeding
       if (!homeChef) return;
-      userToMatch = homeChef?.created_by;
+      userToMatch = homeChef?.created_by_user_id || homeChef?.created_by;
       homeChefIdToMatch = homeChef?.id;
     }
 
@@ -82,7 +82,7 @@ const Shop = ({ defaultCategory = "" }) => {
 
     try {
       setLoading(true);
-      const res = await api.get("/franchise-products");
+      const res = await api.get("/franchise-products", { params: userToMatch ? { franchise_user_id: userToMatch } : {} });
       const data = Array.isArray(res.data) ? res.data : [];
       setProductsCache(data);
       setLastFetchTime(Date.now());

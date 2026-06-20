@@ -47,15 +47,33 @@ exports.getAllProducts = async (req, res) => {
             params.push(category);
         }
 
-        if (franchise_user_id) {
-            query += ' AND created_by = ?';
-            params.push(franchise_user_id);
-        } else if (req.user && (req.user.role === 'franchise' || req.user.role === 'Franchise')) {
-            const loggedInUserId = req.user.user_id || req.user.id;
-            if (loggedInUserId) {
-                query += ' AND created_by = ?';
-                params.push(loggedInUserId);
+        const requestedCreatedBy = await (async () => {
+            if (franchise_user_id) return franchise_user_id;
+
+            if (!req.user) return null;
+            const role = String(req.user.role || '').toLowerCase();
+            const currentUserId = req.user.user_id || req.user.id || null;
+
+            if (role === 'admin' || role === 'franchise') {
+                return currentUserId;
             }
+
+            if (role === 'chef' || role === 'homechef') {
+                if (!currentUserId) return null;
+                const [chefRows] = await pool.execute(
+                    'SELECT created_by_user_id, created_by FROM home_chefs WHERE user_id = ? OR email = ? LIMIT 1',
+                    [currentUserId, req.user.email || '']
+                );
+                const chefRow = chefRows[0];
+                return chefRow ? chefRow.created_by_user_id || chefRow.created_by : null;
+            }
+
+            return null;
+        })();
+
+        if (requestedCreatedBy) {
+            query += ' AND created_by = ?';
+            params.push(requestedCreatedBy);
         }
 
         // Only apply status filter if explicitly requested; default to showing Active products
