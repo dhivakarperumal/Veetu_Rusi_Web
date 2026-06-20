@@ -564,10 +564,6 @@ const createReviewsTable = async () => {
                 description LONGTEXT,
                 images LONGTEXT,
                 subcategory LONGTEXT,
-                
-                created_by_user_id VARCHAR(255),
-                created_by_email VARCHAR(255),
-                created_by_name VARCHAR(255),
 
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -578,12 +574,12 @@ const createReviewsTable = async () => {
 
             await pool.execute(sql);
             
-            // Drop index if it exists before dropping column
-            try { await pool.execute('ALTER TABLE franchise_category DROP INDEX idx_franchise_user_id'); } catch {}
-            
             // Drop columns if they exist
             try { await pool.execute('ALTER TABLE franchise_category DROP COLUMN franchise_user_id'); } catch {}
             try { await pool.execute('ALTER TABLE franchise_category DROP COLUMN franchise_id'); } catch {}
+            try { await pool.execute('ALTER TABLE franchise_category DROP COLUMN created_by_user_id'); } catch {}
+            try { await pool.execute('ALTER TABLE franchise_category DROP COLUMN created_by_email'); } catch {}
+            try { await pool.execute('ALTER TABLE franchise_category DROP COLUMN created_by_name'); } catch {}
 
             console.log('✓ franchise_category table created or already exists');
         } catch (err) {
