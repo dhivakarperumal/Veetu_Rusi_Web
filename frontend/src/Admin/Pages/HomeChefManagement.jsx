@@ -49,6 +49,7 @@ const emptyForm = {
 
   // Kitchen Information
   kitchen_name: "",
+  kitchen_address: "",
   kitchen_type: "Home Kitchen",
   veg_nonveg: "Veg",
   experience_years: "",
@@ -170,8 +171,9 @@ const HomeChefManagement = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingChef, setEditingChef] = useState(null);
   const [form, setForm] = useState(emptyForm);
+  const [validationErrors, setValidationErrors] = useState({});
   const [saving, setSaving] = useState(false);
-  const [activeFormTab, setActiveFormTab] = useState("basic");
+  const [activeFormTab, setActiveFormTab] = useState("personal");
   const stepIds = tabs.map((t) => t.id);
   const currentFormStepIndex = stepIds.indexOf(activeFormTab);
   const goToNextFormTab = () => {
@@ -384,12 +386,14 @@ const HomeChefManagement = () => {
   const openAddModal = () => {
     setEditingChef(null);
     setForm(emptyForm);
+    setValidationErrors({});
     setActiveFormTab("personal");
     setIsFormOpen(true);
   };
 
   const openEditModal = (chef) => {
     setEditingChef(chef);
+    setValidationErrors({});
     setActiveFormTab("personal");
     setForm({
       chef_unique_code: chef.chef_unique_code || "",
@@ -488,6 +492,10 @@ const HomeChefManagement = () => {
       return;
     }
     try {
+      if (!validateForm()) {
+        toast.error("Please resolve the highlighted fields before submitting.");
+        return;
+      }
       setSaving(true);
       const payload = {
         ...form,
@@ -571,6 +579,189 @@ const HomeChefManagement = () => {
   const lbl =
     "text-[11px] text-slate-300 font-black uppercase tracking-[0.24em] block mb-2";
 
+  const fieldClass = (fieldName) =>
+    `${inp}${validationErrors[fieldName] ? " border-rose-500 ring-1 ring-rose-500/20" : ""}`;
+
+  const fieldToTab = {
+    first_name: "personal",
+    last_name: "personal",
+    gender: "personal",
+    date_of_birth: "personal",
+    mobile: "personal",
+    alt_mobile: "personal",
+    email: "personal",
+    password: "personal",
+    confirmPassword: "personal",
+    profile_photo: "personal",
+    house_number: "address",
+    street: "address",
+    area: "address",
+    city: "address",
+    state: "address",
+    country: "address",
+    pincode: "address",
+    google_map_location: "address",
+    kitchen_name: "kitchen",
+    kitchen_address: "kitchen",
+    kitchen_type: "kitchen",
+    veg_nonveg: "kitchen",
+    experience_years: "kitchen",
+    cuisine_type: "kitchen",
+    daily_order_capacity: "kitchen",
+    available_days: "availability",
+    available_slots: "availability",
+    aadhaar_number: "business",
+    pan_number: "business",
+    bank_account_number: "business",
+    ifsc_code: "business",
+    account_holder_name: "business",
+    bank_branch: "business",
+    upi_id: "business",
+    passbook_image: "business",
+    about_me: "creator",
+    cooking_story: "creator",
+    why_choose_me: "creator",
+    languages_known: "creator",
+    introduction_video: "creator",
+    aadhaar_front_url: "verification",
+    aadhaar_back_url: "verification",
+    pan_card_url: "verification",
+    selfie_verification_url: "verification",
+    delivery_radius: "delivery",
+  };
+
+  const renderFieldError = (fieldName) =>
+    validationErrors[fieldName] ? (
+      <p className="mt-1 text-[10px] text-rose-400">
+        {validationErrors[fieldName]}
+      </p>
+    ) : null;
+
+  const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  const isValidPhone = (value) => /^[0-9]{10}$/.test(value);
+  const isValidIFSC = (value) => /^[A-Za-z]{4}[0-9]{7}$/.test(value);
+  const isValidPAN = (value) => /^[A-Z]{5}[0-9]{4}[A-Z]$/.test(value.toUpperCase());
+  const isValidAadhaar = (value) => /^[0-9]{12}$/.test(value);
+  const isNumeric = (value) => /^[0-9]+$/.test(String(value).trim());
+
+  const validateForm = () => {
+    const errors = {};
+
+    if (!form.first_name.trim()) errors.first_name = "First name is required.";
+    if (!form.last_name.trim()) errors.last_name = "Last name is required.";
+    if (!form.gender) errors.gender = "Select gender.";
+    if (!form.date_of_birth) {
+      errors.date_of_birth = "Date of birth is required.";
+    } else if (new Date(form.date_of_birth) > new Date()) {
+      errors.date_of_birth = "Date of birth cannot be in the future.";
+    }
+    if (!form.mobile.trim()) {
+      errors.mobile = "Mobile number is required.";
+    } else if (!isValidPhone(form.mobile.trim())) {
+      errors.mobile = "Enter a valid 10-digit mobile number.";
+    }
+    if (form.alt_mobile?.trim() && !isValidPhone(form.alt_mobile.trim())) {
+      errors.alt_mobile = "Enter a valid 10-digit alternate mobile number.";
+    }
+    if (!form.email.trim()) {
+      errors.email = "Email ID is required.";
+    } else if (!isValidEmail(form.email.trim())) {
+      errors.email = "Enter a valid email address.";
+    }
+    if (!editingChef && !form.password) {
+      errors.password = "Password is required.";
+    }
+    if (!editingChef && !form.confirmPassword) {
+      errors.confirmPassword = "Please confirm password.";
+    }
+    if (form.password && !form.confirmPassword) {
+      errors.confirmPassword = "Please confirm password.";
+    }
+    if (form.password && form.confirmPassword && form.password !== form.confirmPassword) {
+      errors.confirmPassword = "Passwords do not match.";
+    }
+    if (!form.profile_photo) {
+      errors.profile_photo = "Profile photo is required.";
+    }
+
+    if (!form.house_number.trim()) errors.house_number = "House number is required.";
+    if (!form.street.trim()) errors.street = "Street is required.";
+    if (!form.area.trim()) errors.area = "Area is required.";
+    if (!form.city.trim()) errors.city = "City is required.";
+    if (!form.state.trim()) errors.state = "State is required.";
+    if (!form.country.trim()) errors.country = "Country is required.";
+    if (!form.pincode.trim()) {
+      errors.pincode = "Pincode is required.";
+    } else if (!isNumeric(form.pincode.trim())) {
+      errors.pincode = "Enter a valid numeric pincode.";
+    }
+    if (!form.google_map_location.trim()) errors.google_map_location = "Google Map location is required.";
+
+    if (!form.kitchen_name.trim()) errors.kitchen_name = "Kitchen name is required.";
+    if (!form.kitchen_address.trim()) errors.kitchen_address = "Kitchen address is required.";
+    if (!form.experience_years.trim()) {
+      errors.experience_years = "Experience is required.";
+    } else if (!isNumeric(form.experience_years.trim())) {
+      errors.experience_years = "Enter valid years of experience.";
+    }
+    if (!form.cuisine_type || form.cuisine_type.length === 0) errors.cuisine_type = "Select at least one cuisine type.";
+    if (!form.daily_order_capacity.trim()) {
+      errors.daily_order_capacity = "Daily order capacity is required.";
+    } else if (!isNumeric(form.daily_order_capacity.trim())) {
+      errors.daily_order_capacity = "Enter a valid order capacity.";
+    }
+
+    if (!form.aadhaar_number.trim()) {
+      errors.aadhaar_number = "Aadhaar number is required.";
+    } else if (!isValidAadhaar(form.aadhaar_number.trim())) {
+      errors.aadhaar_number = "Enter a valid 12-digit Aadhaar number.";
+    }
+    if (!form.pan_number.trim()) {
+      errors.pan_number = "PAN number is required.";
+    } else if (!isValidPAN(form.pan_number.trim())) {
+      errors.pan_number = "Enter a valid PAN number like ABCDE1234F.";
+    }
+    if (!form.bank_account_number.trim()) {
+      errors.bank_account_number = "Bank account number is required.";
+    } else if (!isNumeric(form.bank_account_number.trim())) {
+      errors.bank_account_number = "Enter a valid account number.";
+    }
+    if (!form.ifsc_code.trim()) {
+      errors.ifsc_code = "IFSC code is required.";
+    } else if (!isValidIFSC(form.ifsc_code.trim())) {
+      errors.ifsc_code = "Enter a valid IFSC code.";
+    }
+    if (!form.account_holder_name.trim()) errors.account_holder_name = "Account holder name is required.";
+    if (!form.bank_branch.trim()) errors.bank_branch = "Bank branch is required.";
+    if (!form.upi_id.trim()) errors.upi_id = "UPI ID is required.";
+    if (!form.passbook_image) errors.passbook_image = "Passbook image is required.";
+
+    if (!form.about_me.trim()) errors.about_me = "About me is required.";
+    if (!form.cooking_story.trim()) errors.cooking_story = "Cooking story is required.";
+    if (!form.why_choose_me.trim()) errors.why_choose_me = "Describe why customers should choose you.";
+    if (!form.languages_known.trim()) errors.languages_known = "Languages known is required.";
+    if (!form.introduction_video) errors.introduction_video = "Introduction video is required.";
+
+    if (!form.aadhaar_front_url) errors.aadhaar_front_url = "Aadhaar front upload is required.";
+    if (!form.aadhaar_back_url) errors.aadhaar_back_url = "Aadhaar back upload is required.";
+    if (!form.pan_card_url) errors.pan_card_url = "PAN card upload is required.";
+    if (!form.selfie_verification_url) errors.selfie_verification_url = "Selfie with Aadhaar is required.";
+
+    if (!form.delivery_radius.trim()) errors.delivery_radius = "Delivery radius is required.";
+
+    if (!form.available_days?.length) errors.available_days = "Select at least one available day.";
+    if (!form.available_slots?.length) errors.available_slots = "Select at least one available time slot.";
+
+    setValidationErrors(errors);
+
+    const firstInvalidField = Object.keys(errors).find((field) => fieldToTab[field]);
+    if (firstInvalidField) {
+      setActiveFormTab(fieldToTab[firstInvalidField]);
+    }
+
+    return Object.keys(errors).length === 0;
+  };
+
   const isDataUrl = (value) => typeof value === "string" && value.startsWith("data:");
   const isImageDataUrl = (value) => typeof value === "string" && value.startsWith("data:image/");
   const isVideoDataUrl = (value) => typeof value === "string" && value.startsWith("data:video/");
@@ -592,6 +783,7 @@ const HomeChefManagement = () => {
     const previewUrl = getPreviewUrl(currentValue);
     const showImagePreview = previewUrl && isImageField(fieldName);
     const showVideoPreview = previewUrl && (fieldName === "introduction_video" || isVideoDataUrl(previewUrl));
+    const fieldError = validationErrors[fieldName];
 
     return (
       <div>
@@ -607,11 +799,14 @@ const HomeChefManagement = () => {
                 : files[0];
             setForm((prev) => ({ ...prev, [fieldName]: value }));
           }}
-          className={inp}
+          className={`${inp}${fieldError ? " border-rose-500 ring-1 ring-rose-500/20" : ""}`}
           multiple={
             fieldName === "kitchen_photos" || fieldName === "kitchen_videos"
           }
         />
+        {fieldError && (
+          <p className="mt-1 text-[10px] text-rose-400">{fieldError}</p>
+        )}
 
         {(currentValue instanceof FileList || Array.isArray(currentValue)) && currentValue.length > 0 && (
           <p className="mt-1 text-xs text-slate-300">
@@ -1168,8 +1363,9 @@ const HomeChefManagement = () => {
                                 first_name: e.target.value,
                               })
                             }
-                            className={inp}
+                            className={fieldClass("first_name")}
                           />
+                          {renderFieldError("first_name")}
                         </div>
 
                         <div>
@@ -1180,8 +1376,9 @@ const HomeChefManagement = () => {
                             onChange={(e) =>
                               setForm({ ...form, last_name: e.target.value })
                             }
-                            className={inp}
+                            className={fieldClass("last_name")}
                           />
+                          {renderFieldError("last_name")}
                         </div>
 
                         {renderFileField("profile_photo", "Profile Photo", form.profile_photo)}
@@ -1193,12 +1390,13 @@ const HomeChefManagement = () => {
                             onChange={(e) =>
                               setForm({ ...form, gender: e.target.value })
                             }
-                            className={inp}
+                            className={fieldClass("gender")}
                           >
                             <option value="Male">Male</option>
                             <option value="Female">Female</option>
                             <option value="Other">Other</option>
                           </select>
+                          {renderFieldError("gender")}
                         </div>
 
                         <div>
@@ -1209,8 +1407,9 @@ const HomeChefManagement = () => {
                             onChange={(e) =>
                               setForm({ ...form, date_of_birth: e.target.value })
                             }
-                            className={inp}
+                            className={fieldClass("date_of_birth")}
                           />
+                          {renderFieldError("date_of_birth")}
                         </div>
 
                         <div>
@@ -1221,8 +1420,9 @@ const HomeChefManagement = () => {
                             onChange={(e) =>
                               setForm({ ...form, mobile: e.target.value })
                             }
-                            className={inp}
+                            className={fieldClass("mobile")}
                           />
+                          {renderFieldError("mobile")}
                         </div>
 
                         <div>
@@ -1233,20 +1433,22 @@ const HomeChefManagement = () => {
                             onChange={(e) =>
                               setForm({ ...form, alt_mobile: e.target.value })
                             }
-                            className={inp}
+                            className={fieldClass("alt_mobile")}
                           />
+                          {renderFieldError("alt_mobile")}
                         </div>
 
                         <div>
-                          <label className={lbl}>Email Address *</label>
+                          <label className={lbl}>Email ID *</label>
                           <input
                             type="email"
                             value={form.email}
                             onChange={(e) =>
                               setForm({ ...form, email: e.target.value })
                             }
-                            className={inp}
+                            className={fieldClass("email")}
                           />
+                          {renderFieldError("email")}
                         </div>
 
                         <div>
@@ -1259,8 +1461,9 @@ const HomeChefManagement = () => {
                               onChange={(e) =>
                                 setForm({ ...form, password: e.target.value })
                               }
-                              className={`${inp} pr-12`}
+                              className={`${fieldClass("password")} pr-12`}
                             />
+                          {renderFieldError("password")}
 
                             <button
                               type="button"
@@ -1286,8 +1489,9 @@ const HomeChefManagement = () => {
                               onChange={(e) =>
                                 setForm({ ...form, confirmPassword: e.target.value })
                               }
-                              className={`${inp} pr-12`}
+                              className={`${fieldClass("confirmPassword")} pr-12`}
                             />
+                          {renderFieldError("confirmPassword")}
 
                             <button
                               type="button"
@@ -1321,8 +1525,9 @@ const HomeChefManagement = () => {
                               setForm({ ...form, house_number: e.target.value })
                             }
                             placeholder="House Number"
-                            className={inp}
+                            className={fieldClass("house_number")}
                           />
+                          {renderFieldError("house_number")}
                         </div>
 
                         <div>
@@ -1334,8 +1539,9 @@ const HomeChefManagement = () => {
                               setForm({ ...form, street: e.target.value })
                             }
                             placeholder="Street"
-                            className={inp}
+                            className={fieldClass("street")}
                           />
+                          {renderFieldError("street")}
                         </div>
 
                         <div>
@@ -1347,8 +1553,9 @@ const HomeChefManagement = () => {
                               setForm({ ...form, area: e.target.value })
                             }
                             placeholder="Area"
-                            className={inp}
+                            className={fieldClass("area")}
                           />
+                          {renderFieldError("area")}
                         </div>
 
                         <div>
@@ -1360,8 +1567,9 @@ const HomeChefManagement = () => {
                               setForm({ ...form, city: e.target.value })
                             }
                             placeholder="City"
-                            className={inp}
+                            className={fieldClass("city")}
                           />
+                          {renderFieldError("city")}
                         </div>
 
                         <div>
@@ -1371,7 +1579,7 @@ const HomeChefManagement = () => {
                             onChange={(e) =>
                               setForm({ ...form, state: e.target.value })
                             }
-                            className={inp}
+                            className={fieldClass("state")}
                           >
                             <option value="">Select State</option>
                             <option value="Andhra Pradesh">Andhra Pradesh</option>
@@ -1412,7 +1620,7 @@ const HomeChefManagement = () => {
                             onChange={(e) =>
                               setForm({ ...form, country: e.target.value })
                             }
-                            className={inp}
+                            className={fieldClass("country")}
                           >
                             <option value="">Select Country</option>
                             <option value="India">India</option>
@@ -1432,8 +1640,9 @@ const HomeChefManagement = () => {
                               setForm({ ...form, pincode: e.target.value })
                             }
                             placeholder="Pincode"
-                            className={inp}
+                            className={fieldClass("pincode")}
                           />
+                          {renderFieldError("pincode")}
                         </div>
 
                         <div>
@@ -1445,8 +1654,9 @@ const HomeChefManagement = () => {
                               setForm({ ...form, google_map_location: e.target.value })
                             }
                             placeholder="https://maps.google.com/..."
-                            className={inp}
+                            className={fieldClass("google_map_location")}
                           />
+                          {renderFieldError("google_map_location")}
                         </div>
 
                       </div>
@@ -1464,8 +1674,9 @@ const HomeChefManagement = () => {
                               setForm({ ...form, kitchen_name: e.target.value })
                             }
                             placeholder="Kitchen Name"
-                            className={inp}
+                            className={fieldClass("kitchen_name")}
                           />
+                          {renderFieldError("kitchen_name")}
                         </div>
 
                         <div>
@@ -1475,7 +1686,7 @@ const HomeChefManagement = () => {
                             onChange={(e) =>
                               setForm({ ...form, kitchen_type: e.target.value })
                             }
-                            className={inp}
+                            className={fieldClass("kitchen_type")}
                           >
                             <option value="Home Kitchen">Home Kitchen</option>
                             <option value="Cloud Kitchen">Cloud Kitchen</option>
@@ -1492,8 +1703,9 @@ const HomeChefManagement = () => {
                               setForm({ ...form, experience_years: e.target.value })
                             }
                             placeholder="Years Of Experience"
-                            className={inp}
+                            className={fieldClass("experience_years")}
                           />
+                          {renderFieldError("experience_years")}
                         </div>
 
                         <div>
@@ -1503,7 +1715,7 @@ const HomeChefManagement = () => {
                             onChange={(e) =>
                               setForm({ ...form, veg_nonveg: e.target.value })
                             }
-                            className={inp}
+                            className={fieldClass("veg_nonveg")}
                           >
                             <option value="Veg">Veg</option>
                             <option value="Non-Veg">Non-Veg</option>
@@ -1549,6 +1761,7 @@ const HomeChefManagement = () => {
                               </label>
                             ))}
                           </div>
+                          {renderFieldError("cuisine_type")}
                         </div>
 
                         <div className="md:col-span-2">
@@ -1563,8 +1776,9 @@ const HomeChefManagement = () => {
                               })
                             }
                             placeholder="Maximum Orders Per Day"
-                            className={inp}
+                            className={fieldClass("daily_order_capacity")}
                           />
+                          {renderFieldError("daily_order_capacity")}
                         </div>
 
                         <div className="md:col-span-2">
@@ -1650,6 +1864,7 @@ const HomeChefManagement = () => {
                               </label>
                             ))}
                           </div>
+                          {renderFieldError("available_days")}
                         </div>
 
                         {/* Available Time Slots */}
@@ -1700,6 +1915,7 @@ const HomeChefManagement = () => {
                               </label>
                             ))}
                           </div>
+                          {renderFieldError("available_slots")}
                         </div>
 
                       </div>
@@ -1751,8 +1967,9 @@ const HomeChefManagement = () => {
                               setForm({ ...form, pan_number: e.target.value })
                             }
                             placeholder="PAN Number"
-                            className={inp}
+                            className={fieldClass("pan_number")}
                           />
+                          {renderFieldError("pan_number")}
                         </div>
 
                         <div>
@@ -1767,8 +1984,9 @@ const HomeChefManagement = () => {
                               })
                             }
                             placeholder="Account Holder Name"
-                            className={inp}
+                            className={fieldClass("account_holder_name")}
                           />
+                          {renderFieldError("account_holder_name")}
                         </div>
 
                         <div>
@@ -1783,8 +2001,9 @@ const HomeChefManagement = () => {
                               })
                             }
                             placeholder="Bank Branch"
-                            className={inp}
+                            className={fieldClass("bank_branch")}
                           />
+                          {renderFieldError("bank_branch")}
                         </div>
 
                         <div>
@@ -1799,8 +2018,9 @@ const HomeChefManagement = () => {
                               })
                             }
                             placeholder="Bank Account Number"
-                            className={inp}
+                            className={fieldClass("bank_account_number")}
                           />
+                          {renderFieldError("bank_account_number")}
                         </div>
 
                         <div>
@@ -1815,8 +2035,9 @@ const HomeChefManagement = () => {
                               })
                             }
                             placeholder="IFSC Code"
-                            className={inp}
+                            className={fieldClass("ifsc_code")}
                           />
+                          {renderFieldError("ifsc_code")}
                         </div>
 
                         <div>
@@ -1831,8 +2052,9 @@ const HomeChefManagement = () => {
                               })
                             }
                             placeholder="username@upi"
-                            className={inp}
+                            className={fieldClass("upi_id")}
                           />
+                          {renderFieldError("upi_id")}
                         </div>
 
                         <div>
@@ -1931,8 +2153,9 @@ const HomeChefManagement = () => {
                               })
                             }
                             placeholder="Tell customers about yourself..."
-                            className="w-full px-4 py-3 rounded-[1.75rem] bg-slate-950/85 border border-white/10 text-slate-100 outline-none placeholder:text-slate-500 text-sm font-medium resize-none transition focus:border-emerald-400 focus:bg-slate-900"
+                            className={`w-full px-4 py-3 rounded-[1.75rem] bg-slate-950/85 border ${validationErrors.about_me ? "border-rose-500 ring-1 ring-rose-500/20" : "border-white/10"} text-slate-100 outline-none placeholder:text-slate-500 text-sm font-medium resize-none transition focus:border-emerald-400 focus:bg-slate-900`}
                           />
+                          {renderFieldError("about_me")}
                         </div>
 
                         <div className="md:col-span-2">
@@ -1947,8 +2170,9 @@ const HomeChefManagement = () => {
                               })
                             }
                             placeholder="Share your cooking journey..."
-                            className="w-full px-4 py-3 rounded-[1.75rem] bg-slate-950/85 border border-white/10 text-slate-100 outline-none placeholder:text-slate-500 text-sm font-medium resize-none transition focus:border-emerald-400 focus:bg-slate-900"
+                            className={`w-full px-4 py-3 rounded-[1.75rem] bg-slate-950/85 border ${validationErrors.cooking_story ? "border-rose-500 ring-1 ring-rose-500/20" : "border-white/10"} text-slate-100 outline-none placeholder:text-slate-500 text-sm font-medium resize-none transition focus:border-emerald-400 focus:bg-slate-900`}
                           />
+                          {renderFieldError("cooking_story")}
                         </div>
 
                         <div className="md:col-span-2">
@@ -1965,8 +2189,9 @@ const HomeChefManagement = () => {
                               })
                             }
                             placeholder="Tell customers why they should choose you..."
-                            className="w-full px-4 py-3 rounded-[1.75rem] bg-slate-950/85 border border-white/10 text-slate-100 outline-none placeholder:text-slate-500 text-sm font-medium resize-none transition focus:border-emerald-400 focus:bg-slate-900"
+                            className={`w-full px-4 py-3 rounded-[1.75rem] bg-slate-950/85 border ${validationErrors.why_choose_me ? "border-rose-500 ring-1 ring-rose-500/20" : "border-white/10"} text-slate-100 outline-none placeholder:text-slate-500 text-sm font-medium resize-none transition focus:border-emerald-400 focus:bg-slate-900`}
                           />
+                          {renderFieldError("why_choose_me")}
                         </div>
 
                         <div>
@@ -1981,8 +2206,9 @@ const HomeChefManagement = () => {
                               })
                             }
                             placeholder="Tamil, English, Telugu..."
-                            className={inp}
+                            className={fieldClass("languages_known")}
                           />
+                          {renderFieldError("languages_known")}
                         </div>
 
                         <div>
@@ -2040,7 +2266,7 @@ const HomeChefManagement = () => {
                                 delivery_radius: e.target.value,
                               })
                             }
-                            className={inp}
+                            className={fieldClass("delivery_radius")}
                           >
                             <option value="2 KM">2 KM</option>
                             <option value="3 KM">3 KM</option>
@@ -2050,6 +2276,7 @@ const HomeChefManagement = () => {
                           <p className="text-xs text-gray-500 mt-2">
                             Default: 5 KM
                           </p>
+                          {renderFieldError("delivery_radius")}
                         </div>
 
                         <div>
@@ -2213,7 +2440,7 @@ const HomeChefManagement = () => {
                   </div>
                   <div>
                     <p className="text-[10px] text-white/40 font-bold uppercase">
-                      Email Address
+                      Email Address 
                     </p>
                     <p className="font-semibold mt-0.5 text-white/90">{selectedChef.email}</p>
                   </div>

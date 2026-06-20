@@ -55,7 +55,7 @@ const resolveFoodCategoryMetadata = async (req, body) => {
       `SELECT hc.*, u.id AS user_id, u.user_id AS user_user_id, u.full_name AS user_name, u.mobile_number AS user_phone, u.email AS user_email
        FROM home_chefs hc
        LEFT JOIN users u ON (u.email = hc.email OR u.mobile_number = hc.mobile)
-       WHERE hc.chef_id = ?
+       WHERE hc.user_id = ?
           OR hc.email = ?
           OR hc.mobile = ?
           OR u.user_id = ?
@@ -68,7 +68,7 @@ const resolveFoodCategoryMetadata = async (req, body) => {
   }
 
   const finalChefUserId = chef_user_id || req.user?.user_id || req.user?.id || homeChef?.user_user_id || homeChef?.user_id || null;
-  const finalChefId = chef_id || homeChef?.chef_id || null;
+  const finalChefId = chef_id || homeChef?.chef_id || homeChef?.user_id || homeChef?.user_user_id || null;
   const finalChefName = chef_name || homeChef?.name || req.user?.name || homeChef?.user_name || null;
   const finalChefPhone = chef_phone || homeChef?.mobile || req.user?.phone || homeChef?.user_phone || null;
   const finalChefEmail = chef_email || homeChef?.email || req.user?.email || homeChef?.user_email || null;
@@ -117,8 +117,7 @@ exports.getFoodCategories = async (req, res) => {
 
     let query = `SELECT id, catId, name, description, category_image, images, subcategory,
       chef_user_id, chef_id, chef_name, chef_phone, chef_email,
-      franchise_user_id, franchise_id, franchise_name, franchise_email, franchise_phone,
-      created_by_user_id, created_by_email, created_by_name, created_by_phone
+      franchise_user_id, franchise_id, franchise_name, franchise_email, franchise_phone
       FROM cheffoodcategorytable WHERE 1=1`;
     const params = [];
 
@@ -163,10 +162,7 @@ exports.createFoodCategory = async (req, res) => {
       description,
       category_image,
       images = [],
-      subcategory = [],
-      created_by_user_id,
-      created_by_name,
-      created_by_phone
+      subcategory = []
     } = req.body;
 
     const categoryName = name || req.body.cname;
@@ -190,19 +186,15 @@ exports.createFoodCategory = async (req, res) => {
       finalFranchisePhone
     } = metadata;
 
-    const finalCreatedByUserId = created_by_user_id || req.user?.user_id || req.user?.id || null;
-    const finalCreatedByEmail = req.user?.email || null;
-    const finalCreatedByName = created_by_name || finalChefName || req.user?.name || null;
-    const finalCreatedByPhone = created_by_phone || finalChefPhone || req.user?.phone || null;
+    // No created_by_* fields required for this table in trimmed schema
 
     let finalCatId = catId || await generateNextFoodCategoryId(finalChefUserId);
 
     const insertSql = `INSERT INTO cheffoodcategorytable
       (catId, name, description, category_image, images, subcategory,
       chef_id, chef_user_id, chef_name, chef_phone, chef_email,
-      franchise_id, franchise_user_id, franchise_name, franchise_email, franchise_phone,
-      created_by_user_id, created_by_email, created_by_name, created_by_phone)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+      franchise_id, franchise_user_id, franchise_name, franchise_email, franchise_phone)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
     const insertParams = [
       finalCatId,
@@ -220,11 +212,7 @@ exports.createFoodCategory = async (req, res) => {
       finalFranchiseUserId,
       finalFranchiseName,
       finalFranchiseEmail,
-      finalFranchisePhone,
-      finalCreatedByUserId,
-      finalCreatedByEmail,
-      finalCreatedByName,
-      finalCreatedByPhone
+      finalFranchisePhone
     ];
 
     let result;
@@ -331,22 +319,7 @@ exports.updateFoodCategory = async (req, res) => {
       fields.push('franchise_phone = ?');
       params.push(updates.franchise_phone);
     }
-    if (updates.created_by_user_id !== undefined) {
-      fields.push('created_by_user_id = ?');
-      params.push(updates.created_by_user_id);
-    }
-    if (updates.created_by_email !== undefined) {
-      fields.push('created_by_email = ?');
-      params.push(updates.created_by_email);
-    }
-    if (updates.created_by_name !== undefined) {
-      fields.push('created_by_name = ?');
-      params.push(updates.created_by_name);
-    }
-    if (updates.created_by_phone !== undefined) {
-      fields.push('created_by_phone = ?');
-      params.push(updates.created_by_phone);
-    }
+    // created_by_* columns removed from schema; skip update handling
 
     if (fields.length === 0) {
       return res.status(400).json({ message: 'No fields to update' });
