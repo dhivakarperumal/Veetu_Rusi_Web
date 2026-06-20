@@ -2414,8 +2414,9 @@ const HomeChefManagement = () => {
                 </form>
               </div>
             </div>
+            </div>
           </div>,
-          document.body,
+          document.body
         )}
 
       {/* Details View Modal */}
