@@ -2373,6 +2373,13 @@ const HomeChefManagement = () => {
                         Cancel
                       </button>
                       <button
+                        type="button"
+                        onClick={() => { fillSampleChefData(); toast.success('Sample data filled into form.'); setActiveFormTab('personal'); }}
+                        className="rounded-2xl bg-slate-800/70 px-5 py-3 text-sm font-black uppercase tracking-[0.18em] text-slate-100 transition hover:bg-slate-800"
+                      >
+                        Fill Sample Data
+                      </button>
+                      <button
                         type="submit"
                         disabled={saving}
                         className="px-8 py-3 bg-emerald-600 hover:bg-emerald-500 disabled:bg-emerald-800 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl transition active:scale-95 flex items-center justify-center gap-2"
