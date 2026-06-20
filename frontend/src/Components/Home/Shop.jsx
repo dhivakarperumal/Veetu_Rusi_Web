@@ -60,7 +60,7 @@ const Shop = ({ defaultCategory = "" }) => {
     } else if (role === 'chef' || role === 'homechef') {
       // Wait for homeChef to load before proceeding
       if (!homeChef) return;
-      userToMatch = homeChef?.created_by_user_id || homeChef?.created_by;
+      userToMatch = homeChef?.created_by;
       homeChefIdToMatch = homeChef?.id;
     }
 

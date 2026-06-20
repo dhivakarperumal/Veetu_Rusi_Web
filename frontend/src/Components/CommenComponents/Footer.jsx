@@ -35,14 +35,14 @@ const Footer = () => {
   }, []);
 
   useEffect(() => {
-    if (!homeChef?.created_by_user_id) return;
+    if (!homeChef?.created_by) return;
 
     const fetchCategories = async () => {
       try {
         const res = await api.get("/categories");
 
         const myCategories = res.data.filter(
-          (cat) => cat.created_by_user_id === homeChef.created_by_user_id
+          (cat) => cat.created_by_user_id === homeChef.created_by
         );
 
         setCategories(myCategories);

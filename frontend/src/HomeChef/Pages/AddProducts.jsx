@@ -419,7 +419,7 @@ const AddProducts = () => {
             const chefId = homeChef?.chef_id || userData.chef_id || userData.id || null; // internal chef_id
 
             // Franchise / created-by should come from the homeChef record user_id / franchise_user_id)
-            const franchiseUserId = homeChef?.created_by_user_id || homeChef?.franchise_user_id || null;
+            const franchiseUserId = homeChef?.created_by || homeChef?.franchise_user_id || null;
             const createdByUserId = franchiseUserId || userData.id || null;
 
             const finalData = {

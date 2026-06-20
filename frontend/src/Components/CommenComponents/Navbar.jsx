@@ -271,7 +271,7 @@ const Navbar = () => {
           {/* <div className="hidden md:flex items-center gap-2 text-sm font-medium text-gray-700">
             <span>Created By:</span>
             <span className="text-primary">
-              {homeChef?.created_by_user_id || "-"}
+              {homeChef?.created_by || "-"}
 
             </span>
           </div> */}
