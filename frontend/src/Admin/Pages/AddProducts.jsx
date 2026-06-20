@@ -92,7 +92,7 @@ const Products = () => {
     setLoadingList(true);
     try {
       const [catRes, prodRes, comboRes] = await Promise.allSettled([
-        api.get("/categories"),
+        api.get("/categories", { params: { ...(franchiseUserId ? { franchise_user_id: franchiseUserId } : {}) } }),
         api.get("/franchise-products", { params: { ...(franchiseUserId ? { franchise_user_id: franchiseUserId } : {}), ...(franchiseId ? { franchise_id: franchiseId } : {}) } }),
         api.get("/combos"),
       ]);
@@ -395,8 +395,8 @@ const SingleProductForm = ({ categories, franchiseId, franchiseUserId, onSuccess
                 <div className="grid grid-cols-2 gap-6">
                   <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Category *</label><select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} required className="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 outline-none font-black text-emerald-800 shadow-sm"><option value="">Select Category</option>{(() => {
                     const filteredCategories = categories.filter((c) => {
-                      if (franchiseId) {
-                        return c.franchise_id === franchiseId || c.franchise_user_id === franchiseUserId;
+                      if (franchiseUserId) {
+                        return c.created_by === franchiseUserId || !c.created_by;
                       }
                       return true;
                     });
