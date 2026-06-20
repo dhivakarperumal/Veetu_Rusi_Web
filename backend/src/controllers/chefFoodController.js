@@ -64,7 +64,8 @@ const resolveChefFoodMetadata = async (req, body) => {
   const finalChefEmail = chef_email || homeChef?.email || req.user?.email || homeChef?.user_email || null;
 
   const currentUserId = req.user?.user_id || req.user?.id || null;
-  const finalFranchiseUserId = franchise_user_id || ((req.user?.role === 'admin' || req.user?.role === 'superadmin') ? currentUserId : null) || homeChef?.created_by_user_id || null;
+  const isFranchiseActor = ['admin', 'franchise', 'superadmin'].includes(req.user?.role);
+  const finalFranchiseUserId = franchise_user_id || (isFranchiseActor ? currentUserId : null) || homeChef?.created_by_user_id || null;
   const finalFranchiseId = franchise_id || homeChef?.created_by_id || null;
   const finalFranchiseName = franchise_name || homeChef?.created_by_name || null;
   const finalFranchiseEmail = franchise_email || homeChef?.created_by_email || null;
@@ -105,7 +106,7 @@ exports.getFoods = async (req, res) => {
       if (req.user.role === 'chef' && currentUserId) {
         query += ' AND created_by = ?';
         params.push(currentUserId);
-      } else if (req.user.role === 'admin' && currentUserId) {
+      } else if (['admin', 'franchise', 'superadmin'].includes(req.user.role) && currentUserId) {
         query += ' AND franchise_user_id = ?';
         params.push(currentUserId);
       }

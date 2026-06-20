@@ -274,6 +274,16 @@ const createChefFoodTable = async () => {
         `;
 
         await pool.execute(createTableSQL);
+        try { await pool.execute('ALTER TABLE chef_food_table DROP COLUMN chef_id'); } catch (err) {}
+        try { await pool.execute('ALTER TABLE chef_food_table DROP COLUMN chef_user_id'); } catch (err) {}
+        try { await pool.execute('ALTER TABLE chef_food_table DROP COLUMN chef_name'); } catch (err) {}
+        try { await pool.execute('ALTER TABLE chef_food_table DROP COLUMN chef_phone'); } catch (err) {}
+        try { await pool.execute('ALTER TABLE chef_food_table DROP COLUMN chef_email'); } catch (err) {}
+        try { await pool.execute('ALTER TABLE chef_food_table DROP COLUMN franchise_id'); } catch (err) {}
+        try { await pool.execute('ALTER TABLE chef_food_table DROP COLUMN franchise_name'); } catch (err) {}
+        try { await pool.execute('ALTER TABLE chef_food_table DROP COLUMN franchise_email'); } catch (err) {}
+        try { await pool.execute('ALTER TABLE chef_food_table DROP COLUMN franchise_phone'); } catch (err) {}
+        try { await pool.execute('ALTER TABLE chef_food_table DROP COLUMN created_by_phone'); } catch (err) {}
         try { await pool.execute('ALTER TABLE chef_food_table ADD COLUMN images LONGTEXT'); } catch (err) {}
         console.log('✓ Chef food table created or already exists');
     } catch (error) {
