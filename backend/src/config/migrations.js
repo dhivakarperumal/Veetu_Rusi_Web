@@ -214,27 +214,9 @@ const createDealersTable = async () => {
                 variants LONGTEXT,
                 images LONGTEXT,
 
-                chef_id VARCHAR(255) NOT NULL,
-                chef_user_id VARCHAR(255),
-                chef_name VARCHAR(255),
-                chef_phone VARCHAR(20),
-                chef_email VARCHAR(255),
-
-                created_by_user_id VARCHAR(255),
-                created_by_email VARCHAR(255),
-                created_by_name VARCHAR(255),
-                created_by_phone VARCHAR(20),
-
-                franchise_user_id VARCHAR(255),
-                franchise_name VARCHAR(255),
-                franchise_email VARCHAR(255),
-                franchise_phone VARCHAR(20),
-                franchise_id VARCHAR(255),
-
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
-                KEY idx_chef_id (chef_id),
                 KEY idx_category (category),
                 KEY idx_status (status),
                 KEY idx_created_at (created_at)
@@ -242,10 +224,17 @@ const createDealersTable = async () => {
             `;
 
             await pool.execute(createTableSQL);
-            // ensure optional columns exist
-            try { await pool.execute('ALTER TABLE franchise_products ADD COLUMN images LONGTEXT'); } catch {}
-            try { await pool.execute('ALTER TABLE franchise_products ADD COLUMN franchise_user_id VARCHAR(255)'); } catch {}
-            try { await pool.execute('ALTER TABLE franchise_products ADD COLUMN IF NOT EXISTS created_by_user_id VARCHAR(255)'); } catch {}
+            // Drop removed columns from existing tables (safe — errors ignored if column doesn't exist)
+            const dropColumns = [
+                'chef_id', 'chef_user_id', 'chef_name', 'chef_phone', 'chef_email',
+                'created_by_user_id', 'created_by_email', 'created_by_name', 'created_by_phone',
+                'franchise_user_id', 'franchise_name', 'franchise_email', 'franchise_phone', 'franchise_id'
+            ];
+            for (const col of dropColumns) {
+                try { await pool.execute(`ALTER TABLE franchise_products DROP COLUMN ${col}`); } catch {}
+            }
+            // Drop the old chef_id index if it exists
+            try { await pool.execute('ALTER TABLE franchise_products DROP INDEX idx_chef_id'); } catch {}
             console.log('✓ Franchise products table created or already exists');
         } catch (error) {
             console.error('✗ Error creating franchise_products table:', error.message);
