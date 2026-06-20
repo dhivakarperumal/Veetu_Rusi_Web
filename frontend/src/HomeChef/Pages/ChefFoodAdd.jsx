@@ -52,7 +52,7 @@ const ChefFoodAdd = () => {
     const loadProfile = async () => {
       try {
         const res = await api.get("/auth/profile");
-        setProfile(res.data?.user || {});
+        setProfile(res.data || {});
       } catch (err) {
         console.warn("Failed to load profile", err);
         setProfile(JSON.parse(localStorage.getItem("user") || "{}"));
@@ -184,17 +184,17 @@ const ChefFoodAdd = () => {
       mrp: Number(form.mrp),
       offer: Number(form.offer) || 0,
       final_price: Number(form.final_price) || null,
-      chef_user_id: profile?.user_id || profile?.id || null,
-      chef_id: profile?.chef_id || null,
-      chef_name: profile?.name || profile?.username || null,
-      chef_phone: profile?.phone || null,
-      chef_email: profile?.email || null,
-      franchise_user_id: profile?.created_by_user_id || null,
-      franchise_id: profile?.franchise_id || null,
-      franchise_name: profile?.created_by_name || null,
-      franchise_email: profile?.created_by_email || null,
-      franchise_phone: profile?.created_by_phone || null,
-      created_by_user_id: profile?.user_id || profile?.id || null,
+      chef_user_id: profile?.user?.user_id || profile?.user?.id || profile?.user_id || profile?.id || null,
+      chef_id: profile?.homeChef?.chef_id || profile?.chef_id || null,
+      chef_name: profile?.homeChef?.name || profile?.name || profile?.username || null,
+      chef_phone: profile?.homeChef?.mobile || profile?.phone || null,
+      chef_email: profile?.homeChef?.email || profile?.email || null,
+      franchise_user_id: profile?.homeChef?.created_by || profile?.homeChef?.created_by_user_id || profile?.created_by_user_id || null,
+      franchise_id: profile?.homeChef?.franchise_id || profile?.franchise_id || null,
+      franchise_name: profile?.homeChef?.created_by_name || profile?.created_by_name || null,
+      franchise_email: profile?.homeChef?.created_by_email || profile?.created_by_email || null,
+      franchise_phone: profile?.homeChef?.created_by_phone || profile?.created_by_phone || null,
+      created_by_user_id: profile?.user?.user_id || profile?.user?.id || profile?.user_id || profile?.id || null,
       created_by_name: profile?.name || profile?.username || null,
       created_by_email: profile?.email || null,
       created_by_phone: profile?.phone || null,

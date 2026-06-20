@@ -65,7 +65,7 @@ const resolveChefFoodMetadata = async (req, body) => {
 
   const currentUserId = req.user?.user_id || req.user?.id || null;
   const isFranchiseActor = ['admin', 'franchise', 'superadmin'].includes(req.user?.role);
-  const finalFranchiseUserId = franchise_user_id || (isFranchiseActor ? currentUserId : null) || homeChef?.created_by_user_id || null;
+  const finalFranchiseUserId = franchise_user_id || (isFranchiseActor ? currentUserId : null) || homeChef?.created_by || homeChef?.created_by_user_id || null;
   const finalFranchiseId = franchise_id || homeChef?.created_by_id || null;
   const finalFranchiseName = franchise_name || homeChef?.created_by_name || null;
   const finalFranchiseEmail = franchise_email || homeChef?.created_by_email || null;

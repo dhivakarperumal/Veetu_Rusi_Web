@@ -154,7 +154,7 @@ exports.profile = async (req, res) => {
     }
 
     if (role === 'admin') {
-      const [rows] = await pool.execute('SELECT id, franchise_id, franchise_name, status FROM franchise_owners WHERE email = ? LIMIT 1', [email]);
+      const [rows] = await pool.execute('SELECT id, franchise_id, franchise_name, franch_user_id, status FROM franchise_owners WHERE email = ? LIMIT 1', [email]);
       if (rows.length > 0) {
         response.franchise = rows[0];
       }
