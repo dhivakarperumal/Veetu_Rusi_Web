@@ -26,7 +26,7 @@ const CategoryIcon = () => {
       const data = Array.isArray(res.data) ? res.data : [];
       const myCategories = data.filter(
         (cat) =>
-          cat.created_by_user_id === homeChef?.created_by_user_id
+          cat.created_by_user_id === homeChef?.created_by
       );
       setCategories(myCategories);
       setCategoriesCache(myCategories);
@@ -39,7 +39,7 @@ const CategoryIcon = () => {
   };
 
   useEffect(() => {
-    if (homeChef?.created_by_user_id) {
+    if (homeChef?.created_by) {
       fetchCategories();
     }
   }, [homeChef]);

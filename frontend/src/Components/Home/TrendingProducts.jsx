@@ -32,7 +32,7 @@ const TrendingProducts = () => {
 
       const myProducts = (data || []).filter(
         (product) =>
-          product.created_by_user_id === homeChef?.created_by_user_id
+          product.created_by_user_id === homeChef?.created_by
       );
 
       const sortedProducts = myProducts.sort(
@@ -60,7 +60,7 @@ const TrendingProducts = () => {
   }, []);
 
 useEffect(() => {
-  if (homeChef?.created_by_user_id) {
+  if (homeChef?.created_by) {
     fetchTrendingProducts();
   }
 }, [homeChef]);
