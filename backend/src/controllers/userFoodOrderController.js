@@ -31,10 +31,6 @@ const addUserFoodOrder = async (payload) => {
     payment_status,
     total_amount,
     items,
-    created_by_user_id,
-    created_by_name,
-    created_by_email,
-    created_by_phone,
     chef_user_id,
     chef_id,
     chef_name,
@@ -71,10 +67,6 @@ const addUserFoodOrder = async (payload) => {
       payment_status,
       total_amount,
       items,
-      created_by_user_id,
-      created_by_name,
-      created_by_email,
-      created_by_phone,
       chef_user_id,
       chef_id,
       chef_name,
@@ -89,7 +81,7 @@ const addUserFoodOrder = async (payload) => {
       ordered_by_email,
       ordered_by_phone,
       status
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending')`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending')`,
     [
       order_id,
       user_id || null,
@@ -108,10 +100,6 @@ const addUserFoodOrder = async (payload) => {
       payment_status || 'Pending',
       total_amount || 0,
       JSON.stringify(items || []),
-      created_by_user_id || null,
-      created_by_name || null,
-      created_by_email || null,
-      created_by_phone || null,
       chef_user_id || null,
       chef_id || null,
       chef_name || null,
@@ -365,8 +353,8 @@ const getAllOrders = async (filters = {}) => {
     query += ' AND franchise_user_id = ?';
     params.push(userId);
   } else if (role === 'user' && userId) {
-    query += ' AND (user_id = ? OR created_by_user_id = ? OR ordered_by_user_id = ?)';
-    params.push(userId, userId, userId);
+    query += ' AND (user_id = ? OR ordered_by_user_id = ?)';
+    params.push(userId, userId);
   }
 
   // Status filter
@@ -400,24 +388,17 @@ const getAllOrders = async (filters = {}) => {
     params.push(franchise_id);
   }
 
-  // User filter (for customers) - match both user_id and created_by_user_id
+  // User filter (for customers) - match user_id
   if (user_id) {
-    query += ' AND (user_id = ? OR created_by_user_id = ?)';
-    params.push(user_id, user_id);
+    query += ' AND user_id = ?';
+    params.push(user_id);
   }
 
-  // Created by user filter (for personal orders) - match all variations of user ID
-  if (created_by_user_id) {
-    const stringId = String(created_by_user_id).trim();
-    query += ' AND (user_id = ? OR user_id LIKE ? OR created_by_user_id = ? OR created_by_user_id LIKE ? OR ordered_by_user_id = ? OR ordered_by_user_id LIKE ?)';
-    params.push(stringId, `%${stringId}%`, stringId, `%${stringId}%`, stringId, `%${stringId}%`);
-  }
-
-  // Ordered by user filter (for personal orders) - match all variations of user ID
+  // Ordered by user filter (for personal orders) - match ordered_by_user_id
   if (ordered_by_user_id) {
     const stringId = String(ordered_by_user_id).trim();
-    query += ' AND (user_id = ? OR user_id LIKE ? OR created_by_user_id = ? OR created_by_user_id LIKE ? OR ordered_by_user_id = ? OR ordered_by_user_id LIKE ?)';
-    params.push(stringId, `%${stringId}%`, stringId, `%${stringId}%`, stringId, `%${stringId}%`);
+    query += ' AND (user_id = ? OR user_id LIKE ? OR ordered_by_user_id = ? OR ordered_by_user_id LIKE ?)';
+    params.push(stringId, `%${stringId}%`, stringId, `%${stringId}%`);
   }
 
   // Search filter

@@ -13,11 +13,6 @@ const initUserFoodTable = async () => {
         total_price DECIMAL(10,2),
         quantity INT DEFAULT 1,
 
-        created_by_user_id VARCHAR(255),
-        created_by_name VARCHAR(255),
-        created_by_email VARCHAR(255),
-        created_by_phone VARCHAR(20),
-
         chef_user_id VARCHAR(255),
         chef_id VARCHAR(255),
         chef_name VARCHAR(255),
@@ -60,10 +55,6 @@ const addToUserFoodCart = async (data) => {
     price,
     total_price,
     quantity,
-    created_by_user_id,
-    created_by_name,
-    created_by_email,
-    created_by_phone,
     chef_user_id,
     chef_id,
     chef_name,
@@ -95,8 +86,8 @@ const addToUserFoodCart = async (data) => {
   }
 
   const [result] = await pool.execute(
-    `INSERT INTO user_food_cart (user_id, product_id, name, image, price, total_price, quantity, created_by_user_id, created_by_name, created_by_email, created_by_phone, chef_user_id, chef_id, chef_name, chef_phone, chef_email, franchise_id, franchise_user_id, franchise_email, franchise_name, franchise_phone, ordered_by_name, ordered_by_user_id, ordered_by_email, ordered_by_phone) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO user_food_cart (user_id, product_id, name, image, price, total_price, quantity, chef_user_id, chef_id, chef_name, chef_phone, chef_email, franchise_id, franchise_user_id, franchise_email, franchise_name, franchise_phone, ordered_by_name, ordered_by_user_id, ordered_by_email, ordered_by_phone) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `,
     [
       user_id,
@@ -106,10 +97,6 @@ const addToUserFoodCart = async (data) => {
       price || 0,
       total_price || 0,
       quantity || 1,
-      created_by_user_id || '',
-      created_by_name || '',
-      created_by_email || '',
-      created_by_phone || '',
       chef_user_id || '',
       chef_id || '',
       chef_name || '',
