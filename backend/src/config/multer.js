@@ -72,7 +72,8 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  const allowedExtensions = ['.jpg', '.jpeg', '.png', '.pdf', '.webp', '.mp4', '.mov', '.webm'];
+  // Allow common image, document and video extensions (including some mobile formats)
+  const allowedExtensions = ['.jpg', '.jpeg', '.png', '.pdf', '.webp', '.mp4', '.mov', '.webm', '.3gp', '.mkv'];
   const ext = path.extname(file.originalname).toLowerCase();
   if (allowedExtensions.includes(ext)) {
     cb(null, true);
@@ -81,10 +82,11 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
+// Increase file size limit to support larger kitchen videos (500MB per file)
 const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
-  limits: { fileSize: 50 * 1024 * 1024 } // 50MB limit
+  limits: { fileSize: 500 * 1024 * 1024 } // 500MB limit
 });
 
 module.exports = upload;

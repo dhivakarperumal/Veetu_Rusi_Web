@@ -125,6 +125,17 @@ const VALID_HOMECHEF_COLUMNS = [
 
 exports.createHomeChef = async (req, res) => {
   try {
+    // Debug: log received files for troubleshooting kitchen video uploads
+    try {
+      const fileSummary = Object.keys(req.files || {}).reduce((acc, k) => {
+        acc[k] = (req.files[k] || []).map(f => ({ filename: f.filename, originalname: f.originalname, size: f.size }));
+        return acc;
+      }, {});
+      console.debug('📁 createHomeChef files received:', JSON.stringify(fileSummary));
+      if (req.body) console.debug('✉️ createHomeChef body keys:', Object.keys(req.body));
+    } catch (err) {
+      console.debug('Could not summarise incoming files for createHomeChef:', err.message);
+    }
     const auditUser = await resolveCurrentUserAudit(req);
     const {
       user_id,
@@ -294,6 +305,17 @@ exports.createHomeChef = async (req, res) => {
 exports.updateHomeChef = async (req, res) => {
   try {
     const { id } = req.params;
+    // Debug: log received files for troubleshooting kitchen video uploads
+    try {
+      const fileSummary = Object.keys(req.files || {}).reduce((acc, k) => {
+        acc[k] = (req.files[k] || []).map(f => ({ filename: f.filename, originalname: f.originalname, size: f.size }));
+        return acc;
+      }, {});
+      console.debug('📁 updateHomeChef files received:', JSON.stringify(fileSummary));
+      if (req.body) console.debug('✉️ updateHomeChef body keys:', Object.keys(req.body));
+    } catch (err) {
+      console.debug('Could not summarise incoming files for updateHomeChef:', err.message);
+    }
     const auditUser = await resolveCurrentUserAudit(req);
     const {
       first_name, last_name, gender, date_of_birth, age,
