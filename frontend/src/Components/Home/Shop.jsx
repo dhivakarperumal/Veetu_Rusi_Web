@@ -30,6 +30,7 @@ const Shop = ({ defaultCategory = "" }) => {
   const [offerFilter, setOfferFilter] = useState(0);
   const [sortOption, setSortOption] = useState("");
   const [homeChef, setHomeChef] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
 
   const [gridView, setGridView] = useState(5);
 
@@ -40,35 +41,39 @@ const Shop = ({ defaultCategory = "" }) => {
       try {
         const res = await api.get("/auth/profile");
         setHomeChef(res.data.homeChef);
+        setCurrentUser(res.data.user);
       } catch (err) {
-        console.error(err);
+        console.error("Profile load error:", err);
       }
     };
-
-    loadProfile();
-  }, []);
-
-  useEffect(() => {
-    const loadProfile = async () => {
-      try {
-        const res = await api.get("/auth/profile");
-        setHomeChef(res.data.homeChef);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
     loadProfile();
   }, []);
 
   /* ─── Fetch Products ─────────────────────────────────────────── */
   const fetchProducts = async () => {
+    let userToMatch = null;
+    let homeChefIdToMatch = null;
+
+    const role = currentUser?.role?.toLowerCase() || '';
+    if (role === 'admin' || role === 'franchise') {
+      userToMatch = currentUser?.user_id;
+    } else if (role === 'chef') {
+      // Wait for homeChef to load before proceeding
+      if (!homeChef) return;
+      userToMatch = homeChef?.created_by;
+      homeChefIdToMatch = homeChef?.id;
+    }
+
     // Use cache if fresh (5 min)
     const isCacheValid = lastFetchTime && Date.now() - lastFetchTime < 5 * 60 * 1000;
     if (isCacheValid && productsCache?.length > 0) {
-      const myProducts = productsCache.filter(
-        (product) => product.created_by_user_id === homeChef?.created_by_user_id
-      );
+      let myProducts = productsCache;
+      if (userToMatch) {
+        myProducts = myProducts.filter((product) => product.created_by === userToMatch);
+      }
+      if (homeChefIdToMatch) {
+        myProducts = myProducts.filter((product) => !product.home_chef_id || product.home_chef_id == homeChefIdToMatch);
+      }
       setProducts(myProducts);
       setFilteredProducts(myProducts);
       setLoading(false);
@@ -82,9 +87,14 @@ const Shop = ({ defaultCategory = "" }) => {
       setProductsCache(data);
       setLastFetchTime(Date.now());
       
-      const myProducts = data.filter(
-        (product) => product.created_by_user_id === homeChef?.created_by_user_id
-      );
+      let myProducts = data;
+      if (userToMatch) {
+        myProducts = myProducts.filter((product) => product.created_by === userToMatch);
+      }
+      if (homeChefIdToMatch) {
+        myProducts = myProducts.filter((product) => !product.home_chef_id || product.home_chef_id == homeChefIdToMatch);
+      }
+      
       setProducts(myProducts);
       setFilteredProducts(myProducts);
     } catch (error) {
@@ -97,10 +107,8 @@ const Shop = ({ defaultCategory = "" }) => {
   };
 
   useEffect(() => {
-    if (homeChef?.created_by_user_id) {
-      fetchProducts();
-    }
-  }, [homeChef]);
+    fetchProducts();
+  }, [homeChef, currentUser]);
 
   /* ─── Filter Logic ───────────────────────────────────────────── */
   useEffect(() => {
