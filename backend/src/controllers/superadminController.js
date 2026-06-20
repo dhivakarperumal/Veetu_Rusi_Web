@@ -1619,9 +1619,18 @@ exports.deleteArea = async (req, res) => {
 // ==================== DELIVERY PARTNER MANAGEMENT ====================
 exports.getDeliveryPartners = async (req, res) => {
   try {
-    const [rows] = await pool.execute(
-      "SELECT * FROM delivery_partners ORDER BY created_at DESC"
-    );
+    const auditUser = await resolveCurrentUserAudit(req);
+    const currentUserId = auditUser?.user_id || auditUser?.id || null;
+
+    let query = "SELECT * FROM delivery_partners";
+    const params = [];
+    if (currentUserId) {
+      query += " WHERE created_by = ?";
+      params.push(currentUserId);
+    }
+    query += " ORDER BY created_at DESC";
+
+    const [rows] = await pool.execute(query, params);
     res.json(rows);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving delivery partners.', error: error.message });
