@@ -100,32 +100,18 @@ exports.getFoods = async (req, res) => {
 
     // Enforce role-based restrictions
     if (req.user) {
-      if (req.user.role === 'chef') {
-        query += ' AND (chef_id = ? OR chef_user_id = ?)';
-        params.push(req.user.id, req.user.user_id);
-      } else if (req.user.role === 'admin') {
-        query += ' AND (franchise_id = ? OR franchise_user_id = ?)';
-        params.push(req.user.id, req.user.user_id);
+      const currentUserId = req.user.user_id || req.user.id || null;
+      if (req.user.role === 'chef' && currentUserId) {
+        query += ' AND created_by = ?';
+        params.push(currentUserId);
+      } else if (req.user.role === 'admin' && currentUserId) {
+        query += ' AND franchise_user_id = ?';
+        params.push(currentUserId);
       }
       // superadmin can see all
     }
 
-    if (chef_id) {
-      query += ' AND chef_id = ?';
-      params.push(chef_id);
-    }
-    if (chef_user_id) {
-      query += ' AND chef_user_id = ?';
-      params.push(chef_user_id);
-    }
-    // Use OR logic for franchise: match if either franchise_id OR franchise_user_id matches
-    if (franchise_id && franchise_user_id) {
-      query += ' AND (franchise_id = ? OR franchise_user_id = ?)';
-      params.push(franchise_id, franchise_user_id);
-    } else if (franchise_id) {
-      query += ' AND franchise_id = ?';
-      params.push(franchise_id);
-    } else if (franchise_user_id) {
+    if (franchise_user_id) {
       query += ' AND franchise_user_id = ?';
       params.push(franchise_user_id);
     }
@@ -205,28 +191,20 @@ exports.createFood = async (req, res) => {
     const metadata = await resolveChefFoodMetadata(req, req.body);
     const {
       finalChefUserId,
-      finalChefId,
-      finalChefName,
-      finalChefPhone,
-      finalChefEmail,
-      finalFranchiseUserId,
-      finalFranchiseId,
-      finalFranchiseName,
-      finalFranchiseEmail,
-      finalFranchisePhone
+      finalFranchiseUserId
     } = metadata;
 
-    // created_by_* columns removed from chef_food_table schema; skipping population
+    const createdBy = finalChefUserId || req.user?.user_id || req.user?.id || null;
+    const updatedBy = createdBy;
 
     const computedFinalPrice = Number(final_price) || (Number(mrp) - (Number(offer) || 0) * Number(mrp) / 100) || Number(mrp);
 
     const insertSql = `INSERT INTO chef_food_table
       (category, name, description, cuisine, prep_time, shelf_life_days, mrp, offer, final_price,
        dietary_tag, net_weight, packaging_type, ingredients, instructions, images, status,
-       chef_id, chef_user_id, chef_name, chef_phone, chef_email,
-      franchise_id, franchise_user_id, franchise_name, franchise_email, franchise_phone
-          )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+       franchise_user_id, created_by, updated_by
+      )
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
     const params = [
       category,
@@ -245,16 +223,9 @@ exports.createFood = async (req, res) => {
       instructions || null,
       normalizeJsonField(images) || null,
       status || 'Active',
-      finalChefId,
-      finalChefUserId,
-      finalChefName,
-      finalChefPhone,
-      finalChefEmail,
-      finalFranchiseId,
       finalFranchiseUserId,
-      finalFranchiseName,
-      finalFranchiseEmail,
-      finalFranchisePhone
+      createdBy,
+      updatedBy
     ];
 
     const [result] = await pool.execute(insertSql, params);
@@ -275,9 +246,7 @@ exports.updateFood = async (req, res) => {
     const allowed = [
       'category', 'name', 'description', 'cuisine', 'prep_time', 'shelf_life_days', 'mrp',
       'offer', 'final_price', 'dietary_tag', 'net_weight', 'packaging_type',
-      'ingredients', 'instructions', 'images', 'status', 'chef_id', 'chef_user_id', 'chef_name',
-      'chef_phone', 'chef_email', 'franchise_id', 'franchise_user_id', 'franchise_name',
-      'franchise_email', 'franchise_phone'
+      'ingredients', 'instructions', 'images', 'status', 'franchise_user_id'
     ];
 
     allowed.forEach((key) => {
@@ -290,6 +259,17 @@ exports.updateFood = async (req, res) => {
         }
       }
     });
+
+    const updateCreatedBy = updates.chef_user_id || req.user?.user_id || req.user?.id || null;
+    if (updateCreatedBy) {
+      fields.push('created_by = ?');
+      params.push(updateCreatedBy);
+    }
+    const updateUpdatedBy = req.user?.user_id || req.user?.id || updateCreatedBy || null;
+    if (updateUpdatedBy) {
+      fields.push('updated_by = ?');
+      params.push(updateUpdatedBy);
+    }
 
     if (fields.length === 0) {
       return res.status(400).json({ message: 'No fields to update' });
