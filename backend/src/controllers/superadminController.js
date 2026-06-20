@@ -1663,7 +1663,8 @@ exports.createDeliveryPartner = async (req, res) => {
 
     const hashedPassword = password ? hashPassword(password) : hashPassword(`${email}@2024`);
     const deliveryPartnerUserId = user_id || generateRoleId('delivery_partner');
-    const createdBy = auditUser?.name || auditUser?.email || auditUser?.user_id || null;
+    // Store the audit user's user_id (or id) in created_by/updated_by for consistency
+    const createdBy = auditUser?.user_id || auditUser?.id || null;
     const fullName = [first_name, last_name].filter(Boolean).join(' ') || email.split('@')[0];
 
     const files = req.files || {};
@@ -1740,7 +1741,8 @@ exports.updateDeliveryPartner = async (req, res) => {
   try {
     const { id } = req.params;
     const auditUser = await resolveCurrentUserAudit(req);
-    const updatedBy = auditUser?.name || auditUser?.email || auditUser?.user_id || null;
+    // Use audit user's user_id (or id) when setting updated_by
+    const updatedBy = auditUser?.user_id || auditUser?.id || null;
     const {
       first_name, last_name, gender, date_of_birth, age, blood_group,
       mobile, alt_mobile, email,
@@ -1879,7 +1881,7 @@ exports.updateDeliveryPartnerStatus = async (req, res) => {
     const { status } = req.body;
 
     const auditUser = await resolveCurrentUserAudit(req);
-    const updatedBy = auditUser?.name || auditUser?.email || auditUser?.user_id || null;
+    const updatedBy = auditUser?.user_id || auditUser?.id || null;
 
     await pool.execute(
       `UPDATE delivery_partners SET status = ?, updated_by = ?, updated_at = NOW() WHERE id = ?`,
