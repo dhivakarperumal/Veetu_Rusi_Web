@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -128,6 +128,13 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
     setOpenMenu(prev => prev === label ? null : label);
   };
 
+  useEffect(() => {
+    const activeItem = navItems.find(item => item.children && isActiveRoute(item));
+    if (activeItem) {
+      setOpenMenu(activeItem.label);
+    }
+  }, [location.pathname]);
+
   return (
     <>
       {/* ========== MOBILE OVERLAY ========== */}
@@ -179,8 +186,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
 
             /* ===== DROPDOWN ITEM ===== */
             if (item.children) {
-              const isAnyChildActive = isActiveRoute(item);
-              const isMenuOpen = openMenu === item.label || isAnyChildActive;
+              const isMenuOpen = openMenu === item.label;
 
               return (
                 <div key={item.label} className="space-y-1">
