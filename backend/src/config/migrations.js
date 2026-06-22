@@ -224,11 +224,22 @@ const createDealersTable = async () => {
             `;
 
             await pool.execute(createTableSQL);
+            // Ensure audit and franchise ownership columns exist for franchise_products
+            const addColumnCommands = [
+                `ALTER TABLE franchise_products ADD COLUMN IF NOT EXISTS franchise_user_id VARCHAR(255)`,
+                `ALTER TABLE franchise_products ADD COLUMN IF NOT EXISTS created_by VARCHAR(255)`,
+                `ALTER TABLE franchise_products ADD COLUMN IF NOT EXISTS updated_by VARCHAR(255)`,
+                `ALTER TABLE franchise_products ADD INDEX IF NOT EXISTS idx_franchise_user_id (franchise_user_id)`,
+                `ALTER TABLE franchise_products ADD INDEX IF NOT EXISTS idx_created_by (created_by)`
+            ];
+            for (const cmd of addColumnCommands) {
+                try { await pool.execute(cmd); } catch {}
+            }
             // Drop removed columns from existing tables (safe — errors ignored if column doesn't exist)
             const dropColumns = [
                 'chef_id', 'chef_user_id', 'chef_name', 'chef_phone', 'chef_email',
                 'created_by_user_id', 'created_by_email', 'created_by_name', 'created_by_phone',
-                'franchise_user_id', 'franchise_name', 'franchise_email', 'franchise_phone', 'franchise_id'
+                'franchise_name', 'franchise_email', 'franchise_phone', 'franchise_id'
             ];
             for (const col of dropColumns) {
                 try { await pool.execute(`ALTER TABLE franchise_products DROP COLUMN ${col}`); } catch {}
