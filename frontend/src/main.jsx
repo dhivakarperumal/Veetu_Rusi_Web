@@ -112,6 +112,13 @@ const ReportsAnalytics = React.lazy(() => import("./SuperAdmin/Pages/ReportsAnal
 const SubscriptionPlansManagement = React.lazy(() => import("./SuperAdmin/Pages/SubscriptionPlansManagement.jsx"));
 const SuperAreas = React.lazy(() => import("./SuperAdmin/Pages/Areas.jsx"));
 const ChefOrderManagement = React.lazy(() => import("./HomeChef/Pages/OrderManagement.jsx"));
+const ChefCart = React.lazy(() => import("./HomeChef/Pages/ChefCart.jsx"));
+const ChefWishlist = React.lazy(() => import("./HomeChef/Pages/ChefWishlist.jsx"));
+
+// home chef
+const Material = React.lazy(() => import("./HomeChef/Pages/Material.jsx"));
+const ChefMaterialDetails = React.lazy(() => import("./HomeChef/Pages/ChefMaterialDetails.jsx"));
+const MaterialCheckout = React.lazy(() => import("./HomeChef/Pages/MaterialCheckout.jsx"));
 
 // Lazy Load Delivery Boys Components
 const DeliveryPanel = React.lazy(() => import("./DeliveryBoys/DeliveryPanel.jsx"));
@@ -159,7 +166,7 @@ const router = createBrowserRouter([
   { path: "/login", element: <Login /> },
   { path: "/register", element: <Register /> },
   { path: "/forgot-password", element: <ForgotPassword /> },
-  
+
   {
     path: "/superadmin",
     element: (
@@ -225,6 +232,11 @@ const router = createBrowserRouter([
       { path: "earnings", element: <WalletAndEarnings /> },
       { path: "orders", element: <ChefOrderManagement /> },
       { path: "reviews", element: <ChefReviews /> },
+      { path: "material", element: <Material /> },
+      { path: "material/:id", element: <ChefMaterialDetails /> },
+      { path: "checkout", element: <MaterialCheckout /> },
+      { path: "cart", element: <ChefCart /> },
+      { path: "wishlist", element: <ChefWishlist /> },
     ],
   },
 
@@ -324,7 +336,7 @@ createRoot(document.getElementById("root")).render(
   <GoogleOAuthProvider clientId="92181265196-n9a9p26qe601hg7lar8acq6s4f1cknq7.apps.googleusercontent.com">
     <AuthProvider>
       <StoreProvider>
-        <Toaster position="top-left" reverseOrder={false} />
+        <Toaster position="top-right" reverseOrder={false} />
         <React.Suspense fallback={<Loader />}>
           <RouterProvider router={router} />
         </React.Suspense>

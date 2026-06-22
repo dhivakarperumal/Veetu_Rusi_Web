@@ -2,21 +2,19 @@ import React, { useContext } from "react";
 import { FiHeart, FiTrash2, FiEye } from "react-icons/fi";
 import { StoreContext } from "../../PrivateRouter/StoreContext";
 import { useNavigate } from "react-router-dom";
-import PageHeader from "../CommenComponents/PageHeader";
-import PageContainer from "../CommenComponents/PageContainer";
 
-export default function WishList() {
+
+export default function ChefWishlist() {
   const { wishlist, toggleWishlist } = useContext(StoreContext);
   const navigate = useNavigate();
 
   return (
     <>
       {/* Page Title */}
-      <PageHeader title="My Wishlist" />
-
-      <div className=" bg-gray-50 py-16">
+     
+      <div className="  py-16">
         {/* Wishlist Grid */}
-        <PageContainer>
+       
           <div className="">
             {wishlist.length === 0 ? (
               <div className="flex flex-col items-center justify-center text-center py-16 bg-white rounded-2xl border border-gray-100 shadow-sm max-w-xl mx-auto">
@@ -43,60 +41,23 @@ export default function WishList() {
             ) : (
               <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
                 {wishlist.map((item, idx) => {
-                  // Get image from multiple sources
-                  let image = item?.image || item?.wishlist_image || item?.product_images || item?.images || null;
-                  
-                  console.log(`Wishlist item ${idx}:`, { name: item?.name, imageLength: image?.length, hasImage: !!image });
-                  
-                  // Parse JSON strings
-                  if (typeof image === 'string') {
-                    if (image.startsWith('[')) {
-                      try {
-                        const parsed = JSON.parse(image);
-                        image = Array.isArray(parsed) && parsed.length > 0 ? parsed[0] : image;
-                      } catch (e) {
-                        console.error('Error parsing image JSON:', e);
-                        image = null;
-                      }
-                    }
-                  } else if (Array.isArray(image)) {
-                    image = image[0] || null;
-                  }
-                  
-                  // Validate image format
-                  if (typeof image === 'string') {
-                    // Check if it's a valid data URI or HTTP URL
-                    if (image.startsWith('data:') && image.length > 50) {
-                      // Valid base64 data URI - use as is
-                      try {
-                        // Test if it's valid by creating an image object
-                        const testImg = new Image();
-                        testImg.onerror = () => {
-                          console.warn('Invalid data URI for', item?.name);
-                        };
-                        testImg.src = image;
-                      } catch (e) {
-                        console.warn('Invalid image data for', item?.name, e);
-                        image = null;
-                      }
-                    } else if (image.startsWith('http://') || image.startsWith('https://')) {
-                      // Valid HTTP URL - use as is
-                    } else {
-                      // Invalid format
-                      console.warn('Invalid image format for', item?.name, ':', image.substring(0, 50));
-                      image = null;
-                    }
-                  } else {
-                    image = null;
+                  // Get image - check variants first, then product images
+                  let image = null;
+                  if (item?.variants?.length > 0 && item.variants[0]?.images?.length > 0) {
+                    image = item.variants[0].images[0];
+                  } else if (item?.images?.length > 0) {
+                    image = item.images[0];
+                  } else if (item?.image) {
+                    image = item.image;
                   }
                   
                   // Fallback to placeholder
                   if (!image) {
-                    image = `https://ui-avatars.com/api/?name=${encodeURIComponent(item?.name || 'Product')}&background=random`;
+                    image = `https://ui-avatars.com/api/?name=${encodeURIComponent(item?.name || 'Product')}&background=f3f4f6&color=64748b&size=400`;
                   }
 
-                  const price = item?.price || item?.offer_price || 0;
-                  const mrp = item?.mrp || price;
+                  const price = item?.offer_price || item?.price || 0;
+                  const mrp = item?.mrp || 0;
                   const discount = mrp && price ? Math.round(((mrp - price) / mrp) * 100) : 0;
 
                   return (
@@ -111,15 +72,10 @@ export default function WishList() {
                           alt={item?.name || 'Product'}
                           className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                           onError={(e) => {
-                            console.error(`Image failed to load for product ${item?.name}:`, image);
-                            // Fallback to avatar on error
-                            const fallbackImg = `https://ui-avatars.com/api/?name=${encodeURIComponent(item?.name || 'Product')}&background=random&size=400`;
+                            const fallbackImg = `https://ui-avatars.com/api/?name=${encodeURIComponent(item?.name || 'Product')}&background=f3f4f6&color=64748b&size=400`;
                             if (e.target.src !== fallbackImg) {
                               e.target.src = fallbackImg;
                             }
-                          }}
-                          onLoad={() => {
-                            console.log(`Image successfully loaded for product ${item?.name}`);
                           }}
                         />
 
@@ -161,7 +117,7 @@ export default function WishList() {
 
                           {/* View Product */}
                           <button
-                            onClick={() => navigate(`/products/${item.id}`)}
+                            onClick={() => navigate(`/chef/material/${item.id || item.product_id}`)}
                             className="ml-auto bg-primary-dark text-white p-2 rounded-lg hover:bg-primary-light flex items-center justify-center transition cursor-pointer"
                           >
                             <FiEye size={18} />
@@ -174,7 +130,7 @@ export default function WishList() {
               </div>
             )}
           </div>
-        </PageContainer>
+
       </div>
     </>
   );

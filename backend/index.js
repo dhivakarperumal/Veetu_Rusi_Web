@@ -37,6 +37,7 @@ let createChefFoodCategoryTable = async () => {};
 let createChefCategoryTable = async () => {};
 let createFranchiseCategoryTable = async () => {};
 let createUserFoodOrderTable = async () => {};
+let createWishlistTable = async () => {};
 let ensureAuditColumns = async () => {};
 let cleanupHomeChefs = async () => {};
 let addHomeChefUniqueConstraints = async () => {};
@@ -56,6 +57,7 @@ try {
   createChefCategoryTable = migrations.createChefCategoryTable || createChefCategoryTable;
   createFranchiseCategoryTable = migrations.createFranchiseCategoryTable || createFranchiseCategoryTable;
   createUserFoodOrderTable = migrations.createUserFoodOrderTable || createUserFoodOrderTable;
+  createWishlistTable = migrations.createWishlistTable || createWishlistTable;
   ensureAuditColumns = migrations.ensureAuditColumns || ensureAuditColumns;
   cleanupHomeChefs = migrations.cleanupHomeChefs || cleanupHomeChefs;
   addHomeChefUniqueConstraints = migrations.addHomeChefUniqueConstraints || addHomeChefUniqueConstraints;
@@ -146,6 +148,7 @@ const startServer = async () => {
     await createChefFoodCategoryTable();
     await createChefCategoryTable();
     await createFranchiseCategoryTable();
+    await createWishlistTable();
   } catch (err) {
     console.error('Migration error:', err.message || err);
   }
