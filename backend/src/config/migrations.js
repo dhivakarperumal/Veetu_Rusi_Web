@@ -261,6 +261,7 @@ const createChefFoodTable = async () => {
             description LONGTEXT,
             cuisine VARCHAR(100),
             prep_time VARCHAR(100),
+            preparation_url VARCHAR(512),
             shelf_life_days INT,
             mrp DECIMAL(10,2) NOT NULL,
             offer INT DEFAULT 0,
@@ -268,6 +269,7 @@ const createChefFoodTable = async () => {
             dietary_tag VARCHAR(50),
             net_weight VARCHAR(100),
             packaging_type VARCHAR(100),
+            packaging_image LONGTEXT,
             ingredients LONGTEXT,
             instructions LONGTEXT,
             images LONGTEXT,
@@ -294,6 +296,8 @@ const createChefFoodTable = async () => {
         try { await pool.execute('ALTER TABLE chef_food_table DROP COLUMN franchise_email'); } catch (err) {}
         try { await pool.execute('ALTER TABLE chef_food_table DROP COLUMN franchise_phone'); } catch (err) {}
         try { await pool.execute('ALTER TABLE chef_food_table DROP COLUMN created_by_phone'); } catch (err) {}
+        try { await pool.execute('ALTER TABLE chef_food_table ADD COLUMN preparation_url VARCHAR(512)'); } catch (err) {}
+        try { await pool.execute('ALTER TABLE chef_food_table ADD COLUMN packaging_image LONGTEXT'); } catch (err) {}
         try { await pool.execute('ALTER TABLE chef_food_table ADD COLUMN images LONGTEXT'); } catch (err) {}
         console.log('✓ Chef food table created or already exists');
     } catch (error) {

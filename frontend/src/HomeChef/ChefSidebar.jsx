@@ -42,13 +42,18 @@ const navItems = [
   { path: "/chef", label: "Dashboard", icon: TrendingUp, exact: true },
   {
     path: "/chef/food",
-    label: "Food",
+    label: "Food & Products",
     icon: Package,
     children: [
-      { path: "/chef/food/categories/add", label: "Add Category", icon: PlusCircle },
-      { path: "/chef/food/categories", label: "All Categories", icon: List },
-      { path: "/chef/food/add", label: "Add Food", icon: PlusCircle },
-      { path: "/chef/food/all", label: "All Food", icon: Package }
+      // Admin-style inventory links
+       { path: "/chef/food/add", label: "Add Food", icon: PlusCircle },
+      { path: "/chef/food/all", label: "All Food", icon: Package },
+      { path: "/chef/products/all", label: "All Products", icon: List },
+      { path: "/chef/products/add", label: "Add Product", icon: PlusCircle },
+      { path: "/chef/products/stock", label: "Stock Details", icon: Archive }
+
+      // Chef food management links (kept for backward compatibility)
+     
     ]
   },
 
@@ -65,16 +70,7 @@ const navItems = [
     ]
   },
 
-  {
-    path: "/chef/products",
-    label: "Products",
-    icon: Package,
-    children: [
-      { path: "/chef/products", label: "All Products", icon: List },
-      { path: "/chef/categories", label: "Categories", icon: Layers },
-      { path: "/chef/products/stock", label: "Stock Details", icon: Archive }
-    ]
-  },
+  
   { path: "/chef/reviews", label: "Reviews", icon: MessageSquare },
   { path: "/chef/earnings", label: "Wallet & Earnings", icon: Wallet },
   { path: "/", label: "Back Home", icon: Home },
