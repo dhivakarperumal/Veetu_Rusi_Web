@@ -1249,8 +1249,8 @@ const HomeChefManagement = () => {
             <div className="relative w-full max-w-6xl rounded-[2.5rem] overflow-hidden border border-white/10 shadow-[0_35px_120px_rgba(0,0,0,0.45)] bg-[#081017]">
               <div className="absolute -right-28 top-12 h-72 w-72 rounded-full bg-emerald-500/12 blur-3xl pointer-events-none" />
               <div className="absolute -left-28 bottom-10 h-72 w-72 rounded-full bg-blue-500/10 blur-3xl pointer-events-none" />
-              <div className="grid lg:grid-cols-[340px_1fr] min-h-[60vh] max-h-[90vh]">
-                <aside className="hidden lg:flex flex-col gap-6 p-8 bg-[#091219] border-r border-white/10 overflow-y-auto min-h-0 h-full">
+              <div className="grid lg:grid-cols-[340px_1fr] min-h-[60vh] max-h-[90vh] h-[90vh] overflow-hidden">
+                <aside className="hidden lg:flex flex-col p-8 bg-[#091219] border-r border-white/10 h-full overflow-y-auto">
                   <div className="space-y-4">
                     <p className="text-xs uppercase tracking-[0.35em] text-emerald-300/70">
                       Home Chef Onboarding
