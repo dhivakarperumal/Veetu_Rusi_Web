@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useContext } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import api from "../api";
 import {
@@ -10,6 +10,8 @@ import {
   LogOut,
   ChevronDown,
   ShoppingBag,
+  ShoppingCart,
+  Heart,
   Package,
   X,
   AlertTriangle,
@@ -18,6 +20,7 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "../PrivateRouter/AuthContext";
+import { StoreContext } from "../PrivateRouter/StoreContext";
 
 const pageTitles = {
   "/chef": "Dashboard",
@@ -60,6 +63,9 @@ const ChefHeader = ({ onMenuClick }) => {
 
   // ✅ CORRECT AUTH VALUES
   const { profileName, role, email, logout } = useAuth();
+  
+  // ✅ CART AND WISHLIST
+  const { cart, wishlist } = useContext(StoreContext);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -598,6 +604,32 @@ const ChefHeader = ({ onMenuClick }) => {
                 </div>
             )}
           </div>
+
+          {/* WISHLIST */}
+          <Link
+            to={getDynamicPath("/chef/wishlist")}
+            className="relative p-2 rounded-xl transition-all active:scale-95 border bg-[#0b0d10] text-slate-300 hover:bg-[#111319] border-slate-800 shadow-sm"
+          >
+            <Heart className="w-5 h-5" />
+            {wishlist && wishlist.length > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white">
+                {wishlist.length}
+              </span>
+            )}
+          </Link>
+
+          {/* CART */}
+          <Link
+            to={getDynamicPath("/chef/cart")}
+            className="relative p-2 rounded-xl transition-all active:scale-95 border bg-[#0b0d10] text-slate-300 hover:bg-[#111319] border-slate-800 shadow-sm"
+          >
+            <ShoppingCart className="w-5 h-5" />
+            {cart && cart.length > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white ring-2 ring-white">
+                {cart.length}
+              </span>
+            )}
+          </Link>
 
           {/* PROFILE */}
           <div className="relative" ref={profileRef}>

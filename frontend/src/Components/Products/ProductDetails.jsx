@@ -131,12 +131,14 @@ const ProductDetails = () => {
 
   const handleBuyNow = () => {
 
-    if (!selectedVariant) {
+    if (!selectedVariant && product?.variants?.length > 0) {
       alert("Please select a variant");
       return;
     }
 
-    navigate("/checkout", {
+    const checkoutPath = (user?.role === "chef" || user?.role === "homechef") ? "/chef/checkout" : "/checkout";
+
+    navigate(checkoutPath, {
       state: {
         product: product,
         variant: selectedVariant,
