@@ -304,7 +304,7 @@ const Checkout = () => {
         key: "rzp_test_SGj8n5SyKSE10b",
         amount: total * 100,
         currency: "INR",
-        name: "Saree World",
+        name: "Veetu Rusi",
         description: "Order Payment",
 
         handler: async function (response) {
