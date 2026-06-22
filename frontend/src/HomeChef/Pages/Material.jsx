@@ -284,7 +284,7 @@ const Materials = () => {
                             : null;
 
                         return (
-                            <div key={product.id} className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden group hover:shadow-xl transition-all duration-400 flex flex-col">
+                            <div key={product.id} className="relative bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden group hover:shadow-xl transition-all duration-400 flex flex-col">
                                 {/* Image */}
                                 <Link to={`/chef/material/${product.id}`} className="relative block flex-shrink-0">
                                     <div className="w-full h-56 sm:h-64 overflow-hidden bg-gray-50">
