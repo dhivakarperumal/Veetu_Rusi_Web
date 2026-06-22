@@ -108,28 +108,50 @@ const MaterialCheckout = () => {
           try {
             // Use OpenStreetMap's Nominatim for reverse geocoding (free service)
             const response = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`
             );
+            
+            if (!response.ok) {
+              throw new Error("Failed to fetch address from location");
+            }
+            
             const data = await response.json();
+            console.log("Nominatim Response:", data); // Debug log
+
+            // Build street address from available components
+            const streetParts = [];
+            if (data.address?.house_number) streetParts.push(data.address.house_number);
+            if (data.address?.road) streetParts.push(data.address.road);
+            if (data.address?.street) streetParts.push(data.address.street);
+            if (data.address?.neighbourhood) streetParts.push(data.address.neighbourhood);
+            
+            const streetAddress = streetParts.length > 0 ? streetParts.join(", ") : data.address?.address || "";
 
             const addressComponents = {
-              street_address: data.address?.road || data.address?.street || "",
-              city: data.address?.city || data.address?.town || "",
-              district: data.address?.county || data.address?.district || "",
+              street_address: streetAddress || "",
+              city: data.address?.city || data.address?.town || data.address?.village || "",
+              district: data.address?.county || data.address?.district || data.address?.state_district || "",
               state: data.address?.state || "",
               country: data.address?.country || "India",
               zip_code: data.address?.postcode || ""
             };
+
+            // Validate that we have at least street address and city
+            if (!addressComponents.street_address && !addressComponents.city) {
+              toast.error("Could not determine street address from location. Please enter manually.");
+              setLocationLoading(false);
+              return;
+            }
 
             setForm((prev) => ({
               ...prev,
               ...addressComponents
             }));
             setSelectedAddress(null);
-            toast.success("Location detected successfully!");
+            toast.success("✓ Location detected successfully!");
           } catch (error) {
             console.error("Reverse geocoding error:", error);
-            toast.error("Could not fetch address details");
+            toast.error("Could not fetch address details. Please enter manually.");
           }
           setLocationLoading(false);
         },
@@ -137,14 +159,19 @@ const MaterialCheckout = () => {
           console.error("Geolocation error:", error);
           let errorMsg = "Could not access your location";
           if (error.code === error.PERMISSION_DENIED) {
-            errorMsg = "Location permission denied. Please enable it in settings.";
+            errorMsg = "Location permission denied. Please enable location in browser settings.";
           } else if (error.code === error.POSITION_UNAVAILABLE) {
             errorMsg = "Location information is unavailable.";
           } else if (error.code === error.TIMEOUT) {
-            errorMsg = "Location request timed out.";
+            errorMsg = "Location request timed out. Please try again.";
           }
           toast.error(errorMsg);
           setLocationLoading(false);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
         }
       );
     } catch (error) {
