@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import api from "../../api";
 import { FiUser, FiMail, FiPhone, FiHash, FiShield, FiCalendar, FiMapPin } from "react-icons/fi";
@@ -275,10 +276,10 @@ const Profile = () => {
       </div>
 
       {/* Order Details Modal */}
-      {selectedOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+      {selectedOrder && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6">
           <div 
-            className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity" 
+            className="absolute inset-0 bg-[#070b13]/80 backdrop-blur-sm transition-opacity" 
             onClick={() => setSelectedOrder(null)}
           />
           <div className="relative z-10 w-full max-w-2xl rounded-[2.5rem] bg-[#0b1120] border border-white/10 shadow-[0_0_80px_rgba(0,0,0,0.8)] overflow-hidden animate-in zoom-in-95 duration-300">
@@ -392,7 +393,8 @@ const Profile = () => {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
