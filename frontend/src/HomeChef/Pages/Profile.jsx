@@ -64,6 +64,7 @@ const Profile = () => {
   }, [user]);
 
   const [activeTab, setActiveTab] = useState("details");
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   if (!user && !loading) {
     return (
@@ -230,7 +231,11 @@ const Profile = () => {
             ) : (
               <div className="grid gap-4 sm:grid-cols-2">
                 {orders.slice(0, 6).map((order) => (
-                  <div key={order.id} className="rounded-[1.5rem] border border-slate-200 bg-slate-950/95 p-5 shadow-sm">
+                  <div 
+                    key={order.id} 
+                    className="rounded-[1.5rem] border border-slate-200 bg-slate-950/95 p-5 shadow-sm cursor-pointer hover:scale-[1.02] transition-transform"
+                    onClick={() => setSelectedOrder(order)}
+                  >
                     <p className="text-xs uppercase tracking-[0.35em] text-slate-400">Order ID</p>
                     <p className="mt-2 text-sm font-black text-white">{order.order_id || `#${order.id}`}</p>
                     <div className="mt-4 space-y-2 text-sm text-slate-300">
@@ -251,6 +256,108 @@ const Profile = () => {
           </div>
         )}
       </div>
+
+      {/* Order Details Modal */}
+      {selectedOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+          <div 
+            className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity" 
+            onClick={() => setSelectedOrder(null)}
+          />
+          <div className="relative z-10 w-full max-w-lg rounded-[2rem] bg-[#0b1120] border border-white/10 shadow-[0_0_40px_rgba(0,0,0,0.5)] overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="bg-white/5 p-6 sm:p-8 border-b border-white/5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-black text-white uppercase italic tracking-tight">Order Details</h3>
+                  <p className="mt-1 text-xs font-bold uppercase tracking-widest text-emerald-400">
+                    {selectedOrder.order_id || `#${selectedOrder.id}`}
+                  </p>
+                </div>
+                <button 
+                  onClick={() => setSelectedOrder(null)}
+                  className="rounded-full bg-white/5 p-2 text-white/70 hover:bg-white/10 hover:text-white transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6 sm:p-8 max-h-[60vh] overflow-y-auto">
+              <div className="space-y-6">
+                <div>
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.35em] text-white/40 mb-3">Customer Info</h4>
+                  <p className="font-semibold text-white/80">{selectedOrder.customer_name || "—"}</p>
+                </div>
+                
+                <div>
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.35em] text-white/40 mb-3">Products</h4>
+                  {selectedOrder.items && selectedOrder.items.length > 0 ? (
+                    <div className="overflow-hidden rounded-[1.5rem] border border-white/5 bg-[#070b13]/60">
+                      <table className="w-full text-left text-sm">
+                        <thead className="bg-white/5 text-white/40">
+                          <tr>
+                            <th className="px-4 py-3 font-bold uppercase tracking-wider text-[10px]">Product</th>
+                            <th className="px-4 py-3 font-bold uppercase tracking-wider text-[10px] text-center">Qty</th>
+                            <th className="px-4 py-3 font-bold uppercase tracking-wider text-[10px] text-right">Price</th>
+                            <th className="px-4 py-3 font-bold uppercase tracking-wider text-[10px] text-right">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5">
+                          {selectedOrder.items.map((item, idx) => {
+                            const price = Number(item.price || 0);
+                            const qty = Number(item.quantity || 1);
+                            const total = price * qty;
+                            const imageSrc = item.image || item.image_url || item.product_image;
+                            
+                            return (
+                              <tr key={idx} className="bg-transparent hover:bg-white/5 transition-colors">
+                                <td className="px-4 py-3">
+                                  <div className="flex items-center gap-3">
+                                    {imageSrc ? (
+                                      <img 
+                                        src={imageSrc} 
+                                        alt={item.name || item.product_name || "Product"} 
+                                        className="h-10 w-10 rounded-xl object-cover bg-white/5"
+                                      />
+                                    ) : (
+                                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-white/30">
+                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                      </div>
+                                    )}
+                                    <span className="font-bold text-white/80">
+                                      {item.name || item.product_name || "Product"}
+                                    </span>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 text-center text-white/60 font-semibold">{qty}</td>
+                                <td className="px-4 py-3 text-right text-white/60">₹{price.toLocaleString()}</td>
+                                <td className="px-4 py-3 text-right font-black text-white/90">₹{total.toLocaleString()}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-white/30 italic">No product details available.</p>
+                  )}
+                </div>
+
+                <div className="pt-6 border-t border-white/5 flex justify-between items-center">
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-white/40">Total Amount</h4>
+                  <p className="text-2xl font-black text-white">
+                    ₹{Number(selectedOrder.chef_total_amount ?? selectedOrder.total_amount ?? 0).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
