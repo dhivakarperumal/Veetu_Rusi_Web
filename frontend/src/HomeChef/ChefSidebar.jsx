@@ -75,22 +75,8 @@ const navItems = [
       { path: "/chef/products/stock", label: "Stock Details", icon: Archive }
     ]
   },
-  {
-    label: "Buy Materials",
-    icon: ShoppingCart,
-    children: [
-      {
-        path: "/chef/material",
-        label: "Materials",
-        icon: Package,
-      },
-      {
-        path: "/chef/checkout",
-        label: "Checkout",
-        icon: CreditCard,
-      },
-    ],
-  },
+
+   { path: "/chef/material", label: "Buy Materials", icon:  ShoppingCart },
   { path: "/chef/reviews", label: "Reviews", icon: MessageSquare },
   { path: "/chef/earnings", label: "Wallet & Earnings", icon: Wallet },
   { path: "/", label: "Back Home", icon: Home },
