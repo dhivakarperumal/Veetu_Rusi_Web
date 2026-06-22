@@ -179,7 +179,6 @@ exports.createProduct = async (req, res) => {
         }
 
         const finalProductCode = product_code || await generateNextProductCode();
-        const franchiseUserId = req.user?.user_id || req.user?.id || req.body?.franchise_user_id || null;
         const createdBy = req.user?.user_id || req.user?.id || req.body?.created_by || req.user?.email || 'Admin';
 
         const params = [
@@ -194,7 +193,6 @@ exports.createProduct = async (req, res) => {
             packaging_type || 'Pouch', manufacture_date || null,
             variants ? JSON.stringify(variants) : null,
             images ? JSON.stringify(images) : null,
-            franchiseUserId,
             createdBy
         ];
 
@@ -202,7 +200,7 @@ exports.createProduct = async (req, res) => {
             product_code, total_stock, rating, status, material, nutrition_info, storage_instructions,
             presentation_style, portion_format, service_type, packaging_notes, dietary_tag, heat_profile,
             serving_size, prep_time, ingredients, spice_level, shelf_life_days, net_weight, package_count,
-            packaging_type, manufacture_date, variants, images, franchise_user_id, created_by`;
+            packaging_type, manufacture_date, variants, images, created_by`;
 
         const placeholders = params.map(() => '?').join(', ');
         const insertParams = params.map(v => v === undefined ? null : v);
@@ -239,8 +237,7 @@ exports.updateProduct = async (req, res) => {
             return res.status(404).json({ message: 'Franchise product not found' });
         }
 
-        const franchiseUserId = req.user?.user_id || req.user?.id || req.body?.franchise_user_id || null;
-        const updatedBy = franchiseUserId || req.body?.updated_by || req.user?.email || 'Admin';
+        const updatedBy = req.user?.user_id || req.user?.id || req.body?.updated_by || req.user?.email || 'Admin';
 
         const updateQuery = `UPDATE franchise_products SET
                 name = ?, description = ?, category = ?, product_type = ?, subcategory = ?,
@@ -250,7 +247,7 @@ exports.updateProduct = async (req, res) => {
                 dietary_tag = ?, heat_profile = ?, serving_size = ?, prep_time = ?,
                 ingredients = ?, spice_level = ?, shelf_life_days = ?, net_weight = ?,
                 package_count = ?, packaging_type = ?, manufacture_date = ?, variants = ?, images = ?,
-                franchise_user_id = ?, updated_by = ?,
+                updated_by = ?,
                 updated_at = NOW()
             WHERE id = ?`;
         const params = [
@@ -260,7 +257,6 @@ exports.updateProduct = async (req, res) => {
             serving_size, prep_time, ingredients, spice_level, shelf_life_days, net_weight, package_count,
             packaging_type, manufacture_date, serializeJsonField(variants),
             images ? JSON.stringify(images) : null,
-            franchiseUserId,
             updatedBy,
             id
         ];

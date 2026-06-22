@@ -226,10 +226,8 @@ const createDealersTable = async () => {
             await pool.execute(createTableSQL);
             // Ensure audit and franchise ownership columns exist for franchise_products
             const addColumnCommands = [
-                `ALTER TABLE franchise_products ADD COLUMN IF NOT EXISTS franchise_user_id VARCHAR(255)`,
                 `ALTER TABLE franchise_products ADD COLUMN IF NOT EXISTS created_by VARCHAR(255)`,
                 `ALTER TABLE franchise_products ADD COLUMN IF NOT EXISTS updated_by VARCHAR(255)`,
-                `ALTER TABLE franchise_products ADD INDEX IF NOT EXISTS idx_franchise_user_id (franchise_user_id)`,
                 `ALTER TABLE franchise_products ADD INDEX IF NOT EXISTS idx_created_by (created_by)`
             ];
             for (const cmd of addColumnCommands) {
