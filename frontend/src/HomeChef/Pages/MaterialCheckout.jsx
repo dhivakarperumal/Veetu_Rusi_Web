@@ -340,6 +340,12 @@ const MaterialCheckout = () => {
           </div>
 
           {/* CART ITEMS */}
+          
+        </div>
+
+        {/* ORDER SUMMARY */}
+        <div className="bg-[#0f1216] border border-slate-800 p-6 rounded-2xl shadow-md h-fit sticky top-24">
+          <h2 className="text-lg font-semibold mb-6 text-white">Order Summary</h2>
           <div className="bg-[#0f1216] border border-slate-800 p-6 rounded-2xl shadow-md">
             <h2 className="text-lg font-semibold mb-4 text-white">Your Items</h2>
             <div className="space-y-4">
@@ -377,11 +383,6 @@ const MaterialCheckout = () => {
               ))}
             </div>
           </div>
-        </div>
-
-        {/* ORDER SUMMARY */}
-        <div className="bg-[#0f1216] border border-slate-800 p-6 rounded-2xl shadow-md h-fit sticky top-24">
-          <h2 className="text-lg font-semibold mb-6 text-white">Order Summary</h2>
           <div className="space-y-4 text-sm">
             <div className="flex justify-between text-slate-300">
               <span>Subtotal</span>
