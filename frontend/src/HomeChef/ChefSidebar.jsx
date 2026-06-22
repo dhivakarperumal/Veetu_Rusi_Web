@@ -1,43 +1,23 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard,
   Package,
-  ShoppingCart,
-  Users,
-  MessageSquare,
-  BarChart3,
-  X,
-  ChevronDown,
-  ChevronLeft,
-  Home,
-  Tag,
   PlusCircle,
   List,
-  Layers,
   Truck,
   XCircle,
   Archive,
   Handshake,
-  Video,
-  Image,
-  Store,
-  ChefHat,
-  Bike,
-  ShoppingBag,
-  CreditCard,
-  BookOpen,
-  Upload,
-  Share2,
-  Calendar,
-  Clock,
-  TrendingUp,
-  Wallet
+  MessageSquare,
+  Wallet,
+  Home,
+  X,
+  ChevronDown,
+  ChevronLeft,
+  TrendingUp
 } from "lucide-react";
-
 import { useAuth } from "../PrivateRouter/AuthContext";
 
-/* ================= NAV ITEMS ================= */
 const navItems = [
   { path: "/chef", label: "Dashboard", icon: TrendingUp, exact: true },
   {
@@ -48,8 +28,8 @@ const navItems = [
       // Admin-style inventory links
        { path: "/chef/food/add", label: "Add Food", icon: PlusCircle },
       { path: "/chef/food/all", label: "All Food", icon: Package },
-      { path: "/chef/products/all", label: "All Products", icon: List },
-      { path: "/chef/products/add", label: "Add Product", icon: PlusCircle },
+      { path: "/chef/products", label: "All Products", icon: List },
+      { path: "/chef/add-products", label: "Add Product", icon: PlusCircle },
       { path: "/chef/products/stock", label: "Stock Details", icon: Archive }
 
       // Chef food management links (kept for backward compatibility)
@@ -97,7 +77,6 @@ const ChefSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
   };
 
   /* ================= ACTIVE ROUTE MAP ================= */
-  const activeRouteMap = {};
 
   /* ================= HELPERS & LOGIC ================= */
   const isActiveRoute = (item) => {
@@ -185,7 +164,6 @@ const ChefSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
             /* ===== DROPDOWN ITEM ===== */
             if (item.children) {
               const isMenuOpen = openMenu === item.label;
-              const isAnyChildActive = isActiveRoute(item);
 
               return (
                 <div key={item.label} className="space-y-2">
