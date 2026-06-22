@@ -117,7 +117,7 @@ export default function ChefWishlist() {
 
                           {/* View Product */}
                           <button
-                            onClick={() => navigate(`/products/${item.id}`)}
+                            onClick={() => navigate(`/chef/material/${item.id || item.product_id}`)}
                             className="ml-auto bg-primary-dark text-white p-2 rounded-lg hover:bg-primary-light flex items-center justify-center transition cursor-pointer"
                           >
                             <FiEye size={18} />
