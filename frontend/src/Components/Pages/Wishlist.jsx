@@ -6,7 +6,7 @@ import PageHeader from "../CommenComponents/PageHeader";
 import PageContainer from "../CommenComponents/PageContainer";
 
 export default function WishList() {
-  const { wishlist, removeFromWishlist } = useContext(StoreContext);
+  const { wishlist, toggleWishlist } = useContext(StoreContext);
   const navigate = useNavigate();
 
   return (
@@ -42,14 +42,62 @@ export default function WishList() {
               </div>
             ) : (
               <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-                {wishlist.map((item) => {
-                  const image = item?.variants?.[0]?.images?.[0] || item?.image;
+                {wishlist.map((item, idx) => {
+                  // Get image from multiple sources
+                  let image = item?.image || item?.wishlist_image || item?.product_images || item?.images || null;
+                  
+                  console.log(`Wishlist item ${idx}:`, { name: item?.name, imageLength: image?.length, hasImage: !!image });
+                  
+                  // Parse JSON strings
+                  if (typeof image === 'string') {
+                    if (image.startsWith('[')) {
+                      try {
+                        const parsed = JSON.parse(image);
+                        image = Array.isArray(parsed) && parsed.length > 0 ? parsed[0] : image;
+                      } catch (e) {
+                        console.error('Error parsing image JSON:', e);
+                        image = null;
+                      }
+                    }
+                  } else if (Array.isArray(image)) {
+                    image = image[0] || null;
+                  }
+                  
+                  // Validate image format
+                  if (typeof image === 'string') {
+                    // Check if it's a valid data URI or HTTP URL
+                    if (image.startsWith('data:') && image.length > 50) {
+                      // Valid base64 data URI - use as is
+                      try {
+                        // Test if it's valid by creating an image object
+                        const testImg = new Image();
+                        testImg.onerror = () => {
+                          console.warn('Invalid data URI for', item?.name);
+                        };
+                        testImg.src = image;
+                      } catch (e) {
+                        console.warn('Invalid image data for', item?.name, e);
+                        image = null;
+                      }
+                    } else if (image.startsWith('http://') || image.startsWith('https://')) {
+                      // Valid HTTP URL - use as is
+                    } else {
+                      // Invalid format
+                      console.warn('Invalid image format for', item?.name, ':', image.substring(0, 50));
+                      image = null;
+                    }
+                  } else {
+                    image = null;
+                  }
+                  
+                  // Fallback to placeholder
+                  if (!image) {
+                    image = `https://ui-avatars.com/api/?name=${encodeURIComponent(item?.name || 'Product')}&background=random`;
+                  }
 
-                  const price = item?.variants?.[0]?.price || item?.price;
-
-                  const mrp = item?.variants?.[0]?.mrp || item?.mrp;
-
-                  const discount = Math.round(((mrp - price) / mrp) * 100);
+                  const price = item?.price || item?.offer_price || 0;
+                  const mrp = item?.mrp || price;
+                  const discount = mrp && price ? Math.round(((mrp - price) / mrp) * 100) : 0;
 
                   return (
                     <div
@@ -57,11 +105,22 @@ export default function WishList() {
                       className="bg-white rounded-2xl shadow-md hover:shadow-xl transition duration-300 overflow-hidden border border-gray-100 group"
                     >
                       {/* Image */}
-                      <div className="relative h-80 overflow-hidden">
+                      <div className="relative h-80 overflow-hidden bg-gray-100 flex items-center justify-center">
                         <img
                           src={image}
-                          alt={item.name}
+                          alt={item?.name || 'Product'}
                           className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                          onError={(e) => {
+                            console.error(`Image failed to load for product ${item?.name}:`, image);
+                            // Fallback to avatar on error
+                            const fallbackImg = `https://ui-avatars.com/api/?name=${encodeURIComponent(item?.name || 'Product')}&background=random&size=400`;
+                            if (e.target.src !== fallbackImg) {
+                              e.target.src = fallbackImg;
+                            }
+                          }}
+                          onLoad={() => {
+                            console.log(`Image successfully loaded for product ${item?.name}`);
+                          }}
                         />
 
                         {/* Discount */}
@@ -73,7 +132,7 @@ export default function WishList() {
 
                         {/* Remove */}
                         <button
-                          onClick={() => removeFromWishlist(item._id)}
+                          onClick={() => toggleWishlist(item)}
                           className="absolute top-3 right-3 bg-white p-2 rounded-full shadow hover:bg-primary-light hover:text-white transition cursor-pointer"
                         >
                           <FiTrash2 />

@@ -446,6 +446,34 @@ const createReviewsTable = async () => {
     }
 };
 
+const createWishlistTable = async () => {
+    try {
+        const createTableSQL = `
+        CREATE TABLE IF NOT EXISTS wishlist (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            user_id VARCHAR(255) NOT NULL,
+            product_id INT NOT NULL,
+            variant_color VARCHAR(255),
+            variant_size VARCHAR(255),
+            image LONGTEXT,
+            email VARCHAR(255),
+            price DECIMAL(10, 2) DEFAULT 0,
+            total_price DECIMAL(10, 2) DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            KEY idx_user_id (user_id),
+            KEY idx_product_id (product_id),
+            UNIQUE KEY unique_user_product (user_id, product_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `;
+
+        await pool.execute(createTableSQL);
+        console.log('✓ Wishlist table created or already exists');
+    } catch (error) {
+        console.error('✗ Error creating wishlist table:', error.message);
+    }
+};
+
  
     const createUserFoodCartTable = async () => {
         try {
@@ -733,6 +761,7 @@ const addDeliveryPartnerUniqueConstraints = async () => {
         createChefFoodCategoryTable,
         createChefCategoryTable,
         createFranchiseCategoryTable,
+        createWishlistTable,
         cleanupHomeChefs,
         addHomeChefUniqueConstraints,
         addDeliveryPartnerUniqueConstraints,

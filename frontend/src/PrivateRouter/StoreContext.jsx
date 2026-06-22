@@ -38,6 +38,7 @@ export const StoreProvider = ({ children }) => {
         try {
             setLoadingWishlist(true);
             const res = await api.get(`/wishlist/${user.user_id}`);
+            console.log('Wishlist data received:', res.data);
             setWishlist(res.data);
         } catch (err) {
             console.error("Fetch wishlist error:", err);
@@ -318,8 +319,8 @@ export const StoreProvider = ({ children }) => {
             return;
         }
 
-        const productId = product.id || product.product_id;
-        const isAlready = wishlist.some(w => w.product_id === productId || w.id === productId);
+        const productId = product.product_id || product.id;
+        const isAlready = wishlist.some(w => Number(w.product_id) === Number(productId) || Number(w.id) === Number(productId));
 
         try {
             if (isAlready) {
@@ -331,8 +332,25 @@ export const StoreProvider = ({ children }) => {
                 const variantColor = selectedVariant?.colorName || selectedVariant?.color || "";
 
                 // Correctly parse images if they are stored as JSON strings
-                const productImages = typeof product.images === 'string' ? JSON.parse(product.images) : (product.images || []);
-                const variantImage = selectedVariant?.images?.[0] || productImages[0] || null;
+                let productImages = [];
+                if (typeof product.images === 'string') {
+                    try {
+                        const parsed = JSON.parse(product.images);
+                        productImages = Array.isArray(parsed) ? parsed : [product.images];
+                    } catch (e) {
+                        // If not valid JSON, treat as single image URL
+                        productImages = [product.images];
+                    }
+                } else if (Array.isArray(product.images)) {
+                    productImages = product.images;
+                }
+                
+                // Get valid image (must be complete URL or data URI)
+                let variantImage = selectedVariant?.images?.[0] || productImages[0] || null;
+                // If variantImage is a string and empty, set to null
+                if (variantImage && typeof variantImage === 'string' && variantImage.trim() === '') {
+                    variantImage = null;
+                }
 
                 const price = parseFloat(selectedVariant?.offerPrice || selectedVariant?.salePrice || selectedVariant?.price || product.offer_price || product.price || 0);
 
