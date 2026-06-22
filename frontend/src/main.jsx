@@ -113,6 +113,10 @@ const SubscriptionPlansManagement = React.lazy(() => import("./SuperAdmin/Pages/
 const SuperAreas = React.lazy(() => import("./SuperAdmin/Pages/Areas.jsx"));
 const ChefOrderManagement = React.lazy(() => import("./HomeChef/Pages/OrderManagement.jsx"));
 
+// home chef
+const Material = React.lazy(() => import("./HomeChef/Pages/Material.jsx"));
+const MaterialCheckout = React.lazy(() => import("./HomeChef/Pages/MaterialCheckout.jsx"));
+
 // Lazy Load Delivery Boys Components
 const DeliveryPanel = React.lazy(() => import("./DeliveryBoys/DeliveryPanel.jsx"));
 const DeliveryDashboard = React.lazy(() => import("./DeliveryBoys/DeliveryDashboard.jsx"));
@@ -159,7 +163,7 @@ const router = createBrowserRouter([
   { path: "/login", element: <Login /> },
   { path: "/register", element: <Register /> },
   { path: "/forgot-password", element: <ForgotPassword /> },
-  
+
   {
     path: "/superadmin",
     element: (
@@ -225,6 +229,8 @@ const router = createBrowserRouter([
       { path: "earnings", element: <WalletAndEarnings /> },
       { path: "orders", element: <ChefOrderManagement /> },
       { path: "reviews", element: <ChefReviews /> },
+      { path: "material", element: <Material /> },
+      { path: "checkout", element: <MaterialCheckout /> },
     ],
   },
 

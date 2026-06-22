@@ -75,6 +75,22 @@ const navItems = [
       { path: "/chef/products/stock", label: "Stock Details", icon: Archive }
     ]
   },
+  {
+    label: "Buy Materials",
+    icon: ShoppingCart,
+    children: [
+      {
+        path: "/chef/material",
+        label: "Materials",
+        icon: Package,
+      },
+      {
+        path: "/chef/checkout",
+        label: "Checkout",
+        icon: CreditCard,
+      },
+    ],
+  },
   { path: "/chef/reviews", label: "Reviews", icon: MessageSquare },
   { path: "/chef/earnings", label: "Wallet & Earnings", icon: Wallet },
   { path: "/", label: "Back Home", icon: Home },
@@ -89,8 +105,8 @@ const ChefSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
   const prefix = location.pathname.startsWith("/superadmin")
     ? "/superadmin"
     : location.pathname.startsWith("/chef")
-    ? "/chef"
-    : "/admin";
+      ? "/chef"
+      : "/admin";
 
   const getDynamicPath = (path) => {
     if (!path) return path;
