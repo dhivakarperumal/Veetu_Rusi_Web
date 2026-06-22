@@ -117,6 +117,7 @@ const ChefWishlist = React.lazy(() => import("./HomeChef/Pages/ChefWishlist.jsx"
 
 // home chef
 const Material = React.lazy(() => import("./HomeChef/Pages/Material.jsx"));
+const ChefMaterialDetails = React.lazy(() => import("./HomeChef/Pages/ChefMaterialDetails.jsx"));
 const MaterialCheckout = React.lazy(() => import("./HomeChef/Pages/MaterialCheckout.jsx"));
 
 // Lazy Load Delivery Boys Components
@@ -232,6 +233,7 @@ const router = createBrowserRouter([
       { path: "orders", element: <ChefOrderManagement /> },
       { path: "reviews", element: <ChefReviews /> },
       { path: "material", element: <Material /> },
+      { path: "material/:id", element: <ChefMaterialDetails /> },
       { path: "checkout", element: <MaterialCheckout /> },
       { path: "cart", element: <ChefCart /> },
       { path: "wishlist", element: <ChefWishlist /> },

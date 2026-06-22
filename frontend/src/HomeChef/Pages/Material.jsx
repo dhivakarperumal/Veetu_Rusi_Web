@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useContext } from "react";
 import api from "../../api";
 import { StoreContext } from "../../PrivateRouter/StoreContext";
+import { AuthContext } from "../../PrivateRouter/AuthContext";
 import { Link } from "react-router-dom";
 import {
     FiSearch, FiHeart, FiShoppingCart, FiStar, FiFilter, FiX, FiSliders
@@ -17,6 +18,7 @@ const SORT_OPTIONS = [
 
 const Materials = () => {
     const { addToCart, toggleWishlist, wishlist, productsCache, setProductsCache, lastFetchTime, setLastFetchTime } = useContext(StoreContext);
+    const { user } = useContext(AuthContext);
     const [products, setProducts] = useState(Array.isArray(productsCache) ? productsCache : []);
     const [loading, setLoading] = useState(!productsCache || productsCache.length === 0);
     const [searchTerm, setSearchTerm] = useState("");
@@ -27,33 +29,84 @@ const Materials = () => {
     const [showQR, setShowQR] = useState(null);
     const [showFilters, setShowFilters] = useState(false);
 
+    const currentUser = user;
+    const [homeChef, setHomeChef] = useState(null);
+    const [profileLoaded, setProfileLoaded] = useState(false); // Add a flag to track if profile check is done
+
+    useEffect(() => {
+        const loadProfile = async () => {
+            try {
+                const profileRes = await api.get('/auth/profile');
+                setHomeChef(profileRes.data?.homeChef || null);
+            } catch (err) {
+                console.error("Profile load error:", err);
+            } finally {
+                setProfileLoaded(true); // Ensure we mark it as loaded even on error
+            }
+        };
+        if (!homeChef && !profileLoaded) loadProfile();
+    }, [homeChef, profileLoaded]);
+
     const fetchProducts = async () => {
-        // Cache for 5 minutes
-        const isCacheValid = lastFetchTime && (Date.now() - lastFetchTime < 5 * 60 * 1000);
+        let userToMatch = null;
+        let homeChefIdToMatch = null;
+
+        const role = currentUser?.role?.toLowerCase() || '';
+        if (role === 'admin' || role === 'franchise') {
+            userToMatch = currentUser?.user_id || currentUser?.id;
+        } else if (role === 'chef' || role === 'homechef') {
+            // Wait for profile endpoint to finish before proceeding
+            if (!profileLoaded) return;
+            userToMatch = homeChef?.created_by || homeChef?.franchise_user_id || homeChef?.created_by_user_id;
+            homeChefIdToMatch = homeChef?.id;
+        }
+
+        // Use cache if fresh (5 min)
+        const isCacheValid = lastFetchTime && Date.now() - lastFetchTime < 5 * 60 * 1000;
         if (isCacheValid && productsCache?.length > 0) {
+            let myProducts = productsCache;
+            if (userToMatch) {
+                myProducts = myProducts.filter((product) => product.created_by === userToMatch);
+            }
+            if (homeChefIdToMatch) {
+                myProducts = myProducts.filter((product) => !product.home_chef_id || product.home_chef_id == homeChefIdToMatch);
+            }
+            setProducts(myProducts);
             setLoading(false);
             return;
         }
 
         try {
-            setLoading(productsCache?.length === 0);
-            const res = await api.get("/products");
+            setLoading(true);
+            const res = await api.get("/franchise-products", { params: userToMatch ? { franchise_user_id: userToMatch } : {} });
             const data = Array.isArray(res.data) ? res.data : [];
-            setProducts(data);
             setProductsCache(data);
             setLastFetchTime(Date.now());
 
+            let myProducts = data;
+            if (userToMatch) {
+                myProducts = myProducts.filter((product) => product.created_by === userToMatch);
+            }
+            if (homeChefIdToMatch) {
+                myProducts = myProducts.filter((product) => !product.home_chef_id || product.home_chef_id == homeChefIdToMatch);
+            }
+
+            setProducts(myProducts);
+            
             // Extract unique categories
-            const cats = ["All", ...new Set(data.map(p => p.category).filter(Boolean))];
+            const cats = ["All", ...new Set(myProducts.map(p => p.category).filter(Boolean))];
             setCategories(cats);
         } catch (error) {
             console.error("Error fetching products:", error);
+            setProducts([]);
         } finally {
             setLoading(false);
         }
     };
 
-    useEffect(() => { fetchProducts(); }, []);
+    useEffect(() => {
+        fetchProducts();
+    }, [homeChef, currentUser, profileLoaded]);
 
     const getImage = (product) => {
         if (product.variants?.length > 0 && product.variants[0]?.images?.length > 0)
@@ -225,7 +278,7 @@ const Materials = () => {
                     {filtered.map((product) => {
                         const img = getImage(product);
                         const inWishlist = isInWishlist(product.id);
-                        const productUrl = `${window.location.origin}/products/${product.id}`;
+                        const productUrl = `${window.location.origin}/chef/material/${product.id}`;
                         const discountPct = product.mrp && product.offer_price
                             ? Math.round((1 - parseFloat(product.offer_price) / parseFloat(product.mrp)) * 100)
                             : null;
@@ -233,7 +286,7 @@ const Materials = () => {
                         return (
                             <div key={product.id} className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden group hover:shadow-xl transition-all duration-400 flex flex-col">
                                 {/* Image */}
-                                <Link to={`/products/${product.id}`} className="relative block flex-shrink-0">
+                                <Link to={`/chef/material/${product.id}`} className="relative block flex-shrink-0">
                                     <div className="w-full h-56 sm:h-64 overflow-hidden bg-gray-50">
                                         <img
                                             src={img}
@@ -258,8 +311,8 @@ const Materials = () => {
                                     )}
                                 </Link>
 
-                                {/* Hover Quick Actions */}
-                                <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0 z-10">
+                                {/* Quick Actions */}
+                                <div className="absolute top-3 right-3 flex flex-col gap-2 z-10">
                                     <button
                                         onClick={(e) => { e.preventDefault(); toggleWishlist(product); }}
                                         className={`w-9 h-9 bg-white rounded-full shadow-md flex items-center justify-center transition-all active:scale-90 ${inWishlist ? 'text-rose-500' : 'text-gray-400 hover:text-rose-400'}`}
