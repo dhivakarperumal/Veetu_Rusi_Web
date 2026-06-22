@@ -24,11 +24,12 @@ const navItems = [
   // { path: "/superadmin/restaurants", label: "Restaurants", icon: Store },
  
   { path: "/superadmin/franchises", label: "Franchise Owners", icon: Landmark },
+  { path: "/superadmin/users", label: "User Management", icon: Users },
   { path: "/superadmin/plans", label: "Subscription Plans", icon: CreditCard },
   { path: "/superadmin/commissions", label: "Commissions", icon: Percent },
   // { path: "/superadmin/notifications", label: "Notifications", icon: Bell },
   { path: "/superadmin/reports", label: "Reports & Analytics", icon: BarChart3 },
-  { path: "/", label: "Back to Website", icon: Home, exact: true }
+  // { path: "/", label: "Back to Website", icon: Home, exact: true }
 ];
 
 const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {

@@ -36,6 +36,8 @@ const navItems = [
   // { path: "/admin/restaurants", label: "Restaurants", icon: Store },
   { path: "/admin/homechefs", label: "Home Chefs", icon: ChefHat },
   { path: "/admin/delivery-partners", label: "Delivery Partners", icon: Bike },
+  { path: "/admin/food-orders", label: "Food Orders", icon: ShoppingCart },
+  { path: "/admin/food-products", label: "Food Products", icon: ShoppingBag },
   { path: "/admin/users", label: "User Management", icon: Users },
   // { path: "/admin/orders", label: "Order Management", icon: ShoppingBag },
   // { path: "/admin/payouts", label: "Payouts & Earnings", icon: CreditCard },
@@ -64,8 +66,8 @@ const navItems = [
     ],
   },
 
-  { path: "/admin/orders/create", label: "Billing", icon: PlusCircle },
-  { path: "/admin/users/all", label: "Customers", icon: Users },
+  // { path: "/admin/orders/create", label: "Billing", icon: PlusCircle },
+  // { path: "/admin/users/all", label: "Customers", icon: Users },
   {
     label: "Dealers",
     icon: Handshake,
@@ -74,11 +76,11 @@ const navItems = [
       { path: "/admin/invoices/add", label: "New Invoice", icon: PlusCircle },
     ],
   },
-  { path: "/admin/banners", label: "Promotion Banners", icon: Image },
-  { path: "/admin/videos", label: "Showcase Videos", icon: Video },
-  { path: "/admin/reviews", label: "Customer Reviews", icon: MessageSquare },
+  // { path: "/admin/banners", label: "Promotion Banners", icon: Image },
+  // { path: "/admin/videos", label: "Showcase Videos", icon: Video },
+  // { path: "/admin/reviews", label: "Customer Reviews", icon: MessageSquare },
   { path: "/admin/reports", label: "Reports", icon: BarChart3 },
-  { path: "/", label: "Back Home", icon: Home },
+  // { path: "/", label: "Back Home", icon: Home },
 ];
 
 /* ================= SIDEBAR ================= */

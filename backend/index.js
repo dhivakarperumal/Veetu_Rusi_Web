@@ -13,12 +13,17 @@ const franchiseProductsRouter = require('./src/routes/franchiseProducts');
 const categoriesRouter = require('./src/routes/categories');
 const reviewsRouter = require('./src/routes/reviews');
 const chefCategoriesRouter = require('./src/routes/chefCategories');
+const chefFoodCategoriesRouter = require('./src/routes/chefFoodCategories');
+const chefFoodsRouter = require('./src/routes/chefFoods');
 const recipesRouter = require('./src/routes/recipes');
 const preordersRouter = require('./src/routes/preorders');
 const ordersRouter = require('./src/routes/orders');
 const cartRouter = require('./src/routes/cart');
 const wishlistRouter = require('./src/routes/wishlist');
-const { createProductsTable, createRecipeDetailsTable, createFranchiseProductsTable, createSubscriptionPlansTable } = require('./src/config/migrations');
+const dealersRouter = require('./src/routes/dealers');
+const { createProductsTable, createRecipeDetailsTable, createFranchiseProductsTable, createChefFoodTable, createSubscriptionPlansTable, createReviewsTable, createDealersTable, createUserFoodCartTable, createChefFoodCategoryTable, createChefCategoryTable, createFranchiseCategoryTable, createUserFoodOrderTable } = require('./src/config/migrations');
+const userFoodRouter = require('./src/routes/userFood');
+const userFoodOrdersRouter = require('./src/routes/userFoodOrders');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -37,11 +42,16 @@ app.use('/api/franchise-products', franchiseProductsRouter);
 app.use('/api/reviews', reviewsRouter);
 app.use('/api/categories', categoriesRouter);
 app.use('/api/chef-categories', chefCategoriesRouter);
+app.use('/api/chef-food-categories', chefFoodCategoriesRouter);
+app.use('/api/chef-foods', chefFoodsRouter);
 app.use('/api/preorders', preordersRouter);
 app.use('/api/orders', ordersRouter);
 app.use('/api/chef/recipes', recipesRouter);
 app.use('/api/cart', cartRouter);
 app.use('/api/wishlist', wishlistRouter);
+app.use('/api/dealers', dealersRouter);
+app.use('/api/user-food', userFoodRouter);
+app.use('/api/user-food-orders', userFoodOrdersRouter);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
@@ -50,9 +60,16 @@ app.get('/api/health', (req, res) => {
 initDb().then(async () => {
   try {
     await createProductsTable();
-      await createFranchiseProductsTable();
+    await createFranchiseProductsTable();
+    await createChefFoodTable();
     await createSubscriptionPlansTable();
     await createReviewsTable();
+    await createUserFoodCartTable();
+    await createUserFoodOrderTable();
+    await createDealersTable();
+    await createChefFoodCategoryTable();
+    await createChefCategoryTable();
+    await createFranchiseCategoryTable();
   } catch (err) {
     console.error('Migration error:', err.message || err);
   }

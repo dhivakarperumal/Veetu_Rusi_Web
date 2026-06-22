@@ -18,6 +18,46 @@ import api from "../../api";
 import JsBarcode from "jsbarcode";
 import imageCompression from "browser-image-compression";
 
+const parseQuantityValue = (value) => {
+  const text = String(value || "").trim().toLowerCase();
+  if (!text) return { unit: "count", normalized: 0, original: "" };
+  const rawNumber = text.match(/[0-9]+(?:[.,][0-9]+)?/g)?.join("") || "";
+  const number = parseFloat(rawNumber.replace(/,/g, "")) || 0;
+  let unit = "count";
+
+  if (/kg|kilogram|kilograms/.test(text)) unit = "kg";
+  else if (/\b(?:g|gram|grams)\b/.test(text)) unit = "g";
+  else if (/\b(?:l|liter|litre|liters|litres)\b/.test(text)) unit = "l";
+  else if (/\b(?:ml|milliliter|millilitre|milliliters|millilitres)\b/.test(text)) unit = "ml";
+  else if (/packet|packets|pcs|pieces|piece|pkt\b/.test(text)) unit = "packet";
+
+  const normalized = unit === "kg" ? number * 1000 : unit === "g" ? number : unit === "l" ? number * 1000 : unit === "ml" ? number : number;
+  return { unit, normalized, number, original: text };
+};
+
+const getQuantityGroup = (unit) => {
+  if (["kg", "g"].includes(unit)) return "weight";
+  if (["l", "ml"].includes(unit)) return "volume";
+  if (["packet", "count"].includes(unit)) return "count";
+  return "count";
+};
+
+const formatQuantityDisplay = (value, group) => {
+  if (group === "weight") return value >= 1000 ? `${(value / 1000).toFixed(2)}kg` : `${value}g`;
+  if (group === "volume") return value >= 1000 ? `${(value / 1000).toFixed(2)}L` : `${value}ml`;
+  if (group === "count") return `${value} pcs`;
+  return `${value} units`;
+};
+
+const computeQuantitySummary = (items) => {
+  const parsed = items.map((item) => parseQuantityValue(item.weight || item.quantity || ""));
+  const groupSet = new Set(parsed.map((p) => getQuantityGroup(p.unit)));
+  const normalizedSum = parsed.reduce((sum, item) => sum + item.normalized, 0);
+  const primaryGroup = groupSet.size === 1 ? [...groupSet][0] : "mixed";
+  const display = primaryGroup === "mixed" ? `${normalizedSum} units` : formatQuantityDisplay(normalizedSum, primaryGroup);
+  return { normalizedSum, group: primaryGroup, display };
+};
+
 const Products = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -213,6 +253,8 @@ const SingleProductForm = ({ categories, franchiseId, franchiseUserId, onSuccess
     variants: [{ weight: "", mrp: "", offerPercent: "", offerPrice: "" }],
     totalStock: "0",
     totalWeight: 0,
+    manufactureDate: "",
+    expiryDate: "",
     barcode: "",
     barcodeValue: "",
     rating: 5,
@@ -221,6 +263,7 @@ const SingleProductForm = ({ categories, franchiseId, franchiseUserId, onSuccess
   const [loading, setLoading] = useState(false);
   const [manualWeight, setManualWeight] = useState(false);
   const barcodeRef = useRef();
+  const singleSummary = computeQuantitySummary(form.variants);
 
   const safeParse = (data) => {
     if (!data) return [];
@@ -235,6 +278,8 @@ const SingleProductForm = ({ categories, franchiseId, franchiseUserId, onSuccess
         healthBenefits: safeParse(editItem.healthBenefits).length ? safeParse(editItem.healthBenefits) : [""],
         variants: safeParse(editItem.variants),
         images: safeParse(editItem.images),
+        manufactureDate: editItem.manufactureDate || editItem.mfg_date || "",
+        expiryDate: editItem.expiryDate || editItem.expiryDate || "",
         barcodeValue: editItem.barcodeValue || editItem.productId
       });
     } else {
@@ -253,16 +298,11 @@ const SingleProductForm = ({ categories, franchiseId, franchiseUserId, onSuccess
   }, [editItem, products]);
 
   useEffect(() => {
-    if (manualWeight) return; // user is manually controlling weight
-    const totalW = form.variants.reduce((sum, v) => {
-      const wStr = String(v.weight || "").toLowerCase();
-      const val = parseFloat(wStr) || 0;
-      const factor = wStr.includes("kg") ? 1000 : 1;
-      return sum + (val * factor);
-    }, 0);
+    if (manualWeight) return; // user is manually controlling quantity
+    const { normalizedSum } = computeQuantitySummary(form.variants);
 
-    if (String(totalW) !== form.totalStock || totalW !== form.totalWeight) {
-      setForm(prev => ({ ...prev, totalStock: String(totalW), totalWeight: totalW }));
+    if (String(normalizedSum) !== form.totalStock || normalizedSum !== form.totalWeight) {
+      setForm(prev => ({ ...prev, totalStock: String(normalizedSum), totalWeight: normalizedSum }));
     }
   }, [form.variants, manualWeight]);
 
@@ -316,6 +356,10 @@ const SingleProductForm = ({ categories, franchiseId, franchiseUserId, onSuccess
         franchise_id: franchiseId
       };
 
+      try {
+        console.debug('Submitting franchise product payload', payload);
+      } catch (e) { /* ignore debug errors */ }
+
       if (editItem) {
         await api.put(`/franchise-products/${editItem.id}`, payload);
         toast.success("Inventory Pulse Updated");
@@ -358,15 +402,35 @@ const SingleProductForm = ({ categories, franchiseId, franchiseUserId, onSuccess
                     });
                     return filteredCategories.length ? filteredCategories.map((c) => {
                       const label = c.name || c.cname || c.catId || `Category ${c.id}`;
-                      const value = c.catId || c.name || c.cname || c.id;
+                      const value = c.name || c.cname || c.catId || c.id;
                       return (<option key={c.id || value} value={value}>{label}</option>);
                     }) : <option disabled>No franchise categories available</option>;
                   })()}</select></div>
                   <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Status *</label><select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 outline-none font-black text-emerald-800 shadow-sm"><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div>
                 </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                  <div>
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Manufacture Date</label>
+                    <input
+                      type="date"
+                      value={form.manufactureDate}
+                      onChange={(e) => setForm({ ...form, manufactureDate: e.target.value })}
+                      className="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 outline-none font-bold text-gray-900 shadow-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Expiry Date</label>
+                    <input
+                      type="date"
+                      value={form.expiryDate}
+                      onChange={(e) => setForm({ ...form, expiryDate: e.target.value })}
+                      className="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 outline-none font-bold text-gray-900 shadow-sm"
+                    />
+                  </div>
+                </div>
                 <div>
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1 flex items-center gap-2">
-                      Total Weight
+                      Total Quantity
                       <span className={`text-[8px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider ${manualWeight ? 'bg-orange-100 text-orange-500' : 'bg-emerald-100 text-emerald-600'}`}>
                         {manualWeight ? 'Manual' : 'Auto'}
                       </span>
@@ -381,7 +445,7 @@ const SingleProductForm = ({ categories, franchiseId, franchiseUserId, onSuccess
                             ? 'bg-orange-50 border-orange-300 text-orange-700 focus:border-orange-500'
                             : 'bg-emerald-50 border-emerald-100 text-emerald-700 focus:border-emerald-400'
                         }`}
-                        placeholder="Enter grams"
+                        placeholder="250g / 1L / 500ml / 2pcs"
                       />
                       {manualWeight && (
                         <button
@@ -392,7 +456,11 @@ const SingleProductForm = ({ categories, franchiseId, franchiseUserId, onSuccess
                         >↺</button>
                       )}
                     </div>
-                    <p className="text-[9px] text-gray-400 font-medium ml-1 mt-1">{manualWeight ? 'Type to override · click ↺ to sync from variants' : 'Auto-summed from variant weights'}</p>
+                    <p className="text-[9px] text-gray-400 font-medium ml-1 mt-1">
+                      {manualWeight
+                        ? 'Type to override · click ↺ to sync from variants'
+                        : `Auto-summed from variant quantities (${singleSummary.display})`}
+                    </p>
                   </div>
                 {/* <div className="bg-emerald-50/30 p-6 rounded-[2rem] border border-emerald-100">
                   <h4 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-4 flex items-center gap-2">Studio Status Radar</h4>
@@ -503,6 +571,8 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
     comboDetails: { mrp: "", offerPercent: "", offerPrice: "", totalWeight: 0 },
     totalStock: "0",
     totalWeight: 0,
+    manufactureDate: "",
+    expiryDate: "",
     barcode: "",
     barcodeValue: "",
     rating: 5,
@@ -530,6 +600,8 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
         images: safeParse(editItem.images),
         comboItems: safeParse(editItem.comboItems),
         comboDetails: parsedDetails,
+        manufactureDate: editItem.manufactureDate || editItem.mfg_date || "",
+        expiryDate: editItem.expiryDate || editItem.expiryDate || "",
         // Restore totalWeight from comboDetails if available
         totalWeight: Number(parsedDetails?.totalWeight || editItem.totalWeight || 0),
         barcodeValue: editItem.barcodeValue || editItem.productId
@@ -548,27 +620,23 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
     }
   }, [editItem, combos]);
 
+  const comboSummary = computeQuantitySummary(form.comboItems);
+
   useEffect(() => {
     if (manualWeight) return;
 
-    const totalW = form.comboItems.reduce((sum, item) => {
-      const wStr = String(item.weight || "").toLowerCase().trim();
-      const val = parseFloat(wStr) || 0;
-      const factor = wStr.includes("kg") ? 1000 : 1;
-      return sum + (val * factor);
-    }, 0);
+    const { normalizedSum } = computeQuantitySummary(form.comboItems);
 
-    // Always update via functional updater — avoids stale closure of form.totalWeight
     setForm(prev => {
-      if (prev.totalWeight === totalW && (manualStock || prev.totalStock === String(totalW))) return prev; 
+      if (prev.totalWeight === normalizedSum && (manualStock || prev.totalStock === String(normalizedSum))) return prev;
       return {
         ...prev,
-        totalWeight: totalW,
-        comboDetails: { ...prev.comboDetails, totalWeight: totalW },
-        totalStock: manualStock ? prev.totalStock : String(totalW),
+        totalWeight: normalizedSum,
+        comboDetails: { ...prev.comboDetails, totalWeight: normalizedSum },
+        totalStock: manualStock ? prev.totalStock : String(normalizedSum),
       };
     });
-  }, [form.comboItems, manualWeight]);
+  }, [form.comboItems, manualWeight, manualStock]);
 
   useEffect(() => {
     if (form.productId && barcodeRef.current) {
@@ -661,7 +729,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                     <div className="flex-1 bg-white p-3 rounded-xl border border-amber-100 text-center shadow-sm"><p className="text-[9px] font-black text-gray-400 uppercase">Items</p><p className="text-xl font-black text-amber-600">{form.comboItems.length}</p></div>
                     <div className="flex-1 bg-white p-3 rounded-xl border border-amber-100 text-center shadow-sm">
                       <p className="text-[9px] font-black text-gray-400 uppercase">Total Weight</p>
-                      <p className="text-sm font-black text-amber-600">{form.totalWeight >= 1000 ? (form.totalWeight / 1000).toFixed(2) + "kg" : form.totalWeight + "g"}</p>
+                      <p className="text-sm font-black text-amber-600">{comboSummary.display}</p>
                     </div>
                   </div>
                   {/* Weight breakdown per item */}
@@ -690,7 +758,26 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                   )}
                   <div className="grid grid-cols-2 gap-4 mb-4">
                     <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Status *</label><select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="w-full bg-gray-50 border-2 border-transparent focus:border-amber-500 rounded-2xl px-4 py-2.5 outline-none font-black text-amber-800 shadow-sm text-sm"><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div>
-                    <div className="hidden"></div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Manufacture Date</label>
+                        <input
+                          type="date"
+                          value={form.manufactureDate}
+                          onChange={(e) => setForm({ ...form, manufactureDate: e.target.value })}
+                          className="w-full bg-gray-50 border-2 border-transparent focus:border-amber-500 rounded-2xl px-4 py-2.5 outline-none font-black text-gray-900 shadow-sm text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Expiry Date</label>
+                        <input
+                          type="date"
+                          value={form.expiryDate}
+                          onChange={(e) => setForm({ ...form, expiryDate: e.target.value })}
+                          className="w-full bg-gray-50 border-2 border-transparent focus:border-amber-500 rounded-2xl px-4 py-2.5 outline-none font-black text-gray-900 shadow-sm text-sm"
+                        />
+                      </div>
+                    </div>
                   </div>
                   <div>
                     <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
@@ -909,7 +996,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                   {/* Total Stock Field (Grams -> KG) */}
                   <div>
                     <label className="text-[10px] font-black text-amber-700 uppercase tracking-widest mb-2 block ml-1">
-                      Inventory Level (Grams) *
+                      Inventory Level *
                     </label>
                     <div className="flex gap-2 items-center">
                       <input
@@ -928,7 +1015,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                       />
                     </div>
                     <p className="text-[9px] text-gray-400 font-medium ml-1 mt-1">
-                      {manualStock ? "Manual weight entry" : "Auto-calculated from combo items"}
+                      {manualStock ? "Manual quantity entry" : `Auto-calculated from combo items (${comboSummary.display})`}
                     </p>
                   </div>
                   <div className="grid grid-cols-2 gap-8">

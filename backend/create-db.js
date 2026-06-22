@@ -208,7 +208,25 @@ async function createDatabaseAndTables() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
   console.log('Home Chefs table created or already exists');
-
+  await connection.execute(`
+    CREATE TABLE IF NOT EXISTS dealers (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      dealer_id VARCHAR(255) UNIQUE,
+      name VARCHAR(255) NOT NULL,
+      contact VARCHAR(255),
+      email VARCHAR(255),
+      phone VARCHAR(50),
+      location VARCHAR(255),
+      status VARCHAR(50) DEFAULT 'Pending',
+      rating DECIMAL(3,1) DEFAULT 0,
+      orders INT DEFAULT 0,
+      image LONGTEXT,
+      details LONGTEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+  console.log('Dealers table created or already exists');
   // Add chef_unique_code column if it doesn't exist
   try {
     const [codeColumns] = await connection.execute(
@@ -296,6 +314,41 @@ async function createDatabaseAndTables() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
   console.log('Chef category table created or already exists');
+
+  await connection.execute(`
+    CREATE TABLE IF NOT EXISTS cheffoodcategorytable (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      catId VARCHAR(50) NOT NULL,
+      name VARCHAR(255) NOT NULL,
+      description TEXT,
+      category_image VARCHAR(255),
+      images LONGTEXT,
+      subcategory LONGTEXT,
+      chef_user_id VARCHAR(255),
+      chef_id VARCHAR(255),
+      chef_name VARCHAR(255),
+      chef_phone VARCHAR(50),
+      chef_email VARCHAR(255),
+      franchise_user_id VARCHAR(255),
+      franchise_id INT,
+      franchise_name VARCHAR(255),
+      franchise_email VARCHAR(255),
+      franchise_phone VARCHAR(50),
+      created_by_user_id VARCHAR(255),
+      created_by_email VARCHAR(255),
+      created_by_name VARCHAR(255),
+      created_by_phone VARCHAR(50),
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      UNIQUE(catId, chef_user_id),
+      INDEX(chef_user_id),
+      INDEX(chef_id),
+      INDEX(franchise_user_id),
+      INDEX(franchise_id),
+      INDEX(created_by_user_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+  console.log('Chef food category table created or already exists');
 
   try { await connection.execute('ALTER TABLE chef_category DROP INDEX catId'); } catch (err) {
     // Ignore if the old single-column catId unique index does not exist.

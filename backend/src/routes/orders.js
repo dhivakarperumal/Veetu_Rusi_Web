@@ -29,7 +29,7 @@ const initOrderTable = async () => {
         franchise_user_id VARCHAR(100),
         franchise_user_name VARCHAR(255),
         franchise_user_email VARCHAR(255),
-        status VARCHAR(50) NOT NULL DEFAULT 'Pending',
+        status VARCHAR(50) NOT NULL DEFAULT 'Order Placed',
         ordered_date DATETIME DEFAULT CURRENT_TIMESTAMP,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -50,18 +50,68 @@ router.post('/', verifyToken, async (req, res) => {
       franchise_user_id, franchise_user_name, franchise_user_email
     } = req.body;
 
+    let final_franchise_user_id = franchise_user_id || null;
+    let final_franchise_user_name = franchise_user_name || null;
+    let final_franchise_user_email = franchise_user_email || null;
+
+    if (!final_franchise_user_id && items && items.length > 0) {
+      const firstProductId = items[0].product_id;
+      if (firstProductId) {
+        let productFranchiseId = null;
+        let productFranchiseName = null;
+        let productFranchiseEmail = null;
+
+        const [products] = await pool.execute(
+          'SELECT franchise_user_id, franchise_name, franchise_email FROM chef_products WHERE id = ?',
+          [firstProductId]
+        );
+        if (products.length > 0) {
+          productFranchiseId = products[0].franchise_user_id;
+          productFranchiseName = products[0].franchise_name;
+          productFranchiseEmail = products[0].franchise_email;
+        } else {
+          const [fProducts] = await pool.execute(
+            'SELECT franchise_user_id, franchise_name, franchise_email FROM franchise_products WHERE id = ?',
+            [firstProductId]
+          );
+          if (fProducts.length > 0) {
+            productFranchiseId = fProducts[0].franchise_user_id;
+            productFranchiseName = fProducts[0].franchise_name;
+            productFranchiseEmail = fProducts[0].franchise_email;
+          }
+        }
+
+        if (productFranchiseId) {
+          final_franchise_user_id = productFranchiseId;
+          final_franchise_user_name = productFranchiseName;
+          final_franchise_user_email = productFranchiseEmail;
+
+          if (!final_franchise_user_name || !final_franchise_user_email) {
+            const [franchiseUsers] = await pool.execute(
+              'SELECT full_name, email FROM users WHERE user_id = ? OR id = ? LIMIT 1',
+              [productFranchiseId, productFranchiseId]
+            );
+            if (franchiseUsers.length > 0) {
+              final_franchise_user_name = final_franchise_user_name || franchiseUsers[0].full_name;
+              final_franchise_user_email = final_franchise_user_email || franchiseUsers[0].email;
+            }
+          }
+        }
+      }
+    }
+
     const order_id = 'ORD-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
 
     const [result] = await pool.execute(
       `INSERT INTO \`Chef_Order\` 
-      (order_id, user_id, customer_name, customer_email, customer_phone, street_address, city, district, state, country, zip_code, payment_method, payment_status, payment_id, total_amount, items, franchise_user_id, franchise_user_name, franchise_user_email) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (order_id, user_id, customer_name, customer_email, customer_phone, street_address, city, district, state, country, zip_code, payment_method, payment_status, payment_id, total_amount, items, franchise_user_id, franchise_user_name, franchise_user_email, status) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Order Placed')`,
       [
         order_id, user_id || null, customer_name, customer_email || null, customer_phone || null,
         street_address || null, city || null, district || null, state || null, country || null,
         zip_code || null, payment_method || null, payment_status || 'pending', payment_id || null,
         total_amount, JSON.stringify(items),
-        franchise_user_id || null, franchise_user_name || null, franchise_user_email || null
+        final_franchise_user_id, final_franchise_user_name, final_franchise_user_email
       ]
     );
 
@@ -83,6 +133,53 @@ router.post('/', verifyToken, async (req, res) => {
 // If it fails with 401 we will remove verifyToken from POST.
 
 router.get('/', verifyToken, controller.getOrders);
-// Wait, in Checkout.jsx, fetchAddresses calls GET /orders without verifying token logic if it fails it might be because of token, but let's use verifyToken for GET and POST.
+router.put('/:id/status', verifyToken, controller.patchOrderStatus);
+
+// GET personal orders for the logged-in user
+router.get('/myorders', verifyToken, async (req, res) => {
+  try {
+    const currentUserId = req.user?.user_id;
+    const currentId = req.user?.id;
+    
+    // Fallback if token doesn't have user_id
+    if (!currentUserId && !currentId) {
+      return res.status(401).json({ message: 'User not authenticated properly' });
+    }
+
+    const [rows] = await pool.execute(
+      'SELECT * FROM Chef_Order WHERE user_id = ? OR user_id = ? ORDER BY ordered_date DESC',
+      [currentUserId || currentId, currentId || currentUserId]
+    );
+
+    const parsedRows = rows.map(row => {
+      let items = row.items;
+      if (typeof items === 'string') {
+        try { items = JSON.parse(items); } catch (e) { items = []; }
+      }
+      return { ...row, items };
+    });
+
+    res.json(parsedRows);
+  } catch (err) {
+    console.error("Error fetching my orders:", err);
+    res.status(500).json({ message: 'Error retrieving your orders.', error: err.message });
+  }
+});
+
+// GET single order by id (for popup in My Orders page)
+router.get('/:id', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [rows] = await pool.execute('SELECT * FROM Chef_Order WHERE id = ?', [id]);
+    if (!rows.length) return res.status(404).json({ message: 'Order not found.' });
+    const order = rows[0];
+    if (typeof order.items === 'string') {
+      try { order.items = JSON.parse(order.items); } catch { order.items = []; }
+    }
+    res.json(order);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching order.', error: err.message });
+  }
+});
 
 module.exports = router;

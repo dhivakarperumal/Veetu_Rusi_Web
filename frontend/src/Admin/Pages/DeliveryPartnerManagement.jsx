@@ -20,7 +20,7 @@ import {
 
 const tabs = [
   { id: "basic", label: "Basic Info" },
-  { id: "contact", label: "Contact Details" },
+ 
   { id: "address", label: "Address Details" },
   { id: "login", label: "Login & Auth" },
   { id: "vehicle", label: "Vehicle Info" },
@@ -45,10 +45,8 @@ const emptyForm = {
   blood_group: "",
   // Contact
   mobile: "",
-  alt_mobile: "",
-  whatsapp_number: "",
   email: "",
-  emergency_contact: "",
+  
   // Address
   door_number: "",
   street_name: "",
@@ -355,11 +353,7 @@ const DeliveryPartnerManagement = () => {
       case "contact":
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {f("mobile", "Mobile Number", "tel")}
-            {f("alt_mobile", "Alternate Mobile Number", "tel")}
-            {f("whatsapp_number", "WhatsApp Number", "tel")}
-            {f("email", "Email Address", "email")}
-            {f("emergency_contact", "Emergency Contact Number", "tel")}
+            {/* Contact details moved to Login & Auth tab */}
           </div>
         );
       case "address":
@@ -382,13 +376,13 @@ const DeliveryPartnerManagement = () => {
       case "login":
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+           
             {f("username", "Username")}
+             {f("mobile", "Mobile Number", "tel")}
+            {f("email", "Email Address", "email")}
             {f("password", "Password", "password")}
             {f("confirmPassword", "Confirm Password", "password")}
-            <div className="flex flex-col gap-3 pt-2">
-              {toggle("otp_verified", "OTP Verified")}
-              {toggle("email_verified", "Email Verified")}
-            </div>
+            
             {f("device_id", "Device ID")}
             {f("last_login_time", "Last Login Time", "datetime-local")}
             {sel("login_status", "Login Status", ["Active", "Inactive", "Blocked"])}
@@ -693,9 +687,9 @@ const DeliveryPartnerManagement = () => {
       {isFormOpen && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={() => setIsFormOpen(false)} />
-          <div className="border border-white/10 w-full max-w-5xl rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden flex flex-col max-h-[90vh] bg-transparent">
+          <div className="border border-white/10 w-full max-w-6xl rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden flex flex-col max-h-[95vh] bg-transparent">
             {/* Form Header */}
-            <div className="p-8 text-white flex-shrink-0 flex justify-between items-center bg-emerald-800 rounded-t-[2.5rem] border-b border-white/5">
+            <div className="p-4 text-white flex-shrink-0 flex justify-between items-center bg-emerald-800 rounded-t-[2.5rem] border-b border-white/5">
               <div>
                 <h3 className="text-xl font-black uppercase italic tracking-tight">
                   {editingPartner ? "Edit Delivery Partner" : "Add New Delivery Partner"}
@@ -710,13 +704,13 @@ const DeliveryPartnerManagement = () => {
             </div>
 
             {/* Tab List */}
-            <div className="border-b border-gray-100 bg-white p-3 flex gap-2 overflow-x-auto whitespace-nowrap scrollbar-thin relative z-20">
+            <div className="border-b border-gray-100 bg-white p-1 flex gap-2 overflow-x-auto whitespace-nowrap scrollbar-thin relative z-20">
               {tabs.map((t) => (
                 <button
                   key={t.id}
                   type="button"
                   onClick={() => setActiveTab(t.id)}
-                  className={`flex-shrink-0 mx-1 px-4 py-2 text-xs font-black uppercase tracking-wider rounded-full transition focus:outline-none ${activeTab === t.id ? "bg-emerald-800 text-white shadow-inner" : "text-gray-600 hover:text-gray-800 hover:bg-gray-100"}`}
+                  className={`flex-shrink-0 mx-1 px-3 py-1.5 text-xs font-black uppercase tracking-wider rounded-full transition focus:outline-none ${activeTab === t.id ? "bg-emerald-800 text-white shadow-inner" : "text-gray-600 hover:text-gray-800 hover:bg-gray-100"}`}
                 >
                   {t.label}
                 </button>
@@ -725,8 +719,8 @@ const DeliveryPartnerManagement = () => {
 
             {/* Tab Content */}
             <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden bg-gray-50">
-              <div className="flex-1 overflow-y-auto p-8">{renderTabContent()}</div>
-              <div className="flex-shrink-0 p-6 bg-white border-t border-gray-100 rounded-b-[2.5rem] flex justify-between items-center gap-4">
+              <div className="flex-1 overflow-y-auto p-6">{renderTabContent()}</div>
+              <div className="flex-shrink-0 p-4 bg-white border-t border-gray-100 rounded-b-[2.5rem] flex justify-between items-center gap-4">
                 <div className="flex gap-2">
                   {tabs.map((t, i) => (
                     <div key={t.id} className={`w-2 h-2 rounded-full transition-all ${activeTab === t.id ? "bg-emerald-700 w-5" : "bg-gray-200"}`} />

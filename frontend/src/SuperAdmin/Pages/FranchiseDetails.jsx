@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../../api";
 import { toast } from "react-hot-toast";
-import { Landmark, MapPin, UserCheck, Clock, List, KeyRound, Copy, X, CheckCircle, ChevronLeft, ShieldAlert, BadgeCheck, Phone, Mail, Trash2, Edit3, ShieldCheck, ShoppingCart, Package } from "lucide-react";
+import { Landmark, MapPin, UserCheck, Clock, List, KeyRound, Copy, X, CheckCircle, ChevronLeft, ShieldAlert, BadgeCheck, Phone, Mail, Trash2, Edit3, ShieldCheck, ShoppingCart, Package, Utensils } from "lucide-react";
 
 const FranchiseDetails = () => {
   const { id } = useParams();
@@ -16,9 +16,13 @@ const FranchiseDetails = () => {
   const [linkedDeliveryPartners, setLinkedDeliveryPartners] = useState([]);
   const [linkedOrderCount, setLinkedOrderCount] = useState(0);
   const [linkedOrders, setLinkedOrders] = useState([]);
+  const [linkedUserOrders, setLinkedUserOrders] = useState([]);
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [productsError, setProductsError] = useState(null);
+  const [chefProducts, setChefProducts] = useState([]);
+  const [loadingChefProducts, setLoadingChefProducts] = useState(false);
+  const [chefProductsError, setChefProductsError] = useState(null);
   const [activeDetailTab, setActiveDetailTab] = useState("franchise");
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [plans, setPlans] = useState([]);
@@ -78,9 +82,8 @@ const FranchiseDetails = () => {
                 });
                 toast.success('Subscription activated');
                 setShowPurchaseModal(false);
-                const r = await api.get('/superadmin/franchises');
-                const found = r.data.find(f => String(f.id) === String(franchise.id));
-                if (found) setFranchise(found);
+                const r = await api.get(`/superadmin/franchises/${franchise.id}`);
+                setFranchise(r.data);
               } catch (err) {
                 toast.error('Payment verification failed');
               }
@@ -94,9 +97,8 @@ const FranchiseDetails = () => {
         await api.post('/subscriptions/confirm', { franchiseId: franchise.id, planId: selectedPlan.id, razorpay_payment_id: 'TEST', razorpay_order_id: order.id });
         toast.success('Subscription activated (test)');
         setShowPurchaseModal(false);
-        const r = await api.get('/superadmin/franchises');
-        const found = r.data.find(f => String(f.id) === String(franchise.id));
-        if (found) setFranchise(found);
+        const r = await api.get(`/superadmin/franchises/${franchise.id}`);
+        setFranchise(r.data);
       }
     } catch (err) {
       console.error(err);
@@ -134,27 +136,27 @@ const FranchiseDetails = () => {
     const fetch = async () => {
       try {
         setLoading(true);
-        const res = await api.get('/superadmin/franchises');
-        const found = res.data.find(f => String(f.id) === String(id));
-        if (!found) {
-          toast.error('Franchise not found');
-          navigate('/superadmin/franchises');
-          return;
-        }
-        setFranchise(found);
+        const res = await api.get(`/superadmin/franchises/${id}`);
+        setFranchise(res.data);
 
         // fetch linked counts
-        const [homeChefRes, deliveryRes] = await Promise.all([
+        const [homeChefRes, deliveryRes, ordersRes] = await Promise.all([
           api.get('/superadmin/homechefs'),
-          api.get('/superadmin/delivery-partners')
+          api.get('/superadmin/delivery-partners'),
+          api.get('/superadmin/orders')
         ]);
-        const matcher = item => item.created_by_user_id === found.franch_user_id;
+        const matcher = item => item.created_by_user_id === res.data.franch_user_id;
         const homeChefs = homeChefRes.data.filter(matcher);
         const deliveryPartners = deliveryRes.data.filter(matcher);
+        const orders = ordersRes.data.filter(order => order.franchise_user_id === res.data.franch_user_id);
+        const userOrders = ordersRes.data.filter(order => order.user_id === res.data.franch_user_id);
         setLinkedHomeChefs(homeChefs);
         setLinkedDeliveryPartners(deliveryPartners);
+        setLinkedOrders(orders);
+        setLinkedUserOrders(userOrders);
         setLinkedHomeChefCount(homeChefs.length);
         setLinkedDeliveryPartnerCount(deliveryPartners.length);
+        setLinkedOrderCount(orders.length);
       } catch (err) {
         toast.error('Failed to load franchise');
         navigate('/superadmin/franchises');
@@ -182,9 +184,29 @@ const FranchiseDetails = () => {
     }
   };
 
+  const fetchChefProducts = async () => {
+    if (!franchise) return;
+    setLoadingChefProducts(true);
+    setChefProductsError(null);
+    try {
+      const params = {};
+      if (franchise.franchise_id) params.franchise_id = franchise.franchise_id;
+      if (franchise.franch_user_id) params.franchise_user_id = franchise.franch_user_id;
+      const res = await api.get('/chef-foods', { params });
+      setChefProducts(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      setChefProductsError('Failed to load chef food products.');
+      setChefProducts([]);
+    } finally {
+      setLoadingChefProducts(false);
+    }
+  };
+
   useEffect(() => {
     if (activeDetailTab === 'products') {
       fetchProducts();
+    } else if (activeDetailTab === 'chefProducts') {
+      fetchChefProducts();
     }
   }, [activeDetailTab, franchise]);
 
@@ -300,7 +322,9 @@ const FranchiseDetails = () => {
               { id: 'homechefs', icon: List, label: 'Home Chefs' },
               { id: 'deliverypartners', icon: MapPin, label: 'Delivery Partners' },
               { id: 'products', icon: Package, label: 'Our Products' },
+              { id: 'chefProducts', icon: Utensils, label: 'Chef Food Products' },
               { id: 'orders', icon: ShoppingCart, label: 'Orders' },
+              { id: 'usersOrder', icon: ShoppingCart, label: 'User Orders' },
               { id: 'subscription', icon: Clock, label: 'Subscription' },
               { id: 'credentials', icon: KeyRound, label: 'Credentials & Access' },
             ].map((tab) => {
@@ -622,7 +646,140 @@ const FranchiseDetails = () => {
               </div>
             )}
 
+            {/* CHEF FOOD PRODUCTS LIST */}
+            {activeDetailTab === 'chefProducts' && (
+              <div className="animate-in slide-in-from-right-4 fade-in duration-300">
+                <div className="mb-6 flex items-center justify-between border-b border-slate-100 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 text-orange-600"><Utensils className="h-5 w-5" /></div>
+                    <h3 className="text-xl font-black text-slate-800">Chef Food Products</h3>
+                  </div>
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500">{chefProducts.length} items</span>
+                </div>
+
+                {loadingChefProducts ? (
+                  <div className="flex flex-col items-center justify-center rounded-[2rem] border border-slate-200 bg-slate-50 py-20 text-center">
+                    <div className="h-12 w-12 rounded-full border-4 border-orange-500 border-t-transparent animate-spin mb-4"></div>
+                    <p className="text-sm font-black uppercase tracking-widest text-slate-500">Loading chef foods...</p>
+                  </div>
+                ) : chefProductsError ? (
+                  <div className="rounded-[2rem] border border-rose-200 bg-rose-50 p-8 text-center text-rose-700">
+                    <p className="font-bold">{chefProductsError}</p>
+                  </div>
+                ) : chefProducts.length > 0 ? (
+                  <div className="overflow-hidden rounded-2xl border border-slate-200">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-sm">
+                        <thead className="bg-slate-50">
+                          <tr>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Food Name</th>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Category</th>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Chef</th>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Price</th>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 bg-white">
+                          {chefProducts.map((product) => (
+                            <tr key={product.id} className="hover:bg-slate-50/50 transition-colors group">
+                              <td className="px-6 py-4">
+                                <div className="flex items-center gap-3">
+                                  <div className="h-10 w-10 rounded-2xl bg-slate-100 grid place-items-center text-slate-600 font-bold">{String(product.name || '').charAt(0).toUpperCase() || 'F'}</div>
+                                  <div>
+                                    <p className="font-bold text-slate-800">{product.name}</p>
+                                    <p className="text-xs text-slate-500">{product.cuisine || 'Home cooked'}</p>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-slate-600">{product.category}</td>
+                              <td className="px-6 py-4 text-slate-600 font-medium">{product.chef_name || product.chef_id || 'Unknown'}</td>
+                              <td className="px-6 py-4 font-bold text-emerald-600">₹{product.final_price ?? product.mrp ?? '0'}</td>
+                              <td className="px-6 py-4">
+                                <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${product.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                                  {product.status || 'Unknown'}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-200 bg-slate-50 py-16 text-center">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-sm mb-4">
+                      <Utensils className="h-8 w-8 text-slate-300" />
+                    </div>
+                    <h4 className="text-lg font-bold text-slate-700">No Chef Foods Found</h4>
+                    <p className="mt-1 text-sm text-slate-500 max-w-sm">There are no home chef food products associated with this franchise yet.</p>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* DELIVERY PARTNERS LIST */}
+            {activeDetailTab === 'deliverypartners' && (
+              <div className="animate-in slide-in-from-right-4 fade-in duration-300">
+                <div className="mb-6 flex items-center justify-between border-b border-slate-100 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-600"><MapPin className="h-5 w-5" /></div>
+                    <h3 className="text-xl font-black text-slate-800">Linked Delivery Partners</h3>
+                  </div>
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500">{linkedDeliveryPartners.length} Total</span>
+                </div>
+
+                {linkedDeliveryPartners.length > 0 ? (
+                  <div className="overflow-hidden rounded-2xl border border-slate-200">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-sm">
+                        <thead className="bg-slate-50">
+                          <tr>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Partner Details</th>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Contact</th>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Code</th>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs text-center">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 bg-white">
+                          {linkedDeliveryPartners.map((partner) => (
+                            <tr key={partner.id} className="hover:bg-slate-50/50 transition-colors group">
+                              <td className="px-6 py-4">
+                                <p className="font-bold text-slate-800">{partner.name || 'Unnamed'}</p>
+                                <p className="text-xs text-slate-500 mt-0.5">{partner.city ? `${partner.city}, ${partner.state}` : 'Location unknown'}</p>
+                              </td>
+                              <td className="px-6 py-4">
+                                <p className="font-medium text-slate-700">{partner.mobile || '—'}</p>
+                                <p className="text-xs text-slate-400 mt-0.5 truncate max-w-[150px]">{partner.email || '—'}</p>
+                              </td>
+                              <td className="px-6 py-4">
+                                <span className="inline-flex items-center rounded-lg bg-slate-100 px-2 py-1 text-xs font-mono font-bold text-slate-600">
+                                  {partner.delivery_partner_code || partner.id || '—'}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 text-center">
+                                <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${partner.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                                  {partner.status || 'Pending'}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-200 bg-slate-50 py-16 text-center">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-sm mb-4">
+                      <MapPin className="h-8 w-8 text-slate-300" />
+                    </div>
+                    <h4 className="text-lg font-bold text-slate-700">No Delivery Partners Linked</h4>
+                    <p className="mt-1 text-sm text-slate-500 max-w-sm">There are no delivery partners assigned to this franchise account yet.</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ORDERS LIST */}
             {activeDetailTab === 'orders' && (
               <div className="animate-in slide-in-from-right-4 fade-in duration-300">
                 <div className="mb-6 flex items-center justify-between border-b border-slate-100 pb-4">
@@ -669,6 +826,58 @@ const FranchiseDetails = () => {
                     </div>
                     <h4 className="text-lg font-bold text-slate-700">No Orders Found</h4>
                     <p className="mt-1 text-sm text-slate-500 max-w-sm">There are no orders associated with this franchise account yet.</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* USERS ORDER LIST */}
+            {activeDetailTab === 'usersOrder' && (
+              <div className="animate-in slide-in-from-right-4 fade-in duration-300">
+                <div className="mb-6 flex items-center justify-between border-b border-slate-100 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 text-violet-600"><ShoppingCart className="h-5 w-5" /></div>
+                    <h3 className="text-xl font-black text-slate-800">User Orders (Personal)</h3>
+                  </div>
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500">{linkedUserOrders.length} Total</span>
+                </div>
+
+                {linkedUserOrders.length > 0 ? (
+                  <div className="overflow-hidden rounded-2xl border border-slate-200">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-sm">
+                        <thead className="bg-slate-50">
+                          <tr>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Order ID</th>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Date</th>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Amount</th>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs text-center">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 bg-white">
+                          {linkedUserOrders.map((order) => (
+                            <tr key={order.id} className="hover:bg-slate-50/50 transition-colors group">
+                              <td className="px-6 py-4 font-bold text-slate-800">#{order.order_id || order.id}</td>
+                              <td className="px-6 py-4 text-slate-600">{formatDate(order.created_at)}</td>
+                              <td className="px-6 py-4 font-bold text-emerald-600">₹{order.total_amount || 0}</td>
+                              <td className="px-6 py-4 text-center">
+                                <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${order.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                                  {order.status || 'Pending'}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-200 bg-slate-50 py-16 text-center">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-sm mb-4">
+                      <ShoppingCart className="h-8 w-8 text-slate-300" />
+                    </div>
+                    <h4 className="text-lg font-bold text-slate-700">No Personal Orders Found</h4>
+                    <p className="mt-1 text-sm text-slate-500 max-w-sm">This franchise owner has not placed any orders as a regular user yet.</p>
                   </div>
                 )}
               </div>

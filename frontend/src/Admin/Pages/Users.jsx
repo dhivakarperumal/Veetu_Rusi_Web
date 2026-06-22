@@ -21,6 +21,14 @@ const Users = ({ initialTab = "All" }) => {
     const [selectedTab, setSelectedTab] = useState(initialTab);
     const [selectedRole, setSelectedRole] = useState("all");
     const [searchTerm, setSearchTerm] = useState("");
+    const roleOptions = ["all", "superadmin", "admin", "franchise", "manager", "chef", "dealer", "delivery_partner", "user"];
+
+    const formatRoleLabel = (role) => {
+        if (!role) return "";
+        return role === "all"
+            ? "all roles"
+            : role.replace(/_/g, " ");
+    };
 
     // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
@@ -54,7 +62,8 @@ const Users = ({ initialTab = "All" }) => {
                     id: u.id || u.user_id,
                     name: u.name || u.username,
                     email: u.email,
-                    role: u.role ? u.role.toLowerCase() : 'user',
+                    phone: u.phone || u.mobile || u.mobile_number || '',
+                    role: u.role ? u.role.toString().trim().toLowerCase() : 'user',
                     status: 'Active', // Mocking status since it's not in db yet
                     joined: u.created_at ? new Date(u.created_at).toLocaleDateString() : 'N/A',
                     rawCreated_at: u.created_at,
@@ -78,7 +87,8 @@ const Users = ({ initialTab = "All" }) => {
                 id: u.id || u.user_id,
                 name: u.name || u.username,
                 email: u.email,
-                role: u.role ? u.role.toLowerCase() : 'user',
+                phone: u.phone || u.mobile || u.mobile_number || '',
+                role: u.role ? u.role.toString().trim().toLowerCase() : 'user',
                 status: 'Active',
                 joined: u.created_at ? new Date(u.created_at).toLocaleDateString() : 'N/A',
                 rawCreated_at: u.created_at,
@@ -165,7 +175,11 @@ const Users = ({ initialTab = "All" }) => {
 
     const getRoleStyle = (role) => {
         const normalizedRole = role ? role.toLowerCase() : "";
+        if (normalizedRole.includes("superadmin")) return "bg-slate-900 text-white shadow-sm";
+        if (normalizedRole.includes("delivery_partner")) return "bg-sky-50 text-sky-600 border border-sky-100";
         if (normalizedRole.includes("admin")) return "bg-slate-900 text-white shadow-sm";
+        if (normalizedRole.includes("franchise")) return "bg-cyan-50 text-cyan-600 border border-cyan-100";
+        if (normalizedRole.includes("chef")) return "bg-purple-50 text-purple-600 border border-purple-100";
         if (normalizedRole.includes("manager")) return "bg-indigo-50 text-indigo-600 border border-indigo-100";
         if (normalizedRole.includes("dealer")) return "bg-amber-50 text-amber-600 border border-amber-100";
         return "bg-emerald-50 text-emerald-600 border border-emerald-100"; // User / Customer
@@ -181,8 +195,10 @@ const Users = ({ initialTab = "All" }) => {
     };
 
     const filteredUsers = users.filter(user => {
-        const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.email.toLowerCase().includes(searchTerm.toLowerCase());
+        const lowerSearch = searchTerm.toLowerCase();
+        const matchesSearch = user.name.toLowerCase().includes(lowerSearch) ||
+            user.email.toLowerCase().includes(lowerSearch) ||
+            (user.phone || '').toLowerCase().includes(lowerSearch);
 
         const matchesTab = selectedTab === "All" || (selectedTab === "New" && isToday(user.rawCreated_at));
         const matchesRole = selectedRole === "all" || (user.role && user.role.toLowerCase() === selectedRole.toLowerCase());
@@ -253,7 +269,7 @@ const Users = ({ initialTab = "All" }) => {
                         <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
                             type="text"
-                            placeholder="Find by name or email..."
+                            placeholder="Find by name, email or phone..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full pl-12 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:bg-white focus:border-blue-500 transition-all text-sm"
@@ -267,11 +283,11 @@ const Users = ({ initialTab = "All" }) => {
                                 onChange={(e) => setSelectedRole(e.target.value)}
                                 className="pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:bg-white focus:border-blue-500 transition-all text-sm font-bold text-gray-600 cursor-pointer appearance-none min-w-[140px]"
                             >
-                                <option value="all">all roles</option>
-                                <option value="admin">admin</option>
-                                <option value="manager">manager</option>
-                                <option value="dealer">dealer</option>
-                                <option value="user">user</option>
+                                {roleOptions.map((role) => (
+                                    <option key={role} value={role}>
+                                        {formatRoleLabel(role)}
+                                    </option>
+                                ))}
                             </select>
                         </div>
                     </div>
@@ -282,6 +298,8 @@ const Users = ({ initialTab = "All" }) => {
                         <thead className="hidden md:table-header-group">
                             <tr className="bg-gray-50/50">
                                 <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">User Profile</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Email</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Phone</th>
                                 <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Role</th>
                                 <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Status</th>
                                 <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Joined Date</th>
@@ -326,6 +344,18 @@ const Users = ({ initialTab = "All" }) => {
                                         </td>
                                         <td className="px-3 py-4 md:px-6 md:py-4 block md:table-cell border-b border-gray-50 md:border-b-0">
                                             <div className="flex md:block items-center justify-between w-full">
+                                                <span className="md:hidden text-[10px] font-black text-gray-400 uppercase tracking-widest">Email</span>
+                                                <p className="text-sm font-bold text-slate-700 truncate max-w-[220px]" title={user.email}>{user.email}</p>
+                                            </div>
+                                        </td>
+                                        <td className="px-3 py-4 md:px-6 md:py-4 block md:table-cell border-b border-gray-50 md:border-b-0">
+                                            <div className="flex md:block items-center justify-between w-full">
+                                                <span className="md:hidden text-[10px] font-black text-gray-400 uppercase tracking-widest">Phone</span>
+                                                <p className="text-sm font-bold text-slate-700 truncate max-w-[220px]" title={user.phone || 'N/A'}>{user.phone || 'N/A'}</p>
+                                            </div>
+                                        </td>
+                                        <td className="px-3 py-4 md:px-6 md:py-4 block md:table-cell border-b border-gray-50 md:border-b-0">
+                                            <div className="flex md:block items-center justify-between w-full">
                                                 <span className="md:hidden text-[10px] font-black text-gray-400 uppercase tracking-widest">Role</span>
                                                 <div className="relative group/role">
                                                     <select
@@ -333,10 +363,9 @@ const Users = ({ initialTab = "All" }) => {
                                                         onChange={(e) => handleQuickRoleUpdate(user.id, e.target.value, user)}
                                                         className={`appearance-none cursor-pointer px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-transparent outline-none transition-all ${getRoleStyle(user.role)}`}
                                                     >
-                                                        <option value="admin">admin</option>
-                                                        <option value="manager">manager</option>
-                                                        <option value="dealer">dealer</option>
-                                                        <option value="user">user</option>
+                                                        {roleOptions.filter((role) => role !== 'all').map((role) => (
+                                                            <option key={role} value={role}>{formatRoleLabel(role)}</option>
+                                                        ))}
                                                     </select>
                                                 </div>
                                             </div>
@@ -480,9 +509,12 @@ const Users = ({ initialTab = "All" }) => {
                                     onChange={handleInputChange}
                                     className="w-full bg-gray-50 border border-gray-200 text-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium cursor-pointer"
                                 >
-                                    <option value="admin">admin</option>
+                                        <option value="admin">admin</option>
+                                    <option value="franchise">franchise</option>
                                     <option value="manager">manager</option>
+                                    <option value="chef">chef</option>
                                     <option value="dealer">dealer</option>
+                                    <option value="delivery_partner">delivery partner</option>
                                     <option value="user">user</option>
                                 </select>
                             </div>

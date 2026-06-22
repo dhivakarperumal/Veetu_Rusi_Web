@@ -1,4 +1,4 @@
-  const pool = require('../config/db');
+const pool = require('../config/db');
 
 const parseJsonField = (value) => {
   if (value === null || value === undefined) return null;
@@ -10,9 +10,9 @@ const parseJsonField = (value) => {
   }
 };
 
-const generateNextChefCategoryId = async (chefUserId) => {
+const generateNextFoodCategoryId = async (chefUserId) => {
   const [rows] = await pool.execute(
-    'SELECT catId FROM chef_category WHERE chef_user_id <=> ? ORDER BY id DESC',
+    'SELECT catId FROM cheffoodcategorytable WHERE chef_user_id <=> ? ORDER BY id DESC',
     [chefUserId]
   );
 
@@ -31,7 +31,7 @@ const generateNextChefCategoryId = async (chefUserId) => {
   return `CAT${String(maxId + 1).padStart(3, '0')}`;
 };
 
-const resolveChefCategoryMetadata = async (req, body) => {
+const resolveFoodCategoryMetadata = async (req, body) => {
   const {
     chef_id,
     chef_user_id,
@@ -106,7 +106,7 @@ const resolveChefCategoryMetadata = async (req, body) => {
   };
 };
 
-exports.getChefCategories = async (req, res) => {
+exports.getFoodCategories = async (req, res) => {
   try {
     const {
       chef_user_id,
@@ -115,11 +115,11 @@ exports.getChefCategories = async (req, res) => {
       franchise_id
     } = req.query;
 
-    let query = `SELECT id, catId, name, description, subcategory, images,
+    let query = `SELECT id, catId, name, description, category_image, images, subcategory,
       chef_user_id, chef_id, chef_name, chef_phone, chef_email,
       franchise_user_id, franchise_id, franchise_name, franchise_email, franchise_phone,
       created_by_user_id, created_by_email, created_by_name, created_by_phone
-      FROM chef_category WHERE 1=1`;
+      FROM cheffoodcategorytable WHERE 1=1`;
     const params = [];
 
     if (chef_id) {
@@ -150,19 +150,20 @@ exports.getChefCategories = async (req, res) => {
 
     res.json(categories);
   } catch (error) {
-    console.error('Error fetching chef categories:', error);
-    res.status(500).json({ message: 'Failed to fetch chef categories', error: error.message });
+    console.error('Error fetching chef food categories:', error);
+    res.status(500).json({ message: 'Failed to fetch chef food categories', error: error.message });
   }
 };
 
-exports.createChefCategory = async (req, res) => {
+exports.createFoodCategory = async (req, res) => {
   try {
     const {
       catId,
       name,
       description,
-      subcategory = [],
+      category_image,
       images = [],
+      subcategory = [],
       created_by_user_id,
       created_by_name,
       created_by_phone
@@ -175,7 +176,7 @@ exports.createChefCategory = async (req, res) => {
       return res.status(400).json({ message: 'Category name is required' });
     }
 
-    const metadata = await resolveChefCategoryMetadata(req, req.body);
+    const metadata = await resolveFoodCategoryMetadata(req, req.body);
     const {
       finalChefId,
       finalChefUserId,
@@ -194,28 +195,29 @@ exports.createChefCategory = async (req, res) => {
     const finalCreatedByName = created_by_name || finalChefName || req.user?.name || null;
     const finalCreatedByPhone = created_by_phone || finalChefPhone || req.user?.phone || null;
 
-    let finalCatId = catId || await generateNextChefCategoryId(finalChefUserId);
+    let finalCatId = catId || await generateNextFoodCategoryId(finalChefUserId);
 
-    const insertSql = `INSERT INTO chef_category
-      (catId, name, description, subcategory, images,
+    const insertSql = `INSERT INTO cheffoodcategorytable
+      (catId, name, description, category_image, images, subcategory,
       chef_id, chef_user_id, chef_name, chef_phone, chef_email,
-      franchise_user_id, franchise_id, franchise_name, franchise_email, franchise_phone,
+      franchise_id, franchise_user_id, franchise_name, franchise_email, franchise_phone,
       created_by_user_id, created_by_email, created_by_name, created_by_phone)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
     const insertParams = [
       finalCatId,
       categoryName,
       categoryDescription,
-      JSON.stringify(subcategory),
+      category_image || null,
       JSON.stringify(images),
+      JSON.stringify(subcategory),
       finalChefId,
       finalChefUserId,
       finalChefName,
       finalChefPhone,
       finalChefEmail,
-      finalFranchiseUserId,
       finalFranchiseId,
+      finalFranchiseUserId,
       finalFranchiseName,
       finalFranchiseEmail,
       finalFranchisePhone,
@@ -236,7 +238,7 @@ exports.createChefCategory = async (req, res) => {
       } catch (insertErr) {
         if (insertErr.code === 'ER_DUP_ENTRY') {
           attempt += 1;
-          finalCatId = await generateNextChefCategoryId(finalChefUserId);
+          finalCatId = await generateNextFoodCategoryId(finalChefUserId);
           insertParams[0] = finalCatId;
           continue;
         }
@@ -248,17 +250,17 @@ exports.createChefCategory = async (req, res) => {
       return res.status(409).json({ message: 'Unable to generate a unique Category ID. Please try again.' });
     }
 
-    res.status(201).json({ message: 'Chef category created successfully', id: result.insertId, catId: finalCatId });
+    res.status(201).json({ message: 'Chef food category created successfully', id: result.insertId, catId: finalCatId });
   } catch (err) {
-    console.error('Failed to create chef category:', err);
+    console.error('Failed to create chef food category:', err);
     if (err.code === 'ER_DUP_ENTRY') {
       return res.status(409).json({ message: 'Category ID already exists for this chef user. Please try again.' });
     }
-    res.status(500).json({ message: 'Failed to create chef category', error: err.message });
+    res.status(500).json({ message: 'Failed to create chef food category', error: err.message });
   }
 };
 
-exports.updateChefCategory = async (req, res) => {
+exports.updateFoodCategory = async (req, res) => {
   try {
     const catId = req.params.catId;
     const updates = req.body;
@@ -277,13 +279,17 @@ exports.updateChefCategory = async (req, res) => {
       fields.push('description = ?');
       params.push(updates.description !== undefined ? updates.description : updates.cdescription);
     }
-    if (updates.subcategory !== undefined) {
-      fields.push('subcategory = ?');
-      params.push(JSON.stringify(updates.subcategory));
+    if (updates.category_image !== undefined) {
+      fields.push('category_image = ?');
+      params.push(updates.category_image);
     }
     if (updates.images !== undefined || updates.cimgs !== undefined) {
       fields.push('images = ?');
       params.push(JSON.stringify(updates.images !== undefined ? updates.images : updates.cimgs));
+    }
+    if (updates.subcategory !== undefined) {
+      fields.push('subcategory = ?');
+      params.push(JSON.stringify(updates.subcategory));
     }
     if (updates.chef_user_id !== undefined) {
       fields.push('chef_user_id = ?');
@@ -325,6 +331,22 @@ exports.updateChefCategory = async (req, res) => {
       fields.push('franchise_phone = ?');
       params.push(updates.franchise_phone);
     }
+    if (updates.created_by_user_id !== undefined) {
+      fields.push('created_by_user_id = ?');
+      params.push(updates.created_by_user_id);
+    }
+    if (updates.created_by_email !== undefined) {
+      fields.push('created_by_email = ?');
+      params.push(updates.created_by_email);
+    }
+    if (updates.created_by_name !== undefined) {
+      fields.push('created_by_name = ?');
+      params.push(updates.created_by_name);
+    }
+    if (updates.created_by_phone !== undefined) {
+      fields.push('created_by_phone = ?');
+      params.push(updates.created_by_phone);
+    }
 
     if (fields.length === 0) {
       return res.status(400).json({ message: 'No fields to update' });
@@ -332,36 +354,36 @@ exports.updateChefCategory = async (req, res) => {
 
     params.push(catId, catId);
     const [result] = await pool.execute(
-      `UPDATE chef_category SET ${fields.join(', ')} WHERE catId = ? OR id = ?`,
+      `UPDATE cheffoodcategorytable SET ${fields.join(', ')} WHERE catId = ? OR id = ?`,
       params
     );
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ message: 'Category not found' });
+      return res.status(404).json({ message: 'Food category not found' });
     }
 
     res.json({ message: 'Updated' });
   } catch (err) {
-    console.error('Failed to update chef category:', err);
-    res.status(500).json({ message: 'Failed to update chef category', error: err.message });
+    console.error('Failed to update chef food category:', err);
+    res.status(500).json({ message: 'Failed to update chef food category', error: err.message });
   }
 };
 
-exports.deleteChefCategory = async (req, res) => {
+exports.deleteFoodCategory = async (req, res) => {
   try {
     const catId = req.params.catId;
     const [result] = await pool.execute(
-      'DELETE FROM chef_category WHERE catId = ? OR id = ?',
+      'DELETE FROM cheffoodcategorytable WHERE catId = ? OR id = ?',
       [catId, catId]
     );
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ message: 'Category not found' });
+      return res.status(404).json({ message: 'Food category not found' });
     }
 
     res.json({ message: 'Deleted' });
   } catch (err) {
-    console.error('Failed to delete chef category:', err);
-    res.status(500).json({ message: 'Failed to delete chef category', error: err.message });
+    console.error('Failed to delete chef food category:', err);
+    res.status(500).json({ message: 'Failed to delete chef food category', error: err.message });
   }
 };

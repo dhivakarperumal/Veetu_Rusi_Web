@@ -58,21 +58,14 @@ export default function Orders() {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const res = await api.get("/orders");
-
-        const allOrders = res.data || [];
-
-        const userOrders = allOrders.filter(
-          (order) => order.user_id === user?.user_id,
-        );
-
-        setOrders(userOrders);
+        const res = await api.get("/orders/myorders");
+        setOrders(res.data || []);
       } catch (error) {
         console.error("Failed to load orders", error);
       }
     };
 
-    if (user?.user_id) fetchOrders();
+    if (user) fetchOrders();
   }, [user]);
 
   const openOrderDetails = async (order) => {

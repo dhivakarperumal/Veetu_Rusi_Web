@@ -132,6 +132,47 @@ const createRecipeDetailsTable = async () => {
     }
 };
 
+const createDealersTable = async () => {
+    try {
+        const createTableSQL = `
+        CREATE TABLE IF NOT EXISTS dealers (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            dealer_id VARCHAR(255) UNIQUE,
+            name VARCHAR(255) NOT NULL,
+            contact VARCHAR(255),
+            email VARCHAR(255),
+            phone VARCHAR(50),
+            location VARCHAR(255),
+            status VARCHAR(50) DEFAULT 'Pending',
+            rating DECIMAL(3,1) DEFAULT 0,
+            orders INT DEFAULT 0,
+            image LONGTEXT,
+            details LONGTEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            KEY idx_status (status),
+            KEY idx_location (location)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `;
+
+        await pool.execute(createTableSQL);
+        try { await pool.execute('ALTER TABLE dealers ADD COLUMN dealer_id VARCHAR(255) UNIQUE'); } catch {}
+        try { await pool.execute('ALTER TABLE dealers ADD COLUMN contact VARCHAR(255)'); } catch {}
+        try { await pool.execute('ALTER TABLE dealers ADD COLUMN email VARCHAR(255)'); } catch {}
+        try { await pool.execute('ALTER TABLE dealers ADD COLUMN phone VARCHAR(50)'); } catch {}
+        try { await pool.execute('ALTER TABLE dealers ADD COLUMN location VARCHAR(255)'); } catch {}
+        try { await pool.execute("ALTER TABLE dealers ADD COLUMN status VARCHAR(50) DEFAULT 'Pending'"); } catch {}
+        try { await pool.execute('ALTER TABLE dealers ADD COLUMN rating DECIMAL(3,1) DEFAULT 0'); } catch {}
+        try { await pool.execute('ALTER TABLE dealers ADD COLUMN orders INT DEFAULT 0'); } catch {}
+        try { await pool.execute('ALTER TABLE dealers ADD COLUMN image LONGTEXT'); } catch {}
+        try { await pool.execute('ALTER TABLE dealers ADD COLUMN details LONGTEXT'); } catch {}
+
+        console.log('✓ Dealers table created or already exists');
+    } catch (error) {
+        console.error('✗ Error creating dealers table:', error.message);
+    }
+};
+
     const createFranchiseProductsTable = async () => {
         try {
             const createTableSQL = `
@@ -210,26 +251,79 @@ const createRecipeDetailsTable = async () => {
         }
     };
 
-    const createSubscriptionPlansTable = async () => {
-        try {
-            const createTableSQL = `
-            CREATE TABLE IF NOT EXISTS subscription_plans (
-                id VARCHAR(100) PRIMARY KEY,
-                name VARCHAR(255) NOT NULL,
-                amount DECIMAL(10,2) NOT NULL,
-                currency VARCHAR(10) DEFAULT 'INR',
-                durationDays INT DEFAULT 30,
-                status VARCHAR(50) DEFAULT 'Active',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-            `;
+const createChefFoodTable = async () => {
+    try {
+        const createTableSQL = `
+        CREATE TABLE IF NOT EXISTS chef_food_table (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            category VARCHAR(100) NOT NULL,
+            name VARCHAR(255) NOT NULL,
+            description LONGTEXT,
+            cuisine VARCHAR(100),
+            prep_time VARCHAR(100),
+            shelf_life_days INT,
+            mrp DECIMAL(10,2) NOT NULL,
+            offer INT DEFAULT 0,
+            final_price DECIMAL(10,2),
+            dietary_tag VARCHAR(50),
+            net_weight VARCHAR(100),
+            packaging_type VARCHAR(100),
+            ingredients LONGTEXT,
+            instructions LONGTEXT,
+            images LONGTEXT,
+            status VARCHAR(50) DEFAULT 'Active',
+            chef_id VARCHAR(255),
+            chef_user_id VARCHAR(255),
+            chef_name VARCHAR(255),
+            chef_phone VARCHAR(20),
+            chef_email VARCHAR(255),
+            franchise_id VARCHAR(255),
+            franchise_user_id VARCHAR(255),
+            franchise_name VARCHAR(255),
+            franchise_email VARCHAR(255),
+            franchise_phone VARCHAR(20),
+            created_by_user_id VARCHAR(255),
+            created_by_name VARCHAR(255),
+            created_by_email VARCHAR(255),
+            created_by_phone VARCHAR(20),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            KEY idx_category (category),
+            KEY idx_chef_id (chef_id),
+            KEY idx_chef_user_id (chef_user_id),
+            KEY idx_franchise_id (franchise_id),
+            KEY idx_created_at (created_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `;
 
-            await pool.execute(createTableSQL);
-            console.log('✓ Subscription plans table created or already exists');
-        } catch (error) {
-            console.error('✗ Error creating subscription_plans table:', error.message);
-        }
-    };
+        await pool.execute(createTableSQL);
+        try { await pool.execute('ALTER TABLE chef_food_table ADD COLUMN images LONGTEXT'); } catch (err) {}
+        console.log('✓ Chef food table created or already exists');
+    } catch (error) {
+        console.error('✗ Error creating chef_food_table:', error.message);
+    }
+};
+
+const createSubscriptionPlansTable = async () => {
+    try {
+        const createTableSQL = `
+        CREATE TABLE IF NOT EXISTS subscription_plans (
+            id VARCHAR(100) PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            amount DECIMAL(10,2) NOT NULL,
+            currency VARCHAR(10) DEFAULT 'INR',
+            durationDays INT DEFAULT 30,
+            status VARCHAR(50) DEFAULT 'Active',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `;
+
+        await pool.execute(createTableSQL);
+        console.log('✓ Subscription plans table created or already exists');
+    } catch (error) {
+        console.error('✗ Error creating subscription_plans table:', error.message);
+    }
+};
 
     const createReviewsTable = async () => {
         try {
@@ -256,10 +350,241 @@ const createRecipeDetailsTable = async () => {
         }
     };
 
-module.exports = {
-    createProductsTable,
-    createRecipeDetailsTable,
-    createFranchiseProductsTable,
-    createSubscriptionPlansTable
-    ,createReviewsTable
+    const createUserFoodCartTable = async () => {
+        try {
+            const sql = `
+            CREATE TABLE IF NOT EXISTS user_food_cart (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                user_id VARCHAR(255),
+                product_id INT,
+                name VARCHAR(255),
+                image LONGTEXT,
+                price DECIMAL(10,2),
+                total_price DECIMAL(10,2),
+                quantity INT DEFAULT 1,
+
+                created_by_user_id VARCHAR(255),
+                created_by_name VARCHAR(255),
+                created_by_email VARCHAR(255),
+                created_by_phone VARCHAR(20),
+
+                chef_user_id VARCHAR(255),
+                chef_id VARCHAR(255),
+                chef_name VARCHAR(255),
+                chef_phone VARCHAR(20),
+                chef_email VARCHAR(255),
+
+                franchise_id VARCHAR(255),
+                franchise_user_id VARCHAR(255),
+                franchise_email VARCHAR(255),
+                franchise_name VARCHAR(255),
+                franchise_phone VARCHAR(20),
+
+                ordered_by_name VARCHAR(255),
+                ordered_by_user_id VARCHAR(255),
+                ordered_by_email VARCHAR(255),
+                ordered_by_phone VARCHAR(20),
+
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+                KEY idx_user_id (user_id),
+                KEY idx_product_id (product_id),
+                KEY idx_created_at (created_at)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            `;
+
+            await pool.execute(sql);
+            console.log('✓ user_food_cart table created or already exists');
+        } catch (err) {
+            console.error('✗ Error creating user_food_cart table:', err.message || err);
+        }
+    };
+
+    const createChefFoodCategoryTable = async () => {
+        try {
+            const sql = `
+            CREATE TABLE IF NOT EXISTS cheffoodcategorytable (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                catId VARCHAR(50) UNIQUE,
+                name VARCHAR(255) NOT NULL,
+                description LONGTEXT,
+                category_image LONGTEXT,
+                images LONGTEXT,
+                subcategory LONGTEXT,
+
+                chef_id VARCHAR(255),
+                chef_user_id VARCHAR(255),
+                chef_name VARCHAR(255),
+                chef_phone VARCHAR(20),
+                chef_email VARCHAR(255),
+
+                franchise_id VARCHAR(255),
+                franchise_user_id VARCHAR(255),
+                franchise_name VARCHAR(255),
+                franchise_email VARCHAR(255),
+                franchise_phone VARCHAR(20),
+
+                created_by_user_id VARCHAR(255),
+                created_by_email VARCHAR(255),
+                created_by_name VARCHAR(255),
+                created_by_phone VARCHAR(20),
+
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+                KEY idx_catId (catId),
+                KEY idx_chef_user_id (chef_user_id),
+                KEY idx_franchise_user_id (franchise_user_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            `;
+
+            await pool.execute(sql);
+            console.log('✓ cheffoodcategorytable created or already exists');
+        } catch (err) {
+            console.error('✗ Error creating cheffoodcategorytable:', err.message || err);
+        }
+    };
+
+    const createChefCategoryTable = async () => {
+        try {
+            const sql = `
+            CREATE TABLE IF NOT EXISTS chef_category (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                catId VARCHAR(50) UNIQUE,
+                name VARCHAR(255) NOT NULL,
+                description LONGTEXT,
+                category_image LONGTEXT,
+                images LONGTEXT,
+                subcategory LONGTEXT,
+
+                chef_id VARCHAR(255),
+                chef_user_id VARCHAR(255),
+                chef_name VARCHAR(255),
+                chef_phone VARCHAR(20),
+                chef_email VARCHAR(255),
+
+                created_by_user_id VARCHAR(255),
+                created_by_email VARCHAR(255),
+                created_by_name VARCHAR(255),
+                created_by_phone VARCHAR(20),
+
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+                KEY idx_catId (catId),
+                KEY idx_chef_user_id (chef_user_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            `;
+
+            await pool.execute(sql);
+            console.log('✓ chef_category table created or already exists');
+        } catch (err) {
+            console.error('✗ Error creating chef_category table:', err.message || err);
+        }
+    };
+
+    const createFranchiseCategoryTable = async () => {
+        try {
+            const sql = `
+            CREATE TABLE IF NOT EXISTS franchise_category (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                catId VARCHAR(50) UNIQUE,
+                name VARCHAR(255) NOT NULL,
+                description LONGTEXT,
+                images LONGTEXT,
+                subcategory LONGTEXT,
+
+                franchise_user_id VARCHAR(255),
+                franchise_id VARCHAR(255),
+                
+                created_by_user_id VARCHAR(255),
+                created_by_email VARCHAR(255),
+                created_by_name VARCHAR(255),
+
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+                KEY idx_catId (catId),
+                KEY idx_franchise_user_id (franchise_user_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            `;
+
+            await pool.execute(sql);
+            console.log('✓ franchise_category table created or already exists');
+        } catch (err) {
+            console.error('✗ Error creating franchise_category table:', err.message || err);
+        }
+    };
+
+const createUserFoodOrderTable = async () => {
+    try {
+        const sql = `
+        CREATE TABLE IF NOT EXISTS user_food_order_table (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            order_id VARCHAR(100) NOT NULL UNIQUE,
+            user_id VARCHAR(255),
+            customer_name VARCHAR(255),
+            customer_email VARCHAR(255),
+            customer_phone VARCHAR(50),
+            street_address TEXT,
+            city VARCHAR(100),
+            district VARCHAR(100),
+            state VARCHAR(100),
+            country VARCHAR(100),
+            zip_code VARCHAR(50),
+            delivery_date DATE,
+            delivery_time VARCHAR(50),
+            payment_method VARCHAR(50),
+            payment_status VARCHAR(50) DEFAULT 'Pending',
+            total_amount DECIMAL(10,2) DEFAULT 0,
+            items JSON,
+            delivery_partner VARCHAR(255),
+            created_by_user_id VARCHAR(255),
+            created_by_name VARCHAR(255),
+            created_by_email VARCHAR(255),
+            created_by_phone VARCHAR(20),
+            chef_user_id VARCHAR(255),
+            chef_id VARCHAR(255),
+            chef_name VARCHAR(255),
+            chef_email VARCHAR(255),
+            chef_phone VARCHAR(20),
+            franchise_user_id VARCHAR(255),
+            franchise_id VARCHAR(255),
+            franchise_name VARCHAR(255),
+            franchise_email VARCHAR(255),
+            franchise_phone VARCHAR(20),
+            ordered_by_name VARCHAR(255),
+            ordered_by_email VARCHAR(255),
+            ordered_by_phone VARCHAR(20),
+            status VARCHAR(50) DEFAULT 'Pending',
+            ordered_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            KEY idx_user_id (user_id),
+            KEY idx_chef_user_id (chef_user_id),
+            KEY idx_franchise_user_id (franchise_user_id),
+            KEY idx_status (status),
+            KEY idx_ordered_at (ordered_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `;
+
+        await pool.execute(sql);
+        console.log('✓ user_food_order_table created or already exists');
+    } catch (err) {
+        console.error('✗ Error creating user_food_order_table:', err.message || err);
+    }
 };
+
+    module.exports = {
+        createProductsTable,
+        createRecipeDetailsTable,
+        createFranchiseProductsTable,
+        createChefFoodTable,
+        createSubscriptionPlansTable,
+        createReviewsTable,
+        createUserFoodCartTable,
+        createUserFoodOrderTable,
+        createChefFoodCategoryTable,
+        createChefCategoryTable,
+        createFranchiseCategoryTable
+    };

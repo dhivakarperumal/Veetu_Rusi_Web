@@ -324,8 +324,7 @@ exports.createHomeChef = async (req, res) => {
     const fullAddress = address || [door_number, street_name, area_name, landmark, city, district, state, pincode].filter(Boolean).join(', ') || null;
     const hashedPw = password ? hashPassword(password) : null;
 
-    const [result] = await pool.execute(
-      `INSERT INTO home_chefs (
+    const sql = `INSERT INTO home_chefs (
         name, mobile, email, address, fssai_number, aadhaar_url, pan_url, status,
         chef_unique_code, created_by_id, created_by_user_id, created_by_name, created_by_email, created_by_phone,
         franchise_id, franchise_user_id,
@@ -342,97 +341,109 @@ exports.createHomeChef = async (req, res) => {
         email_verified, last_login, device_details, login_status, verification_status, approval_status,
         approved_by_admin, approval_date, rejection_reason, block_reason,
         aadhaar_front_url, aadhaar_back_url, pan_card_url, fssai_certificate_url, gst_certificate_url, signature_url, selfie_verification_url
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        name,
-        mobile,
-        email,
-        fullAddress,
-        fssai_number || null,
-        null, // aadhaar_url
-        null, // pan_url
-        approval_status || 'Pending', // status
-        generatedChefCode,
-        createdById,
-        createdByUserId,
-        createdByName,
-        createdByEmail,
-        createdByPhone,
-        resolvedFranchiseId,
-        resolvedFranchiseUserId,
-        father_husband_name || null,
-        gender || null,
-        date_of_birth || null,
-        calculatedAge !== null ? calculatedAge : (age ? parseInt(age) : null),
-        profile_photo,
-        cover_banner,
-        alt_mobile || null,
-        whatsapp_number || null,
-        emergency_contact || null,
-        door_number || null,
-        street_name || null,
-        area_name || null,
-        landmark || null,
-        city || null,
-        district || null,
-        state || null,
-        pincode || null,
-        latitude || null,
-        longitude || null,
-        map_link || null,
-        kitchen_name || null,
-        kitchen_address || null,
-        kitchen_type || 'Home Kitchen',
-        kitchen_photos,
-        kitchen_videos,
-        seating_available === 'true' || seating_available === true ? 1 : 0,
-        dining_available === 'true' || dining_available === true ? 1 : 0,
-        takeaway_available === 'true' || takeaway_available === true ? 1 : 0,
-        delivery_available === 'true' || delivery_available === true ? 1 : 0,
-        specialty_food || null,
-        cuisine_type || 'South Indian',
-        signature_dish || null,
-        veg_nonveg || 'Veg',
-        experience_years ? parseInt(experience_years) : null,
-        cooking_style || null,
-        preparation_time || null,
-        daily_order_capacity ? parseInt(daily_order_capacity) : null,
-        available_days || null,
-        opening_time || null,
-        closing_time || null,
-        holiday_schedule || null,
-        busy_hours || null,
-        instant_order === 'true' || instant_order === true ? 1 : 0,
-        pre_order === 'true' || pre_order === true ? 1 : 0,
-        aadhaar_number || null,
-        pan_number || null,
-        gst_number || null,
-        bank_account_number || null,
-        ifsc_code || null,
-        account_holder_name || null,
-        upi_id || null,
-        username || null,
-        hashedPw,
-        otp_verified === 'true' || otp_verified === true ? 1 : 0,
-        email_verified === 'true' || email_verified === true ? 1 : 0,
-        null, // last_login
-        null, // device_details
-        login_status || 'Active',
-        verification_status || 'Pending',
-        approval_status || 'Pending',
-        null, // approved_by_admin
-        null, // approval_date
-        rejection_reason || null,
-        block_reason || null,
-        aadhaar_front_url,
-        aadhaar_back_url,
-        pan_card_url,
-        fssai_certificate_url,
-        gst_certificate_url,
-        signature_url,
-        selfie_verification_url
-      ]
-    );
+      ) VALUES (${Array(87).fill('?').join(', ')})`;
+
+    const params = [
+      name,
+      mobile,
+      email,
+      fullAddress,
+      fssai_number || null,
+      null, // aadhaar_url
+      null, // pan_url
+      approval_status || 'Pending', // status
+      generatedChefCode,
+      createdById,
+      createdByUserId,
+      createdByName,
+      createdByEmail,
+      createdByPhone,
+      resolvedFranchiseId,
+      resolvedFranchiseUserId,
+      father_husband_name || null,
+      gender || null,
+      date_of_birth || null,
+      calculatedAge !== null ? calculatedAge : (age ? parseInt(age) : null),
+      profile_photo,
+      cover_banner,
+      alt_mobile || null,
+      whatsapp_number || null,
+      emergency_contact || null,
+      door_number || null,
+      street_name || null,
+      area_name || null,
+      landmark || null,
+      city || null,
+      district || null,
+      state || null,
+      pincode || null,
+      latitude || null,
+      longitude || null,
+      map_link || null,
+      kitchen_name || null,
+      kitchen_address || null,
+      kitchen_type || 'Home Kitchen',
+      kitchen_photos,
+      kitchen_videos,
+      seating_available === 'true' || seating_available === true ? 1 : 0,
+      dining_available === 'true' || dining_available === true ? 1 : 0,
+      takeaway_available === 'true' || takeaway_available === true ? 1 : 0,
+      delivery_available === 'true' || delivery_available === true ? 1 : 0,
+      specialty_food || null,
+      cuisine_type || 'South Indian',
+      signature_dish || null,
+      veg_nonveg || 'Veg',
+      experience_years ? parseInt(experience_years) : null,
+      cooking_style || null,
+      preparation_time || null,
+      daily_order_capacity ? parseInt(daily_order_capacity) : null,
+      available_days || null,
+      opening_time || null,
+      closing_time || null,
+      holiday_schedule || null,
+      busy_hours || null,
+      instant_order === 'true' || instant_order === true ? 1 : 0,
+      pre_order === 'true' || pre_order === true ? 1 : 0,
+      aadhaar_number || null,
+      pan_number || null,
+      gst_number || null,
+      bank_account_number || null,
+      ifsc_code || null,
+      account_holder_name || null,
+      upi_id || null,
+      username || null,
+      hashedPw,
+      otp_verified === 'true' || otp_verified === true ? 1 : 0,
+      email_verified === 'true' || email_verified === true ? 1 : 0,
+      null, // last_login
+      null, // device_details
+      login_status || 'Active',
+      verification_status || 'Pending',
+      approval_status || 'Pending',
+      null, // approved_by_admin
+      null, // approval_date
+      rejection_reason || null,
+      block_reason || null,
+      aadhaar_front_url,
+      aadhaar_back_url,
+      pan_card_url,
+      fssai_certificate_url,
+      gst_certificate_url,
+      signature_url,
+      selfie_verification_url
+    ];
+
+    // Debug checks
+    try {
+      const colsMatch = sql.match(/INSERT INTO\s+home_chefs\s*\(([^)]*)\)\s*VALUES/i);
+      const colsCount = colsMatch ? colsMatch[1].split(',').filter(c => c.trim()).length : null;
+      const placeholders = (sql.match(/\?/g) || []).length;
+      if (colsCount !== placeholders) console.error('home_chefs: columns vs placeholders mismatch', colsCount, placeholders);
+      if (placeholders !== params.length) console.error('home_chefs: placeholders vs params length mismatch', placeholders, params.length);
+      console.log('home_chefs insert debug:', { colsCount, placeholders, paramsLength: params.length });
+    } catch (e) { console.error('Debug check failed', e); }
+
+    const [result] = await pool.execute(sql, params);
 
     await syncUserForEntity('home_chefs', result.insertId, 'chef');
     res.status(201).json({ message: 'Home chef application submitted.', id: result.insertId });
@@ -983,7 +994,7 @@ exports.deleteDeliveryPartner = async (req, res) => {
 // ==================== USER MANAGEMENT ====================
 exports.getUsers = async (req, res) => {
   try {
-    const [rows] = await pool.execute("SELECT id, user_id, full_name AS name, email, mobile_number AS phone, role, status AS active, created_at FROM users WHERE role = 'user' ORDER BY created_at DESC");
+    const [rows] = await pool.execute("SELECT id, user_id, full_name AS name, email, mobile_number AS phone, role, status AS active, created_at FROM users ORDER BY created_at DESC");
     res.json(rows);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving users.', error: error.message });
@@ -994,11 +1005,45 @@ exports.patchUserStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { active } = req.body; // 1 for active, 0 for blocked
-    const statusVal = active ? 'Active' : 'Blocked';
+    const statusVal = active ? 'Active' : 'Inactive';
     await pool.execute("UPDATE users SET status = ? WHERE id = ?", [statusVal, id]);
-    res.json({ message: `User status changed to ${active ? 'Active' : 'Blocked'}.` });
+    res.json({ message: `User status changed to ${active ? 'Active' : 'Inactive'}.` });
   } catch (error) {
     res.status(500).json({ message: 'Error changing user status.', error: error.message });
+  }
+};
+
+exports.patchUserRole = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { role } = req.body;
+    await pool.execute("UPDATE users SET role = ? WHERE id = ?", [role, id]);
+    res.json({ message: `User role changed to ${role}.` });
+  } catch (error) {
+    res.status(500).json({ message: 'Error changing user role.', error: error.message });
+  }
+};
+
+exports.createUser = async (req, res) => {
+  try {
+    const { full_name, email, mobile_number, password, role } = req.body;
+    if (!full_name || !email || !password) {
+      return res.status(400).json({ message: 'Full name, email and password are required.' });
+    }
+    // Check duplicate email
+    const [existing] = await pool.execute('SELECT id FROM users WHERE email = ?', [email]);
+    if (existing.length > 0) {
+      return res.status(409).json({ message: 'A user with this email already exists.' });
+    }
+    const hashedPw = hashPassword(password);
+    const userIdStr = generateRoleId(role || 'user');
+    const [result] = await pool.execute(
+      'INSERT INTO users (user_id, full_name, email, mobile_number, password, role, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [userIdStr, full_name, email, mobile_number || null, hashedPw, role || 'user', 'Active']
+    );
+    res.status(201).json({ message: 'User created successfully.', id: result.insertId, user_id: userIdStr });
+  } catch (error) {
+    res.status(500).json({ message: 'Error creating user.', error: error.message });
   }
 };
 
@@ -1015,7 +1060,45 @@ exports.deleteUser = async (req, res) => {
 // ==================== ORDER MANAGEMENT ====================
 exports.getOrders = async (req, res) => {
   try {
-    const [rows] = await pool.execute("SELECT * FROM Chef_Order ORDER BY ordered_date DESC");
+    const { status } = req.query;
+    const currentUserId = req.user?.user_id;
+    const role = req.user?.role;
+    
+    let query = "SELECT * FROM Chef_Order WHERE 1=1";
+    let params = [];
+    
+    if (status && status !== 'All') {
+      if (status === 'Order Placed') {
+        query += " AND (status = ? OR status = 'Pending' OR status = 'New')";
+      } else {
+        query += " AND status = ?";
+      }
+      params.push(status);
+    }
+    
+    // Role-based filtering:
+    // - superadmin → see all orders
+    // - admin/franchise → see only orders where their franchise_user_id matches
+    // - user → see only their own orders by user_id
+    // - chef → filter in JS below by product ownership
+    if (role === 'franchise' || role === 'admin') {
+      query += " AND franchise_user_id = ?";
+      params.push(currentUserId);
+    } else if (role === 'user') {
+      query += " AND user_id = ?";
+      params.push(currentUserId);
+    }
+    
+    query += " ORDER BY ordered_date DESC";
+    
+    const [rows] = await pool.execute(query, params);
+    
+    let chefProductIds = new Set();
+    if (role === 'chef') {
+      const [chefProducts] = await pool.execute('SELECT id FROM chef_products WHERE chef_user_id = ?', [currentUserId]);
+      chefProducts.forEach(p => chefProductIds.add(p.id));
+    }
+    
     const parsedRows = rows.map(row => {
       let items = row.items;
       if (typeof items === 'string') {
@@ -1026,7 +1109,15 @@ exports.getOrders = async (req, res) => {
         }
       }
       return { ...row, items };
+    }).filter(row => {
+      if (role === 'chef') {
+        if (!row.items || row.items.length === 0) return false;
+        // Check if any item in the order belongs to this chef
+        return row.items.some(item => chefProductIds.has(Number(item.product_id) || Number(item.id)));
+      }
+      return true;
     });
+    
     res.json(parsedRows);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving orders.', error: error.message });
@@ -1085,13 +1176,28 @@ exports.createPayout = async (req, res) => {
 exports.getFranchises = async (req, res) => {
   try {
     // Safe migrations for new columns
-    try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS franch_user_id CHAR(36) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS franch_user_id VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE franchise_owners MODIFY COLUMN franch_user_id VARCHAR(255) DEFAULT NULL"); } catch (_) {}
     try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS login_password VARCHAR(255) DEFAULT NULL"); } catch (_) {}
     await expireFranchiseSubscriptions();
     const [rows] = await pool.execute("SELECT id, franchise_id, franch_user_id, franchise_name, owner_name, mobile, email, city, state, commission_percentage, status, start_date, expiry_date, territory_pincodes, created_at, login_password IS NOT NULL AS password_preset FROM franchise_owners ORDER BY created_at DESC");
     res.json(rows);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving franchise owners.', error: error.message });
+  }
+};
+
+exports.getFranchiseById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS franch_user_id VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE franchise_owners MODIFY COLUMN franch_user_id VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE franchise_owners ADD COLUMN IF NOT EXISTS login_password VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+    const [rows] = await pool.execute('SELECT * FROM franchise_owners WHERE id = ? LIMIT 1', [id]);
+    if (!rows.length) return res.status(404).json({ message: 'Franchise not found' });
+    res.json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving franchise.', error: error.message });
   }
 };
 

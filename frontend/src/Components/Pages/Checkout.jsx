@@ -43,15 +43,8 @@ const Checkout = () => {
 
   const fetchAddresses = async () => {
     try {
-
-      const res = await api.get("/orders");
-
-      const userAddresses = res.data.filter(
-        (addr) => addr.user_id === user?.user_id
-      );
-
-      setAddresses(userAddresses);
-
+      const res = await api.get("/orders/myorders");
+      setAddresses(res.data || []);
     } catch (error) {
       console.error(error);
     }
