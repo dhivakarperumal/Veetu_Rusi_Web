@@ -70,16 +70,7 @@ const navItems = [
     ]
   },
 
-  {
-    path: "/chef/products",
-    label: "Products",
-    icon: Package,
-    children: [
-      { path: "/chef/products", label: "All Products", icon: List },
-      { path: "/chef/categories", label: "Categories", icon: Layers },
-      { path: "/chef/products/stock", label: "Stock Details", icon: Archive }
-    ]
-  },
+  
   { path: "/chef/reviews", label: "Reviews", icon: MessageSquare },
   { path: "/chef/earnings", label: "Wallet & Earnings", icon: Wallet },
   { path: "/", label: "Back Home", icon: Home },
