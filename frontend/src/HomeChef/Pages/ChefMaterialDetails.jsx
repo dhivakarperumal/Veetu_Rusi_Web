@@ -210,19 +210,29 @@ const ChefMaterialDetails = () => {
           </div>
 
           <div className="flex items-center gap-4 py-4 border-y border-slate-800">
-            <span className="text-4xl font-bold text-emerald-400">
-              ₹{selectedVariant?.offerPrice || selectedVariant?.salePrice || selectedVariant?.price || product.offer_price || product.price || 0}
-            </span>
-            {(selectedVariant?.mrp || product.mrp) && (
-              <span className="text-slate-500 line-through text-xl">
-                ₹{selectedVariant?.mrp || product.mrp}
-              </span>
-            )}
-            {(selectedVariant?.offerPercent || product.offer) && (
-              <span className="bg-rose-500/20 text-rose-400 text-sm font-bold px-3 py-1 rounded-lg border border-rose-500/20">
-                {Math.floor(selectedVariant?.offerPercent || product.offer)}% OFF
-              </span>
-            )}
+            {(() => {
+              const price = parseFloat(selectedVariant?.offerPrice || selectedVariant?.salePrice || selectedVariant?.price || product.offer_price || product.price || 0);
+              const mrp = parseFloat(selectedVariant?.mrp || product.mrp || 0);
+              const discount = mrp && price ? Math.round(((mrp - price) / mrp) * 100) : 0;
+              
+              return (
+                <>
+                  <span className="text-4xl font-bold text-emerald-400">
+                    ₹{Math.round(price)}
+                  </span>
+                  {mrp > price && (
+                    <span className="text-slate-500 line-through text-xl">
+                      ₹{Math.round(mrp)}
+                    </span>
+                  )}
+                  {discount > 0 && (
+                    <span className="bg-rose-500/20 text-rose-400 text-sm font-bold px-3 py-1 rounded-lg border border-rose-500/20">
+                      {discount}% OFF
+                    </span>
+                  )}
+                </>
+              );
+            })()}
           </div>
 
           {/* Color Variants */}

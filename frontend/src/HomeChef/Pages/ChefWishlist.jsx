@@ -1,128 +1,137 @@
 import React, { useContext } from "react";
-import { FiHeart, FiTrash2, FiShoppingCart } from "react-icons/fi";
+import { FiHeart, FiTrash2, FiEye } from "react-icons/fi";
 import { StoreContext } from "../../PrivateRouter/StoreContext";
 import { useNavigate } from "react-router-dom";
 
+
 export default function ChefWishlist() {
-  const { wishlist, toggleWishlist, addToCart } = useContext(StoreContext);
+  const { wishlist, toggleWishlist } = useContext(StoreContext);
   const navigate = useNavigate();
 
   return (
-    <div className="p-4 sm:p-6 text-slate-200">
-      <h1 className="text-2xl font-bold mb-6 text-white">Wishlist</h1>
-      {wishlist.length === 0 ? (
-        <div className="text-center py-20 bg-[#0f1216] border border-slate-800 rounded-2xl shadow max-w-2xl mx-auto">
-          <FiHeart className="mx-auto text-emerald-400 text-5xl mb-4" />
-          <h2 className="text-xl font-semibold text-white">Your wishlist is empty</h2>
-          <p className="text-slate-400 mt-2">Save items you like and check them out later.</p>
-          <button
-            onClick={() => navigate("/chef/material")}
-            className="mt-6 px-6 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-500 transition"
-          >
-            Explore Materials
-          </button>
-        </div>
-      ) : (
-        <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {wishlist.map((item, idx) => {
-            let image = item?.image || item?.wishlist_image || item?.product_images || item?.images || null;
-                  
-            console.log(`Wishlist item ${idx}:`, { name: item?.name, imageLength: image?.length, hasImage: !!image });
-            
-            // Parse JSON strings
-            if (typeof image === 'string') {
-              if (image.startsWith('[')) {
-                try {
-                  const parsed = JSON.parse(image);
-                  image = Array.isArray(parsed) && parsed.length > 0 ? parsed[0] : image;
-                } catch (e) {
-                  console.error('Error parsing image JSON:', e);
-                  image = null;
-                }
-              }
-            } else if (Array.isArray(image)) {
-              image = image[0] || null;
-            }
-            
-            // Validate image format
-            if (typeof image === 'string') {
-              // Check if it's a valid data URI or HTTP URL
-              if (image.startsWith('data:') && image.length > 50) {
-                // Valid base64 data URI - use as is
-              } else if (image.startsWith('http://') || image.startsWith('https://')) {
-                // Valid HTTP URL - use as is
-              } else {
-                // Invalid format
-                console.warn('Invalid image format for', item?.name, ':', image.substring(0, 50));
-                image = null;
-              }
-            } else {
-              image = null;
-            }
-            
-            // Fallback to placeholder
-            if (!image) {
-              image = `https://ui-avatars.com/api/?name=${encodeURIComponent(item?.name || 'Product')}&background=random`;
-            }
-            const price = item?.variants?.[0]?.price || item?.price;
-            const mrp = item?.variants?.[0]?.mrp || item?.mrp;
-            const discount = mrp && price ? Math.round(((mrp - price) / mrp) * 100) : 0;
-
-            return (
-              <div
-                key={item._id || item.id}
-                className="bg-[#0f1216] rounded-2xl shadow-md hover:shadow-xl transition duration-300 overflow-hidden border border-slate-800 group flex flex-col"
-              >
-                {/* Image */}
-                <div className="relative h-64 overflow-hidden bg-slate-900 border-b border-slate-800">
-                  <img
-                    src={image || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name || 'Product')}&background=random&size=400`}
-                    alt={item.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
-                    onError={(e) => {
-                      const fallback = `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name || 'Product')}&background=random&size=400`;
-                      if (e.target.src !== fallback) {
-                        e.target.src = fallback;
-                      }
-                    }}
-                  />
-                  {discount > 0 && (
-                    <span className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
-                      {discount}% OFF
-                    </span>
-                  )}
-                  <button
-                    onClick={() => toggleWishlist(item)}
-                    className="absolute top-3 right-3 bg-[#0b0d10] p-2 rounded-full shadow hover:bg-red-500 hover:text-white transition text-slate-300"
-                  >
-                    <FiTrash2 />
-                  </button>
+    <>
+      {/* Page Title */}
+     
+      <div className="  py-16">
+        {/* Wishlist Grid */}
+       
+          <div className="">
+            {wishlist.length === 0 ? (
+              <div className="flex flex-col items-center justify-center text-center py-16 bg-white rounded-2xl border border-gray-100 shadow-sm max-w-xl mx-auto">
+                <div className="w-16 h-16 flex items-center justify-center rounded-full bg-primary-light/10 mb-5">
+                  <FiHeart className="text-primary-light text-3xl" />
                 </div>
 
-                {/* Content */}
-                <div className="p-4 flex flex-col flex-1">
-                  <h3 className="font-semibold text-white line-clamp-2">{item.name}</h3>
-                  <div className="flex items-center mt-2 flex-1">
-                    <div className="flex flex-col">
-                      <span className="text-emerald-400 font-bold text-lg">₹{price}</span>
-                      {mrp && <span className="text-slate-500 line-through text-xs">₹{mrp}</span>}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => {
-                       addToCart(item);
-                       toggleWishlist(item);
-                    }}
-                    className="mt-4 w-full bg-slate-800 hover:bg-emerald-600 text-white py-2 rounded-lg transition font-medium flex items-center justify-center gap-2"
-                  >
-                    <FiShoppingCart size={16} /> Move to Cart
-                  </button>
-                </div>
+                <h2 className="text-xl font-semibold text-gray-800">
+                  Your wishlist is empty
+                </h2>
+
+                <p className="text-gray-500 mt-2 max-w-sm">
+                  Looks like you haven't added any sarees yet. Browse our
+                  collections and save your favorites.
+                </p>
+
+                <button
+                  onClick={() => navigate("/shop")}
+                  className="mt-6 px-6 py-2.5 bg-primary-dark text-white rounded-lg font-medium hover:bg-primary-light transition cursor-pointer"
+                >
+                  Explore Products
+                </button>
               </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
+            ) : (
+              <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+                {wishlist.map((item, idx) => {
+                  // Get image - check variants first, then product images
+                  let image = null;
+                  if (item?.variants?.length > 0 && item.variants[0]?.images?.length > 0) {
+                    image = item.variants[0].images[0];
+                  } else if (item?.images?.length > 0) {
+                    image = item.images[0];
+                  } else if (item?.image) {
+                    image = item.image;
+                  }
+                  
+                  // Fallback to placeholder
+                  if (!image) {
+                    image = `https://ui-avatars.com/api/?name=${encodeURIComponent(item?.name || 'Product')}&background=f3f4f6&color=64748b&size=400`;
+                  }
+
+                  const price = item?.offer_price || item?.price || 0;
+                  const mrp = item?.mrp || 0;
+                  const discount = mrp && price ? Math.round(((mrp - price) / mrp) * 100) : 0;
+
+                  return (
+                    <div
+                      key={item._id}
+                      className="bg-white rounded-2xl shadow-md hover:shadow-xl transition duration-300 overflow-hidden border border-gray-100 group"
+                    >
+                      {/* Image */}
+                      <div className="relative h-80 overflow-hidden bg-gray-100 flex items-center justify-center">
+                        <img
+                          src={image}
+                          alt={item?.name || 'Product'}
+                          className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                          onError={(e) => {
+                            const fallbackImg = `https://ui-avatars.com/api/?name=${encodeURIComponent(item?.name || 'Product')}&background=f3f4f6&color=64748b&size=400`;
+                            if (e.target.src !== fallbackImg) {
+                              e.target.src = fallbackImg;
+                            }
+                          }}
+                        />
+
+                        {/* Discount */}
+                        {discount > 0 && (
+                          <span className="absolute top-3 left-3 bg-primary text-white text-xs px-3 py-1 rounded-full">
+                            {discount}% OFF
+                          </span>
+                        )}
+
+                        {/* Remove */}
+                        <button
+                          onClick={() => toggleWishlist(item)}
+                          className="absolute top-3 right-3 bg-white p-2 rounded-full shadow hover:bg-primary-light hover:text-white transition cursor-pointer"
+                        >
+                          <FiTrash2 />
+                        </button>
+                      </div>
+
+                      {/* Content */}
+                      <div className="p-4">
+                        <h3 className="font-semibold text-gray-800 line-clamp-1">
+                          {item.name}
+                        </h3>
+
+                        {/* Price */}
+                        <div className="flex items-center mt-2">
+                          <div className="flex items-center gap-3">
+                            <span className="text-primary font-bold text-lg">
+                              ₹{price}
+                            </span>
+
+                            {mrp && (
+                              <span className="text-gray-400 line-through text-sm">
+                                ₹{mrp}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* View Product */}
+                          <button
+                            onClick={() => navigate(`/products/${item.id}`)}
+                            className="ml-auto bg-primary-dark text-white p-2 rounded-lg hover:bg-primary-light flex items-center justify-center transition cursor-pointer"
+                          >
+                            <FiEye size={18} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+      </div>
+    </>
   );
 }
