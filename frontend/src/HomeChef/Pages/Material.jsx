@@ -19,13 +19,13 @@ const SORT_OPTIONS = [
 const Materials = () => {
     const { addToCart, toggleWishlist, wishlist, productsCache, setProductsCache, lastFetchTime, setLastFetchTime } = useContext(StoreContext);
     const { user } = useContext(AuthContext);
-    const [products, setProducts] = useState(Array.isArray(productsCache) ? productsCache : []);
-    const [loading, setLoading] = useState(!productsCache || productsCache.length === 0);
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedAge, setSelectedAge] = useState("All");
     const [selectedCategory, setSelectedCategory] = useState("All");
     const [sortBy, setSortBy] = useState("newest");
-    const [categories, setCategories] = useState(["All", ...new Set((Array.isArray(productsCache) ? productsCache : []).map(p => p.category).filter(Boolean))]);
+    const [categories, setCategories] = useState(["All"]);
     const [showQR, setShowQR] = useState(null);
     const [showFilters, setShowFilters] = useState(false);
 
@@ -61,9 +61,10 @@ const Materials = () => {
             homeChefIdToMatch = homeChef?.id;
         }
 
-        // Use cache if fresh (5 min)
+        // Use shared cache only for non-chef material pages, otherwise fetch fresh user-specific data.
         const isCacheValid = lastFetchTime && Date.now() - lastFetchTime < 5 * 60 * 1000;
-        if (isCacheValid && productsCache?.length > 0) {
+        const isChefRole = role === 'chef' || role === 'homechef';
+        if (!isChefRole && isCacheValid && productsCache?.length > 0) {
             let myProducts = productsCache;
             if (userToMatch) {
                 myProducts = myProducts.filter((product) => product.created_by === userToMatch);
@@ -72,6 +73,7 @@ const Materials = () => {
                 myProducts = myProducts.filter((product) => !product.home_chef_id || product.home_chef_id == homeChefIdToMatch);
             }
             setProducts(myProducts);
+            setCategories(["All", ...new Set(myProducts.map(p => p.category).filter(Boolean))]);
             setLoading(false);
             return;
         }
