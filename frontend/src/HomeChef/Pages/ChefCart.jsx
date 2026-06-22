@@ -15,7 +15,7 @@ export default function ChefCart() {
       if (Array.isArray(parsed) && parsed.length > 0) {
         cleanUrl = parsed[0];
       }
-    } catch(e) {}
+    } catch (e) { }
     if (cleanUrl.startsWith('http') || cleanUrl.startsWith('data:')) return cleanUrl;
     const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
     const cleanPath = cleanUrl.replace(/\\/g, '/');
@@ -48,14 +48,38 @@ export default function ChefCart() {
             </div>
           ) : (
             cart.map((item, index) => {
-              const image = resolveImageUrl(item.image);
+              let image = null;
+
+              if (item?.variants?.length > 0 && item.variants[0]?.images?.length > 0) {
+                image = item.variants[0].images[0];
+              } else if (item?.images?.length > 0) {
+                image = item.images[0];
+              } else if (item?.image) {
+                image = item.image;
+              }
+
+              image = resolveImageUrl(image);
               const price = item.price;
               const mrp = item.mrp;
               return (
                 <div key={index} className="bg-[#0f1216] border border-slate-800 rounded-2xl shadow-md p-5 flex flex-col sm:flex-row gap-6 items-center">
                   {/* IMAGE */}
                   <div className="w-24 h-32 sm:w-32 sm:h-40 shrink-0 rounded-lg overflow-hidden bg-slate-900 border border-slate-800">
-                    <img src={image} alt={item.name} className="w-full h-full object-cover" />
+                    <img
+                      src={
+                        image ||
+                        `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                          item.name || "Product"
+                        )}&background=f3f4f6&color=64748b&size=400`
+                      }
+                      alt={item.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                          item.name || "Product"
+                        )}&background=f3f4f6&color=64748b&size=400`;
+                      }}
+                    />
                   </div>
 
                   {/* DETAILS */}
