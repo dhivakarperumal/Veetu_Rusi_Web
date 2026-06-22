@@ -19,6 +19,8 @@ const MaterialCheckout = () => {
 
   const [addresses, setAddresses] = useState([]);
   const [selectedAddress, setSelectedAddress] = useState(null);
+  const [searchAddress, setSearchAddress] = useState("");
+  const [locationLoading, setLocationLoading] = useState(false);
 
   const resolveImageUrl = (url) => {
     if (!url || typeof url !== 'string') return null;
@@ -92,6 +94,70 @@ const MaterialCheckout = () => {
       zip_code: address.zip_code
     });
   };
+
+  const getCurrentLocation = async () => {
+    setLocationLoading(true);
+    try {
+      if (!navigator.geolocation) {
+        throw new Error("Geolocation is not supported by your browser");
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          try {
+            // Use OpenStreetMap's Nominatim for reverse geocoding (free service)
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+            );
+            const data = await response.json();
+
+            const addressComponents = {
+              street_address: data.address?.road || data.address?.street || "",
+              city: data.address?.city || data.address?.town || "",
+              district: data.address?.county || data.address?.district || "",
+              state: data.address?.state || "",
+              country: data.address?.country || "India",
+              zip_code: data.address?.postcode || ""
+            };
+
+            setForm((prev) => ({
+              ...prev,
+              ...addressComponents
+            }));
+            setSelectedAddress(null);
+            toast.success("Location detected successfully!");
+          } catch (error) {
+            console.error("Reverse geocoding error:", error);
+            toast.error("Could not fetch address details");
+          }
+          setLocationLoading(false);
+        },
+        (error) => {
+          console.error("Geolocation error:", error);
+          let errorMsg = "Could not access your location";
+          if (error.code === error.PERMISSION_DENIED) {
+            errorMsg = "Location permission denied. Please enable it in settings.";
+          } else if (error.code === error.POSITION_UNAVAILABLE) {
+            errorMsg = "Location information is unavailable.";
+          } else if (error.code === error.TIMEOUT) {
+            errorMsg = "Location request timed out.";
+          }
+          toast.error(errorMsg);
+          setLocationLoading(false);
+        }
+      );
+    } catch (error) {
+      toast.error(error.message || "Location access failed");
+      setLocationLoading(false);
+    }
+  };
+
+  const filteredAddresses = addresses.filter((addr) =>
+    `${addr.customer_name} ${addr.street_address} ${addr.city} ${addr.state}`
+      .toLowerCase()
+      .includes(searchAddress.toLowerCase())
+  );
 
   const indianStates = [
     "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal", "Delhi"
@@ -231,28 +297,52 @@ const MaterialCheckout = () => {
           {/* SAVED ADDRESSES */}
           {addresses.length > 0 && (
             <div className="bg-[#0f1216] border border-slate-800 p-6 rounded-2xl shadow-md">
-              <h2 className="text-lg font-semibold mb-4 text-white">Select Saved Address</h2>
-              <div className="space-y-4">
-                {addresses.map((addr) => (
-                  <div
-                    key={addr.id}
-                    onClick={() => selectAddress(addr)}
-                    className={`border p-4 rounded-xl cursor-pointer transition ${
-                      selectedAddress === addr.id
-                        ? "border-emerald-500 bg-emerald-500/10"
-                        : "border-slate-800 hover:border-slate-600"
-                    }`}
-                  >
-                    <p className="text-sm leading-6 text-slate-300">
-                      <strong className="text-white">{addr.customer_name}</strong> <br />
-                      {addr.street_address} <br />
-                      {addr.city}, {addr.district} <br />
-                      {addr.state} - {addr.zip_code} <br />
-                      {addr.country} <br />
-                      Phone: {addr.customer_phone}
-                    </p>
-                  </div>
-                ))}
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-white">Select Saved Address</h2>
+                <button
+                  onClick={getCurrentLocation}
+                  disabled={locationLoading}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 text-white rounded-lg font-medium transition active:scale-95 text-sm"
+                >
+                  {locationLoading ? "Getting Location..." : "📍 Use Current"}
+                </button>
+              </div>
+
+              {/* Search Input */}
+              <input
+                type="text"
+                placeholder="Search addresses..."
+                value={searchAddress}
+                onChange={(e) => setSearchAddress(e.target.value)}
+                className="w-full mb-4 bg-[#0b0d10] border border-slate-700 text-white p-3 rounded-xl focus:outline-none focus:border-emerald-500 text-sm"
+              />
+
+              {/* Addresses List */}
+              <div className="space-y-4 max-h-96 overflow-y-auto">
+                {filteredAddresses.length > 0 ? (
+                  filteredAddresses.map((addr) => (
+                    <div
+                      key={addr.id}
+                      onClick={() => selectAddress(addr)}
+                      className={`border p-4 rounded-xl cursor-pointer transition ${
+                        selectedAddress === addr.id
+                          ? "border-emerald-500 bg-emerald-500/10"
+                          : "border-slate-800 hover:border-slate-600 hover:bg-slate-900/30"
+                      }`}
+                    >
+                      <p className="text-sm leading-6 text-slate-300">
+                        <strong className="text-white">{addr.customer_name}</strong> <br />
+                        {addr.street_address} <br />
+                        {addr.city}, {addr.district} <br />
+                        {addr.state} - {addr.zip_code} <br />
+                        {addr.country} <br />
+                        <span className="text-emerald-400">Phone: {addr.customer_phone}</span>
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-center text-slate-500 py-4">No addresses match your search</p>
+                )}
               </div>
             </div>
           )}
@@ -347,8 +437,8 @@ const MaterialCheckout = () => {
         <div className="bg-[#0f1216] border border-slate-800 p-6 rounded-2xl shadow-md h-fit sticky top-24">
           <h2 className="text-lg font-semibold mb-6 text-white">Order Summary</h2>
           <div className="bg-[#0f1216] border border-slate-800 p-6 rounded-2xl shadow-md">
-            <h2 className="text-lg font-semibold mb-4 text-white">Your Items</h2>
-            <div className="space-y-4">
+           
+            <div className="space-y-4 pb-4">
               {checkoutItems.map((item, idx) => (
                 <div key={idx} className="flex items-center gap-4 border-b border-slate-800 pb-3">
                   <img
