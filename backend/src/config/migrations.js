@@ -237,13 +237,14 @@ const createDealersTable = async () => {
             const dropColumns = [
                 'chef_id', 'chef_user_id', 'chef_name', 'chef_phone', 'chef_email',
                 'created_by_user_id', 'created_by_email', 'created_by_name', 'created_by_phone',
-                'franchise_name', 'franchise_email', 'franchise_phone', 'franchise_id'
+                'franchise_user_id', 'franchise_name', 'franchise_email', 'franchise_phone', 'franchise_id'
             ];
             for (const col of dropColumns) {
                 try { await pool.execute(`ALTER TABLE franchise_products DROP COLUMN ${col}`); } catch {}
             }
-            // Drop the old chef_id index if it exists
+            // Drop old indexes if they exist
             try { await pool.execute('ALTER TABLE franchise_products DROP INDEX idx_chef_id'); } catch {}
+            try { await pool.execute('ALTER TABLE franchise_products DROP INDEX idx_franchise_user_id'); } catch {}
             console.log('✓ Franchise products table created or already exists');
         } catch (error) {
             console.error('✗ Error creating franchise_products table:', error.message);
