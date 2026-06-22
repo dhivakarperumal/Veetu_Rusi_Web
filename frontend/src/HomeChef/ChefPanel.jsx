@@ -147,7 +147,6 @@ const AdminLayout = () => {
 
     return (
         <div className="admin-root homechef-root flex min-h-screen bg-[#0b0d10] text-slate-200 font-sans">
-            <Toaster position="top-right" />
 
             {/* Sidebar */}
             <ChefSidebar
