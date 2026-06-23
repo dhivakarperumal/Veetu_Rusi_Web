@@ -76,9 +76,18 @@ export default function Orders() {
       const orderRes = await api.get(`/orders/${order.id}`);
       setSelectedOrder(orderRes.data);
 
-      // fetch address using order_id
-      const addressRes = await api.get(`/addresses/${order.id}`);
-      setAddress(addressRes.data);
+      // set address using order data as it already contains the address details
+      setAddress({
+        customer_name: orderRes.data.customer_name,
+        street_address: orderRes.data.street_address,
+        city: orderRes.data.city,
+        district: orderRes.data.district,
+        state: orderRes.data.state,
+        zip_code: orderRes.data.zip_code,
+        country: orderRes.data.country,
+        customer_phone: orderRes.data.customer_phone,
+        customer_email: orderRes.data.customer_email
+      });
 
       setShowPopup(true);
     } catch (error) {

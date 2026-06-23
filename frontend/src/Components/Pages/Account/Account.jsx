@@ -22,7 +22,8 @@ export default function Account() {
 
   const menuItems = [
     { key: "personal", label: "Personal Info", icon: <FiUser size={18} /> },
-    { key: "orders",   label: "My Orders",     icon: <FiPackage size={18} /> },
+    // { key: "orders",   label: "Product Orders", icon: <FiPackage size={18} /> },
+    { key: "food_orders", label: "My Orders", icon: <FiPackage size={18} /> },
     { key: "address",  label: "Manage Address", icon: <FiMapPin size={18} /> },
     { key: "password", label: "Set Password",  icon: <FiLock size={18} /> },
   ];
@@ -64,7 +65,13 @@ export default function Account() {
                   {menuItems.map((item) => (
                     <button
                       key={item.key}
-                      onClick={() => setActiveTab(item.key)}
+                      onClick={() => {
+                        if (item.key === "food_orders") {
+                          navigate("/food-orders");
+                        } else {
+                          setActiveTab(item.key);
+                        }
+                      }}
                       className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl font-medium transition-all cursor-pointer text-sm
                         ${activeTab === item.key
                           ? "bg-primary text-white shadow-md shadow-green-200"
