@@ -296,7 +296,7 @@ const HomeChefCategories = () => {
                 </div>
 
                 <div className="px-2 pb-2">
-                   <h4 className="text-lg font-black text-slate-950 mb-2 truncate">{cat.c_name}</h4>
+                   <h4 className="text-lg font-black text-white mb-2 truncate">{cat.c_name}</h4>
                    <p className="text-[11px] text-slate-800 font-bold line-clamp-2 leading-relaxed h-8 mb-4">
                       {cat.discripti}
                    </p>
