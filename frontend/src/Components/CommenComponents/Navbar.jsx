@@ -27,6 +27,7 @@ const Navbar = () => {
   const [homeChef, setHomeChef] = useState(null);
   const [groupedCategories, setGroupedCategories] = useState({});
   const [activeMainCategory, setActiveMainCategory] = useState(null);
+  const hoverTimeout = useRef(null);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -190,12 +191,14 @@ const Navbar = () => {
                 className="relative"
                 ref={categoryRef}
                 onMouseEnter={() => {
+                  clearTimeout(hoverTimeout.current);
                   setCategoryMenu(true);
-                  setPagesMenu(false);
                 }}
                 onMouseLeave={() => {
-                  setCategoryMenu(false);
-                  setActiveMainCategory(null);
+                  hoverTimeout.current = setTimeout(() => {
+                    setCategoryMenu(false);
+                    setActiveMainCategory(null);
+                  }, 300);
                 }}
               >
                 <button
