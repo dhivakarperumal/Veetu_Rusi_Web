@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../../api';
 import { toast } from 'react-hot-toast';
@@ -109,6 +110,14 @@ const FoodProducts = () => {
     setApprovalModalItem(null);
     setApprovalChecklist({ taste: false, quality: false, packaging: false });
   };
+
+  // Prevent background scrolling when modal is open
+  useEffect(() => {
+    if (!approvalModalItem) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [approvalModalItem]);
 
   const handleChecklistChange = (key) => {
     setApprovalChecklist((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -400,7 +409,7 @@ const FoodProducts = () => {
         </div>
       )}
 
-      {approvalModalItem && (
+      {approvalModalItem && typeof document !== 'undefined' ? createPortal(
         <div className="fixed inset-0 z-[9999] flex min-h-screen items-center justify-center overflow-y-auto p-4 bg-slate-950/80 backdrop-blur-xl">
           <div className="w-full max-w-xl rounded-[2rem] border border-white/10 bg-[#0d1118] shadow-2xl p-6 sm:p-8">
             <div className="flex items-start justify-between gap-4">
@@ -458,8 +467,9 @@ const FoodProducts = () => {
               </div>
             </div>
           </div>
-        </div>
-      )}
+        </div>,
+        document.body
+      ) : null}
     </div>
   );
 };
