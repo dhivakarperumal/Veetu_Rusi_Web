@@ -145,7 +145,7 @@ exports.profile = async (req, res) => {
       user: users[0],
     };
 
-    if (role === 'chef') {
+    if (role === 'chef' || role === 'homechef') {
       const userId = users[0].user_id;
       const [rows] = await pool.execute('SELECT * FROM home_chefs WHERE user_id = ? OR email = ? LIMIT 1', [userId, email || '']);
       if (rows.length > 0) {

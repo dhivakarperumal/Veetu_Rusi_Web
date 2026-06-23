@@ -89,6 +89,8 @@ const ChefFoodAdd = () => {
             String(cat.created_by_user_id) === String(adminUserId) ||
             String(cat.franchise_user_id) === String(adminUserId)
           );
+        } else {
+          filtered = [];
         }
 
         setCategories(filtered);
