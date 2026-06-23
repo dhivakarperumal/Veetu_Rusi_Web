@@ -36,20 +36,6 @@ const HomeChefCategories = () => {
   const [subcatInput, setSubcatInput] = useState("");
   const itemsPerPage = 8;
 
-  const generateCategoryId = (existingCategories) => {
-    if (!existingCategories || existingCategories.length === 0) return "HC_CAT001";
-    
-    const ids = existingCategories
-      .map((cat) => {
-        if (!cat.CatId) return 0;
-        const match = cat.CatId.match(/\d+/);
-        return match ? parseInt(match[0]) : 0;
-      })
-      .filter((id) => !isNaN(id));
-    
-    const maxId = ids.length > 0 ? Math.max(...ids) : 0;
-    return `HC_CAT${String(maxId + 1).padStart(3, "0")}`;
-  };
 
   const safeParse = (data) => {
     if (!data) return [];
@@ -162,8 +148,7 @@ const HomeChefCategories = () => {
   };
 
   const openAddModal = () => {
-    const nextId = generateCategoryId(categories);
-    setCategory({ CatId: nextId, c_name: "", discripti: "", image: [], subcategory: [], category_type: "Food" });
+    setCategory({ CatId: "", c_name: "", discripti: "", image: [], subcategory: [], category_type: "Food" });
     setPreviewImgs([]);
     setSubcatInput("");
     setEditId(null);

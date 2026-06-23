@@ -67,11 +67,31 @@ const ChefFoodAdd = () => {
 
     const loadCategories = async () => {
       try {
-        const params = {};
-        if (profile?.user_id || profile?.id) params.chef_user_id = profile.user_id || profile.id;
-        const res = await api.get("/home-chef-categories", { params });
+        // Get the admin's user_id who created this chef (homeChef.created_by)
+        let adminUserId = null;
+        try {
+          const profileRes = await api.get('/auth/profile');
+          const homeChef = profileRes.data?.homeChef || null;
+          adminUserId = homeChef?.created_by || homeChef?.franchise_user_id || homeChef?.created_by_user_id || null;
+        } catch {
+          // fallback
+        }
+
+        const res = await api.get("/home-chef-categories");
         const allCategories = Array.isArray(res.data) ? res.data : [];
-        setCategories(allCategories.filter(cat => cat.category_type?.toLowerCase() === 'food'));
+
+        let filtered = allCategories.filter(cat => cat.category_type?.toLowerCase() === 'food');
+
+        // Only show categories created by the admin who manages this chef
+        if (adminUserId) {
+          filtered = filtered.filter(cat =>
+            String(cat.created_by) === String(adminUserId) ||
+            String(cat.created_by_user_id) === String(adminUserId) ||
+            String(cat.franchise_user_id) === String(adminUserId)
+          );
+        }
+
+        setCategories(filtered);
       } catch {
         console.error("Failed to load categories");
       }

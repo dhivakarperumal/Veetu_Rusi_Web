@@ -12,10 +12,20 @@ exports.getAll = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const { CatId, c_name, discripti, image, subcategory, category_type, created_by: body_created_by, updated_by: body_updated_by } = req.body;
+    const { c_name, discripti, image, subcategory, category_type, created_by: body_created_by, updated_by: body_updated_by } = req.body;
     const created_by = body_created_by || (req.user ? req.user.id : null);
     const updated_by = body_updated_by || created_by;
-    
+
+    // Auto-generate CatId from global max to avoid cross-admin collisions
+    const [rows] = await pool.execute("SELECT CatId FROM home_chef_categorys");
+    const maxNum = rows.reduce((max, row) => {
+      if (!row.CatId) return max;
+      const match = row.CatId.match(/\d+/);
+      const num = match ? parseInt(match[0]) : 0;
+      return num > max ? num : max;
+    }, 0);
+    const CatId = `HC_CAT${String(maxNum + 1).padStart(3, '0')}`;
+
     // Convert subcategory array to JSON string
     const subcategoryStr = Array.isArray(subcategory) ? JSON.stringify(subcategory) : subcategory;
     const imageStr = Array.isArray(image) ? JSON.stringify(image) : image;
@@ -26,12 +36,9 @@ exports.create = async (req, res) => {
       [CatId, c_name, discripti, imageStr, subcategoryStr, category_type || 'Food', created_by, updated_by]
     );
 
-    res.status(201).json({ message: 'Created successfully', id: result.insertId });
+    res.status(201).json({ message: 'Created successfully', id: result.insertId, CatId });
   } catch (err) {
     console.error('Error creating home_chef_category:', err);
-    if (err.code === 'ER_DUP_ENTRY') {
-      return res.status(409).json({ message: 'CatId already exists' });
-    }
     res.status(500).json({ message: 'Internal server error', error: err.message });
   }
 };

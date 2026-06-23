@@ -178,18 +178,34 @@ const AddProducts = () => {
     useEffect(() => {
         const fetchEssentialData = async () => {
             setFetching(true);
+            // Resolve admin user_id (who created this chef) to filter categories
+            let adminUserId = null;
+            try {
+                const profileRes = await api.get('/auth/profile');
+                const homeChef = profileRes.data?.homeChef || null;
+                adminUserId = homeChef?.created_by || homeChef?.franchise_user_id || homeChef?.created_by_user_id || null;
+            } catch (e) {
+                console.warn('Could not fetch chef profile for category filtering', e);
+            }
+
             if (isEdit) {
                 // Fetch categories and the product independently so one failure doesn't block the other
-                const userData = JSON.parse(localStorage.getItem("user") || "{}");
-                const chefUserId = userData.user_id || userData.id || null;
                 const [catsResult, productResult] = await Promise.allSettled([
-                    api.get("/home-chef-categories", { params: { chef_user_id: chefUserId } }),
+                    api.get("/home-chef-categories"),
                     api.get(`/products/${id}`)
                 ]);
 
                 if (catsResult.status === 'fulfilled') {
-                    const allCats = Array.isArray(catsResult.value.data) ? catsResult.value.data : [];
-                    setCategories(allCats.filter(cat => cat.category_type?.toLowerCase().includes('product') || cat.category_type === 'Product_food'));
+                    let allCats = Array.isArray(catsResult.value.data) ? catsResult.value.data : [];
+                    allCats = allCats.filter(cat => cat.category_type?.toLowerCase().includes('product') || cat.category_type === 'Product_food');
+                    if (adminUserId) {
+                        allCats = allCats.filter(cat =>
+                            String(cat.created_by) === String(adminUserId) ||
+                            String(cat.created_by_user_id) === String(adminUserId) ||
+                            String(cat.franchise_user_id) === String(adminUserId)
+                        );
+                    }
+                    setCategories(allCats);
                 } else {
                     console.warn('Failed to load categories', catsResult.reason);
                 }
@@ -243,12 +259,17 @@ const AddProducts = () => {
 
             // Not editing: load chef categories only
             try {
-                const userData = JSON.parse(localStorage.getItem("user") || "{}");
-                const chefUserId = userData.user_id || userData.id || null;
-                const catsResult = await api.get("/home-chef-categories", { params: { chef_user_id: chefUserId } });
+                const catsResult = await api.get("/home-chef-categories");
 
                 if (Array.isArray(catsResult.data)) {
-                    const filteredCats = catsResult.data.filter(cat => cat.category_type?.toLowerCase().includes('product') || cat.category_type === 'Product_food');
+                    let filteredCats = catsResult.data.filter(cat => cat.category_type?.toLowerCase().includes('product') || cat.category_type === 'Product_food');
+                    if (adminUserId) {
+                        filteredCats = filteredCats.filter(cat =>
+                            String(cat.created_by) === String(adminUserId) ||
+                            String(cat.created_by_user_id) === String(adminUserId) ||
+                            String(cat.franchise_user_id) === String(adminUserId)
+                        );
+                    }
                     setCategories(filteredCats);
                     setFormData(prev => ({
                         ...prev,
