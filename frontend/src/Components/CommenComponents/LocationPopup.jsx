@@ -5,18 +5,15 @@ import { toast } from "react-toastify";
 import api from "../../api";
 
 const LocationPopup = () => {
-  const { user, login } = useContext(AuthContext);
-  const [isOpen, setIsOpen] = useState(false);
+  const { user, login, locationPopupOpen, setLocationPopupOpen } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     // Only show if user is logged in, has role 'user', and doesn't have a pincode
     if (user && user.role === "user" && (!user.pincode || !user.latitude)) {
-      setIsOpen(true);
-    } else {
-      setIsOpen(false);
+      setLocationPopupOpen(true);
     }
-  }, [user]);
+  }, [user, setLocationPopupOpen]);
 
   const getLocation = () => {
     if (!navigator.geolocation) {
@@ -56,7 +53,7 @@ const LocationPopup = () => {
             }
 
             toast.success(`Location set to ${pincode || "your current area"}`);
-            setIsOpen(false);
+            setLocationPopupOpen(false);
           } else {
             toast.error("Could not determine your address details.");
           }
@@ -78,14 +75,14 @@ const LocationPopup = () => {
     );
   };
 
-  if (!isOpen) return null;
+  if (!locationPopupOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden relative animate-fade-in-up">
         {/* Semi-mandatory close button */}
         <button
-          onClick={() => setIsOpen(false)}
+          onClick={() => setLocationPopupOpen(false)}
           className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition"
         >
           <FiX size={20} />
