@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { createPortal } from "react-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import api from "../../api";
@@ -64,7 +65,22 @@ const Profile = () => {
     loadOrders();
   }, [user]);
 
-  const [activeTab, setActiveTab] = useState("details");
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState(() => {
+    if (location.state?.activeTab) return location.state.activeTab;
+    if (location.hash === '#orders') return 'orders';
+    if (typeof document !== 'undefined' && document.referrer.includes('/chef/orders')) return 'orders';
+    return 'details';
+  });
+  
+  useEffect(() => {
+    if (location.state?.activeTab) {
+      setActiveTab(location.state.activeTab);
+    } else if (location.hash === '#orders') {
+      setActiveTab('orders');
+    }
+  }, [location.state?.activeTab, location.hash]);
+
   const [selectedOrder, setSelectedOrder] = useState(null);
 
   if (!user && !loading) {
