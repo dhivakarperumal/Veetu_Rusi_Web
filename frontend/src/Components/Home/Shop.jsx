@@ -102,11 +102,16 @@ const Shop = ({ defaultCategory = "" }) => {
     }
 
     if (selectedCategory) {
-      updated = updated.filter(
-        (p) =>
-          p.category?.trim().toLowerCase() ===
-          decodeURIComponent(selectedCategory).trim().toLowerCase()
-      );
+      const normalizedSelectedCategory = decodeURIComponent(selectedCategory)
+        .trim()
+        .toLowerCase();
+      
+      updated = updated.filter((p) => {
+        const productCategory = p.category
+          ? p.category.trim().toLowerCase()
+          : "";
+        return productCategory === normalizedSelectedCategory;
+      });
     }
 
     if (selectedSubCategory) {
@@ -150,7 +155,10 @@ const Shop = ({ defaultCategory = "" }) => {
   ]);
 
   useEffect(() => {
-    if (defaultCategory) setSelectedCategory(defaultCategory);
+    if (defaultCategory) {
+      setSelectedCategory(defaultCategory);
+      setSelectedSubCategory(""); // Reset subcategory when category changes
+    }
   }, [defaultCategory]);
 
   useEffect(() => {
@@ -162,29 +170,51 @@ const Shop = ({ defaultCategory = "" }) => {
   }, []);
 
   /* ─── Derived Filter Data ────────────────────────────────────── */
-  const categories = [...new Set(products.map((p) => p.category).filter(Boolean))];
+  const categories = [...new Set(products.map((p) => p.category).filter(Boolean).map(cat => cat.trim()))];
+  
   const subCategories = [
     ...new Set(
       products
-        .filter((p) => p.category === selectedCategory)
+        .filter((p) => {
+          if (!selectedCategory) return false;
+          const productCategory = p.category ? p.category.trim().toLowerCase() : "";
+          const normalizedSelectedCategory = decodeURIComponent(selectedCategory)
+            .trim()
+            .toLowerCase();
+          return productCategory === normalizedSelectedCategory;
+        })
         .map((p) => p.subcategory)
         .filter(Boolean),
     ),
   ];
+  
   const colors = selectedCategory
     ? [
       ...new Set(
         products
-          .filter((p) => p.category === selectedCategory)
+          .filter((p) => {
+            const productCategory = p.category ? p.category.trim().toLowerCase() : "";
+            const normalizedSelectedCategory = decodeURIComponent(selectedCategory)
+              .trim()
+              .toLowerCase();
+            return productCategory === normalizedSelectedCategory;
+          })
           .flatMap((p) => p.variants?.map((v) => v.colorName)),
       ),
     ]
     : [];
+  
   const sizes = selectedCategory
     ? [
       ...new Set(
         products
-          .filter((p) => p.category === selectedCategory)
+          .filter((p) => {
+            const productCategory = p.category ? p.category.trim().toLowerCase() : "";
+            const normalizedSelectedCategory = decodeURIComponent(selectedCategory)
+              .trim()
+              .toLowerCase();
+            return productCategory === normalizedSelectedCategory;
+          })
           .flatMap((p) => p.variants?.flatMap((v) => v.selectedSizes || [])),
       ),
     ]
