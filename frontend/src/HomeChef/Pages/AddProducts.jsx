@@ -657,20 +657,6 @@ const AddProducts = () => {
                                         <input type="number" name="mrp" value={formData.mrp} onChange={handleFormChange} className="w-full pl-10 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-[1.2rem] outline-none focus:bg-white focus:border-blue-500/20 transition-all text-xl font-black text-slate-900" required />
                                     </div>
                                 </div>
-                                <div className="space-y-3">
-                                    <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Offer (%)</label>
-                                    <div className="relative">
-                                        <FiPercent className="absolute left-5 top-1/2 -translate-y-1/2 text-amber-500 font-black" />
-                                        <input type="number" name="offer" value={formData.offer} onChange={handleFormChange} className="w-full pl-10 pr-4 py-4 bg-amber-50/50 border border-amber-100 rounded-[1.2rem] outline-none focus:bg-white focus:border-amber-500/20 transition-all text-xl font-black text-amber-600" />
-                                    </div>
-                                </div>
-                                <div className="space-y-3">
-                                    <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Final Price</label>
-                                    <div className="relative">
-                                        <span className="absolute left-5 top-1/2 -translate-y-1/2 text-emerald-500 font-black text-lg">₹</span>
-                                        <input type="number" value={formData.offer_price} readOnly className="w-full pl-10 pr-4 py-4 bg-emerald-50/50 border border-emerald-100 rounded-[1.2rem] text-xl font-black text-emerald-600 cursor-not-allowed" />
-                                    </div>
-                                </div>
                                 <div className="space-y-3 relative group">
                                     <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1 flex items-center justify-between">
                                         Available Stock
