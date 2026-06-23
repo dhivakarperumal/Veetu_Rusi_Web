@@ -4,7 +4,6 @@ import { createPortal } from "react-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import api from "../../api";
 import { FiUser, FiMail, FiPhone, FiHash, FiShield, FiCalendar, FiMapPin } from "react-icons/fi";
-import { useLocation } from "react-router-dom";
 
 const formatLabel = (key) => {
   return key
@@ -66,7 +65,7 @@ const Profile = () => {
 
     loadOrders();
   }, [user]);
-
+  
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const tab = params.get("tab");
@@ -76,23 +75,13 @@ const Profile = () => {
     }
   }, [location.search]);
 
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const tab = params.get("tab");
-
-    if (tab) {
-      setActiveTab(tab);
-    }
-  }, [location.search]);
-
-  const location = useLocation();
   const [activeTab, setActiveTab] = useState(() => {
     if (location.state?.activeTab) return location.state.activeTab;
     if (location.hash === '#orders') return 'orders';
     if (typeof document !== 'undefined' && document.referrer.includes('/chef/orders')) return 'orders';
     return 'details';
   });
-  
+
   useEffect(() => {
     if (location.state?.activeTab) {
       setActiveTab(location.state.activeTab);
@@ -170,8 +159,8 @@ const Profile = () => {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 ${isActive
-                    ? "bg-[#1B4D22] text-white shadow-lg shadow-emerald-900/20 scale-[1.02]"
-                    : "text-white/60 hover:bg-white/5 hover:text-white"
+                  ? "bg-[#1B4D22] text-white shadow-lg shadow-emerald-900/20 scale-[1.02]"
+                  : "text-white/60 hover:bg-white/5 hover:text-white"
                   }`}
               >
                 <Icon className={`h-5 w-5 transition-opacity ${isActive ? 'opacity-100' : 'opacity-50'}`} />
@@ -290,12 +279,12 @@ const Profile = () => {
                       <p className="flex justify-between items-center">
                         <span className="text-white/40 uppercase tracking-widest">Status</span>
                         <span className={`text-[9px] font-black px-2 py-1 rounded-lg uppercase tracking-widest ${order.status === "Delivered"
-                            ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                            : order.status === "Cancelled"
-                              ? "bg-red-500/10 text-red-400 border border-red-500/20"
-                              : order.status === "Pending" || order.status === "New Order"
-                                ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
-                                : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                          : order.status === "Cancelled"
+                            ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                            : order.status === "Pending" || order.status === "New Order"
+                              ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                              : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
                           }`}>
                           {order.status === "Pending" ? "New Order" : order.status || "Unknown"}
                         </span>
@@ -327,12 +316,12 @@ const Profile = () => {
                     </p>
                     <span
                       className={`text-[10px] font-black px-3 py-1.5 rounded-xl uppercase tracking-widest ${selectedOrder.status === "Delivered"
-                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                          : selectedOrder.status === "Cancelled"
-                            ? "bg-red-500/10 text-red-400 border border-red-500/20"
-                            : selectedOrder.status === "Pending" || selectedOrder.status === "New Order"
-                              ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
-                              : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                        ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                        : selectedOrder.status === "Cancelled"
+                          ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                          : selectedOrder.status === "Pending" || selectedOrder.status === "New Order"
+                            ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                            : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
                         }`}
                     >
                       {selectedOrder.status === "Pending" ? "New Order" : selectedOrder.status || "Unknown"}
