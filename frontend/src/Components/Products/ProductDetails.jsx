@@ -401,6 +401,12 @@ const ProductDetails = () => {
             {product.name}
           </h1>
 
+          {product.chef_name && (
+            <p className="text-gray-500 mt-2 text-lg">
+              By <span className="font-semibold text-gray-800">{product.chef_name}</span>
+            </p>
+          )}
+
           {reviewStats.total_reviews > 0 && (
             <div className="flex items-center gap-2 mt-2">
               <div className="flex text-yellow-400">

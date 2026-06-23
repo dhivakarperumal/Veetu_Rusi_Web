@@ -422,10 +422,19 @@ export default function MyFoodOrders({ isEmbedded = false }) {
                             <p className="text-xs uppercase tracking-[0.24em] text-slate-500 mt-2">Chef share</p>
                           </div>
                         </div>
-                        <div className="mt-3 grid gap-2 sm:grid-cols-3 text-sm">
-                          <p><span className="font-semibold text-slate-900">Qty:</span> {chef.total_quantity}</p>
-                          <p><span className="font-semibold text-slate-900">Phone:</span> {chef.phone}</p>
-                          <p><span className="font-semibold text-slate-900">Email:</span> {chef.email}</p>
+                        <div className="mt-4 grid gap-4 sm:grid-cols-3 text-sm border-t border-slate-100 pt-4">
+                          <div>
+                            <p className="font-semibold text-slate-900">{chef.total_quantity}</p>
+                            <p className="text-xs uppercase tracking-[0.24em] text-slate-500 mt-1.5">Qty</p>
+                          </div>
+                          <div>
+                            <p className="font-semibold text-slate-900">{chef.phone}</p>
+                            <p className="text-xs uppercase tracking-[0.24em] text-slate-500 mt-1.5">Phone</p>
+                          </div>
+                          <div>
+                            <p className="font-semibold text-slate-900 truncate" title={chef.email}>{chef.email}</p>
+                            <p className="text-xs uppercase tracking-[0.24em] text-slate-500 mt-1.5">Email</p>
+                          </div>
                         </div>
                       </div>
                     ))}
