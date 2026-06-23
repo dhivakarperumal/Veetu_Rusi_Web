@@ -39,7 +39,16 @@ const navItems = [
     ],
   },
   { path: "/admin/delivery-partners", label: "Delivery Partners", icon: Bike },
-  { path: "/admin/food-orders", label: "Food Orders", icon: ShoppingCart },
+  {
+    label: "Food Orders",
+    icon: ShoppingCart,
+    children: [
+      { path: "/admin/food-orders/new", label: "New Orders", icon: List },
+      { path: "/admin/food-orders/all", label: "All Orders", icon: Archive },
+      { path: "/admin/food-orders/delivery", label: "Delivered Orders", icon: Truck },
+      { path: "/admin/food-orders/cancelled", label: "Cancelled Orders", icon: XCircle },
+    ],
+  },
   { path: "/admin/food-products", label: "Food Products", icon: ShoppingBag },
   { path: "/admin/users", label: "User Management", icon: Users },
   { path: "/admin/earnings", label: "Wallet & Earnings", icon: CreditCard },

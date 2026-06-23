@@ -301,6 +301,10 @@ const router = createBrowserRouter([
       { path: "products/stock/add", element: <AddStock /> },
       { path: "products/:id", element: <ProductDetail /> },
       // Food-specific
+      { path: "food-orders/new", element: <FoodOrders /> },
+      { path: "food-orders/all", element: <FoodOrders /> },
+      { path: "food-orders/delivery", element: <FoodOrders /> },
+      { path: "food-orders/cancelled", element: <FoodOrders /> },
       { path: "food-orders", element: <FoodOrders /> },
       { path: "food-orders/:id", element: <FoodOrderDetails /> },
       { path: "food-products", element: <FoodProducts /> },
