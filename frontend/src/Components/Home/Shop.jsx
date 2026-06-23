@@ -150,7 +150,10 @@ const Shop = ({ defaultCategory = "" }) => {
   ]);
 
   useEffect(() => {
-    if (defaultCategory) setSelectedCategory(defaultCategory);
+    if (defaultCategory) {
+      setSelectedCategory(defaultCategory);
+      setShowFilters(true);
+    }
   }, [defaultCategory]);
 
   useEffect(() => {
@@ -166,7 +169,10 @@ const Shop = ({ defaultCategory = "" }) => {
   const subCategories = [
     ...new Set(
       products
-        .filter((p) => p.category === selectedCategory)
+        .filter((p) => 
+          p.category?.trim().toLowerCase() ===
+          decodeURIComponent(selectedCategory || "").trim().toLowerCase()
+        )
         .map((p) => p.subcategory)
         .filter(Boolean),
     ),
@@ -175,7 +181,10 @@ const Shop = ({ defaultCategory = "" }) => {
     ? [
       ...new Set(
         products
-          .filter((p) => p.category === selectedCategory)
+          .filter((p) => 
+            p.category?.trim().toLowerCase() ===
+            decodeURIComponent(selectedCategory || "").trim().toLowerCase()
+          )
           .flatMap((p) => p.variants?.map((v) => v.colorName)),
       ),
     ]
@@ -184,7 +193,10 @@ const Shop = ({ defaultCategory = "" }) => {
     ? [
       ...new Set(
         products
-          .filter((p) => p.category === selectedCategory)
+          .filter((p) => 
+            p.category?.trim().toLowerCase() ===
+            decodeURIComponent(selectedCategory || "").trim().toLowerCase()
+          )
           .flatMap((p) => p.variants?.flatMap((v) => v.selectedSizes || [])),
       ),
     ]
@@ -372,7 +384,10 @@ const Shop = ({ defaultCategory = "" }) => {
                   <label key={cat} className="flex items-center gap-3 mb-2 cursor-pointer">
                     <input
                       type="radio" name="category" className="accent-green-600"
-                      checked={selectedCategory === cat}
+                      checked={
+                        cat?.trim().toLowerCase() ===
+                        decodeURIComponent(selectedCategory || "").trim().toLowerCase()
+                      }
                       onChange={() => setSelectedCategory(cat)}
                     />
                     <span className="text-sm text-gray-700">{cat}</span>

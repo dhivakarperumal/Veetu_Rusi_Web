@@ -100,7 +100,7 @@ exports.login = async (req, res) => {
 
     const hashedPassword = hashPassword(password);
     const [users] = await pool.execute(
-      'SELECT id, user_id, full_name as name, email, mobile_number as phone, role, status FROM `users` WHERE (email = ? OR full_name = ?) AND password = ?',
+      'SELECT id, user_id, full_name as name, email, mobile_number as phone, role, status, latitude, longitude, location_name, pincode FROM `users` WHERE (email = ? OR full_name = ?) AND password = ?',
       [identifier, identifier, hashedPassword]
     );
 
@@ -132,7 +132,7 @@ exports.profile = async (req, res) => {
     const { id, role, email } = req.user;
 
     const [users] = await pool.execute(
-      `SELECT id, user_id, full_name AS username, full_name AS name, email, mobile_number AS phone, role, status, profile_image, created_at, updated_at
+      `SELECT id, user_id, full_name AS username, full_name AS name, email, mobile_number AS phone, role, status, profile_image, created_at, updated_at, latitude, longitude, location_name, pincode
        FROM users WHERE id = ? LIMIT 1`,
       [id]
     );
@@ -211,6 +211,32 @@ exports.updateProfile = async (req, res) => {
   } catch (error) {
     console.error('Update profile error:', error);
     return res.status(500).json({ message: 'Server error while updating profile.' });
+  }
+};
+
+exports.updateLocation = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { latitude, longitude, location_name, pincode } = req.body;
+
+    if (!latitude || !longitude || !pincode) {
+      return res.status(400).json({ message: 'Latitude, longitude, and pincode are required.' });
+    }
+
+    await pool.execute(
+      'UPDATE users SET latitude = ?, longitude = ?, location_name = ?, pincode = ? WHERE id = ?',
+      [latitude, longitude, location_name || null, pincode, userId]
+    );
+
+    const [updatedRows] = await pool.execute(
+      'SELECT id, user_id, full_name AS username, full_name AS name, email, mobile_number AS phone, role, status, profile_image, created_at, updated_at, latitude, longitude, location_name, pincode FROM users WHERE id = ? LIMIT 1',
+      [userId]
+    );
+
+    return res.status(200).json({ message: 'Location updated successfully', user: updatedRows[0] });
+  } catch (error) {
+    console.error('Update location error:', error);
+    return res.status(500).json({ message: 'Server error while updating location.' });
   }
 };
 
