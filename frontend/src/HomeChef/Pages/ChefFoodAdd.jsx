@@ -69,8 +69,9 @@ const ChefFoodAdd = () => {
       try {
         const params = {};
         if (profile?.user_id || profile?.id) params.chef_user_id = profile.user_id || profile.id;
-        const res = await api.get("/chef-food-categories", { params });
-        setCategories(Array.isArray(res.data) ? res.data : []);
+        const res = await api.get("/home-chef-categories", { params });
+        const allCategories = Array.isArray(res.data) ? res.data : [];
+        setCategories(allCategories.filter(cat => cat.category_type?.toLowerCase() === 'food'));
       } catch {
         console.error("Failed to load categories");
       }
@@ -231,7 +232,7 @@ const ChefFoodAdd = () => {
                         <label className="block text-xs font-black text-slate-300 uppercase mb-2">Food Category *</label>
                         <select value={form.category} onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))} className={fieldClass}>
                           <option value="">Select category</option>
-                          {categories.map((cat) => <option key={cat.id || cat.catId} value={cat.name || cat.catId}>{cat.name || cat.catId}</option>)}
+                          {categories.map((cat) => <option key={cat.id || cat.CatId} value={cat.c_name || cat.name || cat.CatId}>{cat.c_name || cat.name || cat.CatId}</option>)}
                         </select>
                       </div>
 

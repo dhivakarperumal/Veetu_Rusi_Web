@@ -183,12 +183,13 @@ const AddProducts = () => {
                 const userData = JSON.parse(localStorage.getItem("user") || "{}");
                 const chefUserId = userData.user_id || userData.id || null;
                 const [catsResult, productResult] = await Promise.allSettled([
-                    api.get("/chef-categories", { params: { chef_user_id: chefUserId } }),
+                    api.get("/home-chef-categories", { params: { chef_user_id: chefUserId } }),
                     api.get(`/products/${id}`)
                 ]);
 
                 if (catsResult.status === 'fulfilled') {
-                    setCategories(Array.isArray(catsResult.value.data) ? catsResult.value.data : []);
+                    const allCats = Array.isArray(catsResult.value.data) ? catsResult.value.data : [];
+                    setCategories(allCats.filter(cat => cat.category_type?.toLowerCase().includes('product') || cat.category_type === 'Product_food'));
                 } else {
                     console.warn('Failed to load categories', catsResult.reason);
                 }
@@ -244,13 +245,14 @@ const AddProducts = () => {
             try {
                 const userData = JSON.parse(localStorage.getItem("user") || "{}");
                 const chefUserId = userData.user_id || userData.id || null;
-                const catsResult = await api.get("/chef-categories", { params: { chef_user_id: chefUserId } });
+                const catsResult = await api.get("/home-chef-categories", { params: { chef_user_id: chefUserId } });
 
                 if (Array.isArray(catsResult.data)) {
-                    setCategories(catsResult.data);
+                    const filteredCats = catsResult.data.filter(cat => cat.category_type?.toLowerCase().includes('product') || cat.category_type === 'Product_food');
+                    setCategories(filteredCats);
                     setFormData(prev => ({
                         ...prev,
-                        category: catsResult.data[0]?.name || "Cooked Food",
+                        category: filteredCats[0]?.c_name || filteredCats[0]?.name || "Cooked Food",
                     }));
                 } else {
                     console.warn('Unexpected category response', catsResult);
@@ -506,7 +508,7 @@ const AddProducts = () => {
                                 <div className="space-y-4">
                                     <label className="text-[10px] sm:text-xs  font-black text-gray-400 uppercase tracking-widest ml-1">Food Category *</label>
                                     <select name="category" value={formData.category} onChange={handleFormChange} className="w-full px-6 py-4 bg-[#0b0d10] border-2 border-transparent rounded-3xl outline-none focus:bg-[#0f1216] focus:border-emerald-500/20 transition-all text-base font-black text-white shadow-inner cursor-pointer appearance-none">
-                                        {categories.length > 0 ? categories.map(cat => <option key={cat.id} value={cat.name}>{cat.name}</option>) : (
+                                        {categories.length > 0 ? categories.map(cat => <option key={cat.id || cat.CatId} value={cat.c_name || cat.name || cat.CatId}>{cat.c_name || cat.name || cat.CatId}</option>) : (
                                             <>
                                                 <option>Cooked Food</option>
                                                 <option>Masala / Pre-cooked</option>
