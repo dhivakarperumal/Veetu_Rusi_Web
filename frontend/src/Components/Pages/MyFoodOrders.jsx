@@ -353,12 +353,26 @@ export default function MyFoodOrders({ isEmbedded = false }) {
                   <div className="mt-4 space-y-4">
                     {selectedOrder.items?.map((item, index) => (
                       <div key={index} className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                        <div className="flex items-start justify-between gap-4">
-                          <div>
-                            <p className="font-semibold text-slate-900">{item.name || item.product_name}</p>
-                            <p className="text-sm text-slate-600">Qty {item.quantity || 1} × ₹{item.price || '0.00'}</p>
+                        <div className="flex items-start gap-4">
+                          {item.image && (
+                            <img
+                              src={item.image}
+                              alt={item.name || item.product_name}
+                              className="w-16 h-16 object-cover rounded-xl shadow-sm border border-slate-200 flex-shrink-0"
+                              onError={(e) => {
+                                e.target.src = "/placeholder.png";
+                              }}
+                            />
+                          )}
+                          <div className="flex-1">
+                            <div className="flex justify-between items-start gap-2">
+                              <div>
+                                <p className="font-semibold text-slate-900">{item.name || item.product_name}</p>
+                                <p className="text-sm text-slate-600">Qty {item.quantity || 1} × ₹{item.price || '0.00'}</p>
+                              </div>
+                              <p className="font-semibold text-slate-900 whitespace-nowrap">₹{(parseFloat(item.price || 0) * (item.quantity || 1)).toFixed(2)}</p>
+                            </div>
                           </div>
-                          <p className="font-semibold text-slate-900">₹{(parseFloat(item.price || 0) * (item.quantity || 1)).toFixed(2)}</p>
                         </div>
                       </div>
                     ))}
