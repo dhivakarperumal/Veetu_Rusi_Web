@@ -118,11 +118,17 @@ const HomeChefCategories = () => {
     setCategory((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleAddSubcategory = (e) => {
-    if (e.key === 'Enter' && subcatInput.trim() !== '') {
-      e.preventDefault();
+  const addSubcategory = () => {
+    if (subcatInput.trim() !== '') {
       setCategory(prev => ({ ...prev, subcategory: [...prev.subcategory, subcatInput.trim()] }));
       setSubcatInput("");
+    }
+  };
+
+  const handleAddSubcategory = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addSubcategory();
     }
   };
 
@@ -471,14 +477,23 @@ const HomeChefCategories = () => {
 
                    <div className="space-y-2">
                       <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Subcategories</label>
-                      <input
-                        type="text"
-                        value={subcatInput}
-                        onChange={(e) => setSubcatInput(e.target.value)}
-                        onKeyDown={handleAddSubcategory}
-                        placeholder="Type subcategory and press Enter"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-emerald-600 focus:ring-4 focus:ring-emerald-600/5 transition-all font-black text-black text-sm"
-                      />
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={subcatInput}
+                          onChange={(e) => setSubcatInput(e.target.value)}
+                          onKeyDown={handleAddSubcategory}
+                          placeholder="Type subcategory and press Enter or +"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-emerald-600 focus:ring-4 focus:ring-emerald-600/5 transition-all font-black text-black text-sm"
+                        />
+                        <button
+                          type="button"
+                          onClick={addSubcategory}
+                          className="bg-emerald-600 text-white p-3.5 rounded-2xl shadow-lg hover:bg-emerald-700 transition-colors flex items-center justify-center font-bold"
+                        >
+                          <FaPlus size={18} />
+                        </button>
+                      </div>
                       <div className="flex flex-wrap gap-2 mt-2">
                          {category.subcategory.map((sub, idx) => (
                            <div key={idx} className="flex items-center gap-2 bg-emerald-100 text-emerald-800 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm">
