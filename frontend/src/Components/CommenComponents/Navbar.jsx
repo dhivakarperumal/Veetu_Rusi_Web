@@ -186,77 +186,85 @@ const Navbar = () => {
 
               {/* Categories */}
 
-              <div className="relative" ref={categoryRef}>
-
+              <div
+                className="relative"
+                ref={categoryRef}
+                onMouseEnter={() => {
+                  setCategoryMenu(true);
+                  setPagesMenu(false);
+                }}
+                onMouseLeave={() => {
+                  setCategoryMenu(false);
+                  setActiveMainCategory(null);
+                }}
+              >
                 <button
-                  onClick={() => {
-                    setCategoryMenu(!categoryMenu);
-                    setPagesMenu(false);
-                  }}
                   className="flex cursor-pointer items-center gap-1 text-gray-600 hover:text-primary transition"
                 >
                   Categories
                   <FiChevronDown
-                    className={`transition-transform ${categoryMenu ? "rotate-180" : ""}`}
+                    className={`transition-transform ${categoryMenu ? "rotate-180" : ""
+                      }`}
                   />
                 </button>
 
-                <div className="absolute top-10 left-0 w-64 bg-white border border-primary rounded-xl shadow-xl">
+                {categoryMenu && (
+                  <div className="absolute top-10 left-0 w-64 bg-white border border-primary rounded-xl shadow-xl z-50">
 
-                  {/* FOOD */}
-                  <div
-                    className="relative"
-                    onMouseEnter={() => setActiveMainCategory("Food")}
-                  >
-                    <div className="px-4 py-3 cursor-pointer hover:bg-primary hover:text-white flex justify-between">
-                      Food
-                      <FiChevronRight />
+                    {/* FOOD */}
+                    <div
+                      className="relative"
+                      onMouseEnter={() => setActiveMainCategory("Food")}
+                    >
+                      <div className="px-4 py-3 cursor-pointer hover:bg-primary hover:text-white flex justify-between items-center">
+                        Food
+                        <FiChevronRight />
+                      </div>
+
+                      {activeMainCategory === "Food" && (
+                        <div className="absolute left-full top-0 w-60 bg-white border rounded-xl shadow-lg overflow-hidden">
+                          {groupedCategories.Food?.map((cat) => (
+                            <NavLink
+                              key={cat.id}
+                              to={`/category/${cat.id}`}
+                              onClick={() => setCategoryMenu(false)}
+                              className="block px-4 py-3 text-sm text-gray-700 hover:bg-primary hover:text-white"
+                            >
+                              {cat.name}
+                            </NavLink>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
-                    {activeMainCategory === "Food" && (
-                      <div className="absolute left-full top-0 w-60 bg-white border rounded-xl shadow-lg">
-                        {groupedCategories.Food?.map((cat) => (
-                          <NavLink
-                            key={cat.id}
-                            to={`/category/${cat.id}`}
-                            className="block px-4 py-3 hover:bg-primary hover:text-white"
-                            onClick={() => setCategoryMenu(false)}
-                          >
-                            {cat.name}
-                          </NavLink>
-                        ))}
+                    {/* PRODUCTS */}
+                    <div
+                      className="relative"
+                      onMouseEnter={() => setActiveMainCategory("Products")}
+                    >
+                      <div className="px-4 py-3 cursor-pointer hover:bg-primary hover:text-white flex justify-between items-center">
+                        Products
+                        <FiChevronRight />
                       </div>
-                    )}
-                  </div>
 
-                  {/* PRODUCTS */}
-                  <div
-                    className="relative"
-                    onMouseEnter={() => setActiveMainCategory("Products")}
-                  >
-                    <div className="px-4 py-3 cursor-pointer hover:bg-primary hover:text-white flex justify-between">
-                      Products
-                      <FiChevronRight />
+                      {activeMainCategory === "Products" && (
+                        <div className="absolute left-full top-0 w-60 bg-white border rounded-xl shadow-lg overflow-hidden">
+                          {groupedCategories.Products?.map((cat) => (
+                            <NavLink
+                              key={cat.id}
+                              to={`/category/${cat.id}`}
+                              onClick={() => setCategoryMenu(false)}
+                              className="block px-4 py-3 text-sm text-gray-700 hover:bg-primary hover:text-white"
+                            >
+                              {cat.name}
+                            </NavLink>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
-                    {activeMainCategory === "Products" && (
-                      <div className="absolute left-full top-0 w-60 bg-white border rounded-xl shadow-lg">
-                        {groupedCategories.Products?.map((cat) => (
-                          <NavLink
-                            key={cat.id}
-                            to={`/category/${cat.id}`}
-                            className="block px-4 py-3 hover:bg-primary hover:text-white"
-                            onClick={() => setCategoryMenu(false)}
-                          >
-                            {cat.name}
-                          </NavLink>
-                        ))}
-                      </div>
-                    )}
                   </div>
-
-                </div>
-
+                )}
               </div>
 
               {/* Pages */}
