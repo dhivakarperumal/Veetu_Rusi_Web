@@ -228,7 +228,7 @@ exports.createFood = async (req, res) => {
       ingredients || null,
       instructions || null,
       normalizeJsonField(images) || null,
-      status || 'Active',
+      status || 'Inactive',
       finalFranchiseUserId,
       createdBy,
       updatedBy
