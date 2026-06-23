@@ -13,6 +13,8 @@ const FoodProducts = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [viewMode, setViewMode] = useState('table');
+  const [approvalModalItem, setApprovalModalItem] = useState(null);
+  const [approvalChecklist, setApprovalChecklist] = useState({ taste: false, quality: false, packaging: false });
 
   useEffect(() => {
     const fetchChefs = async () => {
@@ -96,6 +98,30 @@ const FoodProducts = () => {
       console.error('Failed to update food status', err);
       toast.error('Failed to update food status');
     }
+  };
+
+  const openApprovalModal = (item) => {
+    setApprovalModalItem(item);
+    setApprovalChecklist({ taste: false, quality: false, packaging: false });
+  };
+
+  const closeApprovalModal = () => {
+    setApprovalModalItem(null);
+    setApprovalChecklist({ taste: false, quality: false, packaging: false });
+  };
+
+  const handleChecklistChange = (key) => {
+    setApprovalChecklist((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const canApprove = Object.values(approvalChecklist).every(Boolean);
+
+  const handleApproveFromModal = async () => {
+    if (!approvalModalItem) return;
+    if (!canApprove) return;
+
+    await handleStatusUpdate(approvalModalItem, 'Active');
+    closeApprovalModal();
   };
 
   const handleDelete = async (id) => {
@@ -245,7 +271,7 @@ const FoodProducts = () => {
                           {item.status !== 'Active' ? (
                             <button
                               type="button"
-                              onClick={() => handleStatusUpdate(item, 'Active')}
+                              onClick={() => openApprovalModal(item)}
                               className="px-3 py-2 rounded-2xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-black uppercase tracking-[0.2em] hover:bg-emerald-100 transition"
                             >
                               Approve
@@ -328,7 +354,7 @@ const FoodProducts = () => {
                       {item.status !== 'Active' ? (
                         <button
                           type="button"
-                          onClick={() => handleStatusUpdate(item, 'Active')}
+                          onClick={() => openApprovalModal(item)}
                           className="rounded-2xl bg-emerald-50 px-3 py-2 text-xs font-black uppercase tracking-[0.2em] text-emerald-700"
                         >
                           Approve
@@ -371,6 +397,67 @@ const FoodProducts = () => {
               </div>
             ))
           )}
+        </div>
+      )}
+
+      {approvalModalItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
+          <div className="w-full max-w-xl rounded-[2rem] border border-white/10 bg-[#0d1118] shadow-2xl p-6 sm:p-8">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-black text-white">Approve Food Item</h2>
+                <p className="mt-2 text-sm text-slate-400">Select the required checks before approving this inactive product.</p>
+              </div>
+              <button onClick={closeApprovalModal} className="rounded-2xl bg-white/5 px-3 py-2 text-sm font-bold text-slate-200 hover:bg-white/10 transition">Close</button>
+            </div>
+
+            <div className="mt-6 rounded-3xl bg-slate-950/80 border border-white/10 p-6">
+              <p className="text-sm font-black uppercase tracking-[0.3em] text-slate-400">Food</p>
+              <h3 className="mt-2 text-xl font-black text-white">{approvalModalItem.name || 'Unnamed Food'}</h3>
+              <p className="mt-1 text-sm text-slate-500">{approvalModalItem.category || 'No category specified'}</p>
+            </div>
+
+            <div className="mt-6 space-y-4">
+              <div className="rounded-3xl bg-slate-950/80 border border-white/10 p-5">
+                <p className="text-sm font-black uppercase tracking-[0.3em] text-slate-400">Approval checklist</p>
+                <div className="mt-4 space-y-3">
+                  {['taste', 'quality', 'packaging'].map((key) => (
+                    <label key={key} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#11151f] px-4 py-3 transition hover:border-emerald-500/40">
+                      <input
+                        type="checkbox"
+                        checked={approvalChecklist[key]}
+                        onChange={() => handleChecklistChange(key)}
+                        className="h-4 w-4 rounded border-slate-500 bg-slate-900 text-emerald-500 focus:ring-emerald-400"
+                      />
+                      <span className="text-sm font-bold text-white">{key === 'taste' ? 'Taste' : key === 'quality' ? 'Quality' : 'Packaging'}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-3xl bg-slate-950/80 border border-white/10 p-5">
+                <p className="text-sm text-slate-400">Only when all checklist items are ticked will the approve button become available.</p>
+              </div>
+
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <button
+                  type="button"
+                  onClick={handleApproveFromModal}
+                  disabled={!canApprove}
+                  className={`w-full sm:w-auto rounded-3xl px-6 py-4 text-sm font-black uppercase tracking-[0.2em] transition ${canApprove ? 'bg-emerald-500 text-white hover:bg-emerald-400' : 'bg-slate-700 text-slate-400 cursor-not-allowed'}`}
+                >
+                  Approve Product
+                </button>
+                <button
+                  type="button"
+                  onClick={closeApprovalModal}
+                  className="w-full sm:w-auto rounded-3xl border border-white/10 bg-white/5 px-6 py-4 text-sm font-black uppercase tracking-[0.2em] text-slate-300 hover:bg-white/10 transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
