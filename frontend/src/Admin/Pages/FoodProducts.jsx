@@ -401,7 +401,7 @@ const FoodProducts = () => {
       )}
 
       {approvalModalItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[9999] flex min-h-screen items-center justify-center overflow-y-auto p-4 bg-slate-950/80 backdrop-blur-xl">
           <div className="w-full max-w-xl rounded-[2rem] border border-white/10 bg-[#0d1118] shadow-2xl p-6 sm:p-8">
             <div className="flex items-start justify-between gap-4">
               <div>
