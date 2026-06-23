@@ -180,10 +180,10 @@ const ProductCard = ({ product }) => {
           {/* Price */}
           <div className="flex items-center gap-3 mt-4">
             <span className="text-2xl font-bold text-primary">
-              ₹{product?.offer_price || product?.price}
+              ₹{product?.final_price || product?.offer_price || product?.price || product?.mrp || 0}
             </span>
 
-            {product?.mrp && (
+            {product?.mrp && product?.mrp !== (product?.final_price || product?.offer_price || product?.price) && (
               <span className="text-gray-400 line-through">
                 ₹{product?.mrp}
               </span>
