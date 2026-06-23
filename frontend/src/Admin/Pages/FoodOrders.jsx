@@ -25,7 +25,6 @@ import {
   LayoutGrid,
   List
 } from 'lucide-react';
-import { useNavigate } from "react-router-dom";
 
 const STATUS_OPTIONS = [
   'All',
@@ -35,6 +34,13 @@ const STATUS_OPTIONS = [
   'Out for Delivery',
   'Delivered',
   'Cancelled'
+];
+
+const ORDER_CATEGORIES = [
+  { label: 'All Orders', value: 'All', icon: <List className="w-3 h-3" /> },
+  { label: 'New Orders', value: 'Pending', icon: <Clock className="w-3 h-3" /> },
+  { label: 'Delivered', value: 'Delivered', icon: <CheckCircle className="w-3 h-3" /> },
+  { label: 'Cancelled', value: 'Cancelled', icon: <XCircle className="w-3 h-3" /> },
 ];
 
 const STATUS_STYLES = {
@@ -459,8 +465,6 @@ const FoodOrders = () => {
   const [expandedRow, setExpandedRow] = useState(null);
   const [viewMode, setViewMode] = useState("table");
 
-  const navigate = useNavigate();
-
   const fetchOrders = useCallback(async () => {
     setLoading(true);
 
@@ -601,81 +605,99 @@ const FoodOrders = () => {
       </div>
 
       {/* FILTER */}
-      <div className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm md:flex-row md:items-center">
-
-        <div className="relative flex-1 max-w-md w-full">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-
-          <input
-            type="text"
-            placeholder="Search by customer, order ID, chef..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm"
-          />
+      <div className="space-y-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+        <div className="flex flex-wrap items-center gap-3">
+          {ORDER_CATEGORIES.map((category) => (
+            <button
+              key={category.value}
+              onClick={() => setStatusFilter(category.value)}
+              className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-black uppercase tracking-[0.2em] transition ${
+                statusFilter === category.value
+                  ? 'bg-slate-900 text-white border-slate-900'
+                  : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
+              }`}
+            >
+              {category.icon}
+              {category.label}
+            </button>
+          ))}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="relative flex-1 max-w-md w-full">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
 
-          {chefs.length > 0 && (
-            <select
-              value={chefFilter}
-              onChange={(e) =>
-                setChefFilter(e.target.value)
-              }
-              className="px-3 py-3 rounded-xl border border-slate-200"
-            >
-              <option value="All">All Chefs</option>
-
-              {chefs.map((c) => (
-                <option
-                  key={c.chef_id || c.id}
-                  value={c.chef_id || c.id}
-                >
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          )}
-
-          <select
-            value={statusFilter}
-            onChange={(e) =>
-              setStatusFilter(e.target.value)
-            }
-            className="px-3 py-3 rounded-xl border border-slate-200"
-          >
-            {STATUS_OPTIONS.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-
-          <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
-            <button
-              onClick={() => setViewMode("table")}
-              className={`p-2 rounded-lg transition ${viewMode === "table"
-                ? "bg-white text-emerald-700 shadow-sm"
-                : "text-slate-500"
-                }`}
-            >
-              <List className="w-4 h-4" />
-            </button>
-
-            <button
-              onClick={() => setViewMode("card")}
-              className={`p-2 rounded-lg transition ${viewMode === "card"
-                ? "bg-white text-emerald-700 shadow-sm"
-                : "text-slate-500"
-                }`}
-            >
-              <LayoutGrid className="w-4 h-4" />
-            </button>
+            <input
+              type="text"
+              placeholder="Search by customer, order ID, chef..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+            />
           </div>
 
-        </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            {chefs.length > 0 && (
+              <select
+                value={chefFilter}
+                onChange={(e) =>
+                  setChefFilter(e.target.value)
+                }
+                className="min-w-[160px] rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm"
+              >
+                <option value="All">All Chefs</option>
 
+                {chefs.map((c) => (
+                  <option
+                    key={c.chef_id || c.id}
+                    value={c.chef_id || c.id}
+                  >
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            <div className="relative min-w-[160px]">
+              <select
+                value={statusFilter}
+                onChange={(e) =>
+                  setStatusFilter(e.target.value)
+                }
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm"
+              >
+                {STATUS_OPTIONS.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            </div>
+
+            <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
+              <button
+                onClick={() => setViewMode("table")}
+                className={`p-2 rounded-lg transition ${viewMode === "table"
+                  ? "bg-white text-emerald-700 shadow-sm"
+                  : "text-slate-500"
+                  }`}
+              >
+                <List className="w-4 h-4" />
+              </button>
+
+              <button
+                onClick={() => setViewMode("card")}
+                className={`p-2 rounded-lg transition ${viewMode === "card"
+                  ? "bg-white text-emerald-700 shadow-sm"
+                  : "text-slate-500"
+                  }`}
+              >
+                <LayoutGrid className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* TABLE */}
