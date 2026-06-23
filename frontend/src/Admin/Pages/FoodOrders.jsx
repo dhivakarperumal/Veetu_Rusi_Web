@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import api from '../../api';
 import { toast } from 'react-hot-toast';
+import { useLocation } from 'react-router-dom';
 import {
   Search,
   Eye,
@@ -82,6 +83,14 @@ const getItemUnitPrice = (item) =>
 const getItemTotal = (item) => {
   const quantity = Number(item.quantity) || 1;
   return getItemUnitPrice(item) * quantity;
+};
+
+const deriveStatusFromPath = (pathname) => {
+  if (pathname.endsWith('/food-orders/new')) return 'Pending';
+  if (pathname.endsWith('/food-orders/delivery')) return 'Delivered';
+  if (pathname.endsWith('/food-orders/cancelled')) return 'Cancelled';
+  if (pathname.endsWith('/food-orders/all')) return 'All';
+  return 'All';
 };
 
 const getChefGroups = (items) => {
@@ -453,6 +462,7 @@ const OrderModal = ({ order, onClose, onStatusChange }) => {
 /* ───────────────────────────────────────────── */
 
 const FoodOrders = () => {
+  const location = useLocation();
   const [orders, setOrders] = useState([]);
   const [chefs, setChefs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -464,6 +474,10 @@ const FoodOrders = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [expandedRow, setExpandedRow] = useState(null);
   const [viewMode, setViewMode] = useState("table");
+
+  useEffect(() => {
+    setStatusFilter(deriveStatusFromPath(location.pathname));
+  }, [location.pathname]);
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -606,7 +620,7 @@ const FoodOrders = () => {
 
       {/* FILTER */}
       <div className="space-y-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-        <div className="flex flex-wrap items-center gap-3">
+        {/* <div className="flex flex-wrap items-center gap-3">
           {ORDER_CATEGORIES.map((category) => (
             <button
               key={category.value}
@@ -621,7 +635,7 @@ const FoodOrders = () => {
               {category.label}
             </button>
           ))}
-        </div>
+        </div> */}
 
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="relative flex-1 max-w-md w-full">
