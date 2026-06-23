@@ -41,7 +41,22 @@ const MaterialCheckout = () => {
   const fetchAddresses = async () => {
     try {
       const res = await api.get("/orders/myorders");
-      setAddresses(res.data || []);
+      const orders = res.data || [];
+      
+      // Filter out duplicate addresses
+      const uniqueAddresses = [];
+      const seen = new Set();
+      
+      orders.forEach(order => {
+        // Create a unique key for the address to prevent duplicates
+        const key = `${order.street_address}|${order.city}|${order.zip_code}`.toLowerCase().trim();
+        if (order.street_address && !seen.has(key)) {
+          seen.add(key);
+          uniqueAddresses.push(order);
+        }
+      });
+      
+      setAddresses(uniqueAddresses);
     } catch (error) {
       console.error(error);
     }
