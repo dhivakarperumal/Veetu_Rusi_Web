@@ -492,7 +492,10 @@ const Shop = ({ defaultCategory = "" }) => {
                   <label key={cat} className="flex items-center gap-3 mb-2 cursor-pointer">
                     <input
                       type="radio" name="category" className="accent-green-600"
-                      checked={selectedCategory === cat}
+                      checked={
+                        cat?.trim().toLowerCase() ===
+                        decodeURIComponent(selectedCategory || "").trim().toLowerCase()
+                      }
                       onChange={() => setSelectedCategory(cat)}
                     />
                     <span className="text-sm text-gray-700">{cat}</span>

@@ -62,7 +62,7 @@ const getItemSummary = (items) => {
   return `${names.slice(0, 2).join(", ")} +${names.length - 2} more`;
 };
 
-export default function MyFoodOrders() {
+export default function MyFoodOrders({ isEmbedded = false }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -181,11 +181,7 @@ export default function MyFoodOrders() {
     }
   };
 
-  return (
-    <>
-      <PageHeader title="My Food Orders" />
-      <div className="min-h-screen bg-slate-50 py-14">
-        <PageContainer>
+  const content = (
           <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <div>
@@ -301,7 +297,13 @@ export default function MyFoodOrders() {
               </div>
             )}
           </div>
-        </PageContainer>
+  );
+
+  return (
+    <>
+      {!isEmbedded && <PageHeader title="My Food Orders" />}
+      <div className={isEmbedded ? "" : "min-h-screen bg-slate-50 py-14"}>
+        {isEmbedded ? content : <PageContainer>{content}</PageContainer>}
       </div>
 
       {selectedOrder && (
@@ -351,12 +353,26 @@ export default function MyFoodOrders() {
                   <div className="mt-4 space-y-4">
                     {selectedOrder.items?.map((item, index) => (
                       <div key={index} className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                        <div className="flex items-start justify-between gap-4">
-                          <div>
-                            <p className="font-semibold text-slate-900">{item.name || item.product_name}</p>
-                            <p className="text-sm text-slate-600">Qty {item.quantity || 1} × ₹{item.price || '0.00'}</p>
+                        <div className="flex items-start gap-4">
+                          {item.image && (
+                            <img
+                              src={item.image}
+                              alt={item.name || item.product_name}
+                              className="w-16 h-16 object-cover rounded-xl shadow-sm border border-slate-200 flex-shrink-0"
+                              onError={(e) => {
+                                e.target.src = "/placeholder.png";
+                              }}
+                            />
+                          )}
+                          <div className="flex-1">
+                            <div className="flex justify-between items-start gap-2">
+                              <div>
+                                <p className="font-semibold text-slate-900">{item.name || item.product_name}</p>
+                                <p className="text-sm text-slate-600">Qty {item.quantity || 1} × ₹{item.price || '0.00'}</p>
+                              </div>
+                              <p className="font-semibold text-slate-900 whitespace-nowrap">₹{(parseFloat(item.price || 0) * (item.quantity || 1)).toFixed(2)}</p>
+                            </div>
                           </div>
-                          <p className="font-semibold text-slate-900">₹{(parseFloat(item.price || 0) * (item.quantity || 1)).toFixed(2)}</p>
                         </div>
                       </div>
                     ))}
@@ -406,10 +422,19 @@ export default function MyFoodOrders() {
                             <p className="text-xs uppercase tracking-[0.24em] text-slate-500 mt-2">Chef share</p>
                           </div>
                         </div>
-                        <div className="mt-3 grid gap-2 sm:grid-cols-3 text-sm">
-                          <p><span className="font-semibold text-slate-900">Qty:</span> {chef.total_quantity}</p>
-                          <p><span className="font-semibold text-slate-900">Phone:</span> {chef.phone}</p>
-                          <p><span className="font-semibold text-slate-900">Email:</span> {chef.email}</p>
+                        <div className="mt-4 grid gap-4 sm:grid-cols-3 text-sm border-t border-slate-100 pt-4">
+                          <div>
+                            <p className="font-semibold text-slate-900">{chef.total_quantity}</p>
+                            <p className="text-xs uppercase tracking-[0.24em] text-slate-500 mt-1.5">Qty</p>
+                          </div>
+                          <div>
+                            <p className="font-semibold text-slate-900">{chef.phone}</p>
+                            <p className="text-xs uppercase tracking-[0.24em] text-slate-500 mt-1.5">Phone</p>
+                          </div>
+                          <div>
+                            <p className="font-semibold text-slate-900 truncate" title={chef.email}>{chef.email}</p>
+                            <p className="text-xs uppercase tracking-[0.24em] text-slate-500 mt-1.5">Email</p>
+                          </div>
                         </div>
                       </div>
                     ))}

@@ -14,12 +14,13 @@ import {
 import logo from "/logo.png";
 import PageContainer from "./PageContainer";
 import api from "../../api";
-import { FiHome, FiShoppingBag, FiGrid, FiFileText, FiPhone, FiChevronDown } from "react-icons/fi";
+import { FiHome, FiShoppingBag, FiGrid, FiFileText, FiPhone, FiChevronDown, FiMapPin } from "react-icons/fi";
 import { FiChevronRight, FiTag } from "react-icons/fi";
 
 const Navbar = () => {
 
   const { user, logout } = useContext(AuthContext);
+  const { setLocationPopupOpen } = useContext(AuthContext);
   console.log("USER DATA:", user);
   const { cart, wishlist, userFoodCart } = useContext(StoreContext);
   const [mobilePages, setMobilePages] = useState(false);
@@ -375,6 +376,19 @@ const Navbar = () => {
 
             {user?.role === "user" && (
               <>
+                {/* Location icon */}
+                <button
+                  onClick={() => setLocationPopupOpen(true)}
+                  title={user?.pincode ? `Location: ${user.pincode}` : "Set your location"}
+                  className="flex items-center gap-1 text-primary hover:text-primary-light hover:scale-110 transition relative group"
+                >
+                  <FiMapPin size={20} />
+                
+                  {!user?.pincode && (
+                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                  )}
+                </button>
+
                 <Link
                   to="/food-orders"
                   className="text-primary hover:text-primary-light hover:scale-110 transition"

@@ -97,40 +97,40 @@ exports.getFoods = async (req, res) => {
       status
     } = req.query;
 
-    let query = 'SELECT * FROM chef_food_table WHERE 1=1';
+    let query = 'SELECT cf.*, u.full_name as chef_name FROM chef_food_table cf LEFT JOIN users u ON cf.created_by = u.user_id WHERE 1=1';
     const params = [];
 
     // Enforce role-based restrictions
     if (req.user) {
       const currentUserId = req.user.user_id || req.user.id || null;
       if (['chef', 'homechef'].includes(req.user.role) && currentUserId) {
-        query += ' AND (created_by = ? OR updated_by = ?)';
+        query += ' AND (cf.created_by = ? OR cf.updated_by = ?)';
         params.push(currentUserId, currentUserId);
       } else if (['admin', 'franchise', 'superadmin'].includes(req.user.role) && currentUserId) {
-        query += ' AND franchise_user_id = ?';
+        query += ' AND cf.franchise_user_id = ?';
         params.push(currentUserId);
       }
       // superadmin can see all when no explicit filter is applied
     }
 
     if (franchise_user_id) {
-      query += ' AND franchise_user_id = ?';
+      query += ' AND cf.franchise_user_id = ?';
       params.push(franchise_user_id);
     }
     if (category) {
-      query += ' AND category = ?';
+      query += ' AND cf.category = ?';
       params.push(category);
     }
     if (dietary_tag) {
-      query += ' AND dietary_tag = ?';
+      query += ' AND cf.dietary_tag = ?';
       params.push(dietary_tag);
     }
     if (status && status !== 'All') {
-      query += ' AND status = ?';
+      query += ' AND cf.status = ?';
       params.push(status);
     }
 
-    query += ' ORDER BY created_at DESC';
+    query += ' ORDER BY cf.created_at DESC';
     const [rows] = await pool.execute(query, params);
     const foods = rows.map((row) => ({
       ...row,
