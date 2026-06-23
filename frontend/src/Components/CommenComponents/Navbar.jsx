@@ -25,6 +25,40 @@ const Navbar = () => {
   const [mobilePages, setMobilePages] = useState(false);
   const navigate = useNavigate();
   const [homeChef, setHomeChef] = useState(null);
+  const [groupedCategories, setGroupedCategories] = useState({});
+  const [activeMainCategory, setActiveMainCategory] = useState(null);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await api.get("/home-chef-categories");
+
+        const allCats = Array.isArray(res.data) ? res.data : [];
+
+        const grouped = allCats.reduce((acc, cat) => {
+          const type =
+            cat.category_type?.toLowerCase() === "food"
+              ? "Food"
+              : "Products";
+
+          if (!acc[type]) acc[type] = [];
+
+          acc[type].push({
+            ...cat,
+            name: cat.c_name,
+          });
+
+          return acc;
+        }, {});
+
+        setGroupedCategories(grouped);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -167,32 +201,61 @@ const Navbar = () => {
                   />
                 </button>
 
-                {categoryMenu && (
+                <div className="absolute top-10 left-0 w-64 bg-white border border-primary rounded-xl shadow-xl">
 
-                  <div className="absolute  top-10 left-0 w-48 bg-white border border-primary rounded-xl shadow-xl overflow-hidden animate-dropdown">
+                  {/* FOOD */}
+                  <div
+                    className="relative"
+                    onMouseEnter={() => setActiveMainCategory("Food")}
+                  >
+                    <div className="px-4 py-3 cursor-pointer hover:bg-primary hover:text-white flex justify-between">
+                      Food
+                      <FiChevronRight />
+                    </div>
 
-                    {categories.map((cat) => (
-
-                      <NavLink
-                        key={cat.id}
-                        to={`/category/${cat.slug || cat.name}`}
-                        onClick={() => setCategoryMenu(false)}
-                        className={({ isActive }) =>
-                          `block px-4 py-3 text-sm transition
-    ${isActive
-                            ? "bg-gradient-to-r from-primary-light via-secondary to-secondary-light text-white"
-                            : "text-gray-700 hover:bg-gradient-to-r from-primary-light via-secondary to-secondary-light hover:text-white"
-                          }`
-                        }
-                      >
-                        {cat.name}
-                      </NavLink>
-
-                    ))}
-
+                    {activeMainCategory === "Food" && (
+                      <div className="absolute left-full top-0 w-60 bg-white border rounded-xl shadow-lg">
+                        {groupedCategories.Food?.map((cat) => (
+                          <NavLink
+                            key={cat.id}
+                            to={`/category/${cat.id}`}
+                            className="block px-4 py-3 hover:bg-primary hover:text-white"
+                            onClick={() => setCategoryMenu(false)}
+                          >
+                            {cat.name}
+                          </NavLink>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
-                )}
+                  {/* PRODUCTS */}
+                  <div
+                    className="relative"
+                    onMouseEnter={() => setActiveMainCategory("Products")}
+                  >
+                    <div className="px-4 py-3 cursor-pointer hover:bg-primary hover:text-white flex justify-between">
+                      Products
+                      <FiChevronRight />
+                    </div>
+
+                    {activeMainCategory === "Products" && (
+                      <div className="absolute left-full top-0 w-60 bg-white border rounded-xl shadow-lg">
+                        {groupedCategories.Products?.map((cat) => (
+                          <NavLink
+                            key={cat.id}
+                            to={`/category/${cat.id}`}
+                            className="block px-4 py-3 hover:bg-primary hover:text-white"
+                            onClick={() => setCategoryMenu(false)}
+                          >
+                            {cat.name}
+                          </NavLink>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                </div>
 
               </div>
 
