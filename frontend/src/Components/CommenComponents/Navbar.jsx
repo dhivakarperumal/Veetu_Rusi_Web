@@ -82,26 +82,26 @@ const Navbar = () => {
 
   }, []);
 
-  // Fetch categories after homeChef profile is loaded
+  // Fetch categories from home_chef_categorys table
   useEffect(() => {
-    if (!homeChef?.created_by_user_id) return;
-
     const fetchCategories = async () => {
       try {
-        const res = await api.get("/categories");
-
-        const myCategories = res.data.filter(
-          (cat) => cat.created_by_user_id === homeChef.created_by_user_id
-        );
-
-        setCategories(myCategories);
+        const res = await api.get("/home-chef-categories");
+        const allCats = Array.isArray(res.data) ? res.data : [];
+        // Map c_name to name for consistent rendering
+        const mapped = allCats.map(cat => ({
+          ...cat,
+          name: cat.c_name || cat.name || '',
+          slug: cat.c_name || cat.name || ''
+        }));
+        setCategories(mapped);
       } catch (error) {
-        console.error(error);
+        console.error("Error fetching home chef categories:", error);
       }
     };
 
     fetchCategories();
-  }, [homeChef]);
+  }, []);
 
   const navClass = ({ isActive }) =>
     `px-4 py-1.5 rounded-lg text-sm font-medium transition
