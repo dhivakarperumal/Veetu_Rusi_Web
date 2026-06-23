@@ -51,29 +51,11 @@ const Shop = ({ defaultCategory = "" }) => {
 
   /* ─── Fetch Products ─────────────────────────────────────────── */
   const fetchProducts = async () => {
-    let userToMatch = null;
-    let homeChefIdToMatch = null;
-
-    const role = currentUser?.role?.toLowerCase() || '';
-    if (role === 'admin' || role === 'franchise') {
-      userToMatch = currentUser?.user_id;
-    } else if (role === 'chef' || role === 'homechef') {
-      // Wait for homeChef to load before proceeding
-      if (!homeChef) return;
-      userToMatch = homeChef?.created_by;
-      homeChefIdToMatch = homeChef?.id;
-    }
-
     // Use cache if fresh (5 min)
     const isCacheValid = lastFetchTime && Date.now() - lastFetchTime < 5 * 60 * 1000;
     if (isCacheValid && productsCache?.length > 0) {
-      let myProducts = productsCache;
-      if (userToMatch) {
-        myProducts = myProducts.filter((product) => product.created_by === userToMatch);
-      }
-      if (homeChefIdToMatch) {
-        myProducts = myProducts.filter((product) => !product.home_chef_id || product.home_chef_id == homeChefIdToMatch);
-      }
+      // Only show active foods for shop
+      let myProducts = productsCache.filter(p => p.status?.toLowerCase() === 'active');
       setProducts(myProducts);
       setFilteredProducts(myProducts);
       setLoading(false);
@@ -82,18 +64,13 @@ const Shop = ({ defaultCategory = "" }) => {
 
     try {
       setLoading(true);
-      const res = await api.get("/chef-foods", { params: userToMatch ? { franchise_user_id: userToMatch } : {} });
+      const res = await api.get("/chef-foods");
       const data = Array.isArray(res.data) ? res.data : [];
       setProductsCache(data);
       setLastFetchTime(Date.now());
       
-      let myProducts = data;
-      if (userToMatch) {
-        myProducts = myProducts.filter((product) => product.created_by === userToMatch);
-      }
-      if (homeChefIdToMatch) {
-        myProducts = myProducts.filter((product) => !product.home_chef_id || product.home_chef_id == homeChefIdToMatch);
-      }
+      // Only show active foods for shop
+      let myProducts = data.filter(p => p.status?.toLowerCase() === 'active');
       
       setProducts(myProducts);
       setFilteredProducts(myProducts);
@@ -108,17 +85,11 @@ const Shop = ({ defaultCategory = "" }) => {
 
   useEffect(() => {
     fetchProducts();
-  }, [homeChef, currentUser]);
+  }, []);
 
   /* ─── Filter Logic ───────────────────────────────────────────── */
   useEffect(() => {
     let updated = [...products];
-    console.log("selectedCategory:", selectedCategory);
-
-    // Enforce active status filter for regular users and guests
-    if (!currentUser || currentUser?.role?.toLowerCase() === 'user') {
-      updated = updated.filter(p => p.status?.toLowerCase() === 'active');
-    }
 
     products.forEach((p) => {
       console.log("product category:", p.category);
@@ -156,7 +127,7 @@ const Shop = ({ defaultCategory = "" }) => {
 
     // Safe price filter — treat null/undefined as 0
     updated = updated.filter(
-      (p) => parseFloat(p.offer_price || p.mrp || 0) <= parseFloat(priceRange),
+      (p) => parseFloat(p.final_price || p.offer_price || p.mrp || 0) <= parseFloat(priceRange),
     );
 
     if (offerFilter) {
@@ -166,8 +137,8 @@ const Shop = ({ defaultCategory = "" }) => {
     /* Sorting */
     if (sortOption === "az") updated.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
     if (sortOption === "za") updated.sort((a, b) => (b.name || "").localeCompare(a.name || ""));
-    if (sortOption === "priceLowHigh") updated.sort((a, b) => parseFloat(a.offer_price || 0) - parseFloat(b.offer_price || 0));
-    if (sortOption === "priceHighLow") updated.sort((a, b) => parseFloat(b.offer_price || 0) - parseFloat(a.offer_price || 0));
+    if (sortOption === "priceLowHigh") updated.sort((a, b) => parseFloat(a.final_price || a.offer_price || 0) - parseFloat(b.final_price || b.offer_price || 0));
+    if (sortOption === "priceHighLow") updated.sort((a, b) => parseFloat(b.final_price || b.offer_price || 0) - parseFloat(a.final_price || a.offer_price || 0));
     if (sortOption === "offerHighLow") updated.sort((a, b) => parseFloat(b.offer || 0) - parseFloat(a.offer || 0));
     if (sortOption === "offerLowHigh") updated.sort((a, b) => parseFloat(a.offer || 0) - parseFloat(b.offer || 0));
 
@@ -511,7 +482,7 @@ const Shop = ({ defaultCategory = "" }) => {
           >
             {currentProducts.length > 0 ? (
               currentProducts.map((product) => (
-                <ProductCard key={product._id} product={product} />
+                <ProductCard key={product.id} product={product} />
               ))
             ) : (
               <p>No products found</p>
