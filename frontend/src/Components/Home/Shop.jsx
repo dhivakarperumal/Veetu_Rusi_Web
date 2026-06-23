@@ -135,6 +135,15 @@ const Shop = ({ defaultCategory = "" }) => {
       );
     }
 
+    if (selectedType) {
+      const categoriesForType = new Set(
+        (groupedCategories[selectedType] || []).map((cat) => cat.name?.trim().toLowerCase()).filter(Boolean),
+      );
+      if (categoriesForType.size > 0) {
+        updated = updated.filter((p) => categoriesForType.has(p.category?.trim().toLowerCase()));
+      }
+    }
+
     if (selectedCategory) {
       const normalizedSelectedCategory = decodeURIComponent(selectedCategory)
         .trim()
@@ -204,8 +213,17 @@ const Shop = ({ defaultCategory = "" }) => {
   }, []);
 
   /* ─── Derived Filter Data ────────────────────────────────────── */
-  const categories = [...new Set(products.map((p) => p.category).filter(Boolean).map(cat => cat.trim()))];
-  
+  const apiCategoryNames = Object.values(groupedCategories || {})
+    .flat()
+    .map((cat) => cat.name?.trim())
+    .filter(Boolean);
+
+  const categories = selectedType
+    ? [...new Set((groupedCategories[selectedType] || []).map((cat) => cat.name?.trim()).filter(Boolean))]
+    : apiCategoryNames.length > 0
+    ? [...new Set(apiCategoryNames)]
+    : [...new Set(products.map((p) => p.category).filter(Boolean).map((cat) => cat.trim()))];
+
   const subCategories = [
     ...new Set(
       products
@@ -427,6 +445,43 @@ const Shop = ({ defaultCategory = "" }) => {
                 className="w-full accent-green-600"
               />
               <p className="text-sm mt-1">Up to ₹{Number(priceRange).toLocaleString()}</p>
+            </div>
+
+            {/* Type */}
+            <div>
+              <h4 className="font-semibold mb-3 text-gray-800 border-b pb-1">Type</h4>
+              {['Food', 'Products'].map((type) => (
+                <label key={type} className="flex items-center gap-3 mb-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="type"
+                    className="accent-green-600"
+                    checked={selectedType === type}
+                    onChange={() => {
+                      setSelectedType(type);
+                      if (selectedCategory) {
+                        const allowed = (groupedCategories[type] || [])
+                          .map((cat) => cat.name?.trim().toLowerCase());
+                        if (!allowed.includes(selectedCategory.trim().toLowerCase())) {
+                          setSelectedCategory("");
+                          setSelectedSubCategory("");
+                        }
+                      }
+                    }}
+                  />
+                  <span className="text-sm text-gray-700">{type}</span>
+                </label>
+              ))}
+              <label className="flex items-center gap-3 mb-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="type"
+                  className="accent-green-600"
+                  checked={selectedType === ""}
+                  onChange={() => setSelectedType("")}
+                />
+                <span className="text-sm text-gray-700">All Types</span>
+              </label>
             </div>
 
             {/* Category */}
