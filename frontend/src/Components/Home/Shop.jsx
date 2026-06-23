@@ -82,7 +82,7 @@ const Shop = ({ defaultCategory = "" }) => {
 
     try {
       setLoading(true);
-      const res = await api.get("/franchise-products", { params: userToMatch ? { franchise_user_id: userToMatch } : {} });
+      const res = await api.get("/chef-foods", { params: userToMatch ? { franchise_user_id: userToMatch } : {} });
       const data = Array.isArray(res.data) ? res.data : [];
       setProductsCache(data);
       setLastFetchTime(Date.now());
@@ -114,6 +114,11 @@ const Shop = ({ defaultCategory = "" }) => {
   useEffect(() => {
     let updated = [...products];
     console.log("selectedCategory:", selectedCategory);
+
+    // Enforce active status filter for regular users and guests
+    if (!currentUser || currentUser?.role?.toLowerCase() === 'user') {
+      updated = updated.filter(p => p.status?.toLowerCase() === 'active');
+    }
 
     products.forEach((p) => {
       console.log("product category:", p.category);
