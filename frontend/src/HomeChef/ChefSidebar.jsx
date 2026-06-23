@@ -50,7 +50,7 @@ const navItems = [
     ]
   },
 
-  
+  { path: "/chef/material", label: "Buy Materials", icon: Package },
   { path: "/chef/reviews", label: "Reviews", icon: MessageSquare },
   { path: "/chef/earnings", label: "Wallet & Earnings", icon: Wallet },
   { path: "/", label: "Back Home", icon: Home },
