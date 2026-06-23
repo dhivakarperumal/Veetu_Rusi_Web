@@ -272,7 +272,7 @@ const MaterialCheckout = () => {
       }
 
       toast.success("Order Placed Successfully!");
-      navigate("/chef/orders");
+      navigate("/chef/profile?tab=orders");
 
     } catch (error) {
       console.error(error);
