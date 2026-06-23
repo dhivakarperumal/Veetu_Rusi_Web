@@ -12,17 +12,18 @@ exports.getAll = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const { CatId, c_name, discripti, image, subcategory, category_type } = req.body;
-    const created_by = req.user ? req.user.id : null;
+    const { CatId, c_name, discripti, image, subcategory, category_type, created_by: body_created_by, updated_by: body_updated_by } = req.body;
+    const created_by = body_created_by || (req.user ? req.user.id : null);
+    const updated_by = body_updated_by || created_by;
     
     // Convert subcategory array to JSON string
     const subcategoryStr = Array.isArray(subcategory) ? JSON.stringify(subcategory) : subcategory;
     const imageStr = Array.isArray(image) ? JSON.stringify(image) : image;
 
     const [result] = await pool.execute(
-      `INSERT INTO home_chef_categorys (CatId, c_name, discripti, image, subcategory, category_type, created_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [CatId, c_name, discripti, imageStr, subcategoryStr, category_type || 'Food', created_by]
+      `INSERT INTO home_chef_categorys (CatId, c_name, discripti, image, subcategory, category_type, created_by, updated_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [CatId, c_name, discripti, imageStr, subcategoryStr, category_type || 'Food', created_by, updated_by]
     );
 
     res.status(201).json({ message: 'Created successfully', id: result.insertId });

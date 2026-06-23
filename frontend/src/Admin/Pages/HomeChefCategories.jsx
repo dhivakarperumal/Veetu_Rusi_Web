@@ -65,11 +65,24 @@ const HomeChefCategories = () => {
   const fetchCategories = async () => {
     try {
       const response = await api.get("/home-chef-categories");
-      const sanitized = (response.data || []).map(cat => ({
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const userId = user.user_id || user.id;
+
+      let sanitized = (response.data || []).map(cat => ({
         ...cat,
         image: safeParse(cat.image),
         subcategory: safeParse(cat.subcategory)
       }));
+
+      if (userId && user.role !== 'SuperAdmin') {
+        sanitized = sanitized.filter(cat => 
+          cat.created_by == userId || 
+          cat.created_by_user_id == userId ||
+          cat.franchise_user_id == userId ||
+          !cat.created_by // optionally keep generic categories if needed, but per user request we filter strictly
+        );
+      }
+
       setCategories(sanitized);
     } catch (err) {
       console.error("Error fetching categories:", err);
@@ -164,13 +177,22 @@ const HomeChefCategories = () => {
       return;
     }
 
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const userId = user.user_id || user.id;
+
+    const payload = {
+      ...category,
+      created_by: userId,
+      updated_by: userId
+    };
+
     setLoading(true);
     try {
       if (editId) {
-        await api.put(`/home-chef-categories/${editId}`, category);
+        await api.put(`/home-chef-categories/${editId}`, payload);
         toast.success("Category updated!");
       } else {
-        await api.post("/home-chef-categories", category);
+        await api.post("/home-chef-categories", payload);
         toast.success("Category added!");
       }
       closeModal();
