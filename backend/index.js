@@ -117,6 +117,9 @@ app.use('/api/orders', ordersRouter);
 app.use('/api/chef/recipes', recipesRouter);
 app.use('/api/cart', cartRouter);
 app.use('/api/wishlist', wishlistRouter);
+const homeChefCategorysRouter = require('./src/routes/homeChefCategorys');
+app.use('/api/home-chef-categories', homeChefCategorysRouter);
+
 app.use('/api/dealers', dealersRouter);
 app.use('/api/user-food', userFoodRouter);
 app.use('/api/user-food-orders', userFoodOrdersRouter);

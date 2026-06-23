@@ -81,6 +81,7 @@ const HomeChefPanel = React.lazy(() => import("./HomeChef/ChefPanel.jsx"));
 const HomeChefDashboard = React.lazy(() => import("./HomeChef/Pages/AnalyticsDashboard.jsx"));
 const HomeChefPageManagement = React.lazy(() => import("./HomeChef/Pages/HomeChefManagement.jsx"));
 const AdminHomeChefManagement = React.lazy(() => import("./Admin/Pages/HomeChefManagement.jsx"));
+const AdminHomeChefCategories = React.lazy(() => import("./Admin/Pages/HomeChefCategories.jsx"));
 const ChefAddProducts = React.lazy(() => import("./HomeChef/Pages/AddProducts.jsx"));
 const ChefFoodAdd = React.lazy(() => import("./HomeChef/Pages/ChefFoodAdd.jsx"));
 const ChefFoodAll = React.lazy(() => import("./HomeChef/Pages/ChefFoodAll.jsx"));
@@ -284,6 +285,7 @@ const router = createBrowserRouter([
       { index: true, element: <Dashboard /> },
       { path: "restaurants", element: <AdminRestaurantManagement /> },
       { path: "homechefs", element: <AdminHomeChefManagement /> },
+      { path: "homechefs/categories", element: <AdminHomeChefCategories /> },
       { path: "homechefs/:id", element: <HomeChefDetail /> },
       { path: "delivery-partners", element: <DeliveryPartnerManagement /> },
       { path: "users", element: <UserManagement /> },

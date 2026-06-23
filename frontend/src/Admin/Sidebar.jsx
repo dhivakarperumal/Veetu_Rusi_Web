@@ -30,7 +30,14 @@ import { useAuth } from "../PrivateRouter/AuthContext";
 const navItems = [
   { path: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   // { path: "/admin/restaurants", label: "Restaurants", icon: Store },
-  { path: "/admin/homechefs", label: "Home Chefs", icon: ChefHat },
+  {
+    label: "Home Chefs",
+    icon: ChefHat,
+    children: [
+      { path: "/admin/homechefs", label: "Home Chefs List", icon: List },
+      { path: "/admin/homechefs/categories", label: "Category New One", icon: Layers },
+    ],
+  },
   { path: "/admin/delivery-partners", label: "Delivery Partners", icon: Bike },
   { path: "/admin/food-orders", label: "Food Orders", icon: ShoppingCart },
   { path: "/admin/food-products", label: "Food Products", icon: ShoppingBag },
