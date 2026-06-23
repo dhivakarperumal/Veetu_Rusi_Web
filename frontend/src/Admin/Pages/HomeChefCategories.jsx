@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import api from "../../api";
 import imageCompression from "browser-image-compression";
 import toast from "react-hot-toast";
@@ -406,7 +407,7 @@ const HomeChefCategories = () => {
         )}
 
         {/* Modal Overlay */}
-        {showModal && (
+        {showModal && createPortal(
           <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
              <div className="absolute inset-0 bg-emerald-950/20 backdrop-blur-md animate-in fade-in duration-300" onClick={closeModal} />
              
@@ -544,7 +545,8 @@ const HomeChefCategories = () => {
                    </div>
                 </form>
              </div>
-          </div>
+          </div>,
+          document.body
         )}
       </div>
     </div>
