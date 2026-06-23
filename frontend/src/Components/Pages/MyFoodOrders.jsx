@@ -62,7 +62,7 @@ const getItemSummary = (items) => {
   return `${names.slice(0, 2).join(", ")} +${names.length - 2} more`;
 };
 
-export default function MyFoodOrders() {
+export default function MyFoodOrders({ isEmbedded = false }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -181,11 +181,7 @@ export default function MyFoodOrders() {
     }
   };
 
-  return (
-    <>
-      <PageHeader title="My Food Orders" />
-      <div className="min-h-screen bg-slate-50 py-14">
-        <PageContainer>
+  const content = (
           <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <div>
@@ -301,7 +297,13 @@ export default function MyFoodOrders() {
               </div>
             )}
           </div>
-        </PageContainer>
+  );
+
+  return (
+    <>
+      {!isEmbedded && <PageHeader title="My Food Orders" />}
+      <div className={isEmbedded ? "" : "min-h-screen bg-slate-50 py-14"}>
+        {isEmbedded ? content : <PageContainer>{content}</PageContainer>}
       </div>
 
       {selectedOrder && (

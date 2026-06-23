@@ -11,6 +11,7 @@ import PageContainer from "../../CommenComponents/PageContainer";
 import { useSearchParams } from "react-router-dom";
 import { AuthContext } from "../../../PrivateRouter/AuthContext";
 import { useNavigate } from "react-router-dom";
+import MyFoodOrders from "../MyFoodOrders";
 
 export default function Account() {
   const [searchParams] = useSearchParams();
@@ -65,13 +66,7 @@ export default function Account() {
                   {menuItems.map((item) => (
                     <button
                       key={item.key}
-                      onClick={() => {
-                        if (item.key === "food_orders") {
-                          navigate("/food-orders");
-                        } else {
-                          setActiveTab(item.key);
-                        }
-                      }}
+                      onClick={() => setActiveTab(item.key)}
                       className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl font-medium transition-all cursor-pointer text-sm
                         ${activeTab === item.key
                           ? "bg-primary text-white shadow-md shadow-green-200"
@@ -102,6 +97,7 @@ export default function Account() {
             <div className="lg:col-span-3">
               {activeTab === "personal" && <PersonalInfo />}
               {activeTab === "orders"   && <Orders />}
+              {activeTab === "food_orders" && <MyFoodOrders isEmbedded={true} />}
               {activeTab === "address"  && <Address />}
               {activeTab === "password" && <SetPassword />}
             </div>
