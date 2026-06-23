@@ -78,14 +78,15 @@ export const StoreProvider = ({ children }) => {
 
         // Correctly parse images if they are stored as JSON strings
         const productImages = typeof product.images === 'string' ? JSON.parse(product.images) : (product.images || []);
-        const variantImage = selectedVariant?.images?.[0] || productImages[0] || null;
+        const variantImage = selectedVariant?.images?.[0] || productImages[0] || product.image || product.wishlist_image || null;
 
         const price = parseFloat(selectedVariant?.offerPrice || selectedVariant?.salePrice || selectedVariant?.price || product.offer_price || product.price || 0);
 
         try {
             await api.post("/cart", {
                 user_id: user.user_id,
-                product_id: product.id || product.product_id,
+                product_id: product.product_id || product.id,
+                name: product.name,
                 variant_color: variantColor,
                 variant_size: selectedSize,
                 image: variantImage,
@@ -115,7 +116,7 @@ export const StoreProvider = ({ children }) => {
 
         const payload = {
             user_id: user.user_id,
-            product_id: product.id || product.product_id,
+            product_id: product.product_id || product.id,
             name: product.name,
             image: image,
             price: price,
