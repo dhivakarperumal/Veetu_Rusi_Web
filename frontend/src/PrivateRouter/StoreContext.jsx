@@ -73,8 +73,8 @@ export const StoreProvider = ({ children }) => {
         }
 
         const selectedVariant = variant || product.variants?.[0] || null;
-        const selectedSize = size || selectedVariant?.weight || selectedVariant?.selectedSizes?.[0] || "Free Size";
-        const variantColor = selectedVariant?.colorName || selectedVariant?.color || "Default";
+        const selectedSize = size || selectedVariant?.weight || selectedVariant?.selectedSizes?.[0] || "";
+        const variantColor = selectedVariant?.colorName || selectedVariant?.color || "";
 
         // Correctly parse images if they are stored as JSON strings
         const productImages = typeof product.images === 'string' ? JSON.parse(product.images) : (product.images || []);
