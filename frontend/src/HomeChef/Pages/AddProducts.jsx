@@ -241,21 +241,27 @@ const AddProducts = () => {
             }
 
             // Not editing: load chef categories only
-            const userData = JSON.parse(localStorage.getItem("user") || "{}");
-            const chefUserId = userData.user_id || userData.id || null;
-            const catsResult = await api.get("/chef-categories", { params: { chef_user_id: chefUserId } });
+            try {
+                const userData = JSON.parse(localStorage.getItem("user") || "{}");
+                const chefUserId = userData.user_id || userData.id || null;
+                const catsResult = await api.get("/chef-categories", { params: { chef_user_id: chefUserId } });
 
-            if (Array.isArray(catsResult.data)) {
-                setCategories(catsResult.data);
-                setFormData(prev => ({
-                    ...prev,
-                    category: catsResult.data[0]?.name || "Cooked Food",
-                }));
-            } else {
-                console.warn('Unexpected category response', catsResult);
+                if (Array.isArray(catsResult.data)) {
+                    setCategories(catsResult.data);
+                    setFormData(prev => ({
+                        ...prev,
+                        category: catsResult.data[0]?.name || "Cooked Food",
+                    }));
+                } else {
+                    console.warn('Unexpected category response', catsResult);
+                }
+            } catch (error) {
+                console.error('Failed to load categories', error);
+                // We shouldn't show a toast on every load if categories just aren't there yet,
+                // but at least we'll stop the loading spinner.
+            } finally {
+                setFetching(false);
             }
-
-            setFetching(false);
         };
         fetchEssentialData();
     }, [id, isEdit]);
@@ -739,7 +745,7 @@ const AddProducts = () => {
                 </div>
 
                 {/* Inventory Manager */}
-                {/* <div className="space-y-8">
+                <div className="space-y-8">
                     <div className="flex items-center justify-between sticky top-25 z-20 bg-gray-50/90 backdrop-blur-md p-3 rounded-2xl border border-gray-100 shadow-sm">
                         <div className="flex items-center gap-2">
                             <FiBox className="text-orange-500" />
@@ -852,7 +858,7 @@ const AddProducts = () => {
                             </div>
                         </div>
                     ))}
-                </div> */}
+                </div>
 
                 {/* Bottom Global Action Button */}
                 <div className="lg:col-span-3 pt-10 pb-20 border-t border-gray-100 mt-10">
