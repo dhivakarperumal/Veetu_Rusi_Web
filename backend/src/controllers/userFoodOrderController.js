@@ -105,16 +105,14 @@ const addUserFoodOrder = async (payload) => {
       chef_id || null,
       chef_name || null,
       chef_email || null,
-      chef_phone || null,
-      franchise_user_id || null,
-      franchise_id || null,
-      franchise_name || null,
-      franchise_email || null,
-      franchise_phone || null,
-      ordered_by_name || null,
-      ordered_by_email || null,
-      ordered_by_phone || null
-    ]
+          `SELECT * FROM user_food_order_table
+           WHERE chef_user_id = ?
+             OR chef_id = ?
+             OR items LIKE ?
+             OR items LIKE ?
+             OR items LIKE ?
+           ORDER BY COALESCE(ordered_at, created_at, updated_at) DESC`,
+          [chefUserId, chefUserId, ...patterns]
   );
 
   // Fetch the inserted order to include items and full data
@@ -433,8 +431,8 @@ const getAllOrders = async (filters = {}) => {
       };
 
       if (chef_id) {
-        const chefData = getChefOrderItemsAndTotals(row, chef_id);
-        const hasChefRow =
+         const key = item.chef_name || item.chef_email || item.chef_user_id || item.chef_id || 'unknown';
+         const chefName = item.chef_name || item.chef || 'Unknown Chef';
           String(row.chef_id) === String(chef_id) ||
           String(row.chef_user_id) === String(chef_id);
 
