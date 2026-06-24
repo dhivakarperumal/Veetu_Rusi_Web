@@ -311,14 +311,29 @@ const FranchiseOwnerManagement = () => {
       };
       const formData = new FormData();
       Object.keys(submitForm).forEach(key => {
-        if (submitForm[key] instanceof FileList || Array.isArray(submitForm[key])) {
-          for (let i = 0; i < submitForm[key].length; i++) {
-            formData.append(key, submitForm[key][i]);
+        const value = submitForm[key];
+        if (value instanceof FileList) {
+          for (let i = 0; i < value.length; i++) {
+            formData.append(key, value[i]);
           }
-        } else if (submitForm[key] !== null && submitForm[key] !== undefined) {
-          formData.append(key, submitForm[key]);
+        } else if (Array.isArray(value)) {
+          if (key === 'territory_pincodes') {
+            formData.append(key, value.filter(Boolean).join(', '));
+          } else {
+            value.forEach(item => {
+              if (item !== null && item !== undefined) {
+                formData.append(key, item);
+              }
+            });
+          }
+        } else if (value !== null && value !== undefined) {
+          formData.append(key, value);
         }
       });
+
+      if (submitForm.district !== undefined && submitForm.district !== null) {
+        formData.set('district', String(submitForm.district).trim());
+      }
 
       if (editingFranchise) {
         await api.put(`/superadmin/franchises/${editingFranchise.id}`, formData);
