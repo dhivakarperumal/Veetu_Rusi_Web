@@ -118,19 +118,11 @@ exports.getAllProducts = async (req, res) => {
         const params = [];
         let query = '';
 
-        // If caller requests chef-scoped results, query `chef_products` table
         if (chef_user_id || chef_id) {
-            table = 'chef_products';
             query = 'SELECT * FROM chef_products WHERE 1=1';
-            if (chef_id) {
-                query += ' AND chef_id = ?'; params.push(chef_id);
-            }
-            if (chef_user_id) {
-                query += ' AND chef_user_id = ?'; params.push(chef_user_id);
-            }
+            if (chef_id) { query += ' AND chef_id = ?'; params.push(chef_id); }
+            if (chef_user_id) { query += ' AND chef_user_id = ?'; params.push(chef_user_id); }
         } else {
-            // Default to franchise_products for admin/franchise listings
-            table = 'franchise_products';
             query = 'SELECT * FROM franchise_products WHERE 1=1';
             if (franchise_id) { query += ' AND franchise_id = ?'; params.push(franchise_id); }
             if (franchise_user_id) { query += ' AND franchise_user_id = ?'; params.push(franchise_user_id); }
@@ -170,7 +162,6 @@ exports.getProductById = async (req, res) => {
             });
         }
 
-        // Fallback: try franchise_products table
         const [franchiseProducts] = await pool.execute('SELECT * FROM franchise_products WHERE id = ?', [id]);
         if (franchiseProducts.length > 0) {
             const product = franchiseProducts[0];
@@ -233,24 +224,17 @@ exports.createProduct = async (req, res) => {
             franchise_name,
             franchise_email,
             franchise_phone,
-            created_by_user_id,
-            created_by_email,
-            created_by_name,
-            created_by_phone,
             franchise_id
         } = req.body;
 
-        // Validation
-        if (!name || !category || !mrp) {
-            return res.status(400).json({
-                message: 'Required fields: name, category, mrp'
-            });
-        }
+        if (!name || !category || !mrp) return res.status(400).json({ message: 'Required fields: name, category, mrp' });
 
-        // Determine product code
         const finalProductCode = product_code || await generateNextProductCode();
-
         const metadata = await resolveProductMetadata(req, req.body);
+        const {
+            finalChefId,
+            finalChefUserId,
+            finalChefName,
             finalChefPhone,
             finalChefEmail,
             finalFranchiseId,
@@ -260,13 +244,8 @@ exports.createProduct = async (req, res) => {
             finalFranchisePhone
         } = metadata;
 
-        const finalCreatedByUserId = finalChefUserId || created_by_user_id || null;
-        const finalCreatedByEmail = finalChefEmail || created_by_email || null;
-        const finalCreatedByName = created_by_name || finalChefName || null;
-        const finalCreatedByPhone = created_by_phone || finalChefPhone || null;
         const finalFranchiseIdResolved = franchise_id || finalFranchiseId || null;
-
-        const createdBy = req.user?.user_id || req.user?.id || req.user?.email || req.user?.name || req.body.created_by || finalCreatedByUserId || finalCreatedByEmail || finalCreatedByName || 'Admin';
+        const createdBy = req.user?.user_id || req.user?.id || req.user?.email || req.user?.name || req.body.created_by || 'Admin';
 
         const params = [
             name, description || null, category, product_type || 'Cooked Food', subcategory || null,
@@ -278,8 +257,9 @@ exports.createProduct = async (req, res) => {
             prep_time || null, ingredients || null, spice_level || 'Medium',
             shelf_life_days || null, net_weight || null, package_count || null,
             packaging_type || 'Pouch', manufacture_date || null,
-                const finalFranchiseIdResolved = franchise_id || finalFranchiseId || null;
-            finalCreatedByUserId, finalCreatedByEmail, finalCreatedByName, finalCreatedByPhone,
+            serializeJsonField(variants), images ? JSON.stringify(images) : null,
+            finalChefId, finalChefUserId, finalChefName, finalChefPhone, finalChefEmail,
+            finalFranchiseUserId, finalFranchiseName, finalFranchiseEmail, finalFranchisePhone,
             finalFranchiseIdResolved, createdBy
         ];
 
@@ -289,11 +269,9 @@ exports.createProduct = async (req, res) => {
             serving_size, prep_time, ingredients, spice_level, shelf_life_days, net_weight, package_count,
             packaging_type, manufacture_date, variants, images, chef_id, chef_user_id, chef_name, chef_phone, chef_email,
             franchise_user_id, franchise_name, franchise_email, franchise_phone,
-            created_by_user_id, created_by_email, created_by_name, created_by_phone,
             franchise_id, created_by`;
 
         const placeholders = params.map(() => '?').join(', ');
-        // Sanitize undefined -> null for insert params as well
         const insertParams = params.map(v => v === undefined ? null : v);
 
         const [result] = await pool.execute(
@@ -301,11 +279,7 @@ exports.createProduct = async (req, res) => {
             insertParams
         );
 
-        res.status(201).json({
-            message: 'Franchise product created successfully',
-            id: result.insertId,
-            product_code: finalProductCode
-        });
+        res.status(201).json({ message: 'Franchise product created successfully', id: result.insertId, product_code: finalProductCode });
     } catch (error) {
         console.error('Error creating product:', error);
         res.status(500).json({ message: 'Failed to create product', error: error.message });
@@ -324,14 +298,11 @@ exports.updateProduct = async (req, res) => {
             packaging_type, manufacture_date, variants, images,
             chef_id, chef_user_id, chef_name, chef_phone, chef_email,
             franchise_user_id, franchise_name, franchise_email, franchise_phone,
-            created_by_user_id, created_by_email, created_by_name, created_by_phone, franchise_id
+            franchise_id
         } = req.body;
 
-        // Check if product exists
         const [existing] = await pool.execute('SELECT id FROM chef_products WHERE id = ?', [id]);
-        if (existing.length === 0) {
-            return res.status(404).json({ message: 'Product not found' });
-        }
+        if (existing.length === 0) return res.status(404).json({ message: 'Product not found' });
 
         const metadata = await resolveProductMetadata(req, req.body);
         const {
@@ -359,14 +330,8 @@ exports.updateProduct = async (req, res) => {
         const finalFranchiseEmailResolved = franchise_email || finalFranchiseEmail || null;
         const finalFranchisePhoneResolved = franchise_phone || finalFranchisePhone || null;
 
-        const finalCreatedByUserId = finalChefUserIdResolved || created_by_user_id || null;
-        const finalCreatedByEmail = finalChefEmailResolved || created_by_email || null;
-        const finalCreatedByName = created_by_name || finalChefNameResolved || null;
-        const finalCreatedByPhone = created_by_phone || finalChefPhoneResolved || null;
-
         const updatedBy = req.user?.user_id || req.user?.id || req.user?.email || req.user?.name || req.body.updated_by || 'Admin';
 
-        // Update product
         const updateQuery = `UPDATE chef_products SET
                 name = ?, description = ?, category = ?, product_type = ?, subcategory = ?,
                 mrp = ?, offer = ?, offer_price = ?, product_code = ?, total_stock = ?,
@@ -377,29 +342,27 @@ exports.updateProduct = async (req, res) => {
                 package_count = ?, packaging_type = ?, manufacture_date = ?, variants = ?, images = ?,
                 chef_id = ?, chef_user_id = ?, chef_name = ?, chef_phone = ?, chef_email = ?,
                 franchise_user_id = ?, franchise_name = ?, franchise_email = ?, franchise_phone = ?,
-                created_by_user_id = ?, created_by_email = ?, created_by_name = ?, created_by_phone = ?,
                 franchise_id = ?, updated_by = ?, updated_at = NOW()
             WHERE id = ?`;
+
         const params = [
             name, description, category, product_type, subcategory, mrp, offer, offer_price,
             product_code, total_stock, rating, status, material, nutrition_info, storage_instructions,
             presentation_style, portion_format, service_type, packaging_notes, dietary_tag, heat_profile,
             serving_size, prep_time, ingredients, spice_level, shelf_life_days, net_weight, package_count,
-            packaging_type, manufacture_date, serializeJsonField(variants),
-            images ? JSON.stringify(images) : null,
+            packaging_type, manufacture_date, serializeJsonField(variants), images ? JSON.stringify(images) : null,
             finalChefIdResolved, finalChefUserIdResolved, finalChefNameResolved, finalChefPhoneResolved, finalChefEmailResolved,
             finalFranchiseUserIdResolved, finalFranchiseNameResolved, finalFranchiseEmailResolved, finalFranchisePhoneResolved,
-            finalCreatedByUserId, finalCreatedByEmail, finalCreatedByName, finalCreatedByPhone,
-            finalFranchiseIdResolved, updatedBy,
-            id
+            finalFranchiseIdResolved, updatedBy, id
         ];
 
-        // Sanitize undefined -> null to satisfy mysql2 parameter binding
         const sanitized = params.map(v => v === undefined ? null : v);
-
         await pool.execute(updateQuery, sanitized);
-
         res.json({ message: 'Product updated successfully' });
+    } catch (error) {
+        console.error('Error updating product:', error);
+        res.status(500).json({ message: 'Failed to update product', error: error.message });
+    }
 };
 
 // Delete product
@@ -407,11 +370,8 @@ exports.deleteProduct = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Check if product exists
         const [existing] = await pool.execute('SELECT id FROM chef_products WHERE id = ?', [id]);
-        if (existing.length === 0) {
-            return res.status(404).json({ message: 'Product not found' });
-        }
+        if (existing.length === 0) return res.status(404).json({ message: 'Product not found' });
 
         await pool.execute('DELETE FROM chef_products WHERE id = ?', [id]);
         res.json({ message: 'Product deleted successfully' });
@@ -430,11 +390,16 @@ exports.getLatestProductCode = async (req, res) => {
 
         let nextCode = 'P001';
         if (products.length > 0) {
-            const lastCode = products[0].product_code;
-            const num = parseInt(lastCode.replace('P', ''), 10) + 1;
-            nextCode = `P${String(num).padStart(3, '0')}`;
+            const lastCode = products[0].product_code || '';
+            const num = parseInt(lastCode.replace(/^P/i, ''), 10);
+            const nextNumber = Number.isInteger(num) ? num + 1 : 1;
+            nextCode = `P${String(nextNumber).padStart(3, '0')}`;
         }
 
+        res.json({ latestCode: nextCode });
+    } catch (error) {
+        console.error('Error getting product code:', error);
+        res.status(500).json({ message: 'Failed to get product code', error: error.message });
     }
 };
 
@@ -460,6 +425,7 @@ exports.getCategories = async (req, res) => {
         }));
 
         res.json(categories);
+    } catch (error) {
         console.error('Error fetching categories:', error);
         res.status(500).json({ message: 'Failed to fetch categories', error: error.message });
     }
@@ -500,7 +466,6 @@ exports.createCategory = async (req, res) => {
         const finalCreatedByUserId = created_by_user_id || req.user?.user_id || req.user?.id || null;
         const finalFranchiseId = franchise_id || null;
 
-        // Ignore client-supplied catId for creates; generate franchise-scoped IDs server-side.
         let finalCatId = await generateNextCategoryId(finalCreatedByUserId);
 
         const insertSql =
@@ -534,88 +499,14 @@ exports.createCategory = async (req, res) => {
             }
         }
 
-        if (!result) {
-            return res.status(409).json({ message: 'Unable to generate a unique Category ID. Please try again.' });
-        }
+        if (!result) return res.status(409).json({ message: 'Unable to generate a unique Category ID. Please try again.' });
 
         res.status(201).json({ message: 'Category created successfully', id: result.insertId, catId: finalCatId });
     } catch (err) {
         console.error('Failed to create category:', err);
         if (err.code === 'ER_DUP_ENTRY') {
-            return res.status(409).json({ message: 'Category ID already exists for this franchise user. Please try again.' });
+            return res.status(409).json({ message: 'Category ID conflict, try again' });
         }
         res.status(500).json({ message: 'Failed to create category', error: err.message });
-    }
-};
-
-// Update existing category by catId or id
-exports.updateCategory = async (req, res) => {
-    try {
-        const catId = req.params.catId;
-        const updates = req.body;
-        const fields = [];
-        const params = [];
-
-        if (updates.catId) {
-            fields.push('catId = ?');
-            params.push(updates.catId);
-        }
-        if (updates.name || updates.cname) {
-            fields.push('name = ?');
-            params.push(updates.name || updates.cname);
-        }
-        if (updates.description !== undefined || updates.cdescription !== undefined) {
-            fields.push('description = ?');
-            params.push(updates.description !== undefined ? updates.description : updates.cdescription);
-        }
-        if (updates.subcategory !== undefined) {
-            fields.push('subcategory = ?');
-            params.push(JSON.stringify(updates.subcategory));
-        }
-        if (updates.images !== undefined || updates.cimgs !== undefined) {
-            fields.push('images = ?');
-            params.push(JSON.stringify(updates.images !== undefined ? updates.images : updates.cimgs));
-        }
-
-        // Always update the updated_by field with the user's ID, not their name
-        const updatedByUserId = req.user?.user_id || req.user?.id || req.body?.updated_by || null;
-        if (updatedByUserId) {
-            fields.push('updated_by = ?');
-            params.push(updatedByUserId);
-        }
-
-        if (fields.length === 0) {
-            return res.status(400).json({ message: 'No fields to update' });
-        }
-
-        params.push(catId, catId);
-        const [result] = await pool.execute(
-            `UPDATE franchise_category SET ${fields.join(', ')} WHERE catId = ? OR id = ?`,
-            params
-        );
-
-        if (result.affectedRows === 0) return res.status(404).json({ message: 'Category not found' });
-
-        res.json({ message: 'Updated' });
-    } catch (err) {
-        console.error('Failed to update category:', err);
-        res.status(500).json({ message: 'Failed to update category', error: err.message });
-    }
-};
-
-// Delete category by catId or id
-exports.deleteCategory = async (req, res) => {
-    try {
-        const catId = req.params.catId;
-        const [result] = await pool.execute(
-            'DELETE FROM franchise_category WHERE catId = ? OR id = ?',
-            [catId, catId]
-        );
-
-        if (result.affectedRows === 0) return res.status(404).json({ message: 'Category not found' });
-        res.json({ message: 'Deleted' });
-    } catch (err) {
-        console.error('Failed to delete category:', err);
-        res.status(500).json({ message: 'Failed to delete category', error: err.message });
     }
 };
