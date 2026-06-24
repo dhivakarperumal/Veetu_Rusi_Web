@@ -184,7 +184,7 @@ exports.createProduct = async (req, res) => {
         const params = [
             name, description || null, category, product_type || 'Cooked Food', subcategory || null,
             mrp, offer || 0, offer_price || mrp, finalProductCode, total_stock || 0,
-            rating || 5, status || 'Active', material || null, nutrition_info || null,
+            rating || 5, status || 'Inactive', material || null, nutrition_info || null,
             storage_instructions || 'Keep Refrigerated', presentation_style || null,
             portion_format || null, service_type || null, packaging_notes || null,
             dietary_tag || null, heat_profile || null, serving_size || null,
