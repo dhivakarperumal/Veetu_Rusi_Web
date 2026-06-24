@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
     FiArrowLeft,
-    FiSave,
     FiBox,
     FiLayers,
     FiUploadCloud,
@@ -125,7 +124,19 @@ const AddProducts = () => {
         net_weight: "",
         package_count: "",
         packaging_type: "Pouch",
-        manufacture_date: "" });
+        manufacture_date: "",
+        packaging_image: "",
+        images: []
+    });
+
+    const [activeStepIndex, setActiveStepIndex] = useState(0);
+    const steps = [
+        { id: 'details', label: 'Dish Details' },
+        { id: 'pricing', label: 'Pricing & Stock' },
+        { id: 'product', label: 'Product Details' },
+        { id: 'variants', label: 'Portion & Inventory' },
+        { id: 'images', label: 'Images & Review' }
+    ];
 
     const [variants, setVariants] = useState([
         {
@@ -152,6 +163,14 @@ const AddProducts = () => {
              
             setFormData(prev => ({ ...prev, offer_price: "0" }));
         }
+    }, [formData.mrp, formData.offer]);
+
+    const computedFinalPrice = useMemo(() => {
+        const mrpValue = parseFloat(formData.mrp) || 0;
+        const offerValue = parseFloat(formData.offer) || 0;
+        if (mrpValue <= 0) return "0";
+        const calculated = mrpValue - mrpValue * (offerValue / 100);
+        return Math.round(calculated).toString();
     }, [formData.mrp, formData.offer]);
 
     // 2. Auto-calculate Total Stock whenever variants or sizesStock change
@@ -378,6 +397,21 @@ const AddProducts = () => {
         }
     };
 
+    const handlePackagingUpload = async (e) => {
+        try {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            const options = { maxSizeMB: 0.5, maxWidthOrHeight: 1200, useWebWorker: true };
+            const compressed = await imageCompression(file, options);
+            const imageData = await imageCompression.getDataUrlFromFile(compressed);
+            setFormData(prev => ({ ...prev, packaging_image: imageData }));
+            toast.success('Packaging image added');
+        } catch (err) {
+            console.error(err);
+            toast.error('Packaging image upload failed');
+        }
+    };
+
     const removeVariantImage = (vIndex, imgIndex) => {
         const updated = [...variants];
         updated[vIndex].images = updated[vIndex].images.filter((_, i) => i !== imgIndex);
@@ -485,6 +519,7 @@ const AddProducts = () => {
             <form onSubmit={handleSubmit} className="w-full">
                 <div className="space-y-8">
                     {/* Primary Categorization & Identity */}
+                    {activeStepIndex === 0 && (
                     <div className="bg-[#111319] p-6 sm:p-10 rounded-[2.5rem] border border-slate-800 shadow-sm relative overflow-hidden group text-slate-200">
                         <div className="absolute -top-10 -right-10 p-8 opacity-[0.03] text-blue-600">
                             <FiLayers size={200} />
@@ -634,8 +669,10 @@ const AddProducts = () => {
                             )}
                         </div>
                     </div>
+                    )}
 
                     {/* Industrial Pricing & Stock */}
+                    {activeStepIndex === 1 && (
                     <div className="bg-white p-8 sm:p-10 rounded-[3rem] shadow-2xl space-y-8 relative overflow-hidden group">
                         <div className="absolute top-0 right-0 p-8 opacity-5 text-gray-900 group-hover:scale-110 transition-transform">
                             <FaRupeeSign size={150} />
@@ -686,8 +723,10 @@ const AddProducts = () => {
                             </div>
                         </div>
                     </div>
+                    )}
 
                     {/* Product Details */}
+                    {activeStepIndex === 2 && (
                     <div className="bg-white p-6 sm:p-10 rounded-[2.5rem] border border-gray-100 shadow-sm relative overflow-hidden group">
                         <div className="absolute -bottom-10 -right-10 p-8 opacity-[0.03] text-indigo-600">
                             <FiBox size={200} />
@@ -742,9 +781,11 @@ const AddProducts = () => {
                             </div>
                         </div>
                     </div>
+                    )}
                 </div>
 
                 {/* Inventory Manager */}
+                {activeStepIndex === 3 && (
                 <div className="space-y-8">
                     <div className="flex items-center justify-between sticky top-25 z-20 bg-gray-50/90 backdrop-blur-md p-3 rounded-2xl border border-gray-100 shadow-sm">
                         <div className="flex items-center gap-2">
@@ -860,29 +901,73 @@ const AddProducts = () => {
                     ))}
                 </div>
 
-                {/* Bottom Global Action Button */}
-                <div className="lg:col-span-3 pt-10 pb-20 border-t border-gray-100 mt-10">
-                    <div className="flex items-center justify-end">
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="flex items-center justify-center gap-4 bg-slate-900 border-4 border-white hover:bg-black disabled:bg-slate-400 disabled:cursor-not-allowed text-white py-4 px-10 rounded-[2.5rem] text-xl font-black shadow-2xl shadow-slate-200 transition-all active:scale-95 group"
-                        >
-                            {loading ? (
-                                <div className="flex items-center gap-3">
-                                    <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                                    <span className="text-sm font-bold animate-pulse">Processing Masterpiece...</span>
-                                </div>
-                            ) : (
-                                <>
-                                    <div className="p-2 bg-white/10 rounded-xl group-hover:bg-blue-500 transition-colors">
-                                        <FiSave className="text-2xl" />
+                )}
+
+                {/* Images & Review / Navigation */}
+                {activeStepIndex === 4 && (
+                    <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-100 shadow-sm relative">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-xs font-black text-gray-400 uppercase mb-2">Packaging Image</label>
+                                <label className="flex items-center gap-3 p-4 border-2 border-dashed rounded-xl cursor-pointer">
+                                    <FiUploadCloud />
+                                    <span className="text-sm">Upload packaging image</span>
+                                    <input type="file" accept="image/*" onChange={handlePackagingUpload} className="hidden" />
+                                </label>
+                                {formData.packaging_image && (
+                                    <div className="mt-4 rounded-lg overflow-hidden border">
+                                        <img src={formData.packaging_image} alt="pack" className="w-full object-cover h-48" />
                                     </div>
-                                    <span>{isEdit ? 'Update Dish' : 'Add Dish'}</span>
-                                    <FiPlus className="text-white/40 group-hover:text-white transition-colors" />
-                                </>
+                                )}
+                            </div>
+                            <div>
+                                <p className="text-sm font-black text-gray-700">Review</p>
+                                <div className="mt-3 text-sm text-gray-600">
+                                    <p><strong className="text-slate-800">Name:</strong> {formData.name || '-'}</p>
+                                    <p><strong className="text-slate-800">Category:</strong> {formData.category || '-'}</p>
+                                    <p><strong className="text-slate-800">Price:</strong> {formData.mrp || '-'}</p>
+                                    <p><strong className="text-slate-800">Final Price:</strong> {computedFinalPrice}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                <div className="mt-6 rounded-[2rem] border border-white/10 bg-[#0b111a] p-4 shadow-[0_25px_60px_rgba(0,0,0,0.25)]">
+                    <div className="flex flex-col md:flex-row items-center gap-4">
+                        <div className="flex-1">
+                            <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Navigation</p>
+                            <h5 className="mt-2 text-lg font-black text-white">Advance to the next stage</h5>
+                        </div>
+
+                        <div className="flex items-center gap-3 w-full md:w-auto">
+                            <button
+                                type="button"
+                                onClick={() => setActiveStepIndex(Math.max(0, activeStepIndex - 1))}
+                                disabled={activeStepIndex === 0}
+                                className="inline-flex items-center justify-center min-w-[140px] rounded-3xl border border-white/10 bg-transparent px-5 py-3 text-sm font-semibold text-slate-300 transition hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:border-white/5 disabled:text-slate-500"
+                            >
+                                Previous Step
+                            </button>
+
+                            {activeStepIndex < steps.length - 1 ? (
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveStepIndex(Math.min(steps.length - 1, activeStepIndex + 1))}
+                                    className="inline-flex items-center justify-center min-w-[140px] rounded-3xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500"
+                                >
+                                    Next Step
+                                </button>
+                            ) : (
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="inline-flex items-center justify-center min-w-[140px] rounded-3xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-70 disabled:cursor-not-allowed"
+                                >
+                                    {loading ? 'Saving...' : (isEdit ? 'Update Dish' : 'Save Dish')}
+                                </button>
                             )}
-                        </button>
+                        </div>
                     </div>
                 </div>
             </form>
