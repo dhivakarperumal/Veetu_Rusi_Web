@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 
 const initialForm = {
   category: "",
+  product_type: "Food",
   name: "",
   description: "",
   cuisine: "",
@@ -113,6 +114,7 @@ const ChefFoodAdd = () => {
         setEditId(item.id);
         setForm({
           category: item.category || "",
+          product_type: item.product_type || "Food",
           name: item.name || "",
           description: item.description || "",
           cuisine: item.cuisine || "",
@@ -194,6 +196,7 @@ const ChefFoodAdd = () => {
       ...form,
       shelf_life_days: form.shelf_life_days ? Number(form.shelf_life_days) : null,
       mrp: Number(form.mrp),
+      product_type: form.product_type || "Food",
       offer: Number(form.offer) || 0,
       final_price: Number(form.final_price) || null,
       packaging_image: form.packaging_image || null,
@@ -261,6 +264,14 @@ const ChefFoodAdd = () => {
                       <div>
                         <label className="block text-xs font-black text-slate-300 uppercase mb-2">Food Name *</label>
                         <input placeholder="e.g., Butter Chicken" value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} className={fieldClass} />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-black text-slate-300 uppercase mb-2">Type *</label>
+                        <select value={form.product_type} onChange={(e) => setForm((p) => ({ ...p, product_type: e.target.value }))} className={fieldClass}>
+                          <option value="Food">Food</option>
+                          <option value="Food Product">Food Product</option>
+                        </select>
                       </div>
                     </div>
 

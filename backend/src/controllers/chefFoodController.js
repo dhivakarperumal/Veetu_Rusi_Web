@@ -177,6 +177,7 @@ exports.createFood = async (req, res) => {
   try {
     const {
       category,
+      product_type,
       name,
       description,
       cuisine,
@@ -212,14 +213,15 @@ exports.createFood = async (req, res) => {
     const computedFinalPrice = Number(final_price) || (Number(mrp) - (Number(offer) || 0) * Number(mrp) / 100) || Number(mrp);
 
     const insertSql = `INSERT INTO chef_food_table
-      (category, name, description, cuisine, prep_time, preparation_url, shelf_life_days, mrp, offer, final_price,
+      (category, product_type, name, description, cuisine, prep_time, preparation_url, shelf_life_days, mrp, offer, final_price,
        dietary_tag, net_weight, packaging_type, packaging_image, ingredients, instructions, images, status,
        franchise_user_id, created_by, updated_by
       )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
     const params = [
       category,
+      product_type || 'Food',
       name,
       description,
       cuisine || null,
@@ -258,7 +260,7 @@ exports.updateFood = async (req, res) => {
     const params = [];
 
     const allowed = [
-      'category', 'name', 'description', 'cuisine', 'prep_time', 'preparation_url', 'shelf_life_days', 'mrp',
+      'category', 'product_type', 'name', 'description', 'cuisine', 'prep_time', 'preparation_url', 'shelf_life_days', 'mrp',
       'offer', 'final_price', 'dietary_tag', 'net_weight', 'packaging_type', 'packaging_image',
       'ingredients', 'instructions', 'images', 'status', 'franchise_user_id'
     ];

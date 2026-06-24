@@ -98,8 +98,8 @@ const AddProducts = () => {
     const [formData, setFormData] = useState({
         name: "",
         description: "",
-        category: "Cooked Food",
-        product_type: "Cooked Food", // Cooked Food | Masala / Pre-cooked
+        category: "Food Product",
+        product_type: "Food Product", // Food | Food Product
         subcategory: "",
         mrp: "",
         offer: "",
@@ -192,7 +192,7 @@ const AddProducts = () => {
                 // Fetch categories and the product independently so one failure doesn't block the other
                 const [catsResult, productResult] = await Promise.allSettled([
                     api.get("/home-chef-categories"),
-                    api.get(`/products/${id}`)
+                    api.get(`/chef-foods/${id}`)
                 ]);
 
                 if (catsResult.status === 'fulfilled') {
@@ -216,11 +216,11 @@ const AddProducts = () => {
                         setFormData({
                             name: p.name || "",
                             description: p.description || "",
-                            category: p.category || "Cooked Food",
+                            category: p.category || "Food Product",
                             subcategory: p.subcategory || "",
                             mrp: p.mrp?.toString() || "",
                             offer: p.offer?.toString() || "",
-                            offer_price: p.offer_price?.toString() || "",
+                            offer_price: (p.offer_price || p.final_price)?.toString() || "",
                             product_code: p.product_code || "",
                             total_stock: p.total_stock?.toString() || "0",
                             rating: p.rating?.toString() || "5",
@@ -273,7 +273,7 @@ const AddProducts = () => {
                     setCategories(filteredCats);
                     setFormData(prev => ({
                         ...prev,
-                        category: filteredCats[0]?.c_name || filteredCats[0]?.name || "Cooked Food",
+                        category: filteredCats[0]?.c_name || filteredCats[0]?.name || "Food Product",
                     }));
                 } else {
                     console.warn('Unexpected category response', catsResult);
@@ -416,16 +416,16 @@ const AddProducts = () => {
         }
 
         // Type-specific validation
-        if (formData.product_type === "Cooked Food") {
+        if (formData.product_type === "Food") {
             if (!formData.serving_size || !formData.prep_time || !formData.ingredients || !formData.shelf_life_days) {
-                toast.error("Please fill all required Cooked Food fields (serving size, prep time, ingredients, shelf life).");
+                toast.error("Please fill all required Food fields (serving size, prep time, ingredients, shelf life).");
                 return;
             }
         }
 
-        if (formData.product_type === "Masala/Pre-cooked") {
+        if (formData.product_type === "Food Product") {
             if (!formData.net_weight || !formData.ingredients || !formData.packaging_type || !formData.shelf_life_days) {
-                toast.error("Please fill all required Masala / Pre-cooked fields (net weight, ingredients, packaging, expiry).");
+                toast.error("Please fill all required Food Product fields (net weight, ingredients, packaging, expiry).");
                 return;
             }
         }
@@ -446,34 +446,47 @@ const AddProducts = () => {
 
             const chefUserId = userData.user_id || userData.id || null; // the chef's user_id label
             const chefId = homeChef?.chef_id || userData.chef_id || userData.id || null; // internal chef_id
-
             // Franchise / created-by should come from the homeChef record user_id / franchise_user_id)
             const franchiseUserId = homeChef?.created_by || homeChef?.franchise_user_id || null;
-            const createdByUserId = franchiseUserId || userData.id || null;
+
+            // Build a clean payload matching chef_food_table columns
+            const mrpNum = parseFloat(formData.mrp) || 0;
+            const offerNum = parseFloat(formData.offer) || 0;
+            const computedFinalPrice = formData.offer_price
+                ? parseFloat(formData.offer_price)
+                : mrpNum - mrpNum * (offerNum / 100);
 
             const finalData = {
-                ...formData,
-                variants,
+                // core food fields (chef_food_table columns)
+                category: formData.category || "Food Product",
+                product_type: formData.product_type || "Food Product",
+                name: formData.name,
+                description: formData.description || null,
+                cuisine: formData.cuisine || null,
+                prep_time: formData.prep_time || null,
+                preparation_url: formData.preparation_url || null,
+                shelf_life_days: formData.shelf_life_days ? Number(formData.shelf_life_days) : null,
+                mrp: mrpNum,
+                offer: offerNum,
+                final_price: computedFinalPrice || mrpNum,
+                dietary_tag: formData.dietary_tag || null,
+                net_weight: formData.net_weight || null,
+                packaging_type: formData.packaging_type || null,
+                packaging_image: formData.packaging_image || null,
+                ingredients: formData.ingredients || null,
+                instructions: formData.instructions || formData.cooking_instructions || null,
+                images: formData.images || [],
+                status: formData.status || "Inactive",
                 // chef identifiers
-                chef_id: chefId,
-                chef_user_id: chefUserId,
-                chef_name: userData.name || userData.username || "",
-                chef_phone: userData.phone || "",
-                chef_email: userData.email || "",
-                // franchise / created-by identifiers
                 franchise_user_id: franchiseUserId,
-                created_by_user_id: createdByUserId,
-                created_by_email: homeChef?.created_by_email || userData.email || "",
-                created_by_name: homeChef?.created_by_name || userData.name || userData.username || "",
-                created_by_phone: homeChef?.created_by_phone || userData.phone || ""
             };
 
             if (isEdit) {
-                await api.put(`/products/${id}`, finalData);
-                toast.success("Dish updated successfully!");
+                await api.put(`/chef-foods/${id}`, finalData);
+                toast.success("Product updated successfully!");
             } else {
-                await api.post("/products", finalData);
-                toast.success("Dish added to your menu successfully!");
+                await api.post("/chef-foods", finalData);
+                toast.success("Product added to your menu successfully!");
             }
             setTimeout(() => navigate("/chef/products"), 1500);
         } catch (error) {
@@ -531,8 +544,8 @@ const AddProducts = () => {
                                     <select name="category" value={formData.category} onChange={handleFormChange} className="w-full px-6 py-4 bg-[#0b0d10] border-2 border-transparent rounded-3xl outline-none focus:bg-[#0f1216] focus:border-emerald-500/20 transition-all text-base font-black text-white shadow-inner cursor-pointer appearance-none">
                                         {categories.length > 0 ? categories.map(cat => <option key={cat.id || cat.CatId} value={cat.c_name || cat.name || cat.CatId}>{cat.c_name || cat.name || cat.CatId}</option>) : (
                                             <>
-                                                <option>Cooked Food</option>
-                                                <option>Masala / Pre-cooked</option>
+                                                <option>Food Product</option>
+                                                <option>Food</option>
                                                 <option>Snacks</option>
                                                 <option>Beverages</option>
                                             </>
@@ -579,19 +592,18 @@ const AddProducts = () => {
                                 <textarea name="description" value={formData.description} onChange={handleFormChange} rows="3" placeholder="Describe the dish, flavors and serving suggestions..." className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-3xl outline-none focus:bg-white focus:border-emerald-500/20 transition-all text-sm font-medium text-gray-600 shadow-inner resize-none" />
                             </div>
 
-                            {/* Product Type Selector for HomeChef */}
                             <div className="space-y-4">
-                                <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Product Type *</label>
+                                <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Type *</label>
                                 <select name="product_type" value={formData.product_type} onChange={handleFormChange} className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-3xl outline-none focus:bg-white focus:border-emerald-500/20 transition-all text-base font-black text-slate-800 shadow-inner cursor-pointer appearance-none">
-                                    <option value="Cooked Food">Cooked Food</option>
-                                    <option value="Masala/Pre-cooked">Masala / Pre-cooked</option>
+                                    <option value="Food">Food</option>
+                                    <option value="Food Product">Food Product</option>
                                 </select>
                             </div>
 
                             {/* Type-specific fields */}
-                            {formData.product_type === "Cooked Food" ? (
+                            {formData.product_type === "Food" ? (
                                 <div className="space-y-6 bg-emerald-50/30 p-6 rounded-2xl">
-                                    <h3 className="text-sm font-black text-emerald-700">Cooked Food Details</h3>
+                                    <h3 className="text-sm font-black text-emerald-700">Food Details</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <label className="text-xs font-bold text-gray-600">Serving Size *</label>
@@ -621,7 +633,7 @@ const AddProducts = () => {
                                 </div>
                             ) : (
                                 <div className="space-y-6 bg-yellow-50/30 p-6 rounded-2xl">
-                                    <h3 className="text-sm font-black text-amber-700">Masala / Pre-cooked Details</h3>
+                                    <h3 className="text-sm font-black text-amber-700">Food Product Details</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <label className="text-xs font-bold text-gray-600">Net Weight (g) *</label>

@@ -94,7 +94,7 @@ const ChefSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
     // 2. Dropdown parent check: check if any child is perfectly active or a sub-path
     if (item.children) {
       return item.children.some(child => {
-        const childPath = getDynamicPath(child.path);
+        const childPath = getDynamicPath(child.path).split("?")[0];
         return currentPath === childPath || currentPath.startsWith(childPath + "/");
       });
     }
@@ -202,7 +202,18 @@ const ChefSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                       {item.children.map((sub) => {
                         const SubIcon = sub.icon;
                         const subPath = getDynamicPath(sub.path);
-                        const isActive = location.pathname === subPath;
+                        const basePath = subPath.split("?")[0];
+                        const targetQuery = subPath.split("?")[1] || "";
+                        const currentQuery = location.search.replace("?", "");
+                        
+                        let isActive = false;
+                        if (location.pathname === basePath) {
+                          if (targetQuery) {
+                            isActive = currentQuery === targetQuery || (!currentQuery && targetQuery === "status=All");
+                          } else {
+                            isActive = currentQuery === "";
+                          }
+                        }
 
                         return (
                           <NavLink
