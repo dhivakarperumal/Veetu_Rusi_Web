@@ -12,11 +12,13 @@ export const StoreProvider = ({ children }) => {
     const [loadingCart, setLoadingCart] = useState(false);
     const [loadingWishlist, setLoadingWishlist] = useState(false);
     const [productsCache, setProductsCache] = useState([]);
+    const [chefFoodsCache, setChefFoodsCache] = useState([]);
     const [userFoodCart, setUserFoodCart] = useState([]);
     const [videosCache, setVideosCache] = useState([]);
     const [bannersCache, setBannersCache] = useState({});
     const [categoriesCache, setCategoriesCache] = useState([]);
     const [lastFetchTime, setLastFetchTime] = useState(0);
+    const [lastChefFoodsFetchTime, setLastChefFoodsFetchTime] = useState(0);
 
     // ─── Fetch cart from backend ─────────────────────────────────
     const fetchCart = useCallback(async () => {
@@ -383,11 +385,12 @@ export const StoreProvider = ({ children }) => {
             loadingCart, loadingWishlist,
             fetchCart, fetchWishlist,
             productsCache, setProductsCache,
+            chefFoodsCache, setChefFoodsCache,
             videosCache, setVideosCache,
             bannersCache, setBannersCache,
             categoriesCache, setCategoriesCache,
-            lastFetchTime, setLastFetchTime
-        }}>
+            lastFetchTime, setLastFetchTime,
+            lastChefFoodsFetchTime, setLastChefFoodsFetchTime,        }}>
             {children}
         </StoreContext.Provider>
     );
