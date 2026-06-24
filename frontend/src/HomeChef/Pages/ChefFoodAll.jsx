@@ -79,7 +79,15 @@ const ChefFoodAll = () => {
       const params = {};
       if (profile?.user_id || profile?.id) params.chef_user_id = profile.user_id || profile.id;
       const res = await api.get("/chef-foods", { params });
-      setFoods(Array.isArray(res.data) ? res.data : []);
+      const allFoods = Array.isArray(res.data) ? res.data : [];
+      const foodsOnly = allFoods.filter(item => {
+        if (!item.product_type) {
+          if (!item.category) return true;
+          return !String(item.category).toLowerCase().includes('product');
+        }
+        return item.product_type === 'Food';
+      });
+      setFoods(foodsOnly);
     } catch (err) {
       console.error("Failed to load chef foods", err);
       toast.error("Could not load chef food items.");

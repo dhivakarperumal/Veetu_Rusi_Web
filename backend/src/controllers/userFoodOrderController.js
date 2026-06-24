@@ -175,13 +175,12 @@ const getChefOrders = async (chefUserId) => {
     `SELECT * FROM user_food_order_table
      WHERE chef_user_id = ?
        OR chef_id = ?
-       OR created_by_user_id = ?
        OR items LIKE ?
        OR items LIKE ?
        OR items LIKE ?
        OR items LIKE ?
-     ORDER BY COALESCE(ordered_at, created_at, updated_at) DESC`,
-    [chefUserId, chefUserId, chefUserId, ...patterns]
+     ORDER BY COALESCE(ordered_at, updated_at) DESC`,
+    [chefUserId, chefUserId, ...patterns]
   );
 
   const chefOrders = [];
@@ -196,8 +195,7 @@ const getChefOrders = async (chefUserId) => {
     // If no matching items in the JSON but the order-level chef_user_id matches, include all items
     const orderLevelMatch =
       String(row.chef_user_id) === String(chefUserId) ||
-      String(row.chef_id) === String(chefUserId) ||
-      String(row.created_by_user_id) === String(chefUserId);
+      String(row.chef_id) === String(chefUserId);
 
     const effectiveItems = chefItems.length > 0 ? chefItems : orderLevelMatch ? items : [];
     if (!effectiveItems.length && !orderLevelMatch) continue;
@@ -215,8 +213,8 @@ const getChefOrders = async (chefUserId) => {
     chefOrders.push({
       ...row,
       items: effectiveItems,
-      // Normalize ordered_at — fall back to created_at or updated_at if null
-      ordered_at: row.ordered_at || row.created_at || row.updated_at || null,
+      // Normalize ordered_at — fall back to updated_at if null
+      ordered_at: row.ordered_at || row.updated_at || null,
       chef_name: chefNames.join(', ') || row.chef_name,
       chef_email: chefEmails[0] || row.chef_email,
       chef_phone: chefPhones[0] || row.chef_phone,

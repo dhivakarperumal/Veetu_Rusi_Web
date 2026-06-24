@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import api from "../../api";
 import { toast } from "react-hot-toast";
 import { Search, Filter, Edit, Check } from "lucide-react";
 
 const OrderManagement = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [partners, setPartners] = useState([]);
@@ -72,6 +73,13 @@ const OrderManagement = () => {
       const pendingAliases = ["Pending", "Order Placed", "New", "New Order"];
       if (pendingAliases.includes(statusFilter)) {
         result = result.filter((o) => pendingAliases.includes(o.status));
+        // Show only today's orders for Pending status
+        const todayStr = new Date().toDateString();
+        result = result.filter((o) => {
+          const dateStr = o.ordered_at || o.created_at || o.updated_at;
+          if (!dateStr) return false;
+          return new Date(dateStr).toDateString() === todayStr;
+        });
       } else {
         result = result.filter((o) => o.status === statusFilter);
       }
@@ -128,7 +136,10 @@ const OrderManagement = () => {
           <div className="relative">
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                navigate(`?status=${e.target.value}`);
+              }}
               className="appearance-none pl-4 pr-10 py-3 bg-[#070b13]/60 border border-white/5 rounded-2xl outline-none font-medium text-white text-sm focus:border-emerald-500/30 transition-all cursor-pointer"
             >
               <option value="All">All Orders</option>
