@@ -76,7 +76,16 @@ const FoodProducts = () => {
             .filter(Boolean)
             .some((value) => value.toString().toLowerCase().includes(search.toLowerCase()))
         : true;
-      const matchesStatus = statusFilter === 'All' ? true : item.status === statusFilter;
+      
+      let matchesStatus = true;
+      if (statusFilter === 'Approved') {
+        matchesStatus = item.status === 'Active' || item.status === 'Approved';
+      } else if (statusFilter === 'Not Approved') {
+        matchesStatus = item.status !== 'Active' && item.status !== 'Approved';
+      } else if (statusFilter !== 'All') {
+        matchesStatus = item.status === statusFilter;
+      }
+      
       return matchesSearch && matchesStatus;
     });
   }, [foods, search, statusFilter]);
@@ -88,7 +97,7 @@ const FoodProducts = () => {
     return { total, active, inactive };
   }, [foods]);
 
-  const statusOptions = ['All', 'Active', 'Inactive', 'Pending', 'Suspended', 'Rejected'];
+  const statusOptions = ['All', 'Approved', 'Not Approved', 'Active', 'Inactive', 'Pending', 'Suspended', 'Rejected'];
 
   const handleStatusUpdate = async (item, newStatus) => {
     try {
