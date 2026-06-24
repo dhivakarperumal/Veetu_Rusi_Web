@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Edit2, ShieldCheck, Phone, Mail, MapPin, CreditCard, FileText } from 'lucide-react';
+import { ArrowLeft, Edit2, ShieldCheck, Phone, Mail, MapPin, CreditCard, FileText, Bike, CheckCircle, XCircle, Clock } from 'lucide-react';
 import api from '../../api';
 import { toast } from 'react-hot-toast';
 
@@ -90,6 +90,39 @@ const DeliveryPartnerDetails = () => {
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         {/* Main Details */}
         <div className="space-y-6">
+          {partner.stats && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="rounded-3xl bg-white border border-slate-200 p-6 shadow-sm text-center hover:-translate-y-1 transition duration-300">
+                <div className="mx-auto w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-500 flex items-center justify-center mb-4">
+                  <CheckCircle className="w-6 h-6" />
+                </div>
+                <p className="text-3xl font-black text-slate-900">{partner.stats.deliveredOrders || 0}</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mt-1">Delivered</p>
+              </div>
+              <div className="rounded-3xl bg-white border border-slate-200 p-6 shadow-sm text-center hover:-translate-y-1 transition duration-300">
+                <div className="mx-auto w-12 h-12 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center mb-4">
+                  <Bike className="w-6 h-6" />
+                </div>
+                <p className="text-3xl font-black text-slate-900">{partner.stats.acceptedOrders || 0}</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mt-1">Accepted</p>
+              </div>
+              <div className="rounded-3xl bg-white border border-slate-200 p-6 shadow-sm text-center hover:-translate-y-1 transition duration-300">
+                <div className="mx-auto w-12 h-12 rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center mb-4">
+                  <XCircle className="w-6 h-6" />
+                </div>
+                <p className="text-3xl font-black text-slate-900">{partner.stats.cancelledOrders || 0}</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mt-1">Cancelled</p>
+              </div>
+              <div className="rounded-3xl bg-white border border-slate-200 p-6 shadow-sm text-center hover:-translate-y-1 transition duration-300">
+                <div className="mx-auto w-12 h-12 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center mb-4">
+                  <Clock className="w-6 h-6" />
+                </div>
+                <p className="text-3xl font-black text-slate-900">{partner.stats.newOrders || 0}</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mt-1">New Orders</p>
+              </div>
+            </div>
+          )}
+
           <div className="rounded-3xl bg-white border border-slate-200 p-8 shadow-sm">
             <div className="flex items-center gap-4 border-b border-slate-100 pb-6 mb-6">
               <div className="w-16 h-16 rounded-2xl bg-slate-100 overflow-hidden shrink-0 border border-slate-200">
