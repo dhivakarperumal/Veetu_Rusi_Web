@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import api from "../../api";
+import { AuthContext } from "../../PrivateRouter/AuthContext";
 import ProductCard from "../Products/ProductsCard";
 import PageHeader from "../CommenComponents/PageHeader";
 import { FiFilter, FiX, FiChevronLeft, FiChevronRight, FiSearch } from "react-icons/fi";
@@ -9,6 +10,7 @@ import { StoreContext } from "../../PrivateRouter/StoreContext";
 const Shop = ({ defaultCategory = "" }) => {
   const { productsCache, setProductsCache, lastFetchTime, setLastFetchTime } =
     useContext(StoreContext);
+  const { user } = useContext(AuthContext);
 
   const [products, setProducts] = useState(
     Array.isArray(productsCache) ? productsCache : [],
@@ -98,7 +100,20 @@ const Shop = ({ defaultCategory = "" }) => {
 
     try {
       setLoading(true);
-      const res = await api.get("/chef-foods");
+      const params = {};
+      if (user?.latitude && user?.longitude) {
+        params.user_lat = user.latitude;
+        params.user_lon = user.longitude;
+      }
+      if (user?.pincode) params.user_pincode = user.pincode;
+      if (user?.area) params.user_area = user.area;
+      if (user?.district) params.user_district = user.district;
+      if (user?.location_name) {
+        // Extract city from location_name (e.g. "Road, Tirupattur, District...")
+        const parts = user.location_name.split(',').map(s => s.trim());
+        if (parts.length >= 2) params.user_city = parts[1];
+      }
+      const res = await api.get("/chef-foods", { params });
       const data = Array.isArray(res.data) ? res.data : [];
       setProductsCache(data);
       setLastFetchTime(Date.now());
@@ -119,7 +134,7 @@ const Shop = ({ defaultCategory = "" }) => {
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [user]);
 
   /* ─── Filter Logic ───────────────────────────────────────────── */
   useEffect(() => {

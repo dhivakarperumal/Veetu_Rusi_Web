@@ -34,7 +34,7 @@ exports.getNearbyChefs = async (req, res) => {
     }
 
     if (!isNaN(lat) && !isNaN(lon)) {
-      query += ` HAVING distance <= ${searchRadius}`;
+      query += ` HAVING distance <= COALESCE(CAST(SUBSTRING_INDEX(NULLIF(delivery_radius, ''), ' ', 1) AS UNSIGNED), ${searchRadius})`;
       query += ' ORDER BY distance ASC';
     } else {
       query += ' ORDER BY hc.created_at DESC';

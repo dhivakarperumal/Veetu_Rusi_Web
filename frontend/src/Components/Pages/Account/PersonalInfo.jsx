@@ -20,7 +20,9 @@ export default function PersonalInfo() {
     pincode: "",
     district: "",
     area: "",
-    location_name: ""
+    location_name: "",
+    latitude: "",
+    longitude: ""
   });
 
   useEffect(() => {
@@ -33,7 +35,9 @@ export default function PersonalInfo() {
         pincode: user.pincode || "",
         district: user.district || "",
         area: user.area || "",
-        location_name: user.location_name || ""
+        location_name: user.location_name || "",
+        latitude: user.latitude || "",
+        longitude: user.longitude || ""
       });
     }
   }, [user]);
@@ -52,7 +56,9 @@ export default function PersonalInfo() {
         pincode: form.pincode,
         district: form.district,
         area: form.area,
-        location_name: form.location_name
+        location_name: form.location_name,
+        latitude: form.latitude,
+        longitude: form.longitude
       });
       if (res.data?.user) {
         const token = localStorage.getItem("token");
@@ -227,6 +233,38 @@ export default function PersonalInfo() {
                     value={form.location_name}
                     onChange={handleChange}
                     placeholder="E.g. Home, Office, Full Address..."
+                    className="w-full pl-9 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition"
+                  />
+                </div>
+              </div>
+
+              {/* Latitude */}
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Latitude</label>
+                <div className="relative">
+                  <FiMapPin size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    name="latitude"
+                    value={form.latitude}
+                    onChange={handleChange}
+                    placeholder="E.g. 11.0168"
+                    className="w-full pl-9 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition"
+                  />
+                </div>
+              </div>
+
+              {/* Longitude */}
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Longitude</label>
+                <div className="relative">
+                  <FiMapPin size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    name="longitude"
+                    value={form.longitude}
+                    onChange={handleChange}
+                    placeholder="E.g. 76.9558"
                     className="w-full pl-9 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition"
                   />
                 </div>

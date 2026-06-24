@@ -10,6 +10,14 @@ function normalizeBoolean(value) {
   return value === true || value === 'true' || value === '1' || value === 1 || value === 'on';
 }
 
+function formatDistanceKM(value) {
+  if (value === undefined || value === null || value === '') return value;
+  const str = String(value).trim();
+  if (str.toLowerCase().endsWith('km')) return str.toUpperCase();
+  if (str.toLowerCase().includes('km')) return str.toUpperCase();
+  return `${str} KM`;
+}
+
 async function resolveCurrentUserAudit(req) {
   try {
     if (!req.user) return null;
@@ -108,7 +116,7 @@ exports.getHomeChefById = async (req, res) => {
 // Valid columns in home_chefs table
 const VALID_HOMECHEF_COLUMNS = [
   'id', 'user_id', 'name', 'mobile', 'email', 'aadhaar_url', 'pan_url',
-  'status', 'created_at', 'updated_at', 'profile_photo', 'alt_mobile',
+  'status', 'profile_photo', 'alt_mobile',
   'door_number', 'street_name', 'area_name', 'landmark', 'city', 'district', 'state', 'pincode',
   'map_link', 'kitchen_name', 'kitchen_address', 'kitchen_type', 'kitchen_photos',
   'cuisine_type', 'veg_nonveg', 'experience_years', 'pre_order', 'aadhaar_number',
@@ -120,7 +128,11 @@ const VALID_HOMECHEF_COLUMNS = [
   'gender', 'date_of_birth', 'age', 'country', 'kitchen_videos',
   'daily_order_capacity', 'available_days', 'available_slots', 'fssai_available', 'gst_available',
   'bank_branch', 'passbook_image', 'introduction_video', 'why_choose_me', 'delivery_radius',
-  'verification_status', 'approval_status', 'approval_date', 'rejection_reason', 'block_reason'
+  'verification_status', 'approval_status', 'approval_date', 'rejection_reason', 'block_reason',
+  'father_husband_name', 'emergency_contact',
+  'created_by_id', 'created_by_user_id', 'created_by_name', 'created_by_email', 'created_by_phone',
+  'franchise_id', 'franchise_user_id',
+  'latitude', 'longitude'
 ];
 
 exports.createHomeChef = async (req, res) => {
@@ -239,7 +251,7 @@ exports.createHomeChef = async (req, res) => {
       cooking_story,
       why_choose_me,
       languages_known,
-      delivery_radius,
+      delivery_radius: formatDistanceKM(delivery_radius),
       preorder_available: preorderAvailable,
       cutoff_time,
       fssai_certificate_url: fssaiCertUrl,
@@ -435,7 +447,7 @@ exports.updateHomeChef = async (req, res) => {
       cooking_story: normalizeValue(cooking_story, chef.cooking_story),
       why_choose_me: normalizeValue(why_choose_me, chef.why_choose_me),
       languages_known: normalizeValue(languages_known, chef.languages_known),
-      delivery_radius: normalizeValue(delivery_radius, chef.delivery_radius),
+      delivery_radius: formatDistanceKM(normalizeValue(delivery_radius, chef.delivery_radius)),
       preorder_available: preorderAvailable,
       cutoff_time: normalizeValue(cutoff_time, chef.cutoff_time),
       fssai_certificate_url: fssaiCertUrl,
@@ -502,6 +514,9 @@ exports.updateHomeChef = async (req, res) => {
     const setClauses = Object.keys(filteredUpdate).map(k => `${k} = ?`).join(', ');
     const values = Object.values(filteredUpdate);
     values.push(id);
+
+    console.log('🔍 filteredUpdate keys:', Object.keys(filteredUpdate));
+    console.log('🔍 setClauses:', setClauses);
 
     await pool.execute(
       `UPDATE home_chefs SET ${setClauses}, updated_at = NOW() WHERE id = ?`,

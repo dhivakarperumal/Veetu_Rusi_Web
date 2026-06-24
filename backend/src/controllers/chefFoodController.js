@@ -100,16 +100,23 @@ exports.getFoods = async (req, res) => {
       radius,
       area,
       district,
-      pincode
+      pincode,
+      user_pincode,
+      user_area,
+      user_district,
+      user_city
     } = req.query;
 
     const lat = parseFloat(user_lat || req.user?.latitude);
     const lon = parseFloat(user_lon || req.user?.longitude);
     const searchRadius = parseFloat(radius) || 10;
 
-    let query = 'SELECT cf.*, u.full_name as chef_name';
-    if (!isNaN(lat) && !isNaN(lon)) {
-      query += `, ( 6371 * acos( cos( radians(${lat}) ) * cos( radians( hc.latitude ) ) * cos( radians( hc.longitude ) - radians(${lon}) ) + sin( radians(${lat}) ) * sin( radians( hc.latitude ) ) ) ) AS distance`;
+    // Determine if we have valid GPS coordinates for user
+    const hasUserGPS = !isNaN(lat) && !isNaN(lon);
+
+    let query = 'SELECT cf.*, u.full_name as chef_name, hc.delivery_radius, hc.pincode as chef_pincode, hc.area_name as chef_area, hc.city as chef_city, hc.district as chef_district, hc.latitude as chef_lat, hc.longitude as chef_lon';
+    if (hasUserGPS) {
+      query += `, ( 6371 * acos( GREATEST(-1, LEAST(1, cos( radians(${lat}) ) * cos( radians( COALESCE(hc.latitude, 0) ) ) * cos( radians( COALESCE(hc.longitude, 0) ) - radians(${lon}) ) + sin( radians(${lat}) ) * sin( radians( COALESCE(hc.latitude, 0) ) ) )) ) ) AS distance`;
     } else {
       query += `, NULL as distance`;
     }
@@ -160,9 +167,37 @@ exports.getFoods = async (req, res) => {
       params.push(pincode);
     }
 
-    if (!isNaN(lat) && !isNaN(lon)) {
-      query += ` HAVING distance <= ${searchRadius}`;
+    // ── Location-based filtering ──
+    // Strategy 1: Both user and chef have GPS → use distance + delivery_radius
+    // Strategy 2: No GPS → fallback to pincode/area/city matching
+    if (hasUserGPS) {
+      // Use GPS distance filtering, but also include chefs without GPS who match by pincode/city
+      const locationConditions = [];
+      locationConditions.push(`(hc.latitude IS NOT NULL AND hc.longitude IS NOT NULL AND ( 6371 * acos( GREATEST(-1, LEAST(1, cos( radians(${lat}) ) * cos( radians( hc.latitude ) ) * cos( radians( hc.longitude ) - radians(${lon}) ) + sin( radians(${lat}) ) * sin( radians( hc.latitude ) ) )) ) ) <= COALESCE(CAST(SUBSTRING_INDEX(NULLIF(hc.delivery_radius, ''), ' ', 1) AS UNSIGNED), ${searchRadius}))`);
+
+      // Fallback: chef has no GPS but matches user's area/city/district
+      const fallbackParts = [];
+      if (user_area) fallbackParts.push('hc.area_name = ?');
+      if (user_city) fallbackParts.push('hc.city = ?');
+      if (user_district) fallbackParts.push('hc.district = ?');
+
+      if (fallbackParts.length > 0) {
+        locationConditions.push(`(hc.latitude IS NULL AND (${fallbackParts.join(' OR ')}))`);
+        if (user_area) params.push(user_area);
+        if (user_city) params.push(user_city);
+        if (user_district) params.push(user_district);
+      }
+
+      query += ` AND (${locationConditions.join(' OR ')})`;
       query += ' ORDER BY distance ASC, cf.created_at DESC';
+    } else if (user_area || user_city || user_district) {
+      // No GPS at all — match by area/city/district
+      const matchParts = [];
+      if (user_area) { matchParts.push('hc.area_name = ?'); params.push(user_area); }
+      if (user_city) { matchParts.push('hc.city = ?'); params.push(user_city); }
+      if (user_district) { matchParts.push('hc.district = ?'); params.push(user_district); }
+      query += ` AND (${matchParts.join(' OR ')})`;
+      query += ' ORDER BY cf.created_at DESC';
     } else {
       query += ' ORDER BY cf.created_at DESC';
     }

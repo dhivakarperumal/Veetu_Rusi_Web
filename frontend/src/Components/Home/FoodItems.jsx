@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { FiPlus } from "react-icons/fi";
+import { AuthContext } from "../../PrivateRouter/AuthContext";
+import { useContext } from "react";
 import api from "../../api";
 import Heading from "../Heading";
 import QuickViewModal from "../Products/QuickModel";
@@ -38,6 +40,7 @@ const getStatusClasses = (status) => {
 };
 
 const FoodItems = () => {
+  const { user } = useContext(AuthContext);
   const [foods, setFoods] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -67,7 +70,19 @@ const FoodItems = () => {
   useEffect(() => {
     const fetchFoods = async () => {
       try {
-        const res = await api.get("/chef-foods");
+        const params = {};
+        if (user?.latitude && user?.longitude) {
+          params.user_lat = user.latitude;
+          params.user_lon = user.longitude;
+        }
+        if (user?.pincode) params.user_pincode = user.pincode;
+        if (user?.area) params.user_area = user.area;
+        if (user?.district) params.user_district = user.district;
+        if (user?.location_name) {
+          const parts = user.location_name.split(',').map(s => s.trim());
+          if (parts.length >= 2) params.user_city = parts[1];
+        }
+        const res = await api.get("/chef-foods", { params });
         const data = Array.isArray(res.data) ? res.data : [];
         // Only show active foods on the home page
         const activeFoods = data.filter(f => f.status?.toLowerCase() === 'active');
@@ -80,7 +95,7 @@ const FoodItems = () => {
       }
     };
     fetchFoods();
-  }, []);
+  }, [user]);
 
   return (
     <section className="bg-slate-50 py-16">

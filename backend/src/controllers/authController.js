@@ -176,7 +176,7 @@ exports.profile = async (req, res) => {
 exports.updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { username, name, email, phone, street_address, city, district, state, country, zip_code, area, pincode } = req.body;
+    const { username, name, email, phone, street_address, city, district, state, country, zip_code, area, pincode, latitude, longitude } = req.body;
 
     if (!username || !email) {
       return res.status(400).json({ message: 'Username and email are required.' });
@@ -204,6 +204,8 @@ exports.updateProfile = async (req, res) => {
     if (availableColumns.includes('country')) updateFields.push({ field: 'country', value: country || null });
     if (availableColumns.includes('zip_code')) updateFields.push({ field: 'zip_code', value: zip_code || null });
     if (availableColumns.includes('pincode')) updateFields.push({ field: 'pincode', value: pincode || null });
+    if (availableColumns.includes('latitude')) updateFields.push({ field: 'latitude', value: latitude || null });
+    if (availableColumns.includes('longitude')) updateFields.push({ field: 'longitude', value: longitude || null });
 
     const setClause = updateFields.map((item) => '`' + item.field + '` = ?').join(', ');
     const values = updateFields.map((item) => item.value).concat([userId]);
