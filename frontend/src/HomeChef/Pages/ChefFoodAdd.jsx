@@ -244,11 +244,29 @@ const ChefFoodAdd = () => {
 
         <div className="relative w-full rounded-[2.5rem] overflow-hidden border border-white/10 shadow-[0_35px_120px_rgba(0,0,0,0.45)] bg-[#081017]">
           <div className="grid lg:grid-cols-[320px_1fr] min-h-[60vh]">
-            <aside className="hidden lg:flex flex-col p-6 bg-[#091219] border-r-2 border-white/30 h-full pr-6">
-              <div className="space-y-4">
-                <p className="text-xs uppercase tracking-[0.35em] text-emerald-300/70">Food Onboarding</p>
+            <aside className="hidden lg:flex flex-col p-6 md:p-8 bg-[#091219] border-r-2 border-white/10 h-full">
+              <div className="mb-10">
+                <p className="text-xs uppercase tracking-[0.35em] text-emerald-300/70 mb-2">Food Onboarding</p>
                 <h3 className="text-3xl font-black text-white">Advanced Form</h3>
-                <p className="text-sm leading-6 text-slate-400 max-w-[18rem]">Step through sections to add food details, pricing, images and publish.</p>
+                <p className="mt-4 text-sm leading-6 text-slate-400 max-w-[18rem]">Follow these steps to add food details, pricing, images and publish.</p>
+              </div>
+              <div className="flex-1 space-y-8">
+                {steps.map((step, index) => {
+                  const isActive = index === activeStepIndex;
+                  const isCompleted = index < activeStepIndex;
+                  return (
+                    <div key={step.id} className={`flex items-start gap-4 transition-all duration-300 ${isActive ? 'opacity-100' : isCompleted ? 'opacity-70' : 'opacity-40'}`}>
+                      <div className={`mt-0.5 w-8 h-8 rounded-full flex items-center justify-center border-2 text-xs font-black shrink-0 transition-all duration-300 ${isActive ? 'border-emerald-500 bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]' : isCompleted ? 'border-emerald-500/50 bg-emerald-500/20 text-emerald-300' : 'border-slate-700 bg-slate-800 text-slate-400'}`}>
+                        {index + 1}
+                      </div>
+                      <div>
+                        <p className={`text-sm font-black tracking-wide ${isActive ? 'text-white' : 'text-slate-300'}`}>{step.label}</p>
+                        {isActive && <p className="text-xs text-slate-400 mt-1">Current step</p>}
+                        {isCompleted && <p className="text-xs text-emerald-400 mt-1">Completed</p>}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </aside>
 
