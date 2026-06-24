@@ -72,23 +72,34 @@ export const StoreProvider = ({ children }) => {
             return;
         }
 
+        const productId = product.product_id ?? product.productId ?? product.id ?? product._id ?? null;
         const selectedVariant = variant || product.variants?.[0] || null;
-        const selectedSize = size || selectedVariant?.weight || selectedVariant?.selectedSizes?.[0] || "";
-        const variantColor = selectedVariant?.colorName || selectedVariant?.color || "";
+        const selectedSize = size ?? product.variant_size ?? product.variantSize ?? selectedVariant?.weight ?? selectedVariant?.selectedSizes?.[0] ?? "";
+        const variantColor = selectedVariant?.colorName || selectedVariant?.color || product.variant_color || product.variantColor || "";
 
         // Correctly parse images if they are stored as JSON strings
-        const productImages = typeof product.images === 'string' ? JSON.parse(product.images) : (product.images || []);
-        const variantImage = selectedVariant?.images?.[0] || productImages[0] || product.image || product.wishlist_image || null;
+        let productImages = [];
+        if (typeof product.images === 'string') {
+            try {
+                const parsedImages = JSON.parse(product.images);
+                productImages = Array.isArray(parsedImages) ? parsedImages : [parsedImages];
+            } catch (err) {
+                productImages = [product.images];
+            }
+        } else if (Array.isArray(product.images)) {
+            productImages = product.images;
+        }
 
+        const variantImage = selectedVariant?.images?.[0] || productImages[0] || product.image || product.wishlist_image || null;
         const price = parseFloat(selectedVariant?.offerPrice || selectedVariant?.salePrice || selectedVariant?.price || product.offer_price || product.price || 0);
 
         try {
             await api.post("/cart", {
                 user_id: user.user_id,
-                product_id: product.product_id || product.id,
+                product_id: productId,
                 name: product.name,
-                variant_color: variantColor,
-                variant_size: selectedSize,
+                variant_color: variantColor || "",
+                variant_size: selectedSize || "",
                 image: variantImage,
                 email: user.email || "",
                 price: price,
@@ -320,7 +331,7 @@ export const StoreProvider = ({ children }) => {
             return;
         }
 
-        const productId = product.product_id || product.id;
+        const productId = product.product_id ?? product.id ?? product._id ?? null;
         const isAlready = wishlist.some(w => Number(w.product_id) === Number(productId) || Number(w.id) === Number(productId));
 
         try {
@@ -329,8 +340,8 @@ export const StoreProvider = ({ children }) => {
                 toast.error("Removed from favorites");
             } else {
                 const selectedVariant = variant || product.variants?.[0] || null;
-                const selectedSize = size || selectedVariant?.weight || selectedVariant?.selectedSizes?.[0] || "";
-                const variantColor = selectedVariant?.colorName || selectedVariant?.color || "";
+                const selectedSize = size ?? product.variant_size ?? product.variantSize ?? selectedVariant?.weight ?? selectedVariant?.selectedSizes?.[0] ?? "";
+                const variantColor = selectedVariant?.colorName || selectedVariant?.color || product.variant_color || product.variantColor || "";
 
                 // Correctly parse images if they are stored as JSON strings
                 let productImages = [];
@@ -346,9 +357,7 @@ export const StoreProvider = ({ children }) => {
                     productImages = product.images;
                 }
                 
-                // Get valid image (must be complete URL or data URI)
-                let variantImage = selectedVariant?.images?.[0] || productImages[0] || null;
-                // If variantImage is a string and empty, set to null
+                let variantImage = selectedVariant?.images?.[0] || productImages[0] || product.image || product.wishlist_image || null;
                 if (variantImage && typeof variantImage === 'string' && variantImage.trim() === '') {
                     variantImage = null;
                 }
@@ -358,8 +367,8 @@ export const StoreProvider = ({ children }) => {
                 await api.post("/wishlist", {
                     user_id: user.user_id,
                     product_id: productId,
-                    variant_color: variantColor,
-                    variant_size: selectedSize,
+                    variant_color: variantColor || "",
+                    variant_size: selectedSize || "",
                     image: variantImage,
                     email: user.email || "",
                     price: price,

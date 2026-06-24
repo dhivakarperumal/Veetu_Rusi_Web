@@ -42,11 +42,12 @@ router.get('/:user_id', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const { user_id, product_id, variant_color, variant_size, image, email, price, total_price, quantity } = req.body;
+    const normalizedVariantSize = variant_size || '';
     
     // Check if the exact product variant already exists in cart for this user
     const [existing] = await pool.execute(
-      'SELECT * FROM \`Chef_cart\` WHERE user_id = ? AND product_id = ? AND variant_size = ?',
-      [user_id, product_id, variant_size || '']
+      'SELECT * FROM \`Chef_cart\` WHERE user_id = ? AND product_id = ? AND COALESCE(variant_size, '') = ?',
+      [user_id, product_id, normalizedVariantSize]
     );
 
     if (existing.length > 0) {
