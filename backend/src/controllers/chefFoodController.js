@@ -94,10 +94,27 @@ exports.getFoods = async (req, res) => {
       franchise_id,
       category,
       dietary_tag,
-      status
+      status,
+      user_lat,
+      user_lon,
+      radius,
+      area,
+      district,
+      pincode
     } = req.query;
 
-    let query = 'SELECT cf.*, u.full_name as chef_name FROM chef_food_table cf LEFT JOIN users u ON cf.created_by = u.user_id WHERE 1=1';
+    const lat = parseFloat(user_lat || req.user?.latitude);
+    const lon = parseFloat(user_lon || req.user?.longitude);
+    const searchRadius = parseFloat(radius) || 10;
+
+    let query = 'SELECT cf.*, u.full_name as chef_name';
+    if (!isNaN(lat) && !isNaN(lon)) {
+      query += `, ( 6371 * acos( cos( radians(${lat}) ) * cos( radians( hc.latitude ) ) * cos( radians( hc.longitude ) - radians(${lon}) ) + sin( radians(${lat}) ) * sin( radians( hc.latitude ) ) ) ) AS distance`;
+    } else {
+      query += `, NULL as distance`;
+    }
+
+    query += ' FROM chef_food_table cf LEFT JOIN users u ON cf.created_by = u.user_id LEFT JOIN home_chefs hc ON cf.created_by = hc.user_id WHERE 1=1';
     const params = [];
 
     // Enforce role-based restrictions
@@ -130,10 +147,30 @@ exports.getFoods = async (req, res) => {
       params.push(status);
     }
 
-    query += ' ORDER BY cf.created_at DESC';
+    if (area) {
+      query += ' AND hc.area_name = ?';
+      params.push(area);
+    }
+    if (district) {
+      query += ' AND hc.district = ?';
+      params.push(district);
+    }
+    if (pincode) {
+      query += ' AND hc.pincode = ?';
+      params.push(pincode);
+    }
+
+    if (!isNaN(lat) && !isNaN(lon)) {
+      query += ` HAVING distance <= ${searchRadius}`;
+      query += ' ORDER BY distance ASC, cf.created_at DESC';
+    } else {
+      query += ' ORDER BY cf.created_at DESC';
+    }
+
     const [rows] = await pool.execute(query, params);
     const foods = rows.map((row) => ({
       ...row,
+      distance: row.distance !== null && row.distance !== undefined ? `${parseFloat(row.distance).toFixed(2)} KM` : null,
       ingredients: parseJsonField(row.ingredients) || row.ingredients,
       instructions: parseJsonField(row.instructions) || row.instructions,
       images: parseJsonField(row.images) || row.images || [],

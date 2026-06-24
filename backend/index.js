@@ -128,6 +128,10 @@ app.use('/api/user-food-orders', userFoodOrdersRouter);
 app.use('/api/userFoodOrders', userFoodOrdersRouter);
 app.use('/api/delivery', deliveryRouter);
 
+const nearbyChefsRouter = require('./src/routes/nearbyChefs');
+app.use('/api/nearby-chefs', nearbyChefsRouter);
+
+
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });

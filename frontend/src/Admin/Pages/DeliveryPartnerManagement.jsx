@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { createPortal } from "react-dom";
 import api from "../../api";
 import { toast } from "react-hot-toast";
@@ -218,6 +219,7 @@ const emptyForm = {
 };
 
 const DeliveryPartnerManagement = () => {
+  const navigate = useNavigate();
   const [partners, setPartners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -1023,8 +1025,8 @@ const DeliveryPartnerManagement = () => {
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center justify-center gap-1">
-                        <button onClick={() => { setSelectedPartner(partner); setIsDetailOpen(true); }} className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-lg transition" title="View Details"><Eye className="w-4 h-4" /></button>
-                        <button onClick={() => openEditModal(partner)} className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-lg transition" title="Edit"><Edit2 className="w-4 h-4" /></button>
+                        <button onClick={() => navigate(`/admin/delivery-partners/${partner.id}`)} className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-lg transition" title="View Details"><Eye className="w-4 h-4" /></button>
+                        <button onClick={() => openEditModal(partner)} className="p-1.5 hover:bg-emerald-50 text-slate-400 hover:text-emerald-600 rounded-lg transition" title="Edit Partner"><Edit2 className="w-4 h-4" /></button>
                         {partner.status !== "Approved" && <button onClick={() => handleStatusChange(partner.id, "Approved")} className="p-1.5 hover:bg-emerald-50 text-emerald-500 hover:text-emerald-700 rounded-lg transition" title="Approve"><Check className="w-4 h-4" /></button>}
                         {partner.status === "Approved" && <button onClick={() => handleStatusChange(partner.id, "Suspended")} className="p-1.5 hover:bg-amber-50 text-amber-500 hover:text-amber-700 rounded-lg transition" title="Suspend"><ShieldAlert className="w-4 h-4" /></button>}
                         <button onClick={() => handleDelete(partner.id)} className="p-1.5 hover:bg-red-50 text-red-400 hover:text-red-600 rounded-lg transition" title="Delete"><Trash2 className="w-4 h-4" /></button>
@@ -1065,9 +1067,9 @@ const DeliveryPartnerManagement = () => {
                   <p><strong className="text-slate-600">Earnings:</strong> <span className="text-emerald-600 font-black">₹{parseFloat(partner.earnings || 0).toLocaleString()}</span></p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 mt-5 pt-4 border-t border-slate-100">
-                <button onClick={() => { setSelectedPartner(partner); setIsDetailOpen(true); }} className="flex-1 py-2 bg-slate-50 hover:bg-slate-100 rounded-xl font-bold text-xs uppercase tracking-wider text-slate-600 hover:text-slate-800 transition text-center border border-slate-200">Details</button>
-                <button onClick={() => openEditModal(partner)} className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-xl transition border border-slate-200" title="Edit"><Edit2 className="w-4 h-4" /></button>
+              <div className="flex items-center gap-2 mt-4 pt-4 border-t border-slate-100">
+                <button onClick={() => navigate(`/admin/delivery-partners/${partner.id}`)} className="flex-1 py-2 bg-slate-50 hover:bg-slate-100 rounded-xl font-bold text-xs uppercase tracking-wider text-slate-600 hover:text-slate-800 transition text-center border border-slate-200">Details</button>
+                <button onClick={() => openEditModal(partner)} className="flex-1 py-2 bg-emerald-50 hover:bg-emerald-100 rounded-xl font-bold text-xs uppercase tracking-wider text-emerald-700 hover:text-emerald-800 transition text-center border border-emerald-200">Edit</button>
                 <button onClick={() => handleDelete(partner.id)} className="p-2 bg-slate-50 hover:bg-red-50 text-red-400 hover:text-red-600 rounded-xl transition border border-slate-200" title="Delete"><Trash2 className="w-4 h-4" /></button>
               </div>
             </div>

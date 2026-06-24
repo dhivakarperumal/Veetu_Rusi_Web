@@ -16,7 +16,11 @@ export default function PersonalInfo() {
     username: "",
     email: "",
     phone: "",
-    role: ""
+    role: "",
+    pincode: "",
+    district: "",
+    area: "",
+    location_name: ""
   });
 
   useEffect(() => {
@@ -25,7 +29,11 @@ export default function PersonalInfo() {
         username: user.username || user.name || user.full_name || "",
         email: user.email || "",
         phone: user.phone || user.mobile || user.mobile_number || "",
-        role: user.role || ""
+        role: user.role || "",
+        pincode: user.pincode || "",
+        district: user.district || "",
+        area: user.area || "",
+        location_name: user.location_name || ""
       });
     }
   }, [user]);
@@ -40,7 +48,11 @@ export default function PersonalInfo() {
       const res = await api.put(`/auth/profile`, {
         username: form.username,
         email: form.email,
-        phone: form.phone
+        phone: form.phone,
+        pincode: form.pincode,
+        district: form.district,
+        area: form.area,
+        location_name: form.location_name
       });
       if (res.data?.user) {
         const token = localStorage.getItem("token");
@@ -151,6 +163,70 @@ export default function PersonalInfo() {
                     value={form.phone}
                     onChange={handleChange}
                     placeholder="Your phone number"
+                    className="w-full pl-9 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition"
+                  />
+                </div>
+              </div>
+
+              {/* Pincode */}
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Pincode</label>
+                <div className="relative">
+                  <FiMapPin size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    name="pincode"
+                    value={form.pincode}
+                    onChange={handleChange}
+                    placeholder="Your pincode"
+                    className="w-full pl-9 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition"
+                  />
+                </div>
+              </div>
+
+              {/* District */}
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">District</label>
+                <div className="relative">
+                  <FiMapPin size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    name="district"
+                    value={form.district}
+                    onChange={handleChange}
+                    placeholder="Your district"
+                    className="w-full pl-9 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition"
+                  />
+                </div>
+              </div>
+
+              {/* Area */}
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Area</label>
+                <div className="relative">
+                  <FiMapPin size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    name="area"
+                    value={form.area}
+                    onChange={handleChange}
+                    placeholder="Your area"
+                    className="w-full pl-9 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition"
+                  />
+                </div>
+              </div>
+
+              {/* Location Name */}
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Location Name</label>
+                <div className="relative">
+                  <FiMapPin size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    name="location_name"
+                    value={form.location_name}
+                    onChange={handleChange}
+                    placeholder="E.g. Home, Office, Full Address..."
                     className="w-full pl-9 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition"
                   />
                 </div>

@@ -1658,7 +1658,43 @@ exports.getDeliveryPartnerById = async (req, res) => {
     if (!rows.length) {
       return res.status(404).json({ message: 'Delivery Partner not found.' });
     }
-    res.json(rows[0]);
+    
+    const partner = rows[0];
+    const pId = String(partner.id);
+    const pUserId = String(partner.user_id);
+    
+    // Get the integer user ID from the `users` table since delivery_partner in user_food_order_table often stores users.id
+    const [userRows] = await pool.execute('SELECT id FROM users WHERE user_id = ? LIMIT 1', [pUserId]);
+    const usersId = userRows.length ? String(userRows[0].id) : null;
+    
+    // Fetch order stats for this partner
+    const [[{ deliveredOrders }]] = await pool.execute(
+      `SELECT COUNT(*) as deliveredOrders FROM user_food_order_table WHERE (delivery_partner = ? OR delivery_partner = ? OR delivery_partner = ?) AND status = 'Delivered'`,
+      [pId, pUserId, usersId]
+    );
+    
+    const [[{ acceptedOrders }]] = await pool.execute(
+      `SELECT COUNT(*) as acceptedOrders FROM user_food_order_table WHERE (delivery_partner = ? OR delivery_partner = ? OR delivery_partner = ?) AND status IN ('Assigned', 'Out for Delivery', 'Accepted by Delivery Partner', 'Delivery Partner Assigned')`,
+      [pId, pUserId, usersId]
+    );
+    
+    const [[{ cancelledOrders }]] = await pool.execute(
+      `SELECT COUNT(*) as cancelledOrders FROM user_food_order_table WHERE (delivery_partner = ? OR delivery_partner = ? OR delivery_partner = ?) AND status = 'Cancelled'`,
+      [pId, pUserId, usersId]
+    );
+    
+    const [[{ newOrders }]] = await pool.execute(
+      `SELECT COUNT(*) as newOrders FROM user_food_order_table WHERE status = 'Searching Delivery Partner' AND (delivery_partner IS NULL OR delivery_partner = '')`
+    );
+
+    partner.stats = {
+      deliveredOrders,
+      acceptedOrders,
+      cancelledOrders,
+      newOrders
+    };
+
+    res.json(partner);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving delivery partner.', error: error.message });
   }
