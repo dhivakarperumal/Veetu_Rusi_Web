@@ -37,6 +37,8 @@ const LocationPopup = () => {
           if (data && data.address) {
             const pincode = data.address.postcode || "";
             const location_name = data.display_name || "";
+            const district = data.address.state_district || data.address.county || data.address.city_district || "";
+            const area = data.address.suburb || data.address.neighbourhood || data.address.town || data.address.village || data.address.city || "";
 
             // Call backend API to update location
             const apiRes = await api.post("/auth/update-location", {
@@ -44,6 +46,8 @@ const LocationPopup = () => {
               longitude: lon.toString(),
               location_name,
               pincode,
+              district,
+              area
             });
 
             // Update user in context

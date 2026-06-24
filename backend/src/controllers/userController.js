@@ -8,7 +8,7 @@ function hashPassword(password) {
 
 exports.createUser = async (req, res) => {
   try {
-    const { full_name, mobile_number, email, password, role, profile_image, status } = req.body;
+    const { full_name, mobile_number, email, password, role, profile_image, status, district, area, pincode, latitude, longitude, location_name } = req.body;
 
     if (!full_name || !email || !password || !role) {
       return res.status(400).json({ message: 'Full name, email, password, and role are required.' });
@@ -24,8 +24,8 @@ exports.createUser = async (req, res) => {
     const userStatus = status || 'Active';
 
     const [result] = await pool.execute(
-      'INSERT INTO `users` (user_id, full_name, email, mobile_number, password, profile_image, role, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [userId, full_name, email, mobile_number || null, hashedPassword, profile_image || null, role, userStatus]
+      'INSERT INTO `users` (user_id, full_name, email, mobile_number, password, profile_image, role, status, district, area, pincode, latitude, longitude, location_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [userId, full_name, email, mobile_number || null, hashedPassword, profile_image || null, role, userStatus, district || null, area || null, pincode || null, latitude || null, longitude || null, location_name || null]
     );
 
     const user = {
@@ -36,7 +36,13 @@ exports.createUser = async (req, res) => {
       mobile_number: mobile_number || null,
       profile_image: profile_image || null,
       role,
-      status: userStatus
+      status: userStatus,
+      district: district || null,
+      area: area || null,
+      pincode: pincode || null,
+      latitude: latitude || null,
+      longitude: longitude || null,
+      location_name: location_name || null
     };
 
     return res.status(201).json({ message: 'User created successfully', user });
@@ -53,7 +59,7 @@ exports.getAllUsers = async (req, res) => {
     limit = parseInt(limit) || 10;
     const offset = (page - 1) * limit;
 
-    let query = 'SELECT id, user_id, full_name, email, mobile_number, profile_image, role, status, created_at, updated_at FROM `users` WHERE 1=1';
+    let query = 'SELECT id, user_id, full_name, email, mobile_number, profile_image, role, status, latitude, longitude, location_name, pincode, district, area, created_at, updated_at FROM `users` WHERE 1=1';
     let countQuery = 'SELECT COUNT(*) as total FROM `users` WHERE 1=1';
     const queryParams = [];
 
@@ -124,7 +130,7 @@ exports.getUserById = async (req, res) => {
   try {
     const { id } = req.params;
     const [users] = await pool.execute(
-      'SELECT id, user_id, full_name, email, mobile_number, profile_image, role, status, created_at, updated_at FROM `users` WHERE id = ?',
+      'SELECT id, user_id, full_name, email, mobile_number, profile_image, role, status, latitude, longitude, location_name, pincode, district, area, created_at, updated_at FROM `users` WHERE id = ?',
       [id]
     );
 
@@ -142,7 +148,7 @@ exports.getUserById = async (req, res) => {
 exports.updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const { full_name, mobile_number, profile_image, status, role } = req.body;
+    const { full_name, mobile_number, profile_image, status, role, latitude, longitude, location_name, pincode, district, area } = req.body;
 
     const [users] = await pool.execute('SELECT id FROM `users` WHERE id = ?', [id]);
     if (users.length === 0) {
@@ -171,6 +177,30 @@ exports.updateUser = async (req, res) => {
     if (role !== undefined) {
       updateQuery += 'role = ?, ';
       updateParams.push(role);
+    }
+    if (latitude !== undefined) {
+      updateQuery += 'latitude = ?, ';
+      updateParams.push(latitude);
+    }
+    if (longitude !== undefined) {
+      updateQuery += 'longitude = ?, ';
+      updateParams.push(longitude);
+    }
+    if (location_name !== undefined) {
+      updateQuery += 'location_name = ?, ';
+      updateParams.push(location_name);
+    }
+    if (pincode !== undefined) {
+      updateQuery += 'pincode = ?, ';
+      updateParams.push(pincode);
+    }
+    if (district !== undefined) {
+      updateQuery += 'district = ?, ';
+      updateParams.push(district);
+    }
+    if (area !== undefined) {
+      updateQuery += 'area = ?, ';
+      updateParams.push(area);
     }
 
     if (updateParams.length === 0) {

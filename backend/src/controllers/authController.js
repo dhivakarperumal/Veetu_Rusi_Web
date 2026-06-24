@@ -54,7 +54,7 @@ async function validateFranchiseAdminLogin(user) {
 
 exports.register = async (req, res) => {
   try {
-    const { username, email, phone, password } = req.body;
+    const { username, email, phone, password, district, area, pincode, latitude, longitude, location_name } = req.body;
 
     if (!username || !email || !password) {
       return res.status(400).json({ message: 'Username, email and password are required.' });
@@ -70,8 +70,8 @@ exports.register = async (req, res) => {
     const userId = generateRoleId(role);
 
     const [result] = await pool.execute(
-      'INSERT INTO `users` (user_id, full_name, email, mobile_number, password, role) VALUES (?, ?, ?, ?, ?, ?)',
-      [userId, username, email, phone || null, hashedPassword, role]
+      'INSERT INTO `users` (user_id, full_name, email, mobile_number, password, role, district, area, pincode, latitude, longitude, location_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [userId, username, email, phone || null, hashedPassword, role, district || null, area || null, pincode || null, latitude || null, longitude || null, location_name || null]
     );
 
     const user = {
@@ -81,6 +81,12 @@ exports.register = async (req, res) => {
       email,
       phone: phone || null,
       role: role,
+      district: district || null,
+      area: area || null,
+      pincode: pincode || null,
+      latitude: latitude || null,
+      longitude: longitude || null,
+      location_name: location_name || null
     };
 
     return res.status(201).json({ message: 'Registration successful', user });
@@ -100,7 +106,7 @@ exports.login = async (req, res) => {
 
     const hashedPassword = hashPassword(password);
     const [users] = await pool.execute(
-      'SELECT id, user_id, full_name as name, email, mobile_number as phone, role, status, latitude, longitude, location_name, pincode FROM `users` WHERE (email = ? OR full_name = ?) AND password = ?',
+      'SELECT id, user_id, full_name as name, email, mobile_number as phone, role, status, latitude, longitude, location_name, pincode, district, area FROM `users` WHERE (email = ? OR full_name = ?) AND password = ?',
       [identifier, identifier, hashedPassword]
     );
 
@@ -132,7 +138,7 @@ exports.profile = async (req, res) => {
     const { id, role, email } = req.user;
 
     const [users] = await pool.execute(
-      `SELECT id, user_id, full_name AS username, full_name AS name, email, mobile_number AS phone, role, status, profile_image, created_at, updated_at, latitude, longitude, location_name, pincode
+      `SELECT id, user_id, full_name AS username, full_name AS name, email, mobile_number AS phone, role, status, profile_image, created_at, updated_at, latitude, longitude, location_name, pincode, district, area
        FROM users WHERE id = ? LIMIT 1`,
       [id]
     );
@@ -170,7 +176,7 @@ exports.profile = async (req, res) => {
 exports.updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { username, name, email, phone, street_address, city, district, state, country, zip_code } = req.body;
+    const { username, name, email, phone, street_address, city, district, state, country, zip_code, area, pincode } = req.body;
 
     if (!username || !email) {
       return res.status(400).json({ message: 'Username and email are required.' });
@@ -193,9 +199,11 @@ exports.updateProfile = async (req, res) => {
     if (availableColumns.includes('street_address')) updateFields.push({ field: 'street_address', value: street_address || null });
     if (availableColumns.includes('city')) updateFields.push({ field: 'city', value: city || null });
     if (availableColumns.includes('district')) updateFields.push({ field: 'district', value: district || null });
+    if (availableColumns.includes('area')) updateFields.push({ field: 'area', value: area || null });
     if (availableColumns.includes('state')) updateFields.push({ field: 'state', value: state || null });
     if (availableColumns.includes('country')) updateFields.push({ field: 'country', value: country || null });
     if (availableColumns.includes('zip_code')) updateFields.push({ field: 'zip_code', value: zip_code || null });
+    if (availableColumns.includes('pincode')) updateFields.push({ field: 'pincode', value: pincode || null });
 
     const setClause = updateFields.map((item) => '`' + item.field + '` = ?').join(', ');
     const values = updateFields.map((item) => item.value).concat([userId]);
@@ -203,7 +211,7 @@ exports.updateProfile = async (req, res) => {
     await pool.execute(`UPDATE users SET ${setClause} WHERE id = ?`, values);
 
     const [updatedRows] = await pool.execute(
-      'SELECT id, user_id, full_name AS username, full_name AS name, email, mobile_number AS phone, role, status, profile_image, created_at, updated_at FROM users WHERE id = ? LIMIT 1',
+      'SELECT id, user_id, full_name AS username, full_name AS name, email, mobile_number AS phone, role, status, profile_image, created_at, updated_at, latitude, longitude, location_name, pincode, district, area FROM users WHERE id = ? LIMIT 1',
       [userId]
     );
 
@@ -217,19 +225,19 @@ exports.updateProfile = async (req, res) => {
 exports.updateLocation = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { latitude, longitude, location_name, pincode } = req.body;
+    const { latitude, longitude, location_name, pincode, district, area } = req.body;
 
     if (!latitude || !longitude || !pincode) {
       return res.status(400).json({ message: 'Latitude, longitude, and pincode are required.' });
     }
 
     await pool.execute(
-      'UPDATE users SET latitude = ?, longitude = ?, location_name = ?, pincode = ? WHERE id = ?',
-      [latitude, longitude, location_name || null, pincode, userId]
+      'UPDATE users SET latitude = ?, longitude = ?, location_name = ?, pincode = ?, district = ?, area = ? WHERE id = ?',
+      [latitude, longitude, location_name || null, pincode, district || null, area || null, userId]
     );
 
     const [updatedRows] = await pool.execute(
-      'SELECT id, user_id, full_name AS username, full_name AS name, email, mobile_number AS phone, role, status, profile_image, created_at, updated_at, latitude, longitude, location_name, pincode FROM users WHERE id = ? LIMIT 1',
+      'SELECT id, user_id, full_name AS username, full_name AS name, email, mobile_number AS phone, role, status, profile_image, created_at, updated_at, latitude, longitude, location_name, pincode, district, area FROM users WHERE id = ? LIMIT 1',
       [userId]
     );
 
