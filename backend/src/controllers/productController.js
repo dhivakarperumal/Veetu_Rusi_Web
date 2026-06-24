@@ -510,3 +510,76 @@ exports.createCategory = async (req, res) => {
         res.status(500).json({ message: 'Failed to create category', error: err.message });
     }
 };
+
+
+// Update existing category by catId or id
+exports.updateCategory = async (req, res) => {
+    try {
+        const catId = req.params.catId;
+        const updates = req.body;
+        const fields = [];
+        const params = [];
+
+        if (updates.catId) {
+            fields.push('catId = ?');
+            params.push(updates.catId);
+        }
+        if (updates.name || updates.cname) {
+            fields.push('name = ?');
+            params.push(updates.name || updates.cname);
+        }
+        if (updates.description !== undefined || updates.cdescription !== undefined) {
+            fields.push('description = ?');
+            params.push(updates.description !== undefined ? updates.description : updates.cdescription);
+        }
+        if (updates.subcategory !== undefined) {
+            fields.push('subcategory = ?');
+            params.push(JSON.stringify(updates.subcategory));
+        }
+        if (updates.images !== undefined || updates.cimgs !== undefined) {
+            fields.push('images = ?');
+            params.push(JSON.stringify(updates.images !== undefined ? updates.images : updates.cimgs));
+        }
+
+        // Always update the updated_by field with the user's ID, not their name
+        const updatedByUserId = req.user?.user_id || req.user?.id || req.body?.updated_by || null;
+        if (updatedByUserId) {
+            fields.push('updated_by = ?');
+            params.push(updatedByUserId);
+        }
+
+        if (fields.length === 0) {
+            return res.status(400).json({ message: 'No fields to update' });
+        }
+
+        params.push(catId, catId);
+        const [result] = await pool.execute(
+            `UPDATE franchise_category SET ${fields.join(', ')} WHERE catId = ? OR id = ?`,
+            params
+        );
+
+        if (result.affectedRows === 0) return res.status(404).json({ message: 'Category not found' });
+
+        res.json({ message: 'Updated' });
+    } catch (err) {
+        console.error('Failed to update category:', err);
+        res.status(500).json({ message: 'Failed to update category', error: err.message });
+    }
+};
+
+// Delete category by catId or id
+exports.deleteCategory = async (req, res) => {
+    try {
+        const catId = req.params.catId;
+        const [result] = await pool.execute(
+            'DELETE FROM franchise_category WHERE catId = ? OR id = ?',
+            [catId, catId]
+        );
+
+        if (result.affectedRows === 0) return res.status(404).json({ message: 'Category not found' });
+        res.json({ message: 'Deleted' });
+    } catch (err) {
+        console.error('Failed to delete category:', err);
+        res.status(500).json({ message: 'Failed to delete category', error: err.message });
+    }
+};
