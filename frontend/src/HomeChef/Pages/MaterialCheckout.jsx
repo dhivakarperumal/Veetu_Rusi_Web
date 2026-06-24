@@ -41,7 +41,22 @@ const MaterialCheckout = () => {
   const fetchAddresses = async () => {
     try {
       const res = await api.get("/orders/myorders");
-      setAddresses(res.data || []);
+      const orders = res.data || [];
+      
+      // Filter out duplicate addresses
+      const uniqueAddresses = [];
+      const seen = new Set();
+      
+      orders.forEach(order => {
+        // Create a unique key for the address to prevent duplicates
+        const key = `${order.street_address}|${order.city}|${order.zip_code}`.toLowerCase().trim();
+        if (order.street_address && !seen.has(key)) {
+          seen.add(key);
+          uniqueAddresses.push(order);
+        }
+      });
+      
+      setAddresses(uniqueAddresses);
     } catch (error) {
       console.error(error);
     }
@@ -181,7 +196,7 @@ const MaterialCheckout = () => {
   };
 
   const filteredAddresses = addresses.filter((addr) =>
-    `${addr.customer_name} ${addr.street_address} ${addr.city} ${addr.state}`
+    `${addr.customer_name || ''} ${addr.street_address || ''} ${addr.city || ''} ${addr.district || ''} ${addr.state || ''} ${addr.zip_code || ''} ${addr.country || ''} ${addr.customer_phone || ''}`
       .toLowerCase()
       .includes(searchAddress.toLowerCase())
   );
@@ -257,7 +272,7 @@ const MaterialCheckout = () => {
       }
 
       toast.success("Order Placed Successfully!");
-      navigate("/chef/orders");
+      navigate("/chef/profile?tab=orders");
 
     } catch (error) {
       console.error(error);
@@ -336,13 +351,15 @@ const MaterialCheckout = () => {
               </div>
 
               {/* Search Input */}
-              <input
-                type="text"
-                placeholder="Search addresses..."
-                value={searchAddress}
-                onChange={(e) => setSearchAddress(e.target.value)}
-                className="w-full mb-4 bg-[#0b0d10] border border-slate-700 text-white p-3 rounded-xl focus:outline-none focus:border-emerald-500 text-sm"
-              />
+              {addresses.length > 0 && (
+                <input
+                  type="text"
+                  placeholder="Search by name, address, phone or zip code..."
+                  value={searchAddress}
+                  onChange={(e) => setSearchAddress(e.target.value)}
+                  className="w-full mb-4 bg-[#0b0d10] border border-slate-700 text-white p-3 rounded-xl focus:outline-none focus:border-emerald-500 text-sm"
+                />
+              )}
 
               {/* Addresses List */}
               <div className="space-y-4 max-h-96 overflow-y-auto">

@@ -682,6 +682,14 @@ exports.createFranchise = async (req, res) => {
       bank_name, account_holder_name, account_number, ifsc_code, account_type
     } = req.body;
 
+    const normalizeTextField = (value) => {
+      if (Array.isArray(value)) return value[0] ? String(value[0]).trim() : null;
+      if (typeof value === 'string') return value.trim() || null;
+      return value ?? null;
+    };
+
+    const normalizedDistrict = normalizeTextField(district);
+
     const logo_url = req.files && req.files.logo_url ? req.files.logo_url[0].filename : null;
     const banner_url = req.files && req.files.banner_url ? req.files.banner_url[0].filename : null;
     const aadhaar_url = req.files && req.files.aadhaar_url ? req.files.aadhaar_url[0].filename : null;
@@ -714,7 +722,7 @@ exports.createFranchise = async (req, res) => {
       street_name: street_name || null,
       area: area || null,
       landmark: landmark || null,
-      district: district || null,
+      district: normalizedDistrict,
       territory_pincodes: territory_pincodes || null,
       pincode: pincode || null,
       map_link: map_link || null,
@@ -878,6 +886,14 @@ exports.updateFranchise = async (req, res) => {
       bank_name, account_holder_name, account_number, ifsc_code, account_type
     } = req.body;
 
+    const normalizeTextField = (value) => {
+      if (Array.isArray(value)) return value[0] ? String(value[0]).trim() : null;
+      if (typeof value === 'string') return value.trim() || null;
+      return value ?? null;
+    };
+
+    const normalizedDistrict = normalizeTextField(district);
+
     const [existingFranchiseRows] = await pool.execute('SELECT email, franch_user_id FROM franchise_owners WHERE id = ?', [id]);
     if (!existingFranchiseRows.length) {
       return res.status(404).json({ message: 'Franchise not found.' });
@@ -906,7 +922,7 @@ exports.updateFranchise = async (req, res) => {
     let params = [
       franchise_name, owner_name, mobile, email, city, state, status,
       pan_number || null, aadhaar_number || null, start_date || null, expiry_date || null,
-      door_number || null, street_name || null, area || null, landmark || null, district || null, territory_pincodes || null, pincode || null, map_link || null,
+      door_number || null, street_name || null, area || null, landmark || null, normalizedDistrict, territory_pincodes || null, pincode || null, map_link || null,
       username || null, role || 'Admin', otp_verified !== undefined ? (otp_verified ? 1 : 0) : 0, email_verified !== undefined ? (email_verified ? 1 : 0) : 0, login_status || 'Active',
       bank_name || null, account_holder_name || null, account_number || null, ifsc_code || null, account_type || null
     ];

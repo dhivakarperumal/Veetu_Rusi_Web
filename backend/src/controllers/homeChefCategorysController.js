@@ -1,0 +1,87 @@
+const pool = require('../config/db');
+
+exports.getAll = async (req, res) => {
+  try {
+    const [rows] = await pool.execute('SELECT * FROM home_chef_categorys ORDER BY created_at DESC');
+    res.json(rows);
+  } catch (err) {
+    console.error('Error fetching home_chef_categorys:', err);
+    res.status(500).json({ message: 'Internal server error', error: err.message });
+  }
+};
+
+exports.create = async (req, res) => {
+  try {
+    const { c_name, discripti, image, subcategory, category_type, created_by: body_created_by, updated_by: body_updated_by } = req.body;
+    const created_by = body_created_by || (req.user ? req.user.id : null);
+    const updated_by = body_updated_by || created_by;
+
+    // Auto-generate CatId from global max to avoid cross-admin collisions
+    const [rows] = await pool.execute("SELECT CatId FROM home_chef_categorys");
+    const maxNum = rows.reduce((max, row) => {
+      if (!row.CatId) return max;
+      const match = row.CatId.match(/\d+/);
+      const num = match ? parseInt(match[0]) : 0;
+      return num > max ? num : max;
+    }, 0);
+    const CatId = `HC_CAT${String(maxNum + 1).padStart(3, '0')}`;
+
+    // Convert subcategory array to JSON string
+    const subcategoryStr = Array.isArray(subcategory) ? JSON.stringify(subcategory) : subcategory;
+    const imageStr = Array.isArray(image) ? JSON.stringify(image) : image;
+
+    const [result] = await pool.execute(
+      `INSERT INTO home_chef_categorys (CatId, c_name, discripti, image, subcategory, category_type, created_by, updated_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [CatId, c_name, discripti, imageStr, subcategoryStr, category_type || 'Food', created_by, updated_by]
+    );
+
+    res.status(201).json({ message: 'Created successfully', id: result.insertId, CatId });
+  } catch (err) {
+    console.error('Error creating home_chef_category:', err);
+    res.status(500).json({ message: 'Internal server error', error: err.message });
+  }
+};
+
+exports.update = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { CatId, c_name, discripti, image, subcategory, category_type } = req.body;
+    const updated_by = req.user ? req.user.id : null;
+
+    const subcategoryStr = Array.isArray(subcategory) ? JSON.stringify(subcategory) : subcategory;
+    const imageStr = Array.isArray(image) ? JSON.stringify(image) : image;
+
+    const [result] = await pool.execute(
+      `UPDATE home_chef_categorys 
+       SET CatId = ?, c_name = ?, discripti = ?, image = ?, subcategory = ?, category_type = ?, updated_by = ?
+       WHERE id = ?`,
+      [CatId, c_name, discripti, imageStr, subcategoryStr, category_type, updated_by, id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Record not found' });
+    }
+
+    res.json({ message: 'Updated successfully' });
+  } catch (err) {
+    console.error('Error updating home_chef_category:', err);
+    res.status(500).json({ message: 'Internal server error', error: err.message });
+  }
+};
+
+exports.delete = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [result] = await pool.execute('DELETE FROM home_chef_categorys WHERE id = ?', [id]);
+    
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Record not found' });
+    }
+
+    res.json({ message: 'Deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting home_chef_category:', err);
+    res.status(500).json({ message: 'Internal server error', error: err.message });
+  }
+};

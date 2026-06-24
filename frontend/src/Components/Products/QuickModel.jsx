@@ -319,11 +319,12 @@ const QuickViewModal = ({ product, onClose }) => {
 
                   <button
                     onClick={() => {
-                      if (quantity < stock) {
+                      const maxStock = (stock !== undefined && stock !== null) ? stock : 999;
+                      if (quantity < maxStock) {
                         setQuantity(quantity + 1);
                       }
                     }}
-                    className="text-lg font-bold px-2"
+                    className="text-lg font-bold px-2 cursor-pointer"
                   >
                     +
                   </button>

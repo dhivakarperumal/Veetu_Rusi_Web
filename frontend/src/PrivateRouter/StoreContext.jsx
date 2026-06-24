@@ -72,22 +72,34 @@ export const StoreProvider = ({ children }) => {
             return;
         }
 
+        const productId = product.product_id ?? product.productId ?? product.id ?? product._id ?? null;
         const selectedVariant = variant || product.variants?.[0] || null;
-        const selectedSize = size || selectedVariant?.weight || selectedVariant?.selectedSizes?.[0] || "Free Size";
-        const variantColor = selectedVariant?.colorName || selectedVariant?.color || "Default";
+        const selectedSize = size ?? product.variant_size ?? product.variantSize ?? selectedVariant?.weight ?? selectedVariant?.selectedSizes?.[0] ?? "";
+        const variantColor = selectedVariant?.colorName || selectedVariant?.color || product.variant_color || product.variantColor || "";
 
         // Correctly parse images if they are stored as JSON strings
-        const productImages = typeof product.images === 'string' ? JSON.parse(product.images) : (product.images || []);
-        const variantImage = selectedVariant?.images?.[0] || productImages[0] || null;
+        let productImages = [];
+        if (typeof product.images === 'string') {
+            try {
+                const parsedImages = JSON.parse(product.images);
+                productImages = Array.isArray(parsedImages) ? parsedImages : [parsedImages];
+            } catch (err) {
+                productImages = [product.images];
+            }
+        } else if (Array.isArray(product.images)) {
+            productImages = product.images;
+        }
 
+        const variantImage = selectedVariant?.images?.[0] || productImages[0] || product.image || product.wishlist_image || null;
         const price = parseFloat(selectedVariant?.offerPrice || selectedVariant?.salePrice || selectedVariant?.price || product.offer_price || product.price || 0);
 
         try {
             await api.post("/cart", {
                 user_id: user.user_id,
-                product_id: product.id || product.product_id,
-                variant_color: variantColor,
-                variant_size: selectedSize,
+                product_id: productId,
+                name: product.name,
+                variant_color: variantColor || "",
+                variant_size: selectedSize || "",
                 image: variantImage,
                 email: user.email || "",
                 price: price,
@@ -115,23 +127,20 @@ export const StoreProvider = ({ children }) => {
 
         const payload = {
             user_id: user.user_id,
-            product_id: product.id || product.product_id,
+            product_id: product.product_id || product.id,
             name: product.name,
             image: image,
             price: price,
             total_price: price * qty,
             quantity: qty,
 
-            created_by_user_id: product.created_by_user_id || product.created_by || '',
-            created_by_name: product.created_by_name || product.created_by || '',
-            created_by_email: product.created_by_email || '',
-            created_by_phone: product.created_by_phone || '',
-
-            chef_user_id: product.chef_user_id || product.chef_user || '',
-            chef_id: product.chef_id || product.chef || '',
-            chef_name: product.chef_name || '',
-            chef_phone: product.chef_phone || '',
-            chef_email: product.chef_email || '',
+            // chef_user_id is the chef's user_id (user.user_id of the chef)
+            // getFoodById now returns this correctly via the users JOIN
+            chef_user_id: product.chef_user_id || product.created_by || product.created_by_user_id || '',
+            chef_id: product.chef_id || product.id_in_home_chefs || '',
+            chef_name: product.chef_name || product.created_by_name || '',
+            chef_phone: product.chef_phone || product.created_by_phone || '',
+            chef_email: product.chef_email || product.created_by_email || '',
 
             franchise_id: product.franchise_id || '',
             franchise_user_id: product.franchise_user_id || '',
@@ -222,33 +231,27 @@ export const StoreProvider = ({ children }) => {
                 price: item.price,
                 quantity: item.quantity,
                 total_price: item.total_price,
-                created_by_user_id: item.created_by_user_id,
-                created_by_name: item.created_by_name,
-                created_by_email: item.created_by_email,
-                created_by_phone: item.created_by_phone,
-                chef_user_id: item.chef_user_id,
-                chef_id: item.chef_id,
-                chef_name: item.chef_name,
-                chef_email: item.chef_email,
-                chef_phone: item.chef_phone,
-                franchise_id: item.franchise_id,
-                franchise_user_id: item.franchise_user_id,
-                franchise_name: item.franchise_name,
-                franchise_email: item.franchise_email,
-                franchise_phone: item.franchise_phone,
-                ordered_by_name: item.ordered_by_name,
-                ordered_by_email: item.ordered_by_email,
-                ordered_by_phone: item.ordered_by_phone,
+                // Use correct chef_user_id with fallback chain
+                chef_user_id: item.chef_user_id || item.created_by || item.created_by_user_id || '',
+                chef_id: item.chef_id || '',
+                chef_name: item.chef_name || item.created_by_name || '',
+                chef_email: item.chef_email || item.created_by_email || '',
+                chef_phone: item.chef_phone || item.created_by_phone || '',
+                franchise_id: item.franchise_id || '',
+                franchise_user_id: item.franchise_user_id || '',
+                franchise_name: item.franchise_name || '',
+                franchise_email: item.franchise_email || '',
+                franchise_phone: item.franchise_phone || '',
+                ordered_by_name: item.ordered_by_name || '',
+                ordered_by_email: item.ordered_by_email || '',
+                ordered_by_phone: item.ordered_by_phone || '',
             })),
-            created_by_user_id: userFoodCart[0]?.created_by_user_id || '',
-            created_by_name: userFoodCart[0]?.created_by_name || '',
-            created_by_email: userFoodCart[0]?.created_by_email || '',
-            created_by_phone: userFoodCart[0]?.created_by_phone || '',
-            chef_user_id: userFoodCart[0]?.chef_user_id || '',
+            // Order-level chef info from first cart item
+            chef_user_id: userFoodCart[0]?.chef_user_id || userFoodCart[0]?.created_by || userFoodCart[0]?.created_by_user_id || '',
             chef_id: userFoodCart[0]?.chef_id || '',
-            chef_name: userFoodCart[0]?.chef_name || '',
-            chef_email: userFoodCart[0]?.chef_email || '',
-            chef_phone: userFoodCart[0]?.chef_phone || '',
+            chef_name: userFoodCart[0]?.chef_name || userFoodCart[0]?.created_by_name || '',
+            chef_email: userFoodCart[0]?.chef_email || userFoodCart[0]?.created_by_email || '',
+            chef_phone: userFoodCart[0]?.chef_phone || userFoodCart[0]?.created_by_phone || '',
             franchise_user_id: userFoodCart[0]?.franchise_user_id || '',
             franchise_id: userFoodCart[0]?.franchise_id || '',
             franchise_name: userFoodCart[0]?.franchise_name || '',
@@ -319,7 +322,7 @@ export const StoreProvider = ({ children }) => {
             return;
         }
 
-        const productId = product.product_id || product.id;
+        const productId = product.product_id ?? product.id ?? product._id ?? null;
         const isAlready = wishlist.some(w => Number(w.product_id) === Number(productId) || Number(w.id) === Number(productId));
 
         try {
@@ -328,8 +331,8 @@ export const StoreProvider = ({ children }) => {
                 toast.error("Removed from favorites");
             } else {
                 const selectedVariant = variant || product.variants?.[0] || null;
-                const selectedSize = size || selectedVariant?.weight || selectedVariant?.selectedSizes?.[0] || "";
-                const variantColor = selectedVariant?.colorName || selectedVariant?.color || "";
+                const selectedSize = size ?? product.variant_size ?? product.variantSize ?? selectedVariant?.weight ?? selectedVariant?.selectedSizes?.[0] ?? "";
+                const variantColor = selectedVariant?.colorName || selectedVariant?.color || product.variant_color || product.variantColor || "";
 
                 // Correctly parse images if they are stored as JSON strings
                 let productImages = [];
@@ -345,9 +348,7 @@ export const StoreProvider = ({ children }) => {
                     productImages = product.images;
                 }
                 
-                // Get valid image (must be complete URL or data URI)
-                let variantImage = selectedVariant?.images?.[0] || productImages[0] || null;
-                // If variantImage is a string and empty, set to null
+                let variantImage = selectedVariant?.images?.[0] || productImages[0] || product.image || product.wishlist_image || null;
                 if (variantImage && typeof variantImage === 'string' && variantImage.trim() === '') {
                     variantImage = null;
                 }
@@ -357,8 +358,8 @@ export const StoreProvider = ({ children }) => {
                 await api.post("/wishlist", {
                     user_id: user.user_id,
                     product_id: productId,
-                    variant_color: variantColor,
-                    variant_size: selectedSize,
+                    variant_color: variantColor || "",
+                    variant_size: selectedSize || "",
                     image: variantImage,
                     email: user.email || "",
                     price: price,

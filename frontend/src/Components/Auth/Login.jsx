@@ -36,20 +36,23 @@ function Login() {
         navigate("/admin");
       } else if (res.data.user.role === "delivery_partner") {
         navigate("/delivery");
-      } else {
+      } else if (res.data.user.role === "homechef" || res.data.user.role === "chef") {
+        navigate("/chef");
+      }
+      else {
         navigate("/");
       }
     } catch (error) {
       console.error("Login Error:", error);
-      
+
       let errorMessage = error.response?.data?.message || "Login failed";
-      
+
       // If the user is inactive or deactivated (usually 403)
       if (error.response?.status === 403) {
         const currentTime = new Date().toLocaleString();
         errorMessage = `${errorMessage} (Login attempt at: ${currentTime})`;
       }
-      
+
       toast.error(errorMessage, { position: "top-right" });
     }
   };
@@ -81,15 +84,15 @@ function Login() {
 
     } catch (error) {
       console.error("Google Login Error:", error);
-      
+
       let errorMessage = error.response?.data?.message || error.message || "Google Login Failed";
-      
+
       // If the user is inactive or deactivated (usually 403)
       if (error.response?.status === 403) {
         const currentTime = new Date().toLocaleString();
         errorMessage = `${errorMessage} (Login attempt at: ${currentTime})`;
       }
-      
+
       toast.error(errorMessage, { position: "top-right" });
     }
   };
@@ -104,15 +107,15 @@ function Login() {
 
       {/* Main Card - Increased Size */}
       <div className="relative z-10 w-full max-w-[1000px] min-h-[600px] bg-white rounded-3xl shadow-[0_20px_60px_-15px_rgba(20,184,166,0.3)] overflow-hidden flex transform transition-all hover:shadow-[0_25px_60px_-15px_rgba(20,184,166,0.4)]">
-        
+
         {/* Left Image Section - Brighter and more vibrant */}
-        <div 
+        <div
           className="absolute inset-0 w-full h-full bg-cover bg-center hidden md:block"
           style={{ backgroundImage: "url('https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=1200&q=80')" }}
         >
           {/* Subtle warm overlay to make food pop */}
           <div className="absolute inset-0 bg-gradient-to-t from-teal-900/60 via-teal-800/20 to-transparent"></div>
-          
+
           {/* Decorative text on image */}
           <div className="absolute bottom-12 left-12 right-[55%] text-white">
             <h1 className="text-4xl font-bold mb-3 drop-shadow-lg">Veetu Rusi</h1>
@@ -130,14 +133,14 @@ function Login() {
 
         {/* Right Form Section */}
         <div className="relative z-10 w-full md:w-[50%] md:ml-auto h-full flex flex-col justify-center px-8 md:px-12 py-10">
-          
+
           <div className="mb-10">
             <h2 className="text-4xl font-bold text-gray-800 mb-2 tracking-tight">Welcome Back</h2>
             <p className="text-gray-500 text-base font-medium">Log in to your account to continue</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            
+
             {/* Email Field with Label */}
             <div className="space-y-2">
               <label className="block text-sm font-bold text-gray-700 ml-1">Email Address</label>
@@ -159,10 +162,10 @@ function Login() {
             {/* Password Field with Label */}
             <div className="space-y-2">
               <div className="flex justify-between items-center ml-1">
-                 <label className="block text-sm font-bold text-gray-700">Password</label>
-                 <Link to="/forgot-password" className="text-sm text-teal-600 hover:text-teal-700 font-bold hover:underline transition-colors">
+                <label className="block text-sm font-bold text-gray-700">Password</label>
+                <Link to="/forgot-password" className="text-sm text-teal-600 hover:text-teal-700 font-bold hover:underline transition-colors">
                   Forgot password?
-                 </Link>
+                </Link>
               </div>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none transition-colors group-focus-within:text-teal-500 text-gray-400">
@@ -203,9 +206,9 @@ function Login() {
             {/* Social Icons & Google Login */}
             <div className="mt-10 flex flex-col items-center space-y-6">
               <div className="flex items-center w-full max-w-xs gap-4">
-                 <div className="flex-1 h-px bg-gray-200"></div>
-                 <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Or login with</span>
-                 <div className="flex-1 h-px bg-gray-200"></div>
+                <div className="flex-1 h-px bg-gray-200"></div>
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Or login with</span>
+                <div className="flex-1 h-px bg-gray-200"></div>
               </div>
 
               <div className="flex justify-center space-x-6 text-gray-400">
@@ -213,7 +216,7 @@ function Login() {
                 <a href="#" className="hover:text-sky-500 transition-colors transform hover:scale-110"><FaTwitter className="h-6 w-6" /></a>
                 <a href="#" className="hover:text-blue-700 transition-colors transform hover:scale-110"><FaLinkedinIn className="h-6 w-6" /></a>
               </div>
-              
+
               <div className="flex justify-center w-full overflow-hidden rounded-2xl shadow-sm transition-transform hover:scale-[1.02]">
                 <GoogleLogin
                   onSuccess={handleSuccess}

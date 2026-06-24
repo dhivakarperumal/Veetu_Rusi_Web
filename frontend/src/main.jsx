@@ -81,6 +81,7 @@ const HomeChefPanel = React.lazy(() => import("./HomeChef/ChefPanel.jsx"));
 const HomeChefDashboard = React.lazy(() => import("./HomeChef/Pages/AnalyticsDashboard.jsx"));
 const HomeChefPageManagement = React.lazy(() => import("./HomeChef/Pages/HomeChefManagement.jsx"));
 const AdminHomeChefManagement = React.lazy(() => import("./Admin/Pages/HomeChefManagement.jsx"));
+const AdminHomeChefCategories = React.lazy(() => import("./Admin/Pages/HomeChefCategories.jsx"));
 const ChefAddProducts = React.lazy(() => import("./HomeChef/Pages/AddProducts.jsx"));
 const ChefFoodAdd = React.lazy(() => import("./HomeChef/Pages/ChefFoodAdd.jsx"));
 const ChefFoodAll = React.lazy(() => import("./HomeChef/Pages/ChefFoodAll.jsx"));
@@ -284,6 +285,7 @@ const router = createBrowserRouter([
       { index: true, element: <Dashboard /> },
       { path: "restaurants", element: <AdminRestaurantManagement /> },
       { path: "homechefs", element: <AdminHomeChefManagement /> },
+      { path: "homechefs/categories", element: <AdminHomeChefCategories /> },
       { path: "homechefs/:id", element: <HomeChefDetail /> },
       { path: "delivery-partners", element: <DeliveryPartnerManagement /> },
       { path: "users", element: <UserManagement /> },
@@ -299,6 +301,10 @@ const router = createBrowserRouter([
       { path: "products/stock/add", element: <AddStock /> },
       { path: "products/:id", element: <ProductDetail /> },
       // Food-specific
+      { path: "food-orders/new", element: <FoodOrders /> },
+      { path: "food-orders/all", element: <FoodOrders /> },
+      { path: "food-orders/delivery", element: <FoodOrders /> },
+      { path: "food-orders/cancelled", element: <FoodOrders /> },
       { path: "food-orders", element: <FoodOrders /> },
       { path: "food-orders/:id", element: <FoodOrderDetails /> },
       { path: "food-products", element: <FoodProducts /> },
@@ -336,7 +342,9 @@ createRoot(document.getElementById("root")).render(
   <GoogleOAuthProvider clientId="92181265196-n9a9p26qe601hg7lar8acq6s4f1cknq7.apps.googleusercontent.com">
     <AuthProvider>
       <StoreProvider>
-        <Toaster position="top-right" reverseOrder={false} />
+        <Toaster position="top-right" reverseOrder={false} containerStyle={{
+          zIndex: 99999,
+        }} />
         <React.Suspense fallback={<Loader />}>
           <RouterProvider router={router} />
         </React.Suspense>

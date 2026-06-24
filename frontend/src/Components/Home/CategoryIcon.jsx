@@ -14,6 +14,15 @@ const CategoryIcon = () => {
   const { user } = useContext(AuthContext);
   const [homeChef, setHomeChef] = useState(null);
 
+  const safeParse = (data) => {
+    if (!data) return [];
+    if (Array.isArray(data)) return data;
+    try {
+      const parsed = JSON.parse(data);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch { return []; }
+  };
+
   const fetchCategories = async () => {
     try {
       if (categoriesCache && categoriesCache.length > 0) {
@@ -22,16 +31,18 @@ const CategoryIcon = () => {
         return;
       }
 
-      const res = await api.get("/categories");
+      const res = await api.get("/home-chef-categories");
       const data = Array.isArray(res.data) ? res.data : [];
-      const myCategories = data.filter(
-        (cat) =>
-          cat.created_by_user_id === homeChef?.created_by
-      );
-      setCategories(myCategories);
-      setCategoriesCache(myCategories);
+      // Map home_chef_categorys fields to consistent names
+      const mapped = data.map(cat => ({
+        ...cat,
+        name: cat.c_name || cat.name || '',
+        images: safeParse(cat.image || cat.images)
+      }));
+      setCategories(mapped);
+      setCategoriesCache(mapped);
     } catch (error) {
-      console.error(error);
+      console.error("Error fetching home chef categories:", error);
       setCategories([]);
     } finally {
       setLoading(false);
@@ -39,22 +50,7 @@ const CategoryIcon = () => {
   };
 
   useEffect(() => {
-    if (homeChef?.created_by) {
-      fetchCategories();
-    }
-  }, [homeChef]);
-
-  useEffect(() => {
-    const loadProfile = async () => {
-      try {
-        const res = await api.get("/auth/profile");
-        setHomeChef(res.data.homeChef);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    loadProfile();
+    fetchCategories();
   }, []);
 
   return (

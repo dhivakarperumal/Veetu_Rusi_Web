@@ -86,12 +86,14 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 const bannersRouter = require('./src/routes/banners');
 const videosRouter = require('./src/routes/videos');
+const uploadRouter = require('./src/routes/upload');
 
 app.use('/api/auth', authRouter);
 app.use('/api/superadmin', superadminRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/banners', bannersRouter);
 app.use('/api/videos', videosRouter);
+app.use('/api/upload', uploadRouter);
 
 const areasRouter = express.Router();
 areasRouter.use(verifyToken);
@@ -117,6 +119,9 @@ app.use('/api/orders', ordersRouter);
 app.use('/api/chef/recipes', recipesRouter);
 app.use('/api/cart', cartRouter);
 app.use('/api/wishlist', wishlistRouter);
+const homeChefCategorysRouter = require('./src/routes/homeChefCategorys');
+app.use('/api/home-chef-categories', homeChefCategorysRouter);
+
 app.use('/api/dealers', dealersRouter);
 app.use('/api/user-food', userFoodRouter);
 app.use('/api/user-food-orders', userFoodOrdersRouter);

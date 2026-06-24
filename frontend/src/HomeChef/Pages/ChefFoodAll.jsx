@@ -44,15 +44,30 @@ const ChefFoodAll = () => {
 
   const getFoodImage = (item) => {
     try {
+      // 1. Try images array (already parsed object, JSON string, or double-stringified)
       if (item.images) {
-        const imgs = typeof item.images === "string" ? JSON.parse(item.images) : item.images;
-        if (Array.isArray(imgs) && imgs.length > 0) return imgs[0];
+        let imgs = item.images;
+        // Parse if it's a string
+        if (typeof imgs === "string") {
+          try { imgs = JSON.parse(imgs); } catch { imgs = null; }
+        }
+        // Handle double-stringified: imgs might still be a string after first parse
+        if (typeof imgs === "string") {
+          try { imgs = JSON.parse(imgs); } catch { imgs = null; }
+        }
+        if (Array.isArray(imgs) && imgs.length > 0 && imgs[0]) {
+          return imgs[0];
+        }
+      }
+      // 2. Try packaging_image as fallback
+      if (item.packaging_image) {
+        return item.packaging_image;
       }
     } catch (e) {
       console.error("Error parsing images", e);
     }
-
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name || "Chef Food")}&background=random&size=400`;
+    // 3. Avatar fallback
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name || "Chef Food")}&background=10b981&color=fff&size=400`;
   };
 
   useEffect(() => {
@@ -79,7 +94,15 @@ const ChefFoodAll = () => {
       const params = {};
       if (profile?.user_id || profile?.id) params.chef_user_id = profile.user_id || profile.id;
       const res = await api.get("/chef-foods", { params });
-      setFoods(Array.isArray(res.data) ? res.data : []);
+      const allFoods = Array.isArray(res.data) ? res.data : [];
+      const foodsOnly = allFoods.filter(item => {
+        if (!item.product_type) {
+          if (!item.category) return true;
+          return !String(item.category).toLowerCase().includes('product');
+        }
+        return item.product_type === 'Food';
+      });
+      setFoods(foodsOnly);
     } catch (err) {
       console.error("Failed to load chef foods", err);
       toast.error("Could not load chef food items.");
@@ -258,7 +281,9 @@ const ChefFoodAll = () => {
                               <img
                                 src={getFoodImage(item)}
                                 alt={item.name}
+                                loading="lazy"
                                 className="w-full h-full object-cover"
+                                onError={(e) => { e.target.onerror = null; e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name || 'Food')}&background=10b981&color=fff&size=400`; }}
                               />
                             </div>
                             <div className="min-w-0 flex-1">
@@ -332,7 +357,9 @@ const ChefFoodAll = () => {
                     <img
                       src={getFoodImage(item)}
                       alt={item.name}
+                      loading="lazy"
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                      onError={(e) => { e.target.onerror = null; e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name || 'Food')}&background=10b981&color=fff&size=400`; }}
                     />
                     <div className="absolute top-4 left-4 right-4 flex justify-between items-start pointer-events-none">
                       <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border backdrop-blur-md pointer-events-auto shadow-sm ${getStatusStyle(item.status)}`}>

@@ -69,7 +69,9 @@ const FoodItems = () => {
       try {
         const res = await api.get("/chef-foods");
         const data = Array.isArray(res.data) ? res.data : [];
-        setFoods(data);
+        // Only show active foods on the home page
+        const activeFoods = data.filter(f => f.status?.toLowerCase() === 'active');
+        setFoods(activeFoods);
       } catch (err) {
         console.error("Error fetching food items:", err);
         setError("Unable to load food items right now.");

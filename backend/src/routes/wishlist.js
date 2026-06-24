@@ -78,6 +78,9 @@ router.post('/', async (req, res) => {
       }
     }
 
+    const savedVariantSize = variant_size !== undefined ? variant_size : "";
+    const savedVariantColor = variant_color !== undefined ? variant_color : "";
+
     // Check if already exists
     const [existing] = await pool.execute(
       'SELECT id FROM wishlist WHERE user_id = ? AND product_id = ?',
@@ -95,7 +98,7 @@ router.post('/', async (req, res) => {
 
     const [result] = await pool.execute(
       'INSERT INTO wishlist (user_id, product_id, variant_color, variant_size, image, email, price, total_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [user_id, product_id, variant_color || null, variant_size || null, sanitizedImage, email || null, price || 0, total_price || 0]
+      [user_id, product_id, savedVariantColor, savedVariantSize, sanitizedImage, email || null, price || 0, total_price || 0]
     );
 
     res.status(201).json({ message: 'Added to wishlist', id: result.insertId, action: 'added' });

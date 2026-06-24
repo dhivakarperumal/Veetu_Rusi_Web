@@ -19,13 +19,13 @@ const emptyForm = {
   // Contact Details
   mobile: "", alt_mobile: "", email: "", territory_pincodes: [],
   aadhaar_number: "", pan_number: "",
-  
+
   // Address Details
   door_number: "", street_name: "", area: "", landmark: "",
   city: "", district: "", state: "", pincode: "", map_link: "",
 
   // Bank Account Details
-  bank_name: "", account_holder_name: "", account_number: "", 
+  bank_name: "", account_holder_name: "", account_number: "",
   ifsc_code: "", account_type: "Savings", bank_passbook_url: "",
 
   // Login Details
@@ -296,7 +296,7 @@ const FranchiseOwnerManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Run comprehensive validation
     if (!validateFormData()) {
       return;
@@ -311,14 +311,29 @@ const FranchiseOwnerManagement = () => {
       };
       const formData = new FormData();
       Object.keys(submitForm).forEach(key => {
-        if (submitForm[key] instanceof FileList || Array.isArray(submitForm[key])) {
-          for (let i = 0; i < submitForm[key].length; i++) {
-            formData.append(key, submitForm[key][i]);
+        const value = submitForm[key];
+        if (value instanceof FileList) {
+          for (let i = 0; i < value.length; i++) {
+            formData.append(key, value[i]);
           }
-        } else if (submitForm[key] !== null && submitForm[key] !== undefined) {
-          formData.append(key, submitForm[key]);
+        } else if (Array.isArray(value)) {
+          if (key === 'territory_pincodes') {
+            formData.append(key, value.filter(Boolean).join(', '));
+          } else {
+            value.forEach(item => {
+              if (item !== null && item !== undefined) {
+                formData.append(key, item);
+              }
+            });
+          }
+        } else if (value !== null && value !== undefined) {
+          formData.append(key, value);
         }
       });
+
+      if (submitForm.district !== undefined && submitForm.district !== null) {
+        formData.set('district', String(submitForm.district).trim());
+      }
 
       if (editingFranchise) {
         await api.put(`/superadmin/franchises/${editingFranchise.id}`, formData);
@@ -647,6 +662,31 @@ const FranchiseOwnerManagement = () => {
       }
     }
 
+    // Address validation
+    if (!form.district) {
+      toast.error("District is required.");
+      setActiveFormTab("address");
+      return false;
+    }
+
+    if (!form.state) {
+      toast.error("State is required.");
+      setActiveFormTab("address");
+      return false;
+    }
+
+    if (!form.pincode) {
+      toast.error("Pincode is required.");
+      setActiveFormTab("address");
+      return false;
+    }
+
+    if (!validatePincode(form.pincode)) {
+      toast.error("Pincode must be 6 digits.");
+      setActiveFormTab("address");
+      return false;
+    }
+
     // KYC validation
     if (!form.email_verified) {
       toast.error("Email must be verified in KYC tab.");
@@ -699,14 +739,14 @@ const FranchiseOwnerManagement = () => {
 
   const formatDateForInput = (dateStr) => {
     if (!dateStr) return "";
-    
+
     // If already in YYYY-MM-DD format, return as-is
     if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
       return dateStr;
     }
-    
+
     let date;
-    
+
     // Try parsing as ISO string or standard formats
     if (typeof dateStr === 'string') {
       // Remove time portion if present
@@ -718,12 +758,12 @@ const FranchiseOwnerManagement = () => {
     } else {
       date = new Date(dateStr);
     }
-    
+
     if (isNaN(date.getTime())) {
       console.warn('Invalid date format:', dateStr);
       return "";
     }
-    
+
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
@@ -807,10 +847,10 @@ const FranchiseOwnerManagement = () => {
             </div>
             <div className="flex items-center gap-3">
               <span className={`text-[10px] font-black px-3 py-1.5 rounded-lg uppercase tracking-wider ${viewDetailsFranchise.status === "Active"
-                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200/50"
-                  : viewDetailsFranchise.status === "Inactive"
-                    ? "bg-red-50 text-red-700 border border-red-200/50"
-                    : "bg-amber-50 text-amber-700 border border-amber-200/50"
+                ? "bg-emerald-50 text-emerald-700 border border-emerald-200/50"
+                : viewDetailsFranchise.status === "Inactive"
+                  ? "bg-red-50 text-red-700 border border-red-200/50"
+                  : "bg-amber-50 text-amber-700 border border-amber-200/50"
                 }`}>{viewDetailsFranchise.status}</span>
             </div>
           </div>
@@ -854,8 +894,8 @@ const FranchiseOwnerManagement = () => {
               <button
                 onClick={() => setActiveDetailTab("franchise")}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all text-left ${activeDetailTab === "franchise"
-                    ? "bg-[#1B4D22] text-white shadow-sm shadow-[#1B4D22]/20"
-                    : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+                  ? "bg-[#1B4D22] text-white shadow-sm shadow-[#1B4D22]/20"
+                  : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
                   }`}
               >
                 <Landmark className="w-4 h-4" />
@@ -864,8 +904,8 @@ const FranchiseOwnerManagement = () => {
               <button
                 onClick={() => setActiveDetailTab("owner")}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all text-left ${activeDetailTab === "owner"
-                    ? "bg-[#1B4D22] text-white shadow-sm shadow-[#1B4D22]/20"
-                    : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+                  ? "bg-[#1B4D22] text-white shadow-sm shadow-[#1B4D22]/20"
+                  : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
                   }`}
               >
                 <UserCheck className="w-4 h-4" />
@@ -874,8 +914,8 @@ const FranchiseOwnerManagement = () => {
               <button
                 onClick={() => setActiveDetailTab("homechefs")}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all text-left ${activeDetailTab === "homechefs"
-                    ? "bg-[#1B4D22] text-white shadow-sm shadow-[#1B4D22]/20"
-                    : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+                  ? "bg-[#1B4D22] text-white shadow-sm shadow-[#1B4D22]/20"
+                  : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
                   }`}
               >
                 <List className="w-4 h-4" />
@@ -884,8 +924,8 @@ const FranchiseOwnerManagement = () => {
               <button
                 onClick={() => setActiveDetailTab("deliverypartners")}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all text-left ${activeDetailTab === "deliverypartners"
-                    ? "bg-[#1B4D22] text-white shadow-sm shadow-[#1B4D22]/20"
-                    : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+                  ? "bg-[#1B4D22] text-white shadow-sm shadow-[#1B4D22]/20"
+                  : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
                   }`}
               >
                 <MapPin className="w-4 h-4" />
@@ -894,8 +934,8 @@ const FranchiseOwnerManagement = () => {
               <button
                 onClick={() => setActiveDetailTab("credentials")}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all text-left ${activeDetailTab === "credentials"
-                    ? "bg-[#1B4D22] text-white shadow-sm shadow-[#1B4D22]/20"
-                    : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+                  ? "bg-[#1B4D22] text-white shadow-sm shadow-[#1B4D22]/20"
+                  : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
                   }`}
               >
                 <KeyRound className="w-4 h-4" />
@@ -1185,8 +1225,8 @@ const FranchiseOwnerManagement = () => {
             <button
               onClick={() => setViewMode("table")}
               className={`p-3 rounded-xl transition ${viewMode === "table"
-                  ? "bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20"
-                  : "text-slate-400 hover:text-slate-100"
+                ? "bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20"
+                : "text-slate-400 hover:text-slate-100"
                 }`}
               title="Table View"
             >
@@ -1195,8 +1235,8 @@ const FranchiseOwnerManagement = () => {
             <button
               onClick={() => setViewMode("card")}
               className={`p-3 rounded-xl transition ${viewMode === "card"
-                  ? "bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20"
-                  : "text-slate-400 hover:text-slate-100"
+                ? "bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20"
+                : "text-slate-400 hover:text-slate-100"
                 }`}
               title="Card View"
             >
@@ -1264,10 +1304,10 @@ const FranchiseOwnerManagement = () => {
                       {/* Subscription */}
                       <td className="px-5 py-4">
                         <span className={`inline-flex items-center text-[10px] font-black px-2.5 py-1 rounded-md uppercase tracking-widest ${getSubscriptionLabel(f) === 'Trial'
-                            ? 'bg-amber-50 text-amber-700 border border-amber-200/50'
-                            : getSubscriptionLabel(f) === 'Active'
-                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/50'
-                              : 'bg-red-50 text-red-700 border border-red-200/50'
+                          ? 'bg-amber-50 text-amber-700 border border-amber-200/50'
+                          : getSubscriptionLabel(f) === 'Active'
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/50'
+                            : 'bg-red-50 text-red-700 border border-red-200/50'
                           }`}>
                           {getSubscriptionLabel(f)}
                         </span>
@@ -1280,10 +1320,10 @@ const FranchiseOwnerManagement = () => {
                       >
                         <div className="space-y-1">
                           <span className={`inline-block text-[9px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider ${f.status === "Active"
-                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200/50"
-                              : f.status === "Inactive"
-                                ? "bg-red-50 text-red-700 border border-red-200/50"
-                                : "bg-amber-50 text-amber-700 border border-amber-200/50"
+                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200/50"
+                            : f.status === "Inactive"
+                              ? "bg-red-50 text-red-700 border border-red-200/50"
+                              : "bg-amber-50 text-amber-700 border border-amber-200/50"
                             }`}>{f.status}</span>
                         </div>
                       </td>
@@ -1446,10 +1486,10 @@ const FranchiseOwnerManagement = () => {
 
                   <span
                     className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black tracking-wide uppercase cursor-pointer select-none ${f.status === "Active"
-                        ? "bg-emerald-50 text-emerald-700"
-                        : f.status === "Inactive"
-                          ? "bg-rose-50 text-rose-700"
-                          : "bg-amber-50 text-amber-700"
+                      ? "bg-emerald-50 text-emerald-700"
+                      : f.status === "Inactive"
+                        ? "bg-rose-50 text-rose-700"
+                        : "bg-amber-50 text-amber-700"
                       }`}
                     onDoubleClick={() => handleToggleStatus(f)}
                     title="Double-click to toggle status"
@@ -1575,8 +1615,8 @@ const FranchiseOwnerManagement = () => {
                 key={page}
                 onClick={() => setCurrentPage(page)}
                 className={`w-9 h-9 text-[10px] font-black rounded-xl transition ${currentPage === page
-                    ? "bg-[#1B4D22] text-white shadow-sm shadow-[#1B4D22]/20"
-                    : "text-slate-500 hover:text-slate-800 bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50/50"
+                  ? "bg-[#1B4D22] text-white shadow-sm shadow-[#1B4D22]/20"
+                  : "text-slate-500 hover:text-slate-800 bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50/50"
                   }`}
               >
                 {page}
@@ -1621,7 +1661,7 @@ const FranchiseOwnerManagement = () => {
                       className={`w-full text-left rounded-3xl border px-4 py-4 transition ${isActive
                         ? "bg-emerald-700 text-white border-emerald-600 shadow-xl"
                         : "bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700 hover:bg-slate-900/95"
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center justify-between gap-3">
                         <span className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-black ${isActive
@@ -1629,7 +1669,7 @@ const FranchiseOwnerManagement = () => {
                           : completed
                             ? "bg-emerald-500 text-white"
                             : "bg-slate-800 text-slate-400"
-                        }`}>
+                          }`}>
                           {completed ? "✓" : index + 1}
                         </span>
                         <span className="text-xs uppercase tracking-[0.25em]">Step {index + 1}</span>
@@ -1677,7 +1717,7 @@ const FranchiseOwnerManagement = () => {
                       className={`flex-shrink-0 px-4 py-2 text-xs font-black uppercase tracking-wider rounded-full transition ${activeFormTab === step.id
                         ? "bg-emerald-500 text-slate-950 shadow-[0_15px_40px_rgba(16,185,129,0.18)]"
                         : "text-slate-300 hover:text-white hover:bg-slate-900/80"
-                      }`}
+                        }`}
                     >
                       {step.label}
                     </button>
@@ -1687,577 +1727,641 @@ const FranchiseOwnerManagement = () => {
 
               <div className="overflow-y-auto flex-1 p-7 bg-slate-50/5">
                 <div className="space-y-5">
-              
-                {/* Basic Info */}
-                {activeFormTab === "basic" && (
-                  <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 shadow-lg shadow-slate-950/20 animate-in fade-in zoom-in-95 duration-200">
-                    <p className="text-xs text-emerald-300 uppercase tracking-[0.25em] font-black mb-5">Basic Details</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {/* Franchise Name */}
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Franchise Name / Branch *</label>
-                        <input type="text" required value={form.franchise_name} onChange={e => setForm({ ...form, franchise_name: e.target.value })} placeholder="e.g. Veetu Rusi Coimbatore" className={inputCls} />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Owner Name *</label>
-                        <input type="text" required value={form.owner_name} onChange={e => setForm({ ...form, owner_name: e.target.value })} placeholder="Ram Kumar" className={inputCls} />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Franchise Logo</label>
-                        <div className="space-y-2">
-                          <input 
-                            type="file" 
-                            accept="image/*" 
-                            onChange={e => setForm({ ...form, logo_url: e.target.files[0] })} 
-                            className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} 
-                          />
-                          {getImageUrl(form.logo_url) && (
-                            <div className="rounded-lg border border-slate-700 overflow-hidden bg-slate-900 p-2">
-                              <img 
-                                src={getImageUrl(form.logo_url)} 
-                                alt="Logo preview" 
-                                className="w-full h-24 object-cover rounded" 
-                                onError={(e) => { e.target.style.display = 'none'; }}
-                              />
-                            </div>
-                          )}
-                          <p className="text-[9px] text-slate-500">{isExistingFile(form.logo_url) ? "✓ Existing file" : "New upload"}</p>
+
+                  {/* Basic Info */}
+                  {activeFormTab === "basic" && (
+                    <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 shadow-lg shadow-slate-950/20 animate-in fade-in zoom-in-95 duration-200">
+                      <p className="text-xs text-emerald-300 uppercase tracking-[0.25em] font-black mb-5">Basic Details</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {/* Franchise Name */}
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Franchise Name / Branch *</label>
+                          <input type="text" required value={form.franchise_name} onChange={e => setForm({ ...form, franchise_name: e.target.value })} placeholder="e.g. Veetu Rusi Coimbatore" className={inputCls} />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Owner Name *</label>
+                          <input type="text" required value={form.owner_name} onChange={e => setForm({ ...form, owner_name: e.target.value })} placeholder="Ram Kumar" className={inputCls} />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Franchise Logo</label>
+                          <div className="space-y-2">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={e => setForm({ ...form, logo_url: e.target.files[0] })}
+                              className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"}
+                            />
+                            {getImageUrl(form.logo_url) && (
+                              <div className="rounded-lg border border-slate-700 overflow-hidden bg-slate-900 p-2">
+                                <img
+                                  src={getImageUrl(form.logo_url)}
+                                  alt="Logo preview"
+                                  className="w-full h-24 object-cover rounded"
+                                  onError={(e) => { e.target.style.display = 'none'; }}
+                                />
+                              </div>
+                            )}
+                            <p className="text-[9px] text-slate-500">{isExistingFile(form.logo_url) ? "✓ Existing file" : "New upload"}</p>
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Franchise Banner Image</label>
+                          <div className="space-y-2">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={e => setForm({ ...form, banner_url: e.target.files[0] })}
+                              className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"}
+                            />
+                            {getImageUrl(form.banner_url) && (
+                              <div className="rounded-lg border border-slate-700 overflow-hidden bg-slate-900 p-2">
+                                <img
+                                  src={getImageUrl(form.banner_url)}
+                                  alt="Banner preview"
+                                  className="w-full h-24 object-cover rounded"
+                                  onError={(e) => { e.target.style.display = 'none'; }}
+                                />
+                              </div>
+                            )}
+                            <p className="text-[9px] text-slate-500">{isExistingFile(form.banner_url) ? "✓ Existing file" : "New upload"}</p>
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Start Date</label>
+                          <input type="date" value={form.start_date} onChange={e => setForm({ ...form, start_date: e.target.value })} className={inputCls} />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Expiry Date</label>
+                          <input type="date" value={form.expiry_date} onChange={e => setForm({ ...form, expiry_date: e.target.value })} className={inputCls} />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Status</label>
+                          <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })} className={inputCls}>
+                            <option value="Pending">Pending</option>
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                            <option value="Suspended">Suspended</option>
+                            <option value="Closed">Closed</option>
+                          </select>
                         </div>
                       </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Franchise Banner Image</label>
-                        <div className="space-y-2">
-                          <input 
-                            type="file" 
-                            accept="image/*" 
-                            onChange={e => setForm({ ...form, banner_url: e.target.files[0] })} 
-                            className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} 
-                          />
-                          {getImageUrl(form.banner_url) && (
-                            <div className="rounded-lg border border-slate-700 overflow-hidden bg-slate-900 p-2">
-                              <img 
-                                src={getImageUrl(form.banner_url)} 
-                                alt="Banner preview" 
-                                className="w-full h-24 object-cover rounded" 
-                                onError={(e) => { e.target.style.display = 'none'; }}
-                              />
+
+                      <div className="grid grid-cols-1 gap-4 mt-6 sm:grid-cols-2">
+                        <div className="rounded-3xl border border-slate-800 bg-slate-900 p-4 text-slate-100 shadow-sm">
+                          <div className="flex items-center justify-between gap-3">
+                            <div>
+                              <p className="text-[10px] uppercase tracking-[0.28em] text-slate-400 font-black">Image Upload Status</p>
+                              <p className="mt-2 text-sm font-semibold text-slate-200">{imageComplete ? "All images ready for publish" : "Upload both logo and banner"}</p>
                             </div>
-                          )}
-                          <p className="text-[9px] text-slate-500">{isExistingFile(form.banner_url) ? "✓ Existing file" : "New upload"}</p>
+                            <span className={`inline-flex items-center rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${imageComplete ? "bg-emerald-500/15 text-emerald-200 border border-emerald-500/30" : "bg-amber-500/10 text-amber-200 border border-amber-500/20"}`}>
+                              {imageComplete ? "Complete" : "Incomplete"}
+                            </span>
+                          </div>
+                          <div className="mt-4 grid gap-3">
+                            <div className="rounded-3xl border border-slate-800 bg-slate-950 p-3">
+                              <p className="text-[10px] uppercase tracking-[0.24em] text-slate-500 font-black">Logo File</p>
+                              <p className="mt-2 text-sm text-slate-100 font-semibold">{getFileName(form.logo_url)}</p>
+                            </div>
+                            <div className="rounded-3xl border border-slate-800 bg-slate-950 p-3">
+                              <p className="text-[10px] uppercase tracking-[0.24em] text-slate-500 font-black">Banner File</p>
+                              <p className="mt-2 text-sm text-slate-100 font-semibold">{getFileName(form.banner_url)}</p>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Start Date</label>
-                        <input type="date" value={form.start_date} onChange={e => setForm({ ...form, start_date: e.target.value })} className={inputCls} />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Expiry Date</label>
-                        <input type="date" value={form.expiry_date} onChange={e => setForm({ ...form, expiry_date: e.target.value })} className={inputCls} />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Status</label>
-                        <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })} className={inputCls}>
-                          <option value="Pending">Pending</option>
-                          <option value="Active">Active</option>
-                          <option value="Inactive">Inactive</option>
-                          <option value="Suspended">Suspended</option>
-                          <option value="Closed">Closed</option>
-                        </select>
+                        <div className="rounded-3xl border border-slate-800 bg-slate-900 p-4 shadow-sm">
+                          <p className="text-[10px] uppercase tracking-[0.28em] text-slate-400 font-black">KYC Readiness</p>
+                          <p className="mt-2 text-sm font-semibold text-slate-200">Capture business registration, GST, PAN and license data in one section. KYC verification will help speed approvals.</p>
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            <span className="inline-flex items-center rounded-full bg-slate-800 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-300">PAN Document: {form.pan_url ? "Uploaded" : "Pending"}</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
+                  )}
 
-                    <div className="grid grid-cols-1 gap-4 mt-6 sm:grid-cols-2">
-                      <div className="rounded-3xl border border-slate-800 bg-slate-900 p-4 text-slate-100 shadow-sm">
-                        <div className="flex items-center justify-between gap-3">
-                          <div>
-                            <p className="text-[10px] uppercase tracking-[0.28em] text-slate-400 font-black">Image Upload Status</p>
-                            <p className="mt-2 text-sm font-semibold text-slate-200">{imageComplete ? "All images ready for publish" : "Upload both logo and banner"}</p>
-                          </div>
-                          <span className={`inline-flex items-center rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${imageComplete ? "bg-emerald-500/15 text-emerald-200 border border-emerald-500/30" : "bg-amber-500/10 text-amber-200 border border-amber-500/20"}`}>
-                            {imageComplete ? "Complete" : "Incomplete"}
-                          </span>
+                  {/* Contact Details */}
+                  {activeFormTab === "contact" && (
+                    <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 shadow-lg shadow-slate-950/20 animate-in fade-in zoom-in-95 duration-200">
+                      <p className="text-xs text-emerald-300 uppercase tracking-[0.25em] font-black mb-5">Contact Details</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Mobile Number *</label>
+                          <input type="text" required value={form.mobile} onChange={e => setForm({ ...form, mobile: e.target.value })} placeholder="9876543210" className={inputCls} />
                         </div>
-                        <div className="mt-4 grid gap-3">
-                          <div className="rounded-3xl border border-slate-800 bg-slate-950 p-3">
-                            <p className="text-[10px] uppercase tracking-[0.24em] text-slate-500 font-black">Logo File</p>
-                            <p className="mt-2 text-sm text-slate-100 font-semibold">{getFileName(form.logo_url)}</p>
-                          </div>
-                          <div className="rounded-3xl border border-slate-800 bg-slate-950 p-3">
-                            <p className="text-[10px] uppercase tracking-[0.24em] text-slate-500 font-black">Banner File</p>
-                            <p className="mt-2 text-sm text-slate-100 font-semibold">{getFileName(form.banner_url)}</p>
-                          </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Alternate Mobile</label>
+                          <input type="text" value={form.alt_mobile} onChange={e => setForm({ ...form, alt_mobile: e.target.value })} placeholder="Optional" className={inputCls} />
                         </div>
-                      </div>
-                      <div className="rounded-3xl border border-slate-800 bg-slate-900 p-4 shadow-sm">
-                        <p className="text-[10px] uppercase tracking-[0.28em] text-slate-400 font-black">KYC Readiness</p>
-                        <p className="mt-2 text-sm font-semibold text-slate-200">Capture business registration, GST, PAN and license data in one section. KYC verification will help speed approvals.</p>
-                        <div className="mt-4 flex flex-wrap gap-2">
-                          <span className="inline-flex items-center rounded-full bg-slate-800 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-300">PAN Document: {form.pan_url ? "Uploaded" : "Pending"}</span>
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Aadhaar Number *</label>
+                          <input type="text" required value={form.aadhaar_number} onChange={e => setForm({ ...form, aadhaar_number: e.target.value.replace(/\D/g, '').slice(0, 12) })} placeholder="123456789012" maxLength="12" className={inputCls} />
+                          <p className="text-[9px] text-slate-400 mt-1">Unique 12-digit Aadhaar number</p>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">PAN Number *</label>
+                          <input type="text" required value={form.pan_number} onChange={e => setForm({ ...form, pan_number: e.target.value.toUpperCase().slice(0, 10) })} placeholder="ABCDE1234F" maxLength="10" className={inputCls} />
+                          <p className="text-[9px] text-slate-400 mt-1">Unique 10-character PAN number</p>
+                        </div>
+                        <div className="space-y-3 sm:col-span-2">
+                          <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Pincodes</label>
+                          <div className="grid grid-cols-[1fr_auto] gap-2">
+                            <input
+                              type="text"
+                              value={pincodeEntry}
+                              onChange={e => setPincodeEntry(e.target.value)}
+                              onKeyDown={e => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  addTerritoryPincode();
+                                }
+                              }}
+                              placeholder="Enter pincode and press + or Enter"
+                              className={inputCls}
+                            />
+                            <button
+                              type="button"
+                              onClick={addTerritoryPincode}
+                              className="inline-flex items-center justify-center px-4 rounded-xl bg-[#1B4D22] text-white font-black uppercase tracking-widest text-xs transition hover:bg-emerald-700"
+                            >
+                              <Plus className="w-4 h-4" />
+                            </button>
+                          </div>
+                          {form.territory_pincodes.length > 0 ? (
+                            <div className="flex flex-wrap gap-2 mt-3">
+                              {form.territory_pincodes.map((pin, idx) => (
+                                <span key={`${pin}-${idx}`} className="inline-flex items-center gap-2 px-3 py-2 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold">
+                                  {pin}
+                                  <button type="button" onClick={() => removeTerritoryPincode(idx)} className="text-slate-500 hover:text-rose-600 transition">
+                                    <X className="w-3.5 h-3.5" />
+                                  </button>
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-[10px] text-slate-400">No pincodes added yet. Add one using the plus button.</p>
+                          )}
                         </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* Contact Details */}
-                {activeFormTab === "contact" && (
-                  <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 shadow-lg shadow-slate-950/20 animate-in fade-in zoom-in-95 duration-200">
-                    <p className="text-xs text-emerald-300 uppercase tracking-[0.25em] font-black mb-5">Contact Details</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Mobile Number *</label>
-                        <input type="text" required value={form.mobile} onChange={e => setForm({ ...form, mobile: e.target.value })} placeholder="9876543210" className={inputCls} />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Alternate Mobile</label>
-                        <input type="text" value={form.alt_mobile} onChange={e => setForm({ ...form, alt_mobile: e.target.value })} placeholder="Optional" className={inputCls} />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Aadhaar Number *</label>
-                        <input type="text" required value={form.aadhaar_number} onChange={e => setForm({ ...form, aadhaar_number: e.target.value.replace(/\D/g, '').slice(0, 12) })} placeholder="123456789012" maxLength="12" className={inputCls} />
-                        <p className="text-[9px] text-slate-400 mt-1">Unique 12-digit Aadhaar number</p>
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">PAN Number *</label>
-                        <input type="text" required value={form.pan_number} onChange={e => setForm({ ...form, pan_number: e.target.value.toUpperCase().slice(0, 10) })} placeholder="ABCDE1234F" maxLength="10" className={inputCls} />
-                        <p className="text-[9px] text-slate-400 mt-1">Unique 10-character PAN number</p>
-                      </div>
-                      <div className="space-y-3 sm:col-span-2">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Pincodes</label>
-                        <div className="grid grid-cols-[1fr_auto] gap-2">
+                  {/* Address Details */}
+                  {activeFormTab === "address" && (
+                    <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 shadow-lg shadow-slate-950/20 animate-in fade-in zoom-in-95 duration-200">
+                      <p className="text-xs text-emerald-300 uppercase tracking-[0.25em] font-black mb-5">Address Details</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Door Number</label>
+                          <input type="text" value={form.door_number} onChange={e => setForm({ ...form, door_number: e.target.value })} placeholder="e.g. 12/4" className={inputCls} />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Street Name</label>
+                          <input type="text" value={form.street_name} onChange={e => setForm({ ...form, street_name: e.target.value })} placeholder="Main Street" className={inputCls} />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Area / Locality</label>
+                          <input type="text" value={form.area} onChange={e => setForm({ ...form, area: e.target.value })} placeholder="RS Puram" className={inputCls} />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Landmark</label>
+                          <input type="text" value={form.landmark} onChange={e => setForm({ ...form, landmark: e.target.value })} placeholder="Near Park" className={inputCls} />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">City *</label>
+                          <input type="text" required value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} placeholder="Coimbatore" className={inputCls} />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">District</label>
+                          <select
+                            value={form.district}
+                            onChange={(e) => setForm({ ...form, district: e.target.value })}
+                            required
+                            className={inputCls}
+                          >
+                            <option value="">Select District</option>
+
+                            <option>Ariyalur</option>
+                            <option>Chengalpattu</option>
+                            <option>Chennai</option>
+                            <option>Coimbatore</option>
+                            <option>Cuddalore</option>
+                            <option>Dharmapuri</option>
+                            <option>Dindigul</option>
+                            <option>Erode</option>
+                            <option>Kallakurichi</option>
+                            <option>Kanchipuram</option>
+                            <option>Kanyakumari</option>
+                            <option>Karur</option>
+                            <option>Krishnagiri</option>
+                            <option>Madurai</option>
+                            <option>Mayiladuthurai</option>
+                            <option>Nagapattinam</option>
+                            <option>Namakkal</option>
+                            <option>Nilgiris</option>
+                            <option>Perambalur</option>
+                            <option>Pudukkottai</option>
+                            <option>Ramanathapuram</option>
+                            <option>Ranipet</option>
+                            <option>Salem</option>
+                            <option>Sivaganga</option>
+                            <option>Tenkasi</option>
+                            <option>Thanjavur</option>
+                            <option>Theni</option>
+                            <option>Thoothukudi</option>
+                            <option>Tiruchirappalli</option>
+                            <option>Tirunelveli</option>
+                            <option>Tirupathur</option>
+                            <option>Tiruppur</option>
+                            <option>Tiruvallur</option>
+                            <option>Tiruvannamalai</option>
+                            <option>Tiruvarur</option>
+                            <option>Vellore</option>
+                            <option>Viluppuram</option>
+                            <option>Virudhunagar</option>
+                          </select>
+
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">State *</label>
+                          <select
+                            value={form.state}
+                            onChange={(e) => setForm({ ...form, state: e.target.value })}
+                            required
+                            className={inputCls}
+                          >
+                            <option value="">Select State</option>
+                            <option value="Tamil Nadu">Tamil Nadu</option>
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Pincode</label>
                           <input
                             type="text"
-                            value={pincodeEntry}
-                            onChange={e => setPincodeEntry(e.target.value)}
-                            onKeyDown={e => {
-                              if (e.key === "Enter") {
-                                e.preventDefault();
-                                addTerritoryPincode();
-                              }
-                            }}
-                            placeholder="Enter pincode and press + or Enter"
+                            name="pincode"
+                            value={form.pincode}
+                            onChange={handlePincodeChange}
+                            maxLength={6}
+                            required
+                            placeholder="Enter Pincode"
                             className={inputCls}
                           />
-                          <button
-                            type="button"
-                            onClick={addTerritoryPincode}
-                            className="inline-flex items-center justify-center px-4 rounded-xl bg-[#1B4D22] text-white font-black uppercase tracking-widest text-xs transition hover:bg-emerald-700"
+                        </div>
+                        <div className="space-y-1 sm:col-span-2">
+                          <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Google Map Link</label>
+                          <input type="url" value={form.map_link} onChange={e => setForm({ ...form, map_link: e.target.value })} placeholder="https://maps.app.goo.gl/..." className={inputCls} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Bank Account Details */}
+                  {activeFormTab === "bank" && (
+                    <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 shadow-lg shadow-slate-950/20 animate-in fade-in zoom-in-95 duration-200">
+                      <p className="text-xs text-emerald-300 uppercase tracking-[0.25em] font-black mb-5">Bank Account Details</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Bank Name *</label>
+                          <input
+                            type="text"
+                            required
+                            value={form.bank_name}
+                            onChange={e => setForm({ ...form, bank_name: e.target.value })}
+                            placeholder="e.g. State Bank of India"
+                            className={inputCls}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Account Holder Name *</label>
+                          <input
+                            type="text"
+                            required
+                            value={form.account_holder_name}
+                            onChange={e => setForm({ ...form, account_holder_name: e.target.value })}
+                            placeholder="Name as per bank"
+                            className={inputCls}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Account Number *</label>
+                          <input
+                            type="text"
+                            required
+                            value={form.account_number}
+                            onChange={e => setForm({ ...form, account_number: e.target.value.replace(/\D/g, '') })}
+                            placeholder="9-18 digits"
+                            maxLength="18"
+                            className={inputCls}
+                          />
+                          <p className="text-[9px] text-slate-400 mt-1">9 to 18 digit account number</p>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">IFSC Code *</label>
+                          <input
+                            type="text"
+                            required
+                            value={form.ifsc_code}
+                            onChange={e => setForm({ ...form, ifsc_code: e.target.value.toUpperCase() })}
+                            placeholder="e.g. SBIN0001234"
+                            maxLength="11"
+                            className={inputCls}
+                          />
+                          <p className="text-[9px] text-slate-400 mt-1">4 letters + 7 alphanumeric characters</p>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Account Type *</label>
+                          <select
+                            required
+                            value={form.account_type}
+                            onChange={e => setForm({ ...form, account_type: e.target.value })}
+                            className={inputCls}
                           >
-                            <Plus className="w-4 h-4" />
-                          </button>
+                            <option value="Savings">Savings</option>
+                            <option value="Current">Current</option>
+                            <option value="Business">Business</option>
+                            <option value="Other">Other</option>
+                          </select>
                         </div>
-                        {form.territory_pincodes.length > 0 ? (
-                          <div className="flex flex-wrap gap-2 mt-3">
-                            {form.territory_pincodes.map((pin, idx) => (
-                              <span key={`${pin}-${idx}`} className="inline-flex items-center gap-2 px-3 py-2 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold">
-                                {pin}
-                                <button type="button" onClick={() => removeTerritoryPincode(idx)} className="text-slate-500 hover:text-rose-600 transition">
-                                  <X className="w-3.5 h-3.5" />
-                                </button>
-                              </span>
-                            ))}
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Bank Passbook / Statement</label>
+                          <input
+                            type="file"
+                            accept="image/*,.pdf"
+                            onChange={e => setForm({ ...form, bank_passbook_url: e.target.files[0] })}
+                            className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Validation Status */}
+                      <div className="mt-6 p-4 rounded-2xl border border-slate-700 bg-slate-900 space-y-3">
+                        <p className="text-xs text-amber-300 uppercase tracking-[0.28em] font-black">Bank Details Validation</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px]">
+                          <div className="flex items-center justify-between rounded-xl bg-slate-950 px-3 py-2 border border-slate-800">
+                            <span className="text-slate-400">Bank Name</span>
+                            <span className={form.bank_name ? "text-emerald-400 font-bold" : "text-slate-500"}>{form.bank_name ? "✓" : "—"}</span>
                           </div>
-                        ) : (
-                          <p className="text-[10px] text-slate-400">No pincodes added yet. Add one using the plus button.</p>
+                          <div className="flex items-center justify-between rounded-xl bg-slate-950 px-3 py-2 border border-slate-800">
+                            <span className="text-slate-400">Account Number</span>
+                            <span className={validateAccountNumber(form.account_number) ? "text-emerald-400 font-bold" : "text-slate-500"}>
+                              {validateAccountNumber(form.account_number) ? "✓" : "—"}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between rounded-xl bg-slate-950 px-3 py-2 border border-slate-800">
+                            <span className="text-slate-400">IFSC Code</span>
+                            <span className={validateIFSC(form.ifsc_code) ? "text-emerald-400 font-bold" : "text-slate-500"}>
+                              {validateIFSC(form.ifsc_code) ? "✓" : "—"}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between rounded-xl bg-slate-950 px-3 py-2 border border-slate-800">
+                            <span className="text-slate-400">Passbook</span>
+                            <span className={form.bank_passbook_url ? "text-emerald-400 font-bold" : "text-slate-500"}>
+                              {form.bank_passbook_url ? "Uploaded" : "—"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Login & Auth */}
+                  {activeFormTab === "login" && (
+                    <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 shadow-lg shadow-slate-950/20 animate-in fade-in zoom-in-95 duration-200">
+                      <p className="text-xs text-emerald-300 uppercase tracking-[0.25em] font-black mb-5">Login & Authentication</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {!editingFranchise && (
+                          <>
+                            <div className="space-y-1">
+                              <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Username</label>
+                              <input type="text" required value={form.username} onChange={e => setForm({ ...form, username: e.target.value })} placeholder="franchise_admin" className={inputCls} />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Email</label>
+                              <input type="email" required value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="admin@franchise.com" className={inputCls} />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Password</label>
+                              <input type="password" required value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder="••••••••" className={inputCls} />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Confirm Password</label>
+                              <input type="password" required value={form.confirmPassword} onChange={e => setForm({ ...form, confirmPassword: e.target.value })} placeholder="••••••••" className={inputCls} />
+                            </div>
+                          </>
                         )}
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Role</label>
+                          <select required value={form.role} onChange={e => setForm({ ...form, role: e.target.value })} className={inputCls}>
+                            <option value="Admin">Admin</option>
+                            <option value="Franchise Manager">Franchise Manager</option>
+                            <option value="Staff">Staff</option>
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Login Status</label>
+                          <select required value={form.login_status} onChange={e => setForm({ ...form, login_status: e.target.value })} className={inputCls}>
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                          </select>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* Address Details */}
-                {activeFormTab === "address" && (
-                  <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 shadow-lg shadow-slate-950/20 animate-in fade-in zoom-in-95 duration-200">
-                    <p className="text-xs text-emerald-300 uppercase tracking-[0.25em] font-black mb-5">Address Details</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Door Number</label>
-                        <input type="text" value={form.door_number} onChange={e => setForm({ ...form, door_number: e.target.value })} placeholder="e.g. 12/4" className={inputCls} />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Street Name</label>
-                        <input type="text" value={form.street_name} onChange={e => setForm({ ...form, street_name: e.target.value })} placeholder="Main Street" className={inputCls} />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Area / Locality</label>
-                        <input type="text" value={form.area} onChange={e => setForm({ ...form, area: e.target.value })} placeholder="RS Puram" className={inputCls} />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Landmark</label>
-                        <input type="text" value={form.landmark} onChange={e => setForm({ ...form, landmark: e.target.value })} placeholder="Near Park" className={inputCls} />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">City *</label>
-                        <input type="text" required value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} placeholder="Coimbatore" className={inputCls} />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">District</label>
-                        <input type="text" value={form.district} onChange={e => setForm({ ...form, district: e.target.value })} placeholder="Coimbatore" className={inputCls} />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">State *</label>
-                        <input type="text" required value={form.state} onChange={e => setForm({ ...form, state: e.target.value })} placeholder="Tamil Nadu" className={inputCls} />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Pincode</label>
-                        <input type="text" value={form.pincode} onChange={handlePincodeChange} placeholder="641001" className={inputCls} />
-                      </div>
-                      <div className="space-y-1 sm:col-span-2">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Google Map Link</label>
-                        <input type="url" value={form.map_link} onChange={e => setForm({ ...form, map_link: e.target.value })} placeholder="https://maps.app.goo.gl/..." className={inputCls} />
-                      </div>
-                    </div>
-                  </div>
-                )}
+                  {/* KYC & Docs */}
+                  {activeFormTab === "kyc" && (
+                    <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 shadow-lg shadow-slate-950/20 animate-in fade-in zoom-in-95 duration-200">
+                      <p className="text-xs text-emerald-300 uppercase tracking-[0.25em] font-black mb-5">KYC & Verification Documents</p>
 
-                {/* Bank Account Details */}
-                {activeFormTab === "bank" && (
-                  <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 shadow-lg shadow-slate-950/20 animate-in fade-in zoom-in-95 duration-200">
-                    <p className="text-xs text-emerald-300 uppercase tracking-[0.25em] font-black mb-5">Bank Account Details</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Bank Name *</label>
-                        <input 
-                          type="text" 
-                          required 
-                          value={form.bank_name} 
-                          onChange={e => setForm({ ...form, bank_name: e.target.value })} 
-                          placeholder="e.g. State Bank of India" 
-                          className={inputCls} 
-                        />
+                      {/* Email & Mobile Verification Section */}
+                      <div className="mb-6 p-4 rounded-2xl border border-slate-700 bg-slate-900 space-y-4">
+                        <p className="text-xs text-amber-300 uppercase tracking-[0.28em] font-black">Step 1: Contact Verification</p>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {/* Email Verification */}
+                          <div className="flex items-center gap-3 p-4 rounded-xl border border-slate-700 bg-slate-950">
+                            <input
+                              type="checkbox"
+                              id="email_verified"
+                              checked={form.email_verified}
+                              onChange={(e) => setForm({ ...form, email_verified: e.target.checked })}
+                              className="w-4 h-4 rounded cursor-pointer"
+                            />
+                            <label htmlFor="email_verified" className="flex-1 cursor-pointer">
+                              <div className="text-xs font-black uppercase tracking-[0.24em] text-slate-300">Email Verified</div>
+                              <div className="text-[11px] text-slate-400 mt-1">{form.email || "No email provided"}</div>
+                            </label>
+                            <span className={`inline-flex items-center rounded-full px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em] ${form.email_verified
+                              ? "bg-emerald-500/15 text-emerald-200 border border-emerald-500/30"
+                              : "bg-slate-700/40 text-slate-300 border border-slate-600"
+                              }`}>
+                              {form.email_verified ? "✓ Done" : "Pending"}
+                            </span>
+                          </div>
+
+                          {/* Mobile OTP Verification */}
+                          <div className="flex items-center gap-3 p-4 rounded-xl border border-slate-700 bg-slate-950">
+                            <input
+                              type="checkbox"
+                              id="otp_verified"
+                              checked={form.otp_verified}
+                              onChange={(e) => setForm({ ...form, otp_verified: e.target.checked })}
+                              className="w-4 h-4 rounded cursor-pointer"
+                            />
+                            <label htmlFor="otp_verified" className="flex-1 cursor-pointer">
+                              <div className="text-xs font-black uppercase tracking-[0.24em] text-slate-300">Mobile OTP Verified</div>
+                              <div className="text-[11px] text-slate-400 mt-1">{form.mobile || "No mobile provided"}</div>
+                            </label>
+                            <span className={`inline-flex items-center rounded-full px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em] ${form.otp_verified
+                              ? "bg-emerald-500/15 text-emerald-200 border border-emerald-500/30"
+                              : "bg-slate-700/40 text-slate-300 border border-slate-600"
+                              }`}>
+                              {form.otp_verified ? "✓ Done" : "Pending"}
+                            </span>
+                          </div>
+                        </div>
+
+                        <p className="text-[10px] text-slate-400 pt-2">✓ Check the boxes once email and mobile numbers are verified</p>
                       </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Account Holder Name *</label>
-                        <input 
-                          type="text" 
-                          required 
-                          value={form.account_holder_name} 
-                          onChange={e => setForm({ ...form, account_holder_name: e.target.value })} 
-                          placeholder="Name as per bank" 
-                          className={inputCls} 
-                        />
+
+                      <div className="grid grid-cols-1 gap-4 mb-5 sm:grid-cols-2">
+                        <div className="rounded-3xl border border-slate-800 bg-slate-900 p-4">
+                          <p className="text-[10px] uppercase tracking-[0.28em] text-slate-400 font-black">Verification Status</p>
+                          <select value={form.kyc_verification_status} onChange={e => setForm({ ...form, kyc_verification_status: e.target.value })} className={inputCls + " bg-slate-900 border-slate-700 text-slate-100"}>
+                            <option value="Pending">Pending</option>
+                            <option value="Verified">Verified</option>
+                            <option value="Rejected">Rejected</option>
+                          </select>
+                          <p className="mt-3 text-[11px] text-slate-500">Select the current verification state for this franchise owner.</p>
+                        </div>
+                        <div className="rounded-3xl border border-slate-800 bg-slate-900 p-4">
+                          <div className="flex items-center justify-between gap-3">
+                            <div>
+                              <p className="text-[10px] uppercase tracking-[0.28em] text-slate-400 font-black">Required Documents</p>
+                              <p className="mt-2 text-sm text-slate-200 font-semibold">Keep these ready for upload and review.</p>
+                            </div>
+                            <span className={`inline-flex items-center rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${form.kyc_verification_status === "Verified" ? "bg-emerald-500/15 text-emerald-200 border border-emerald-500/30" : "bg-amber-500/10 text-amber-200 border border-amber-500/20"}`}>
+                              {form.kyc_verification_status}
+                            </span>
+                          </div>
+                          <div className="mt-4 grid gap-2 text-[11px] text-slate-400">
+                            <div className="flex items-center justify-between rounded-2xl bg-slate-950 px-3 py-2 border border-slate-800">
+                              <span>Aadhaar</span>
+                              <span className="text-slate-300">{form.aadhaar_url ? "Uploaded" : "Pending"}</span>
+                            </div>
+                            <div className="flex items-center justify-between rounded-2xl bg-slate-950 px-3 py-2 border border-slate-800">
+                              <span>PAN</span>
+                              <span className="text-slate-300">{form.pan_url ? "Uploaded" : "Pending"}</span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Account Number *</label>
-                        <input 
-                          type="text" 
-                          required 
-                          value={form.account_number} 
-                          onChange={e => setForm({ ...form, account_number: e.target.value.replace(/\D/g, '') })} 
-                          placeholder="9-18 digits" 
-                          maxLength="18"
-                          className={inputCls} 
-                        />
-                        <p className="text-[9px] text-slate-400 mt-1">9 to 18 digit account number</p>
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">IFSC Code *</label>
-                        <input 
-                          type="text" 
-                          required 
-                          value={form.ifsc_code} 
-                          onChange={e => setForm({ ...form, ifsc_code: e.target.value.toUpperCase() })} 
-                          placeholder="e.g. SBIN0001234" 
-                          maxLength="11"
-                          className={inputCls} 
-                        />
-                        <p className="text-[9px] text-slate-400 mt-1">4 letters + 7 alphanumeric characters</p>
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Account Type *</label>
-                        <select 
-                          required 
-                          value={form.account_type} 
-                          onChange={e => setForm({ ...form, account_type: e.target.value })} 
-                          className={inputCls}
+
+                      <div className="flex flex-col gap-3 mb-5">
+                        <button
+                          type="button"
+                          onClick={finalizeKycVerification}
+                          className="w-full inline-flex items-center justify-center px-4 py-3 text-xs font-black uppercase tracking-widest rounded-2xl bg-teal-500 hover:bg-teal-400 text-slate-950 transition"
                         >
-                          <option value="Savings">Savings</option>
-                          <option value="Current">Current</option>
-                          <option value="Business">Business</option>
-                          <option value="Other">Other</option>
-                        </select>
+                          Mark KYC Verified
+                        </button>
+                        <p className="text-[11px] text-slate-400">KYC can only be marked verified once Aadhaar and PAN are uploaded.</p>
                       </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Bank Passbook / Statement</label>
-                        <input 
-                          type="file" 
-                          accept="image/*,.pdf" 
-                          onChange={e => setForm({ ...form, bank_passbook_url: e.target.files[0] })} 
-                          className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} 
-                        />
-                      </div>
-                    </div>
-
-                    {/* Validation Status */}
-                    <div className="mt-6 p-4 rounded-2xl border border-slate-700 bg-slate-900 space-y-3">
-                      <p className="text-xs text-amber-300 uppercase tracking-[0.28em] font-black">Bank Details Validation</p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px]">
-                        <div className="flex items-center justify-between rounded-xl bg-slate-950 px-3 py-2 border border-slate-800">
-                          <span className="text-slate-400">Bank Name</span>
-                          <span className={form.bank_name ? "text-emerald-400 font-bold" : "text-slate-500"}>{form.bank_name ? "✓" : "—"}</span>
-                        </div>
-                        <div className="flex items-center justify-between rounded-xl bg-slate-950 px-3 py-2 border border-slate-800">
-                          <span className="text-slate-400">Account Number</span>
-                          <span className={validateAccountNumber(form.account_number) ? "text-emerald-400 font-bold" : "text-slate-500"}>
-                            {validateAccountNumber(form.account_number) ? "✓" : "—"}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between rounded-xl bg-slate-950 px-3 py-2 border border-slate-800">
-                          <span className="text-slate-400">IFSC Code</span>
-                          <span className={validateIFSC(form.ifsc_code) ? "text-emerald-400 font-bold" : "text-slate-500"}>
-                            {validateIFSC(form.ifsc_code) ? "✓" : "—"}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between rounded-xl bg-slate-950 px-3 py-2 border border-slate-800">
-                          <span className="text-slate-400">Passbook</span>
-                          <span className={form.bank_passbook_url ? "text-emerald-400 font-bold" : "text-slate-500"}>
-                            {form.bank_passbook_url ? "Uploaded" : "—"}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Login & Auth */}
-                {activeFormTab === "login" && (
-                  <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 shadow-lg shadow-slate-950/20 animate-in fade-in zoom-in-95 duration-200">
-                    <p className="text-xs text-emerald-300 uppercase tracking-[0.25em] font-black mb-5">Login & Authentication</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {!editingFranchise && (
-                        <>
-                          <div className="space-y-1">
-                            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Username</label>
-                            <input type="text" required value={form.username} onChange={e => setForm({ ...form, username: e.target.value })} placeholder="franchise_admin" className={inputCls} />
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Email</label>
-                            <input type="email" required value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="admin@franchise.com" className={inputCls} />
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Password</label>
-                            <input type="password" required value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder="••••••••" className={inputCls} />
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Confirm Password</label>
-                            <input type="password" required value={form.confirmPassword} onChange={e => setForm({ ...form, confirmPassword: e.target.value })} placeholder="••••••••" className={inputCls} />
-                          </div>
-                        </>
-                      )}
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Role</label>
-                        <select required value={form.role} onChange={e => setForm({ ...form, role: e.target.value })} className={inputCls}>
-                          <option value="Admin">Admin</option>
-                          <option value="Franchise Manager">Franchise Manager</option>
-                          <option value="Staff">Staff</option>
-                        </select>
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Login Status</label>
-                        <select required value={form.login_status} onChange={e => setForm({ ...form, login_status: e.target.value })} className={inputCls}>
-                          <option value="Active">Active</option>
-                          <option value="Inactive">Inactive</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* KYC & Docs */}
-                {activeFormTab === "kyc" && (
-                  <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 shadow-lg shadow-slate-950/20 animate-in fade-in zoom-in-95 duration-200">
-                    <p className="text-xs text-emerald-300 uppercase tracking-[0.25em] font-black mb-5">KYC & Verification Documents</p>
-
-                    {/* Email & Mobile Verification Section */}
-                    <div className="mb-6 p-4 rounded-2xl border border-slate-700 bg-slate-900 space-y-4">
-                      <p className="text-xs text-amber-300 uppercase tracking-[0.28em] font-black">Step 1: Contact Verification</p>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {/* Email Verification */}
-                        <div className="flex items-center gap-3 p-4 rounded-xl border border-slate-700 bg-slate-950">
-                          <input
-                            type="checkbox"
-                            id="email_verified"
-                            checked={form.email_verified}
-                            onChange={(e) => setForm({ ...form, email_verified: e.target.checked })}
-                            className="w-4 h-4 rounded cursor-pointer"
-                          />
-                          <label htmlFor="email_verified" className="flex-1 cursor-pointer">
-                            <div className="text-xs font-black uppercase tracking-[0.24em] text-slate-300">Email Verified</div>
-                            <div className="text-[11px] text-slate-400 mt-1">{form.email || "No email provided"}</div>
-                          </label>
-                          <span className={`inline-flex items-center rounded-full px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em] ${form.email_verified
-                              ? "bg-emerald-500/15 text-emerald-200 border border-emerald-500/30"
-                              : "bg-slate-700/40 text-slate-300 border border-slate-600"
-                            }`}>
-                            {form.email_verified ? "✓ Done" : "Pending"}
-                          </span>
-                        </div>
-
-                        {/* Mobile OTP Verification */}
-                        <div className="flex items-center gap-3 p-4 rounded-xl border border-slate-700 bg-slate-950">
-                          <input
-                            type="checkbox"
-                            id="otp_verified"
-                            checked={form.otp_verified}
-                            onChange={(e) => setForm({ ...form, otp_verified: e.target.checked })}
-                            className="w-4 h-4 rounded cursor-pointer"
-                          />
-                          <label htmlFor="otp_verified" className="flex-1 cursor-pointer">
-                            <div className="text-xs font-black uppercase tracking-[0.24em] text-slate-300">Mobile OTP Verified</div>
-                            <div className="text-[11px] text-slate-400 mt-1">{form.mobile || "No mobile provided"}</div>
-                          </label>
-                          <span className={`inline-flex items-center rounded-full px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em] ${form.otp_verified
-                              ? "bg-emerald-500/15 text-emerald-200 border border-emerald-500/30"
-                              : "bg-slate-700/40 text-slate-300 border border-slate-600"
-                            }`}>
-                            {form.otp_verified ? "✓ Done" : "Pending"}
-                          </span>
-                        </div>
-                      </div>
-
-                      <p className="text-[10px] text-slate-400 pt-2">✓ Check the boxes once email and mobile numbers are verified</p>
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-4 mb-5 sm:grid-cols-2">
-                      <div className="rounded-3xl border border-slate-800 bg-slate-900 p-4">
-                        <p className="text-[10px] uppercase tracking-[0.28em] text-slate-400 font-black">Verification Status</p>
-                        <select value={form.kyc_verification_status} onChange={e => setForm({ ...form, kyc_verification_status: e.target.value })} className={inputCls + " bg-slate-900 border-slate-700 text-slate-100"}>
-                          <option value="Pending">Pending</option>
-                          <option value="Verified">Verified</option>
-                          <option value="Rejected">Rejected</option>
-                        </select>
-                        <p className="mt-3 text-[11px] text-slate-500">Select the current verification state for this franchise owner.</p>
-                      </div>
-                      <div className="rounded-3xl border border-slate-800 bg-slate-900 p-4">
-                        <div className="flex items-center justify-between gap-3">
-                          <div>
-                            <p className="text-[10px] uppercase tracking-[0.28em] text-slate-400 font-black">Required Documents</p>
-                            <p className="mt-2 text-sm text-slate-200 font-semibold">Keep these ready for upload and review.</p>
-                          </div>
-                          <span className={`inline-flex items-center rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${form.kyc_verification_status === "Verified" ? "bg-emerald-500/15 text-emerald-200 border border-emerald-500/30" : "bg-amber-500/10 text-amber-200 border border-amber-500/20"}`}>
-                            {form.kyc_verification_status}
-                          </span>
-                        </div>
-                        <div className="mt-4 grid gap-2 text-[11px] text-slate-400">
-                          <div className="flex items-center justify-between rounded-2xl bg-slate-950 px-3 py-2 border border-slate-800">
-                            <span>Aadhaar</span>
-                            <span className="text-slate-300">{form.aadhaar_url ? "Uploaded" : "Pending"}</span>
-                          </div>
-                          <div className="flex items-center justify-between rounded-2xl bg-slate-950 px-3 py-2 border border-slate-800">
-                            <span>PAN</span>
-                            <span className="text-slate-300">{form.pan_url ? "Uploaded" : "Pending"}</span>
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Aadhaar Card</label>
+                          <div className="space-y-2">
+                            <input
+                              type="file"
+                              accept="image/*,.pdf"
+                              onChange={e => setForm({ ...form, aadhaar_url: e.target.files[0] })}
+                              className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"}
+                            />
+                            {getImageUrl(form.aadhaar_url) && form.aadhaar_url && (typeof form.aadhaar_url === 'string' ? form.aadhaar_url.match(/\.(jpg|jpeg|png|gif)$/i) : true) && (
+                              <div className="rounded-lg border border-slate-700 overflow-hidden bg-slate-900 p-2">
+                                <img
+                                  src={getImageUrl(form.aadhaar_url)}
+                                  alt="Aadhaar preview"
+                                  className="w-full h-24 object-cover rounded"
+                                  onError={(e) => { e.target.style.display = 'none'; }}
+                                />
+                              </div>
+                            )}
+                            <p className="text-[9px] text-slate-500">{isExistingFile(form.aadhaar_url) ? "✓ Existing file" : "New upload"}</p>
                           </div>
                         </div>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-3 mb-5">
-                      <button
-                        type="button"
-                        onClick={finalizeKycVerification}
-                        className="w-full inline-flex items-center justify-center px-4 py-3 text-xs font-black uppercase tracking-widest rounded-2xl bg-teal-500 hover:bg-teal-400 text-slate-950 transition"
-                      >
-                        Mark KYC Verified
-                      </button>
-                      <p className="text-[11px] text-slate-400">KYC can only be marked verified once Aadhaar and PAN are uploaded.</p>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Aadhaar Card</label>
-                        <div className="space-y-2">
-                          <input 
-                            type="file" 
-                            accept="image/*,.pdf" 
-                            onChange={e => setForm({ ...form, aadhaar_url: e.target.files[0] })} 
-                            className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} 
-                          />
-                          {getImageUrl(form.aadhaar_url) && form.aadhaar_url && (typeof form.aadhaar_url === 'string' ? form.aadhaar_url.match(/\.(jpg|jpeg|png|gif)$/i) : true) && (
-                            <div className="rounded-lg border border-slate-700 overflow-hidden bg-slate-900 p-2">
-                              <img 
-                                src={getImageUrl(form.aadhaar_url)} 
-                                alt="Aadhaar preview" 
-                                className="w-full h-24 object-cover rounded" 
-                                onError={(e) => { e.target.style.display = 'none'; }}
-                              />
-                            </div>
-                          )}
-                          <p className="text-[9px] text-slate-500">{isExistingFile(form.aadhaar_url) ? "✓ Existing file" : "New upload"}</p>
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">PAN Card</label>
+                          <div className="space-y-2">
+                            <input
+                              type="file"
+                              accept="image/*,.pdf"
+                              onChange={e => setForm({ ...form, pan_url: e.target.files[0] })}
+                              className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"}
+                            />
+                            {getImageUrl(form.pan_url) && form.pan_url && (typeof form.pan_url === 'string' ? form.pan_url.match(/\.(jpg|jpeg|png|gif)$/i) : true) && (
+                              <div className="rounded-lg border border-slate-700 overflow-hidden bg-slate-900 p-2">
+                                <img
+                                  src={getImageUrl(form.pan_url)}
+                                  alt="PAN preview"
+                                  className="w-full h-24 object-cover rounded"
+                                  onError={(e) => { e.target.style.display = 'none'; }}
+                                />
+                              </div>
+                            )}
+                            <p className="text-[9px] text-slate-500">{isExistingFile(form.pan_url) ? "✓ Existing file" : "New upload"}</p>
+                          </div>
                         </div>
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">PAN Card</label>
-                        <div className="space-y-2">
-                          <input 
-                            type="file" 
-                            accept="image/*,.pdf" 
-                            onChange={e => setForm({ ...form, pan_url: e.target.files[0] })} 
-                            className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} 
-                          />
-                          {getImageUrl(form.pan_url) && form.pan_url && (typeof form.pan_url === 'string' ? form.pan_url.match(/\.(jpg|jpeg|png|gif)$/i) : true) && (
-                            <div className="rounded-lg border border-slate-700 overflow-hidden bg-slate-900 p-2">
-                              <img 
-                                src={getImageUrl(form.pan_url)} 
-                                alt="PAN preview" 
-                                className="w-full h-24 object-cover rounded" 
-                                onError={(e) => { e.target.style.display = 'none'; }}
-                              />
-                            </div>
-                          )}
-                          <p className="text-[9px] text-slate-500">{isExistingFile(form.pan_url) ? "✓ Existing file" : "New upload"}</p>
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Bank Passbook</label>
+                          <div className="space-y-2">
+                            <input
+                              type="file"
+                              accept="image/*,.pdf"
+                              onChange={e => setForm({ ...form, bank_passbook_url: e.target.files[0] })}
+                              className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"}
+                            />
+                            {getImageUrl(form.bank_passbook_url) && form.bank_passbook_url && (typeof form.bank_passbook_url === 'string' ? form.bank_passbook_url.match(/\.(jpg|jpeg|png|gif)$/i) : true) && (
+                              <div className="rounded-lg border border-slate-700 overflow-hidden bg-slate-900 p-2">
+                                <img
+                                  src={getImageUrl(form.bank_passbook_url)}
+                                  alt="Passbook preview"
+                                  className="w-full h-24 object-cover rounded"
+                                  onError={(e) => { e.target.style.display = 'none'; }}
+                                />
+                              </div>
+                            )}
+                            <p className="text-[9px] text-slate-500">{isExistingFile(form.bank_passbook_url) ? "✓ Existing file" : "New upload"}</p>
+                          </div>
                         </div>
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Bank Passbook</label>
-                        <div className="space-y-2">
-                          <input 
-                            type="file" 
-                            accept="image/*,.pdf" 
-                            onChange={e => setForm({ ...form, bank_passbook_url: e.target.files[0] })} 
-                            className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} 
-                          />
-                          {getImageUrl(form.bank_passbook_url) && form.bank_passbook_url && (typeof form.bank_passbook_url === 'string' ? form.bank_passbook_url.match(/\.(jpg|jpeg|png|gif)$/i) : true) && (
-                            <div className="rounded-lg border border-slate-700 overflow-hidden bg-slate-900 p-2">
-                              <img 
-                                src={getImageUrl(form.bank_passbook_url)} 
-                                alt="Passbook preview" 
-                                className="w-full h-24 object-cover rounded" 
-                                onError={(e) => { e.target.style.display = 'none'; }}
-                              />
-                            </div>
-                          )}
-                          <p className="text-[9px] text-slate-500">{isExistingFile(form.bank_passbook_url) ? "✓ Existing file" : "New upload"}</p>
-                        </div>
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Signature Image</label>
-                        <div className="space-y-2">
-                          <input 
-                            type="file" 
-                            accept="image/*" 
-                            onChange={e => setForm({ ...form, signature_url: e.target.files[0] })} 
-                            className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"} 
-                          />
-                          {getImageUrl(form.signature_url) && (
-                            <div className="rounded-lg border border-slate-700 overflow-hidden bg-slate-900 p-2">
-                              <img 
-                                src={getImageUrl(form.signature_url)} 
-                                alt="Signature preview" 
-                                className="w-full h-24 object-cover rounded" 
-                                onError={(e) => { e.target.style.display = 'none'; }}
-                              />
-                            </div>
-                          )}
-                          <p className="text-[9px] text-slate-500">{isExistingFile(form.signature_url) ? "✓ Existing file" : "New upload"}</p>
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Signature Image</label>
+                          <div className="space-y-2">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={e => setForm({ ...form, signature_url: e.target.files[0] })}
+                              className={inputCls + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-emerald-500/20 file:text-emerald-700"}
+                            />
+                            {getImageUrl(form.signature_url) && (
+                              <div className="rounded-lg border border-slate-700 overflow-hidden bg-slate-900 p-2">
+                                <img
+                                  src={getImageUrl(form.signature_url)}
+                                  alt="Signature preview"
+                                  className="w-full h-24 object-cover rounded"
+                                  onError={(e) => { e.target.style.display = 'none'; }}
+                                />
+                              </div>
+                            )}
+                            <p className="text-[9px] text-slate-500">{isExistingFile(form.signature_url) ? "✓ Existing file" : "New upload"}</p>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
+                </div>
               </div>
-            </div>
 
               <div className="p-8 border-t border-white/10 bg-slate-950/95 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between flex-shrink-0">
                 <div className="flex flex-wrap gap-3">

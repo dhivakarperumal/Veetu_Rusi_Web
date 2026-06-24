@@ -3,9 +3,12 @@ import { NavLink, useLocation } from "react-router-dom";
 import {
   Package,
   PlusCircle,
+  PlusSquare,
   List,
+  ListOrdered,
   Truck,
   XCircle,
+  CheckCircle,
   Archive,
   Handshake,
   MessageSquare,
@@ -14,44 +17,44 @@ import {
   X,
   ChevronDown,
   ChevronLeft,
-  TrendingUp
+  LayoutDashboard,
+  Utensils,
+  UtensilsCrossed,
+  ClipboardList,
+  Clock,
+  ShoppingCart,
+  Star
 } from "lucide-react";
 import { useAuth } from "../PrivateRouter/AuthContext";
 
 const navItems = [
-  { path: "/chef", label: "Dashboard", icon: TrendingUp, exact: true },
+  { path: "/chef", label: "Dashboard", icon: LayoutDashboard, exact: true },
   {
     path: "/chef/food",
     label: "Food & Products",
-    icon: Package,
+    icon: Utensils,
     children: [
-      // Admin-style inventory links
-       { path: "/chef/food/add", label: "Add Food", icon: PlusCircle },
-      { path: "/chef/food/all", label: "All Food", icon: Package },
+      { path: "/chef/food/add", label: "Add Food", icon: PlusCircle },
+      { path: "/chef/food/all", label: "All Food", icon: UtensilsCrossed },
       { path: "/chef/products", label: "All Products", icon: List },
-      { path: "/chef/add-products", label: "Add Product", icon: PlusCircle },
+      { path: "/chef/add-products", label: "Add Product", icon: PlusSquare },
       { path: "/chef/products/stock", label: "Stock Details", icon: Archive }
-
-      // Chef food management links (kept for backward compatibility)
-     
     ]
   },
-
   {
     path: "/chef/orders",
-    label: "Order Mangements",
-    icon: Package,
+    label: "Order Management",
+    icon: ClipboardList,
     children: [
-      { path: "/chef/orders?status=All", label: "All Orders", icon: List },
-      { path: "/chef/orders?status=Pending", label: "New Order", icon: PlusCircle },
-      { path: "/chef/orders?status=Accepted", label: "Accept Order", icon: Handshake },
+      { path: "/chef/orders?status=All", label: "All Orders", icon: ListOrdered },
+      { path: "/chef/orders?status=Pending", label: "New Order", icon: Clock },
+      { path: "/chef/orders?status=Accepted", label: "Accept Order", icon: CheckCircle },
       { path: "/chef/orders?status=Out for Delivery", label: "Delivery Order", icon: Truck },
       { path: "/chef/orders?status=Cancelled", label: "Cancelled Order", icon: XCircle }
     ]
   },
-
-  
-  { path: "/chef/reviews", label: "Reviews", icon: MessageSquare },
+  { path: "/chef/material", label: "Buy Materials", icon: ShoppingCart },
+  { path: "/chef/reviews", label: "Reviews", icon: Star },
   { path: "/chef/earnings", label: "Wallet & Earnings", icon: Wallet },
   { path: "/", label: "Back Home", icon: Home },
 ];
@@ -91,7 +94,7 @@ const ChefSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
     // 2. Dropdown parent check: check if any child is perfectly active or a sub-path
     if (item.children) {
       return item.children.some(child => {
-        const childPath = getDynamicPath(child.path);
+        const childPath = getDynamicPath(child.path).split("?")[0];
         return currentPath === childPath || currentPath.startsWith(childPath + "/");
       });
     }
@@ -157,7 +160,7 @@ const ChefSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
         </div>
 
         {/* ========== NAVIGATION ========== */}
-        <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto hide-scrollbar">
+        <nav className="flex-1 px-3 py-6 space-y-2.5 overflow-y-auto hide-scrollbar">
           {navItems.map((item) => {
             const Icon = item.icon;
 
@@ -170,7 +173,7 @@ const ChefSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                   <button
                     onClick={() => toggleMenu(item.label)}
                     className={`
-                      relative w-full flex items-center gap-3 px-4 py-3 rounded-3xl transition-all duration-200
+                      relative w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-200
                       ${isMenuOpen
                         ? "bg-slate-900/80 text-white ring-1 ring-emerald-500/25"
                         : "text-slate-300 hover:bg-slate-800/80 hover:text-white"
@@ -199,7 +202,18 @@ const ChefSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                       {item.children.map((sub) => {
                         const SubIcon = sub.icon;
                         const subPath = getDynamicPath(sub.path);
-                        const isActive = location.pathname === subPath;
+                        const basePath = subPath.split("?")[0];
+                        const targetQuery = subPath.split("?")[1] || "";
+                        const currentQuery = location.search.replace("?", "");
+                        
+                        let isActive = false;
+                        if (location.pathname === basePath) {
+                          if (targetQuery) {
+                            isActive = currentQuery === targetQuery || (!currentQuery && targetQuery === "status=All");
+                          } else {
+                            isActive = currentQuery === "";
+                          }
+                        }
 
                         return (
                           <NavLink
@@ -207,9 +221,9 @@ const ChefSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                             to={subPath}
                             onClick={() => isOpen && onClose()}
                             className={`
-                              flex items-center gap-3 px-4 py-2.5 rounded-3xl text-xs font-semibold transition-all duration-200
+                              flex items-center gap-3 px-4 py-3 rounded-2xl text-[13px] font-semibold transition-all duration-200
                               ${isActive
-                                ? "bg-emerald-500/10 text-white shadow-lg shadow-emerald-500/10"
+                                ? "bg-emerald-500/10 text-white shadow-sm shadow-emerald-500/10 border border-emerald-500/20"
                                 : "text-slate-400 hover:text-white hover:bg-slate-800/80"
                               }
                             `}
@@ -239,7 +253,7 @@ const ChefSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                   if (isOpen) onClose();
                 }}
                 className={`
-                  relative flex items-center gap-3 px-4 py-3 rounded-3xl transition-all duration-200
+                  relative flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-200
                   ${isActive
                     ? "bg-slate-900/90 text-white shadow-xl shadow-slate-950/40"
                     : "text-slate-300 hover:bg-slate-800/80 hover:text-white"

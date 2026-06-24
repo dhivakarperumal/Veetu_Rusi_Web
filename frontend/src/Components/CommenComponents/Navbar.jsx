@@ -14,17 +14,53 @@ import {
 import logo from "/logo.png";
 import PageContainer from "./PageContainer";
 import api from "../../api";
-import { FiHome, FiShoppingBag, FiGrid, FiFileText, FiPhone, FiChevronDown } from "react-icons/fi";
+import { FiHome, FiShoppingBag, FiGrid, FiFileText, FiPhone, FiChevronDown, FiMapPin } from "react-icons/fi";
 import { FiChevronRight, FiTag } from "react-icons/fi";
 
 const Navbar = () => {
 
   const { user, logout } = useContext(AuthContext);
+  const { setLocationPopupOpen } = useContext(AuthContext);
   console.log("USER DATA:", user);
   const { cart, wishlist, userFoodCart } = useContext(StoreContext);
   const [mobilePages, setMobilePages] = useState(false);
   const navigate = useNavigate();
   const [homeChef, setHomeChef] = useState(null);
+  const [groupedCategories, setGroupedCategories] = useState({});
+  const [activeMainCategory, setActiveMainCategory] = useState(null);
+  const hoverTimeout = useRef(null);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await api.get("/home-chef-categories");
+
+        const allCats = Array.isArray(res.data) ? res.data : [];
+
+        const grouped = allCats.reduce((acc, cat) => {
+          const type =
+            cat.category_type?.toLowerCase() === "food"
+              ? "Food"
+              : "Products";
+
+          if (!acc[type]) acc[type] = [];
+
+          acc[type].push({
+            ...cat,
+            name: cat.c_name,
+          });
+
+          return acc;
+        }, {});
+
+        setGroupedCategories(grouped);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -82,26 +118,26 @@ const Navbar = () => {
 
   }, []);
 
-  // Fetch categories after homeChef profile is loaded
+  // Fetch categories from home_chef_categorys table
   useEffect(() => {
-    if (!homeChef?.created_by_user_id) return;
-
     const fetchCategories = async () => {
       try {
-        const res = await api.get("/categories");
-
-        const myCategories = res.data.filter(
-          (cat) => cat.created_by_user_id === homeChef.created_by_user_id
-        );
-
-        setCategories(myCategories);
+        const res = await api.get("/home-chef-categories");
+        const allCats = Array.isArray(res.data) ? res.data : [];
+        // Map c_name to name for consistent rendering
+        const mapped = allCats.map(cat => ({
+          ...cat,
+          name: cat.c_name || cat.name || '',
+          slug: cat.c_name || cat.name || ''
+        }));
+        setCategories(mapped);
       } catch (error) {
-        console.error(error);
+        console.error("Error fetching home chef categories:", error);
       }
     };
 
     fetchCategories();
-  }, [homeChef]);
+  }, []);
 
   const navClass = ({ isActive }) =>
     `px-4 py-1.5 rounded-lg text-sm font-medium transition
@@ -152,48 +188,87 @@ const Navbar = () => {
 
               {/* Categories */}
 
-              <div className="relative" ref={categoryRef}>
-
+              <div
+                className="relative"
+                ref={categoryRef}
+                onMouseEnter={() => {
+                  clearTimeout(hoverTimeout.current);
+                  setCategoryMenu(true);
+                }}
+                onMouseLeave={() => {
+                  hoverTimeout.current = setTimeout(() => {
+                    setCategoryMenu(false);
+                    setActiveMainCategory(null);
+                  }, 300);
+                }}
+              >
                 <button
-                  onClick={() => {
-                    setCategoryMenu(!categoryMenu);
-                    setPagesMenu(false);
-                  }}
                   className="flex cursor-pointer items-center gap-1 text-gray-600 hover:text-primary transition"
                 >
                   Categories
                   <FiChevronDown
-                    className={`transition-transform ${categoryMenu ? "rotate-180" : ""}`}
+                    className={`transition-transform ${categoryMenu ? "rotate-180" : ""
+                      }`}
                   />
                 </button>
 
                 {categoryMenu && (
+                  <div className="absolute top-10 left-0 w-64 bg-white border border-primary rounded-xl shadow-xl z-50">
 
-                  <div className="absolute  top-10 left-0 w-48 bg-white border border-primary rounded-xl shadow-xl overflow-hidden animate-dropdown">
+                    {/* FOOD */}
+                    <div
+                      className="relative"
+                      onMouseEnter={() => setActiveMainCategory("Food")}
+                    >
+                      <div className="px-4 py-3 cursor-pointer hover:bg-primary hover:text-white flex justify-between items-center">
+                        Food
+                        <FiChevronRight />
+                      </div>
 
-                    {categories.map((cat) => (
+                      {activeMainCategory === "Food" && (
+                        <div className="absolute left-full top-0 w-60 bg-white border rounded-xl shadow-lg overflow-hidden">
+                          {groupedCategories.Food?.map((cat) => (
+                            <NavLink
+                              key={cat.id}
+                              to={`/category/${cat.id}`}
+                              onClick={() => setCategoryMenu(false)}
+                              className="block px-4 py-3 text-sm text-gray-700 hover:bg-primary hover:text-white"
+                            >
+                              {cat.name}
+                            </NavLink>
+                          ))}
+                        </div>
+                      )}
+                    </div>
 
-                      <NavLink
-                        key={cat.id}
-                        to={`/category/${cat.slug || cat.name}`}
-                        onClick={() => setCategoryMenu(false)}
-                        className={({ isActive }) =>
-                          `block px-4 py-3 text-sm transition
-    ${isActive
-                            ? "bg-gradient-to-r from-primary-light via-secondary to-secondary-light text-white"
-                            : "text-gray-700 hover:bg-gradient-to-r from-primary-light via-secondary to-secondary-light hover:text-white"
-                          }`
-                        }
-                      >
-                        {cat.name}
-                      </NavLink>
+                    {/* PRODUCTS */}
+                    <div
+                      className="relative"
+                      onMouseEnter={() => setActiveMainCategory("Products")}
+                    >
+                      <div className="px-4 py-3 cursor-pointer hover:bg-primary hover:text-white flex justify-between items-center">
+                        Products
+                        <FiChevronRight />
+                      </div>
 
-                    ))}
+                      {activeMainCategory === "Products" && (
+                        <div className="absolute left-full top-0 w-60 bg-white border rounded-xl shadow-lg overflow-hidden">
+                          {groupedCategories.Products?.map((cat) => (
+                            <NavLink
+                              key={cat.id}
+                              to={`/category/${cat.id}`}
+                              onClick={() => setCategoryMenu(false)}
+                              className="block px-4 py-3 text-sm text-gray-700 hover:bg-primary hover:text-white"
+                            >
+                              {cat.name}
+                            </NavLink>
+                          ))}
+                        </div>
+                      )}
+                    </div>
 
                   </div>
-
                 )}
-
               </div>
 
               {/* Pages */}
@@ -301,6 +376,19 @@ const Navbar = () => {
 
             {user?.role === "user" && (
               <>
+                {/* Location icon */}
+                <button
+                  onClick={() => setLocationPopupOpen(true)}
+                  title={user?.pincode ? `Location: ${user.pincode}` : "Set your location"}
+                  className="flex items-center gap-1 text-primary hover:text-primary-light hover:scale-110 transition relative group"
+                >
+                  <FiMapPin size={20} />
+                
+                  {!user?.pincode && (
+                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                  )}
+                </button>
+
                 <Link
                   to="/food-orders"
                   className="text-primary hover:text-primary-light hover:scale-110 transition"

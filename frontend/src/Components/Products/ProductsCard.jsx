@@ -159,6 +159,13 @@ const ProductCard = ({ product }) => {
           <h3 className="text-lg font-bold text-gray-800 line-clamp-1">
             {product?.name}
           </h3>
+          
+          {/* Chef Name */}
+          {product?.chef_name && (
+            <p className="text-sm text-gray-500 mt-1 line-clamp-1">
+              By <span className="font-medium text-gray-700">{product.chef_name}</span>
+            </p>
+          )}
 
           {/* Rating */}
           <div className="flex items-center gap-1 mt-2">
@@ -180,10 +187,10 @@ const ProductCard = ({ product }) => {
           {/* Price */}
           <div className="flex items-center gap-3 mt-4">
             <span className="text-2xl font-bold text-primary">
-              ₹{product?.offer_price || product?.price}
+              ₹{product?.final_price || product?.offer_price || product?.price || product?.mrp || 0}
             </span>
 
-            {product?.mrp && (
+            {product?.mrp && product?.mrp !== (product?.final_price || product?.offer_price || product?.price) && (
               <span className="text-gray-400 line-through">
                 ₹{product?.mrp}
               </span>

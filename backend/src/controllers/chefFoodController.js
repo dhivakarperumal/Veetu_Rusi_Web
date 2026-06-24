@@ -97,40 +97,40 @@ exports.getFoods = async (req, res) => {
       status
     } = req.query;
 
-    let query = 'SELECT * FROM chef_food_table WHERE 1=1';
+    let query = 'SELECT cf.*, u.full_name as chef_name FROM chef_food_table cf LEFT JOIN users u ON cf.created_by = u.user_id WHERE 1=1';
     const params = [];
 
     // Enforce role-based restrictions
     if (req.user) {
       const currentUserId = req.user.user_id || req.user.id || null;
       if (['chef', 'homechef'].includes(req.user.role) && currentUserId) {
-        query += ' AND (created_by = ? OR updated_by = ?)';
+        query += ' AND (cf.created_by = ? OR cf.updated_by = ?)';
         params.push(currentUserId, currentUserId);
       } else if (['admin', 'franchise', 'superadmin'].includes(req.user.role) && currentUserId) {
-        query += ' AND franchise_user_id = ?';
+        query += ' AND cf.franchise_user_id = ?';
         params.push(currentUserId);
       }
       // superadmin can see all when no explicit filter is applied
     }
 
     if (franchise_user_id) {
-      query += ' AND franchise_user_id = ?';
+      query += ' AND cf.franchise_user_id = ?';
       params.push(franchise_user_id);
     }
     if (category) {
-      query += ' AND category = ?';
+      query += ' AND cf.category = ?';
       params.push(category);
     }
     if (dietary_tag) {
-      query += ' AND dietary_tag = ?';
+      query += ' AND cf.dietary_tag = ?';
       params.push(dietary_tag);
     }
     if (status && status !== 'All') {
-      query += ' AND status = ?';
+      query += ' AND cf.status = ?';
       params.push(status);
     }
 
-    query += ' ORDER BY created_at DESC';
+    query += ' ORDER BY cf.created_at DESC';
     const [rows] = await pool.execute(query, params);
     const foods = rows.map((row) => ({
       ...row,
@@ -148,13 +148,21 @@ exports.getFoods = async (req, res) => {
 exports.getFoodById = async (req, res) => {
   try {
     const { id } = req.params;
-    const [rows] = await pool.execute('SELECT * FROM chef_food_table WHERE id = ?', [id]);
+    const [rows] = await pool.execute(
+      `SELECT cf.*, u.full_name AS chef_name, u.user_id AS chef_user_id, u.email AS chef_email, u.mobile_number AS chef_phone
+       FROM chef_food_table cf
+       LEFT JOIN users u ON cf.created_by = u.user_id
+       WHERE cf.id = ?`,
+      [id]
+    );
     if (rows.length === 0) {
       return res.status(404).json({ message: 'Chef food item not found' });
     }
     const food = rows[0];
     res.json({
       ...food,
+      // Ensure chef_user_id is always the correct user_id (created_by)
+      chef_user_id: food.chef_user_id || food.created_by || null,
       ingredients: parseJsonField(food.ingredients) || food.ingredients,
       instructions: parseJsonField(food.instructions) || food.instructions,
       images: parseJsonField(food.images) || food.images || []
@@ -169,6 +177,7 @@ exports.createFood = async (req, res) => {
   try {
     const {
       category,
+      product_type,
       name,
       description,
       cuisine,
@@ -204,14 +213,15 @@ exports.createFood = async (req, res) => {
     const computedFinalPrice = Number(final_price) || (Number(mrp) - (Number(offer) || 0) * Number(mrp) / 100) || Number(mrp);
 
     const insertSql = `INSERT INTO chef_food_table
-      (category, name, description, cuisine, prep_time, preparation_url, shelf_life_days, mrp, offer, final_price,
+      (category, product_type, name, description, cuisine, prep_time, preparation_url, shelf_life_days, mrp, offer, final_price,
        dietary_tag, net_weight, packaging_type, packaging_image, ingredients, instructions, images, status,
        franchise_user_id, created_by, updated_by
       )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
     const params = [
       category,
+      product_type || 'Food',
       name,
       description,
       cuisine || null,
@@ -228,7 +238,7 @@ exports.createFood = async (req, res) => {
       ingredients || null,
       instructions || null,
       normalizeJsonField(images) || null,
-      status || 'Active',
+      status || 'Inactive',
       finalFranchiseUserId,
       createdBy,
       updatedBy
@@ -250,7 +260,7 @@ exports.updateFood = async (req, res) => {
     const params = [];
 
     const allowed = [
-      'category', 'name', 'description', 'cuisine', 'prep_time', 'preparation_url', 'shelf_life_days', 'mrp',
+      'category', 'product_type', 'name', 'description', 'cuisine', 'prep_time', 'preparation_url', 'shelf_life_days', 'mrp',
       'offer', 'final_price', 'dietary_tag', 'net_weight', 'packaging_type', 'packaging_image',
       'ingredients', 'instructions', 'images', 'status', 'franchise_user_id'
     ];

@@ -30,9 +30,25 @@ import { useAuth } from "../PrivateRouter/AuthContext";
 const navItems = [
   { path: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   // { path: "/admin/restaurants", label: "Restaurants", icon: Store },
-  { path: "/admin/homechefs", label: "Home Chefs", icon: ChefHat },
+  {
+    label: "Home Chefs",
+    icon: ChefHat,
+    children: [
+      { path: "/admin/homechefs", label: "Home Chefs List", icon: List },
+      { path: "/admin/homechefs/categories", label: "Category New One", icon: Layers },
+    ],
+  },
   { path: "/admin/delivery-partners", label: "Delivery Partners", icon: Bike },
-  { path: "/admin/food-orders", label: "Food Orders", icon: ShoppingCart },
+  {
+    label: "Food Orders",
+    icon: ShoppingCart,
+    children: [
+      { path: "/admin/food-orders/new", label: "New Orders", icon: List },
+      { path: "/admin/food-orders/all", label: "All Orders", icon: Archive },
+      { path: "/admin/food-orders/delivery", label: "Delivered Orders", icon: Truck },
+      { path: "/admin/food-orders/cancelled", label: "Cancelled Orders", icon: XCircle },
+    ],
+  },
   { path: "/admin/food-products", label: "Food Products", icon: ShoppingBag },
   { path: "/admin/users", label: "User Management", icon: Users },
   { path: "/admin/earnings", label: "Wallet & Earnings", icon: CreditCard },

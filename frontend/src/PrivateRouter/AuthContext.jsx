@@ -8,6 +8,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loginOpen, setLoginOpen] = useState(false);
+  const [locationPopupOpen, setLocationPopupOpen] = useState(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -60,6 +61,8 @@ export const AuthProvider = ({ children }) => {
         loading,
         loginOpen,
         setLoginOpen,
+        locationPopupOpen,
+        setLocationPopupOpen,
         profileName,
         role,
         email,

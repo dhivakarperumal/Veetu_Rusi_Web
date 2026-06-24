@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 
 const initialForm = {
   category: "",
+  product_type: "Food",
   name: "",
   description: "",
   cuisine: "",
@@ -67,10 +68,33 @@ const ChefFoodAdd = () => {
 
     const loadCategories = async () => {
       try {
-        const params = {};
-        if (profile?.user_id || profile?.id) params.chef_user_id = profile.user_id || profile.id;
-        const res = await api.get("/chef-food-categories", { params });
-        setCategories(Array.isArray(res.data) ? res.data : []);
+        // Get the admin's user_id who created this chef (homeChef.created_by)
+        let adminUserId = null;
+        try {
+          const profileRes = await api.get('/auth/profile');
+          const homeChef = profileRes.data?.homeChef || null;
+          adminUserId = homeChef?.created_by || homeChef?.franchise_user_id || homeChef?.created_by_user_id || null;
+        } catch {
+          // fallback
+        }
+
+        const res = await api.get("/home-chef-categories");
+        const allCategories = Array.isArray(res.data) ? res.data : [];
+
+        let filtered = allCategories.filter(cat => cat.category_type?.toLowerCase() === 'food');
+
+        // Only show categories created by the admin who manages this chef
+        if (adminUserId) {
+          filtered = filtered.filter(cat =>
+            String(cat.created_by) === String(adminUserId) ||
+            String(cat.created_by_user_id) === String(adminUserId) ||
+            String(cat.franchise_user_id) === String(adminUserId)
+          );
+        } else {
+          filtered = [];
+        }
+
+        setCategories(filtered);
       } catch {
         console.error("Failed to load categories");
       }
@@ -90,6 +114,7 @@ const ChefFoodAdd = () => {
         setEditId(item.id);
         setForm({
           category: item.category || "",
+          product_type: item.product_type || "Food",
           name: item.name || "",
           description: item.description || "",
           cuisine: item.cuisine || "",
@@ -125,38 +150,50 @@ const ChefFoodAdd = () => {
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
+    
+    const toastId = toast.loading("Uploading images...");
     try {
-      const imageData = await Promise.all(
-        files.map((file) =>
-          imageCompression(file, { maxSizeMB: 0.5, maxWidthOrHeight: 1200, useWebWorker: true })
-            .then((compressed) => new Promise((resolve) => {
-              const reader = new FileReader();
-              reader.onloadend = () => resolve(reader.result);
-              reader.readAsDataURL(compressed);
-            }))
-        )
-      );
-      setForm((prev) => ({ ...prev, images: [...(prev.images || []), ...imageData] }));
+      const formData = new FormData();
+      for (const file of files) {
+        const compressed = await imageCompression(file, { maxSizeMB: 0.5, maxWidthOrHeight: 1200, useWebWorker: true });
+        formData.append("images", compressed, file.name || "image.jpg");
+      }
+      
+      const res = await api.post("/upload/images", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+      
+      if (res.data && res.data.urls) {
+        setForm((prev) => ({ ...prev, images: [...(prev.images || []), ...res.data.urls] }));
+        toast.success("Images uploaded successfully", { id: toastId });
+      }
     } catch (err) {
       console.error("Image upload failed", err);
-      toast.error("Could not process images.");
+      toast.error("Could not process images.", { id: toastId });
     }
   };
 
   const handlePackagingUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    
+    const toastId = toast.loading("Uploading packaging image...");
     try {
       const compressed = await imageCompression(file, { maxSizeMB: 0.5, maxWidthOrHeight: 1200, useWebWorker: true });
-      const imageData = await new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result);
-        reader.readAsDataURL(compressed);
+      const formData = new FormData();
+      formData.append("images", compressed, file.name || "packaging.jpg");
+      
+      const res = await api.post("/upload/images", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
       });
-      setForm((prev) => ({ ...prev, packaging_image: imageData }));
+      
+      if (res.data && res.data.urls && res.data.urls.length > 0) {
+        setForm((prev) => ({ ...prev, packaging_image: res.data.urls[0] }));
+        toast.success("Packaging image uploaded", { id: toastId });
+      }
     } catch (err) {
       console.error("Packaging image upload failed", err);
-      toast.error("Could not process packaging image.");
+      toast.error("Could not process packaging image.", { id: toastId });
     }
   };
 
@@ -171,6 +208,7 @@ const ChefFoodAdd = () => {
       ...form,
       shelf_life_days: form.shelf_life_days ? Number(form.shelf_life_days) : null,
       mrp: Number(form.mrp),
+      product_type: form.product_type || "Food",
       offer: Number(form.offer) || 0,
       final_price: Number(form.final_price) || null,
       packaging_image: form.packaging_image || null,
@@ -231,13 +269,21 @@ const ChefFoodAdd = () => {
                         <label className="block text-xs font-black text-slate-300 uppercase mb-2">Food Category *</label>
                         <select value={form.category} onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))} className={fieldClass}>
                           <option value="">Select category</option>
-                          {categories.map((cat) => <option key={cat.id || cat.catId} value={cat.name || cat.catId}>{cat.name || cat.catId}</option>)}
+                          {categories.map((cat) => <option key={cat.id || cat.CatId} value={cat.c_name || cat.name || cat.CatId}>{cat.c_name || cat.name || cat.CatId}</option>)}
                         </select>
                       </div>
 
                       <div>
                         <label className="block text-xs font-black text-slate-300 uppercase mb-2">Food Name *</label>
                         <input placeholder="e.g., Butter Chicken" value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} className={fieldClass} />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-black text-slate-300 uppercase mb-2">Type *</label>
+                        <select value={form.product_type} onChange={(e) => setForm((p) => ({ ...p, product_type: e.target.value }))} className={fieldClass}>
+                          <option value="Food">Food</option>
+                          <option value="Food Product">Food Product</option>
+                        </select>
                       </div>
                     </div>
 

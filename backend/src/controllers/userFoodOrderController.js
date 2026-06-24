@@ -80,8 +80,9 @@ const addUserFoodOrder = async (payload) => {
       ordered_by_name,
       ordered_by_email,
       ordered_by_phone,
+      ordered_at,
       status
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending')`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 'Pending')`,
     [
       order_id,
       user_id || null,
@@ -178,7 +179,7 @@ const getChefOrders = async (chefUserId) => {
        OR items LIKE ?
        OR items LIKE ?
        OR items LIKE ?
-     ORDER BY ordered_at DESC`,
+     ORDER BY COALESCE(ordered_at, updated_at) DESC`,
     [chefUserId, chefUserId, ...patterns]
   );
 
@@ -187,29 +188,38 @@ const getChefOrders = async (chefUserId) => {
     const items = parseJson(row.items);
     const chefItems = items.filter((item) =>
       String(item.chef_user_id) === String(chefUserId) ||
-      String(item.chef_id) === String(chefUserId)
+      String(item.chef_id) === String(chefUserId) ||
+      String(item.created_by_user_id) === String(chefUserId)
     );
 
-    if (!chefItems.length) continue;
+    // If no matching items in the JSON but the order-level chef_user_id matches, include all items
+    const orderLevelMatch =
+      String(row.chef_user_id) === String(chefUserId) ||
+      String(row.chef_id) === String(chefUserId);
 
-    const chefNames = [...new Set(chefItems.map((item) => item.chef_name).filter(Boolean))];
-    const chefEmails = [...new Set(chefItems.map((item) => item.chef_email).filter(Boolean))];
-    const chefPhones = [...new Set(chefItems.map((item) => item.chef_phone).filter(Boolean))];
-    const chefTotalAmount = chefItems.reduce((sum, item) => {
+    const effectiveItems = chefItems.length > 0 ? chefItems : orderLevelMatch ? items : [];
+    if (!effectiveItems.length && !orderLevelMatch) continue;
+
+    const chefNames = [...new Set(effectiveItems.map((item) => item.chef_name).filter(Boolean))];
+    const chefEmails = [...new Set(effectiveItems.map((item) => item.chef_email).filter(Boolean))];
+    const chefPhones = [...new Set(effectiveItems.map((item) => item.chef_phone).filter(Boolean))];
+    const chefTotalAmount = effectiveItems.reduce((sum, item) => {
       const price = parseFloat(item.price || item.final_price || item.mrp || 0) || 0;
       const quantity = Number(item.quantity) || 1;
       return sum + price * quantity;
     }, 0);
-    const chefTotalQuantity = chefItems.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0);
+    const chefTotalQuantity = effectiveItems.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0);
 
     chefOrders.push({
       ...row,
-      items: chefItems,
+      items: effectiveItems,
+      // Normalize ordered_at — fall back to updated_at if null
+      ordered_at: row.ordered_at || row.updated_at || null,
       chef_name: chefNames.join(', ') || row.chef_name,
       chef_email: chefEmails[0] || row.chef_email,
       chef_phone: chefPhones[0] || row.chef_phone,
-      chef_total_amount: parseFloat(chefTotalAmount.toFixed(2)),
-      chef_total_quantity: chefTotalQuantity,
+      chef_total_amount: chefTotalAmount > 0 ? parseFloat(chefTotalAmount.toFixed(2)) : parseFloat(Number(row.total_amount || 0).toFixed(2)),
+      chef_total_quantity: chefTotalQuantity > 0 ? chefTotalQuantity : effectiveItems.reduce((s, i) => s + (Number(i.quantity) || 1), 0),
     });
   }
 

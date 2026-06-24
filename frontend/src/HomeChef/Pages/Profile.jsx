@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { createPortal } from "react-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import api from "../../api";
@@ -13,6 +14,7 @@ const formatLabel = (key) => {
 
 const Profile = () => {
   const { user } = useAuth();
+  const location = useLocation();
   const [homeChef, setHomeChef] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -63,8 +65,31 @@ const Profile = () => {
 
     loadOrders();
   }, [user]);
+  
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get("tab");
 
-  const [activeTab, setActiveTab] = useState("details");
+    if (tab) {
+      setActiveTab(tab);
+    }
+  }, [location.search]);
+
+  const [activeTab, setActiveTab] = useState(() => {
+    if (location.state?.activeTab) return location.state.activeTab;
+    if (location.hash === '#orders') return 'orders';
+    if (typeof document !== 'undefined' && document.referrer.includes('/chef/orders')) return 'orders';
+    return 'details';
+  });
+
+  useEffect(() => {
+    if (location.state?.activeTab) {
+      setActiveTab(location.state.activeTab);
+    } else if (location.hash === '#orders') {
+      setActiveTab('orders');
+    }
+  }, [location.state?.activeTab, location.hash]);
+
   const [selectedOrder, setSelectedOrder] = useState(null);
 
   if (!user && !loading) {
@@ -94,7 +119,8 @@ const Profile = () => {
     { label: "Phone", value: user.phone || "-", icon: FiPhone },
     { label: "Role", value: user.role || "-", icon: FiShield },
     { label: "Joined", value: user.created_at || user.created || "-", icon: FiCalendar },
-    { label: "Address", value: user.street_address || user.address || "Not set", icon: FiMapPin }
+    { label: "Address", value: user.street_address || user.address || "Not set", icon: FiMapPin },
+    { label: "Created By ID", value: homeChef?.created_by || "-", icon: FiHash },
   ];
 
   const chefFields = homeChef
@@ -103,7 +129,7 @@ const Profile = () => {
 
   const tabs = [
     { id: "details", label: "Account Details", icon: FiUser },
-    
+
     { id: "orders", label: "Recent Orders", icon: FiCalendar },
   ];
 
@@ -133,11 +159,10 @@ const Profile = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 ${
-                  isActive
-                    ? "bg-[#1B4D22] text-white shadow-lg shadow-emerald-900/20 scale-[1.02]"
-                    : "text-white/60 hover:bg-white/5 hover:text-white"
-                }`}
+                className={`flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 ${isActive
+                  ? "bg-[#1B4D22] text-white shadow-lg shadow-emerald-900/20 scale-[1.02]"
+                  : "text-white/60 hover:bg-white/5 hover:text-white"
+                  }`}
               >
                 <Icon className={`h-5 w-5 transition-opacity ${isActive ? 'opacity-100' : 'opacity-50'}`} />
                 <span className="font-bold text-xs uppercase tracking-widest">{tab.label}</span>
@@ -235,8 +260,8 @@ const Profile = () => {
             ) : (
               <div className="grid gap-6 sm:grid-cols-2">
                 {orders.slice(0, 6).map((order) => (
-                  <div 
-                    key={order.id} 
+                  <div
+                    key={order.id}
                     className="rounded-[2rem] border border-white/5 bg-[#0b1120]/60 p-6 shadow-xl cursor-pointer hover:bg-white/5 hover:scale-[1.02] transition-all group relative overflow-hidden"
                     onClick={() => setSelectedOrder(order)}
                   >
@@ -245,24 +270,23 @@ const Profile = () => {
                     <p className="mt-2 text-sm font-black text-white">{order.order_id || `#${order.id}`}</p>
                     <div className="mt-6 space-y-3 text-xs text-white/60 font-semibold tracking-wide">
                       <p className="flex justify-between">
-                        <span className="text-white/40 uppercase tracking-widest">Customer</span> 
+                        <span className="text-white/40 uppercase tracking-widest">Customer</span>
                         <span className="text-white">{order.customer_name || "—"}</span>
                       </p>
                       <p className="flex justify-between">
-                        <span className="text-white/40 uppercase tracking-widest">Amount</span> 
+                        <span className="text-white/40 uppercase tracking-widest">Amount</span>
                         <span className="text-emerald-400 font-black">₹{Number(order.chef_total_amount ?? order.total_amount ?? 0).toLocaleString()}</span>
                       </p>
                       <p className="flex justify-between items-center">
-                        <span className="text-white/40 uppercase tracking-widest">Status</span> 
-                        <span className={`text-[9px] font-black px-2 py-1 rounded-lg uppercase tracking-widest ${
-                          order.status === "Delivered"
-                            ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                            : order.status === "Cancelled"
+                        <span className="text-white/40 uppercase tracking-widest">Status</span>
+                        <span className={`text-[9px] font-black px-2 py-1 rounded-lg uppercase tracking-widest ${order.status === "Delivered"
+                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                          : order.status === "Cancelled"
                             ? "bg-red-500/10 text-red-400 border border-red-500/20"
                             : order.status === "Pending" || order.status === "New Order"
-                            ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
-                            : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
-                        }`}>
+                              ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                              : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                          }`}>
                           {order.status === "Pending" ? "New Order" : order.status || "Unknown"}
                         </span>
                       </p>
@@ -278,8 +302,8 @@ const Profile = () => {
       {/* Order Details Modal */}
       {selectedOrder && typeof document !== "undefined" && createPortal(
         <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6">
-          <div 
-            className="absolute inset-0 bg-[#070b13]/80 backdrop-blur-sm transition-opacity" 
+          <div
+            className="absolute inset-0 bg-[#070b13]/80 backdrop-blur-sm transition-opacity"
             onClick={() => setSelectedOrder(null)}
           />
           <div className="relative z-10 w-full max-w-2xl rounded-[2.5rem] bg-[#0b1120] border border-white/10 shadow-[0_0_80px_rgba(0,0,0,0.8)] overflow-hidden animate-in zoom-in-95 duration-300">
@@ -292,21 +316,20 @@ const Profile = () => {
                       {selectedOrder.order_id || `#${selectedOrder.id}`}
                     </p>
                     <span
-                      className={`text-[10px] font-black px-3 py-1.5 rounded-xl uppercase tracking-widest ${
-                        selectedOrder.status === "Delivered"
-                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                          : selectedOrder.status === "Cancelled"
+                      className={`text-[10px] font-black px-3 py-1.5 rounded-xl uppercase tracking-widest ${selectedOrder.status === "Delivered"
+                        ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                        : selectedOrder.status === "Cancelled"
                           ? "bg-red-500/10 text-red-400 border border-red-500/20"
                           : selectedOrder.status === "Pending" || selectedOrder.status === "New Order"
-                          ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
-                          : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
-                      }`}
+                            ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                            : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                        }`}
                     >
                       {selectedOrder.status === "Pending" ? "New Order" : selectedOrder.status || "Unknown"}
                     </span>
                   </div>
                 </div>
-                <button 
+                <button
                   onClick={() => setSelectedOrder(null)}
                   className="rounded-full bg-white/5 p-3 text-white/40 hover:bg-white/10 hover:text-white transition-all hover:scale-110 active:scale-95"
                 >
@@ -316,7 +339,7 @@ const Profile = () => {
                 </button>
               </div>
             </div>
-            
+
             <div className="p-8 max-h-[60vh] overflow-y-auto custom-scrollbar">
               <div className="space-y-8">
                 <div className="bg-white/5 p-6 rounded-[2rem] border border-white/5">
@@ -325,7 +348,7 @@ const Profile = () => {
                   </h4>
                   <p className="font-black text-white text-lg">{selectedOrder.customer_name || "—"}</p>
                 </div>
-                
+
                 <div>
                   <h4 className="text-[10px] font-black uppercase tracking-[0.35em] text-white/40 mb-4 px-2">Products Included</h4>
                   {selectedOrder.items && selectedOrder.items.length > 0 ? (
@@ -345,15 +368,15 @@ const Profile = () => {
                             const qty = Number(item.quantity || 1);
                             const total = price * qty;
                             const imageSrc = item.image || item.image_url || item.product_image;
-                            
+
                             return (
                               <tr key={idx} className="bg-transparent hover:bg-white/5 transition-colors group">
                                 <td className="px-6 py-4">
                                   <div className="flex items-center gap-4">
                                     {imageSrc ? (
-                                      <img 
-                                        src={imageSrc} 
-                                        alt={item.name || item.product_name || "Product"} 
+                                      <img
+                                        src={imageSrc}
+                                        alt={item.name || item.product_name || "Product"}
                                         className="h-12 w-12 rounded-[1rem] object-cover bg-white/5 shadow-sm border border-white/5 group-hover:scale-105 transition-transform"
                                       />
                                     ) : (

@@ -8,6 +8,7 @@ import "react-toastify/dist/ReactToastify.css";
 import ScrollToTop from "./Components/CommenComponents/ScrollToTop";
 import ScrollNavigator from "./Components/CommenComponents/ScrollNavigator";
 import Loader from "./Components/CommenComponents/Loader";
+import LocationPopup from "./Components/CommenComponents/LocationPopup";
 
 function App() {
    const [loading, setLoading] = useState(false);
@@ -22,6 +23,7 @@ function App() {
       <Navbar />
       <ScrollToTop/>
       <ScrollNavigator/>
+      <LocationPopup />
       <Outlet />
       <Footer />
     </section>

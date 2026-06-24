@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import api from "../../api";
 import imageCompression from "browser-image-compression";
 import toast from "react-hot-toast";
@@ -14,12 +15,14 @@ import {
   FaFileAlt
 } from "react-icons/fa";
 
-const Category = () => {
+const HomeChefCategories = () => {
   const [category, setCategory] = useState({
-    catId: "",
-    name: "",
-    description: "",
-    images: [],
+    CatId: "",
+    c_name: "",
+    discripti: "",
+    image: [],
+    subcategory: [],
+    category_type: "Food"
   });
 
   const [editId, setEditId] = useState(null);
@@ -30,47 +33,9 @@ const Category = () => {
   const [viewMode, setViewMode] = useState("card");
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [franchiseUserId, setFranchiseUserId] = useState(null);
-  const [franchiseId, setFranchiseId] = useState(null);
-  const [franchiseLoaded, setFranchiseLoaded] = useState(false);
+  const [subcatInput, setSubcatInput] = useState("");
   const itemsPerPage = 8;
 
-  // Fetch franchise info on mount
-  useEffect(() => {
-    const fetchFranchiseInfo = async () => {
-      try {
-        const res = await api.get("/auth/profile");
-        const userId = res.data?.user?.user_id || res.data?.user?.id;
-        const franchiseRecordId = res.data?.franchise?.franchise_id;
-        if (userId) setFranchiseUserId(userId);
-        if (franchiseRecordId) setFranchiseId(franchiseRecordId);
-      } catch (error) {
-        console.error("Error fetching franchise info:", error);
-      } finally {
-        setFranchiseLoaded(true);
-      }
-    };
-    fetchFranchiseInfo();
-  }, []);
-
-  const generateCategoryId = (existingCategories) => {
-    // Filter to only current franchise's categories
-    const franchiseCategories = (existingCategories || []).filter(
-      cat => cat.franchise_user_id === franchiseUserId || (!cat.franchise_user_id && !franchiseUserId)
-    );
-    
-    if (!franchiseCategories || franchiseCategories.length === 0) return "CAT001";
-    
-    const ids = franchiseCategories
-      .map((cat) => {
-        const match = cat.catId.match(/\d+/);
-        return match ? parseInt(match[0]) : 0;
-      })
-      .filter((id) => !isNaN(id));
-    
-    const maxId = ids.length > 0 ? Math.max(...ids) : 0;
-    return `CAT${String(maxId + 1).padStart(3, "0")}`;
-  };
 
   const safeParse = (data) => {
     if (!data) return [];
@@ -84,19 +49,26 @@ const Category = () => {
   };
 
   const fetchCategories = async () => {
-    if (!franchiseLoaded) return;
     try {
-      const params = {};
-      if (franchiseUserId) params.franchise_user_id = franchiseUserId;
-      if (franchiseId) params.franchise_id = franchiseId;
-      
-      const response = await api.get("/categories", { params });
-      const sanitized = (response.data || []).map(cat => ({
+      const response = await api.get("/home-chef-categories");
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const userId = user.user_id || user.id;
+
+      let sanitized = (response.data || []).map(cat => ({
         ...cat,
-        name: cat.name || cat.cname || "",
-        description: cat.description || cat.cdescription || "",
-        images: safeParse(cat.images || cat.cimgs),
+        image: safeParse(cat.image),
+        subcategory: safeParse(cat.subcategory)
       }));
+
+      if (userId && user.role !== 'SuperAdmin') {
+        sanitized = sanitized.filter(cat => 
+          cat.created_by == userId || 
+          cat.created_by_user_id == userId ||
+          cat.franchise_user_id == userId ||
+          !cat.created_by // optionally keep generic categories if needed, but per user request we filter strictly
+        );
+      }
+
       setCategories(sanitized);
     } catch (err) {
       console.error("Error fetching categories:", err);
@@ -105,10 +77,8 @@ const Category = () => {
   };
 
   useEffect(() => {
-    if (franchiseLoaded) {
-      fetchCategories();
-    }
-  }, [franchiseLoaded, franchiseUserId, franchiseId]);
+    fetchCategories();
+  }, []);
 
   const handleImageChange = async (e) => {
     const files = Array.from(e.target.files);
@@ -135,7 +105,7 @@ const Category = () => {
         )
       );
 
-      setCategory((prev) => ({ ...prev, images: base64Images }));
+      setCategory((prev) => ({ ...prev, image: base64Images }));
       setPreviewImgs(base64Images);
       toast.success("Images ready!");
     } catch (error) {
@@ -148,59 +118,86 @@ const Category = () => {
     setCategory((prev) => ({ ...prev, [name]: value }));
   };
 
+  const addSubcategory = () => {
+    if (subcatInput.trim() !== '') {
+      setCategory(prev => ({ ...prev, subcategory: [...prev.subcategory, subcatInput.trim()] }));
+      setSubcatInput("");
+    }
+  };
+
+  const handleAddSubcategory = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addSubcategory();
+    }
+  };
+
+  const removeSubcategory = (index) => {
+    setCategory(prev => ({
+      ...prev,
+      subcategory: prev.subcategory.filter((_, i) => i !== index)
+    }));
+  };
+
   const closeModal = () => {
     setShowModal(false);
     setEditId(null);
-    setCategory({ catId: "", name: "", description: "", images: [] });
+    setCategory({ CatId: "", c_name: "", discripti: "", image: [], subcategory: [], category_type: "Food" });
     setPreviewImgs([]);
+    setSubcatInput("");
   };
 
   const openAddModal = () => {
-    const nextId = generateCategoryId(categories);
-    setCategory({ catId: nextId, name: "", description: "", images: [] });
+    setCategory({ CatId: "", c_name: "", discripti: "", image: [], subcategory: [], category_type: "Food" });
     setPreviewImgs([]);
+    setSubcatInput("");
     setEditId(null);
     setShowModal(true);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!category.name || !category.description || category.images.length === 0) {
-      toast.error("Please fill all fields.");
+    if (!category.c_name || !category.discripti || category.image.length === 0) {
+      toast.error("Please fill all required fields.");
       return;
     }
 
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const userId = user.user_id || user.id;
+
+    const payload = {
+      ...category,
+      created_by: userId,
+      updated_by: userId
+    };
+
     setLoading(true);
     try {
-      const payload = {
-        ...category,
-        franchise_user_id: franchiseUserId,
-        franchise_id: franchiseId,
-        created_by_user_id: franchiseUserId
-      };
       if (editId) {
-        await api.put(`/categories/${editId}`, payload);
+        await api.put(`/home-chef-categories/${editId}`, payload);
         toast.success("Category updated!");
       } else {
-        await api.post("/categories", payload);
+        await api.post("/home-chef-categories", payload);
         toast.success("Category added!");
       }
       closeModal();
       await fetchCategories();
     } catch (err) {
-      toast.error("Failed to save category.");
+      toast.error(err.response?.data?.message || "Failed to save category.");
     }
     setLoading(false);
   };
 
   const handleEdit = (cat) => {
     setCategory({
-      catId: cat.catId,
-      name: cat.name || cat.cname || "",
-      description: cat.description || cat.cdescription || "",
-      images: cat.images || cat.cimgs || [],
+      CatId: cat.CatId,
+      c_name: cat.c_name || "",
+      discripti: cat.discripti || "",
+      image: cat.image || [],
+      subcategory: cat.subcategory || [],
+      category_type: cat.category_type || "Food"
     });
-    setPreviewImgs(cat.images || cat.cimgs || []);
+    setPreviewImgs(cat.image || []);
     setEditId(cat.id);
     setShowModal(true);
   };
@@ -208,7 +205,7 @@ const Category = () => {
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this category?")) return;
     try {
-      await api.delete(`/categories/${id}`);
+      await api.delete(`/home-chef-categories/${id}`);
       toast.success("Deleted.");
       await fetchCategories();
     } catch (err) {
@@ -217,8 +214,8 @@ const Category = () => {
   };
 
   const filteredCategories = categories.filter(cat => {
-    const name = (cat.name || cat.cname || "").toLowerCase();
-    const id = (cat.catId || "").toLowerCase();
+    const name = (cat.c_name || "").toLowerCase();
+    const id = (cat.CatId || "").toLowerCase();
     const term = searchTerm.toLowerCase();
     return name.includes(term) || id.includes(term);
   });
@@ -229,7 +226,6 @@ const Category = () => {
     currentPage * itemsPerPage
   );
 
-  // Reset to page 1 on search
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm]);
@@ -247,7 +243,7 @@ const Category = () => {
             placeholder="Search by ID or Name..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-14 pr-6 py-4 bg-white border border-gray-100 rounded-[1.5rem] shadow-sm outline-none focus:ring-4 focus:ring-emerald-500/5 focus:border-emerald-500/20 transition-all font-bold text-sm"
+            className="w-full pl-14 pr-6 py-4 bg-white border border-gray-100 rounded-[1.5rem] shadow-sm outline-none focus:ring-4 focus:ring-emerald-500/5 focus:border-emerald-500/20 transition-all font-bold text-sm text-black"
           />
         </div>
 
@@ -276,36 +272,47 @@ const Category = () => {
           </div>
         </div>
 
-        {/* Search Bar */}
-       
-
         {/* Content Section */}
         {viewMode === "card" ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {currentItems.map((cat) => (
               <div key={cat.id} className="group bg-white rounded-[2.5rem] p-5 shadow-sm border border-gray-100/50 hover:shadow-2xl hover:shadow-emerald-950/5 transition-all duration-500 flex flex-col relative overflow-hidden">
                 <div className="relative h-48 mb-5 overflow-hidden rounded-[2rem] bg-gray-50 flex items-center justify-center">
-                   {cat.images?.[0] ? (
-                      <img src={cat.images[0]} alt={cat.name || cat.cname} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                   {cat.image?.[0] ? (
+                      <img src={cat.image[0]} alt={cat.c_name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                    ) : (
                       <FaImage size={40} className="text-gray-200" />
                    )}
                    <div className="absolute top-4 left-4">
                       <span className="px-3 py-1 bg-white/90 backdrop-blur shadow-sm rounded-full text-[10px] font-black text-emerald-900 border border-emerald-100 uppercase tracking-tighter">
-                         {cat.catId}
+                         {cat.CatId}
+                      </span>
+                   </div>
+                   <div className="absolute top-4 right-4">
+                      <span className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-[10px] font-black uppercase tracking-tighter shadow-sm">
+                         {cat.category_type}
                       </span>
                    </div>
                 </div>
 
                 <div className="px-2 pb-2">
-                   <h4 className="text-lg font-black text-white mb-2 truncate">{cat.name || cat.cname}</h4>
+                   <h4 className="text-lg font-black text-white mb-2 truncate">{cat.c_name}</h4>
                    <p className="text-[11px] text-slate-800 font-bold line-clamp-2 leading-relaxed h-8 mb-4">
-                      {cat.description || cat.cdescription}
+                      {cat.discripti}
                    </p>
+                   
+                   <div className="mb-4 flex flex-wrap gap-1">
+                      {(cat.subcategory || []).slice(0,3).map((sub, idx) => (
+                         <span key={idx} className="bg-gray-100 text-gray-600 text-[9px] px-2 py-1 rounded font-bold uppercase">{sub}</span>
+                      ))}
+                      {(cat.subcategory || []).length > 3 && (
+                         <span className="bg-gray-100 text-gray-600 text-[9px] px-2 py-1 rounded font-bold uppercase">+{cat.subcategory.length - 3}</span>
+                      )}
+                   </div>
 
                    <div className="flex items-center justify-between border-t border-gray-50 pt-4">
                       <div className="flex -space-x-3 overflow-hidden">
-                        {(cat.images || []).slice(0, 3).map((img, i) => (
+                        {(cat.image || []).slice(0, 3).map((img, i) => (
                           <img key={i} src={img} className="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover" alt="" />
                         ))}
                       </div>
@@ -330,7 +337,8 @@ const Category = () => {
                    <tr>
                       <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">S.No</th>
                       <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">ID</th>
-                      <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Identity</th>
+                      <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Type</th>
+                      <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Name</th>
                       <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Description</th>
                       <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest text-center">Gallery</th>
                       <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest text-right">Actions</th>
@@ -342,19 +350,17 @@ const Category = () => {
                          <td className="px-8 py-6 font-black text-slate-900 text-xs text-center">
                             {(currentPage - 1) * itemsPerPage + index + 1}
                          </td>
-                         <td className="px-8 py-6 font-black text-slate-900 text-xs">#{cat.catId}</td>
+                         <td className="px-8 py-6 font-black text-slate-900 text-xs">#{cat.CatId}</td>
+                         <td className="px-8 py-6 font-black text-emerald-600 text-xs">{cat.category_type}</td>
                          <td className="px-8 py-6">
-                            <div className="flex items-center gap-4">
-                               
-                               <span className="font-black text-slate-800 text-sm">{cat.name || cat.cname}</span>
-                            </div>
+                            <span className="font-black text-slate-800 text-sm">{cat.c_name}</span>
                          </td>
                          <td className="px-8 py-6 max-w-xs">
-                            <p className="text-xs text-gray-500 font-medium truncate italic">"{cat.description || cat.cdescription}"</p>
+                            <p className="text-xs text-gray-500 font-medium truncate italic">"{cat.discripti}"</p>
                          </td>
                          <td className="px-8 py-6 text-center">
                             <div className="flex items-center justify-center -space-x-2">
-                               {(cat.images || []).map((img, i) => (
+                               {(cat.image || []).map((img, i) => (
                                  <img key={i} src={img} className="w-8 h-8 rounded-full ring-2 ring-white shadow-sm object-cover" alt="" />
                                ))}
                             </div>
@@ -408,11 +414,11 @@ const Category = () => {
         )}
 
         {/* Modal Overlay */}
-        {showModal && (
+        {showModal && createPortal(
           <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
              <div className="absolute inset-0 bg-emerald-950/20 backdrop-blur-md animate-in fade-in duration-300" onClick={closeModal} />
              
-             <div className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl relative z-[10000] overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-500">
+             <div className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl relative z-[10000] overflow-hidden max-h-[95vh] overflow-y-auto animate-in zoom-in-95 slide-in-from-bottom-8 duration-500">
                 {/* Modal Header */}
                 <div className="bg-emerald-600 p-8 text-white relative">
                    <div className="absolute right-0 top-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl" />
@@ -421,7 +427,7 @@ const Category = () => {
                          <h3 className="text-2xl font-[900] tracking-tight uppercase">{editId ? 'Update Category' : 'Create Category'}</h3>
                          <p className="text-[10px] font-black opacity-80 uppercase tracking-widest mt-1">Configure your product classification</p>
                       </div>
-                      <button onClick={closeModal} className="p-3 bg-black/10 hover:bg-black/20 rounded-2xl transition-all">
+                      <button type="button" onClick={closeModal} className="p-3 bg-black/10 hover:bg-black/20 rounded-2xl transition-all">
                         <FaTimes size={18} />
                       </button>
                    </div>
@@ -431,41 +437,83 @@ const Category = () => {
                 <form onSubmit={handleSubmit} className="p-8 space-y-6">
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                         <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Auto-Generated ID</label>
-                         <div className="bg-emerald-50 border text-white border-emerald-100 rounded-2xl px-5 py-3.5 font-black text-sm shadow-inner flex items-center gap-3">
-                            <FaFileAlt className="opacity-60" /> {category.catId}
-                         </div>
+                         <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Category Type *</label>
+                         <select
+                           name="category_type"
+                           value={category.category_type}
+                           onChange={handleChange}
+                           className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-emerald-600 focus:ring-4 focus:ring-emerald-600/5 transition-all font-black text-black text-sm"
+                         >
+                           <option value="Food">Food</option>
+                           <option value="food products">Food Products</option>
+                         </select>
                       </div>
 
                       <div className="space-y-2">
-                         <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Category Name *</label>
-                         <input
-                           type="text"
-                           name="name"
-                           value={category.name}
-                           onChange={handleChange}
-                           placeholder="Enter name (e.g. Dry Fruits)"
-                           className="w-full bg-slate-50 text-white border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-emerald-600 focus:ring-4 focus:ring-emerald-600/5 transition-all font-black  text-sm"
-                           required
-                         />
+                         <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Auto-Generated ID</label>
+                         <div className="bg-emerald-50 border border-emerald-100 rounded-2xl px-5 py-3.5 text-emerald-950 font-black text-sm shadow-inner flex items-center gap-3">
+                            <FaFileAlt className="opacity-60" /> {category.CatId}
+                         </div>
                       </div>
+                   </div>
+
+                   <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Category Name *</label>
+                      <input
+                        type="text"
+                        name="c_name"
+                        value={category.c_name}
+                        onChange={handleChange}
+                        placeholder="Enter name"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-emerald-600 focus:ring-4 focus:ring-emerald-600/5 transition-all font-black text-black text-sm"
+                        required
+                      />
                    </div>
 
                    <div className="space-y-2">
                       <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Detailed Description *</label>
                       <textarea
-                        name="description"
-                        value={category.description}
+                        name="discripti"
+                        value={category.discripti}
                         onChange={handleChange}
                         rows={3}
-                        placeholder="What items fall under this category?"
-                        className="w-full bg-slate-50 border text-white border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-emerald-600 transition-all font-black text-sm resize-none"
+                        placeholder="Description..."
+                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-emerald-600 transition-all font-black text-black text-sm resize-none"
                         required
                       />
                    </div>
 
+                   <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Subcategories</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={subcatInput}
+                          onChange={(e) => setSubcatInput(e.target.value)}
+                          onKeyDown={handleAddSubcategory}
+                          placeholder="Type subcategory and press Enter or +"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-emerald-600 focus:ring-4 focus:ring-emerald-600/5 transition-all font-black text-black text-sm"
+                        />
+                        <button
+                          type="button"
+                          onClick={addSubcategory}
+                          className="bg-emerald-600 text-white p-3.5 rounded-2xl shadow-lg hover:bg-emerald-700 transition-colors flex items-center justify-center font-bold"
+                        >
+                          <FaPlus size={18} />
+                        </button>
+                      </div>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                         {category.subcategory.map((sub, idx) => (
+                           <div key={idx} className="flex items-center gap-2 bg-emerald-100 text-emerald-800 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm">
+                             {sub}
+                             <button type="button" onClick={() => removeSubcategory(idx)} className="text-emerald-600 hover:text-emerald-900"><FaTimes /></button>
+                           </div>
+                         ))}
+                      </div>
+                   </div>
+
                    <div className="space-y-4">
-                      <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Visual Branding (Images) *</label>
+                      <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Images *</label>
                       <div className="relative group cursor-pointer">
                          <input
                            type="file"
@@ -473,7 +521,7 @@ const Category = () => {
                            multiple
                            onChange={handleImageChange}
                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                           required={!editId}
+                           required={!editId && category.image.length === 0}
                          />
                          <div className="bg-emerald-50 border-2 border-dashed border-emerald-200 rounded-3xl p-8 flex flex-col items-center justify-center transition-all group-hover:bg-emerald-100/50 group-hover:border-emerald-400">
                             <FaImage className="text-emerald-500 mb-3" size={32} />
@@ -504,11 +552,12 @@ const Category = () => {
                    </div>
                 </form>
              </div>
-          </div>
+          </div>,
+          document.body
         )}
       </div>
     </div>
   );
 };
 
-export default Category;
+export default HomeChefCategories;

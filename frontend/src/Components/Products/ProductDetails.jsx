@@ -88,16 +88,26 @@ const ProductDetails = () => {
   };
 
   const fetchProduct = async () => {
-    try {
-      const res = await api.get(`/products/${id}`);
-      const data = res.data;
-      if (!data) throw new Error("Product data not found");
+    const loadProduct = async (path) => {
+      const res = await api.get(path);
+      return res.data;
+    };
 
+    try {
+      let data = null;
+      try {
+        data = await loadProduct(`/products/${id}`);
+      } catch (primaryError) {
+        console.warn(`Product /products/${id} not found, falling back to chef-foods/${id}`);
+        data = await loadProduct(`/chef-foods/${id}`);
+      }
+
+      if (!data) throw new Error("Product data not found");
       setProduct(data);
       console.log("Fetched Product:", data);
 
       if (data.variants?.length > 0) {
-        const firstVariant = data.variants[0];
+        const firstVariant = { ...data.variants[0] };
         // Parse variant images if they are JSON strings
         if (typeof firstVariant.images === 'string') {
           try { firstVariant.images = JSON.parse(firstVariant.images); } catch { firstVariant.images = []; }
@@ -401,6 +411,12 @@ const ProductDetails = () => {
             {product.name}
           </h1>
 
+          {product.chef_name && (
+            <p className="text-gray-500 mt-2 text-lg">
+              By <span className="font-semibold text-gray-800">{product.chef_name}</span>
+            </p>
+          )}
+
           {reviewStats.total_reviews > 0 && (
             <div className="flex items-center gap-2 mt-2">
               <div className="flex text-yellow-400">
@@ -442,7 +458,7 @@ const ProductDetails = () => {
 
           <div className="flex items-center gap-3 mt-4">
             <span className="text-2xl sm:text-3xl font-bold text-primary">
-              ₹{selectedVariant?.offerPrice || selectedVariant?.salePrice || selectedVariant?.price || product.offer_price || product.price || 0}
+              ₹{selectedVariant?.final_price || selectedVariant?.offerPrice || selectedVariant?.salePrice || selectedVariant?.price || product.final_price || product.offer_price || product.price || 0}
             </span>
 
             {(selectedVariant?.mrp || product.mrp) && (

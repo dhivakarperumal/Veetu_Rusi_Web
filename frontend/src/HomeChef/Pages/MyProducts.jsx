@@ -29,15 +29,39 @@ const MyProducts = () => {
   const [viewingProduct, setViewingProduct] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
+  const handleEdit = (id) => navigate(`/chef/add-products/${id}`);
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this product?')) return;
+    setDeleting(true);
+    try {
+      await api.delete(`/chef-foods/${id}`);
+      toast.success('Product deleted successfully.');
+      setProducts(prev => prev.filter(p => p.id !== id));
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Delete failed.');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         const chefUserId = user?.user_id || user?.id;
         if (!chefUserId) return setProducts([]);
-        const res = await api.get('/franchise-products');
-        setProducts(Array.isArray(res.data) ? res.data : []);
+        const res = await api.get('/chef-foods', { params: { chef_user_id: chefUserId } });
+        const allItems = Array.isArray(res.data) ? res.data : [];
+        const productsOnly = allItems.filter(item => {
+          if (!item.product_type) {
+            if (!item.category) return false;
+            return String(item.category).toLowerCase().includes('product');
+          }
+          return item.product_type === 'Food Product';
+        });
+        setProducts(productsOnly);
       } catch (err) {
-        console.error('Failed to fetch franchise products:', err);
+        console.error('Failed to fetch products:', err);
         toast.error('Failed to load your products');
         setProducts([]);
       } finally {
@@ -69,24 +93,37 @@ const MyProducts = () => {
 
   const getProductImage = (product) => {
     try {
-      if (product.variants?.length > 0 && product.variants[0]?.images) {
-        const imgs = typeof product.variants[0].images === 'string' 
-          ? JSON.parse(product.variants[0].images) 
-          : product.variants[0].images;
-        if (Array.isArray(imgs) && imgs.length > 0) {
+      // 1. Try images array (already parsed, JSON string, or double-stringified)
+      if (product.images) {
+        let imgs = product.images;
+        if (typeof imgs === 'string') {
+          try { imgs = JSON.parse(imgs); } catch { imgs = null; }
+        }
+        if (typeof imgs === 'string') {
+          try { imgs = JSON.parse(imgs); } catch { imgs = null; }
+        }
+        if (Array.isArray(imgs) && imgs.length > 0 && imgs[0]) {
           return imgs[0];
         }
       }
-      if (product.images) {
-        const imgs = typeof product.images === 'string' 
-          ? JSON.parse(product.images) 
-          : product.images;
-        if (Array.isArray(imgs) && imgs.length > 0) return imgs[0];
+      // 2. packaging_image fallback (chef_food_table)
+      if (product.packaging_image) {
+        return product.packaging_image;
+      }
+      // 3. variants fallback (legacy)
+      if (product.variants?.length > 0 && product.variants[0]?.images) {
+        let imgs = product.variants[0].images;
+        if (typeof imgs === 'string') {
+          try { imgs = JSON.parse(imgs); } catch { imgs = null; }
+        }
+        if (Array.isArray(imgs) && imgs.length > 0 && imgs[0]) {
+          return imgs[0];
+        }
       }
     } catch (e) {
       console.error('Error parsing images:', e);
     }
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(product.name || 'P')}&background=random`;
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(product.name || 'P')}&background=10b981&color=fff&size=400`;
   };
 
   if (loading) {
@@ -103,9 +140,9 @@ const MyProducts = () => {
       {/* Header with Title */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-black text-slate-800 tracking-tight uppercase">Assigned Products</h2>
+          <h2 className="text-3xl font-black text-slate-800 tracking-tight uppercase">My Products</h2>
           <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-2">
-            View products assigned to you by your franchise owner
+            Manage your listed products and inventory
           </p>
         </div>
       </div>
@@ -238,7 +275,9 @@ const MyProducts = () => {
                             <img
                               src={getProductImage(product)}
                               alt={product.name}
+                              loading="lazy"
                               className="w-full h-full object-cover"
+                              onError={(e) => { e.target.onerror = null; e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(product.name || 'P')}&background=10b981&color=fff&size=400`; }}
                             />
                           </div>
                           <div className="min-w-0 flex-1">
@@ -265,7 +304,7 @@ const MyProducts = () => {
                       </td>
                       <td className="px-8 py-6">
                         <div className="flex flex-col">
-                          <span className="text-base font-black text-slate-800">₹{parseFloat(product.offer_price || product.mrp || 0).toLocaleString()}</span>
+                          <span className="text-base font-black text-slate-800">₹{parseFloat(product.final_price || product.offer_price || product.mrp || 0).toLocaleString()}</span>
                           <span className="text-[10px] text-gray-400 line-through font-bold">₹{parseFloat(product.mrp || 0).toLocaleString()}</span>
                         </div>
                       </td>
@@ -277,6 +316,21 @@ const MyProducts = () => {
                             title="View Details"
                           >
                             <FiEye size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleEdit(product.id)}
+                            className="p-3 border border-gray-200 text-gray-500 rounded-xl hover:bg-blue-500 hover:text-white transition-all"
+                            title="Edit"
+                          >
+                            <FiEdit2 size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(product.id)}
+                            disabled={deleting}
+                            className="p-3 border border-gray-200 text-gray-500 rounded-xl hover:bg-rose-500 hover:text-white transition-all disabled:opacity-50"
+                            title="Delete"
+                          >
+                            <FiTrash2 size={16} />
                           </button>
                         </div>
                       </td>
@@ -307,7 +361,9 @@ const MyProducts = () => {
                   <img
                     src={getProductImage(product)}
                     alt={product.name}
+                    loading="lazy"
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                    onError={(e) => { e.target.onerror = null; e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(product.name || 'P')}&background=10b981&color=fff&size=400`; }}
                   />
                   <div className="absolute top-4 left-4 right-4 flex justify-between items-start pointer-events-none">
                     <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border backdrop-blur-md pointer-events-auto shadow-sm ${getStatusStyle(product.status)}`}>
