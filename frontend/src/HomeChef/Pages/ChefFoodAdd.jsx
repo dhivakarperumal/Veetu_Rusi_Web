@@ -150,38 +150,50 @@ const ChefFoodAdd = () => {
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
+    
+    const toastId = toast.loading("Uploading images...");
     try {
-      const imageData = await Promise.all(
-        files.map((file) =>
-          imageCompression(file, { maxSizeMB: 0.5, maxWidthOrHeight: 1200, useWebWorker: true })
-            .then((compressed) => new Promise((resolve) => {
-              const reader = new FileReader();
-              reader.onloadend = () => resolve(reader.result);
-              reader.readAsDataURL(compressed);
-            }))
-        )
-      );
-      setForm((prev) => ({ ...prev, images: [...(prev.images || []), ...imageData] }));
+      const formData = new FormData();
+      for (const file of files) {
+        const compressed = await imageCompression(file, { maxSizeMB: 0.5, maxWidthOrHeight: 1200, useWebWorker: true });
+        formData.append("images", compressed, file.name || "image.jpg");
+      }
+      
+      const res = await api.post("/upload/images", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+      
+      if (res.data && res.data.urls) {
+        setForm((prev) => ({ ...prev, images: [...(prev.images || []), ...res.data.urls] }));
+        toast.success("Images uploaded successfully", { id: toastId });
+      }
     } catch (err) {
       console.error("Image upload failed", err);
-      toast.error("Could not process images.");
+      toast.error("Could not process images.", { id: toastId });
     }
   };
 
   const handlePackagingUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    
+    const toastId = toast.loading("Uploading packaging image...");
     try {
       const compressed = await imageCompression(file, { maxSizeMB: 0.5, maxWidthOrHeight: 1200, useWebWorker: true });
-      const imageData = await new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result);
-        reader.readAsDataURL(compressed);
+      const formData = new FormData();
+      formData.append("images", compressed, file.name || "packaging.jpg");
+      
+      const res = await api.post("/upload/images", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
       });
-      setForm((prev) => ({ ...prev, packaging_image: imageData }));
+      
+      if (res.data && res.data.urls && res.data.urls.length > 0) {
+        setForm((prev) => ({ ...prev, packaging_image: res.data.urls[0] }));
+        toast.success("Packaging image uploaded", { id: toastId });
+      }
     } catch (err) {
       console.error("Packaging image upload failed", err);
-      toast.error("Could not process packaging image.");
+      toast.error("Could not process packaging image.", { id: toastId });
     }
   };
 
