@@ -16,6 +16,7 @@ const AdminLayout = () => {
     // Socket.IO and Polling - listen for new orders for this chef
     const [popupVisible, setPopupVisible] = useState(false);
     const [popupOrder, setPopupOrder] = useState(null);
+    const popupOrderRef = useRef(null);
     const displayedOrderIdsRef = useRef(new Set());
 
     const navigate = useNavigate();
@@ -49,19 +50,20 @@ const AdminLayout = () => {
             const allOrders = Array.isArray(res.data) ? res.data : [];
             const pendingOrders = allOrders.filter(order => order.status === 'Pending');
 
-            if (popupOrder) {
-                const stillPending = pendingOrders.some(order => Number(order.id) === Number(popupOrder.id));
+            if (popupOrderRef.current) {
+                const stillPending = pendingOrders.some(order => Number(order.id) === Number(popupOrderRef.current.id));
                 if (!stillPending) {
                     setPopupVisible(false);
                     setPopupOrder(null);
+                    popupOrderRef.current = null;
                 }
-                return;
             }
 
             const nextOrder = pendingOrders.find(order => !displayedOrderIdsRef.current.has(Number(order.id)));
-            if (nextOrder) {
+            if (nextOrder && !popupOrderRef.current) {
                 displayedOrderIdsRef.current.add(Number(nextOrder.id));
                 setPopupOrder(nextOrder);
+                popupOrderRef.current = nextOrder;
                 setPopupVisible(true);
                 playNotificationSound();
             }
@@ -83,13 +85,11 @@ const AdminLayout = () => {
 
     useEffect(() => {
         fetchPendingOrders();
-        const interval = setInterval(fetchPendingOrders, 10000); // Poll every 10 seconds
+        const interval = setInterval(fetchPendingOrders, 10000);
 
         const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
         const socketBase = apiUrl.replace(/\/api\/?$/i, '') || 'http://localhost:5000';
         const token = localStorage.getItem('token');
-        
-        console.log('🔌 Initializing socket connection to:', socketBase);
         
         const socket = io(socketBase, { 
             auth: { token },
@@ -105,14 +105,14 @@ const AdminLayout = () => {
 
         socket.on('new_order', (payload) => {
             console.log('📦 New order received via socket:', payload);
-            fetchPendingOrders(); // trigger fetch to get full details and show popup safely
+            fetchPendingOrders();
         });
 
         return () => {
             clearInterval(interval);
             socket.disconnect();
         };
-    }, [popupOrder]); // Depend on popupOrder to ensure correct evaluation inside setInterval
+    }, []);
 
     const handleAccept = async () => {
         if (!popupOrder) return;
@@ -121,6 +121,7 @@ const AdminLayout = () => {
             toast.success('Order accepted');
             setPopupVisible(false);
             setPopupOrder(null);
+            popupOrderRef.current = null;
         } catch (err) {
             console.error(err);
             toast.error('Failed to accept order');
@@ -134,6 +135,7 @@ const AdminLayout = () => {
             toast.success('Order rejected');
             setPopupVisible(false);
             setPopupOrder(null);
+            popupOrderRef.current = null;
         } catch (err) {
             console.error(err);
             toast.error('Failed to reject order');
@@ -143,20 +145,17 @@ const AdminLayout = () => {
     const skipOrder = () => {
         setPopupVisible(false);
         setPopupOrder(null);
+        popupOrderRef.current = null;
     };
 
     return (
         <div className="admin-root homechef-root flex min-h-screen bg-[#0b0d10] text-slate-200 font-sans">
-
-            {/* Sidebar */}
             <ChefSidebar
                 isOpen={sidebarOpen}
                 onClose={() => setSidebarOpen(false)}
                 collapsed={sidebarCollapsed}
                 onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
             />
-
-            {/* Main Content */}
             <div
                 className={`
           flex flex-col flex-1 min-w-0 min-h-screen
@@ -164,10 +163,7 @@ const AdminLayout = () => {
           ${isLargeScreen ? (sidebarCollapsed ? "lg:ml-20" : "lg:ml-72") : ""}
         `}
             >
-                {/* Header */}
                 <ChefHeader onMenuClick={() => setSidebarOpen(true)} />
-
-                {/* Page Content */}
                 <main className="flex-1 p-4 sm:p-5 lg:p-6 overflow-y-auto">
                     <div className="glass-container">
                         <Outlet />
@@ -210,7 +206,6 @@ const AdminLayout = () => {
                                         <p className="mt-2 text-sm text-slate-300">{popupOrder.customer_phone || 'No contact details'}</p>
                                     </div>
 
-                                    {/* Order Items Section for Chef */}
                                         <div className="sm:col-span-2 rounded-3xl border border-slate-800 bg-[#0b0d10] p-5">
                                         <div className="flex items-center justify-between mb-3">
                                             <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Items in Order</p>
@@ -258,11 +253,9 @@ const AdminLayout = () => {
                     </div>
                 )}
 
-                {/* Footer */}
                 <footer className="glass-footer text-center py-4 mt-10 text-sm text-white/70">
                     © {new Date().getFullYear()} Q-Techx Solutions. All rights reserved.
                 </footer>
-
             </div>
         </div>
     );
