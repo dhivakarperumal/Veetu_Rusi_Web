@@ -93,24 +93,37 @@ const MyProducts = () => {
 
   const getProductImage = (product) => {
     try {
-      if (product.variants?.length > 0 && product.variants[0]?.images) {
-        const imgs = typeof product.variants[0].images === 'string' 
-          ? JSON.parse(product.variants[0].images) 
-          : product.variants[0].images;
-        if (Array.isArray(imgs) && imgs.length > 0) {
+      // 1. Try images array (already parsed, JSON string, or double-stringified)
+      if (product.images) {
+        let imgs = product.images;
+        if (typeof imgs === 'string') {
+          try { imgs = JSON.parse(imgs); } catch { imgs = null; }
+        }
+        if (typeof imgs === 'string') {
+          try { imgs = JSON.parse(imgs); } catch { imgs = null; }
+        }
+        if (Array.isArray(imgs) && imgs.length > 0 && imgs[0]) {
           return imgs[0];
         }
       }
-      if (product.images) {
-        const imgs = typeof product.images === 'string' 
-          ? JSON.parse(product.images) 
-          : product.images;
-        if (Array.isArray(imgs) && imgs.length > 0) return imgs[0];
+      // 2. packaging_image fallback (chef_food_table)
+      if (product.packaging_image) {
+        return product.packaging_image;
+      }
+      // 3. variants fallback (legacy)
+      if (product.variants?.length > 0 && product.variants[0]?.images) {
+        let imgs = product.variants[0].images;
+        if (typeof imgs === 'string') {
+          try { imgs = JSON.parse(imgs); } catch { imgs = null; }
+        }
+        if (Array.isArray(imgs) && imgs.length > 0 && imgs[0]) {
+          return imgs[0];
+        }
       }
     } catch (e) {
       console.error('Error parsing images:', e);
     }
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(product.name || 'P')}&background=random`;
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(product.name || 'P')}&background=10b981&color=fff&size=400`;
   };
 
   if (loading) {
@@ -262,7 +275,9 @@ const MyProducts = () => {
                             <img
                               src={getProductImage(product)}
                               alt={product.name}
+                              loading="lazy"
                               className="w-full h-full object-cover"
+                              onError={(e) => { e.target.onerror = null; e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(product.name || 'P')}&background=10b981&color=fff&size=400`; }}
                             />
                           </div>
                           <div className="min-w-0 flex-1">
@@ -346,7 +361,9 @@ const MyProducts = () => {
                   <img
                     src={getProductImage(product)}
                     alt={product.name}
+                    loading="lazy"
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                    onError={(e) => { e.target.onerror = null; e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(product.name || 'P')}&background=10b981&color=fff&size=400`; }}
                   />
                   <div className="absolute top-4 left-4 right-4 flex justify-between items-start pointer-events-none">
                     <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border backdrop-blur-md pointer-events-auto shadow-sm ${getStatusStyle(product.status)}`}>
