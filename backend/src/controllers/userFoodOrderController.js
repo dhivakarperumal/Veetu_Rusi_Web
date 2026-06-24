@@ -175,13 +175,12 @@ const getChefOrders = async (chefUserId) => {
     `SELECT * FROM user_food_order_table
      WHERE chef_user_id = ?
        OR chef_id = ?
-       OR created_by_user_id = ?
        OR items LIKE ?
        OR items LIKE ?
        OR items LIKE ?
        OR items LIKE ?
      ORDER BY COALESCE(ordered_at, created_at, updated_at) DESC`,
-    [chefUserId, chefUserId, chefUserId, ...patterns]
+    [chefUserId, chefUserId, ...patterns]
   );
 
   const chefOrders = [];
@@ -189,15 +188,13 @@ const getChefOrders = async (chefUserId) => {
     const items = parseJson(row.items);
     const chefItems = items.filter((item) =>
       String(item.chef_user_id) === String(chefUserId) ||
-      String(item.chef_id) === String(chefUserId) ||
-      String(item.created_by_user_id) === String(chefUserId)
+      String(item.chef_id) === String(chefUserId)
     );
 
     // If no matching items in the JSON but the order-level chef_user_id matches, include all items
     const orderLevelMatch =
       String(row.chef_user_id) === String(chefUserId) ||
-      String(row.chef_id) === String(chefUserId) ||
-      String(row.created_by_user_id) === String(chefUserId);
+      String(row.chef_id) === String(chefUserId);
 
     const effectiveItems = chefItems.length > 0 ? chefItems : orderLevelMatch ? items : [];
     if (!effectiveItems.length && !orderLevelMatch) continue;

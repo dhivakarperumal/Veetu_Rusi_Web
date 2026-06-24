@@ -251,10 +251,6 @@ exports.createProduct = async (req, res) => {
         const finalProductCode = product_code || await generateNextProductCode();
 
         const metadata = await resolveProductMetadata(req, req.body);
-        const {
-            finalChefId,
-            finalChefUserId,
-            finalChefName,
             finalChefPhone,
             finalChefEmail,
             finalFranchiseId,
@@ -282,10 +278,7 @@ exports.createProduct = async (req, res) => {
             prep_time || null, ingredients || null, spice_level || 'Medium',
             shelf_life_days || null, net_weight || null, package_count || null,
             packaging_type || 'Pouch', manufacture_date || null,
-            variants ? JSON.stringify(variants) : null,
-            images ? JSON.stringify(images) : null,
-            finalChefId, finalChefUserId, finalChefName, finalChefPhone, finalChefEmail,
-            finalFranchiseUserId, finalFranchiseName, finalFranchiseEmail, finalFranchisePhone,
+                const finalFranchiseIdResolved = franchise_id || finalFranchiseId || null;
             finalCreatedByUserId, finalCreatedByEmail, finalCreatedByName, finalCreatedByPhone,
             finalFranchiseIdResolved, createdBy
         ];
@@ -303,7 +296,6 @@ exports.createProduct = async (req, res) => {
         // Sanitize undefined -> null for insert params as well
         const insertParams = params.map(v => v === undefined ? null : v);
 
-        // Insert into base products table
         const [result] = await pool.execute(
             `INSERT INTO chef_products (${columns}) VALUES (${placeholders})`,
             insertParams
@@ -408,10 +400,6 @@ exports.updateProduct = async (req, res) => {
         await pool.execute(updateQuery, sanitized);
 
         res.json({ message: 'Product updated successfully' });
-    } catch (error) {
-        console.error('Error updating product:', error);
-        res.status(500).json({ message: 'Failed to update product', error: error.message });
-    }
 };
 
 // Delete product
@@ -447,10 +435,6 @@ exports.getLatestProductCode = async (req, res) => {
             nextCode = `P${String(num).padStart(3, '0')}`;
         }
 
-        res.json({ latestCode: nextCode });
-    } catch (error) {
-        console.error('Error getting product code:', error);
-        res.status(500).json({ message: 'Failed to get product code', error: error.message });
     }
 };
 
@@ -465,7 +449,6 @@ exports.getCategories = async (req, res) => {
             query += ' AND (created_by = ? OR created_by IS NULL)';
             params.push(franchise_user_id);
         }
-
         query += ' ORDER BY id DESC';
 
         const [rows] = await pool.execute(query, params);
@@ -477,7 +460,6 @@ exports.getCategories = async (req, res) => {
         }));
 
         res.json(categories);
-    } catch (error) {
         console.error('Error fetching categories:', error);
         res.status(500).json({ message: 'Failed to fetch categories', error: error.message });
     }
