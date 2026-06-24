@@ -7,7 +7,6 @@ import {
     FiUploadCloud,
     FiTrash2,
     FiPlus,
-    FiPercent,
     FiActivity,
     FiStar,
     FiHash
@@ -16,74 +15,9 @@ import { FaRupeeSign } from "react-icons/fa";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../api";
 import { toast} from "react-hot-toast";
-import imageCompression from "browser-image-compression";
 
-// Helper: Color to Name Utility
-const tagColors = [
-    { name: "Pure Red", hex: "#FF0000" },
-    { name: "Crimson", hex: "#DC143C" },
-    { name: "Deep Maroon", hex: "#800000" },
-    { name: "Rose Pink", hex: "#FFC0CB" },
-    { name: "Hot Pink", hex: "#FF69B4" },
-    { name: "Magenta", hex: "#FF00FF" },
-    { name: "Royal Purple", hex: "#800080" },
-    { name: "Violet", hex: "#EE82EE" },
-    { name: "Indigo", hex: "#4B0082" },
-    { name: "Navy Blue", hex: "#000080" },
-    { name: "Royal Blue", hex: "#4169E1" },
-    { name: "Sky Blue", hex: "#87CEEB" },
-    { name: "Teal", hex: "#008080" },
-    { name: "Cyan", hex: "#00FFFF" },
-    { name: "Emerald Green", hex: "#50C878" },
-    { name: "Forest Green", hex: "#228B22" },
-    { name: "Olive Green", hex: "#808000" },
-    { name: "Lime Green", hex: "#32CD32" },
-    { name: "Golden Yellow", hex: "#FFD700" },
-    { name: "Mustard", hex: "#FFDB58" },
-    { name: "Bright Orange", hex: "#FFA500" },
-    { name: "Coral", hex: "#FF7F50" },
-    { name: "Peach", hex: "#FFDAB9" },
-    { name: "Beige", hex: "#F5F5DC" },
-    { name: "Cream", hex: "#FFFDD0" },
-    { name: "Pure White", hex: "#FFFFFF" },
-    { name: "Jet Black", hex: "#000000" },
-    { name: "Steel Grey", hex: "#808080" },
-    { name: "Silver Tone", hex: "#C0C0C0" },
-    { name: "Chocolate Brown", hex: "#8B4513" },
-    { name: "Copper", hex: "#B87333" },
-    { name: "Terracotta", hex: "#E2725B" },
-    { name: "Turquoise", hex: "#40E0D0" }
-];
 
-const getNearestColorName = (hex) => {
-    hex = hex.replace("#", "");
-    const r1 = parseInt(hex.substring(0, 2), 16);
-    const g1 = parseInt(hex.substring(2, 4), 16);
-    const b1 = parseInt(hex.substring(4, 6), 16);
 
-    let minDistance = Infinity;
-    let nearestName = "Custom Tag";
-
-    tagColors.forEach(color => {
-        const h = color.hex.replace("#", "");
-        const r2 = parseInt(h.substring(0, 2), 16);
-        const g2 = parseInt(h.substring(2, 4), 16);
-        const b2 = parseInt(h.substring(4, 6), 16);
-
-        const distance = Math.sqrt(
-            Math.pow(r2 - r1, 2) +
-            Math.pow(g2 - g1, 2) +
-            Math.pow(b2 - b1, 2)
-        );
-
-        if (distance < minDistance) {
-            minDistance = distance;
-            nearestName = color.name;
-        }
-    });
-
-    return nearestName;
-};
 
 const AddProducts = () => {
     const { id } = useParams();
@@ -129,8 +63,7 @@ const AddProducts = () => {
 
     const [variants, setVariants] = useState([
         {
-            color: "#3b82f6",
-            colorName: "",
+            tag: "",
             images: [],
             selectedSizes: [],
             sizesStock: {}
@@ -322,8 +255,7 @@ const AddProducts = () => {
     const addVariant = () => {
         const sizes = getSizesByCategory();
         const initialVariant = {
-            color: "#3b82f6",
-            colorName: "",
+            tag: "",
             images: [],
             selectedSizes: sizes.length === 1 ? [sizes[0]] : [],
             sizesStock: sizes.length === 1 ? { [sizes[0]]: 0 } : {}
@@ -337,14 +269,7 @@ const AddProducts = () => {
 
     const handleVariantChange = (index, field, value) => {
         const updated = [...variants];
-        const newVariant = { ...updated[index], [field]: value };
-
-        // Auto-set colorName if color is updated
-        if (field === "color") {
-            newVariant.colorName = getNearestColorName(value);
-        }
-
-        updated[index] = newVariant;
+        updated[index] = { ...updated[index], [field]: value };
         setVariants(updated);
     };
 
@@ -370,36 +295,50 @@ const AddProducts = () => {
     };
 
     const handleVariantImageUpload = async (vIndex, e) => {
-        try {
-            const files = Array.from(e.target.files);
+        const files = Array.from(e.target.files);
+        if (!files.length) return;
 
-            // Limit to 5 images per variant for performance
-            if ((variants[vIndex].images?.length || 0) + files.length > 5) {
-                toast.error("Max 5 images per variant.");
-                return;
+        // Limit to 5 images per variant
+        if ((variants[vIndex].images?.length || 0) + files.length > 5) {
+            toast.error("Max 5 images per variant.");
+            return;
+        }
+
+        const toastId = toast.loading(`Uploading ${files.length} image${files.length > 1 ? 's' : ''}...`);
+        try {
+            const formPayload = new FormData();
+            files.forEach(file => formPayload.append('images', file));
+
+            const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
+            const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
+
+            const res = await fetch(`${baseUrl}/api/upload/images`, {
+                method: 'POST',
+                headers: token ? { Authorization: `Bearer ${token}`, 'x-access-token': token } : {},
+                body: formPayload
+            });
+
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.message || 'Upload failed');
             }
 
-            const imagesArray = await Promise.all(
-                files.map(async (file) => {
-                    // Stricter compression to fit in database packet limits
-                    const options = {
-                        maxSizeMB: 0.5, // Aim for ~200KB per image max
-                        maxWidthOrHeight: 1000,
-                        useWebWorker: true
-                    };
-                    const compressed = await imageCompression(file, options);
-                    return imageCompression.getDataUrlFromFile(compressed);
-                })
-            );
+            const data = await res.json();
+            const urls = data.urls || [];
+
             const updated = [...variants];
-            updated[vIndex].images = [...(updated[vIndex].images || []), ...imagesArray];
+            updated[vIndex] = {
+                ...updated[vIndex],
+                images: [...(updated[vIndex].images || []), ...urls]
+            };
             setVariants(updated);
-            toast.success(`Success! ${files.length} variation images added.`);
+            toast.success(`${files.length} image${files.length > 1 ? 's' : ''} uploaded!`, { id: toastId });
         } catch (error) {
-            console.error(error);
-            toast.error("Image upload failed.");
+            console.error('Image upload error:', error);
+            toast.error(error.message || 'Image upload failed.', { id: toastId });
         }
     };
+
 
     const removeVariantImage = (vIndex, imgIndex) => {
         const updated = [...variants];
@@ -456,6 +395,9 @@ const AddProducts = () => {
                 ? parseFloat(formData.offer_price)
                 : mrpNum - mrpNum * (offerNum / 100);
 
+            // Collect all images from all variants into a flat array
+            const allVariantImages = variants.flatMap(v => v.images || []);
+
             const finalData = {
                 // core food fields (chef_food_table columns)
                 category: formData.category || "Food Product",
@@ -475,7 +417,7 @@ const AddProducts = () => {
                 packaging_image: formData.packaging_image || null,
                 ingredients: formData.ingredients || null,
                 instructions: formData.instructions || formData.cooking_instructions || null,
-                images: formData.images || [],
+                images: allVariantImages,
                 status: formData.status || "Inactive",
                 // chef identifiers
                 franchise_user_id: franchiseUserId,
@@ -670,38 +612,131 @@ const AddProducts = () => {
                         </div>
                     </div>
 
-                    {/* Industrial Pricing & Stock */}
+                    {/* Pricing & Stock */}
                     <div className="bg-white p-8 sm:p-10 rounded-[3rem] shadow-2xl space-y-8 relative overflow-hidden group">
                         <div className="absolute top-0 right-0 p-8 opacity-5 text-gray-900 group-hover:scale-110 transition-transform">
                             <FaRupeeSign size={150} />
                         </div>
                         <div className="relative z-10 space-y-8">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <span className="p-2.5 bg-white/5 text-gray-900 rounded-xl"><FaRupeeSign size={20} /></span>
-                                    <h2 className="text-2xl font-black text-gray-900 tracking-tight">Pricing & Stock</h2>
-                                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse delay-75"></span>
-                                </div>
+                            <div className="flex items-center gap-3">
+                                <span className="p-2.5 bg-white/5 text-gray-900 rounded-xl"><FaRupeeSign size={20} /></span>
+                                <h2 className="text-2xl font-black text-gray-900 tracking-tight">Pricing & Stock</h2>
+                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse delay-75"></span>
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                {/* Weight */}
                                 <div className="space-y-3">
-                                    <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Menu Price *</label>
+                                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 inline-block"></span>
+                                        Weight
+                                    </label>
                                     <div className="relative">
-                                        <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-900 font-black text-lg">₹</span>
-                                        <input type="number" name="mrp" value={formData.mrp} onChange={handleFormChange} className="w-full pl-10 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-[1.2rem] outline-none focus:bg-white focus:border-blue-500/20 transition-all text-xl font-black text-slate-900" required />
+                                        <input
+                                            type="text"
+                                            name="net_weight"
+                                            value={formData.net_weight}
+                                            onChange={handleFormChange}
+                                            placeholder="e.g. 250g, 1kg"
+                                            className="w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-[1.2rem] outline-none focus:bg-white focus:border-indigo-400/40 transition-all text-lg font-black text-slate-800 placeholder:text-gray-300 placeholder:font-medium"
+                                        />
                                     </div>
                                 </div>
-                                <div className="space-y-3 relative group">
-                                    <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1 flex items-center justify-between">
-                                        Available Stock
+
+                                {/* MRP */}
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-slate-700 inline-block"></span>
+                                        MRP (₹) *
+                                    </label>
+                                    <div className="relative">
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-700 font-black text-lg pointer-events-none">₹</span>
+                                        <input
+                                            type="number"
+                                            name="mrp"
+                                            value={formData.mrp}
+                                            onChange={handleFormChange}
+                                            placeholder="0"
+                                            min="0"
+                                            className="w-full pl-9 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-[1.2rem] outline-none focus:bg-white focus:border-slate-400/40 transition-all text-xl font-black text-slate-900 placeholder:text-gray-300"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Discount % */}
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block"></span>
+                                        Discount %
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            name="offer"
+                                            value={formData.offer}
+                                            onChange={handleFormChange}
+                                            placeholder="0"
+                                            min="0"
+                                            max="100"
+                                            className="w-full pl-4 pr-9 py-4 bg-amber-50/60 border border-amber-100 rounded-[1.2rem] outline-none focus:bg-white focus:border-amber-400/40 transition-all text-xl font-black text-amber-700 placeholder:text-amber-200"
+                                        />
+                                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-amber-400 font-black text-lg pointer-events-none">%</span>
+                                    </div>
+                                    {parseFloat(formData.offer) > 0 && (
+                                        <p className="text-[10px] text-amber-600 font-bold ml-1">
+                                            Save ₹{Math.round((parseFloat(formData.mrp) || 0) * (parseFloat(formData.offer) / 100))} off MRP
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* Final Price — read-only, auto-calculated */}
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
+                                        Final Price
+                                        <span className="text-[8px] bg-emerald-100 text-emerald-600 px-1.5 py-0.5 rounded-full font-black ml-1">AUTO</span>
+                                    </label>
+                                    <div className="relative">
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-600 font-black text-lg pointer-events-none">₹</span>
+                                        <input
+                                            type="number"
+                                            name="offer_price"
+                                            value={formData.offer_price}
+                                            readOnly
+                                            tabIndex={-1}
+                                            className="w-full pl-9 pr-4 py-4 bg-emerald-50 border-2 border-emerald-200 rounded-[1.2rem] text-xl font-black text-emerald-700 cursor-default outline-none select-none"
+                                        />
+                                    </div>
+                                    {parseFloat(formData.offer) > 0 && parseFloat(formData.mrp) > 0 && (
+                                        <p className="text-[10px] text-emerald-600 font-bold ml-1">
+                                            {Math.round(parseFloat(formData.offer))}% off applied ✓
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Stock row */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2 border-t border-gray-50">
+                                <div className="space-y-3 relative">
+                                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1 flex items-center justify-between">
+                                        <span className="flex items-center gap-1.5">
+                                            <FiActivity className="text-blue-500" size={10} />
+                                            Available Stock
+                                        </span>
                                         {isStockManuallyEdited && (
-                                            <button onClick={resetStockCalculation} className="text-[8px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full hover:bg-blue-500 transition-colors uppercase tracking-widest">Auto Set</button>
+                                            <button type="button" onClick={resetStockCalculation} className="text-[8px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full hover:bg-blue-500 hover:text-white transition-colors uppercase tracking-widest">Auto Set</button>
                                         )}
                                     </label>
                                     <div className="relative">
                                         <FiActivity className={`absolute left-5 top-1/2 -translate-y-1/2 ${isStockManuallyEdited ? 'text-amber-500' : 'text-blue-500'}`} />
-                                        <input type="number" name="total_stock" value={formData.total_stock} onChange={handleFormChange} className={`w-full pl-10 pr-4 py-4 bg-blue-50/50 border border-blue-100 rounded-[1.2rem] outline-none transition-all text-xl font-black ${isStockManuallyEdited ? 'text-amber-500 border-amber-500/30' : 'text-blue-600'}`} />
+                                        <input
+                                            type="number"
+                                            name="total_stock"
+                                            value={formData.total_stock}
+                                            onChange={handleFormChange}
+                                            className={`w-full pl-11 pr-4 py-4 border rounded-[1.2rem] outline-none transition-all text-xl font-black ${isStockManuallyEdited ? 'bg-amber-50 text-amber-500 border-amber-200' : 'bg-blue-50/50 text-blue-600 border-blue-100'}`}
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -729,10 +764,7 @@ const AddProducts = () => {
                                         <option value="Contains Egg">Contains Egg</option>
                                     </select>
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Net Weight / Volume</label>
-                                    <input type="text" name="net_weight" value={formData.net_weight} onChange={handleFormChange} placeholder="e.g. 500g, 1L" className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800" />
-                                </div>
+
                                 <div className="space-y-2">
                                     <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Packaging Type</label>
                                     <input type="text" name="packaging_type" value={formData.packaging_type} onChange={handleFormChange} placeholder="e.g. Packet, Bottle" className="w-full px-6 py-3.5 bg-gray-50 rounded-2xl text-sm font-bold text-slate-800" />
@@ -778,42 +810,17 @@ const AddProducts = () => {
                     {variants.map((v, vIndex) => (
                         <div key={vIndex} className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6 relative group animate-in zoom-in-95 duration-500">
                             <div className="flex items-center justify-between">
-                                <div className="flex flex-col gap-2">
-                                    <div className="flex items-center gap-3">
-                                        <div className="relative group/color">
-                                            <input
-                                                type="color"
-                                                value={v.color}
-                                                onChange={(e) => handleVariantChange(vIndex, "color", e.target.value)}
-                                                className="w-10 h-10 rounded-full border-2 border-white shadow-md cursor-pointer transition-transform group-hover/color:scale-110"
-                                            />
-                                            <div className="absolute -top-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-100">
-                                                <div className="w-2 h-2 rounded-full border border-gray-200" style={{ backgroundColor: v.color }}></div>
-                                            </div>
-                                        </div>
-                                        <div className="flex-1">
-                                            <select
-                                                value={v.colorName}
-                                                onChange={(e) => {
-                                                    const selected = tagColors.find(bc => bc.name === e.target.value);
-                                                    if (selected) {
-                                                        handleVariantChange(vIndex, "color", selected.hex);
-                                                        handleVariantChange(vIndex, "colorName", selected.name);
-                                                    } else {
-                                                        handleVariantChange(vIndex, "colorName", e.target.value);
-                                                    }
-                                                }}
-                                                className="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-xl text-xs font-black text-slate-800 outline-none focus:bg-white focus:border-blue-500/30 transition-all uppercase tracking-widest shadow-inner cursor-pointer"
-                                            >
-                                                <option value="">Select Serving Tag</option>
-                                                {tagColors.map(bc => <option key={bc.hex} value={bc.name}>{bc.name}</option>)}
-                                                {v.colorName && !tagColors.find(bc => bc.name === v.colorName) && <option value={v.colorName}>{v.colorName}</option>}
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <p className="text-[8px] font-bold text-gray-400 uppercase tracking-tight ml-1">Selected Tag Color: <span className="text-blue-500 font-black">{v.color}</span></p>
+                                <div className="flex-1 space-y-1">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Serving Tag / Label (optional)</label>
+                                    <input
+                                        type="text"
+                                        value={v.tag || ""}
+                                        onChange={(e) => handleVariantChange(vIndex, "tag", e.target.value)}
+                                        placeholder="e.g. Special, Chef's Pick, Bestseller"
+                                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-blue-500/30 transition-all"
+                                    />
                                 </div>
-                                <button type="button" onClick={() => removeVariant(vIndex)} className="text-gray-200 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"><FiTrash2 size={16} /></button>
+                                <button type="button" onClick={() => removeVariant(vIndex)} className="ml-4 text-gray-200 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"><FiTrash2 size={16} /></button>
                             </div>
 
                             <div className="space-y-4 pt-2 border-t border-gray-50">
