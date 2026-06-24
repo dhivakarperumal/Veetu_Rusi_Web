@@ -148,13 +148,21 @@ exports.getFoods = async (req, res) => {
 exports.getFoodById = async (req, res) => {
   try {
     const { id } = req.params;
-    const [rows] = await pool.execute('SELECT * FROM chef_food_table WHERE id = ?', [id]);
+    const [rows] = await pool.execute(
+      `SELECT cf.*, u.full_name AS chef_name, u.user_id AS chef_user_id, u.email AS chef_email, u.mobile_number AS chef_phone
+       FROM chef_food_table cf
+       LEFT JOIN users u ON cf.created_by = u.user_id
+       WHERE cf.id = ?`,
+      [id]
+    );
     if (rows.length === 0) {
       return res.status(404).json({ message: 'Chef food item not found' });
     }
     const food = rows[0];
     res.json({
       ...food,
+      // Ensure chef_user_id is always the correct user_id (created_by)
+      chef_user_id: food.chef_user_id || food.created_by || null,
       ingredients: parseJsonField(food.ingredients) || food.ingredients,
       instructions: parseJsonField(food.instructions) || food.instructions,
       images: parseJsonField(food.images) || food.images || []

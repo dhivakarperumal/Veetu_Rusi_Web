@@ -19,6 +19,7 @@ const OrderManagement = () => {
     const query = new URLSearchParams(location.search);
     const statusParam = query.get("status");
     if (statusParam) {
+      // Normalize: treat "Pending" and "New Order" and "Order Placed" the same way
       setStatusFilter(statusParam);
     }
   }, [location.search]);
@@ -60,14 +61,20 @@ const OrderManagement = () => {
       const lower = search.toLowerCase();
       result = result.filter(
         (o) =>
-          o.order_id.toLowerCase().includes(lower) ||
-          o.customer_name.toLowerCase().includes(lower) ||
-          o.restaurant_or_chef.toLowerCase().includes(lower) ||
+          (o.order_id || '').toLowerCase().includes(lower) ||
+          (o.customer_name || '').toLowerCase().includes(lower) ||
+          (o.restaurant_or_chef || '').toLowerCase().includes(lower) ||
           (o.items || []).some((item) => (item.name || item.product_name || "").toLowerCase().includes(lower))
       );
     }
     if (statusFilter !== "All") {
-      result = result.filter((o) => o.status === statusFilter);
+      // Treat Pending / Order Placed / New as equivalent
+      const pendingAliases = ["Pending", "Order Placed", "New", "New Order"];
+      if (pendingAliases.includes(statusFilter)) {
+        result = result.filter((o) => pendingAliases.includes(o.status));
+      } else {
+        result = result.filter((o) => o.status === statusFilter);
+      }
     }
     setFilteredOrders(result);
   }, [search, statusFilter, orders]);
@@ -199,7 +206,9 @@ const OrderManagement = () => {
                         </div>
                       </td>
                       <td className="px-6 py-5 text-sm font-bold text-white/60">
-                        {order.ordered_at ? new Date(order.ordered_at).toLocaleString() : "-"}
+                        {order.ordered_at || order.created_at
+                          ? new Date(order.ordered_at || order.created_at).toLocaleString()
+                          : "-"}
                       </td>
                       <td className="px-6 py-5 text-sm font-semibold text-white/50">
                         {order.delivery_date ? `${order.delivery_date} ${order.delivery_time || ""}` : "-"}
