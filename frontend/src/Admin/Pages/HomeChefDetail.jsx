@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import api from "../../api";
 import { toast } from "react-hot-toast";
 import SubscriptionPaymentModal from "../../Components/SubscriptionPaymentModal";
-import { Landmark, MapPin, UserCheck, Clock, List, KeyRound, Copy, ChevronLeft, ShieldAlert, BadgeCheck, Phone, Mail, Trash2, Edit3, ShieldCheck, ShoppingCart, Package, Utensils, Star, PlusCircle, FileText } from "lucide-react";
+import { Landmark, MapPin, UserCheck, Clock, List, KeyRound, Copy, ChevronLeft, ShieldAlert, BadgeCheck, Phone, Mail, Trash2, Edit3, ShieldCheck, ShoppingCart, Package, Utensils, Star, PlusCircle, FileText, Eye } from "lucide-react";
 
 const HomeChefDetail = () => {
   const { id } = useParams();
@@ -210,7 +210,271 @@ const HomeChefDetail = () => {
 
           <div className="flex-1 min-w-0">
             <div className="rounded-[2rem] border border-white/10 bg-slate-950/95 p-8 lg:p-10 shadow-[0_30px_90px_rgba(0,0,0,0.35)] min-h-[500px] text-slate-100">
-              {/* content panels rendered earlier */}
+              {activeDetailTab === 'chef' && (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_.8fr] gap-6">
+                    <div className="rounded-[1.75rem] border border-slate-800 bg-slate-900/95 p-6">
+                      <div className="flex items-center gap-3 mb-5">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-300">
+                          <UserCheck className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h2 className="text-xl font-black text-white">Chef Information</h2>
+                          <p className="text-sm text-slate-400">Profile and kitchen details for this home chef.</p>
+                        </div>
+                      </div>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        {[
+                          { label: 'Name', value: chef.name },
+                          { label: 'Mobile', value: chef.mobile },
+                          { label: 'Email', value: chef.email },
+                          { label: 'WhatsApp', value: chef.whatsapp_number },
+                          { label: 'City', value: chef.city },
+                          { label: 'State', value: chef.state },
+                          { label: 'Pincode', value: chef.pincode },
+                          { label: 'Cuisine', value: chef.cuisine_type },
+                          { label: 'Kitchen', value: chef.kitchen_name },
+                          { label: 'Specialty', value: chef.specialty_food },
+                        ].map((item) => (
+                          <div key={item.label} className="rounded-3xl bg-slate-950 p-4 border border-slate-800">
+                            <p className="text-xs uppercase tracking-[0.24em] text-slate-500">{item.label}</p>
+                            <p className="mt-2 text-sm font-black text-white">{item.value || 'N/A'}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="rounded-[1.75rem] border border-slate-800 bg-slate-900/95 p-6">
+                      <div className="flex items-center gap-3 mb-5">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-500/10 text-sky-300">
+                          <MapPin className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h2 className="text-xl font-black text-white">Address & Status</h2>
+                          <p className="text-sm text-slate-400">Chef location, verification, and active status.</p>
+                        </div>
+                      </div>
+                      <div className="space-y-4 text-sm">
+                        {[
+                          { label: 'Address', value: chef.address },
+                          { label: 'Verified', value: chef.verification_status },
+                          { label: 'Subscription', value: chef.subscription_status || 'Unknown' },
+                          { label: 'Chef ID', value: chef.chef_unique_code },
+                          { label: 'Joined', value: formatDate(chef.created_at || chef.created_at_timestamp || chef.joined_at) },
+                        ].map((item) => (
+                          <div key={item.label} className="rounded-3xl bg-slate-950 p-4 border border-slate-800">
+                            <p className="text-xs uppercase tracking-[0.24em] text-slate-500">{item.label}</p>
+                            <p className="mt-2 text-sm font-black text-white">{item.value || 'N/A'}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeDetailTab === 'foods' && (
+                <div className="space-y-5">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h2 className="text-xl font-black text-white">Chef Foods</h2>
+                      <p className="text-sm text-slate-400">Food items created by this home chef.</p>
+                    </div>
+                    <span className="inline-flex items-center rounded-full bg-slate-800 px-4 py-2 text-xs font-black uppercase tracking-[0.24em] text-slate-300">{foods.length} items</span>
+                  </div>
+                  <div className="rounded-[1.75rem] border border-slate-800 bg-slate-900/95 overflow-hidden">
+                    {loadingFoods ? (
+                      <div className="flex items-center justify-center p-16 text-slate-400">Loading foods…</div>
+                    ) : foods.length === 0 ? (
+                      <div className="p-16 text-center text-slate-400">No foods found for this chef.</div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm text-slate-300">
+                          <thead className="bg-slate-950/90 text-slate-500 uppercase text-[11px] tracking-[0.2em]">
+                            <tr>
+                              <th className="px-6 py-4">Food</th>
+                              <th className="px-6 py-4">Category</th>
+                              <th className="px-6 py-4">Price</th>
+                              <th className="px-6 py-4">Dietary</th>
+                              <th className="px-6 py-4">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-800">
+                            {foods.map((food) => (
+                              <tr key={food.id || food.food_id || food._id} className="hover:bg-slate-900/80 transition-colors">
+                                <td className="px-6 py-4">
+                                  <div className="flex items-center gap-3">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-300">{String(food.name || food.title || 'F').charAt(0)}</div>
+                                    <div>
+                                      <p className="font-semibold text-white">{food.name || food.title || 'Unnamed'}</p>
+                                      <p className="text-xs text-slate-500">{food.cuisine || 'Home Cooked'}</p>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4 text-slate-400">{food.category || food.food_category || '—'}</td>
+                                <td className="px-6 py-4 font-black text-emerald-400">{formatAmount(food.final_price || food.price || food.mrp)}</td>
+                                <td className="px-6 py-4 text-slate-400">{food.dietary_tag || food.dietary || '—'}</td>
+                                <td className="px-6 py-4">
+                                  <span className={`inline-flex rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] ${food.status === 'Active' ? 'bg-emerald-500/10 text-emerald-300' : 'bg-slate-800 text-slate-400'}`}>
+                                    {food.status || 'Unknown'}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {activeDetailTab === 'products' && (
+                <div className="space-y-5">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h2 className="text-xl font-black text-white">Products</h2>
+                      <p className="text-sm text-slate-400">Products assigned to this home chef.</p>
+                    </div>
+                    <button onClick={() => navigate(`/admin/products/add?chefId=${chef.id}`)} className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-sm font-black text-white hover:bg-emerald-500 transition">
+                      <PlusCircle className="h-4 w-4" /> Add Product
+                    </button>
+                  </div>
+                  <div className="rounded-[1.75rem] border border-slate-800 bg-slate-900/95 p-6">
+                    {products.length === 0 ? (
+                      <div className="p-16 text-center text-slate-400">No products currently linked to this chef.</div>
+                    ) : (
+                      <div className="grid gap-4 md:grid-cols-2">
+                        {products.map((product) => (
+                          <div key={product.id || product.product_id || product._id} className="rounded-3xl border border-slate-800 bg-slate-950 p-5">
+                            <div className="flex items-center justify-between gap-3">
+                              <div>
+                                <h3 className="font-black text-white">{product.name || product.title || 'Unnamed'}</h3>
+                                <p className="text-sm text-slate-500">{product.category || 'Uncategorized'}</p>
+                              </div>
+                              <p className="font-black text-emerald-400">{formatAmount(product.price || product.final_price || product.mrp)}</p>
+                            </div>
+                            <p className="mt-3 text-sm text-slate-400">{product.description || 'No description available.'}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {activeDetailTab === 'orders' && (
+                <div className="space-y-5">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h2 className="text-xl font-black text-white">Chef Orders</h2>
+                      <p className="text-sm text-slate-400">Recent orders containing products from this chef.</p>
+                    </div>
+                    <span className="inline-flex items-center rounded-full bg-slate-800 px-4 py-2 text-xs font-black uppercase tracking-[0.24em] text-slate-300">{orders.length} orders</span>
+                  </div>
+                  <div className="rounded-[1.75rem] border border-slate-800 bg-slate-900/95 overflow-hidden">
+                    {loadingOrders ? (
+                      <div className="flex items-center justify-center p-16 text-slate-400">Loading orders…</div>
+                    ) : orders.length === 0 ? (
+                      <div className="p-16 text-center text-slate-400">No orders found for this chef.</div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm text-slate-300">
+                          <thead className="bg-slate-950/90 text-slate-500 uppercase text-[11px] tracking-[0.2em]">
+                            <tr>
+                              <th className="px-6 py-4">Order</th>
+                              <th className="px-6 py-4">Customer</th>
+                              <th className="px-6 py-4">Amount</th>
+                              <th className="px-6 py-4">Status</th>
+                              <th className="px-6 py-4">Date</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-800">
+                            {orders.map((order) => (
+                              <tr key={order.id || order.order_id || order._id} className="hover:bg-slate-900/80 transition-colors">
+                                <td className="px-6 py-4 font-semibold text-white">{order.order_id || `#${order.id || order._id}`}</td>
+                                <td className="px-6 py-4 text-slate-400">{order.customer_name || order.name || order.user_name || 'Customer'}</td>
+                                <td className="px-6 py-4 font-black text-emerald-400">{getChefOrderAmount(order)}</td>
+                                <td className="px-6 py-4">
+                                  <span className={`inline-flex rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] ${order.status === 'Delivered' ? 'bg-emerald-500/10 text-emerald-300' : 'bg-slate-800 text-slate-400'}`}>
+                                    {order.status || 'Unknown'}
+                                  </span>
+                                </td>
+                                <td className="px-6 py-4 text-slate-400">{formatDate(order.ordered_at || order.created_at || order.date)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {activeDetailTab === 'documents' && (
+                <div className="space-y-5">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <h2 className="text-xl font-black text-white">Documents</h2>
+                      <p className="text-sm text-slate-400">Uploaded verification documents for this chef.</p>
+                    </div>
+                    <button onClick={() => copy(chef.chef_unique_code || chef.id)} className="inline-flex items-center gap-2 rounded-full bg-slate-800 px-4 py-2 text-sm font-black text-slate-100 hover:bg-slate-700 transition">
+                      <Copy className="h-4 w-4" /> Copy Chef ID
+                    </button>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {[
+                      { label: 'Aadhaar Front', key: 'aadhaar_front_url' },
+                      { label: 'Aadhaar Back', key: 'aadhaar_back_url' },
+                      { label: 'PAN Card', key: 'pan_card_url' },
+                      { label: 'FSSAI Certificate', key: 'fssai_certificate_url' },
+                    ].map((doc) => {
+                      const link = getDocLink(chef[doc.key]);
+                      return (
+                        <div key={doc.key} className="rounded-3xl border border-slate-800 bg-slate-950 p-5 flex items-center justify-between gap-4">
+                          <div>
+                            <p className="text-sm font-black text-white">{doc.label}</p>
+                            <p className="mt-2 text-xs text-slate-500">{chef[doc.key] ? 'Uploaded' : 'Not available'}</p>
+                          </div>
+                          {link ? (
+                            <a href={link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-3 py-2 text-xs font-black text-white hover:bg-emerald-500 transition">
+                              <Eye className="h-4 w-4" /> View
+                            </a>
+                          ) : (
+                            <span className="inline-flex rounded-full bg-slate-800 px-3 py-2 text-xs font-black uppercase tracking-[0.2em] text-slate-400">Missing</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {activeDetailTab === 'credentials' && (
+                <div className="space-y-5">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-800 text-slate-300">
+                      <ShieldCheck className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-black text-white">Credentials</h2>
+                      <p className="text-sm text-slate-400">Important chef credentials and documents.</p>
+                    </div>
+                  </div>
+                  <div className="rounded-[1.75rem] border border-slate-800 bg-slate-950 p-6 grid gap-4 sm:grid-cols-2">
+                    {[
+                      { label: 'Verification Status', value: chef.verification_status },
+                      { label: 'Chef Unique Code', value: chef.chef_unique_code },
+                      { label: 'Payment Status', value: chef.payment_status || 'Unknown' },
+                      { label: 'GST Number', value: chef.gst_number },
+                    ].map((item) => (
+                      <div key={item.label} className="rounded-3xl bg-slate-900 p-5 border border-slate-800">
+                        <p className="text-xs uppercase tracking-[0.24em] text-slate-500">{item.label}</p>
+                        <p className="mt-2 text-sm font-black text-white">{item.value || 'N/A'}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
