@@ -119,7 +119,8 @@ const Profile = () => {
     { label: "Phone", value: user.phone || "-", icon: FiPhone },
     { label: "Role", value: user.role || "-", icon: FiShield },
     { label: "Joined", value: user.created_at || user.created || "-", icon: FiCalendar },
-    { label: "Address", value: user.street_address || user.address || "Not set", icon: FiMapPin }
+    { label: "Address", value: user.street_address || user.address || "Not set", icon: FiMapPin },
+    { label: "Created By ID", value: homeChef?.created_by || "-", icon: FiHash },
   ];
 
   const chefFields = homeChef
