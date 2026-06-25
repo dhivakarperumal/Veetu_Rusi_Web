@@ -173,7 +173,11 @@ exports.getFoods = async (req, res) => {
       distance: row.distance !== null && row.distance !== undefined ? `${parseFloat(row.distance).toFixed(2)} KM` : null,
       ingredients: parseJsonField(row.ingredients) || row.ingredients,
       instructions: parseJsonField(row.instructions) || row.instructions,
-      images: parseJsonField(row.images) || row.images || []
+      images: parseJsonField(row.images) || row.images || [],
+      variants: parseJsonField(row.variants) || row.variants || [],
+      manufacture_date: row.manufacture_date || null,
+      expiry_date: row.expiry_date || null,
+      total_stock: row.total_stock || 0
     }));
     res.json(foods);
   } catch (error) {
@@ -202,7 +206,11 @@ exports.getFoodById = async (req, res) => {
       chef_user_id: food.chef_user_id || food.created_by || null,
       ingredients: parseJsonField(food.ingredients) || food.ingredients,
       instructions: parseJsonField(food.instructions) || food.instructions,
-      images: parseJsonField(food.images) || food.images || []
+      images: parseJsonField(food.images) || food.images || [],
+      variants: parseJsonField(food.variants) || food.variants || [],
+      manufacture_date: food.manufacture_date || null,
+      expiry_date: food.expiry_date || null,
+      total_stock: food.total_stock || 0
     });
   } catch (error) {
     console.error('Error fetching chef food item:', error);
@@ -221,6 +229,8 @@ exports.createFood = async (req, res) => {
       prep_time,
       preparation_url,
       shelf_life_days,
+      manufacture_date,
+      expiry_date,
       mrp,
       offer,
       final_price,
@@ -231,6 +241,8 @@ exports.createFood = async (req, res) => {
       ingredients,
       instructions,
       images,
+      total_stock,
+      variants,
       status
     } = req.body;
 
@@ -250,11 +262,11 @@ exports.createFood = async (req, res) => {
     const computedFinalPrice = Number(final_price) || (Number(mrp) - (Number(offer) || 0) * Number(mrp) / 100) || Number(mrp);
 
     const insertSql = `INSERT INTO chef_food_table
-      (category, product_type, name, description, cuisine, prep_time, preparation_url, shelf_life_days, mrp, offer, final_price,
-       dietary_tag, net_weight, packaging_type, packaging_image, ingredients, instructions, images, status,
+      (category, product_type, name, description, cuisine, prep_time, preparation_url, shelf_life_days, manufacture_date, expiry_date, mrp, offer, final_price,
+       dietary_tag, net_weight, packaging_type, packaging_image, ingredients, instructions, images, total_stock, variants, status,
        franchise_user_id, created_by, updated_by
       )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
     const params = [
       category,
@@ -265,6 +277,8 @@ exports.createFood = async (req, res) => {
       prep_time || null,
       preparation_url || null,
       shelf_life_days || null,
+      manufacture_date || null,
+      expiry_date || null,
       mrp,
       offer || 0,
       computedFinalPrice,
@@ -275,6 +289,8 @@ exports.createFood = async (req, res) => {
       ingredients || null,
       instructions || null,
       normalizeJsonField(images) || null,
+      total_stock || 0,
+      normalizeJsonField(variants) || null,
       status || 'Inactive',
       finalFranchiseUserId,
       createdBy,
@@ -297,15 +313,15 @@ exports.updateFood = async (req, res) => {
     const params = [];
 
     const allowed = [
-      'category', 'product_type', 'name', 'description', 'cuisine', 'prep_time', 'preparation_url', 'shelf_life_days', 'mrp',
+      'category', 'product_type', 'name', 'description', 'cuisine', 'prep_time', 'preparation_url', 'shelf_life_days', 'manufacture_date', 'expiry_date', 'mrp',
       'offer', 'final_price', 'dietary_tag', 'net_weight', 'packaging_type', 'packaging_image',
-      'ingredients', 'instructions', 'images', 'status', 'franchise_user_id'
+      'ingredients', 'instructions', 'images', 'total_stock', 'variants', 'status', 'franchise_user_id'
     ];
 
     allowed.forEach((key) => {
       if (updates[key] !== undefined) {
         fields.push(`${key} = ?`);
-        if (key === 'images') {
+        if (key === 'images' || key === 'variants') {
           params.push(normalizeJsonField(updates[key]));
         } else {
           params.push(updates[key]);
