@@ -353,7 +353,28 @@ export const StoreProvider = ({ children }) => {
                     variantImage = null;
                 }
 
-                const price = parseFloat(selectedVariant?.offerPrice || selectedVariant?.salePrice || selectedVariant?.price || product.offer_price || product.price || 0);
+                // Support all price field variants:
+                // chef_food_table: final_price, mrp, offer (%)
+                // franchise_products: price, offer_price, mrp
+                const mrp = parseFloat(product.mrp || 0);
+                const rawPrice =
+                    selectedVariant?.offerPrice ||
+                    selectedVariant?.salePrice ||
+                    selectedVariant?.price ||
+                    product.final_price ||
+                    product.offer_price ||
+                    product.price ||
+                    null;
+
+                let price = 0;
+                if (rawPrice && parseFloat(rawPrice) > 0) {
+                    price = parseFloat(rawPrice);
+                } else if (product.offer && parseFloat(product.offer) > 0 && mrp > 0) {
+                    // Calculate from offer percentage
+                    price = mrp - (mrp * parseFloat(product.offer)) / 100;
+                } else {
+                    price = mrp;
+                }
 
                 await api.post("/wishlist", {
                     user_id: user.user_id,
