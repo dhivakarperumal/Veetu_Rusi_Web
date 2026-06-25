@@ -12,23 +12,20 @@ import Heading from "../Heading";
 import PageContainer from "../CommenComponents/PageContainer";
 
 const SareeSwiper = () => {
-  const { productsCache, setProductsCache, lastFetchTime, setLastFetchTime } = useContext(StoreContext);
   const [recentItems, setRecentItems] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const fetchRecentItems = async () => {
     try {
-      let data = productsCache;
+      setLoading(true);
+      const res = await api.get("/chef-foods");
+      const data = Array.isArray(res.data) ? res.data : [];
       
-      // If cache is empty or older than 5 minutes, fetch again
-      if (!data || data.length === 0 || !lastFetchTime || (Date.now() - lastFetchTime > 5 * 60 * 1000)) {
-        const res = await api.get("/products");
-        data = Array.isArray(res.data) ? res.data : [];
-        setProductsCache(data);
-        setLastFetchTime(Date.now());
-      }
+      // Filter active items
+      const activeItems = data.filter(item => item.status?.toLowerCase() === 'active');
 
       // Sort by newest first (assuming higher ID or newer created_at)
-      const sorted = [...(data || [])].sort((a, b) => {
+      const sorted = activeItems.sort((a, b) => {
         const dateA = new Date(a.created_at || 0).getTime();
         const dateB = new Date(b.created_at || 0).getTime();
         if (dateB !== dateA) return dateB - dateA;
@@ -38,8 +35,10 @@ const SareeSwiper = () => {
       // Show top 15 recent items
       setRecentItems(sorted.slice(0, 15));
     } catch (error) {
-      console.error("Error fetching recent items:", error);
+      console.error("Error fetching recent chef items:", error);
       setRecentItems([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -47,7 +46,7 @@ const SareeSwiper = () => {
     fetchRecentItems();
   }, []);
 
-  if (recentItems.length === 0) {
+  if (loading) {
     return (
       <PageContainer>
         <div className="py-5">
@@ -66,6 +65,10 @@ const SareeSwiper = () => {
         </div>
       </PageContainer>
     );
+  }
+
+  if (recentItems.length === 0) {
+    return null; // Don't render anything if there are no items
   }
 
   return (
