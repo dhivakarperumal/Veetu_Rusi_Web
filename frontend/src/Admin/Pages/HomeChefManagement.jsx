@@ -95,6 +95,8 @@ const emptyForm = {
   delivery_radius: "5 KM",
   preorder_available: false,
   cutoff_time: "",
+  opening_time: "",
+  closing_time: "",
 };
 
 const tabs = [
@@ -481,6 +483,8 @@ const HomeChefManagement = () => {
         chef.preorder_available === "1" ||
         chef.preorder_available === 1,
       cutoff_time: chef.cutoff_time || "",
+      opening_time: chef.opening_time || "",
+      closing_time: chef.closing_time || "",
     });
     setIsFormOpen(true);
   };
@@ -518,6 +522,8 @@ const HomeChefManagement = () => {
         preorder_available: form.preorder_available ? "1" : "0",
         delivery_radius: form.delivery_radius,
         cutoff_time: form.cutoff_time,
+        opening_time: form.opening_time,
+        closing_time: form.closing_time,
       };
 
       // DEBUG: preview which fields will be sent (remove in production)
@@ -644,117 +650,50 @@ const HomeChefManagement = () => {
   const isValidAadhaar = (value) => /^[0-9]{12}$/.test(value);
   const isNumeric = (value) => /^[0-9]+$/.test(String(value).trim());
 
-  const validateForm = () => {
+  const hasValue = (value) => {
+    if (value === undefined || value === null) return false;
+    if (typeof value === "string") return value.trim() !== "";
+    if (value instanceof File) return true;
+    if (value instanceof FileList || Array.isArray(value)) return value.length > 0;
+    return true;
+  };
+
+  
+const validateForm = () => {
     const errors = {};
 
-    if (!form.first_name.trim()) errors.first_name = "First name is required.";
-    if (!form.last_name.trim()) errors.last_name = "Last name is required.";
-    if (!form.gender) errors.gender = "Select gender.";
-    if (!form.date_of_birth) {
-      errors.date_of_birth = "Date of birth is required.";
-    } else if (new Date(form.date_of_birth) > new Date()) {
-      errors.date_of_birth = "Date of birth cannot be in the future.";
+    if (!form.first_name?.trim()) {
+      errors.first_name = "First name is required.";
     }
-    if (!form.mobile.trim()) {
+
+    if (!form.mobile?.trim()) {
       errors.mobile = "Mobile number is required.";
     } else if (!isValidPhone(form.mobile.trim())) {
       errors.mobile = "Enter a valid 10-digit mobile number.";
     }
-    if (form.alt_mobile?.trim() && !isValidPhone(form.alt_mobile.trim())) {
-      errors.alt_mobile = "Enter a valid 10-digit alternate mobile number.";
-    }
-    if (!form.email.trim()) {
-      errors.email = "Email ID is required.";
-    } else if (!isValidEmail(form.email.trim())) {
-      errors.email = "Enter a valid email address.";
-    }
+
     if (!editingChef && !form.password) {
       errors.password = "Password is required.";
     }
+
     if (!editingChef && !form.confirmPassword) {
       errors.confirmPassword = "Please confirm password.";
     }
-    if (form.password && !form.confirmPassword) {
-      errors.confirmPassword = "Please confirm password.";
-    }
-    if (form.password && form.confirmPassword && form.password !== form.confirmPassword) {
+
+    if (
+      form.password &&
+      form.confirmPassword &&
+      form.password !== form.confirmPassword
+    ) {
       errors.confirmPassword = "Passwords do not match.";
     }
-    if (!form.profile_photo) {
-      errors.profile_photo = "Profile photo is required.";
-    }
-
-    if (!form.house_number.trim()) errors.house_number = "House number is required.";
-    if (!form.street.trim()) errors.street = "Street is required.";
-    if (!form.area.trim()) errors.area = "Area is required.";
-    if (!form.city.trim()) errors.city = "City is required.";
-    if (!form.state.trim()) errors.state = "State is required.";
-    if (!form.country.trim()) errors.country = "Country is required.";
-    if (!form.pincode.trim()) {
-      errors.pincode = "Pincode is required.";
-    } else if (!isNumeric(form.pincode.trim())) {
-      errors.pincode = "Enter a valid numeric pincode.";
-    }
-    if (!form.google_map_location.trim()) errors.google_map_location = "Google Map location is required.";
-
-    if (!form.kitchen_name.trim()) errors.kitchen_name = "Kitchen name is required.";
-    if (!form.kitchen_address.trim()) errors.kitchen_address = "Kitchen address is required.";
-    if (!form.experience_years.trim()) {
-      errors.experience_years = "Experience is required.";
-    } else if (!isNumeric(form.experience_years.trim())) {
-      errors.experience_years = "Enter valid years of experience.";
-    }
-    if (!form.cuisine_type || form.cuisine_type.length === 0) errors.cuisine_type = "Select at least one cuisine type.";
-    if (!form.daily_order_capacity.trim()) {
-      errors.daily_order_capacity = "Daily order capacity is required.";
-    } else if (!isNumeric(form.daily_order_capacity.trim())) {
-      errors.daily_order_capacity = "Enter a valid order capacity.";
-    }
-
-    if (!form.aadhaar_number.trim()) {
-      errors.aadhaar_number = "Aadhaar number is required.";
-    } else if (!isValidAadhaar(form.aadhaar_number.trim())) {
-      errors.aadhaar_number = "Enter a valid 12-digit Aadhaar number.";
-    }
-    if (!form.pan_number.trim()) {
-      errors.pan_number = "PAN number is required.";
-    } else if (!isValidPAN(form.pan_number.trim())) {
-      errors.pan_number = "Enter a valid PAN number like ABCDE1234F.";
-    }
-    if (!form.bank_account_number.trim()) {
-      errors.bank_account_number = "Bank account number is required.";
-    } else if (!isNumeric(form.bank_account_number.trim())) {
-      errors.bank_account_number = "Enter a valid account number.";
-    }
-    if (!form.ifsc_code.trim()) {
-      errors.ifsc_code = "IFSC code is required.";
-    } else if (!isValidIFSC(form.ifsc_code.trim())) {
-      errors.ifsc_code = "Enter a valid IFSC code.";
-    }
-    if (!form.account_holder_name.trim()) errors.account_holder_name = "Account holder name is required.";
-    if (!form.bank_branch.trim()) errors.bank_branch = "Bank branch is required.";
-    if (!form.upi_id.trim()) errors.upi_id = "UPI ID is required.";
-    if (!form.passbook_image) errors.passbook_image = "Passbook image is required.";
-
-    if (!form.about_me.trim()) errors.about_me = "About me is required.";
-    if (!form.cooking_story.trim()) errors.cooking_story = "Cooking story is required.";
-    if (!form.why_choose_me.trim()) errors.why_choose_me = "Describe why customers should choose you.";
-    if (!form.languages_known.trim()) errors.languages_known = "Languages known is required.";
-    if (!form.introduction_video) errors.introduction_video = "Introduction video is required.";
-
-    if (!form.aadhaar_front_url) errors.aadhaar_front_url = "Aadhaar front upload is required.";
-    if (!form.aadhaar_back_url) errors.aadhaar_back_url = "Aadhaar back upload is required.";
-    if (!form.pan_card_url) errors.pan_card_url = "PAN card upload is required.";
-    if (!form.selfie_verification_url) errors.selfie_verification_url = "Selfie with Aadhaar is required.";
-
-    if (!form.delivery_radius.trim()) errors.delivery_radius = "Delivery radius is required.";
-
-    if (!form.available_days?.length) errors.available_days = "Select at least one available day.";
-    if (!form.available_slots?.length) errors.available_slots = "Select at least one available time slot.";
 
     setValidationErrors(errors);
 
-    const firstInvalidField = Object.keys(errors).find((field) => fieldToTab[field]);
+    const firstInvalidField = Object.keys(errors).find(
+      (field) => fieldToTab[field]
+    );
+
     if (firstInvalidField) {
       setActiveFormTab(fieldToTab[firstInvalidField]);
     }
@@ -762,10 +701,13 @@ const HomeChefManagement = () => {
     return Object.keys(errors).length === 0;
   };
 
-  const isDataUrl = (value) => typeof value === "string" && value.startsWith("data:");
+const isDataUrl = (value) => typeof value === "string" && value.startsWith("data:");
   const isImageDataUrl = (value) => typeof value === "string" && value.startsWith("data:image/");
   const isVideoDataUrl = (value) => typeof value === "string" && value.startsWith("data:video/");
-  const isImageField = (fieldName) => fieldName !== "introduction_video";
+  const isImageField = (fieldName) => !["introduction_video", "kitchen_videos"].includes(fieldName);
+  const isVideoField = (fieldName) => ["introduction_video", "kitchen_videos"].includes(fieldName);
+  const isHttpImageUrl = (url) => typeof url === "string" && /\.(jpe?g|png|webp|gif|svg)(\?.*)?$/i.test(url);
+  const isHttpVideoUrl = (url) => typeof url === "string" && /\.(mp4|mov|webm|ogg|m4v|avi|wmv|flv|3gp)(\?.*)?$/i.test(url);
   const getPreviewUrl = (value) => {
     if (value instanceof File) {
       return URL.createObjectURL(value);
@@ -790,8 +732,17 @@ const HomeChefManagement = () => {
     const isImageMime = fileType ? fileType.startsWith('image/') : false;
     const isVideoMime = fileType ? fileType.startsWith('video/') : false;
 
-    const showImagePreview = previewUrl && (isImageField(fieldName) && (isImageMime || isImageDataUrl(previewUrl) || previewUrl.startsWith('http') && (previewUrl.match(/\.(jpg|jpeg|png|webp)$/i))));
-    const showVideoPreview = previewUrl && (fieldName === "introduction_video" || isVideoDataUrl(previewUrl) || isVideoMime || previewUrl.startsWith('blob:'));
+    const showImagePreview = previewUrl && isImageField(fieldName) && (
+      isImageMime ||
+      isImageDataUrl(previewUrl) ||
+      (typeof previewUrl === "string" && (previewUrl.startsWith("http") || previewUrl.startsWith("blob:")) && isHttpImageUrl(previewUrl))
+    );
+    const showVideoPreview = previewUrl && isVideoField(fieldName) && (
+      isVideoDataUrl(previewUrl) ||
+      isVideoMime ||
+      previewUrl.startsWith("blob:") ||
+      (typeof previewUrl === "string" && (previewUrl.startsWith("http") || previewUrl.startsWith("https://")) && isHttpVideoUrl(previewUrl))
+    );
     const fieldError = validationErrors[fieldName];
 
     return (
@@ -2325,6 +2276,30 @@ const HomeChefManagement = () => {
                           </select>
                         </div>
 
+                        <div>
+                          <label className={lbl}>Opening Time</label>
+                          <input
+                            type="time"
+                            value={form.opening_time}
+                            onChange={(e) =>
+                              setForm({ ...form, opening_time: e.target.value })
+                            }
+                            className={inp}
+                          />
+                        </div>
+
+                        <div>
+                          <label className={lbl}>Closing Time</label>
+                          <input
+                            type="time"
+                            value={form.closing_time}
+                            onChange={(e) =>
+                              setForm({ ...form, closing_time: e.target.value })
+                            }
+                            className={inp}
+                          />
+                        </div>
+
                         {form.verification_status === "Rejected" && (
                           <div className="md:col-span-2">
                             <label className={lbl}>Rejection Reason</label>
@@ -2390,13 +2365,6 @@ const HomeChefManagement = () => {
                         className="rounded-2xl bg-slate-900/80 px-5 py-3 text-sm font-black uppercase tracking-[0.18em] text-slate-200 transition hover:bg-slate-900"
                       >
                         Cancel
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => { fillSampleChefData(); toast.success('Sample data filled into form.'); setActiveFormTab('personal'); }}
-                        className="rounded-2xl bg-slate-800/70 px-5 py-3 text-sm font-black uppercase tracking-[0.18em] text-slate-100 transition hover:bg-slate-800"
-                      >
-                        Fill Sample Data
                       </button>
                       <button
                         type="submit"
