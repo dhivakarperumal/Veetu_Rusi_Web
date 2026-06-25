@@ -80,6 +80,16 @@ router.get('/', verifyToken, async (req, res) => {
   }
 });
 
+router.get('/delivery-partners/active', verifyToken, async (req, res) => {
+  try {
+    const [rows] = await pool.execute('SELECT user_id, name, mobile, vehicle_type FROM delivery_partners WHERE status = "Approved"');
+    res.json(rows);
+  } catch (err) {
+    console.error('Error fetching delivery partners:', err);
+    res.status(500).json({ message: 'Error fetching delivery partners', error: err.message });
+  }
+});
+
 router.post('/', verifyToken, async (req, res) => {
   try {
     const payload = {

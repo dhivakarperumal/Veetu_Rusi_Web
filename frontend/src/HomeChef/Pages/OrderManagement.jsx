@@ -15,6 +15,7 @@ const OrderManagement = () => {
   const [statusFilter, setStatusFilter] = useState("All");
   const [editingOrder, setEditingOrder] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [trackingOrder, setTrackingOrder] = useState(null);
 
   useEffect(() => {
     const query = new URLSearchParams(location.search);
@@ -49,8 +50,8 @@ const OrderManagement = () => {
 
   const fetchPartners = async () => {
     try {
-      const res = await api.get("/superadmin/delivery-partners");
-      setPartners(res.data.filter((p) => p.status === "Approved"));
+      const res = await api.get("/user-food-orders/delivery-partners/active");
+      setPartners(res.data);
     } catch (error) {
       console.error("Error loading partners", error);
     }
@@ -233,19 +234,38 @@ const OrderManagement = () => {
                       <td className="px-6 py-5 text-sm font-black text-white">{chefQuantity}</td>
                       <td className="px-6 py-5 text-sm font-black text-white">₹{chefAmount.toLocaleString()}</td>
                       <td className="px-6 py-5">
-                        <span
-                          className={`text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider ${
-                            order.status === "Delivered"
-                              ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                              : order.status === "Cancelled"
-                              ? "bg-red-500/10 text-red-400 border border-red-500/20"
-                              : order.status === "Pending" || order.status === "New Order"
-                              ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
-                              : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
-                          }`}
-                        >
-                          {order.status === "Pending" ? "New Order" : order.status}
-                        </span>
+                        <div className="flex flex-col gap-2 items-start">
+                          <span
+                            className={`text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider ${
+                              order.status === "Delivered"
+                                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                                : order.status === "Cancelled"
+                                ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                                : order.status === "Pending" || order.status === "New Order"
+                                ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                                : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                            }`}
+                          >
+                            {order.status === "Pending" ? "New Order" : order.status}
+                          </span>
+                          
+                          {order.delivery_partner && (
+                            <div className="mt-1 bg-white/5 p-2 rounded-lg border border-white/10 text-xs w-full">
+                              <p className="font-bold text-emerald-400">
+                                {partners.find(p => p.user_id == order.delivery_partner || p.name === order.delivery_partner)?.name || order.delivery_partner}
+                              </p>
+                              <p className="text-white/60 mt-0.5">
+                                {partners.find(p => p.user_id == order.delivery_partner || p.name === order.delivery_partner)?.mobile || "N/A"}
+                              </p>
+                              <button 
+                                onClick={() => setTrackingOrder(order)}
+                                className="text-[9px] font-black uppercase tracking-widest text-emerald-400 hover:text-emerald-300 mt-2 flex items-center gap-1 transition-colors bg-emerald-500/10 px-2 py-1 rounded w-fit"
+                              >
+                                View Tracking
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-5">
                         <div className="flex items-center justify-center gap-2">
@@ -308,7 +328,7 @@ const OrderManagement = () => {
                 >
                   <option value="">Select Delivery Partner</option>
                   {partners.map((p) => (
-                    <option key={p.id} value={p.name}>
+                    <option key={p.user_id || p.id} value={p.user_id || p.name}>
                       {p.name} ({p.vehicle_type})
                     </option>
                   ))}
@@ -372,6 +392,61 @@ const OrderManagement = () => {
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* Tracking Modal */}
+      {trackingOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={() => setTrackingOrder(null)}></div>
+          <div className="bg-[#0B1120] border border-white/5 w-full max-w-md rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="bg-[#1B4D22] p-6 text-white flex justify-between items-center">
+              <div>
+                <h3 className="text-xl font-black uppercase italic tracking-tight">Live Tracking</h3>
+                <p className="text-xs text-emerald-400 font-bold uppercase tracking-widest mt-1">{trackingOrder.order_id}</p>
+              </div>
+              <button onClick={() => setTrackingOrder(null)} className="p-2 hover:bg-white/10 rounded-full transition w-8 h-8 flex items-center justify-center font-black">
+                ✕
+              </button>
+            </div>
+            <div className="p-8 space-y-6 text-white">
+              <div className="aspect-video bg-[#070b13] rounded-2xl border border-white/5 flex flex-col items-center justify-center relative overflow-hidden">
+                <div className="absolute inset-0 opacity-10" style={{backgroundImage: "url('https://www.transparenttextures.com/patterns/cubes.png')"}}></div>
+                <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center animate-pulse mb-3">
+                  <span className="text-xl">📍</span>
+                </div>
+                <p className="text-xs font-black uppercase tracking-widest text-emerald-400">Map Integration Coming Soon</p>
+                <p className="text-[10px] text-white/40 mt-1 uppercase tracking-wider">Coordinates mapping in progress...</p>
+              </div>
+              
+              <div className="space-y-4">
+                <h4 className="text-xs font-black text-white/40 uppercase tracking-widest border-b border-white/5 pb-2">Delivery Status</h4>
+                <div className="space-y-3">
+                  {["Pending", "Preparing", "Out for Delivery", "Delivered"].map((step, index) => {
+                    const isActive = trackingOrder.status === step || (trackingOrder.status === "Accepted" && step === "Pending");
+                    return (
+                      <div key={index} className="flex items-center gap-3">
+                        <div className={`w-2.5 h-2.5 rounded-full ${isActive ? 'bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.5)]' : 'bg-white/10'}`}></div>
+                        <p className={`text-sm font-bold ${isActive ? 'text-emerald-400' : 'text-white/40'}`}>{step}</p>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div className="bg-[#070b13]/60 p-4 rounded-2xl border border-white/5 flex items-center gap-4 mt-6">
+                <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 font-black">
+                  {trackingOrder.delivery_partner ? (partners.find(p => p.user_id == trackingOrder.delivery_partner || p.name === trackingOrder.delivery_partner)?.name || trackingOrder.delivery_partner).charAt(0).toUpperCase() : "?"}
+                </div>
+                <div>
+                  <p className="text-sm font-black text-white">
+                    {trackingOrder.delivery_partner ? (partners.find(p => p.user_id == trackingOrder.delivery_partner || p.name === trackingOrder.delivery_partner)?.name || trackingOrder.delivery_partner) : "Searching Partner"}
+                  </p>
+                  <p className="text-[10px] text-white/50 uppercase tracking-wider font-bold">Delivery Partner</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
