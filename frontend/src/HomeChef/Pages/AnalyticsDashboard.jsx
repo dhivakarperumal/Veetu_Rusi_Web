@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { TrendingUp, ShoppingCart, Users, Star, AlertCircle, Utensils, Package } from "lucide-react";
+import { TrendingUp, ShoppingCart, Users, Star, AlertCircle, Utensils, Package, Eye } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -33,6 +33,7 @@ const AnalyticsDashboard = () => {
     loading: true,
     error: null,
   });
+  const [recentOrders, setRecentOrders] = useState([]);
   const [timeRange, setTimeRange] = useState("week");
 
   useEffect(() => {
@@ -79,6 +80,10 @@ const AnalyticsDashboard = () => {
           loading: false,
           error: null,
         });
+
+        // Sort orders by date descending and get top 5
+        const sortedOrders = [...orders].sort((a, b) => new Date(b.created_at || b.ordered_at || 0) - new Date(a.created_at || a.ordered_at || 0));
+        setRecentOrders(sortedOrders.slice(0, 5));
       } catch (err) {
         console.error("Failed to fetch analytics", err);
         setStats(prev => ({
@@ -299,6 +304,83 @@ const AnalyticsDashboard = () => {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Recent Orders Table */}
+      <div className="rounded-4xl border border-slate-200/20 bg-slate-950/80 p-6 shadow-2xl shadow-slate-900/30 backdrop-blur-xl">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-bold text-white">Recent Orders</h3>
+          <button 
+            onClick={() => window.location.href = '/chef/orders'} 
+            className="text-sm font-bold text-emerald-400 hover:text-emerald-300 transition"
+          >
+            View All
+          </button>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-slate-300">
+            <thead>
+              <tr className="border-b border-white/10 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                <th className="pb-3 pl-4">Order ID</th>
+                <th className="pb-3">Customer</th>
+                <th className="pb-3">Items (Your Products/Foods)</th>
+                <th className="pb-3">Amount</th>
+                <th className="pb-3">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {recentOrders.length > 0 ? (
+                recentOrders.map((order) => {
+                  const chefUserId = user?.user_id || user?.id;
+                  // Filter items to only show the ones belonging to this chef if needed
+                  // Usually the API /user-food-orders/chef already does this, but we filter to be safe
+                  const displayItems = order.items?.filter(i => !i.chef_id || String(i.chef_id) === String(chefUserId)) || [];
+                  const chefAmount = parseFloat((order.chef_total_amount ?? order.total_amount) || 0);
+
+                  return (
+                    <tr key={order.id} className="hover:bg-white/5 transition-colors">
+                      <td className="py-4 pl-4 text-sm font-bold text-white">{order.order_id}</td>
+                      <td className="py-4 text-sm">{order.customer_name}</td>
+                      <td className="py-4 text-sm text-slate-400 max-w-[200px]">
+                        <div className="space-y-1">
+                          {displayItems.slice(0, 2).map((item, idx) => (
+                            <p key={idx} className="truncate">
+                              {item.name || item.product_name || "Food item"} <span className="text-emerald-400">x{item.quantity || 1}</span>
+                            </p>
+                          ))}
+                          {displayItems.length > 2 && (
+                            <p className="text-[10px] uppercase font-bold text-slate-500">+{displayItems.length - 2} more items</p>
+                          )}
+                          {displayItems.length === 0 && <p className="italic text-slate-600">No specific items found</p>}
+                        </div>
+                      </td>
+                      <td className="py-4 text-sm font-black text-white">₹{chefAmount.toLocaleString()}</td>
+                      <td className="py-4">
+                        <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${
+                          order.status === "Delivered" || order.status === "Completed"
+                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                            : order.status === "Cancelled"
+                            ? "bg-red-500/10 text-red-400 border-red-500/20"
+                            : order.status === "Pending" || order.status === "New Order"
+                            ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                            : "bg-blue-500/10 text-blue-400 border-blue-500/20"
+                        }`}>
+                          {order.status === "Pending" ? "New Order" : order.status}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan="5" className="py-8 text-center text-sm text-slate-500 italic">
+                    No recent orders found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
