@@ -693,3 +693,30 @@ exports.updateDeliveryPartner = superadminController.updateDeliveryPartner;
 exports.deleteDeliveryPartner = superadminController.deleteDeliveryPartner;
 exports.updateDeliveryPartnerStatus = superadminController.updateDeliveryPartnerStatus;
 
+// ==================== USER MANAGEMENT ====================
+exports.getUsers = async (req, res) => {
+  try {
+    const currentUserId = req.user?.user_id || req.user?.id || null;
+    if (!currentUserId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    const query = `
+      SELECT DISTINCT u.id, u.user_id, u.full_name AS name, u.email, u.mobile_number AS phone, u.role, u.status AS active, u.created_at
+      FROM users u
+      LEFT JOIN home_chefs hc ON u.email = hc.email
+      LEFT JOIN delivery_partners dp ON u.email = dp.email
+      LEFT JOIN user_food_order_table o ON u.user_id = o.user_id
+      LEFT JOIN home_chefs hc2 ON o.chef_id = hc2.id
+      WHERE (hc.created_by = ?)
+         OR (dp.created_by = ?)
+         OR (hc2.created_by = ?)
+      ORDER BY u.created_at DESC
+    `;
+    const [rows] = await pool.execute(query, [currentUserId, currentUserId, currentUserId]);
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving users.', error: error.message });
+  }
+};
+
