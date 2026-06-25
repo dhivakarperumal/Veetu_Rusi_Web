@@ -90,6 +90,68 @@ router.get('/delivery-partners/active', verifyToken, async (req, res) => {
   }
 });
 
+router.get('/tracking/:order_id', verifyToken, async (req, res) => {
+  try {
+    const { order_id } = req.params;
+    const [rows] = await pool.execute('SELECT * FROM delivery_live_tracking WHERE order_id = ?', [order_id]);
+    
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'Tracking data not found for this order' });
+    }
+    
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('Error fetching tracking data:', err);
+    res.status(500).json({ message: 'Error fetching tracking data', error: err.message });
+  }
+});
+
+// One-time repair: fix all NULL names in delivery_live_tracking
+router.get('/tracking-repair/fix-nulls', verifyToken, async (req, res) => {
+  try {
+    // Get all tracking records with NULL name
+    const [nullRows] = await pool.execute(
+      `SELECT dlt.id, dlt.order_id, dlt.delivery_partner_user_id, ufo.delivery_partner as dp_raw
+       FROM delivery_live_tracking dlt
+       LEFT JOIN user_food_order_table ufo ON ufo.order_id = dlt.order_id
+       WHERE dlt.delivery_partner_name IS NULL OR dlt.delivery_partner_name = ''`
+    );
+
+    let fixed = 0;
+    for (const row of nullRows) {
+      const searchId = row.delivery_partner_user_id || row.dp_raw;
+      if (!searchId) continue;
+
+      const [partnerResult] = await pool.execute(
+        `SELECT dp.name, dp.mobile, dp.user_id
+         FROM delivery_partners dp
+         LEFT JOIN users u ON u.user_id = dp.user_id
+         WHERE dp.user_id = ? OR dp.delivery_partner_user_id = ? OR u.id = ? OR dp.id = ?
+         LIMIT 1`,
+        [searchId, searchId, searchId, searchId]
+      );
+
+      if (partnerResult.length > 0) {
+        const { name, mobile, user_id } = partnerResult[0];
+        await pool.execute(
+          `UPDATE delivery_live_tracking 
+           SET delivery_partner_name = ?, delivery_partner_phone = ?, delivery_partner_user_id = ?, updated_at = CURRENT_TIMESTAMP
+           WHERE id = ?`,
+          [name, mobile, user_id || searchId, row.id]
+        );
+        fixed++;
+        console.log(`✅ Fixed tracking record ${row.id} for order ${row.order_id} → ${name}`);
+      }
+    }
+
+    res.json({ message: `Repaired ${fixed} of ${nullRows.length} NULL tracking records.` });
+  } catch (err) {
+    console.error('Error repairing tracking data:', err);
+    res.status(500).json({ message: 'Error repairing tracking data', error: err.message });
+  }
+});
+
+
 router.post('/', verifyToken, async (req, res) => {
   try {
     const payload = {
@@ -209,6 +271,41 @@ router.put('/:id', verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     await controller.updateOrder(id, req.body);
+    
+    // Check if delivery partner was assigned
+    if (req.body.delivery_partner) {
+      const deliveryBoyId = req.body.delivery_partner;
+      const [orderRows] = await pool.execute('SELECT order_id FROM user_food_order_table WHERE id = ?', [id]);
+      if (orderRows.length > 0) {
+        const realOrderId = orderRows[0].order_id;
+
+        // Search by user_id, delivery_partner_user_id, integer users.id, or auto-inc dp.id
+        const [partnerResult] = await pool.execute(
+          `SELECT dp.name, dp.mobile, dp.user_id
+           FROM delivery_partners dp
+           LEFT JOIN users u ON u.user_id = dp.user_id
+           WHERE dp.user_id = ? OR dp.delivery_partner_user_id = ? OR u.id = ? OR dp.id = ?
+           LIMIT 1`,
+          [deliveryBoyId, deliveryBoyId, deliveryBoyId, deliveryBoyId]
+        );
+        
+        const partnerName = partnerResult[0]?.name || '';
+        const partnerPhone = partnerResult[0]?.mobile || '';
+        const partnerUserId = partnerResult[0]?.user_id || deliveryBoyId;
+
+        await pool.execute(
+          `INSERT INTO delivery_live_tracking (order_id, delivery_partner_user_id, delivery_partner_name, delivery_partner_phone)
+           VALUES (?, ?, ?, ?)
+           ON DUPLICATE KEY UPDATE 
+             delivery_partner_user_id = VALUES(delivery_partner_user_id),
+             delivery_partner_name = VALUES(delivery_partner_name),
+             delivery_partner_phone = VALUES(delivery_partner_phone),
+             updated_at = CURRENT_TIMESTAMP`,
+          [realOrderId, partnerUserId, partnerName, partnerPhone]
+        );
+      }
+    }
+
     res.json({ message: 'Order updated successfully' });
   } catch (err) {
     console.error('Error updating order:', err);

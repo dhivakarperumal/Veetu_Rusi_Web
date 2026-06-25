@@ -16,6 +16,17 @@ const OrderManagement = () => {
   const [editingOrder, setEditingOrder] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [trackingOrder, setTrackingOrder] = useState(null);
+  const [trackingDetails, setTrackingDetails] = useState(null);
+
+  // Fetch tracking details when modal opens
+  useEffect(() => {
+    if (trackingOrder) {
+      setTrackingDetails(null); // Reset
+      api.get(`/user-food-orders/tracking/${trackingOrder.order_id}`)
+        .then(res => setTrackingDetails(res.data))
+        .catch(err => console.error("Error fetching tracking:", err));
+    }
+  }, [trackingOrder]);
 
   useEffect(() => {
     const query = new URLSearchParams(location.search);
@@ -415,7 +426,7 @@ const OrderManagement = () => {
                 <div className="relative z-10 text-center space-y-2">
                   <h3 className="text-xl font-black uppercase tracking-[0.2em] text-emerald-400 drop-shadow-md">Live Tracking Map</h3>
                   <p className="text-xs font-bold text-white/40 uppercase tracking-widest bg-white/5 px-4 py-2 rounded-full border border-white/5 backdrop-blur-sm">
-                    Awaiting GPS Coordinates
+                    {trackingDetails?.area ? `${trackingDetails.area}, ${trackingDetails.district} - ${trackingDetails.pincode}` : "Awaiting GPS Coordinates"}
                   </p>
                 </div>
             </div>

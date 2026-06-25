@@ -97,6 +97,41 @@ router.patch('/orders/:id/assign', async (req, res) => {
       return res.status(409).json({ message: 'This order has already been assigned.' });
     }
 
+    // Insert initial tracking record
+    const [orderRows] = await pool.execute('SELECT order_id FROM user_food_order_table WHERE id = ?', [orderId]);
+    if (orderRows.length > 0) {
+      const realOrderId = orderRows[0].order_id;
+
+      // Look up partner by user_id, delivery_partner_user_id, or integer id
+      console.log('🔍 [Tracking] Looking up delivery partner with id:', deliveryBoyId);
+      const [partnerResult] = await pool.execute(
+        `SELECT dp.name, dp.mobile, dp.user_id
+         FROM delivery_partners dp
+         LEFT JOIN users u ON u.user_id = dp.user_id
+         WHERE dp.user_id = ? OR dp.delivery_partner_user_id = ? OR u.id = ? OR dp.id = ?
+         LIMIT 1`,
+        [deliveryBoyId, deliveryBoyId, deliveryBoyId, deliveryBoyId]
+      );
+
+      console.log('🔍 [Tracking] Found partner:', partnerResult[0]);
+
+      const partnerName = partnerResult[0]?.name || '';
+      const partnerPhone = partnerResult[0]?.mobile || '';
+      const partnerUserId = partnerResult[0]?.user_id || deliveryBoyId;
+
+      await pool.execute(
+        `INSERT INTO delivery_live_tracking (order_id, delivery_partner_user_id, delivery_partner_name, delivery_partner_phone)
+         VALUES (?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE 
+           delivery_partner_user_id = VALUES(delivery_partner_user_id),
+           delivery_partner_name = VALUES(delivery_partner_name),
+           delivery_partner_phone = VALUES(delivery_partner_phone),
+           updated_at = CURRENT_TIMESTAMP`,
+        [realOrderId, partnerUserId, partnerName, partnerPhone]
+      );
+      console.log('✅ [Tracking] Record saved for order:', realOrderId, 'partner:', partnerName);
+    }
+
     res.json({ message: 'Order assigned successfully.' });
   } catch (err) {
     console.error('Assign Order Error:', err);
@@ -158,8 +193,48 @@ router.get('/earnings', async (req, res) => {
       recentDeliveries: recentOrders || []
     });
   } catch (err) {
-    console.error('Earnings Error:', err);
     res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Update Live Tracking
+router.post('/tracking/update', async (req, res) => {
+  try {
+    const deliveryBoyId = req.user.id || req.user.user_id;
+    const { order_id, latitude, longitude, pincode, area, district } = req.body;
+
+    if (!order_id) {
+      return res.status(400).json({ message: 'Order ID is required' });
+    }
+
+    // Fetch delivery boy details
+    const [partnerResult] = await pool.execute('SELECT name, mobile FROM delivery_partners WHERE user_id = ?', [deliveryBoyId]);
+    const name = partnerResult[0]?.name || '';
+    const phone = partnerResult[0]?.mobile || '';
+
+    // Upsert tracking data
+    const query = `
+      INSERT INTO delivery_live_tracking 
+      (order_id, delivery_partner_user_id, delivery_partner_name, delivery_partner_phone, latitude, longitude, pincode, area, district) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE 
+      latitude = VALUES(latitude), 
+      longitude = VALUES(longitude),
+      pincode = VALUES(pincode),
+      area = VALUES(area),
+      district = VALUES(district),
+      updated_at = CURRENT_TIMESTAMP
+    `;
+    
+    await pool.execute(query, [
+      order_id, deliveryBoyId, name, phone, 
+      latitude || null, longitude || null, pincode || null, area || null, district || null
+    ]);
+
+    res.json({ message: 'Tracking updated successfully' });
+  } catch (err) {
+    console.error('Update Tracking Error:', err);
+    res.status(500).json({ message: 'Internal server error', error: err.message });
   }
 });
 
