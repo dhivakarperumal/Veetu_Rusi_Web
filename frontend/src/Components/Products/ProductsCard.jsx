@@ -92,6 +92,19 @@ const ProductCard = ({ product }) => {
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
         >
+          {/* Tag Badge */}
+          {(product?.product_type || product?.category) && (
+            <div className="absolute top-4 left-4 z-20">
+              <span className={`text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-wider shadow-xl backdrop-blur-md border ${
+                (product.product_type?.toLowerCase() === 'food' || product.category?.toLowerCase() === 'food')
+                  ? "bg-orange-500/90 text-white border-orange-400/50"
+                  : "bg-emerald-500/90 text-white border-emerald-400/50"
+              }`}>
+                {product.product_type || product.category}
+              </span>
+            </div>
+          )}
+
           {/* Action Icons */}
           <div
             className="absolute top-4 right-4 flex flex-col gap-3 z-20"

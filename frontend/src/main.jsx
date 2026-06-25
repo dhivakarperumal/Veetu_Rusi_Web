@@ -116,6 +116,7 @@ const SuperAreas = React.lazy(() => import("./SuperAdmin/Pages/Areas.jsx"));
 const ChefOrderManagement = React.lazy(() => import("./HomeChef/Pages/OrderManagement.jsx"));
 const ChefCart = React.lazy(() => import("./HomeChef/Pages/ChefCart.jsx"));
 const ChefWishlist = React.lazy(() => import("./HomeChef/Pages/ChefWishlist.jsx"));
+const ChefCustomers = React.lazy(() => import("./HomeChef/Pages/Customers.jsx"));
 
 // home chef
 const Material = React.lazy(() => import("./HomeChef/Pages/Material.jsx"));
@@ -232,6 +233,7 @@ const router = createBrowserRouter([
       { path: "food/categories/add", element: <ChefFoodCategoryAdd /> },
       { path: "analytics", element: <AnalyticsDashboard /> },
       { path: "earnings", element: <WalletAndEarnings /> },
+      { path: "customers", element: <ChefCustomers /> },
       { path: "orders", element: <ChefOrderManagement /> },
       { path: "reviews", element: <ChefReviews /> },
       { path: "material", element: <Material /> },

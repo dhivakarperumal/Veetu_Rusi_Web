@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from "react";
-import { FiPlus } from "react-icons/fi";
+import React, { useEffect, useState, useContext } from "react";
+import { FiPlus, FiHeart } from "react-icons/fi";
 import api from "../../api";
 import Heading from "../Heading";
 import QuickViewModal from "../Products/QuickModel";
 import PageContainer from "../CommenComponents/PageContainer";
 import { useNavigate } from "react-router-dom";
+import { StoreContext } from "../../PrivateRouter/StoreContext";
 
 const parseJsonField = (value) => {
   if (!value) return [];
@@ -38,6 +39,7 @@ const getStatusClasses = (status) => {
 };
 
 const FoodItems = () => {
+  const { toggleWishlist, wishlist } = useContext(StoreContext);
   const [foods, setFoods] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -62,6 +64,21 @@ const FoodItems = () => {
   const formatPrice = (value) => {
     const amount = parseFloat(value || 0);
     return amount.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  };
+
+  // Get the actual selling price from available fields
+  const getSellingPrice = (food) => {
+    if (food.final_price && parseFloat(food.final_price) > 0) return parseFloat(food.final_price);
+    if (food.offer && parseFloat(food.offer) > 0 && food.mrp) {
+      return parseFloat(food.mrp) - (parseFloat(food.mrp) * parseFloat(food.offer)) / 100;
+    }
+    return parseFloat(food.mrp || 0);
+  };
+
+  const hasDiscount = (food) => {
+    const selling = getSellingPrice(food);
+    const mrp = parseFloat(food.mrp || 0);
+    return mrp > 0 && selling < mrp;
   };
 
   useEffect(() => {
@@ -137,13 +154,33 @@ const FoodItems = () => {
                     </p>
                   </div>
 
-                  {/* Rating */}
-                  {/* <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1">
-                    <span className="text-yellow-500">⭐</span>
-                    <span className="text-sm font-bold text-slate-800">
-                      {food.rating || "4.8"}
-                    </span>
-                  </div> */}
+                  {/* Wishlist Heart Button */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); toggleWishlist(food); }}
+                    className={`absolute top-3 right-3 z-20 w-10 h-10 rounded-full bg-white/90 backdrop-blur-md shadow-lg flex items-center justify-center transition-all duration-300 ${
+                      wishlist.some(w => w.product_id === food.id || w.id === food.id)
+                        ? "text-red-500 scale-110"
+                        : "text-gray-500 hover:text-red-500 hover:scale-110"
+                    }`}
+                  >
+                    <FiHeart
+                      size={18}
+                      className={wishlist.some(w => w.product_id === food.id || w.id === food.id) ? "fill-current" : ""}
+                    />
+                  </button>
+
+                  {/* Category Tag Badge */}
+                  {(food.category || food.chef_category || food.product_type) && (
+                    <div className="absolute bottom-4 left-4 z-10">
+                      <span className={`text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-wider shadow-xl backdrop-blur-md border ${
+                        (food.product_type?.toLowerCase() === 'food' || food.category?.toLowerCase() === 'food' || !food.product_type)
+                          ? "bg-orange-500/90 text-white border-orange-400/50"
+                          : "bg-emerald-500/90 text-white border-emerald-400/50"
+                      }`}>
+                        {food.product_type || food.category || food.chef_category}
+                      </span>
+                    </div>
+                  )}
 
                   {/* Plus Button - Bottom Right */}
                   <button
@@ -177,17 +214,19 @@ const FoodItems = () => {
 
                   {/* Price */}
                   <div className="mt-4 flex items-center gap-3">
-                    <span className="text-slate-400 line-through font-medium text-sm">
-                      ₹{formatPrice(food.mrp)}
-                    </span>
-
+                    {hasDiscount(food) && (
+                      <span className="text-slate-400 line-through font-medium text-sm">
+                        ₹{formatPrice(food.mrp)}
+                      </span>
+                    )}
                     <span className="text-2xl font-black text-emerald-600">
-                      ₹{formatPrice(
-                        food.final_price ||
-                        food.offer_price ||
-                        food.mrp
-                      )}
+                      ₹{formatPrice(getSellingPrice(food))}
                     </span>
+                    {hasDiscount(food) && food.offer > 0 && (
+                      <span className="text-xs font-bold bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full">
+                        {food.offer}% OFF
+                      </span>
+                    )}
                   </div>
                 </div>
               </article>

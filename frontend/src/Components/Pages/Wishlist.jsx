@@ -95,9 +95,19 @@ export default function WishList() {
                     image = `https://ui-avatars.com/api/?name=${encodeURIComponent(item?.name || 'Product')}&background=random`;
                   }
 
-                  const price = item?.price || item?.offer_price || 0;
-                  const mrp = item?.mrp || price;
-                  const discount = mrp && price ? Math.round(((mrp - price) / mrp) * 100) : 0;
+                  const mrp = parseFloat(item?.mrp || 0);
+                  // Support chef_food_table (final_price, offer) and franchise_products (price, offer_price)
+                  const getSellingPrice = () => {
+                    if (item?.final_price && parseFloat(item.final_price) > 0) return parseFloat(item.final_price);
+                    if (item?.offer_price && parseFloat(item.offer_price) > 0) return parseFloat(item.offer_price);
+                    if (item?.price && parseFloat(item.price) > 0) return parseFloat(item.price);
+                    if (item?.offer && parseFloat(item.offer) > 0 && mrp > 0) {
+                      return mrp - (mrp * parseFloat(item.offer)) / 100;
+                    }
+                    return mrp;
+                  };
+                  const price = getSellingPrice();
+                  const discount = mrp > 0 && price < mrp ? Math.round(((mrp - price) / mrp) * 100) : 0;
 
                   return (
                     <div
@@ -147,21 +157,34 @@ export default function WishList() {
 
                         {/* Price */}
                         <div className="flex items-center mt-2">
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-primary font-bold text-lg">
-                              ₹{price}
+                              ₹{price.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
                             </span>
 
-                            {mrp && (
+                            {discount > 0 && (
                               <span className="text-gray-400 line-through text-sm">
-                                ₹{mrp}
+                                ₹{mrp.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                              </span>
+                            )}
+
+                            {discount > 0 && (
+                              <span className="text-xs font-bold bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full">
+                                {discount}% OFF
                               </span>
                             )}
                           </div>
 
                           {/* View Product */}
                           <button
-                            onClick={() => navigate(`/products/${item.id}`)}
+                            onClick={() => {
+                              // Navigate to food or product detail based on available fields
+                              if (item?.chef_name || item?.dietary_tag || item?.prep_time) {
+                                navigate(`/food/${item.id}`);
+                              } else {
+                                navigate(`/products/${item.id}`);
+                              }
+                            }}
                             className="ml-auto bg-primary-dark text-white p-2 rounded-lg hover:bg-primary-light flex items-center justify-center transition cursor-pointer"
                           >
                             <FiEye size={18} />

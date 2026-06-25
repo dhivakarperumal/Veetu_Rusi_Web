@@ -12,42 +12,45 @@ import Heading from "../Heading";
 import PageContainer from "../CommenComponents/PageContainer";
 
 const SareeSwiper = () => {
-  const { productsCache, setProductsCache, lastFetchTime, setLastFetchTime } = useContext(StoreContext);
-  const initialSarees = Array.isArray(productsCache) ? productsCache.filter(p => p.category?.toLowerCase() === "saree") : [];
-  const [sarees, setSarees] = useState(initialSarees);
+  const [recentItems, setRecentItems] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const fetchSarees = async () => {
+  const fetchRecentItems = async () => {
     try {
-      let data = productsCache;
+      setLoading(true);
+      const res = await api.get("/chef-foods");
+      const data = Array.isArray(res.data) ? res.data : [];
       
-      // If cache is empty or older than 5 minutes, fetch again
-      if (!data || data.length === 0 || !lastFetchTime || (Date.now() - lastFetchTime > 5 * 60 * 1000)) {
-        const res = await api.get("/products");
-        data = Array.isArray(res.data) ? res.data : [];
-        setProductsCache(data);
-        setLastFetchTime(Date.now());
-      }
+      // Filter active items
+      const activeItems = data.filter(item => item.status?.toLowerCase() === 'active');
 
-      const filtered = (data || []).filter(
-        (p) => p.category?.toLowerCase() === "saree",
-      );
+      // Sort by newest first (assuming higher ID or newer created_at)
+      const sorted = activeItems.sort((a, b) => {
+        const dateA = new Date(a.created_at || 0).getTime();
+        const dateB = new Date(b.created_at || 0).getTime();
+        if (dateB !== dateA) return dateB - dateA;
+        return (b.id || 0) - (a.id || 0);
+      });
 
-      setSarees(filtered);
+      // Show top 15 recent items
+      setRecentItems(sorted.slice(0, 15));
     } catch (error) {
-      console.error("Error fetching sarees:", error);
-      setSarees([]);
+      console.error("Error fetching recent chef items:", error);
+      setRecentItems([]);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchSarees();
+    fetchRecentItems();
   }, []);
 
-  if (sarees.length === 0) {
+  if (loading) {
     return (
       <PageContainer>
         <div className="py-5">
-          <Heading title="Latest Foods" />
+          <Heading title="Latest Foods & Products" />
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-6">
             {[1, 2, 3, 4, 5].map((i) => (
               <div key={i} className="bg-white rounded-3xl border border-gray-100 overflow-hidden animate-pulse">
@@ -64,11 +67,15 @@ const SareeSwiper = () => {
     );
   }
 
+  if (recentItems.length === 0) {
+    return null; // Don't render anything if there are no items
+  }
+
   return (
     <PageContainer>
       <div className="py-5">
         {/* SECTION TITLE */}
-        <Heading title="Latest Saree Collection" />
+        <Heading title="Latest Foods & Products" />
 
         {/* SWIPER */}
         <Swiper
@@ -84,7 +91,7 @@ const SareeSwiper = () => {
             1024: { slidesPerView: 5 },
           }}
         >
-          {Array.isArray(sarees) && sarees.map((product) => (
+          {recentItems.map((product) => (
             <SwiperSlide
               key={product.id}
               className="flex justify-center pb-10"
