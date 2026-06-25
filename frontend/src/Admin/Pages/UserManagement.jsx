@@ -34,12 +34,12 @@ const UserManagement = () => {
     e.preventDefault();
     try {
       if (modalMode === "add") {
-        await api.post("/superadmin/users", formData);
+        await api.post("/admin/users", formData);
         toast.success("User added successfully.");
       } else {
         const payload = { ...formData };
         if (!payload.password) delete payload.password;
-        await api.put(`/superadmin/users/${formData.id}`, payload);
+        await api.put(`/admin/users/${formData.id}`, payload);
         toast.success("User updated successfully.");
       }
       setIsModalOpen(false);
@@ -52,7 +52,7 @@ const UserManagement = () => {
   async function fetchUsers() {
     try {
       setLoading(true);
-      const res = await api.get("/superadmin/users");
+      const res = await api.get("/admin/users");
       setUsers(res.data);
     } catch {
       toast.error("Failed to load user accounts.");
@@ -98,7 +98,7 @@ const UserManagement = () => {
   const handleToggleStatus = async (id, currentActive) => {
     const nextActive = String(currentActive).toLowerCase() === 'active' ? 0 : 1;
     try {
-      await api.patch(`/superadmin/users/status/${id}`, { active: nextActive });
+      await api.patch(`/admin/users/status/${id}`, { active: nextActive });
       toast.success(`User status changed successfully.`);
       fetchUsers();
     } catch {
@@ -118,7 +118,7 @@ const UserManagement = () => {
 
   const handleRoleChange = async (id) => {
     try {
-      await api.patch(`/superadmin/users/role/${id}`, { role: newRole });
+      await api.patch(`/admin/users/role/${id}`, { role: newRole });
       toast.success("User role updated successfully.");
       setEditingRole(null);
       fetchUsers();
@@ -130,7 +130,7 @@ const UserManagement = () => {
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to permanently delete this customer account?")) return;
     try {
-      await api.delete(`/superadmin/users/${id}`);
+      await api.delete(`/admin/users/${id}`);
       toast.success("User account deleted.");
       fetchUsers();
     } catch {

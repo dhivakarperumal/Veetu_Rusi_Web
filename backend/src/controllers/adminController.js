@@ -693,3 +693,56 @@ exports.updateDeliveryPartner = superadminController.updateDeliveryPartner;
 exports.deleteDeliveryPartner = superadminController.deleteDeliveryPartner;
 exports.updateDeliveryPartnerStatus = superadminController.updateDeliveryPartnerStatus;
 
+// ==================== USER MANAGEMENT ====================
+exports.getUsers = async (req, res) => {
+  try {
+    const currentUserId = req.user?.user_id || req.user?.id || null;
+    if (!currentUserId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    const adminUserIdStr = req.user?.user_id || 'UNKNOWN';
+    const adminIdInt = req.user?.id || -1;
+
+    const query = `
+      SELECT DISTINCT u.id, u.user_id, u.full_name AS name, u.email, u.mobile_number AS phone, u.role, u.status AS active, u.created_at
+      FROM users u
+      LEFT JOIN home_chefs hc ON (u.user_id = hc.user_id OR (u.email = hc.email AND u.email IS NOT NULL AND u.email != ''))
+      LEFT JOIN delivery_partners dp ON (u.user_id = dp.user_id OR u.user_id = dp.delivery_partner_user_id OR (u.email = dp.email AND u.email IS NOT NULL AND u.email != ''))
+      LEFT JOIN user_food_order_table o ON u.user_id = o.user_id
+      LEFT JOIN home_chefs hc2 ON (o.chef_id = hc2.id OR o.chef_user_id = hc2.user_id)
+      WHERE hc.created_by IN (?, ?)
+         OR dp.created_by IN (?, ?)
+         OR hc2.created_by IN (?, ?)
+         
+      UNION ALL
+      
+      SELECT CONCAT('HC_', id) AS id, user_id, name, email, mobile AS phone, 'homechef' AS role, status AS active, created_at
+      FROM home_chefs
+      WHERE created_by IN (?, ?)
+        AND (email IS NULL OR email NOT IN (SELECT email FROM users WHERE email IS NOT NULL))
+        AND (user_id IS NULL OR user_id NOT IN (SELECT user_id FROM users WHERE user_id IS NOT NULL))
+        
+      UNION ALL
+      
+      SELECT CONCAT('DP_', id) AS id, user_id, name, email, mobile AS phone, 'delivery_partner' AS role, status AS active, created_at
+      FROM delivery_partners
+      WHERE created_by IN (?, ?)
+        AND (email IS NULL OR email NOT IN (SELECT email FROM users WHERE email IS NOT NULL))
+        AND (user_id IS NULL OR user_id NOT IN (SELECT user_id FROM users WHERE user_id IS NOT NULL))
+        
+      ORDER BY created_at DESC
+    `;
+    const [rows] = await pool.execute(query, [
+      adminUserIdStr, adminIdInt,
+      adminUserIdStr, adminIdInt,
+      adminUserIdStr, adminIdInt,
+      adminUserIdStr, adminIdInt,
+      adminUserIdStr, adminIdInt
+    ]);
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving users.', error: error.message });
+  }
+};
+

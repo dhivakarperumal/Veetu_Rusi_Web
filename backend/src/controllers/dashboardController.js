@@ -5,38 +5,131 @@ exports.getDashboardData = async (req, res) => {
   try {
     // ── Stat Cards ────────────────────────────────────────────────
     let totalRevenue = 0, activeOrders = 0, totalProducts = 0, lowStockCount = 0;
+    let totalUsers = 0;
+    let totalRestaurants = 0;
+    let totalHomeChefs = 0;
+    let totalDeliveryPartners = 0;
+    let totalOrders = 0;
+    let cancelledOrders = 0;
+
+    const currentUserId = req.user?.user_id || req.user?.id || null;
+    const isSuperAdmin = req.user?.role === 'superadmin';
+    const whereCreatedBy = (!isSuperAdmin && currentUserId) ? "WHERE created_by = ?" : "";
+    const paramsCreatedBy = (!isSuperAdmin && currentUserId) ? [currentUserId] : [];
 
     try {
       const [[rev]] = await pool.execute(
         "SELECT COALESCE(SUM(amount), 0) AS total FROM orders WHERE status = 'Delivered'"
       );
       totalRevenue = parseFloat(rev.total) || 0;
-    } catch (_) {}
+    } catch (_) { }
 
     try {
       const [[ao]] = await pool.execute(
         "SELECT COUNT(*) AS cnt FROM orders WHERE status NOT IN ('Delivered', 'Cancelled')"
       );
       activeOrders = ao.cnt || 0;
-    } catch (_) {}
+    } catch (_) { }
 
     try {
       const [[tp]] = await pool.execute("SELECT COUNT(*) AS cnt FROM chef_products");
       totalProducts = tp.cnt || 0;
-    } catch (_) {}
+    } catch (_) { }
 
     try {
       const [[ls]] = await pool.execute(
         "SELECT COUNT(*) AS cnt FROM chef_products WHERE total_stock < 5"
       );
       lowStockCount = ls.cnt || 0;
-    } catch (_) {}
+    } catch (_) { }
+
+    // Users
+    try {
+      const [[row]] = await pool.execute(`
+        SELECT COUNT(*) AS total
+        FROM users
+        WHERE role='user'
+    `);
+      totalUsers = row.total;
+    } catch (e) { }
+
+    // Restaurants
+    try {
+      const [[row]] = await pool.execute(`
+        SELECT COUNT(*) AS total
+        FROM restaurants
+    `);
+      totalRestaurants = row.total;
+    } catch (e) { }
+
+    // Home Chefs
+    try {
+      const [[row]] = await pool.execute(`
+        SELECT COUNT(*) AS total
+        FROM home_chefs
+        ${whereCreatedBy}
+    `, paramsCreatedBy);
+      totalHomeChefs = row.total;
+    } catch (e) { }
+
+    // Delivery Partners
+    try {
+      const [[row]] = await pool.execute(`
+        SELECT COUNT(*) AS total
+        FROM delivery_partners
+        ${whereCreatedBy}
+    `, paramsCreatedBy);
+      totalDeliveryPartners = row.total;
+    } catch (e) { }
+
+    // Orders
+    try {
+      const [[row]] = await pool.execute(`
+        SELECT COUNT(*) AS total
+        FROM Chef_Order
+    `);
+      totalOrders = row.total;
+    } catch (e) { }
+
+    // Cancelled Orders
+    try {
+      const [[row]] = await pool.execute(`
+        SELECT COUNT(*) AS total
+        FROM Chef_Order
+        WHERE status='Cancelled'
+    `);
+      cancelledOrders = row.total;
+    } catch (e) { }
 
     const stats = [
-      { label: 'Total Revenue', value: `₹${totalRevenue.toLocaleString()}`, trend: '+12.4%', bg: 'bg-blue-50', color: 'text-blue-600' },
-      { label: 'Active Orders', value: activeOrders, trend: '+8.2%', bg: 'bg-emerald-50', color: 'text-emerald-600' },
-      { label: 'Total Products', value: totalProducts, trend: '+5.1%', bg: 'bg-indigo-50', color: 'text-indigo-600' },
-      { label: 'Low Stock', value: lowStockCount, trend: 'Alert', bg: 'bg-amber-50', color: 'text-amber-600' }
+      {
+        label: "Users",
+        value: totalUsers,
+        trend: "",
+        bg: "bg-blue-50",
+        color: "text-blue-600",
+      },
+      {
+        label: "Home Chefs",
+        value: totalHomeChefs,
+        trend: "",
+        bg: "bg-emerald-50",
+        color: "text-emerald-600",
+      },
+      {
+        label: "Delivery Partners",
+        value: totalDeliveryPartners,
+        trend: "",
+        bg: "bg-indigo-50",
+        color: "text-indigo-600",
+      },
+      {
+        label: "Products",
+        value: totalProducts,
+        trend: "",
+        bg: "bg-amber-50",
+        color: "text-amber-600",
+      }
     ];
 
     // ── Recent Orders ─────────────────────────────────────────────
@@ -50,7 +143,7 @@ exports.getDashboardData = async (req, res) => {
         amount: `₹${parseFloat(o.amount).toLocaleString()}`,
         date: o.date ? new Date(o.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '—'
       }));
-    } catch (_) {}
+    } catch (_) { }
 
     // ── Top Products ──────────────────────────────────────────────
     let topProducts = [];
@@ -65,7 +158,7 @@ exports.getDashboardData = async (req, res) => {
         img: p.img || '/placeholder.jpg',
         sales: p.sales || 0
       }));
-    } catch (_) {}
+    } catch (_) { }
 
     // ── Low Stock Alerts ──────────────────────────────────────────
     let lowStockAlerts = [];
@@ -80,7 +173,7 @@ exports.getDashboardData = async (req, res) => {
         img: p.img || '/placeholder.jpg',
         color: p.stock === 0 ? 'text-red-500' : p.stock < 3 ? 'text-amber-500' : 'text-yellow-500'
       }));
-    } catch (_) {}
+    } catch (_) { }
 
     // ── Category Analytics ────────────────────────────────────────
     let categoryAnalytics = [];
@@ -97,7 +190,7 @@ exports.getDashboardData = async (req, res) => {
         pct: Math.round((parseFloat(r.revenue) / totalRev) * 100),
         color: COLORS[i % COLORS.length]
       }));
-    } catch (_) {}
+    } catch (_) { }
 
     // ── Revenue Trends (last 6 months static seed if no data) ─────
     const revenueTrends = [
@@ -133,7 +226,7 @@ exports.getDashboardData = async (req, res) => {
           subscriptionInfo.franchiseId = franchise.id;
           const today = new Date();
           today.setHours(0, 0, 0, 0);
-          
+
           if (franchise.expiry_date) {
             const expiry = new Date(franchise.expiry_date);
             expiry.setHours(0, 0, 0, 0);
@@ -157,7 +250,32 @@ exports.getDashboardData = async (req, res) => {
       console.error('Subscription status error:', err);
     }
 
-    res.json({ stats, recentOrders, topProducts, lowStockAlerts, categoryAnalytics, revenueTrends, regionalSales, subscriptionInfo });
+    res.json({
+      cards: {
+        totalRevenue,
+        totalUsers,
+        totalRestaurants,
+        totalHomeChefs,
+        totalDeliveryPartners,
+        totalOrders,
+        totalProducts,
+        cancelledOrders
+      },
+
+      recentOrders,
+      topProducts,
+      lowStockAlerts,
+      categoryAnalytics,
+
+      charts: {
+        revenueAnalytics: revenueTrends,
+        dailyOrders: [],
+        userGrowth: [],
+        ordersByStatus: []
+      },
+
+      subscriptionInfo
+    });
   } catch (error) {
     console.error('Admin dashboard error:', error);
     res.status(500).json({ message: 'Error loading admin dashboard.', error: error.message });

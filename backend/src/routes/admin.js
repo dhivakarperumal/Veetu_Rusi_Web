@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
+const superadminController = require('../controllers/superadminController');
 const { verifyToken, requireRole } = require('../middleware/authMiddleware');
 const upload = require('../config/multer');
 
@@ -52,5 +53,12 @@ router.post('/delivery-partners', deliveryPartnerUploadFields, adminController.c
 router.put('/delivery-partners/:id', deliveryPartnerUploadFields, adminController.updateDeliveryPartner);
 router.delete('/delivery-partners/:id', adminController.deleteDeliveryPartner);
 router.patch('/delivery-partners/:id/status', adminController.updateDeliveryPartnerStatus);
+
+// User Management (Admin also needs to manage users)
+router.get('/users', adminController.getUsers);
+router.post('/users', superadminController.createUser);
+router.patch('/users/status/:id', superadminController.patchUserStatus);
+router.patch('/users/role/:id', superadminController.patchUserRole);
+router.delete('/users/:id', superadminController.deleteUser);
 
 module.exports = router;
