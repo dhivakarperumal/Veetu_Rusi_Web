@@ -270,7 +270,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                   flex items-center gap-3 px-4 py-3 rounded-xl transition-all
                     ${isActive
                       ? "group relative bg-emerald-500/10 text-emerald-300 shadow-[0_16px_50px_rgba(16,185,129,0.18)] ring-1 ring-emerald-400/20"
-                      : "text-white/50 hover:bg-white/5 hover:text-white"
+                      : "text-slate-300 hover:bg-white/5 hover:text-white"
                     }
                 `}
               >
