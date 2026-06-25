@@ -46,15 +46,20 @@ const resolveChefFoodMetadata = async (req, body) => {
 
   let homeChef = null;
   if (candidateChefId || candidateChefEmail || candidateChefPhone) {
-    const [rows] = await pool.execute(
-      `SELECT hc.*, u.id AS user_id, u.user_id AS user_user_id, u.full_name AS user_name, u.mobile_number AS user_phone, u.email AS user_email
-       FROM home_chefs hc
-       LEFT JOIN users u ON (u.email = hc.email OR u.mobile_number = hc.mobile)
-       WHERE hc.user_id = ? OR hc.email = ? OR hc.mobile = ? OR u.user_id = ? OR u.id = ?
-       LIMIT 1`,
-      [candidateChefId, candidateChefEmail, candidateChefPhone, candidateChefId, candidateChefId]
-    );
-    if (rows.length > 0) homeChef = rows[0];
+    try {
+      const [rows] = await pool.execute(
+        `SELECT hc.*, u.id AS user_id, u.user_id AS user_user_id, u.full_name AS user_name, u.mobile_number AS user_phone, u.email AS user_email
+         FROM home_chefs hc
+         LEFT JOIN users u ON (u.email = hc.email OR u.mobile_number = hc.mobile)
+         WHERE hc.user_id = ? OR hc.email = ? OR hc.mobile = ? OR u.user_id = ? OR u.id = ?
+         LIMIT 1`,
+        [candidateChefId, candidateChefEmail, candidateChefPhone, candidateChefId, candidateChefId]
+      );
+      if (rows.length > 0) homeChef = rows[0];
+    } catch (err) {
+      console.warn('resolveChefFoodMetadata: failed to query home_chefs:', err?.message || err);
+      // tolerate missing home_chefs table or query failures by leaving homeChef null
+    }
   }
 
   const finalChefUserId = chef_user_id || req.user?.user_id || req.user?.id || homeChef?.user_user_id || homeChef?.user_id || null;
@@ -246,7 +251,8 @@ exports.createFood = async (req, res) => {
       status
     } = req.body;
 
-    if (!category || !name || !description || !mrp) {
+    // mrp can be 0 (falsy) when provided explicitly; treat only undefined/null as missing
+    if (!category || !name || !description || mrp === undefined || mrp === null) {
       return res.status(400).json({ message: 'Required fields: category, food name, description, mrp' });
     }
 
@@ -261,42 +267,60 @@ exports.createFood = async (req, res) => {
 
     const computedFinalPrice = Number(final_price) || (Number(mrp) - (Number(offer) || 0) * Number(mrp) / 100) || Number(mrp);
 
-    const insertSql = `INSERT INTO chef_food_table
-      (category, product_type, name, description, cuisine, prep_time, preparation_url, shelf_life_days, manufacture_date, expiry_date, mrp, offer, final_price,
-       dietary_tag, net_weight, packaging_type, packaging_image, ingredients, instructions, images, total_stock, variants, status,
-       franchise_user_id, created_by, updated_by
-      )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    // Normalize incoming images/variants (they might be JSON strings)
+    const parsedVariants = Array.isArray(variants) ? variants : (parseJsonField(variants) || []);
+    const parsedImages = Array.isArray(images) ? images : (parseJsonField(images) || []);
+    const allVariantImages = parsedVariants.flatMap(v => (v && v.images) ? v.images : []);
 
-    const params = [
-      category,
-      product_type || 'Food',
+    // Build insert dynamically based on actual columns present in chef_food_table
+    const [cols] = await pool.execute('SHOW COLUMNS FROM chef_food_table');
+    const available = cols.map(c => c.Field);
+
+    const fieldMap = {
+      category: category || 'Food Product',
+      product_type: product_type || 'Food',
       name,
-      description,
-      cuisine || null,
-      prep_time || null,
-      preparation_url || null,
-      shelf_life_days || null,
-      manufacture_date || null,
-      expiry_date || null,
+      description: description || null,
+      cuisine: cuisine || null,
+      prep_time: prep_time || null,
+      preparation_url: preparation_url || null,
+      shelf_life_days: shelf_life_days ? Number(shelf_life_days) : null,
+      manufacture_date: manufacture_date || null,
+      expiry_date: expiry_date || null,
       mrp,
-      offer || 0,
-      computedFinalPrice,
-      dietary_tag || null,
-      net_weight || null,
-      packaging_type || null,
-      packaging_image || null,
-      ingredients || null,
-      instructions || null,
-      normalizeJsonField(images) || null,
-      total_stock || 0,
-      normalizeJsonField(variants) || null,
-      status || 'Inactive',
-      finalFranchiseUserId,
-      createdBy,
-      updatedBy
-    ];
+      offer: offer || 0,
+      final_price: computedFinalPrice,
+      dietary_tag: dietary_tag || null,
+      net_weight: net_weight || null,
+      packaging_type: packaging_type || null,
+      packaging_image: packaging_image || null,
+      ingredients: ingredients || null,
+      instructions: instructions || null,
+      images: (parsedImages.length > 0 ? normalizeJsonField(parsedImages) : (allVariantImages.length > 0 ? normalizeJsonField(allVariantImages) : null)),
+      total_stock: total_stock || 0,
+      variants: (parsedVariants.length > 0 ? normalizeJsonField(parsedVariants.map(v => ({ weight: v.weight || null, price: v.price ? Number(v.price) : 0, offer: v.offer ? Number(v.offer) : 0, final_price: v.final_price ? Number(v.final_price) : 0, stock: Number(v.stock) || 0, images: v.images || [] }))) : null),
+      status: status || 'Inactive',
+      franchise_user_id: finalFranchiseUserId || null,
+      created_by: createdBy || null,
+      updated_by: updatedBy || null
+    };
 
+    const insertCols = [];
+    const placeholders = [];
+    const params = [];
+    for (const [key, val] of Object.entries(fieldMap)) {
+      if (available.includes(key)) {
+        insertCols.push(key);
+        placeholders.push('?');
+        params.push(val);
+      }
+    }
+
+    if (insertCols.length === 0) {
+      return res.status(500).json({ message: 'No valid columns found for chef_food_table' });
+    }
+
+    const insertSql = `INSERT INTO chef_food_table (${insertCols.join(', ')}) VALUES (${placeholders.join(', ')})`;
     const [result] = await pool.execute(insertSql, params);
     res.status(201).json({ message: 'Chef food item created successfully', id: result.insertId });
   } catch (error) {
@@ -309,8 +333,9 @@ exports.updateFood = async (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
-    const fields = [];
-    const params = [];
+    // Only update columns that exist in the table to tolerate schema differences
+    const [cols] = await pool.execute('SHOW COLUMNS FROM chef_food_table');
+    const available = cols.map(c => c.Field);
 
     const allowed = [
       'category', 'product_type', 'name', 'description', 'cuisine', 'prep_time', 'preparation_url', 'shelf_life_days', 'manufacture_date', 'expiry_date', 'mrp',
@@ -318,8 +343,11 @@ exports.updateFood = async (req, res) => {
       'ingredients', 'instructions', 'images', 'total_stock', 'variants', 'status', 'franchise_user_id'
     ];
 
+    const fields = [];
+    const params = [];
+
     allowed.forEach((key) => {
-      if (updates[key] !== undefined) {
+      if (updates[key] !== undefined && available.includes(key)) {
         fields.push(`${key} = ?`);
         if (key === 'images' || key === 'variants') {
           params.push(normalizeJsonField(updates[key]));
@@ -330,13 +358,13 @@ exports.updateFood = async (req, res) => {
     });
 
     const updateUpdatedBy = req.user?.user_id || req.user?.id || null;
-    if (updateUpdatedBy) {
+    if (updateUpdatedBy && available.includes('updated_by')) {
       fields.push('updated_by = ?');
       params.push(updateUpdatedBy);
     }
 
     if (fields.length === 0) {
-      return res.status(400).json({ message: 'No fields to update' });
+      return res.status(400).json({ message: 'No fields to update or no matching columns in DB' });
     }
 
     params.push(id);

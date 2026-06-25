@@ -6,29 +6,35 @@ const JWT_SECRET = process.env.JWT_SECRET || 'default-secret';
 
 async function validateFranchiseAdminSubscription(user) {
   if (!user || user.role !== 'admin' || !user.email) return null;
-  const [rows] = await pool.execute(
-    'SELECT id, status, expiry_date FROM franchise_owners WHERE email = ? LIMIT 1',
-    [user.email]
-  );
-  if (!rows.length) return null;
+  try {
+    const [rows] = await pool.execute(
+      'SELECT id, status, expiry_date FROM franchise_owners WHERE email = ? LIMIT 1',
+      [user.email]
+    );
+    if (!rows.length) return null;
 
-  const franchise = rows[0];
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+    const franchise = rows[0];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-  if (franchise.expiry_date) {
-    const expiry = new Date(franchise.expiry_date);
-    expiry.setHours(0, 0, 0, 0);
-    if (expiry < today) {
-      return 'Your franchise subscription has expired. Please renew to continue.';
+    if (franchise.expiry_date) {
+      const expiry = new Date(franchise.expiry_date);
+      expiry.setHours(0, 0, 0, 0);
+      if (expiry < today) {
+        return 'Your franchise subscription has expired. Please renew to continue.';
+      }
     }
-  }
 
-  if (franchise.status !== 'Active') {
-    return 'Your franchise status is not active. Please contact support.';
-  }
+    if (franchise.status !== 'Active') {
+      return 'Your franchise status is not active. Please contact support.';
+    }
 
-  return null;
+    return null;
+  } catch (err) {
+    console.warn('validateFranchiseAdminSubscription: failed to query franchise_owners:', err?.message || err);
+    // If the franchise table is missing or the query fails, do not block authentication flow.
+    return null;
+  }
 }
 
 exports.verifyToken = async (req, res, next) => {

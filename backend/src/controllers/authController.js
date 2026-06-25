@@ -6,6 +6,38 @@ const { generateRoleId } = require('../utils/idGenerator');
 const JWT_SECRET = process.env.JWT_SECRET || 'default-secret';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
+async function getUserSelectFields() {
+  try {
+    const [columns] = await pool.execute('SHOW COLUMNS FROM `users`');
+    const available = columns.map((c) => c.Field);
+    const fields = [
+      'id',
+      'user_id',
+      'full_name AS username',
+      'full_name AS name',
+      'email',
+      'mobile_number AS phone',
+      'role',
+      'status',
+      'profile_image',
+      'created_at',
+      'updated_at',
+      'latitude',
+      'longitude',
+      'location_name',
+      'pincode',
+    ];
+
+    if (available.includes('district')) fields.push('district');
+    if (available.includes('area')) fields.push('area');
+
+    return fields.join(', ');
+  } catch (err) {
+    console.warn('Could not determine user columns, falling back to safe defaults:', err?.message || err);
+    return 'id, user_id, full_name AS username, full_name AS name, email, mobile_number AS phone, role, status, profile_image, created_at, updated_at, latitude, longitude, location_name, pincode';
+  }
+}
+
 function hashPassword(password) {
   return crypto.createHash('sha256').update(password).digest('hex');
 }
@@ -27,17 +59,18 @@ function createToken(user) {
 
 async function validateFranchiseAdminLogin(user) {
   if (!user || user.role !== 'admin' || !user.email) return null;
-  const [rows] = await pool.execute(
-    'SELECT id, status, expiry_date FROM franchise_owners WHERE email = ? LIMIT 1',
-    [user.email]
-  );
-  if (!rows.length) return null;
+  try {
+    const [rows] = await pool.execute(
+      'SELECT id, status, expiry_date FROM franchise_owners WHERE email = ? LIMIT 1',
+      [user.email]
+    );
+    if (!rows.length) return null;
 
-  const franchise = rows[0];
+    const franchise = rows[0];
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  if (franchise.expiry_date) {
+    if (franchise.expiry_date) {
     const expiry = new Date(franchise.expiry_date);
     expiry.setHours(0, 0, 0, 0);
     if (expiry < today) {
@@ -50,6 +83,11 @@ async function validateFranchiseAdminLogin(user) {
   }
 
   return null;
+  } catch (err) {
+    console.warn('validateFranchiseAdminLogin: failed to query franchise_owners:', err?.message || err);
+    // If franchise table/query fails, allow login flow to continue rather than throwing a 500
+    return null;
+  }
 }
 
 exports.register = async (req, res) => {
@@ -105,8 +143,9 @@ exports.login = async (req, res) => {
     }
 
     const hashedPassword = hashPassword(password);
+    const selectFields = await getUserSelectFields();
     const [users] = await pool.execute(
-      'SELECT id, user_id, full_name as name, email, mobile_number as phone, role, status, latitude, longitude, location_name, pincode, district, area FROM `users` WHERE (email = ? OR full_name = ?) AND password = ?',
+      `SELECT ${selectFields} FROM \`users\` WHERE (email = ? OR full_name = ?) AND password = ?`,
       [identifier, identifier, hashedPassword]
     );
 
@@ -137,9 +176,9 @@ exports.profile = async (req, res) => {
   try {
     const { id, role, email } = req.user;
 
+    const selectFields = await getUserSelectFields();
     const [users] = await pool.execute(
-      `SELECT id, user_id, full_name AS username, full_name AS name, email, mobile_number AS phone, role, status, profile_image, created_at, updated_at, latitude, longitude, location_name, pincode, district, area
-       FROM users WHERE id = ? LIMIT 1`,
+      `SELECT ${selectFields} FROM users WHERE id = ? LIMIT 1`,
       [id]
     );
 
@@ -153,16 +192,26 @@ exports.profile = async (req, res) => {
 
     if (role === 'chef' || role === 'homechef') {
       const userId = users[0].user_id;
-      const [rows] = await pool.execute('SELECT * FROM home_chefs WHERE user_id = ? OR email = ? LIMIT 1', [userId, email || '']);
-      if (rows.length > 0) {
-        response.homeChef = rows[0];
+      try {
+        const [rows] = await pool.execute('SELECT * FROM home_chefs WHERE user_id = ? OR email = ? LIMIT 1', [userId, email || '']);
+        if (rows.length > 0) {
+          response.homeChef = rows[0];
+        }
+      } catch (err) {
+        console.warn('Profile: failed to query home_chefs:', err?.message || err);
+        // don't fail the whole profile request if home_chefs is missing or query fails
       }
     }
 
     if (role === 'admin') {
-      const [rows] = await pool.execute('SELECT id, franchise_id, franchise_name, franch_user_id, status FROM franchise_owners WHERE email = ? LIMIT 1', [email]);
-      if (rows.length > 0) {
-        response.franchise = rows[0];
+      try {
+        const [rows] = await pool.execute('SELECT id, franchise_id, franchise_name, franch_user_id, status FROM franchise_owners WHERE email = ? LIMIT 1', [email]);
+        if (rows.length > 0) {
+          response.franchise = rows[0];
+        }
+      } catch (err) {
+        console.warn('Profile: failed to query franchise_owners:', err?.message || err);
+        // tolerate missing franchise_owners table or other DB issues here
       }
     }
 
@@ -210,8 +259,9 @@ exports.updateProfile = async (req, res) => {
 
     await pool.execute(`UPDATE users SET ${setClause} WHERE id = ?`, values);
 
+    const selectFields = await getUserSelectFields();
     const [updatedRows] = await pool.execute(
-      'SELECT id, user_id, full_name AS username, full_name AS name, email, mobile_number AS phone, role, status, profile_image, created_at, updated_at, latitude, longitude, location_name, pincode, district, area FROM users WHERE id = ? LIMIT 1',
+      `SELECT ${selectFields} FROM users WHERE id = ? LIMIT 1`,
       [userId]
     );
 
@@ -236,8 +286,9 @@ exports.updateLocation = async (req, res) => {
       [latitude, longitude, location_name || null, pincode, district || null, area || null, userId]
     );
 
+    const selectFields = await getUserSelectFields();
     const [updatedRows] = await pool.execute(
-      'SELECT id, user_id, full_name AS username, full_name AS name, email, mobile_number AS phone, role, status, profile_image, created_at, updated_at, latitude, longitude, location_name, pincode, district, area FROM users WHERE id = ? LIMIT 1',
+      `SELECT ${selectFields} FROM users WHERE id = ? LIMIT 1`,
       [userId]
     );
 

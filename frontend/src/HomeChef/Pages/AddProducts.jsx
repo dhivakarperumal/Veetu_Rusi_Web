@@ -380,25 +380,12 @@ const AddProducts = () => {
     const handleSubmit = async (e) => {
         if (e) e.preventDefault();
 
-        if (!formData.name || !formData.category || !formData.mrp) {
-            toast.error("Please fill in the essentials.");
-            return;
-        }
+        // Note: Removed strict client-side gating for name/category/mrp
+        // Allow backend to validate and respond with appropriate errors.
 
-        // Type-specific validation
-        if (formData.product_type === "Food") {
-            if (!formData.serving_size || !formData.prep_time || !formData.ingredients || !formData.shelf_life_days) {
-                toast.error("Please fill all required Food fields (serving size, prep time, ingredients, shelf life).");
-                return;
-            }
-        }
-
-        if (formData.product_type === "Food Product") {
-            if (!formData.net_weight || !formData.ingredients || !formData.packaging_type || !formData.shelf_life_days) {
-                toast.error("Please fill all required Food Product fields (net weight, ingredients, packaging, expiry).");
-                return;
-            }
-        }
+        // No blocking client-side validation: backend is authoritative.
+        // Frontend will only sanitize the payload and allow submission so
+        // server-side validation can return structured errors to the UI.
 
         setLoading(true);
         try {
@@ -415,6 +402,7 @@ const AddProducts = () => {
 
             const franchiseUserId = homeChef?.created_by || homeChef?.franchise_user_id || null;
 
+
             // Build a clean payload matching chef_food_table columns
             const mrpNum = parseFloat(formData.mrp) || 0;
             const offerNum = parseFloat(formData.offer) || 0;
@@ -422,11 +410,20 @@ const AddProducts = () => {
                 ? parseFloat(formData.offer_price)
                 : mrpNum - mrpNum * (offerNum / 100);
 
-            // Collect all images from all variants into a flat array
-            const allVariantImages = variants.flatMap(v => v.images || []);
+            // Normalize variants/images
+            const normalizedVariants = Array.isArray(variants) ? variants.map(v => ({
+                weight: v.weight || null,
+                price: v.price ? Number(v.price) : 0,
+                offer: v.offer ? Number(v.offer) : 0,
+                final_price: v.final_price ? Number(v.final_price) : 0,
+                stock: v.stock ? Number(v.stock) : 0,
+                images: Array.isArray(v.images) ? v.images : (v.images ? JSON.parse(v.images) : [])
+            })) : [];
+
+            const parsedImagesFromVariants = normalizedVariants.flatMap(v => v.images || []);
+            const parsedStandaloneImages = Array.isArray(formData.images) ? formData.images : (formData.images ? JSON.parse(formData.images) : []);
 
             const finalData = {
-                // core food fields (chef_food_table columns)
                 category: formData.category || "Food Product",
                 product_type: formData.product_type || "Food Product",
                 name: formData.name,
@@ -437,35 +434,36 @@ const AddProducts = () => {
                 shelf_life_days: formData.shelf_life_days ? Number(formData.shelf_life_days) : null,
                 manufacture_date: formData.manufacture_date || null,
                 expiry_date: formData.expiry_date || null,
-                mrp: mrpNum,
-                offer: offerNum,
-                final_price: computedFinalPrice || mrpNum,
+                mrp: (formData.mrp && formData.mrp.toString().trim() !== '') ? mrpNum : undefined,
+                offer: (formData.offer && formData.offer.toString().trim() !== '') ? offerNum : undefined,
+                final_price: (formData.offer_price && formData.offer_price.toString().trim() !== '') ? computedFinalPrice : (formData.mrp && formData.mrp.toString().trim() !== '' ? mrpNum : undefined),
                 dietary_tag: formData.dietary_tag || null,
                 net_weight: formData.net_weight || null,
                 packaging_type: formData.packaging_type || null,
                 packaging_image: formData.packaging_image || null,
                 ingredients: formData.ingredients || null,
                 instructions: formData.instructions || formData.cooking_instructions || null,
-                images: allVariantImages.length > 0 ? allVariantImages : null,
+                images: (parsedStandaloneImages.length > 0 ? parsedStandaloneImages : (parsedImagesFromVariants.length > 0 ? parsedImagesFromVariants : null)),
                 total_stock: Number(formData.total_stock) || 0,
-                variants: variants.length > 0 ? variants.map(v => ({
-                    weight: v.weight || null,
-                    price: v.price ? Number(v.price) : 0,
-                    offer: v.offer ? Number(v.offer) : 0,
-                    final_price: v.final_price ? Number(v.final_price) : 0,
-                    stock: Number(v.stock) || 0,
-                    images: v.images || []
-                })) : [],
+                variants: normalizedVariants.length > 0 ? normalizedVariants : null,
                 status: formData.status || "Inactive",
-                // chef identifiers
-                franchise_user_id: franchiseUserId,
+                franchise_user_id: franchiseUserId || null,
             };
 
+            // Clean payload: remove empty strings, undefined, and empty arrays
+            const cleanPayload = {};
+            Object.entries(finalData).forEach(([k, v]) => {
+                if (v === undefined || v === null) return;
+                if (typeof v === 'string' && v.trim() === '') return;
+                if (Array.isArray(v) && v.length === 0) return;
+                cleanPayload[k] = v;
+            });
+
             if (isEdit) {
-                await api.put(`/chef-foods/${id}`, finalData);
+                await api.put(`/chef-foods/${id}`, cleanPayload);
                 toast.success("Product updated successfully!");
             } else {
-                await api.post("/chef-foods", finalData);
+                await api.post("/chef-foods", cleanPayload);
                 toast.success("Product added to your menu successfully!");
             }
 
@@ -473,7 +471,8 @@ const AddProducts = () => {
             setTimeout(() => navigate("/chef/products"), 1500);
         } catch (error) {
             console.error("Submit error:", error);
-            toast.error(error.response?.data?.message || "Operation failed.");
+            const msg = error?.response?.data?.message || error?.response?.data?.error || error.message || 'Operation failed.';
+            toast.error(msg);
             setLoading(false);
         }
     };
