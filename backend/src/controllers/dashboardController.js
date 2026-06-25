@@ -12,6 +12,11 @@ exports.getDashboardData = async (req, res) => {
     let totalOrders = 0;
     let cancelledOrders = 0;
 
+    const currentUserId = req.user?.user_id || req.user?.id || null;
+    const isSuperAdmin = req.user?.role === 'superadmin';
+    const whereCreatedBy = (!isSuperAdmin && currentUserId) ? "WHERE created_by = ?" : "";
+    const paramsCreatedBy = (!isSuperAdmin && currentUserId) ? [currentUserId] : [];
+
     try {
       const [[rev]] = await pool.execute(
         "SELECT COALESCE(SUM(amount), 0) AS total FROM orders WHERE status = 'Delivered'"
@@ -45,7 +50,6 @@ exports.getDashboardData = async (req, res) => {
         FROM users
         WHERE role='user'
     `);
-
       totalUsers = row.total;
     } catch (e) { }
 
@@ -55,7 +59,6 @@ exports.getDashboardData = async (req, res) => {
         SELECT COUNT(*) AS total
         FROM restaurants
     `);
-
       totalRestaurants = row.total;
     } catch (e) { }
 
@@ -64,8 +67,8 @@ exports.getDashboardData = async (req, res) => {
       const [[row]] = await pool.execute(`
         SELECT COUNT(*) AS total
         FROM home_chefs
-    `);
-
+        ${whereCreatedBy}
+    `, paramsCreatedBy);
       totalHomeChefs = row.total;
     } catch (e) { }
 
@@ -74,8 +77,8 @@ exports.getDashboardData = async (req, res) => {
       const [[row]] = await pool.execute(`
         SELECT COUNT(*) AS total
         FROM delivery_partners
-    `);
-
+        ${whereCreatedBy}
+    `, paramsCreatedBy);
       totalDeliveryPartners = row.total;
     } catch (e) { }
 
@@ -85,7 +88,6 @@ exports.getDashboardData = async (req, res) => {
         SELECT COUNT(*) AS total
         FROM Chef_Order
     `);
-
       totalOrders = row.total;
     } catch (e) { }
 
@@ -96,51 +98,8 @@ exports.getDashboardData = async (req, res) => {
         FROM Chef_Order
         WHERE status='Cancelled'
     `);
-
       cancelledOrders = row.total;
     } catch (e) { }
-
-    // ================= Users =================
-
-    try {
-      const [[user]] = await pool.execute(`
-      SELECT COUNT(*) AS total
-      FROM users
-      WHERE role = 'user'
-  `);
-
-      totalUsers = user.total;
-    } catch (err) {
-      console.log(err);
-    }
-
-    // ================= Home Chefs =================
-   
-
-    try {
-      const [[chef]] = await pool.execute(`
-      SELECT COUNT(*) AS total
-      FROM home_chefs
-  `);
-
-      totalHomeChefs = chef.total;
-    } catch (err) {
-      console.log(err);
-    }
-
-    // ================= Delivery Partners =================
-    
-
-    try {
-      const [[partner]] = await pool.execute(`
-      SELECT COUNT(*) AS total
-      FROM delivery_partners
-  `);
-
-      totalDeliveryPartners = partner.total;
-    } catch (err) {
-      console.log(err);
-    }
 
     const stats = [
       {
