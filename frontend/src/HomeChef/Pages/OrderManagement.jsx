@@ -172,7 +172,8 @@ const OrderManagement = () => {
             <table className="w-full text-left text-slate-200">
               <thead>
                 <tr className="border-b border-white/5 bg-[#070b13]/30">
-                      <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Order ID</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">S.No</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Order ID</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Customer Name</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Food Items</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Ordered Date</th>
@@ -184,7 +185,7 @@ const OrderManagement = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {filteredOrders.map((order) => {
+                {filteredOrders.map((order, idx) => {
                   const chefQuantity = order.chef_total_quantity ?? order.items?.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0);
                   const chefAmount = parseFloat((order.chef_total_amount ?? order.total_amount) || 0);
                   
@@ -204,6 +205,7 @@ const OrderManagement = () => {
 
                   return (
                     <tr key={order.id} className="hover:bg-white/5 transition-colors">
+                      <td className="px-6 py-5 text-sm font-bold text-white/50">{idx + 1}</td>
                       <td className="px-6 py-5 text-sm font-black text-white">{order.order_id}</td>
                       <td className="px-6 py-5 text-sm font-bold text-white/60">{order.customer_name}</td>
                       <td className="px-6 py-5 max-w-[18rem] text-sm text-white/70">

@@ -49,6 +49,7 @@ const AnalyticsDashboard = () => {
 
         const orders = Array.isArray(ordersRes.data) ? ordersRes.data : [];
         const revenue = orders.reduce((sum, order) => {
+          if (order.status !== 'Delivered' && order.status !== 'Completed') return sum;
           const amount = parseFloat(order.chef_total_amount || order.total_amount || 0);
           return sum + amount;
         }, 0);
@@ -322,6 +323,7 @@ const AnalyticsDashboard = () => {
           <table className="w-full text-left text-slate-300">
             <thead>
               <tr className="border-b border-white/10 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                <th className="pb-3 pl-4">S.No</th>
                 <th className="pb-3 pl-4">Order ID</th>
                 <th className="pb-3">Customer</th>
                 <th className="pb-3">Items (Your Products/Foods)</th>
@@ -331,7 +333,7 @@ const AnalyticsDashboard = () => {
             </thead>
             <tbody className="divide-y divide-white/5">
               {recentOrders.length > 0 ? (
-                recentOrders.map((order) => {
+                recentOrders.map((order, idx) => {
                   const chefUserId = user?.user_id || user?.id;
                   // Filter items to only show the ones belonging to this chef if needed
                   // Usually the API /user-food-orders/chef already does this, but we filter to be safe
@@ -340,6 +342,7 @@ const AnalyticsDashboard = () => {
 
                   return (
                     <tr key={order.id} className="hover:bg-white/5 transition-colors">
+                      <td className="py-4 pl-4 text-sm font-bold text-white/50">{idx + 1}</td>
                       <td className="py-4 pl-4 text-sm font-bold text-white">{order.order_id}</td>
                       <td className="py-4 text-sm">{order.customer_name}</td>
                       <td className="py-4 text-sm text-slate-400 max-w-[200px]">

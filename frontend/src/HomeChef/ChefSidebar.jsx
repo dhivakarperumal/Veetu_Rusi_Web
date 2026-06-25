@@ -23,7 +23,8 @@ import {
   ClipboardList,
   Clock,
   ShoppingCart,
-  Star
+  Star,
+  Users
 } from "lucide-react";
 import { useAuth } from "../PrivateRouter/AuthContext";
 
@@ -55,8 +56,9 @@ const navItems = [
   },
   { path: "/chef/material", label: "Buy Materials", icon: ShoppingCart },
   { path: "/chef/reviews", label: "Reviews", icon: Star },
+  { path: "/chef/customers", label: "Customers", icon: Users },
   { path: "/chef/earnings", label: "Wallet & Earnings", icon: Wallet },
-  { path: "/", label: "Back Home", icon: Home },
+  // { path: "/", label: "Back Home", icon: Home },
 ];
 
 /* ================= SIDEBAR ================= */
