@@ -94,6 +94,10 @@ exports.getDashboardData = async (req, res) => {
       totalDeliveryPartners = row.total;
     } catch (e) { }
 
+    if (!isSuperAdmin) {
+      totalUsers += totalHomeChefs + totalDeliveryPartners;
+    }
+
     // Orders
     try {
       const [[row]] = await pool.execute(`
