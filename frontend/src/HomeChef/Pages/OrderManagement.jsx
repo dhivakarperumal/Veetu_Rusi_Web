@@ -397,52 +397,104 @@ const OrderManagement = () => {
 
       {/* Tracking Modal */}
       {trackingOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={() => setTrackingOrder(null)}></div>
-          <div className="bg-[#0B1120] border border-white/5 w-full max-w-md rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300">
-            <div className="bg-[#1B4D22] p-6 text-white flex justify-between items-center">
-              <div>
-                <h3 className="text-xl font-black uppercase italic tracking-tight">Live Tracking</h3>
-                <p className="text-xs text-emerald-400 font-bold uppercase tracking-widest mt-1">{trackingOrder.order_id}</p>
-              </div>
-              <button onClick={() => setTrackingOrder(null)} className="p-2 hover:bg-white/10 rounded-full transition w-8 h-8 flex items-center justify-center font-black">
-                ✕
-              </button>
-            </div>
-            <div className="p-8 space-y-6 text-white">
-              <div className="aspect-video bg-[#070b13] rounded-2xl border border-white/5 flex flex-col items-center justify-center relative overflow-hidden">
-                <div className="absolute inset-0 opacity-10" style={{backgroundImage: "url('https://www.transparenttextures.com/patterns/cubes.png')"}}></div>
-                <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center animate-pulse mb-3">
-                  <span className="text-xl">📍</span>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={() => setTrackingOrder(null)}></div>
+          <div className="bg-gradient-to-br from-[#0c1116] to-[#171a20] border border-white/10 w-full max-w-5xl rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col md:flex-row h-[85vh] max-h-[800px]">
+            
+            {/* Map Section - Left Side */}
+            <div className="w-full md:w-2/3 h-64 md:h-full bg-[#070b13] relative overflow-hidden flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-white/5">
+                <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mix-blend-overlay"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-[#070b13] via-transparent to-transparent z-0"></div>
+                
+                <div className="w-20 h-20 rounded-full bg-emerald-500/10 flex items-center justify-center animate-pulse mb-6 shadow-[0_0_50px_rgba(16,185,129,0.2)] relative z-10 border border-emerald-500/20">
+                  <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-400/30">
+                    <span className="text-3xl">📍</span>
+                  </div>
                 </div>
-                <p className="text-xs font-black uppercase tracking-widest text-emerald-400">Map Integration Coming Soon</p>
-                <p className="text-[10px] text-white/40 mt-1 uppercase tracking-wider">Coordinates mapping in progress...</p>
+                
+                <div className="relative z-10 text-center space-y-2">
+                  <h3 className="text-xl font-black uppercase tracking-[0.2em] text-emerald-400 drop-shadow-md">Live Tracking Map</h3>
+                  <p className="text-xs font-bold text-white/40 uppercase tracking-widest bg-white/5 px-4 py-2 rounded-full border border-white/5 backdrop-blur-sm">
+                    Awaiting GPS Coordinates
+                  </p>
+                </div>
+            </div>
+            
+            {/* Details Section - Right Side */}
+            <div className="w-full md:w-1/3 flex flex-col h-full bg-[#0B1120]/80">
+              <div className="bg-gradient-to-r from-[#1B4D22] to-emerald-900/40 p-6 text-white flex justify-between items-start border-b border-emerald-500/20 shadow-lg">
+                <div>
+                  <h3 className="text-2xl font-black uppercase italic tracking-tight drop-shadow-sm">Tracking</h3>
+                  <p className="text-[11px] text-emerald-300 font-bold uppercase tracking-widest mt-1 opacity-90">{trackingOrder.order_id}</p>
+                </div>
+                <button onClick={() => setTrackingOrder(null)} className="p-2 bg-black/30 hover:bg-black/50 border border-white/10 rounded-full transition w-10 h-10 flex items-center justify-center font-black text-white hover:scale-105 active:scale-95">
+                  ✕
+                </button>
               </div>
               
-              <div className="space-y-4">
-                <h4 className="text-xs font-black text-white/40 uppercase tracking-widest border-b border-white/5 pb-2">Delivery Status</h4>
-                <div className="space-y-3">
-                  {["Pending", "Preparing", "Out for Delivery", "Delivered"].map((step, index) => {
-                    const isActive = trackingOrder.status === step || (trackingOrder.status === "Accepted" && step === "Pending");
-                    return (
-                      <div key={index} className="flex items-center gap-3">
-                        <div className={`w-2.5 h-2.5 rounded-full ${isActive ? 'bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.5)]' : 'bg-white/10'}`}></div>
-                        <p className={`text-sm font-bold ${isActive ? 'text-emerald-400' : 'text-white/40'}`}>{step}</p>
-                      </div>
-                    )
-                  })}
+              <div className="p-6 md:p-8 space-y-8 flex-1 overflow-y-auto custom-scrollbar">
+                <div className="space-y-6">
+                  <h4 className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] border-b border-white/5 pb-3">Delivery Status</h4>
+                  
+                  <div className="space-y-0 relative before:absolute before:inset-0 before:ml-[11px] before:translate-x-[-1px] before:h-full before:w-0.5 before:bg-gradient-to-b before:from-emerald-500/50 before:via-white/10 before:to-transparent">
+                    {["Pending", "Preparing", "Out for Delivery", "Delivered"].map((step, index) => {
+                      const isActive = trackingOrder.status === step || (trackingOrder.status === "Accepted" && step === "Pending");
+                      
+                      // Determine if step is passed
+                      const steps = ["Pending", "Preparing", "Out for Delivery", "Delivered"];
+                      const currentIndex = trackingOrder.status === "Accepted" ? 0 : steps.indexOf(trackingOrder.status);
+                      const isPassed = index < currentIndex;
+                      
+                      return (
+                        <div key={index} className="flex gap-5 relative group py-4">
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center z-10 shrink-0 border-2 transition-all duration-300 ${
+                            isActive 
+                              ? 'bg-[#1B4D22] border-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.4)] scale-110' 
+                              : isPassed 
+                                ? 'bg-emerald-500/20 border-emerald-500/50' 
+                                : 'bg-[#070b13] border-white/10'
+                          }`}>
+                            {isPassed ? (
+                               <div className="w-2 h-2 rounded-full bg-emerald-400"></div>
+                            ) : isActive ? (
+                               <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></div>
+                            ) : null}
+                          </div>
+                          
+                          <div className={`pt-0.5 transition-all duration-300 ${isActive ? 'translate-x-1' : ''}`}>
+                            <p className={`text-sm font-black uppercase tracking-wider ${
+                              isActive ? 'text-emerald-400' : isPassed ? 'text-white/80' : 'text-white/30'
+                            }`}>{step}</p>
+                            {isActive && (
+                              <p className="text-[10px] text-emerald-400/60 font-bold mt-1 tracking-widest uppercase">Current Stage</p>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
-              </div>
 
-              <div className="bg-[#070b13]/60 p-4 rounded-2xl border border-white/5 flex items-center gap-4 mt-6">
-                <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 font-black">
-                  {trackingOrder.delivery_partner ? (partners.find(p => p.user_id == trackingOrder.delivery_partner || p.name === trackingOrder.delivery_partner)?.name || trackingOrder.delivery_partner).charAt(0).toUpperCase() : "?"}
-                </div>
-                <div>
-                  <p className="text-sm font-black text-white">
-                    {trackingOrder.delivery_partner ? (partners.find(p => p.user_id == trackingOrder.delivery_partner || p.name === trackingOrder.delivery_partner)?.name || trackingOrder.delivery_partner) : "Searching Partner"}
-                  </p>
-                  <p className="text-[10px] text-white/50 uppercase tracking-wider font-bold">Delivery Partner</p>
+                <div className="bg-gradient-to-br from-[#070b13]/80 to-[#0B1120]/80 p-5 rounded-2xl border border-white/5 flex items-center gap-4 mt-8 shadow-inner relative overflow-hidden group hover:border-emerald-500/30 transition-colors">
+                  <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center text-emerald-400 font-black text-xl border border-emerald-500/20 shadow-lg relative z-10 shrink-0">
+                    {trackingOrder.delivery_partner ? (partners.find(p => p.user_id == trackingOrder.delivery_partner || p.name === trackingOrder.delivery_partner)?.name || trackingOrder.delivery_partner).charAt(0).toUpperCase() : "?"}
+                  </div>
+                  
+                  <div className="relative z-10 min-w-0 flex-1">
+                    <p className="text-base font-black text-white truncate drop-shadow-sm">
+                      {trackingOrder.delivery_partner ? (partners.find(p => p.user_id == trackingOrder.delivery_partner || p.name === trackingOrder.delivery_partner)?.name || trackingOrder.delivery_partner) : "Searching Partner"}
+                    </p>
+                    <p className="text-[10px] text-emerald-400/70 uppercase tracking-widest font-black mt-0.5">Assigned Delivery Partner</p>
+                    
+                    {trackingOrder.delivery_partner && (
+                      <p className="text-xs text-white/60 font-bold mt-2 flex items-center gap-2">
+                        <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded uppercase tracking-wider">Mobile</span> 
+                        {partners.find(p => p.user_id == trackingOrder.delivery_partner || p.name === trackingOrder.delivery_partner)?.mobile || "N/A"}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
