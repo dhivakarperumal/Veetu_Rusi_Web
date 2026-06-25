@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { TrendingUp, ShoppingCart, Users, Star, AlertCircle } from "lucide-react";
+import { TrendingUp, ShoppingCart, Users, Star, AlertCircle, Utensils, Package } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -16,13 +16,20 @@ import {
   Cell,
 } from "recharts";
 import api from "../../api";
+import { useAuth } from "../../PrivateRouter/AuthContext";
 
 const AnalyticsDashboard = () => {
+  const { user } = useAuth();
   const [stats, setStats] = useState({
     totalOrders: 0,
     totalRevenue: 0,
     totalCustomers: 0,
     avgRating: 0,
+    foodCount: 0,
+    productsCount: 0,
+    completedOrders: 0,
+    inProgressOrders: 0,
+    cancelledOrders: 0,
     loading: true,
     error: null,
   });
@@ -31,9 +38,12 @@ const AnalyticsDashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
+        const chefUserId = user?.user_id || user?.id;
+        if (!chefUserId) return;
+
         const [ordersRes, foodsRes] = await Promise.all([
-          api.get("/user-food-orders"),
-          api.get("/chef-foods"),
+          api.get("/user-food-orders/chef"),
+          api.get("/chef-foods", { params: { chef_user_id: chefUserId } }),
         ]);
 
         const orders = Array.isArray(ordersRes.data) ? ordersRes.data : [];
@@ -42,11 +52,30 @@ const AnalyticsDashboard = () => {
           return sum + amount;
         }, 0);
 
+        const allFoods = Array.isArray(foodsRes.data) ? foodsRes.data : [];
+        const productsCount = allFoods.filter(item => {
+          if (!item.product_type) {
+            if (!item.category) return false;
+            return String(item.category).toLowerCase().includes('product');
+          }
+          return item.product_type === 'Food Product';
+        }).length;
+        const foodCount = allFoods.length - productsCount;
+
+        const completedOrders = orders.filter(o => o.status === 'Delivered' || o.status === 'Completed').length;
+        const cancelledOrders = orders.filter(o => o.status === 'Cancelled').length;
+        const inProgressOrders = orders.filter(o => !['Delivered', 'Completed', 'Cancelled'].includes(o.status)).length;
+
         setStats({
           totalOrders: orders.length,
           totalRevenue: revenue,
           totalCustomers: new Set(orders.map(o => o.customer_id)).size,
           avgRating: 4.8,
+          foodCount,
+          productsCount,
+          completedOrders,
+          inProgressOrders,
+          cancelledOrders,
           loading: false,
           error: null,
         });
@@ -61,7 +90,7 @@ const AnalyticsDashboard = () => {
     };
 
     fetchStats();
-  }, []);
+  }, [user]);
 
   // Sample data
   const chartData = [
@@ -102,6 +131,20 @@ const AnalyticsDashboard = () => {
       change: "+5.3%",
       icon: Users,
       color: "purple",
+    },
+    {
+      label: "Food Count",
+      value: String(stats.foodCount),
+      change: "Active",
+      icon: Utensils,
+      color: "yellow",
+    },
+    {
+      label: "Products Count",
+      value: String(stats.productsCount),
+      change: "Active",
+      icon: Package,
+      color: "blue",
     },
     {
       label: "Avg Rating",
@@ -160,7 +203,7 @@ const AnalyticsDashboard = () => {
           </div>
         </div>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
           {statsData.map((stat, idx) => {
             const Icon = stat.icon;
             return (
@@ -243,16 +286,16 @@ const AnalyticsDashboard = () => {
             <h3 className="text-lg font-bold text-white">Order Status</h3>
             <div className="mt-5 space-y-4">
               <div className="flex items-center justify-between rounded-3xl bg-slate-900/90 px-4 py-4">
-                <span className="text-sm text-slate-300">Completed Orders</span>
-                <span className="text-lg font-black text-emerald-400">156</span>
+                <span className="text-sm text-slate-300">Delivery Orders</span>
+                <span className="text-lg font-black text-emerald-400">{stats.completedOrders}</span>
               </div>
               <div className="flex items-center justify-between rounded-3xl bg-slate-900/90 px-4 py-4">
                 <span className="text-sm text-slate-300">In Progress</span>
-                <span className="text-lg font-black text-amber-400">18</span>
+                <span className="text-lg font-black text-amber-400">{stats.inProgressOrders}</span>
               </div>
               <div className="flex items-center justify-between rounded-3xl bg-slate-900/90 px-4 py-4">
                 <span className="text-sm text-slate-300">Cancelled</span>
-                <span className="text-lg font-black text-red-400">4</span>
+                <span className="text-lg font-black text-red-400">{stats.cancelledOrders}</span>
               </div>
             </div>
           </div>

@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import api from "../api";
 import { useLocation } from "react-router-dom";
 import { TrendingUp, Package, Users, CreditCard } from "lucide-react";
 
@@ -28,6 +29,25 @@ const HomeChefDashboard = () => {
     return "Analytics Dashboard";
   };
 
+  const [stats, setStats] = useState({
+    totalOrders: 0,
+    menuItems: 0,
+    totalEarnings: 0,
+  });
+
+  const fetchStats = async () => {
+    try {
+      const { data } = await api.get("/dashboard/chef");
+      setStats(data);
+    } catch (error) {
+      console.error("Error fetching chef stats:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
   return (
     <div className="p-4 sm:p-6">
       <div className="rounded-[2rem] border border-slate-800/80 bg-[#0b111a] p-6 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.02)]">
@@ -45,7 +65,10 @@ const HomeChefDashboard = () => {
             </div>
           </div>
 
-          <button className="inline-flex items-center justify-center gap-2 rounded-3xl bg-emerald-500 px-5 py-3 text-sm font-bold text-slate-950 shadow-xl shadow-emerald-500/20 transition hover:bg-emerald-400">
+          <button 
+            onClick={fetchStats}
+            className="inline-flex items-center justify-center gap-2 rounded-3xl bg-emerald-500 px-5 py-3 text-sm font-bold text-slate-950 shadow-xl shadow-emerald-500/20 transition hover:bg-emerald-400"
+          >
             <TrendingUp className="w-4 h-4" />
             Refresh Stats
           </button>
@@ -61,7 +84,7 @@ const HomeChefDashboard = () => {
             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-300">+12.4%</span>
           </div>
           <p className="mt-6 text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">Total Orders</p>
-          <p className="mt-3 text-4xl font-black text-white">0</p>
+          <p className="mt-3 text-4xl font-black text-white">{stats.totalOrders}</p>
         </div>
 
         <div className="rounded-[2rem] border border-slate-800 bg-[#10151f] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.25)] transition hover:border-blue-500/30 hover:shadow-blue-500/10">
@@ -72,7 +95,7 @@ const HomeChefDashboard = () => {
             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-300">Active</span>
           </div>
           <p className="mt-6 text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">Menu Items</p>
-          <p className="mt-3 text-4xl font-black text-white">0</p>
+          <p className="mt-3 text-4xl font-black text-white">{stats.menuItems}</p>
         </div>
 
         <div className="rounded-[2rem] border border-slate-800 bg-[#10151f] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.25)] transition hover:border-cyan-500/30 hover:shadow-cyan-500/10">
@@ -83,7 +106,7 @@ const HomeChefDashboard = () => {
             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-300">+8.5%</span>
           </div>
           <p className="mt-6 text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">Earnings</p>
-          <p className="mt-3 text-4xl font-black text-white">₹0</p>
+          <p className="mt-3 text-4xl font-black text-white">₹{parseFloat(stats.totalEarnings).toLocaleString()}</p>
         </div>
       </div>
     </div>
