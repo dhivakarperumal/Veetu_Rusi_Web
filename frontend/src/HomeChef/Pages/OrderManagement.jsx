@@ -71,8 +71,8 @@ const OrderManagement = () => {
     if (statusFilter !== "All") {
       // Treat Pending / Order Placed / New as equivalent
       const pendingAliases = ["Pending", "Order Placed", "New", "New Order"];
-      if (pendingAliases.includes(statusFilter)) {
-        result = result.filter((o) => pendingAliases.includes(o.status));
+      if (pendingAliases.some(a => a.toLowerCase() === statusFilter.toLowerCase())) {
+        result = result.filter((o) => o.status && pendingAliases.some(a => a.toLowerCase() === o.status.toLowerCase()));
         // Show only today's orders for Pending status
         const todayStr = new Date().toDateString();
         result = result.filter((o) => {
@@ -80,8 +80,12 @@ const OrderManagement = () => {
           if (!dateStr) return false;
           return new Date(dateStr).toDateString() === todayStr;
         });
+      } else if (statusFilter === "Delivered") {
+        result = result.filter((o) => 
+          o.status && (o.status.toLowerCase() === "delivered" || o.status.toLowerCase() === "completed")
+        );
       } else {
-        result = result.filter((o) => o.status === statusFilter);
+        result = result.filter((o) => o.status && o.status.toLowerCase() === statusFilter.toLowerCase());
       }
     }
     setFilteredOrders(result);

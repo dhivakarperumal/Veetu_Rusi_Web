@@ -319,8 +319,9 @@ const AnalyticsDashboard = () => {
             View All
           </button>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-slate-300">
+         <div className="bg-[#0B1120]/40 backdrop-blur-md border border-white/5 rounded-3xl overflow-hidden shadow-xl">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-slate-200">
             <thead>
               <tr className="border-b border-white/10 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
                 <th className="pb-3 pl-4">S.No</th>
@@ -384,6 +385,7 @@ const AnalyticsDashboard = () => {
               )}
             </tbody>
           </table>
+        </div>
         </div>
       </div>
     </div>

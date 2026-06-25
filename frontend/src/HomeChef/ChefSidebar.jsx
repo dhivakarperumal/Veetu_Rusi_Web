@@ -47,10 +47,12 @@ const navItems = [
     label: "Order Management",
     icon: ClipboardList,
     children: [
-      { path: "/chef/orders?status=All", label: "All Orders", icon: ListOrdered },
       { path: "/chef/orders?status=Pending", label: "New Order", icon: Clock },
+      { path: "/chef/orders?status=All", label: "All Orders", icon: ListOrdered },
+      
       { path: "/chef/orders?status=Accepted", label: "Accept Order", icon: CheckCircle },
-      { path: "/chef/orders?status=Out for Delivery", label: "Delivery Order", icon: Truck },
+     
+      { path: "/chef/orders?status=Delivered", label: "Delivered Order", icon: CheckCircle },
       { path: "/chef/orders?status=Cancelled", label: "Cancelled Order", icon: XCircle }
     ]
   },
