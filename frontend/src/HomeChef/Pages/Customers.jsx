@@ -21,9 +21,10 @@ const Customers = () => {
       
       const customerMap = {};
       orders.forEach(order => {
-        if (!customerMap[order.customer_id]) {
-          customerMap[order.customer_id] = {
-            id: order.customer_id,
+        const custKey = order.user_id || order.customer_phone || order.customer_email || `unknown-${order.id}`;
+        if (!customerMap[custKey]) {
+          customerMap[custKey] = {
+            id: custKey,
             name: order.customer_name || "Unknown Customer",
             phone: order.customer_phone || order.phone_number || "N/A",
             totalOrders: 0,
@@ -32,7 +33,7 @@ const Customers = () => {
           };
         }
         
-        const cust = customerMap[order.customer_id];
+        const cust = customerMap[custKey];
         cust.totalOrders += 1;
         
         // Sum total amount for this chef
