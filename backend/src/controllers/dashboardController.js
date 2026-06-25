@@ -12,10 +12,11 @@ exports.getDashboardData = async (req, res) => {
     let totalOrders = 0;
     let cancelledOrders = 0;
 
-    const currentUserId = req.user?.user_id || req.user?.id || null;
+    const currentUserId = req.user?.user_id || 'UNKNOWN';
+    const currentIdInt = req.user?.id || -1;
     const isSuperAdmin = req.user?.role === 'superadmin';
-    const whereCreatedBy = (!isSuperAdmin && currentUserId) ? "WHERE created_by = ?" : "";
-    const paramsCreatedBy = (!isSuperAdmin && currentUserId) ? [currentUserId] : [];
+    const whereCreatedBy = (!isSuperAdmin) ? "WHERE created_by IN (?, ?)" : "";
+    const paramsCreatedBy = (!isSuperAdmin) ? [currentUserId, currentIdInt] : [];
 
     try {
       const [[rev]] = await pool.execute(
@@ -45,13 +46,24 @@ exports.getDashboardData = async (req, res) => {
 
     // Users
     try {
-      const [[row]] = await pool.execute(`
-        SELECT COUNT(*) AS total
-        FROM users
-        WHERE role='user'
-    `);
-      totalUsers = row.total;
-    } catch (e) { }
+      if (isSuperAdmin) {
+        const [[row]] = await pool.execute(`
+          SELECT COUNT(*) AS total
+          FROM users
+          WHERE role='user'
+        `);
+        totalUsers = row.total;
+      } else {
+        const [[row]] = await pool.execute(`
+          SELECT COUNT(DISTINCT u.id) AS total
+          FROM users u
+          JOIN user_food_order_table o ON u.user_id = o.user_id
+          JOIN home_chefs hc ON (o.chef_id = hc.id OR o.chef_user_id = hc.user_id)
+          WHERE u.role='user' AND hc.created_by IN (?, ?)
+        `, paramsCreatedBy);
+        totalUsers = row.total;
+      }
+    } catch (e) { console.error('Error counting users:', e); }
 
     // Restaurants
     try {
