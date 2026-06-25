@@ -293,3 +293,57 @@ exports.getDashboardData = async (req, res) => {
     res.status(500).json({ message: 'Error loading admin dashboard.', error: error.message });
   }
 };
+
+exports.getChefDashboardData = async (req, res) => {
+  try {
+    const currentUserId = req.user?.user_id || req.user?.id;
+    let totalOrders = 0, menuItems = 0, totalEarnings = 0;
+
+    try {
+      // Find orders that have this chef's products in their items
+      // For simplicity, since the Chef_Order items json might be complex to parse in SQL, 
+      // let's fetch orders and count in JS, or if there's a chef_user_id in chef_products
+      const [chefProducts] = await pool.execute('SELECT id FROM chef_products WHERE chef_user_id = ?', [currentUserId]);
+      menuItems = chefProducts.length;
+
+      const chefProductIds = new Set(chefProducts.map(p => p.id));
+
+      const [orders] = await pool.execute('SELECT items, total_amount FROM Chef_Order WHERE status = "Delivered"');
+      
+      orders.forEach(order => {
+        let items = [];
+        try {
+          items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
+        } catch(e) {}
+        
+        let hasChefProduct = false;
+        if(items && Array.isArray(items)) {
+          for(const item of items) {
+            const pid = Number(item.product_id) || Number(item.id);
+            if(chefProductIds.has(pid)) {
+              hasChefProduct = true;
+              break;
+            }
+          }
+        }
+        
+        if (hasChefProduct) {
+          totalOrders++;
+          totalEarnings += parseFloat(order.total_amount) || 0;
+        }
+      });
+    } catch(err) {
+      console.error('Chef stats error:', err);
+    }
+
+    res.json({
+      totalOrders,
+      menuItems,
+      totalEarnings
+    });
+
+  } catch (error) {
+    console.error('Chef dashboard error:', error);
+    res.status(500).json({ message: 'Error loading chef dashboard.', error: error.message });
+  }
+};

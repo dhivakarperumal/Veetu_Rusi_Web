@@ -686,6 +686,31 @@ const createUserFoodOrderTable = async () => {
     }
 };
 
+const createDeliveryLiveTrackingTable = async () => {
+    try {
+        const sql = `
+        CREATE TABLE IF NOT EXISTS delivery_live_tracking (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            order_id VARCHAR(100) NOT NULL,
+            delivery_partner_user_id VARCHAR(255),
+            delivery_partner_name VARCHAR(255),
+            delivery_partner_phone VARCHAR(50),
+            latitude DECIMAL(10, 8),
+            longitude DECIMAL(11, 8),
+            pincode VARCHAR(50),
+            area VARCHAR(255),
+            district VARCHAR(100),
+            status VARCHAR(50) DEFAULT 'Active',
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            UNIQUE KEY unique_order_tracking (order_id)
+        )`;
+        await pool.execute(sql);
+        console.log('✓ delivery_live_tracking table created or already exists');
+    } catch (err) {
+        console.error('✗ Error creating delivery_live_tracking table:', err.message || err);
+    }
+};
+
 const cleanupHomeChefs = async () => {
     try {
         // Drop the entire home_chefs table as requested (destructive)
@@ -765,6 +790,7 @@ const addDeliveryPartnerUniqueConstraints = async () => {
         createReviewsTable,
         createUserFoodCartTable,
         createUserFoodOrderTable,
+        createDeliveryLiveTrackingTable,
         createDealersTable,
         createChefFoodCategoryTable,
         createChefCategoryTable,
