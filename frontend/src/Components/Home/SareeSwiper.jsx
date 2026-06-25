@@ -13,10 +13,9 @@ import PageContainer from "../CommenComponents/PageContainer";
 
 const SareeSwiper = () => {
   const { productsCache, setProductsCache, lastFetchTime, setLastFetchTime } = useContext(StoreContext);
-  const initialSarees = Array.isArray(productsCache) ? productsCache.filter(p => p.category?.toLowerCase() === "saree") : [];
-  const [sarees, setSarees] = useState(initialSarees);
+  const [recentItems, setRecentItems] = useState([]);
 
-  const fetchSarees = async () => {
+  const fetchRecentItems = async () => {
     try {
       let data = productsCache;
       
@@ -28,26 +27,31 @@ const SareeSwiper = () => {
         setLastFetchTime(Date.now());
       }
 
-      const filtered = (data || []).filter(
-        (p) => p.category?.toLowerCase() === "saree",
-      );
+      // Sort by newest first (assuming higher ID or newer created_at)
+      const sorted = [...(data || [])].sort((a, b) => {
+        const dateA = new Date(a.created_at || 0).getTime();
+        const dateB = new Date(b.created_at || 0).getTime();
+        if (dateB !== dateA) return dateB - dateA;
+        return (b.id || 0) - (a.id || 0);
+      });
 
-      setSarees(filtered);
+      // Show top 15 recent items
+      setRecentItems(sorted.slice(0, 15));
     } catch (error) {
-      console.error("Error fetching sarees:", error);
-      setSarees([]);
+      console.error("Error fetching recent items:", error);
+      setRecentItems([]);
     }
   };
 
   useEffect(() => {
-    fetchSarees();
+    fetchRecentItems();
   }, []);
 
-  if (sarees.length === 0) {
+  if (recentItems.length === 0) {
     return (
       <PageContainer>
         <div className="py-5">
-          <Heading title="Latest Foods" />
+          <Heading title="Latest Foods & Products" />
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-6">
             {[1, 2, 3, 4, 5].map((i) => (
               <div key={i} className="bg-white rounded-3xl border border-gray-100 overflow-hidden animate-pulse">
@@ -68,7 +72,7 @@ const SareeSwiper = () => {
     <PageContainer>
       <div className="py-5">
         {/* SECTION TITLE */}
-        <Heading title="Latest Saree Collection" />
+        <Heading title="Latest Foods & Products" />
 
         {/* SWIPER */}
         <Swiper
@@ -84,7 +88,7 @@ const SareeSwiper = () => {
             1024: { slidesPerView: 5 },
           }}
         >
-          {Array.isArray(sarees) && sarees.map((product) => (
+          {recentItems.map((product) => (
             <SwiperSlide
               key={product.id}
               className="flex justify-center pb-10"
