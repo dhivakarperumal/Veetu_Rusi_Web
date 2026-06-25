@@ -714,9 +714,28 @@ exports.getUsers = async (req, res) => {
       WHERE hc.created_by IN (?, ?)
          OR dp.created_by IN (?, ?)
          OR hc2.created_by IN (?, ?)
-      ORDER BY u.created_at DESC
+         
+      UNION ALL
+      
+      SELECT CONCAT('HC_', id) AS id, user_id, name, email, mobile AS phone, 'homechef' AS role, status AS active, created_at
+      FROM home_chefs
+      WHERE created_by IN (?, ?)
+        AND (email IS NULL OR email NOT IN (SELECT email FROM users WHERE email IS NOT NULL))
+        AND (user_id IS NULL OR user_id NOT IN (SELECT user_id FROM users WHERE user_id IS NOT NULL))
+        
+      UNION ALL
+      
+      SELECT CONCAT('DP_', id) AS id, user_id, name, email, mobile AS phone, 'delivery_partner' AS role, status AS active, created_at
+      FROM delivery_partners
+      WHERE created_by IN (?, ?)
+        AND (email IS NULL OR email NOT IN (SELECT email FROM users WHERE email IS NOT NULL))
+        AND (user_id IS NULL OR user_id NOT IN (SELECT user_id FROM users WHERE user_id IS NOT NULL))
+        
+      ORDER BY created_at DESC
     `;
     const [rows] = await pool.execute(query, [
+      adminUserIdStr, adminIdInt,
+      adminUserIdStr, adminIdInt,
       adminUserIdStr, adminIdInt,
       adminUserIdStr, adminIdInt,
       adminUserIdStr, adminIdInt
