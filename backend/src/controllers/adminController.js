@@ -10,6 +10,11 @@ function normalizeBoolean(value) {
   return value === true || value === 'true' || value === '1' || value === 1 || value === 'on';
 }
 
+async function getTableColumns(tableName) {
+  const [rows] = await pool.execute(`SHOW COLUMNS FROM \`${tableName}\``);
+  return rows.map((col) => col.Field);
+}
+
 async function resolveCurrentUserAudit(req) {
   try {
     if (!req.user) return null;
@@ -115,7 +120,7 @@ const VALID_HOMECHEF_COLUMNS = [
   'pan_number', 'gst_number', 'bank_account_number', 'ifsc_code', 'account_holder_name', 'upi_id',
   'aadhaar_front_url', 'aadhaar_back_url', 'pan_card_url', 'fssai_certificate_url', 'gst_certificate_url',
   'signature_url', 'selfie_verification_url', 'instagram_url',
-  'facebook_url', 'youtube_url', 'website_url', 'preorder_available', 'cutoff_time', 'about_me',
+  'facebook_url', 'youtube_url', 'website_url', 'preorder_available', 'cutoff_time', 'opening_time', 'closing_time', 'about_me',
   'cooking_story', 'languages_known', 'cooking_area_photo', 'storage_area_photo', 'created_by', 'updated_by', 'password', 'username',
   'gender', 'date_of_birth', 'age', 'country', 'kitchen_videos',
   'daily_order_capacity', 'available_days', 'available_slots', 'fssai_available', 'gst_available',
@@ -143,8 +148,7 @@ exports.createHomeChef = async (req, res) => {
       mobile, alt_mobile, email, password,
       house_number, door_number, street, street_name, area, area_name, city, district, state, pincode, country, google_map_location, map_link,
       kitchen_name, kitchen_address, kitchen_type,
-      veg_nonveg, experience_years, cuisine_type,
-      daily_order_capacity, available_days, available_slots,
+      veg_nonveg, experience_years, cuisine_type,      opening_time, closing_time,      daily_order_capacity, available_days, available_slots,
       fssai_available, gst_available, aadhaar_number, pan_number,
       bank_account_number, ifsc_code, account_holder_name, bank_branch, upi_id,
       username, instagram_url, facebook_url, youtube_url, website_url,
@@ -242,6 +246,8 @@ exports.createHomeChef = async (req, res) => {
       delivery_radius,
       preorder_available: preorderAvailable,
       cutoff_time,
+      opening_time,
+      closing_time,
       fssai_certificate_url: fssaiCertUrl,
       gst_certificate_url: gstCertUrl,
       signature_url: sigUrl,
@@ -259,12 +265,13 @@ exports.createHomeChef = async (req, res) => {
     };
 
     // Filter out undefined, null, and invalid columns
+    const validColumns = await getTableColumns('home_chefs');
     const filteredData = Object.fromEntries(
       Object.entries(homeChefData)
         .filter(([key, value]) => {
           if (value === undefined || value === null || value === '') return false;
-          if (!VALID_HOMECHEF_COLUMNS.includes(key)) {
-            console.warn(`⚠️ Skipping invalid column: ${key}`);
+          if (!VALID_HOMECHEF_COLUMNS.includes(key) || !validColumns.includes(key)) {
+            console.warn(`⚠️ Skipping invalid or missing column: ${key}`);
             return false;
           }
           return true;
@@ -317,13 +324,16 @@ exports.updateHomeChef = async (req, res) => {
       console.debug('Could not summarise incoming files for updateHomeChef:', err.message);
     }
     const auditUser = await resolveCurrentUserAudit(req);
+    // Destructure both original field names and database column names (frontend sends mapped names)
     const {
+      name,
       first_name, last_name, gender, date_of_birth, age,
       mobile, alt_mobile, email,
       password,
-      house_number, street, area, city, district, state, pincode, country, google_map_location,
+      house_number, door_number, street, street_name, area, area_name, city, district, state, pincode, country, google_map_location, map_link,
       kitchen_name, kitchen_address, kitchen_type,
       veg_nonveg, experience_years, cuisine_type,
+      opening_time, closing_time,
       daily_order_capacity, available_days, available_slots,
       fssai_available, gst_available, aadhaar_number, pan_number,
       bank_account_number, ifsc_code, account_holder_name, bank_branch, upi_id,
@@ -334,11 +344,19 @@ exports.updateHomeChef = async (req, res) => {
     } = req.body;
 
     // Get existing chef data
-    const [existing] = await pool.execute('SELECT * FROM home_chefs WHERE id = ?', [id]);
-    if (!existing || existing.length === 0) {
-      return res.status(404).json({ message: 'Home Chef not found.' });
+    let existing, chef;
+    try {
+      [existing] = await pool.execute('SELECT * FROM home_chefs WHERE id = ?', [id]);
+      if (!existing || existing.length === 0) {
+        console.warn(`⚠️ Home Chef with id=${id} not found in database`);
+        return res.status(404).json({ message: 'Home Chef not found.' });
+      }
+      chef = existing[0];
+      console.log(`✓ Found home chef id=${id}, updating...`);
+    } catch (dbErr) {
+      console.error('🔴 Database error fetching home chef:', dbErr.message);
+      throw dbErr;
     }
-    const chef = existing[0];
 
     const files = req.files || {};
 
@@ -389,15 +407,16 @@ exports.updateHomeChef = async (req, res) => {
       age: normalizeValue(age, chef.age),
       profile_photo: profilePhoto,
       alt_mobile: normalizeValue(alt_mobile, chef.alt_mobile),
-      door_number: normalizeValue(house_number, chef.door_number),
-      street_name: normalizeValue(street, chef.street_name),
-      area_name: normalizeValue(area, chef.area_name),
+      // Use either form name (house_number) or database column name (door_number), whichever was sent
+      door_number: normalizeValue(door_number !== undefined ? door_number : house_number, chef.door_number),
+      street_name: normalizeValue(street_name !== undefined ? street_name : street, chef.street_name),
+      area_name: normalizeValue(area_name !== undefined ? area_name : area, chef.area_name),
       city: normalizeValue(city, chef.city),
       district: normalizeValue(district, chef.district),
       state: normalizeValue(state, chef.state),
       pincode: normalizeValue(pincode, chef.pincode),
       country: normalizeValue(country, chef.country),
-      map_link: normalizeValue(google_map_location, chef.map_link),
+      map_link: normalizeValue(map_link !== undefined ? map_link : google_map_location, chef.map_link),
       kitchen_name: normalizeValue(kitchen_name, chef.kitchen_name),
       kitchen_address: normalizeValue(kitchen_address, chef.kitchen_address),
       kitchen_type: normalizeValue(kitchen_type, chef.kitchen_type),
@@ -438,6 +457,8 @@ exports.updateHomeChef = async (req, res) => {
       delivery_radius: normalizeValue(delivery_radius, chef.delivery_radius),
       preorder_available: preorderAvailable,
       cutoff_time: normalizeValue(cutoff_time, chef.cutoff_time),
+      opening_time: normalizeValue(opening_time, chef.opening_time),
+      closing_time: normalizeValue(closing_time, chef.closing_time),
       fssai_certificate_url: fssaiCertUrl,
       gst_certificate_url: gstCertUrl,
       signature_url: sigUrl,
@@ -448,19 +469,20 @@ exports.updateHomeChef = async (req, res) => {
     };
 
     // Only include fields that have actually been sent in the request (not just defaults from chef data)
+    // Include both original field names and mapped database column names since frontend sends either
     const fieldsFromRequest = {
+      name,
       first_name, last_name, gender, date_of_birth, age,
       mobile, alt_mobile, email,
       password,
-      house_number, street, area, city, district, state, pincode, country, google_map_location,
+      house_number, door_number, street, street_name, area, area_name, city, district, state, pincode, country, google_map_location, map_link,
       kitchen_name, kitchen_address, kitchen_type,
       veg_nonveg, experience_years, cuisine_type,
       daily_order_capacity, available_days, available_slots,
       fssai_available, gst_available, aadhaar_number, pan_number,
       bank_account_number, ifsc_code, account_holder_name, bank_branch, upi_id,
       username, instagram_url, facebook_url, youtube_url, website_url,
-      about_me, cooking_story, why_choose_me, languages_known,
-      delivery_radius, preorder_available, cutoff_time,
+      about_me, cooking_story, why_choose_me, languages_known,      opening_time, closing_time,      delivery_radius, preorder_available, cutoff_time,
       verification_status, approval_status
     };
 
@@ -469,44 +491,66 @@ exports.updateHomeChef = async (req, res) => {
       return files && Object.prototype.hasOwnProperty.call(files, key) && Array.isArray(files[key]) && files[key].length > 0;
     };
 
+    const validColumns = await getTableColumns('home_chefs');
     const filteredUpdate = Object.fromEntries(
       Object.entries(updateData).filter(([key, value]) => {
-        if (!VALID_HOMECHEF_COLUMNS.includes(key)) return false;
+        if (!VALID_HOMECHEF_COLUMNS.includes(key) || !validColumns.includes(key)) {
+          console.debug(`  ⊘ Skipping invalid or missing column: ${key}`);
+          return false;
+        }
 
-        // Map database column names back to request field names
-        const requestFieldName = key === 'door_number' ? ['house_number', 'door_number']
+        // Map database column names to the possible request field names
+        // Frontend can send either the original form names OR the mapped database column names
+        const possibleRequestNames = key === 'door_number' ? ['house_number', 'door_number']
                               : key === 'street_name' ? ['street', 'street_name']
                               : key === 'area_name' ? ['area', 'area_name']
                               : key === 'map_link' ? ['google_map_location', 'map_link']
-                              : key === 'name' ? ['first_name', 'last_name']
-                              : key;
+                              : key === 'name' ? ['name', 'first_name', 'last_name']
+                              : [key];
 
-        // name can be set if either first_name or last_name was sent
+        // name can be set if name or either first_name or last_name was sent
         if (key === 'name') {
-          return fieldsFromRequest.first_name !== undefined || fieldsFromRequest.last_name !== undefined;
+          const isIncluded = fieldsFromRequest.name !== undefined || fieldsFromRequest.first_name !== undefined || fieldsFromRequest.last_name !== undefined;
+          if (isIncluded) console.debug(`  ✓ Including: ${key} (name or first_name/last_name present)`);
+          return isIncluded;
         }
 
-        if (Array.isArray(requestFieldName)) {
-          return requestFieldName.some(f => fieldsFromRequest[f] !== undefined);
+        // If this is an audit field, include it always
+        if (key === 'updated_by') {
+          console.debug(`  ✓ Including: ${key} (audit field)`);
+          return true;
         }
 
-        // Include if field was explicitly sent in request, or if a file was uploaded for this key, or if it's the audit field
-        return fieldsFromRequest[requestFieldName] !== undefined || hasFileForKey(key) || key === 'updated_by';
+        // Check if any of the possible request names were sent or a file was uploaded for this key
+        const isIncluded = possibleRequestNames.some(f => fieldsFromRequest[f] !== undefined) || hasFileForKey(key);
+        if (isIncluded) console.debug(`  ✓ Including: ${key} (one of ${possibleRequestNames.join('/')} present or file uploaded)`);
+        return isIncluded;
       })
     );
 
+    console.log(`📊 Filter result: ${Object.keys(filteredUpdate).length} of ${Object.keys(updateData).length} fields will be updated`);
+
     if (Object.keys(filteredUpdate).length === 0) {
+      console.warn(`⚠️ No fields to update for chef id=${id}. fieldsFromRequest keys: ${Object.keys(fieldsFromRequest).filter(k => fieldsFromRequest[k] !== undefined).join(', ')}`);
       return res.json({ message: 'No changes to update.' });
     }
+
+    console.log(`✓ Updating ${Object.keys(filteredUpdate).length} fields for chef id=${id}: ${Object.keys(filteredUpdate).join(', ')}`);
 
     const setClauses = Object.keys(filteredUpdate).map(k => `${k} = ?`).join(', ');
     const values = Object.values(filteredUpdate);
     values.push(id);
 
-    await pool.execute(
-      `UPDATE home_chefs SET ${setClauses}, updated_at = NOW() WHERE id = ?`,
-      values
-    );
+    try {
+      const result = await pool.execute(
+        `UPDATE home_chefs SET ${setClauses}, updated_at = NOW() WHERE id = ?`,
+        values
+      );
+      console.log(`✓ Update query executed for chef id=${id}`);
+    } catch (updateErr) {
+      console.error(`🔴 SQL Update error for chef id=${id}:`, updateErr.message);
+      throw updateErr;
+    }
 
     if (filteredUpdate.status === 'Approved' || filteredUpdate.approval_status === 'Approved') {
       const [chefRows] = await pool.execute('SELECT * FROM home_chefs WHERE id = ?', [id]);
