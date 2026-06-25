@@ -234,7 +234,7 @@ exports.getDashboardStats = async (req, res) => {
     const [ordersByStatus] = await pool.execute("SELECT status, COUNT(*) AS count, SUM(total_amount) as revenue FROM Chef_Order GROUP BY status");
     
     // Fallback/standard chart seeds if DB counts are low
-    const dailyOrders = [
+    let dailyOrders = [
       { date: 'Mon', orders: 12, revenue: 3200 },
       { date: 'Tue', orders: 19, revenue: 4500 },
       { date: 'Wed', orders: 15, revenue: 3800 },
@@ -244,13 +244,13 @@ exports.getDashboardStats = async (req, res) => {
       { date: 'Sun', orders: 35, revenue: 9500 }
     ];
 
-    const revenueAnalytics = [
-      { name: 'Jan', revenue: 45000, orders: 120 },
-      { name: 'Feb', revenue: 58000, orders: 160 },
-      { name: 'Mar', revenue: 64000, orders: 190 },
-      { name: 'Apr', revenue: 78000, orders: 220 },
-      { name: 'May', revenue: 92000, orders: 280 },
-      { name: 'Jun', revenue: 110000, orders: 340 }
+    let revenueAnalytics = [
+      { name: 'Jan', revenue: 45000, commission: 8500, orders: 120 },
+      { name: 'Feb', revenue: 58000, commission: 11000, orders: 160 },
+      { name: 'Mar', revenue: 64000, commission: 13000, orders: 190 },
+      { name: 'Apr', revenue: 78000, commission: 16500, orders: 220 },
+      { name: 'May', revenue: 92000, commission: 19500, orders: 280 },
+      { name: 'Jun', revenue: 110000, commission: 25000, orders: 340 }
     ];
 
     const userGrowth = [
@@ -259,6 +259,55 @@ exports.getDashboardStats = async (req, res) => {
       { name: 'Week 3', customers: 310, chefs: 21, partners: 35 },
       { name: 'Week 4', customers: 450, chefs: 30, partners: 45 }
     ];
+    
+    let franchiseGrowth = [
+      { name: 'Jan', franchises: 12 }, { name: 'Feb', franchises: 18 },
+      { name: 'Mar', franchises: 24 }, { name: 'Apr', franchises: 35 },
+      { name: 'May', franchises: 48 }, { name: 'Jun', franchises: 60 }
+    ];
+
+    try {
+      const [realDailyOrders] = await pool.execute(`
+        SELECT DATE_FORMAT(ordered_date, '%a') as date, 
+               COUNT(*) as orders, 
+               COALESCE(SUM(total_amount), 0) as revenue
+        FROM Chef_Order
+        WHERE ordered_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+        GROUP BY DATE(ordered_date), DATE_FORMAT(ordered_date, '%a')
+        ORDER BY DATE(ordered_date)
+      `);
+      if (realDailyOrders && realDailyOrders.length > 0) {
+        dailyOrders = realDailyOrders;
+      }
+
+      const [realRevenueAnalytics] = await pool.execute(`
+        SELECT DATE_FORMAT(ordered_date, '%b') as name, 
+               COALESCE(SUM(total_amount), 0) as revenue,
+               COALESCE(SUM(total_amount * 0.1), 0) as commission,
+               COUNT(*) as orders
+        FROM Chef_Order
+        WHERE status = 'Delivered' AND ordered_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+        GROUP BY YEAR(ordered_date), MONTH(ordered_date), DATE_FORMAT(ordered_date, '%b')
+        ORDER BY YEAR(ordered_date), MONTH(ordered_date)
+      `);
+      if (realRevenueAnalytics && realRevenueAnalytics.length > 0) {
+        revenueAnalytics = realRevenueAnalytics;
+      }
+
+      const [realFranchiseGrowth] = await pool.execute(`
+        SELECT DATE_FORMAT(created_at, '%b') as name, 
+               COUNT(*) as franchises
+        FROM franchise_owners
+        WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+        GROUP BY YEAR(created_at), MONTH(created_at), DATE_FORMAT(created_at, '%b')
+        ORDER BY YEAR(created_at), MONTH(created_at)
+      `);
+      if (realFranchiseGrowth && realFranchiseGrowth.length > 0) {
+        franchiseGrowth = realFranchiseGrowth;
+      }
+    } catch(err) {
+      console.error("Error fetching real chart data:", err);
+    }
 
     // Also include subscription payments sum if available
     let subscriptionRevenue = 0;
@@ -276,14 +325,15 @@ exports.getDashboardStats = async (req, res) => {
         totalHomeChefs,
         totalDeliveryPartners,
         totalOrders,
-        // combine order revenue + subscription revenue
-        totalRevenue: parseFloat(totalRevenue) + subscriptionRevenue,
+        // Only show subscription revenue as total revenue
+        totalRevenue: subscriptionRevenue,
         pendingApprovals,
         activeFranchises,
         totalFranchises,
         expiredFranchises,
         expiringSoonFranchises,
-        subscriptionRevenue
+        subscriptionRevenue,
+        orderRevenue: parseFloat(totalRevenue)
       },
       // Dates (may be null)
       lastSubscriptionDate: lastSubscriptionDate || null,
@@ -293,7 +343,8 @@ exports.getDashboardStats = async (req, res) => {
         dailyOrders,
         revenueAnalytics,
         userGrowth,
-        ordersByStatus
+        ordersByStatus,
+        franchiseGrowth
       }
     });
   } catch (error) {
