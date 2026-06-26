@@ -117,14 +117,36 @@ router.get('/orders/available', async (req, res) => {
 router.patch('/orders/:id/assign', async (req, res) => {
   try {
     const orderId = req.params.id;
-    const deliveryBoyId = req.user.id || req.user.user_id || null;
+    // Prioritize user_id (e.g. 'DEL-xxx') to avoid global user ID mismatches
+    const deliveryBoyId = req.user?.user_id || req.user?.id || null;
+
+    // First, look up the delivery partner's details
+    console.log('🔍 [Assignment] Looking up delivery partner with id:', deliveryBoyId);
+    const [partnerResult] = await pool.execute(
+      `SELECT dp.name, dp.mobile, dp.user_id
+       FROM delivery_partners dp
+       LEFT JOIN users u ON u.user_id = dp.user_id
+       WHERE dp.user_id = ? OR dp.delivery_partner_user_id = ? OR u.id = ? OR dp.id = ?
+       LIMIT 1`,
+      [deliveryBoyId, deliveryBoyId, deliveryBoyId, deliveryBoyId]
+    );
+
+    const partnerName = partnerResult[0]?.name || '';
+    const partnerPhone = partnerResult[0]?.mobile || '';
+    const partnerUserId = partnerResult[0]?.user_id || deliveryBoyId;
+
     const [result] = await pool.execute(
       `UPDATE user_food_order_table
-       SET status = 'Delivery Partner Assigned', delivery_partner = ?, updated_at = NOW()
+       SET status = 'Delivery Partner Assigned',
+           delivery_partner = ?,
+           delivery_partner_user_id = ?,
+           delivery_partner_name = ?,
+           delivery_partner_phone = ?,
+           updated_at = NOW()
        WHERE id = ?
          AND status = 'Searching Delivery Partner'
          AND (delivery_partner IS NULL OR delivery_partner = '')`,
-      [deliveryBoyId, orderId]
+      [deliveryBoyId, partnerUserId, partnerName, partnerPhone, orderId]
     );
 
     if (!result.affectedRows) {
@@ -135,23 +157,6 @@ router.patch('/orders/:id/assign', async (req, res) => {
     const [orderRows] = await pool.execute('SELECT order_id FROM user_food_order_table WHERE id = ?', [orderId]);
     if (orderRows.length > 0) {
       const realOrderId = orderRows[0].order_id;
-
-      // Look up partner by user_id, delivery_partner_user_id, or integer id
-      console.log('🔍 [Tracking] Looking up delivery partner with id:', deliveryBoyId);
-      const [partnerResult] = await pool.execute(
-        `SELECT dp.name, dp.mobile, dp.user_id
-         FROM delivery_partners dp
-         LEFT JOIN users u ON u.user_id = dp.user_id
-         WHERE dp.user_id = ? OR dp.delivery_partner_user_id = ? OR u.id = ? OR dp.id = ?
-         LIMIT 1`,
-        [deliveryBoyId, deliveryBoyId, deliveryBoyId, deliveryBoyId]
-      );
-
-      console.log('🔍 [Tracking] Found partner:', partnerResult[0]);
-
-      const partnerName = partnerResult[0]?.name || '';
-      const partnerPhone = partnerResult[0]?.mobile || '';
-      const partnerUserId = partnerResult[0]?.user_id || deliveryBoyId;
 
       await pool.execute(
         `INSERT INTO delivery_live_tracking (order_id, delivery_partner_user_id, delivery_partner_name, delivery_partner_phone)
