@@ -8,12 +8,14 @@ import { Eye, Edit2, Trash2, LayoutGrid, List, Search } from 'lucide-react';
 const FoodProducts = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const sourceParam = new URLSearchParams(location.search).get('source');
   const [foods, setFoods] = useState([]);
   const [chefs, setChefs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [viewMode, setViewMode] = useState('table');
+  const [activeTab, setActiveTab] = useState(sourceParam === 'chef_products' ? 'foodProducts' : 'food');
   const [approvalModalItem, setApprovalModalItem] = useState(null);
   const [approvalChecklist, setApprovalChecklist] = useState({ taste: false, quality: false, packaging: false });
 
@@ -41,6 +43,22 @@ const FoodProducts = () => {
     navigate(`${location.pathname}?${params.toString()}`);
   };
 
+  const switchTab = (tab) => {
+    const params = new URLSearchParams(location.search);
+    if (tab === 'foodProducts') {
+      params.set('source', 'chef_products');
+    } else {
+      params.delete('source');
+    }
+    navigate(`${location.pathname}?${params.toString()}`);
+    setActiveTab(tab);
+  };
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    setActiveTab(params.get('source') === 'chef_products' ? 'foodProducts' : 'food');
+  }, [location.search]);
+
   const fetchFoods = useCallback(async () => {
     try {
       setLoading(true);
@@ -50,7 +68,13 @@ const FoodProducts = () => {
       if (params.get('chef_user_id')) query.chef_user_id = params.get('chef_user_id');
       if (params.get('category')) query.category = params.get('category');
       if (params.get('status')) query.status = params.get('status');
-      const res = await api.get('/chef-foods', { params: query });
+
+      const endpoint = activeTab === 'food' ? '/chef-foods' : '/products';
+      if (activeTab === 'foodProducts') {
+        query.source = 'chef_products';
+      }
+
+      const res = await api.get(endpoint, { params: query });
       setFoods(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error('Failed to load foods', err);
@@ -59,7 +83,7 @@ const FoodProducts = () => {
     } finally {
       setLoading(false);
     }
-  }, [location.search]);
+  }, [location.search, activeTab]);
 
   useEffect(() => {
     const loadFoods = async () => {
@@ -72,11 +96,10 @@ const FoodProducts = () => {
   const filteredFoods = useMemo(() => {
     return foods.filter((item) => {
       const matchesSearch = search
-        ? [item.name, item.category, item.cuisine, item.chef_name, item.chef_phone]
+        ? [item.name, item.product_code, item.category, item.cuisine, item.product_type, item.chef_name, item.chef_phone, item.created_by, item.franchise_name]
             .filter(Boolean)
             .some((value) => value.toString().toLowerCase().includes(search.toLowerCase()))
         : true;
-      
       let matchesStatus = true;
       if (statusFilter === 'Approved') {
         matchesStatus = item.status === 'Active' || item.status === 'Approved';
@@ -99,9 +122,15 @@ const FoodProducts = () => {
 
   const statusOptions = ['All', 'Approved', 'Not Approved', 'Active', 'Inactive', 'Pending', 'Suspended', 'Rejected'];
 
+  const getKitchenName = (item) => item.chef_name || item.kitchen_name || item.created_by || item.franchise_name || 'N/A';
+  const getTypeDisplay = (item) => item.cuisine || item.product_type || item.category || '-';
+  const getMobile = (item) => item.chef_phone || item.mobile || item.created_by_phone || '-';
+  const getFoodDescription = (item) => item.description || item.category || item.product_type || 'No description';
+
   const handleStatusUpdate = async (item, newStatus) => {
     try {
-      await api.put(`/chef-foods/${item.id}`, { status: newStatus });
+      const endpoint = activeTab === 'food' ? `/chef-foods/${item.id}` : `/products/${item.id}`;
+      await api.put(endpoint, { status: newStatus });
       toast.success(`Food status updated to ${newStatus}`);
       fetchFoods();
     } catch (err) {
@@ -143,10 +172,11 @@ const FoodProducts = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Delete this food item?')) return;
+    if (!window.confirm('Delete this item?')) return;
     try {
-      await api.delete(`/chef-foods/${id}`);
-      toast.success('Food item deleted');
+      const endpoint = activeTab === 'food' ? `/chef-foods/${id}` : `/products/${id}`;
+      await api.delete(endpoint);
+      toast.success('Item deleted');
       fetchFoods();
     } catch (err) {
       console.error(err);
@@ -244,6 +274,30 @@ const FoodProducts = () => {
         </div>
       </div>
 
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="inline-flex rounded-full bg-slate-100 p-1 shadow-sm">
+          <button
+            type="button"
+            onClick={() => switchTab('food')}
+            className={`px-5 py-3 rounded-full font-bold text-sm transition ${activeTab === 'food' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-emerald-700'}`}
+          >
+            Food
+          </button>
+          <button
+            type="button"
+            onClick={() => switchTab('foodProducts')}
+            className={`px-5 py-3 rounded-full font-bold text-sm transition ${activeTab === 'foodProducts' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-emerald-700'}`}
+          >
+            Food Products
+          </button>
+        </div>
+        <p className="text-sm text-slate-500">
+          {activeTab === 'food'
+            ? 'Showing chef food items from chef_food_table.'
+            : 'Showing chef products from chef_products table.'}
+        </p>
+      </div>
+
       {viewMode === 'table' ? (
         <div className="rounded-2xl overflow-hidden superadmin-card animate-in fade-in duration-200">
           <div className="overflow-x-auto w-full">
@@ -273,12 +327,12 @@ const FoodProducts = () => {
                     <tr key={item.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-6 py-4 text-sm font-black text-slate-500">{index + 1}</td>
                       <td className="px-6 py-4">
-                        <div className="text-sm font-black text-slate-900">{item.name || 'Unnamed Food'}</div>
-                        <div className="text-xs text-slate-500 mt-1">{item.description || item.category || 'No description'}</div>
+                        <div className="text-sm font-black text-slate-900">{item.name || item.product_code || 'Unnamed Food'}</div>
+                        <div className="text-xs text-slate-500 mt-1">{getFoodDescription(item)}</div>
                       </td>
-                      <td className="px-6 py-4 text-sm font-black text-slate-900">{item.chef_name || item.kitchen_name || 'N/A'}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">{item.cuisine || '-'}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">{item.chef_phone || item.mobile || '-'}</td>
+                      <td className="px-6 py-4 text-sm font-black text-slate-900">{getKitchenName(item)}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600">{getTypeDisplay(item)}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600">{getMobile(item)}</td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] ${statusBadge(item.status)}`}>
                           {item.status || 'Unknown'}
@@ -305,12 +359,12 @@ const FoodProducts = () => {
                           )}
                           <button
                             type="button"
-                            onClick={() => navigate(`/admin/food-products/${item.id}`)}
+                            onClick={() => navigate(`/admin/food-products/${item.id}${activeTab === 'foodProducts' ? '?source=chef_products' : ''}`)}
                             className="p-2 rounded-xl bg-slate-50 text-slate-500 hover:bg-slate-100 transition"
                           ><Eye className="w-4 h-4" /></button>
                           <button
                             type="button"
-                            onClick={() => navigate(`/admin/food-products/edit/${item.id}`)}
+                            onClick={() => navigate(`/admin/food-products/edit/${item.id}${activeTab === 'foodProducts' ? '?source=chef_products' : ''}`)}
                             className="p-2 rounded-xl bg-slate-50 text-slate-500 hover:bg-slate-100 transition"
                           ><Edit2 className="w-4 h-4" /></button>
                           <button
@@ -391,14 +445,14 @@ const FoodProducts = () => {
                   <div className="flex flex-wrap items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => navigate(`/admin/food-products/${item.id}`)}
+                      onClick={() => navigate(`/admin/food-products/${item.id}${activeTab === 'foodProducts' ? '?source=chef_products' : ''}`)}
                       className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-slate-700 hover:bg-slate-100"
                     >
                       <Eye className="w-3.5 h-3.5" /> View
                     </button>
                     <button
                       type="button"
-                      onClick={() => navigate(`/admin/food-products/edit/${item.id}`)}
+                      onClick={() => navigate(`/admin/food-products/edit/${item.id}${activeTab === 'foodProducts' ? '?source=chef_products' : ''}`)}
                       className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-slate-700 hover:bg-slate-100"
                     >
                       <Edit2 className="w-3.5 h-3.5" /> Edit

@@ -47,13 +47,13 @@ const resolveProductMetadata = async (req, body) => {
 // Otherwise fall back to franchise/admin `franchise_products` if desired by callers.
 exports.getAllProducts = async (req, res) => {
     try {
-        const { category, status, franchise_id, franchise_user_id, chef_user_id, chef_id } = req.query;
+        const { category, status, franchise_id, franchise_user_id, chef_user_id, chef_id, source } = req.query;
         const params = [];
         let query = '';
         let table = '';
 
         // If caller requests chef-scoped results, query `chef_products` table
-        if (chef_user_id || chef_id) {
+        if (source === 'chef_products' || chef_user_id || chef_id) {
             table = 'chef_products';
             query = 'SELECT * FROM chef_products WHERE 1=1';
             const chefLookup = chef_user_id || chef_id;

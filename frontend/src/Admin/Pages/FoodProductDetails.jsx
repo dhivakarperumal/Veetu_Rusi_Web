@@ -7,6 +7,7 @@ import { toast } from 'react-hot-toast';
 const FoodProductDetails = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const sourceParam = new URLSearchParams(location.search).get('source');
   const { id } = useParams();
   const [food, setFood] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -42,7 +43,8 @@ const FoodProductDetails = () => {
       const loadFood = async () => {
         setLoading(true);
         try {
-          const res = await api.get(`/chef-foods/${id}`);
+          const endpoint = sourceParam === 'chef_products' ? `/products/${id}` : `/chef-foods/${id}`;
+          const res = await api.get(endpoint);
           setFood(res.data);
         } catch (err) {
           console.error('Failed to load food product details', err);
@@ -55,7 +57,7 @@ const FoodProductDetails = () => {
 
       void loadFood();
     }
-  }, [id, isAddPage]);
+  }, [id, isAddPage, sourceParam]);
 
   const title = isAddPage
     ? 'Add Food Product'
@@ -70,7 +72,7 @@ const FoodProductDetails = () => {
           <div className="inline-flex items-center gap-3 text-slate-500">
             <button
               type="button"
-              onClick={() => navigate('/admin/food-products')}
+              onClick={() => navigate(`/admin/food-products${sourceParam === 'chef_products' ? '?source=chef_products' : ''}`)}
               className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
             >
               <ArrowLeft className="w-4 h-4" /> Back to Food Products
