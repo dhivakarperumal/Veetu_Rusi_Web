@@ -80,6 +80,8 @@ router.get('/orders/available', async (req, res) => {
       franchiseAdminId = dpRows[0].created_by;
     }
 
+    console.log(`[orders/available] User: ${deliveryBoyId}, Found FranchiseAdminId: ${franchiseAdminId}`);
+
     let query = `
       SELECT o.* 
       FROM user_food_order_table o
@@ -93,9 +95,15 @@ router.get('/orders/available', async (req, res) => {
     if (franchiseAdminId) {
       query += ` AND (c.created_by = ? OR o.franchise_user_id = ?)`;
       params.push(franchiseAdminId, franchiseAdminId);
+    } else {
+      // If the delivery boy has NO franchise admin, DO NOT show any franchise orders.
+      // E.g., c.created_by IS NULL
+      query += ` AND c.created_by IS NULL AND o.franchise_user_id IS NULL`;
     }
 
     query += ` ORDER BY o.ordered_at DESC`;
+
+    console.log(`[orders/available] Query: ${query}, Params:`, params);
 
     const [rows] = await pool.execute(query, params);
     res.json(rows);
