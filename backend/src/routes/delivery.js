@@ -166,25 +166,20 @@ router.patch('/orders/:id/assign', async (req, res) => {
       await pool.execute(
         `INSERT INTO delivery_live_tracking (
            order_id, delivery_partner_user_id, delivery_partner_name, delivery_partner_phone,
-           user_id, user_name, user_mail_id, ordered_product_details,
            latitude, longitude, pincode, area, district
          )
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE 
            delivery_partner_user_id = VALUES(delivery_partner_user_id),
            delivery_partner_name = VALUES(delivery_partner_name),
            delivery_partner_phone = VALUES(delivery_partner_phone),
-           user_id = VALUES(user_id),
-           user_name = VALUES(user_name),
-           user_mail_id = VALUES(user_mail_id),
-           ordered_product_details = VALUES(ordered_product_details),
            latitude = VALUES(latitude),
            longitude = VALUES(longitude),
            pincode = VALUES(pincode),
            area = VALUES(area),
            district = VALUES(district),
            updated_at = CURRENT_TIMESTAMP`,
-        [realOrderId, partnerUserId, partnerName, partnerPhone, orderUserId, orderUserName, orderUserEmail, orderedItems, latitude || null, longitude || null, pincode || null, area || null, district || null]
+        [realOrderId, partnerUserId, partnerName, partnerPhone, latitude || null, longitude || null, pincode || null, area || null, district || null]
       );
       console.log('✅ [Tracking] Record saved for order:', realOrderId, 'partner:', partnerName);
     }
