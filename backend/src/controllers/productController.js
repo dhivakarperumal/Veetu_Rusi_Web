@@ -11,6 +11,23 @@ const parseJsonField = (value) => {
     }
 };
 
+const normalizeDateField = (value) => {
+    if (value === null || value === undefined || value === '') return null;
+    if (value instanceof Date) {
+        return isNaN(value.getTime()) ? null : value.toISOString().slice(0, 10);
+    }
+    if (typeof value === 'string') {
+        const parsed = new Date(value);
+        if (!isNaN(parsed.getTime())) {
+            return parsed.toISOString().slice(0, 10);
+        }
+        // Preserve already normalized date strings if valid
+        const strictMatch = /^\d{4}-\d{2}-\d{2}$/;
+        return strictMatch.test(value) ? value : null;
+    }
+    return null;
+};
+
 const serializeJsonField = (value) => {
     if (value === null || value === undefined) return null;
     if (typeof value === 'string') {
@@ -26,7 +43,7 @@ const serializeJsonField = (value) => {
 
 const generateNextProductCode = async () => {
     const [products] = await pool.execute(
-        'SELECT product_code FROM chef_products WHERE product_code LIKE "P%" ORDER BY id DESC LIMIT 1'
+        "SELECT product_code FROM chef_products WHERE product_code LIKE 'P%' AND product_code REGEXP '^P[0-9]+$' ORDER BY CAST(SUBSTRING(product_code, 2) AS UNSIGNED) DESC LIMIT 1"
     );
     if (products.length === 0) return 'P001';
 
@@ -58,20 +75,20 @@ exports.getAllProducts = async (req, res) => {
             query = 'SELECT * FROM chef_products WHERE 1=1';
             const chefLookup = chef_user_id || chef_id;
             if (chefLookup) {
-                query += ' AND created_by = ?'; 
+                query += ' AND created_by = ?';
                 params.push(chefLookup);
             }
         } else {
             // Default to franchise_products for admin/franchise listings
             table = 'franchise_products';
             query = 'SELECT * FROM franchise_products WHERE 1=1';
-            if (franchise_id) { 
-                query += ' AND franchise_id = ?'; 
-                params.push(franchise_id); 
+            if (franchise_id) {
+                query += ' AND franchise_id = ?';
+                params.push(franchise_id);
             }
-            if (franchise_user_id) { 
-                query += ' AND franchise_user_id = ?'; 
-                params.push(franchise_user_id); 
+            if (franchise_user_id) {
+                query += ' AND franchise_user_id = ?';
+                params.push(franchise_user_id);
             }
         }
 
@@ -204,6 +221,8 @@ exports.getProductsByUserId = async (req, res) => {
             package_count: product.package_count,
             packaging_type: product.packaging_type,
             manufacture_date: product.manufacture_date,
+            expiry_date: product.expiry_date,
+            instructions: product.instructions,
             variants: parseJsonField(product.variants) || [],
             images: parseJsonField(product.images) || [],
             franchise_user_id: product.franchise_user_id,
@@ -249,17 +268,20 @@ exports.createProduct = async (req, res) => {
             portion_format,
             service_type,
             packaging_notes,
+            packaging_image,
             dietary_tag,
             heat_profile,
             serving_size,
             prep_time,
             ingredients,
+            instructions,
             spice_level,
             shelf_life_days,
             net_weight,
             package_count,
             packaging_type,
             manufacture_date,
+            expiry_date,
             variants,
             images,
             franchise_user_id
@@ -303,9 +325,9 @@ exports.createProduct = async (req, res) => {
             storage_instructions || 'Keep Refrigerated', presentation_style || null,
             portion_format || null, service_type || null, packaging_notes || null,
             dietary_tag || null, heat_profile || null, serving_size || null,
-            prep_time || null, ingredients || null, spice_level || 'Medium',
+            prep_time || null, ingredients || null, instructions || null, spice_level || 'Medium',
             shelf_life_days || null, net_weight || null, package_count || null,
-            packaging_type || 'Pouch', manufacture_date || null,
+            packaging_type || 'Pouch', packaging_image || null, normalizeDateField(manufacture_date), normalizeDateField(expiry_date),
             normalizedVariants.length > 0 ? JSON.stringify(normalizedVariants) : null,
             images ? JSON.stringify(images) : null,
             finalFranchiseUserId, createdBy
@@ -313,9 +335,9 @@ exports.createProduct = async (req, res) => {
 
         const columns = `name, description, category, product_type, subcategory, mrp, offer, offer_price,
             product_code, total_stock, rating, status, material, nutrition_info, storage_instructions,
-            presentation_style, portion_format, service_type, packaging_notes, dietary_tag, heat_profile,
-            serving_size, prep_time, ingredients, spice_level, shelf_life_days, net_weight, package_count,
-            packaging_type, manufacture_date, variants, images,
+            presentation_style, portion_format, service_type, packaging_notes, packaging_image, dietary_tag, heat_profile,
+            serving_size, prep_time, ingredients, instructions, spice_level, shelf_life_days, net_weight, package_count,
+            packaging_type, manufacture_date, expiry_date, variants, images,
             franchise_user_id, created_by`;
 
         const placeholders = params.map(() => '?').join(', ');
@@ -346,9 +368,9 @@ exports.updateProduct = async (req, res) => {
         const {
             name, description, category, product_type, subcategory, mrp, offer, offer_price,
             product_code, total_stock, rating, status, material, nutrition_info, storage_instructions,
-            presentation_style, portion_format, service_type, packaging_notes, dietary_tag, heat_profile,
-            serving_size, prep_time, ingredients, spice_level, shelf_life_days, net_weight, package_count,
-            packaging_type, manufacture_date, variants, images,
+            presentation_style, portion_format, service_type, packaging_notes, packaging_image, dietary_tag, heat_profile,
+            serving_size, prep_time, ingredients, instructions, spice_level, shelf_life_days, net_weight, package_count,
+            packaging_type, manufacture_date, expiry_date, variants, images,
             franchise_user_id
         } = req.body;
 
@@ -388,16 +410,16 @@ exports.updateProduct = async (req, res) => {
                 rating = ?, status = ?, material = ?, nutrition_info = ?, storage_instructions = ?,
                 presentation_style = ?, portion_format = ?, service_type = ?, packaging_notes = ?,
                 dietary_tag = ?, heat_profile = ?, serving_size = ?, prep_time = ?,
-                ingredients = ?, spice_level = ?, shelf_life_days = ?, net_weight = ?,
-                package_count = ?, packaging_type = ?, manufacture_date = ?, variants = ?, images = ?,
+                ingredients = ?, instructions = ?, spice_level = ?, shelf_life_days = ?, net_weight = ?,
+                package_count = ?, packaging_type = ?, packaging_image = ?, manufacture_date = ?, expiry_date = ?, variants = ?, images = ?,
                 franchise_user_id = ?, updated_by = ?, updated_at = NOW()
             WHERE id = ?`;
         const params = [
             name, description, category, product_type, subcategory, computedMrp, finalOffer, computedOfferPrice || computedMrp,
             product_code, total_stock, rating, status, material, nutrition_info, storage_instructions,
             presentation_style, portion_format, service_type, packaging_notes, dietary_tag, heat_profile,
-            serving_size, prep_time, ingredients, spice_level, shelf_life_days, net_weight, package_count,
-            packaging_type, manufacture_date, serializeJsonField(normalizedVariants),
+            serving_size, prep_time, ingredients, instructions || null, spice_level, shelf_life_days, net_weight, package_count,
+            packaging_type, packaging_image || null, normalizeDateField(manufacture_date), normalizeDateField(expiry_date), serializeJsonField(normalizedVariants),
             images ? JSON.stringify(images) : null,
             finalFranchiseUserIdResolved, updatedBy,
             id

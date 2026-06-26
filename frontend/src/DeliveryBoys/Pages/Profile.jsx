@@ -200,13 +200,13 @@ const Profile = () => {
 
             {/* Profile Card */}
             <div className="px-4 md:px-8">
-                <div className="bg-white rounded-[2.5rem] shadow-2xl p-6 md:p-8 border border-gray-100">
+                <div className="table-card rounded-[2.5rem] shadow-2xl p-6 md:p-8 border border-white/10">
 
-                    <div className="flex flex-col md:flex-row items-center gap-8 border-b border-gray-200 pb-8">
+                    <div className="flex flex-col md:flex-row items-center gap-8 border-b border-white/10 pb-8">
 
                         {/* Avatar */}
                         <div className="relative group">
-                            <div className="w-32 h-32 rounded-[2rem] bg-indigo-500 ring-8 ring-white shadow-xl overflow-hidden flex items-center justify-center text-white text-7xl font-black">
+                            <div className="w-32 h-32 rounded-[2rem] bg-slate-900 ring-8 ring-white/20 shadow-2xl overflow-hidden flex items-center justify-center text-white text-7xl font-black">
                                 {profileInitial}
                             </div>
                         </div>
@@ -221,13 +221,13 @@ const Profile = () => {
 
                                 <button
                                     onClick={openEditModal}
-                                    className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+                                    className="p-2 rounded-lg bg-slate-900 border border-white/10 hover:bg-slate-800 transition-colors"
                                 >
                                     <FiEdit2 />
                                 </button>
                             </div>
 
-                            <p className="text-gray-400 font-medium">
+                            <p className="text-slate-400 font-medium">
                                 @{profileData.username} • {profileData.role || "Admin"}
                             </p>
 
@@ -255,9 +255,7 @@ const Profile = () => {
                         {/* Change Password */}
                         <button
                             onClick={openPwdModal}
-                            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold transition-colors"
-                        >
-                            <FiLock />
+                            className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-6 py-3 rounded-xl font-bold transition-colors"
                             Change Password
                         </button>
 
@@ -266,43 +264,43 @@ const Profile = () => {
                     {/* Account Info */}
                     <div className="grid md:grid-cols-2 gap-6 mt-8">
 
-                        <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
-                            <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
-                                <FiUser className="text-blue-500" />
+                        <div className="flex items-center gap-4 p-4 bg-slate-950/90 rounded-2xl border border-white/10">
+                            <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center">
+                                <FiUser className="text-cyan-400" />
                             </div>
                             <div>
-                                <p className="text-xs text-gray-400">Username</p>
-                                <p className="font-bold text-slate-700">{profileData.username || "–"}</p>
+                                <p className="text-xs text-slate-400">Username</p>
+                                <p className="font-bold text-white">{profileData.username || "–"}</p>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
-                            <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
-                                <FiMail className="text-blue-500" />
+                        <div className="flex items-center gap-4 p-4 bg-slate-950/90 rounded-2xl border border-white/10">
+                            <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center">
+                                <FiMail className="text-emerald-400" />
                             </div>
                             <div>
-                                <p className="text-xs text-gray-400">Email</p>
-                                <p className="font-bold text-slate-700">{profileData.email || "–"}</p>
+                                <p className="text-xs text-slate-400">Email</p>
+                                <p className="font-bold text-white">{profileData.email || "–"}</p>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
-                            <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
-                                <FiPhone className="text-blue-500" />
+                        <div className="flex items-center gap-4 p-4 bg-slate-950/90 rounded-2xl border border-white/10">
+                            <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center">
+                                <FiPhone className="text-cyan-400" />
                             </div>
                             <div>
-                                <p className="text-xs text-gray-400">Phone</p>
-                                <p className="font-bold text-slate-700">{profileData.phone || "Not set"}</p>
+                                <p className="text-xs text-slate-400">Phone</p>
+                                <p className="font-bold text-white">{profileData.phone || "Not set"}</p>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
-                            <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
-                                <FiMapPin className="text-blue-500" />
+                        <div className="flex items-center gap-4 p-4 bg-slate-950/90 rounded-2xl border border-white/10">
+                            <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center">
+                                <FiMapPin className="text-emerald-400" />
                             </div>
                             <div>
-                                <p className="text-xs text-gray-400">Location</p>
-                                <p className="font-bold text-slate-700">{locationDisplay}</p>
+                                <p className="text-xs text-slate-400">Location</p>
+                                <p className="font-bold text-white">{locationDisplay}</p>
                             </div>
                         </div>
 
@@ -316,17 +314,17 @@ const Profile = () => {
             {isEditModalOpen && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50 p-4">
 
-                    <div className="bg-white p-6 rounded-2xl w-full max-w-lg relative max-h-[90vh] overflow-y-auto">
+                    <div className="bg-slate-950/95 p-6 rounded-2xl w-full max-w-lg relative max-h-[90vh] overflow-y-auto border border-white/10">
 
                         <button
                             onClick={closeEditModal}
-                            className="absolute top-3 right-3 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                            className="absolute top-3 right-3 p-2 hover:bg-slate-900 rounded-lg transition-colors"
                         >
                             <FiX />
                         </button>
 
-                        <h2 className="text-xl font-black mb-6 flex items-center gap-2">
-                            <FiEdit2 className="text-blue-500" />
+                        <h2 className="text-xl font-black mb-6 flex items-center gap-2 text-white">
+                            <FiEdit2 className="text-cyan-400" />
                             Edit Profile
                         </h2>
 
@@ -470,7 +468,7 @@ const Profile = () => {
                             <button
                                 onClick={handleProfileUpdate}
                                 disabled={saving}
-                                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
+                                className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-700 text-slate-950 py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
                             >
                                 {saving ? (
                                     <>
@@ -497,17 +495,17 @@ const Profile = () => {
             {isPwdModalOpen && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50 p-4">
 
-                    <div className="bg-white p-6 rounded-2xl w-full max-w-md relative">
+                    <div className="bg-slate-950/95 p-6 rounded-2xl w-full max-w-md relative border border-white/10">
 
                         <button
                             onClick={closePwdModal}
-                            className="absolute top-3 right-3 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                            className="absolute top-3 right-3 p-2 hover:bg-slate-900 rounded-lg transition-colors"
                         >
                             <FiX />
                         </button>
 
-                        <h2 className="text-xl font-black mb-6 flex items-center gap-2">
-                            <FiLock className="text-blue-500" />
+                        <h2 className="text-xl font-black mb-6 flex items-center gap-2 text-white">
+                            <FiLock className="text-cyan-400" />
                             Change Password
                         </h2>
 
@@ -520,7 +518,7 @@ const Profile = () => {
                                     placeholder="Enter current password"
                                     value={currentPwd}
                                     onChange={(e) => setCurrentPwd(e.target.value)}
-                                    className="w-full border border-gray-200 px-4 py-2.5 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                    className="superadmin-input"
                                 />
                             </div>
 
@@ -531,7 +529,7 @@ const Profile = () => {
                                     placeholder="Minimum 6 characters"
                                     value={newPwd}
                                     onChange={(e) => setNewPwd(e.target.value)}
-                                    className="w-full border border-gray-200 px-4 py-2.5 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                    className="superadmin-input"
                                 />
                             </div>
 
@@ -542,14 +540,14 @@ const Profile = () => {
                                     placeholder="Re-enter new password"
                                     value={confirmPwd}
                                     onChange={(e) => setConfirmPwd(e.target.value)}
-                                    className="w-full border border-gray-200 px-4 py-2.5 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                    className="superadmin-input"
                                 />
                             </div>
 
                             <button
                                 onClick={handlePwdChange}
                                 disabled={changingPwd}
-                                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
+                                className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-700 text-slate-950 py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
                             >
                                 {changingPwd ? (
                                     <>

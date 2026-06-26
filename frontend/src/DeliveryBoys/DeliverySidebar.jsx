@@ -78,7 +78,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
       >
         {/* Brand Header */}
         <div className="flex items-center gap-3 px-4 py-5 border-b border-white/5 overflow-hidden">
-          <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-lg shadow-emerald-600/20 shrink-0 overflow-hidden">
+          <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center shadow-lg shadow-emerald-600/10 shrink-0 overflow-hidden">
             <img
               src="/logo.png"
               alt="Logo"

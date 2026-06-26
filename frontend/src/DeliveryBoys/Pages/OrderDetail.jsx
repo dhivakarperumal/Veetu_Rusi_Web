@@ -322,61 +322,61 @@ const OrderDetail = () => {
 
     const getStatusStyle = (status) => {
         switch (status) {
-            case "Order Placed": return "bg-blue-100 text-blue-700";
-            case "Packing": return "bg-indigo-100 text-indigo-700";
-            case "Shipping": return "bg-amber-100 text-amber-700";
-            case "Out for Delivery": return "bg-cyan-100 text-cyan-700";
-            case "Delivered": return "bg-emerald-100 text-emerald-700";
-            case "Cancelled": return "bg-red-100 text-red-700";
-            case "New": return "bg-gray-100 text-gray-700 border border-gray-200";
-            case "Processing": return "bg-indigo-50 text-indigo-500 border border-indigo-100";
-            case "Shipped": return "bg-amber-50 text-amber-500 border border-amber-100";
-            default: return "bg-gray-100 text-gray-700";
+            case "Order Placed": return "bg-blue-950 text-blue-300 border-blue-800";
+            case "Packing": return "bg-indigo-950 text-indigo-300 border-indigo-800";
+            case "Shipping": return "bg-amber-950 text-amber-300 border-amber-800";
+            case "Out for Delivery": return "bg-cyan-950 text-cyan-300 border-cyan-800";
+            case "Delivered": return "bg-emerald-950 text-emerald-300 border-emerald-800";
+            case "Cancelled": return "bg-red-950 text-red-300 border-red-800";
+            case "New": return "bg-slate-900 text-slate-300 border-slate-700";
+            case "Processing": return "bg-slate-950 text-indigo-300 border-indigo-800";
+            case "Shipped": return "bg-slate-950 text-amber-300 border-amber-800";
+            default: return "bg-slate-900 text-slate-300 border-slate-700";
         }
-    };
+    }; 
 
     if (loading) return (
         <div className="flex flex-col items-center justify-center py-40 gap-4">
             <div className="w-12 h-12 border-4 border-blue-600/20 border-t-blue-600 rounded-full animate-spin"></div>
-            <p className="text-gray-400 font-black uppercase tracking-widest text-xs">Retrieving Order Artifacts...</p>
+            <p className="text-slate-400 font-black uppercase tracking-widest text-xs">Retrieving Order Artifacts...</p>
         </div>
     );
 
-    if (!order) return <div className="p-20 text-center font-bold text-gray-400">Order not found</div>;
+    if (!order) return <div className="p-20 text-center font-bold text-slate-400">Order not found</div>;
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="space-y-6 pb-12">
             <Toaster position="top-right" />
 
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 no-print">
                 <div className="flex items-center gap-4">
-                    <Link to="/delivery/orders" className="p-2 bg-white border border-gray-100 rounded-xl text-gray-400 hover:text-blue-600 transition-all shadow-sm">
+                    <Link to="/delivery/orders" className="p-2 bg-slate-950 border border-white/10 rounded-xl text-slate-300 hover:text-white transition-all shadow-sm">
                         <FiArrowLeft size={20} />
                     </Link>
                     <div>
                         <div className="flex items-center gap-3">
-                            <h1 className="text-2xl font-black text-slate-800 tracking-tight">Order #ORD-0{order.id}</h1>
+                            <h1 className="text-2xl font-black text-white tracking-tight">Order #ORD-0{order.id}</h1>
                             <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${getStatusStyle(order.status)}`}>
                                 {order.status}
                             </span>
                         </div>
-                        <p className="text-sm text-gray-500 font-medium mt-1 uppercase tracking-widest text-[10px] italic">Placed on {new Date(order.created_at).toLocaleString()}</p>
+                        <p className="text-sm text-slate-400 font-medium mt-1 uppercase tracking-widest text-[10px] italic">Placed on {new Date(order.created_at).toLocaleString()}</p>
                     </div>
                 </div>
 
                 {/* Logistics Badges */}
                 <div className="flex flex-wrap gap-2">
                     {order.status === 'Shipping' && order.tracking_number && (
-                        <div className="px-4 py-2 bg-amber-50 border border-amber-100 rounded-xl flex flex-col items-end">
-                            <span className="text-[10px] font-black text-amber-600 uppercase tracking-widest">{order.courier_name || 'Shipping'}</span>
-                            <span className="text-xs font-bold text-amber-500 italic">{order.tracking_number}</span>
+                        <div className="px-4 py-2 bg-amber-950/80 border border-amber-700/40 rounded-xl flex flex-col items-end">
+                            <span className="text-[10px] font-black text-amber-300 uppercase tracking-widest">{order.courier_name || 'Shipping'}</span>
+                            <span className="text-xs font-bold text-amber-300 italic">{order.tracking_number}</span>
                         </div>
                     )}
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <button onClick={handlePrint} className="p-3 bg-white border border-gray-100 rounded-xl text-gray-400 hover:text-blue-600 transition-all shadow-sm">
+                    <button onClick={handlePrint} className="p-3 bg-slate-950 border border-white/10 rounded-xl text-slate-300 hover:text-white transition-all shadow-sm">
                         <FiPrinter />
                     </button>
                     <button className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95">
@@ -390,11 +390,11 @@ const OrderDetail = () => {
                 <div className="flex justify-between items-start">
                     <div>
                         <h1 className="text-4xl font-black text-slate-900 uppercase">Store Invoice</h1>
-                        <p className="text-sm font-bold text-gray-500 mt-2 italic">Official Manifest Record</p>
+                        <p className="text-sm font-bold text-slate-600 mt-2 italic">Official Manifest Record</p>
                     </div>
                     <div className="text-right">
-                        <h2 className="text-xl font-black text-slate-800">#ORD-0{order.id}</h2>
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Date: {new Date(order.created_at).toLocaleDateString()}</p>
+                        <h2 className="text-xl font-black text-slate-900">#ORD-0{order.id}</h2>
+                        <p className="text-xs font-bold text-slate-600 uppercase tracking-widest mt-1">Date: {new Date(order.created_at).toLocaleDateString()}</p>
                     </div>
                 </div>
             </div>
@@ -402,15 +402,15 @@ const OrderDetail = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 print-container print:block">
                 <div className="lg:col-span-2 space-y-6 sm:space-y-8">
                     {/* Items */}
-                    <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
-                        <div className="p-8 border-b border-gray-50 flex items-center justify-between">
-                            <h3 className="text-xl font-black text-slate-800 tracking-tight">Manifest Items</h3>
-                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1 rounded-lg">{order.items?.length || 0} Products</span>
+                    <div className="bg-slate-950 rounded-[2.5rem] border border-white/10 shadow-xl overflow-hidden">
+                        <div className="p-8 border-b border-white/10 flex items-center justify-between">
+                            <h3 className="text-xl font-black text-white tracking-tight">Manifest Items</h3>
+                            <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest bg-slate-900/80 px-3 py-1 rounded-lg">{order.items?.length || 0} Products</span>
                         </div>
-                        <div className="divide-y divide-gray-50">
+                        <div className="divide-y divide-slate-900/80">
                             {order.items?.map((item) => (
-                                <div key={item.id} className="p-8 flex flex-col sm:flex-row items-start sm:items-center gap-6 group hover:bg-blue-50/20 transition-all">
-                                    <div className="w-16 h-16 rounded-2xl bg-gray-50 overflow-hidden border border-gray-100 shrink-0 shadow-sm animate-in zoom-in-90 duration-300">
+                                <div key={item.id} className="p-8 flex flex-col sm:flex-row items-start sm:items-center gap-6 group hover:bg-slate-800/50 transition-all bg-slate-950">
+                                    <div className="w-16 h-16 rounded-2xl bg-slate-900 overflow-hidden border border-white/10 shrink-0 shadow-sm animate-in zoom-in-90 duration-300">
                                         <img
                                             src={getProductImage(item)}
                                             alt={item.product_name}
@@ -423,46 +423,44 @@ const OrderDetail = () => {
                                         />
                                     </div>
                                     <div className="flex-1">
-                                        <h4 className="font-black text-slate-800 text-md tracking-tight">{item.product_name}</h4>
+                                        <h4 className="font-black text-white text-md tracking-tight">{item.product_name}</h4>
 
-                                        <p className="text-xs font-bold text-gray-400 mt-2 italic uppercase tracking-wider">Unit Price: ₹{parseFloat(item.price).toLocaleString()}</p>
+                                        <p className="text-xs font-bold text-slate-400 mt-2 italic uppercase tracking-wider">Unit Price: ₹{parseFloat(item.price).toLocaleString()}</p>
                                     </div>
                                     <div className="flex items-center gap-3 mt-1.5">
                                         {item.variant_color && (
-                                            <span className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 border border-gray-100 rounded-lg text-[10px] font-black uppercase tracking-widest text-slate-500">
-                                                <div className="w-2 h-2 rounded-full border border-gray-200" style={{ backgroundColor: item.variant_color.startsWith('#') ? item.variant_color : 'transparent' }}></div>
+                                            <span className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-900/80 border border-slate-700 rounded-lg text-[10px] font-black uppercase tracking-widest text-slate-200">
+                                                <div className="w-2 h-2 rounded-full border border-slate-700" style={{ backgroundColor: item.variant_color.startsWith('#') ? item.variant_color : 'transparent' }}></div>
                                                 {item.variant_color}
                                             </span>
                                         )}
                                         {item.variant_size && (
-                                            <span className="px-2.5 py-1 bg-blue-50 border border-blue-100 rounded-lg text-[10px] font-black uppercase tracking-widest text-blue-600">
+                                            <span className="px-2.5 py-1 bg-blue-950 border border-blue-800 rounded-lg text-[10px] font-black uppercase tracking-widest text-blue-300">
                                                 Size: {item.variant_size}
                                             </span>
                                         )}
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-1">Quantity: {item.quantity}</p>
-                                        <p className="font-black text-blue-600 text-xl tracking-tight">₹{(item.price * item.quantity).toLocaleString()}</p>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Quantity: {item.quantity}</p>
+                                        <p className="font-black text-emerald-300 text-xl tracking-tight">₹{(item.price * item.quantity).toLocaleString()}</p>
                                     </div>
                                 </div>
                             ))}
                         </div>
-                        <div className="bg-white p-10 text-gray-900">
-                            <div className="w-full max-w-xs ml-auto space-y-4 text-gray-900">
+                        <div className="bg-slate-950 p-10 text-slate-100">
+                            <div className="w-full max-w-xs ml-auto space-y-4 text-slate-100">
 
-                                <div className="flex justify-between text-md font-bold  opacity-40">
+                                <div className="flex justify-between text-md font-bold text-slate-400">
                                     <span>Subtotal</span>
                                     <span>₹{parseFloat(order.subtotal || order.total_amount).toLocaleString()}</span>
                                 </div>
 
                                 <div className="pt-2 border-t border-white/10 flex justify-between items-end">
-                                    <span className=" font-bold  opacity-40">
+                                    <span className="font-bold text-slate-300">
                                         Total Settlement
                                     </span>
 
-                                    <span className="text-xl font-bold italic">
-                                        ₹{parseFloat(order.total_amount).toLocaleString()}
-                                    </span>
+                                    <span className="text-xl font-bold italic text-white">
                                 </div>
 
                             </div>
@@ -531,49 +529,49 @@ const OrderDetail = () => {
                 {/* Right Column */}
                 <div className="space-y-8">
                     {/* Customer */}
-                    <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-8">
+                    <div className="bg-slate-950 p-8 rounded-[2.5rem] border border-white/10 shadow-2xl space-y-8">
                         <div className="flex items-center justify-between">
-                            <h3 className="font-black text-slate-800 uppercase tracking-widest text-[10px] italic">Manifest Destination</h3>
+                            <h3 className="font-black text-white uppercase tracking-widest text-[10px] italic">Manifest Destination</h3>
                         </div>
                         <div className="flex flex-col items-center text-center space-y-4">
                             <div className="w-24 h-24 rounded-3xl bg-slate-900 border-4 border-white shadow-2xl flex items-center justify-center text-white text-3xl font-black">
                                 {order.customer_name?.charAt(0)}
                             </div>
                             <div>
-                                <h4 className="text-2xl font-black text-slate-800 tracking-tight">{order.customer_name}</h4>
+                                <h4 className="text-2xl font-black text-white tracking-tight">{order.customer_name}</h4>
                                 <div className="flex flex-col items-center gap-1 mt-2 justify-center">
                                     <div className="flex items-center gap-2">
                                         <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-                                        <p className="text-[9px] font-black text-blue-600 uppercase tracking-widest">{order.user_id ? 'Registered' : 'Guest'} Customer</p>
+                                        <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest">{order.user_id ? 'Registered' : 'Guest'} Customer</p>
                                     </div>
                                     {order.user_id && (
-                                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">ID: {order.user_id}</p>
+                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">ID: {order.user_id}</p>
                                     )}
                                 </div>
                             </div>
                         </div>
-                        <div className="space-y-6 pt-8 border-t border-gray-50">
+                        <div className="space-y-6 pt-8 border-t border-white/10">
                             <div className="flex items-center gap-4 group">
-                                <div className="w-12 h-12 bg-gray-50 text-gray-400 rounded-2xl flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm"><FiPhone size={18} /></div>
+                                <div className="w-12 h-12 bg-slate-900 text-slate-300 rounded-2xl flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm"><FiPhone size={18} /></div>
                                 <div>
-                                    <p className="text-[9px] font-black text-gray-300 uppercase tracking-[0.2em] mb-1">Contact Link</p>
-                                    <p className="text-sm font-black text-slate-600">{order.customer_phone}</p>
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Contact Link</p>
+                                    <p className="text-sm font-black text-slate-100">{order.customer_phone}</p>
                                 </div>
                             </div>
                             {order.customer_email && (
                                 <div className="flex items-center gap-4 group">
-                                    <div className="w-12 h-12 bg-gray-50 text-gray-400 rounded-2xl flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm"><FiMail size={18} /></div>
+                                    <div className="w-12 h-12 bg-slate-900 text-slate-300 rounded-2xl flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm"><FiMail size={18} /></div>
                                     <div>
-                                        <p className="text-[9px] font-black text-gray-300 uppercase tracking-[0.2em] mb-1">Email Feed</p>
-                                        <p className="text-sm font-black text-slate-600 truncate">{order.customer_email}</p>
+                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Email Feed</p>
+                                        <p className="text-sm font-black text-slate-100 truncate">{order.customer_email}</p>
                                     </div>
                                 </div>
                             )}
                             <div className="flex items-start gap-4 group">
-                                <div className="w-12 h-12 bg-gray-50 text-gray-400 rounded-2xl flex items-center justify-center shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm"><FiMapPin size={18} /></div>
+                                <div className="w-12 h-12 bg-slate-900 text-slate-300 rounded-2xl flex items-center justify-center shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm"><FiMapPin size={18} /></div>
                                 <div>
-                                    <p className="text-[9px] font-black text-gray-300 uppercase tracking-[0.2em] mb-1">Shipping Vault</p>
-                                    <div className="text-sm font-black text-slate-600 leading-relaxed italic">
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Shipping Vault</p>
+                                    <div className="text-sm font-black text-slate-200 leading-relaxed italic">
                                         {order.street_address && <p>{order.street_address}</p>}
                                         {(order.city || order.district) && (
                                             <p>{[order.city, order.district].filter(Boolean).join(', ')}</p>
@@ -604,7 +602,7 @@ const OrderDetail = () => {
                                 <select
                                     value={selectedStatus}
                                     onChange={(e) => setSelectedStatus(e.target.value)}
-                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 font-black uppercase tracking-widest text-xs outline-none focus:border-blue-500/50 transition-all appearance-none cursor-pointer"
+                                    className="w-full bg-slate-900/80 border border-white/10 rounded-2xl px-5 py-4 font-black uppercase tracking-widest text-xs text-slate-100 outline-none focus:border-blue-500/50 transition-all appearance-none cursor-pointer"
                                 >
                                     {(() => {
                                         const flow = ["Order Placed", "Packing", "Shipping", "Out for Delivery", "Delivered"];
@@ -634,7 +632,7 @@ const OrderDetail = () => {
                             value={trackingNumber}
                             onChange={(e) => setTrackingNumber(e.target.value)}
                             placeholder="Enter AWB or Docket Number"
-                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3 font-bold text-sm outline-none focus:border-blue-500/50 transition-all text-white"
+                            className="w-full bg-slate-900/80 border border-white/10 rounded-2xl px-5 py-3 font-bold text-sm outline-none focus:border-blue-500/50 transition-all text-white"
                         />
                     </div>
                     <div className="space-y-2">
@@ -644,7 +642,7 @@ const OrderDetail = () => {
                             value={courierName}
                             onChange={(e) => setCourierName(e.target.value)}
                             placeholder="e.g. BlueDart, DTDC, Delhivery"
-                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3 font-bold text-sm outline-none focus:border-blue-500/50 transition-all text-white"
+                            className="w-full bg-slate-900/80 border border-white/10 rounded-2xl px-5 py-3 font-bold text-sm outline-none focus:border-blue-500/50 transition-all text-white"
                         />
                     </div>
                     <div className="space-y-2">
@@ -653,7 +651,7 @@ const OrderDetail = () => {
                             type="datetime-local"
                             value={shippedAt || new Date().toISOString().slice(0, 16)}
                             onChange={(e) => setShippedAt(e.target.value)}
-                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3 font-bold text-sm outline-none focus:border-blue-500/50 transition-all text-white"
+                            className="w-full bg-slate-900/80 border border-white/10 rounded-2xl px-5 py-3 font-bold text-sm outline-none focus:border-blue-500/50 transition-all text-white"
                         />
                     </div>
                 </div>
@@ -669,7 +667,7 @@ const OrderDetail = () => {
                             onChange={(e) => setCancellationReason(e.target.value)}
                             placeholder="Reason for cancellation..."
                             rows="3"
-                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3 font-bold text-sm outline-none focus:border-red-500/50 transition-all resize-none"
+                            className="w-full bg-slate-900/80 border border-white/10 rounded-2xl px-5 py-3 font-bold text-sm outline-none focus:border-red-500/50 transition-all resize-none text-slate-100"
                         />
                     </div>
                     <div className="space-y-2">
@@ -678,7 +676,7 @@ const OrderDetail = () => {
                             type="datetime-local"
                             value={cancelledAt || new Date().toISOString().slice(0, 16)}
                             onChange={(e) => setCancelledAt(e.target.value)}
-                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3 font-bold text-sm outline-none focus:border-red-500/50 transition-all text-white"
+                            className="w-full bg-slate-900/80 border border-white/10 rounded-2xl px-5 py-3 font-bold text-sm outline-none focus:border-red-500/50 transition-all text-white"
                         />
                     </div>
                 </div>

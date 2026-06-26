@@ -59,12 +59,15 @@ const createProductsTable = async () => {
             prep_time VARCHAR(100),
 
             ingredients LONGTEXT,
+            instructions LONGTEXT,
             spice_level VARCHAR(50),
             shelf_life_days INT,
             net_weight VARCHAR(100),
             package_count INT,
             packaging_type VARCHAR(100),
+            packaging_image VARCHAR(255),
             manufacture_date DATE,
+            expiry_date DATE,
 
             variants LONGTEXT,
             images LONGTEXT,
@@ -104,6 +107,9 @@ const createProductsTable = async () => {
         try { await pool.execute('ALTER TABLE chef_products MODIFY mrp DECIMAL(10,2) NULL'); } catch {}
         try { await pool.execute('ALTER TABLE chef_products MODIFY offer_price DECIMAL(10,2) NULL'); } catch {}
         await ensureColumnExists('chef_products', 'franchise_user_id', 'VARCHAR(255)');
+        await ensureColumnExists('chef_products', 'instructions', 'LONGTEXT');
+        await ensureColumnExists('chef_products', 'packaging_image', 'VARCHAR(255)');
+        await ensureColumnExists('chef_products', 'expiry_date', 'DATE');
         await ensureColumnExists('chef_products', 'images', 'LONGTEXT');
         await ensureColumnExists('chef_products', 'created_by', 'VARCHAR(255)');
         await ensureColumnExists('chef_products', 'updated_by', 'VARCHAR(255)');
