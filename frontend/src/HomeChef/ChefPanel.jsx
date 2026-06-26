@@ -48,7 +48,7 @@ const AdminLayout = () => {
         try {
             const res = await api.get("/user-food-orders/chef");
             const allOrders = Array.isArray(res.data) ? res.data : [];
-            const pendingOrders = allOrders.filter(order => order.status === 'Pending');
+            const pendingOrders = allOrders.filter(order => order.status === 'New Order');
 
             if (popupOrderRef.current) {
                 const stillPending = pendingOrders.some(order => Number(order.id) === Number(popupOrderRef.current.id));
