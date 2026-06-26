@@ -563,7 +563,7 @@ const OrderManagement = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={() => setViewingOrder(null)}></div>
           <div className="bg-[#0B1120] border border-white/5 w-full max-w-2xl rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[85vh]">
-            <div className="bg-[#1B4D22] p-8 text-white flex justify-between items-start">
+            <div className="bg-[#1B4D22] p-8 text-white flex justify-between items-start shrink-0">
               <div>
                 <h3 className="text-xl font-black uppercase italic tracking-tight">Order Details</h3>
                 <p className="text-xs text-emerald-400 font-bold uppercase tracking-widest mt-1">{viewingOrder.order_id}</p>
@@ -573,7 +573,7 @@ const OrderManagement = () => {
               </button>
             </div>
             
-            <div className="p-8 space-y-6 text-white overflow-y-auto custom-scrollbar flex-1">
+            <div className="p-8 space-y-6 text-white overflow-y-auto custom-scrollbar flex-1 min-h-0">
               <div className="grid grid-cols-2 gap-6">
                 <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
                   <h4 className="text-[10px] text-white/40 font-bold uppercase tracking-widest mb-3">Customer Information</h4>
@@ -594,8 +594,18 @@ const OrderManagement = () => {
               <div className="grid grid-cols-2 gap-6">
                 <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
                   <h4 className="text-[10px] text-white/40 font-bold uppercase tracking-widest mb-3">Order Status</h4>
-                  <p className="text-sm font-black text-emerald-400">{viewingOrder.status === "Pending" ? "New Order" : viewingOrder.status}</p>
-                  <p className="text-xs text-white/60 mt-2">Payment: {viewingOrder.payment_method} ({viewingOrder.payment_status})</p>
+                  <span className={`inline-block text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider ${
+                    viewingOrder.status === "Delivered"
+                      ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                      : viewingOrder.status === "Cancelled"
+                      ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                      : viewingOrder.status === "Pending" || viewingOrder.status === "New Order"
+                      ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                      : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                  }`}>
+                    {viewingOrder.status === "Pending" ? "New Order" : viewingOrder.status}
+                  </span>
+                  <p className="text-xs text-white/60 mt-3">Payment: {viewingOrder.payment_method} ({viewingOrder.payment_status})</p>
                 </div>
                 <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
                   <h4 className="text-[10px] text-white/40 font-bold uppercase tracking-widest mb-3">Delivery Info</h4>
@@ -627,7 +637,7 @@ const OrderManagement = () => {
                       ))}
                     </tbody>
                   </table>
-                  <div className="p-4 bg-[#070b13]/50 flex justify-between items-center border-t border-white/10">
+                  <div className="p-4 bg-[#070b13]/50 flex justify-between items-center border-t border-white/10 shrink-0">
                     <span className="text-sm font-bold uppercase tracking-widest text-white/60">Chef Subtotal</span>
                     <span className="text-lg font-black text-emerald-400">
                       ₹{parseFloat(viewingOrder.chef_total_amount ?? viewingOrder.total_amount ?? 0).toLocaleString()}
@@ -637,7 +647,7 @@ const OrderManagement = () => {
               </div>
             </div>
             
-            <div className="p-6 border-t border-white/5 bg-[#070b13]/40 flex justify-end">
+            <div className="p-6 border-t border-white/5 bg-[#070b13]/40 flex justify-end shrink-0">
               <button
                 onClick={() => setViewingOrder(null)}
                 className="px-6 py-2.5 bg-white/10 hover:bg-white/20 text-white font-black text-xs uppercase tracking-widest rounded-xl transition"
