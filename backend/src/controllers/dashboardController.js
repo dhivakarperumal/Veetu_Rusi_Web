@@ -11,6 +11,8 @@ exports.getDashboardData = async (req, res) => {
     let totalDeliveryPartners = 0;
     let totalOrders = 0;
     let cancelledOrders = 0;
+    let deliveredOrdersCount = 0;
+    let deliveredOrdersRevenue = 0;
 
     const currentUserId = req.user?.user_id || 'UNKNOWN';
     const currentIdInt = req.user?.id || -1;
@@ -115,6 +117,17 @@ exports.getDashboardData = async (req, res) => {
         WHERE status='Cancelled'
     `);
       cancelledOrders = row.total;
+    } catch (e) { }
+
+    // Delivered Orders and Revenue
+    try {
+      const [[row]] = await pool.execute(`
+        SELECT COUNT(*) AS total, COALESCE(SUM(total_amount), 0) AS rev
+        FROM Chef_Order
+        WHERE status='Delivered'
+    `);
+      deliveredOrdersCount = row.total;
+      deliveredOrdersRevenue = parseFloat(row.rev) || 0;
     } catch (e) { }
 
     const stats = [
@@ -275,7 +288,9 @@ exports.getDashboardData = async (req, res) => {
         totalDeliveryPartners,
         totalOrders,
         totalProducts,
-        cancelledOrders
+        cancelledOrders,
+        deliveredOrdersCount,
+        deliveredOrdersRevenue
       },
 
       recentOrders,

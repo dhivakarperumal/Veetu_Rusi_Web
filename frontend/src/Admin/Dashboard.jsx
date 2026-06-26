@@ -177,52 +177,52 @@ const Dashboard = () => {
 
   const statsCards = [
     {
-      label: "Total Revenue", icon: DollarSign, positive: true, trend: "+12.4%",
-      value: `₹${Number(cards?.totalRevenue || 0).toLocaleString()}`,
-      gradient: "linear-gradient(135deg,#052e16 0%,#0B1120 100%)",
-      iconBg: "#10B981"
-    },
-    {
-      label: "Total Orders", icon: ShoppingBag, positive: true, trend: "+8.2%",
+      label: "Home Chef Orders", icon: ShoppingBag, positive: true, trend: "Total",
       value: cards?.totalOrders || 0,
       gradient: "linear-gradient(135deg,#05162e 0%,#0B1120 100%)",
       iconBg: "#3B82F6"
     },
     {
-      label: "Total Users", icon: Users, positive: true, trend: "+15.1%",
-      value: cards?.totalUsers || 0,
-      gradient: "linear-gradient(135deg,#1f052e 0%,#0B1120 100%)",
-      iconBg: "#8B5CF6"
-    },
-    {
-      label: "Restaurants", icon: Store, positive: true, trend: "+4.3%",
-      value: cards?.totalRestaurants || 0,
-      gradient: "linear-gradient(135deg,#03120f 0%,#0B1120 100%)",
-      iconBg: "#06B6D4"
-    },
-    {
-      label: "Home Chefs", icon: ChefHat, positive: true, trend: "+6.8%",
-      value: cards?.totalHomeChefs || 0,
-      gradient: "linear-gradient(135deg,#2e0516 0%,#0B1120 100%)",
-      iconBg: "#EC4899"
-    },
-    {
-      label: "Delivery Partners", icon: Bike, positive: true, trend: "+2.1%",
-      value: cards?.totalDeliveryPartners || 0,
-      gradient: "linear-gradient(135deg,#2e1a05 0%,#0B1120 100%)",
-      iconBg: "#F59E0B"
-    },
-    {
-      label: "Products", icon: Package, positive: true, trend: "In Stock",
-      value: cards?.totalProducts || 0,
+      label: "Delivered Orders", icon: Package, positive: true, trend: "Completed",
+      value: cards?.deliveredOrdersCount || 0,
       gradient: "linear-gradient(135deg,#01140f 0%,#0B1120 100%)",
       iconBg: "#14B8A6"
+    },
+    {
+      label: "Delivered Revenue", icon: DollarSign, positive: true, trend: "Earned",
+      value: `₹${Number(cards?.deliveredOrdersRevenue || 0).toLocaleString()}`,
+      gradient: "linear-gradient(135deg,#052e16 0%,#0B1120 100%)",
+      iconBg: "#10B981"
     },
     {
       label: "Cancelled Orders", icon: XCircle, positive: false, trend: "Alert",
       value: cards?.cancelledOrders || 0,
       gradient: "linear-gradient(135deg,#2e0d05 0%,#0B1120 100%)",
       iconBg: "#EF4444"
+    },
+    {
+      label: "Total Users", icon: Users, positive: true, trend: "Users",
+      value: cards?.totalUsers || 0,
+      gradient: "linear-gradient(135deg,#1f052e 0%,#0B1120 100%)",
+      iconBg: "#8B5CF6"
+    },
+    {
+      label: "Home Chefs", icon: ChefHat, positive: true, trend: "Active",
+      value: cards?.totalHomeChefs || 0,
+      gradient: "linear-gradient(135deg,#2e0516 0%,#0B1120 100%)",
+      iconBg: "#EC4899"
+    },
+    {
+      label: "Delivery Partners", icon: Bike, positive: true, trend: "Active",
+      value: cards?.totalDeliveryPartners || 0,
+      gradient: "linear-gradient(135deg,#2e1a05 0%,#0B1120 100%)",
+      iconBg: "#F59E0B"
+    },
+    {
+      label: "Products", icon: Store, positive: true, trend: "In Stock",
+      value: cards?.totalProducts || 0,
+      gradient: "linear-gradient(135deg,#03120f 0%,#0B1120 100%)",
+      iconBg: "#06B6D4"
     }
   ];
 
