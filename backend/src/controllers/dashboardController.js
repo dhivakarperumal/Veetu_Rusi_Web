@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const { getAllOrders } = require('./userFoodOrderController');
 
 // Admin Dashboard — returns stats, recentOrders, topProducts, lowStockAlerts, categoryAnalytics, revenueTrends, regionalSales
 exports.getDashboardData = async (req, res) => {
@@ -11,6 +12,8 @@ exports.getDashboardData = async (req, res) => {
     let totalDeliveryPartners = 0;
     let totalOrders = 0;
     let cancelledOrders = 0;
+    let deliveredOrdersCount = 0;
+    let deliveredOrdersRevenue = 0;
 
     const currentUserId = req.user?.user_id || 'UNKNOWN';
     const currentIdInt = req.user?.id || -1;
@@ -98,24 +101,26 @@ exports.getDashboardData = async (req, res) => {
       totalUsers += totalHomeChefs + totalDeliveryPartners;
     }
 
-    // Orders
+    // Fetch Orders using the exact same logic as /admin/food-orders/all
     try {
-      const [[row]] = await pool.execute(`
-        SELECT COUNT(*) AS total
-        FROM Chef_Order
-    `);
-      totalOrders = row.total;
-    } catch (e) { }
-
-    // Cancelled Orders
-    try {
-      const [[row]] = await pool.execute(`
-        SELECT COUNT(*) AS total
-        FROM Chef_Order
-        WHERE status='Cancelled'
-    `);
-      cancelledOrders = row.total;
-    } catch (e) { }
+      const orders = await getAllOrders({
+        role: req.user?.role,
+        userId: req.user?.user_id,
+        numericId: req.user?.id
+      });
+      
+      orders.forEach(order => {
+        totalOrders++;
+        if (order.status === 'Cancelled') {
+          cancelledOrders++;
+        } else if (order.status === 'Delivered') {
+          deliveredOrdersCount++;
+          deliveredOrdersRevenue += parseFloat(order.total_amount) || 0;
+        }
+      });
+    } catch (e) { 
+      console.error('Error processing orders for dashboard:', e);
+    }
 
     const stats = [
       {
@@ -275,7 +280,9 @@ exports.getDashboardData = async (req, res) => {
         totalDeliveryPartners,
         totalOrders,
         totalProducts,
-        cancelledOrders
+        cancelledOrders,
+        deliveredOrdersCount,
+        deliveredOrdersRevenue
       },
 
       recentOrders,
