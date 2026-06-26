@@ -49,7 +49,7 @@ exports.getDashboardData = async (req, res) => {
         const [[tp]] = await pool.execute("SELECT COUNT(*) AS cnt FROM franchise_products");
         totalProducts = tp.cnt || 0;
       } else {
-        const [[tp]] = await pool.execute("SELECT COUNT(*) AS cnt FROM franchise_products WHERE franchise_user_id = ? OR created_by = ?", [currentUserId, currentUserId]);
+        const [[tp]] = await pool.execute("SELECT COUNT(*) AS cnt FROM franchise_products WHERE created_by = ?", [currentUserId]);
         totalProducts = tp.cnt || 0;
       }
     } catch (_) { }
@@ -59,7 +59,7 @@ exports.getDashboardData = async (req, res) => {
         const [[ls]] = await pool.execute("SELECT COUNT(*) AS cnt FROM franchise_products WHERE total_stock < 5");
         lowStockCount = ls.cnt || 0;
       } else {
-        const [[ls]] = await pool.execute("SELECT COUNT(*) AS cnt FROM franchise_products WHERE total_stock < 5 AND (franchise_user_id = ? OR created_by = ?)", [currentUserId, currentUserId]);
+        const [[ls]] = await pool.execute("SELECT COUNT(*) AS cnt FROM franchise_products WHERE total_stock < 5 AND created_by = ?", [currentUserId]);
         lowStockCount = ls.cnt || 0;
       }
     } catch (_) { }
@@ -212,8 +212,8 @@ exports.getDashboardData = async (req, res) => {
       let query = "SELECT p.name, p.category AS cat, p.mrp AS rev, p.images AS img, COALESCE(p.total_stock, 0) AS sales FROM franchise_products p";
       const params = [];
       if (!isSuperAdmin) {
-        query += " WHERE p.franchise_user_id = ? OR p.created_by = ?";
-        params.push(currentUserId, currentUserId);
+        query += " WHERE p.created_by = ?";
+        params.push(currentUserId);
       }
       query += " ORDER BY p.mrp DESC LIMIT 5";
       
@@ -233,8 +233,8 @@ exports.getDashboardData = async (req, res) => {
       let query = "SELECT name, category AS cat, total_stock AS stock, images AS img FROM franchise_products WHERE total_stock < 5";
       const params = [];
       if (!isSuperAdmin) {
-        query += " AND (franchise_user_id = ? OR created_by = ?)";
-        params.push(currentUserId, currentUserId);
+        query += " AND created_by = ?";
+        params.push(currentUserId);
       }
       query += " ORDER BY total_stock ASC LIMIT 8";
 
@@ -254,8 +254,8 @@ exports.getDashboardData = async (req, res) => {
       let query = "SELECT category AS name, COUNT(*) AS items, COALESCE(SUM(mrp), 0) AS revenue FROM franchise_products";
       const params = [];
       if (!isSuperAdmin) {
-        query += " WHERE franchise_user_id = ? OR created_by = ?";
-        params.push(currentUserId, currentUserId);
+        query += " WHERE created_by = ?";
+        params.push(currentUserId);
       }
       query += " GROUP BY category ORDER BY revenue DESC LIMIT 5";
 
