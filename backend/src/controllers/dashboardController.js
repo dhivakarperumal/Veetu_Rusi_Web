@@ -100,35 +100,65 @@ exports.getDashboardData = async (req, res) => {
       totalUsers += totalHomeChefs + totalDeliveryPartners;
     }
 
-    // Orders
+    // Fetch Orders and filter by franchise admin's home chefs
     try {
-      const [[row]] = await pool.execute(`
-        SELECT COUNT(*) AS total
-        FROM Chef_Order
-    `);
-      totalOrders = row.total;
-    } catch (e) { }
+      let chefProductIds = new Set();
+      
+      // If not superadmin, find the product IDs for the franchise's home chefs
+      if (!isSuperAdmin) {
+        const [chefs] = await pool.execute(`
+          SELECT user_id FROM home_chefs WHERE created_by IN (?, ?)
+        `, [currentUserId, currentIdInt]);
+        
+        const chefUserIds = chefs.map(c => c.user_id).filter(Boolean);
+        
+        if (chefUserIds.length > 0) {
+          const placeholders = chefUserIds.map(() => '?').join(',');
+          const [products] = await pool.execute(`
+            SELECT id FROM chef_products WHERE chef_user_id IN (${placeholders})
+          `, chefUserIds);
+          
+          products.forEach(p => chefProductIds.add(p.id));
+        }
+      }
 
-    // Cancelled Orders
-    try {
-      const [[row]] = await pool.execute(`
-        SELECT COUNT(*) AS total
-        FROM Chef_Order
-        WHERE status='Cancelled'
-    `);
-      cancelledOrders = row.total;
-    } catch (e) { }
-
-    // Delivered Orders and Revenue
-    try {
-      const [[row]] = await pool.execute(`
-        SELECT COUNT(*) AS total, COALESCE(SUM(total_amount), 0) AS rev
-        FROM Chef_Order
-        WHERE status='Delivered'
-    `);
-      deliveredOrdersCount = row.total;
-      deliveredOrdersRevenue = parseFloat(row.rev) || 0;
-    } catch (e) { }
+      const [orders] = await pool.execute('SELECT items, total_amount, status FROM Chef_Order');
+      
+      orders.forEach(order => {
+        let items = [];
+        try {
+          items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
+        } catch(e) {}
+        
+        let hasFranchiseChefProduct = false;
+        
+        if (!isSuperAdmin) {
+          if (items && Array.isArray(items)) {
+            for (const item of items) {
+              const pid = Number(item.product_id) || Number(item.id);
+              if (chefProductIds.has(pid)) {
+                hasFranchiseChefProduct = true;
+                break;
+              }
+            }
+          }
+        } else {
+          hasFranchiseChefProduct = true;
+        }
+        
+        if (hasFranchiseChefProduct) {
+          totalOrders++;
+          if (order.status === 'Cancelled') {
+            cancelledOrders++;
+          } else if (order.status === 'Delivered') {
+            deliveredOrdersCount++;
+            deliveredOrdersRevenue += parseFloat(order.total_amount) || 0;
+          }
+        }
+      });
+    } catch (e) { 
+      console.error('Error processing orders for franchise:', e);
+    }
 
     const stats = [
       {
