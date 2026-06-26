@@ -599,8 +599,8 @@ const OrderManagement = () => {
                 </div>
                 <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
                   <h4 className="text-[10px] text-white/40 font-bold uppercase tracking-widest mb-3">Delivery Info</h4>
-                  <p className="text-xs text-white/80">Slot: {viewingOrder.delivery_date} {viewingOrder.delivery_time}</p>
-                  <p className="text-xs text-white/80 mt-1">Partner: {viewingOrder.delivery_partner || "Unassigned"}</p>
+                  <p className="text-xs text-white/80">Slot: {viewingOrder.delivery_date ? (viewingOrder.delivery_date.includes('T') ? new Date(viewingOrder.delivery_date).toLocaleDateString() : viewingOrder.delivery_date) : ""} {viewingOrder.delivery_time}</p>
+                  <p className="text-xs text-white/80 mt-1">Partner: {viewingOrder.delivery_partner ? (partners.find(p => p.user_id == viewingOrder.delivery_partner || p.name === viewingOrder.delivery_partner)?.name || viewingOrder.delivery_partner) : "Unassigned"}</p>
                 </div>
               </div>
 
