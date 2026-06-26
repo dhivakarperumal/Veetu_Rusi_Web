@@ -67,7 +67,8 @@ router.get('/orders', async (req, res) => {
 
 router.get('/orders/available', async (req, res) => {
   try {
-    const deliveryBoyId = req.user?.id || req.user?.user_id;
+    // Prioritize user_id (e.g. 'DEL-xxx') because req.user.id might be the ID from the global users table.
+    const deliveryBoyId = req.user?.user_id || req.user?.id;
 
     // Fetch the delivery partner to find their franchise admin (created_by)
     const [dpRows] = await pool.execute(
