@@ -684,6 +684,9 @@ const createUserFoodOrderTable = async () => {
             total_amount DECIMAL(10,2) DEFAULT 0,
             items JSON,
             delivery_partner VARCHAR(255),
+            delivery_partner_user_id VARCHAR(255),
+            delivery_partner_name VARCHAR(255),
+            delivery_partner_phone VARCHAR(50),
             chef_user_id VARCHAR(255),
             chef_id VARCHAR(255),
             chef_name VARCHAR(255),
@@ -702,15 +705,14 @@ const createUserFoodOrderTable = async () => {
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             KEY idx_user_id (user_id),
             KEY idx_chef_user_id (chef_user_id),
-            KEY idx_franchise_user_id (franchise_user_id),
-            KEY idx_status (status),
-            KEY idx_ordered_at (ordered_at)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         `;
-
         await pool.execute(sql);
         // Add ordered_by_user_id if it doesn't exist
         try { await pool.execute('ALTER TABLE user_food_order_table ADD COLUMN ordered_by_user_id VARCHAR(255)'); } catch (e) {}
+        try { await pool.execute('ALTER TABLE user_food_order_table ADD COLUMN delivery_partner_user_id VARCHAR(255)'); } catch (e) {}
+        try { await pool.execute('ALTER TABLE user_food_order_table ADD COLUMN delivery_partner_name VARCHAR(255)'); } catch (e) {}
+        try { await pool.execute('ALTER TABLE user_food_order_table ADD COLUMN delivery_partner_phone VARCHAR(50)'); } catch (e) {}
         console.log('✓ user_food_order_table created or already exists');
     } catch (err) {
         console.error('✗ Error creating user_food_order_table:', err.message || err);
