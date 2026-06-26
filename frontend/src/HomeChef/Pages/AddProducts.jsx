@@ -29,7 +29,7 @@ const AddProducts = () => {
         product_code: "",
         total_stock: "0",
         rating: "5",
-        status: "Active",
+        status: "Inactive",
         material: "",
         nutrition_info: "",
         storage_instructions: "Keep Refrigerated",

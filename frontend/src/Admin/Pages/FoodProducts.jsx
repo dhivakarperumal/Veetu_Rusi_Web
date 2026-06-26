@@ -9,13 +9,13 @@ const FoodProducts = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const sourceParam = new URLSearchParams(location.search).get('source');
+  const activeTab = sourceParam === 'chef_products' ? 'foodProducts' : 'food';
   const [foods, setFoods] = useState([]);
   const [chefs, setChefs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [viewMode, setViewMode] = useState('table');
-  const [activeTab, setActiveTab] = useState(sourceParam === 'chef_products' ? 'foodProducts' : 'food');
   const [approvalModalItem, setApprovalModalItem] = useState(null);
   const [approvalChecklist, setApprovalChecklist] = useState({ taste: false, quality: false, packaging: false });
 
@@ -51,13 +51,7 @@ const FoodProducts = () => {
       params.delete('source');
     }
     navigate(`${location.pathname}?${params.toString()}`);
-    setActiveTab(tab);
   };
-
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    setActiveTab(params.get('source') === 'chef_products' ? 'foodProducts' : 'food');
-  }, [location.search]);
 
   const fetchFoods = useCallback(async () => {
     try {
@@ -308,7 +302,6 @@ const FoodProducts = () => {
                   <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.33em] text-slate-300">Food Info</th>
                   <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.33em] text-slate-300">Kitchen Name</th>
                   <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.33em] text-slate-300">Cuisine</th>
-                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.33em] text-slate-300">Mobile</th>
                   <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.33em] text-slate-300">Status</th>
                   <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.33em] text-slate-300 text-center">Actions</th>
                 </tr>
@@ -332,7 +325,7 @@ const FoodProducts = () => {
                       </td>
                       <td className="px-6 py-4 text-sm font-black text-slate-900">{getKitchenName(item)}</td>
                       <td className="px-6 py-4 text-sm text-slate-600">{getTypeDisplay(item)}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">{getMobile(item)}</td>
+                      
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] ${statusBadge(item.status)}`}>
                           {item.status || 'Unknown'}
