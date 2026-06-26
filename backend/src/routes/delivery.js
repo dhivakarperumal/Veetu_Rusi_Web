@@ -117,6 +117,7 @@ router.get('/orders/available', async (req, res) => {
 router.patch('/orders/:id/assign', async (req, res) => {
   try {
     const orderId = req.params.id;
+    const { latitude, longitude, pincode, area, district } = req.body || {};
     // Prioritize user_id (e.g. 'DEL-xxx') to avoid global user ID mismatches
     const deliveryBoyId = req.user?.user_id || req.user?.id || null;
 
@@ -154,19 +155,36 @@ router.patch('/orders/:id/assign', async (req, res) => {
     }
 
     // Insert initial tracking record
-    const [orderRows] = await pool.execute('SELECT order_id FROM user_food_order_table WHERE id = ?', [orderId]);
+    const [orderRows] = await pool.execute('SELECT order_id, user_id, customer_name, customer_email, items FROM user_food_order_table WHERE id = ?', [orderId]);
     if (orderRows.length > 0) {
       const realOrderId = orderRows[0].order_id;
+      const orderUserId = orderRows[0].user_id || null;
+      const orderUserName = orderRows[0].customer_name || null;
+      const orderUserEmail = orderRows[0].customer_email || null;
+      const orderedItems = JSON.stringify(orderRows[0].items || []);
 
       await pool.execute(
-        `INSERT INTO delivery_live_tracking (order_id, delivery_partner_user_id, delivery_partner_name, delivery_partner_phone)
-         VALUES (?, ?, ?, ?)
+        `INSERT INTO delivery_live_tracking (
+           order_id, delivery_partner_user_id, delivery_partner_name, delivery_partner_phone,
+           user_id, user_name, user_mail_id, ordered_product_details,
+           latitude, longitude, pincode, area, district
+         )
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE 
            delivery_partner_user_id = VALUES(delivery_partner_user_id),
            delivery_partner_name = VALUES(delivery_partner_name),
            delivery_partner_phone = VALUES(delivery_partner_phone),
+           user_id = VALUES(user_id),
+           user_name = VALUES(user_name),
+           user_mail_id = VALUES(user_mail_id),
+           ordered_product_details = VALUES(ordered_product_details),
+           latitude = VALUES(latitude),
+           longitude = VALUES(longitude),
+           pincode = VALUES(pincode),
+           area = VALUES(area),
+           district = VALUES(district),
            updated_at = CURRENT_TIMESTAMP`,
-        [realOrderId, partnerUserId, partnerName, partnerPhone]
+        [realOrderId, partnerUserId, partnerName, partnerPhone, orderUserId, orderUserName, orderUserEmail, orderedItems, latitude || null, longitude || null, pincode || null, area || null, district || null]
       );
       console.log('✅ [Tracking] Record saved for order:', realOrderId, 'partner:', partnerName);
     }

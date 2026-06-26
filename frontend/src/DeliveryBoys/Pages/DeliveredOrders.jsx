@@ -59,31 +59,31 @@ const DeliveredOrders = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search by order, customer or address..."
-            className="w-full pl-12 pr-4 py-3 rounded-2xl border border-slate-200 bg-white text-sm font-semibold text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            className="w-full pl-12 pr-4 py-3 rounded-2xl border border-white/10 bg-slate-950/70 text-sm font-semibold text-slate-100 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20"
           />
         </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+        <div className="superadmin-card p-6">
           <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Total Delivered</p>
-          <p className="mt-4 text-4xl font-black text-slate-900">{orders.length}</p>
+          <p className="mt-4 text-4xl font-black text-white">{orders.length}</p>
         </div>
-        <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+        <div className="rounded-3xl border border-white/10 bg-slate-950/90 p-6">
           <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Visible</p>
-          <p className="mt-4 text-4xl font-black text-slate-900">{visibleOrders.length}</p>
+          <p className="mt-4 text-4xl font-black text-white">{visibleOrders.length}</p>
         </div>
-        <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+        <div className="rounded-3xl border border-white/10 bg-slate-950/90 p-6">
           <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Status</p>
-          <p className="mt-4 text-4xl font-black text-slate-900">Delivered</p>
+          <p className="mt-4 text-4xl font-black text-white">Delivered</p>
         </div>
       </div>
 
-      <div className="bg-white rounded-4xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-slate-100 flex items-center justify-between gap-3">
+      <div className="superadmin-card overflow-hidden">
+        <div className="p-6 border-b border-white/10 flex items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-black">Delivered Orders</h2>
-            <p className="text-sm text-slate-500 mt-1">Completed deliveries that are marked delivered.</p>
+            <h2 className="text-lg font-black text-white">Delivered Orders</h2>
+            <p className="text-sm text-slate-400 mt-1">Completed deliveries that are marked delivered.</p>
           </div>
         </div>
 
@@ -93,8 +93,8 @@ const DeliveredOrders = () => {
           <div className="p-12 text-center text-slate-500">No delivered orders are available.</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-sm text-slate-700">
-              <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-[0.24em]">
+            <table className="superadmin-table">
+              <thead className="bg-slate-950/80 text-slate-300 uppercase text-[10px] tracking-[0.24em]">
                 <tr>
                   <th className="px-6 py-4">Order</th>
                   <th className="px-6 py-4">Customer</th>
@@ -105,9 +105,9 @@ const DeliveredOrders = () => {
               </thead>
               <tbody>
                 {visibleOrders.map((order) => (
-                  <tr key={order.id} className="border-b border-slate-100 hover:bg-slate-50">
+                  <tr key={order.id} className="border-b border-white/10 hover:bg-slate-900/80">
                     <td className="px-6 py-4">
-                      <div className="font-bold text-slate-900">{order.order_id || `#${order.id}`}</div>
+                      <div className="font-bold text-white">{order.order_id || `#${order.id}`}</div>
                       <div className="mt-1 text-xs text-slate-500">Status: {order.status}</div>
                     </td>
                     <td className="px-6 py-4">

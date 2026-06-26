@@ -110,6 +110,19 @@ const AddProducts = () => {
         return Math.round(priceNum - priceNum * (offerNum / 100)).toString();
     };
 
+    const normalizeDateValue = (value) => {
+        if (!value) return "";
+        if (typeof value === 'string') {
+            const parsed = new Date(value);
+            if (!isNaN(parsed)) return parsed.toISOString().slice(0, 10);
+            return value;
+        }
+        if (value instanceof Date && !isNaN(value)) {
+            return value.toISOString().slice(0, 10);
+        }
+        return "";
+    };
+
     useEffect(() => {
         const fetchEssentialData = async () => {
             setFetching(true);
@@ -175,8 +188,8 @@ const AddProducts = () => {
                             net_weight: p.net_weight || "",
                             package_count: p.package_count || "",
                             packaging_type: p.packaging_type || "Pouch",
-                            manufacture_date: p.manufacture_date || "",
-                            expiry_date: p.expiry_date || "" });
+                            manufacture_date: normalizeDateValue(p.manufacture_date),
+                            expiry_date: normalizeDateValue(p.expiry_date) || "" });
                         if (p.variants) setVariants(Array.isArray(p.variants) ? p.variants.map(v => ({
                             ...v,
                             offer: v.offer?.toString() || "",
@@ -365,6 +378,36 @@ const AddProducts = () => {
             const parsedImagesFromVariants = normalizedVariants.flatMap(v => v.images || []);
             const parsedStandaloneImages = Array.isArray(formData.images) ? formData.images : (formData.images ? JSON.parse(formData.images) : []);
 
+            const parseNumberValue = (value) => {
+                const parsed = Number(value);
+                return Number.isFinite(parsed) ? parsed : null;
+            };
+
+            const computedMrp = formData.mrp ? parseNumberValue(formData.mrp) : (normalizedVariants.length > 0 ? Math.max(...normalizedVariants.map((v) => parseNumberValue(v.price) || 0)) : null);
+            const computedOffer = formData.offer ? parseNumberValue(formData.offer) : (normalizedVariants.length > 0 ? parseNumberValue(normalizedVariants[0].offer || 0) : 0);
+            const computedOfferPrice = formData.offer_price ? parseNumberValue(formData.offer_price) : (normalizedVariants.length > 0 ? Math.min(...normalizedVariants.map((v) => parseNumberValue(v.final_price) || parseNumberValue(v.price) || 0)) : null);
+
+            if (!formData.name?.trim()) {
+                toast.error('Please enter a product name.');
+                setLoading(false);
+                return;
+            }
+            if (!formData.category?.trim()) {
+                toast.error('Please select a product category.');
+                setLoading(false);
+                return;
+            }
+            if (!computedMrp || computedMrp <= 0) {
+                toast.error('Please provide a valid MRP or add a variant with price.');
+                setLoading(false);
+                return;
+            }
+            if (normalizedVariants.length === 0) {
+                toast.error('Please add at least one product variant.');
+                setLoading(false);
+                return;
+            }
+
             const finalData = {
                 category: formData.category || "Food Product",
                 product_type: formData.product_type || "Food Product",
@@ -387,6 +430,9 @@ const AddProducts = () => {
                 variants: normalizedVariants.length > 0 ? normalizedVariants : null,
                 status: formData.status || "Inactive",
                 franchise_user_id: franchiseUserId || null,
+                mrp: computedMrp,
+                offer: computedOffer,
+                offer_price: computedOfferPrice,
             };
 
             // Clean payload: remove empty strings, undefined, and empty arrays

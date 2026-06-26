@@ -143,47 +143,45 @@ const Incentives = () => {
           const isLocked = incentive.status === "locked";
 
           return (
-            <div key={incentive.id} className={`rounded-[2rem] p-6 border shadow-sm overflow-hidden transition-all ${
+            <div key={incentive.id} className={`rounded-[2rem] p-6 overflow-hidden transition-all border ${
               isLocked
-                ? "bg-gray-50 border-gray-100 opacity-75"
+                ? "bg-slate-950/90 border-white/10 opacity-90"
                 : isCompleted
-                ? "bg-emerald-50 border-emerald-100"
-                : "bg-white border-gray-100 hover:shadow-md"
+                ? "bg-slate-950/95 border-white/10"
+                : "bg-slate-950/90 border-white/10 hover:shadow-[0_25px_70px_rgba(0,0,0,0.45)]"
             }`}>
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h3 className="text-sm font-black text-slate-800 flex items-center gap-2">
-                    <Gift className="w-5 h-5 text-pink-600" />
-                    {incentive.title}
-                  </h3>
-                  <p className="text-[11px] text-gray-500 font-bold mt-1">{incentive.description}</p>
-                </div>
-                {isLocked && <Lock className="w-5 h-5 text-gray-400 flex-shrink-0" />}
-                {isCompleted && <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0" />}
-              </div>
-
+                    <h3 className="text-sm font-black text-white flex items-center gap-2">
+                      <Gift className="w-5 h-5 text-pink-400" />
+                      {incentive.title}
+                    </h3>
+                    <p className="text-[11px] text-slate-400 font-bold mt-1">{incentive.description}</p>
+                  </div>
+                  {isLocked && <Lock className="w-5 h-5 text-slate-400 flex-shrink-0" />}
+                  {isCompleted && <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />}
               {/* Reward Badge */}
-              <div className="mb-4 inline-block px-3 py-1.5 rounded-xl bg-pink-100 border border-pink-200">
-                <p className="text-[10px] font-black text-pink-700 uppercase tracking-widest">{incentive.reward}</p>
+              <div className="mb-4 inline-block px-3 py-1.5 rounded-xl bg-pink-900/80 border border-pink-500/30">
+                <p className="text-[10px] font-black text-pink-300 uppercase tracking-widest">{incentive.reward}</p>
               </div>
 
               {/* Progress Bar */}
               {!isLocked && (
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Progress</span>
-                    <span className="text-[10px] font-black text-gray-600">{incentive.progress.current}/{incentive.progress.target}</span>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Progress</span>
+                    <span className="text-[10px] font-black text-slate-200">{incentive.progress.current}/{incentive.progress.target}</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                  <div className="w-full bg-slate-900/80 rounded-full h-2 overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all duration-300 ${
-                        isCompleted ? "bg-emerald-500" : "bg-pink-500"
+                        isCompleted ? "bg-emerald-400" : "bg-pink-400"
                       }`}
                       style={{ width: `${Math.min(progressPercent, 100)}%` }}
                     />
                   </div>
                   {isCompleted && (
-                    <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mt-2 flex items-center gap-1">
+                    <p className="text-[10px] font-black text-emerald-300 uppercase tracking-widest mt-2 flex items-center gap-1">
                       <CheckCircle className="w-3 h-3" />
                       Challenge Completed!
                     </p>
@@ -192,7 +190,7 @@ const Incentives = () => {
               )}
 
               {isLocked && (
-                <div className="flex items-center gap-2 text-[11px] font-bold text-gray-500">
+                <div className="flex items-center gap-2 text-[11px] font-bold text-slate-400">
                   <Lock className="w-4 h-4" />
                   Complete other challenges to unlock
                 </div>
@@ -200,7 +198,7 @@ const Incentives = () => {
 
               {/* CTA */}
               {isCompleted && !isLocked && (
-                <button className="w-full mt-4 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-emerald-600/20">
+                <button className="w-full mt-4 py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-emerald-500/20">
                   Claim Reward
                 </button>
               )}
@@ -210,12 +208,12 @@ const Incentives = () => {
       </div>
 
       {/* Info Banner */}
-      <div className="bg-purple-50 border border-purple-200 rounded-[2rem] p-6">
-        <h4 className="text-sm font-black text-purple-900 mb-2 flex items-center gap-2">
-          <TrendingUp className="w-5 h-5" />
+      <div className="bg-slate-950/90 border border-white/10 rounded-[2rem] p-6">
+        <h4 className="text-sm font-black text-white mb-2 flex items-center gap-2">
+          <TrendingUp className="w-5 h-5 text-cyan-400" />
           How it works
         </h4>
-        <ul className="space-y-2 text-[11px] font-bold text-purple-800">
+        <ul className="space-y-2 text-[11px] font-bold text-slate-300">
           <li>• Complete incentive challenges to earn bonus rewards</li>
           <li>• Track your progress in real-time and claim rewards when completed</li>
           <li>• Earn more by participating in multiple incentive programs</li>

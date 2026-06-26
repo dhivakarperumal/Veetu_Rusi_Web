@@ -21,6 +21,16 @@ const AdminLayout = () => {
     const navigate = useNavigate();
     const deliveryBoyId = user?.id || user?.user_id || user?.delivery_partner_user_id || user?.delivery_partner || null;
 
+    const [locationData, setLocationData] = useState({
+        latitude: "",
+        longitude: "",
+        pincode: "",
+        area: "",
+        district: ""
+    });
+    const [fetchingLocation, setFetchingLocation] = useState(false);
+    const [showLocationModal, setShowLocationModal] = useState(false);
+
     const playNotificationSound = () => {
         try {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -53,6 +63,7 @@ const AdminLayout = () => {
                 const stillPending = available.some(order => Number(order.id) === Number(popupOrder.id));
                 if (!stillPending) {
                     setShowPopup(false);
+                    setShowLocationModal(false);
                     setPopupOrder(null);
                     toast.error("This order has already been assigned.");
                 }
@@ -73,24 +84,75 @@ const AdminLayout = () => {
         }
     };
 
-    const acceptOrder = async () => {
+    const openLocationModal = () => {
+        setShowPopup(false);
+        setShowLocationModal(true);
+        fetchCurrentLocation();
+    };
+
+    const closeLocationModal = () => {
+        setShowLocationModal(false);
+        setPopupOrder(null);
+        setLocationData({ latitude: "", longitude: "", pincode: "", area: "", district: "" });
+    };
+
+    const fetchCurrentLocation = () => {
+        if (!navigator.geolocation) {
+            toast.error("Geolocation is not supported by your browser");
+            return;
+        }
+        setFetchingLocation(true);
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const { latitude, longitude } = position.coords;
+                try {
+                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+                    const data = await response.json();
+                    if (data && data.address) {
+                        setLocationData({
+                            latitude,
+                            longitude,
+                            pincode: data.address.postcode || "",
+                            area: data.address.suburb || data.address.neighbourhood || data.address.village || data.address.town || data.address.city || "",
+                            district: data.address.state_district || data.address.county || data.address.city_district || ""
+                        });
+                        toast.success("Location fetched successfully!");
+                    } else {
+                        setLocationData((prev) => ({ ...prev, latitude, longitude }));
+                    }
+                } catch (error) {
+                    console.error("Reverse geocoding failed", error);
+                    toast.error("Failed to fetch address details. Using coordinates only.");
+                    setLocationData((prev) => ({ ...prev, latitude, longitude }));
+                } finally {
+                    setFetchingLocation(false);
+                }
+            },
+            (error) => {
+                console.error("Geolocation error", error);
+                toast.error("Unable to retrieve your location");
+                setFetchingLocation(false);
+            }
+        );
+    };
+
+    const confirmAcceptOrder = async () => {
         if (!popupOrder) return;
         setIsAssigning(true);
         try {
             await api.patch(`/delivery/orders/${popupOrder.id}/assign`, {
                 delivery_partner: deliveryBoyId,
                 status: "Assigned",
+                ...locationData
             });
             toast.success("Order assigned successfully.");
-            setShowPopup(false);
-            setPopupOrder(null);
+            closeLocationModal();
             navigate("/delivery/orders");
         } catch (error) {
             console.error("Assign order failed:", error);
             const message = error.response?.data?.message || "This order has already been assigned.";
             toast.error(message);
-            setShowPopup(false);
-            setPopupOrder(null);
+            closeLocationModal();
         } finally {
             setIsAssigning(false);
         }
@@ -108,7 +170,7 @@ const AdminLayout = () => {
     }, [popupOrder, deliveryBoyId]);
 
     return (
-        <div className="admin-root flex min-h-screen bg-gray-50 text-slate-900">
+        <div className="admin-root flex min-h-screen bg-[#040b0a] text-slate-100">
             <Toaster position="top-right" />
 
             {/* Sidebar */}
@@ -131,7 +193,7 @@ const AdminLayout = () => {
                 <Header onMenuClick={() => setSidebarOpen(true)} />
 
                 {/* Page Content */}
-                <main className="flex-1 p-4 sm:p-5 lg:p-6 overflow-y-auto">
+                <main className="relative flex-1 overflow-y-auto bg-gradient-to-b from-[#020806] via-[#06110f] to-[#040a08] px-4 py-4 sm:px-5 sm:py-5 lg:px-6 lg:py-6">
                     <div className="glass-container">
                         <Outlet />
                     </div>
@@ -145,15 +207,15 @@ const AdminLayout = () => {
             </div>
 
             {showPopup && popupOrder && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4">
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/80 p-4">
                     <div className="absolute inset-0 bg-black/70" aria-hidden="true"></div>
-                    <div className="relative z-10 w-full max-w-2xl rounded-4xl bg-white shadow-2xl ring-1 ring-slate-900/10 overflow-hidden">
+                    <div className="relative z-10 w-full max-w-2xl rounded-4xl bg-slate-950/95 shadow-2xl ring-1 ring-white/10 overflow-hidden border border-white/10">
                         <div className="p-6 sm:p-8">
                             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                                 <div>
-                                    <p className="text-sm font-semibold uppercase tracking-[0.28em] text-emerald-600">🚚 New Order Available</p>
-                                    <h2 className="mt-4 text-2xl font-black text-slate-900">A new delivery order is available.</h2>
-                                    <p className="mt-2 text-sm text-slate-500">Would you like to pick this order?</p>
+                                    <p className="text-sm font-semibold uppercase tracking-[0.28em] text-emerald-400">🚚 New Order Available</p>
+                                    <h2 className="mt-4 text-2xl font-black text-white">A new delivery order is available.</h2>
+                                    <p className="mt-2 text-sm text-slate-400">Would you like to pick this order?</p>
                                 </div>
                                 <button
                                     type="button"
@@ -166,30 +228,30 @@ const AdminLayout = () => {
                             </div>
 
                             <div className="mt-8 grid gap-4 sm:grid-cols-2">
-                                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                                <div className="rounded-3xl border border-white/10 bg-slate-950/90 p-5">
                                     <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Order ID</p>
-                                    <p className="mt-2 text-lg font-bold text-slate-900">{popupOrder.order_id || `#${popupOrder.id}`}</p>
+                                    <p className="mt-2 text-lg font-bold text-white">{popupOrder.order_id || `#${popupOrder.id}`}</p>
                                 </div>
-                                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                                <div className="rounded-3xl border border-white/10 bg-slate-950/90 p-5">
                                     <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Amount</p>
-                                    <p className="mt-2 text-lg font-bold text-slate-900">₹{popupOrder.total_amount?.toFixed?.(2) ?? popupOrder.total_amount ?? 0}</p>
+                                    <p className="mt-2 text-lg font-bold text-white">₹{popupOrder.total_amount?.toFixed?.(2) ?? popupOrder.total_amount ?? 0}</p>
                                 </div>
-                                <div className="sm:col-span-2 rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                                <div className="sm:col-span-2 rounded-3xl border border-white/10 bg-slate-950/90 p-5">
                                     <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Customer</p>
-                                    <p className="mt-2 text-lg font-bold text-slate-900">{popupOrder.customer_name || popupOrder.ordered_by_name || 'Unknown'}</p>
-                                    <p className="mt-2 text-sm text-slate-500">{popupOrder.customer_phone || popupOrder.customer_email || 'No contact details'}</p>
+                                    <p className="mt-2 text-lg font-bold text-white">{popupOrder.customer_name || popupOrder.ordered_by_name || 'Unknown'}</p>
+                                    <p className="mt-2 text-sm text-slate-400">{popupOrder.customer_phone || popupOrder.customer_email || 'No contact details'}</p>
                                 </div>
-                                <div className="sm:col-span-2 rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                                <div className="sm:col-span-2 rounded-3xl border border-white/10 bg-slate-950/90 p-5">
                                     <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Delivery Address</p>
-                                    <p className="mt-2 text-sm text-slate-700 leading-6">
+                                    <p className="mt-2 text-sm text-slate-300 leading-6">
                                         {[popupOrder.street_address, popupOrder.city, popupOrder.district, popupOrder.state, popupOrder.zip_code]
                                             .filter(Boolean)
                                             .join(", ") || 'Not available'}
                                     </p>
                                 </div>
-                                <div className="sm:col-span-2 rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                                <div className="sm:col-span-2 rounded-3xl border border-white/10 bg-slate-950/90 p-5">
                                     <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Order Time</p>
-                                    <p className="mt-2 text-sm text-slate-700">
+                                    <p className="mt-2 text-sm text-slate-300">
                                         {new Date(popupOrder.ordered_at || popupOrder.created_at || popupOrder.delivery_date || Date.now()).toLocaleString()}
                                     </p>
                                 </div>
@@ -199,15 +261,78 @@ const AdminLayout = () => {
                                 <button
                                     type="button"
                                     onClick={skipOrder}
-                                    className="inline-flex justify-center rounded-2xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-bold text-red-700 hover:bg-red-100 transition"
+                                    className="inline-flex justify-center rounded-2xl border border-red-500/20 bg-red-500/10 px-5 py-3 text-sm font-bold text-red-300 hover:bg-red-500/20 transition"
                                 >
                                     Skip Order
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={acceptOrder}
-                                    disabled={isAssigning}
-                                    className="inline-flex justify-center rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white hover:bg-emerald-500 transition disabled:cursor-not-allowed disabled:opacity-60"
+                                    onClick={openLocationModal}
+                                    className="inline-flex justify-center rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white hover:bg-emerald-500 transition"
+                                >
+                                    Accept Order
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Location Modal */}
+            {showLocationModal && popupOrder && (
+                <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-xl border border-slate-100">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-xl font-black text-slate-900">Confirm Assignment</h3>
+                            <button onClick={closeLocationModal} className="text-slate-400 hover:text-slate-600">✕</button>
+                        </div>
+
+                        <p className="text-sm text-slate-500 mb-6">
+                            Please share your current location to accept this order and update live tracking.
+                        </p>
+
+                        <div className="space-y-4">
+                            {fetchingLocation ? (
+                                <div className="flex items-center justify-center p-4 bg-blue-50 text-blue-600 rounded-xl">
+                                    <span className="font-semibold text-sm">Fetching GPS & Address...</span>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-2 gap-3 text-sm">
+                                    <div className="col-span-2">
+                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Coordinates</label>
+                                        <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-slate-700 font-medium">
+                                            {locationData.latitude ? `${locationData.latitude.toFixed(6)}, ${locationData.longitude.toFixed(6)}` : 'Not fetched'}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Pincode</label>
+                                        <input type="text" value={locationData.pincode} readOnly className="w-full p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-slate-700 focus:outline-none" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Area</label>
+                                        <input type="text" value={locationData.area} readOnly className="w-full p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-slate-700 focus:outline-none" />
+                                    </div>
+                                    <div className="col-span-2">
+                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">District</label>
+                                        <input type="text" value={locationData.district} readOnly className="w-full p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-slate-700 focus:outline-none" />
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="flex items-center gap-3 mt-6 pt-4 border-t border-slate-100">
+                                <button
+                                    type="button"
+                                    onClick={fetchCurrentLocation}
+                                    disabled={fetchingLocation}
+                                    className="flex-1 rounded-2xl bg-slate-100 px-4 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-200 disabled:opacity-60"
+                                >
+                                    Retry GPS
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={confirmAcceptOrder}
+                                    disabled={isAssigning || fetchingLocation}
+                                    className="flex-1 rounded-2xl bg-blue-600 px-4 py-3 text-sm font-black text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
                                 >
                                     {isAssigning ? 'Assigning...' : 'Accept Order'}
                                 </button>

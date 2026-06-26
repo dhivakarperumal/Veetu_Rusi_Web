@@ -134,20 +134,20 @@ const DeliveryDashboard = () => {
   const getStatusStyle = (status) => {
     const normalized = String(status || "").toLowerCase().trim();
     const variants = {
-      "order placed": "bg-blue-100 text-blue-800 border-blue-200",
-      "new": "bg-blue-100 text-blue-800 border-blue-200",
-      "assigned": "bg-gray-100 text-gray-800 border-gray-200",
-      "packing": "bg-indigo-100 text-indigo-800 border-indigo-200",
-      "processing": "bg-indigo-100 text-indigo-800 border-indigo-200",
-      "shipping": "bg-amber-100 text-amber-800 border-amber-200",
-      "shipped": "bg-amber-100 text-amber-800 border-amber-200",
-      "picked up": "bg-amber-100 text-amber-800 border-amber-200",
-      "out for delivery": "bg-cyan-100 text-cyan-800 border-cyan-200",
-      "delivered": "bg-emerald-100 text-emerald-800 border-emerald-200",
-      "cancelled": "bg-red-100 text-red-800 border-red-200",
-      "canceled": "bg-red-100 text-red-800 border-red-200",
+      "order placed": "bg-blue-500/10 text-blue-200 border border-blue-400/20",
+      "new": "bg-blue-500/10 text-blue-200 border border-blue-400/20",
+      "assigned": "bg-slate-800 text-slate-200 border border-white/10",
+      "packing": "bg-indigo-500/10 text-indigo-200 border border-indigo-500/20",
+      "processing": "bg-indigo-500/10 text-indigo-200 border border-indigo-500/20",
+      "shipping": "bg-amber-500/10 text-amber-300 border border-amber-500/20",
+      "shipped": "bg-amber-500/10 text-amber-300 border border-amber-500/20",
+      "picked up": "bg-amber-500/10 text-amber-300 border border-amber-500/20",
+      "out for delivery": "bg-cyan-500/10 text-cyan-200 border border-cyan-500/20",
+      "delivered": "bg-emerald-500/10 text-emerald-200 border border-emerald-500/20",
+      "cancelled": "bg-red-500/10 text-red-300 border border-red-500/20",
+      "canceled": "bg-red-500/10 text-red-300 border border-red-500/20",
     };
-    return variants[normalized] || "bg-gray-100 text-gray-800 border-gray-200";
+    return variants[normalized] || "bg-slate-800 text-slate-200 border border-white/10";
   };
 
   if (loading) {
@@ -274,47 +274,47 @@ const DeliveryDashboard = () => {
       {/* Today's Orders Table */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-black text-slate-800 uppercase tracking-tight flex items-center gap-2">
+          <h2 className="text-sm font-black text-slate-100 uppercase tracking-tight flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-pink-500 shadow-[0_0_10px_#EC4899]" />
             Today's Orders
           </h2>
-          <span className="text-xs font-bold text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+          <span className="text-xs font-bold text-slate-300 bg-slate-900/80 px-3 py-1 rounded-full">
             {todayLoading ? "..." : todayOrders.length} orders
           </span>
         </div>
 
         {todayLoading ? (
-          <div className="bg-white rounded-3xl p-8 flex items-center justify-center h-32 border border-gray-100">
+          <div className="bg-slate-950/90 rounded-3xl p-8 flex items-center justify-center h-32 border border-white/10">
             <div className="w-6 h-6 border-3 border-pink-600/20 border-t-pink-600 rounded-full animate-spin"></div>
           </div>
         ) : todayOrders.length === 0 ? (
-          <div className="bg-white rounded-3xl p-8 text-center border border-gray-100">
-            <p className="text-gray-500 font-semibold">No orders for today</p>
+          <div className="bg-slate-950/90 rounded-3xl p-8 text-center border border-white/10">
+            <p className="text-slate-400 font-semibold">No orders for today</p>
           </div>
         ) : (
-          <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100">
+          <div className="bg-slate-950/90 rounded-3xl overflow-hidden shadow-xl shadow-black/20 border border-white/10">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="text-left p-4 font-bold text-gray-700 uppercase text-[10px] tracking-wider">Order ID</th>
-                    <th className="text-left p-4 font-bold text-gray-700 uppercase text-[10px] tracking-wider">Customer</th>
-                    <th className="text-left p-4 font-bold text-gray-700 uppercase text-[10px] tracking-wider">Amount</th>
-                    <th className="text-left p-4 font-bold text-gray-700 uppercase text-[10px] tracking-wider">Status</th>
-                    <th className="text-left p-4 font-bold text-gray-700 uppercase text-[10px] tracking-wider">Time</th>
+                  <tr className="bg-slate-900/90 border-b border-white/10">
+                    <th className="text-left p-4 font-bold text-slate-300 uppercase text-[10px] tracking-wider">Order ID</th>
+                    <th className="text-left p-4 font-bold text-slate-300 uppercase text-[10px] tracking-wider">Customer</th>
+                    <th className="text-left p-4 font-bold text-slate-300 uppercase text-[10px] tracking-wider">Amount</th>
+                    <th className="text-left p-4 font-bold text-slate-300 uppercase text-[10px] tracking-wider">Status</th>
+                    <th className="text-left p-4 font-bold text-slate-300 uppercase text-[10px] tracking-wider">Time</th>
                   </tr>
                 </thead>
                 <tbody>
                   {todayOrders.map((order) => (
-                    <tr key={order.id} className="border-b border-gray-100 hover:bg-gray-50 transition">
+                    <tr key={order.id} className="border-b border-white/10 hover:bg-white/5 transition">
                       <td className="p-4">
-                        <span className="font-bold text-gray-800">#{order.order_id || order.id}</span>
+                        <span className="font-bold text-slate-100">#{order.order_id || order.id}</span>
                       </td>
                       <td className="p-4">
-                        <span className="text-gray-700 font-semibold">{order.customer_name || "N/A"}</span>
+                        <span className="text-slate-300 font-semibold">{order.customer_name || "N/A"}</span>
                       </td>
                       <td className="p-4">
-                        <span className="font-bold text-gray-800">₹{Number(order.total_amount || 0).toLocaleString()}</span>
+                        <span className="font-bold text-white">₹{Number(order.total_amount || 0).toLocaleString()}</span>
                       </td>
                       <td className="p-4">
                         <span className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${getStatusStyle(order.status)}`}>
@@ -322,7 +322,7 @@ const DeliveryDashboard = () => {
                         </span>
                       </td>
                       <td className="p-4">
-                        <span className="text-gray-600 text-xs font-semibold">
+                        <span className="text-slate-400 text-xs font-semibold">
                           {order.created_at ? new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "N/A"}
                         </span>
                       </td>

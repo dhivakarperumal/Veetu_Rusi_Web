@@ -239,15 +239,15 @@ async function createDatabaseAndTables() {
       franchise_user_id VARCHAR(255),
       franchise_id INT,
       created_by_user_id VARCHAR(255),
-      created_by_email VARCHAR(255),
-      created_by_name VARCHAR(255),
+      created_by_email TEXT,
+      created_by_name TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       UNIQUE(catId, franchise_user_id),
       INDEX(franchise_user_id),
       INDEX(franchise_id),
       INDEX(created_by_user_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC
   `);
   console.log('Franchise category table created or already exists');
 
@@ -270,8 +270,8 @@ async function createDatabaseAndTables() {
       franchise_email VARCHAR(255),
       franchise_phone VARCHAR(50),
       created_by_user_id VARCHAR(255),
-      created_by_email VARCHAR(255),
-      created_by_name VARCHAR(255),
+      created_by_email TEXT,
+      created_by_name TEXT,
       created_by_phone VARCHAR(50),
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -305,8 +305,8 @@ async function createDatabaseAndTables() {
       franchise_email VARCHAR(255),
       franchise_phone VARCHAR(50),
       created_by_user_id VARCHAR(255),
-      created_by_email VARCHAR(255),
-      created_by_name VARCHAR(255),
+      created_by_email TEXT,
+      created_by_name TEXT,
       created_by_phone VARCHAR(50),
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -316,12 +316,12 @@ async function createDatabaseAndTables() {
       INDEX(franchise_user_id),
       INDEX(franchise_id),
       INDEX(created_by_user_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC;
   `);
   console.log('Chef food category table created or already exists');
   await addColumnIfNotExists(connection, 'cheffoodcategorytable', 'created_by_user_id', 'VARCHAR(255)');
-  await addColumnIfNotExists(connection, 'cheffoodcategorytable', 'created_by_email', 'VARCHAR(255)');
-  await addColumnIfNotExists(connection, 'cheffoodcategorytable', 'created_by_name', 'VARCHAR(255)');
+  await addColumnIfNotExists(connection, 'cheffoodcategorytable', 'created_by_email', 'TEXT');
+  await addColumnIfNotExists(connection, 'cheffoodcategorytable', 'created_by_name', 'TEXT');
   await addColumnIfNotExists(connection, 'cheffoodcategorytable', 'created_by_phone', 'VARCHAR(50)');
 
   try { await connection.execute('ALTER TABLE chef_category DROP INDEX catId'); } catch (err) {
@@ -341,8 +341,8 @@ async function createDatabaseAndTables() {
   try { await connection.execute('ALTER TABLE chef_category ADD COLUMN franchise_email VARCHAR(255)'); } catch {}
   try { await connection.execute('ALTER TABLE chef_category ADD COLUMN franchise_phone VARCHAR(50)'); } catch {}
   try { await connection.execute('ALTER TABLE chef_category ADD COLUMN created_by_user_id VARCHAR(255)'); } catch {}
-  try { await connection.execute('ALTER TABLE chef_category ADD COLUMN created_by_email VARCHAR(255)'); } catch {}
-  try { await connection.execute('ALTER TABLE chef_category ADD COLUMN created_by_name VARCHAR(255)'); } catch {}
+  try { await connection.execute('ALTER TABLE chef_category ADD COLUMN created_by_email TEXT'); } catch {}
+  try { await connection.execute('ALTER TABLE chef_category ADD COLUMN created_by_name TEXT'); } catch {}
   try { await connection.execute('ALTER TABLE chef_category ADD COLUMN created_by_phone VARCHAR(50)'); } catch {}
 
   try { await connection.execute('ALTER TABLE franchise_category DROP INDEX catId'); } catch (err) {
@@ -355,8 +355,8 @@ async function createDatabaseAndTables() {
   try { await connection.execute('ALTER TABLE franchise_category ADD COLUMN franchise_user_id VARCHAR(255)'); } catch {}
   try { await connection.execute('ALTER TABLE franchise_category ADD COLUMN franchise_id INT'); } catch {}
   try { await connection.execute('ALTER TABLE franchise_category ADD COLUMN created_by_user_id VARCHAR(255)'); } catch {}
-  try { await connection.execute('ALTER TABLE franchise_category ADD COLUMN created_by_email VARCHAR(255)'); } catch {}
-  try { await connection.execute('ALTER TABLE franchise_category ADD COLUMN created_by_name VARCHAR(255)'); } catch {}
+  try { await connection.execute('ALTER TABLE franchise_category ADD COLUMN created_by_email TEXT'); } catch {}
+  try { await connection.execute('ALTER TABLE franchise_category ADD COLUMN created_by_name TEXT'); } catch {}
   try { await connection.execute('ALTER TABLE franchise_category ADD INDEX(franchise_user_id)'); } catch {}
   try { await connection.execute('ALTER TABLE franchise_category ADD INDEX(franchise_id)'); } catch {}
   try { await connection.execute('ALTER TABLE franchise_category ADD INDEX(created_by_user_id)'); } catch {}

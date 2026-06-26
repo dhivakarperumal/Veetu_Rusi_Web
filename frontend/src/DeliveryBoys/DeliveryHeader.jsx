@@ -264,10 +264,7 @@ const Header = ({ onMenuClick }) => {
       : "Administrator";
 
   return (
-    <header className="sticky top-0 z-30 
-      bg-gradient-to-r from-white via-white to-blue-50/30 backdrop-blur-md
-      border-b border-slate-200/60
-      shadow-[0_4px_30px_rgba(0,0,0,0.04)]">
+    <header className="sticky top-0 z-30 bg-[#07110f]/95 backdrop-blur-xl border-b border-white/10 shadow-[0_25px_50px_rgba(0,0,0,0.18)]">
 
       <div className="flex items-center justify-between px-4 py-3 sm:px-6">
 
@@ -275,20 +272,17 @@ const Header = ({ onMenuClick }) => {
         <div className="flex items-center gap-4 min-w-0">
           <button
             onClick={onMenuClick}
-            className="lg:hidden p-2 rounded-xl 
-            bg-white hover:bg-slate-50 
-            text-slate-600 border border-slate-200 shadow-sm transition-all active:scale-95"
+            className="lg:hidden p-2 rounded-xl bg-slate-900/80 text-slate-100 border border-white/10 shadow-sm hover:bg-slate-900 transition-all active:scale-95"
           >
             <Menu className="w-6 h-6" />
           </button>
 
           <div className="hidden sm:flex flex-col">
-            <h1 className="text-xl sm:text-2xl font-black 
-              text-slate-800 tracking-tight truncate leading-none">
+            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight truncate leading-none">
               {getPageTitle()}
             </h1>
-            <p className="hidden sm:block text-[10px] text-blue-600 font-bold uppercase tracking-[0.2em] mt-1 opacity-70">
-              Palace Artisan Admin
+            <p className="hidden sm:block text-[10px] text-emerald-400 font-bold uppercase tracking-[0.2em] mt-1 opacity-85">
+              Delivery Partner Workspace
             </p>
           </div>
         </div>
@@ -308,7 +302,7 @@ const Header = ({ onMenuClick }) => {
                   onChange={handleSearchInput}
                   onFocus={() => searchQuery && setShowSearchResults(true)}
                   placeholder="Order ID, name, phone..."
-                  className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-8 py-3 text-sm focus:outline-none focus:ring-3 focus:ring-gray-500/10 focus:border-gray-300 text-slate-700 transition-all"
+                  className="w-full bg-slate-950/90 border border-white/10 rounded-xl pl-9 pr-8 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/20 focus:border-emerald-500 text-slate-100 transition-all"
                 />
                 {searchQuery && (
                   <button onClick={clearSearch} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700">
@@ -318,7 +312,7 @@ const Header = ({ onMenuClick }) => {
 
                 {/* Search Results Dropdown */}
                 {showSearchResults && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-100 rounded-2xl shadow-2xl z-[200] overflow-hidden">
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-slate-950/95 border border-white/10 rounded-2xl shadow-2xl z-[200] overflow-hidden">
                     {searchLoading ? (
                       <div className="px-4 py-3 text-xs text-slate-400 font-bold">Searching...</div>
                     ) : searchResults.length > 0 ? (
@@ -330,7 +324,7 @@ const Header = ({ onMenuClick }) => {
                           <button
                             key={order.id}
                             onClick={() => handleSearchResultClick(order.id)}
-                            className="w-full px-4 py-3 flex items-center gap-3 hover:bg-blue-50/50 transition-all text-left group"
+                            className="w-full px-4 py-3 flex items-center gap-3 hover:bg-slate-900/80 transition-all text-left group"
                           >
                             {/* Avatar */}
                             <div className="w-9 h-9 rounded-xl bg-slate-900 flex items-center justify-center text-white text-xs font-black shrink-0 shadow">
@@ -338,8 +332,8 @@ const Header = ({ onMenuClick }) => {
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between gap-2">
-                                <p className="text-xs font-black text-slate-800 truncate">{order.customer_name || "Unknown"}</p>
-                                <span className="text-[9px] font-black text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded shrink-0">ORD-0{order.id}</span>
+                                <p className="text-xs font-black text-slate-100 truncate">{order.customer_name || "Unknown"}</p>
+                                <span className="text-[9px] font-black text-emerald-300 bg-emerald-500/10 px-1.5 py-0.5 rounded shrink-0">ORD-0{order.id}</span>
                               </div>
                               <div className="flex items-center gap-2 mt-0.5">
                                 <span className="text-[10px] text-slate-400 font-bold truncate">{order.customer_phone || "No phone"}</span>
@@ -348,10 +342,10 @@ const Header = ({ onMenuClick }) => {
                               </div>
                             </div>
                             <div>
-                              <span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider ${order.status === 'Order Placed' ? 'bg-blue-100 text-blue-700' :
-                                order.status === 'Delivered' ? 'bg-emerald-100 text-emerald-700' :
-                                  order.status === 'Cancelled' ? 'bg-red-100 text-red-700' :
-                                    'bg-amber-100 text-amber-700'
+                              <span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider ${order.status === 'Order Placed' ? 'bg-slate-800 text-slate-100 border border-white/10' :
+                                order.status === 'Delivered' ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20' :
+                                  order.status === 'Cancelled' ? 'bg-red-500/10 text-red-300 border border-red-500/20' :
+                                    'bg-amber-500/10 text-amber-300 border border-amber-500/20'
                                 }`}>{order.status}</span>
                             </div>
                           </button>
@@ -370,8 +364,7 @@ const Header = ({ onMenuClick }) => {
             </div>
             <button
               onClick={() => { setShowSearch(p => !p); if (showSearch) clearSearch(); }}
-              className={`p-2 rounded-xl transition-all active:scale-95 border
-              ${showSearch ? 'text-blue-600 bg-white border-blue-100 shadow-md shadow-blue-500/10' : 'bg-white text-slate-500 hover:bg-slate-50 border-slate-200 shadow-sm'}`}
+              className={`p-2 rounded-xl transition-all active:scale-95 border ${showSearch ? 'text-emerald-300 bg-slate-900/80 border-emerald-500/20 shadow-md shadow-emerald-500/10' : 'bg-slate-900/80 text-slate-100 hover:bg-slate-900 border-white/10 shadow-sm'}`}
             >
               <Search className="w-5 h-5" />
             </button>
@@ -381,8 +374,7 @@ const Header = ({ onMenuClick }) => {
           <div className="relative" ref={lowStockRef}>
             <button
               onClick={() => { setShowLowStock(p => !p); setShowNotifications(false); }}
-              className={`relative p-2 rounded-xl transition-all active:scale-95 border
-              ${showLowStock ? 'bg-amber-50 text-amber-600 border-amber-200 shadow-md' : 'bg-white text-slate-500 hover:bg-amber-50 hover:text-amber-500 border-slate-200 shadow-sm'}`}
+              className={`relative p-2 rounded-xl transition-all active:scale-95 border ${showLowStock ? 'bg-amber-500/10 text-amber-300 border-amber-400/20 shadow-md shadow-amber-500/10' : 'bg-slate-900/80 text-slate-100 hover:bg-slate-900 border-white/10 shadow-sm'}`}
               title="Low Stock Alerts"
             >
               <AlertTriangle className="w-5 h-5" />
@@ -394,15 +386,15 @@ const Header = ({ onMenuClick }) => {
             </button>
 
             {showLowStock && (
-              <div className="absolute right-0 mt-4 w-80 bg-white border border-slate-100 rounded-2xl shadow-2xl z-50 overflow-hidden">
+              <div className="absolute right-0 mt-4 w-80 bg-slate-950/95 border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden">
 
                   {/* Header */}
-                  <div className="px-5 py-4 border-b border-slate-50 flex items-center justify-between bg-amber-50">
+                  <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between bg-slate-900/90">
                     <div className="flex items-center gap-2">
                       <AlertTriangle className="w-4 h-4 text-amber-500" />
-                      <h3 className="text-sm font-black text-slate-800 uppercase tracking-tight">Low Stock</h3>
+                      <h3 className="text-sm font-black text-white uppercase tracking-tight">Low Stock</h3>
                     </div>
-                    <span className="text-[10px] font-black bg-amber-100 text-amber-700 px-2.5 py-1 rounded-lg uppercase">
+                    <span className="text-[10px] font-black bg-amber-500/10 text-amber-300 border border-amber-500/20 px-2.5 py-1 rounded-lg uppercase">
                       {lowStockItems.length} Alert{lowStockItems.length !== 1 ? 's' : ''}
                     </span>
                   </div>
@@ -421,11 +413,11 @@ const Header = ({ onMenuClick }) => {
                           className="w-full px-4 py-3 flex items-center gap-3 hover:bg-amber-50/40 transition-all text-left group"
                         >
                           {/* Product image */}
-                          <div className="w-10 h-10 rounded-xl overflow-hidden bg-gray-100 border border-gray-100 shrink-0">
+                          <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-800 border border-white/10 shrink-0">
                             <img src={img} alt={product.name} className="w-full h-full object-cover" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-xs font-black text-slate-800 truncate">{product.name}</p>
+                            <p className="text-xs font-black text-slate-100 truncate">{product.name}</p>
                             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider truncate mt-0.5">{product.category || product.product_code || '—'}</p>
                           </div>
                           <div className="text-right shrink-0">
@@ -450,7 +442,7 @@ const Header = ({ onMenuClick }) => {
                   <Link
                     to="/delivery"
                     onClick={() => setShowLowStock(false)}
-                    className="block w-full py-3.5 text-center text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] bg-amber-50/60 hover:bg-amber-50 transition-colors border-t border-slate-50"
+                    className="block w-full py-3.5 text-center text-[10px] font-black text-amber-300 uppercase tracking-[0.2em] bg-slate-900/80 hover:bg-slate-900 transition-colors border-t border-white/10"
                   >
                     View Delivery Dashboard →
                   </Link>
@@ -462,8 +454,7 @@ const Header = ({ onMenuClick }) => {
           <div className="relative" ref={notifRef}>
             <button
               onClick={() => setShowNotifications(p => !p)}
-              className={`relative p-2 rounded-xl transition-all active:scale-95 border
-              ${showNotifications ? 'bg-white text-blue-600 border-blue-100 shadow-md shadow-blue-500/10' : 'bg-white text-slate-500 hover:bg-slate-50 border-slate-200 shadow-sm'}`}
+              className={`relative p-2 rounded-xl transition-all active:scale-95 border ${showNotifications ? 'bg-slate-900/80 text-emerald-300 border-emerald-400/20 shadow-md shadow-emerald-500/10' : 'bg-slate-900/80 text-slate-100 hover:bg-slate-900 border-white/10 shadow-sm'}`}
             >
               <Bell className="w-5 h-5" />
               {unreadCount > 0 && (
@@ -474,16 +465,13 @@ const Header = ({ onMenuClick }) => {
             </button>
 
             {showNotifications && (
-              <div className="absolute right-0 mt-4 w-80 
-              bg-white 
-              border border-slate-100
-              rounded-2xl shadow-2xl z-50 overflow-hidden">
+              <div className="absolute right-0 mt-4 w-80 bg-slate-950/95 border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden">
 
-                  <div className="px-5 py-4 border-b border-slate-50 flex items-center justify-between bg-white sticky top-0">
-                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-tight">
+                  <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between bg-slate-900/90 sticky top-0">
+                    <h3 className="text-sm font-black text-white uppercase tracking-tight">
                       New Orders
                     </h3>
-                    <span className="text-[10px] font-black bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg uppercase">
+                    <span className="text-[10px] font-black bg-emerald-500/10 text-emerald-300 px-2.5 py-1 rounded-lg uppercase">
                       {(notifications.today?.length || 0) + (notifications.earlier?.length || 0)} Pending
                     </span>
                   </div>
@@ -494,8 +482,8 @@ const Header = ({ onMenuClick }) => {
                         {/* Today Section */}
                         {notifications.today?.length > 0 && (
                           <>
-                            <div className="px-5 py-2 bg-slate-50/50 sticky top-0 z-10 backdrop-blur-sm">
-                              <p className="text-[9px] font-black text-blue-600 uppercase tracking-[0.2em]">Today's Orders</p>
+                            <div className="px-5 py-2 bg-slate-900/90 sticky top-0 z-10 backdrop-blur-sm">
+                              <p className="text-[9px] font-black text-emerald-300 uppercase tracking-[0.2em]">Today's Orders</p>
                             </div>
                             {notifications.today.map((order) => (
                               <button
@@ -503,19 +491,19 @@ const Header = ({ onMenuClick }) => {
                                 onClick={() => handleNotificationClick(order.id)}
                                 className="w-full px-5 py-4 flex items-start gap-4 hover:bg-blue-50/30 transition-all text-left group  "
                               >
-                                <div className="w-10 h-10 rounded-xl bg-blue-100/50 flex items-center justify-center text-blue-600 shrink-0 group-hover:scale-110 transition-transform shadow-sm">
+                                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-300 shrink-0 group-hover:scale-110 transition-transform shadow-sm shadow-emerald-500/10">
                                   <ShoppingBag className="w-5 h-5" />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center justify-between mb-0.5">
-                                    <p className="text-sm font-black text-slate-800 tracking-tight">ORD-0{order.id}</p>
-                                    <p className="text-[12px] text-blue-600 font-black">₹{Number(order.total_amount).toLocaleString('en-IN')}</p>
+                                    <p className="text-sm font-black text-white tracking-tight">ORD-0{order.id}</p>
+                                    <p className="text-[12px] text-emerald-300 font-black">₹{Number(order.total_amount).toLocaleString('en-IN')}</p>
                                   </div>
                                   <div className="flex items-center justify-between">
-                                    <p className="text-[10px] text-slate-500 font-bold truncate">
+                                    <p className="text-[10px] text-slate-300 font-bold truncate">
                                       {order.customer_name || "New Customer"}
                                     </p>
-                                    <span className="text-[9px] bg-blue-50 text-green-600 font-black px-1.5 py-0.5 rounded uppercase">
+                                    <span className="text-[9px] bg-emerald-500/10 text-emerald-300 font-black px-1.5 py-0.5 rounded uppercase">
                                       {order.status}
                                     </span>
                                   </div>
@@ -530,7 +518,7 @@ const Header = ({ onMenuClick }) => {
                         {/* Earlier Section */}
                         {notifications.earlier?.length > 0 && (
                           <>
-                            <div className="px-5 py-2 bg-slate-50/50 sticky top-0 z-10 backdrop-blur-sm">
+                            <div className="px-5 py-2 bg-slate-900/90 sticky top-0 z-10 backdrop-blur-sm">
                               <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Earlier Pending</p>
                             </div>
                             {notifications.earlier.map((order) => (
@@ -539,19 +527,19 @@ const Header = ({ onMenuClick }) => {
                                 onClick={() => handleNotificationClick(order.id)}
                                 className="w-full px-5 py-4 flex items-start gap-4 hover:bg-slate-50 transition-all text-left group opacity-80 hover:opacity-100"
                               >
-                                <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 shrink-0 group-hover:scale-110 transition-transform">
+                                <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-slate-300 shrink-0 group-hover:scale-110 transition-transform">
                                   <ShoppingBag className="w-5 h-5" />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center justify-between mb-0.5">
-                                    <p className="text-sm font-black text-slate-800 tracking-tight">#ORD-0{order.id}</p>
-                                    <p className="text-[12px] text-slate-600 font-black">₹{Number(order.total_amount).toLocaleString('en-IN')}</p>
+                                    <p className="text-sm font-black text-white tracking-tight">#ORD-0{order.id}</p>
+                                    <p className="text-[12px] text-slate-300 font-black">₹{Number(order.total_amount).toLocaleString('en-IN')}</p>
                                   </div>
                                   <div className="flex items-center justify-between">
-                                    <p className="text-[10px] text-slate-400 font-bold truncate">
+                                    <p className="text-[10px] text-slate-300 font-bold truncate">
                                       {order.customer_name || "New Customer"}
                                     </p>
-                                    <span className="text-[9px] bg-slate-100 text-slate-500 font-black px-1.5 py-0.5 rounded uppercase">
+                                    <span className="text-[9px] bg-slate-800 text-slate-200 font-black px-1.5 py-0.5 rounded uppercase">
                                       {order.status}
                                     </span>
                                   </div>
@@ -580,7 +568,7 @@ const Header = ({ onMenuClick }) => {
                     <Link
                       to="/delivery/orders"
                       onClick={() => setShowNotifications(false)}
-                      className="block w-full py-4 text-center text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] bg-blue-50/50 hover:bg-blue-50 transition-colors border-t border-slate-50"
+                      className="block w-full py-4 text-center text-[10px] font-black text-emerald-300 uppercase tracking-[0.2em] bg-slate-900/80 hover:bg-slate-900 transition-colors border-t border-white/10"
                     >
                       View All Manifests
                     </Link>
@@ -593,8 +581,7 @@ const Header = ({ onMenuClick }) => {
           <div className="relative" ref={profileRef}>
             <button
               onClick={() => setShowDropdown(p => !p)}
-              className={`flex items-center gap-3 px-2 py-1.5 sm:px-3 rounded-2xl transition-all active:scale-95 border
-              ${showDropdown ? 'bg-blue-50 border-blue-100' : 'bg-slate-50 border-slate-100 hover:bg-slate-100'}`}
+              className={`flex items-center gap-3 px-2 py-1.5 sm:px-3 rounded-2xl transition-all active:scale-95 border ${showDropdown ? 'bg-slate-900/90 border-emerald-400/20 text-white' : 'bg-slate-900/80 border-white/10 text-slate-100 hover:bg-slate-900'}`}
             >
               <div className="w-8 h-8 rounded-xl 
                 bg-slate-900 flex items-center justify-center text-white text-xs font-black shadow-lg">
@@ -602,10 +589,10 @@ const Header = ({ onMenuClick }) => {
               </div>
 
               <div className="hidden md:block text-left leading-tight">
-                <p className="text-xs font-black text-slate-800">
+                <p className="text-xs font-black text-white">
                   {userName}
                 </p>
-                <p className="text-[9px] text-blue-600 font-bold uppercase tracking-widest opacity-70">
+                <p className="text-[9px] text-emerald-300 font-bold uppercase tracking-widest opacity-80">
                   {userRole}
                 </p>
               </div>
@@ -617,25 +604,20 @@ const Header = ({ onMenuClick }) => {
             </button>
 
             {showDropdown && (
-              <div className="absolute right-0 mt-4 w-52
-                  bg-white 
-                  border border-slate-100
-                  rounded-2xl shadow-2xl z-50 p-2 overflow-hidden">
+              <div className="absolute right-0 mt-4 w-52 bg-slate-950/95 border border-white/10 rounded-2xl shadow-2xl z-50 p-2 overflow-hidden">
 
-                  <div className="px-3 py-2 border-b border-slate-50 mb-1">
-                    <p className="text-sm font-semibold text-black">
+                  <div className="px-3 py-2 border-b border-white/10 mb-1">
+                    <p className="text-sm font-semibold text-white">
                       {userName}
                     </p>
-                    <p className="text-xs text-black/60">
+                    <p className="text-xs text-slate-400">
                       {email}
                     </p>
                   </div>
 
                   <Link
                     to="/delivery/profile"
-                    className="flex items-center gap-3 px-3 py-2.5 
-                    rounded-xl hover:bg-blue-50 hover:text-blue-600
-                    text-sm text-slate-600 transition font-bold"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-900/80 text-sm text-slate-100 transition font-bold"
                   >
                     <User className="w-4 h-4 opacity-50" /> Profile
                   </Link>
@@ -651,9 +633,7 @@ const Header = ({ onMenuClick }) => {
 
                   <button
                     onClick={handleLogout}
-                    className="flex items-center gap-3 px-3 py-2 
-                    rounded-xl hover:bg-red-500/20 
-                    text-sm text-red-400 w-full transition"
+                    className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-red-500/20 text-sm text-red-300 w-full transition"
                   >
                     <LogOut className="w-4 h-4" /> Logout
                   </button>
