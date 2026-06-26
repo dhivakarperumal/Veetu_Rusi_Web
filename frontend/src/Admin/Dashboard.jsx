@@ -17,7 +17,9 @@ const FALLBACK = {
   cards: {
     totalUsers: 0, totalRestaurants: 0, totalHomeChefs: 0,
     totalDeliveryPartners: 0, totalOrders: 0,
-    pendingApprovals: 0
+    pendingApprovals: 0,
+    franchiseOrdersCount: 0, franchiseDeliveredCount: 0,
+    franchiseCancelledCount: 0, franchiseDeliveredRevenue: 0
   },
   charts: {
     dailyOrders: [
@@ -199,6 +201,30 @@ const Dashboard = () => {
       value: cards?.cancelledOrders || 0,
       gradient: "linear-gradient(135deg,#2e0d05 0%,#0B1120 100%)",
       iconBg: "#EF4444"
+    },
+    {
+      label: "Franchise Admin Orders", icon: ShoppingBag, positive: true, trend: "Total",
+      value: cards?.franchiseOrdersCount || 0,
+      gradient: "linear-gradient(135deg,#1f2937 0%,#0B1120 100%)",
+      iconBg: "#6366F1"
+    },
+    {
+      label: "Franchise Delivered", icon: Package, positive: true, trend: "Completed",
+      value: cards?.franchiseDeliveredCount || 0,
+      gradient: "linear-gradient(135deg,#064e3b 0%,#0B1120 100%)",
+      iconBg: "#10B981"
+    },
+    {
+      label: "Franchise Revenue", icon: DollarSign, positive: true, trend: "Earned",
+      value: `₹${Number(cards?.franchiseDeliveredRevenue || 0).toLocaleString()}`,
+      gradient: "linear-gradient(135deg,#0f766e 0%,#0B1120 100%)",
+      iconBg: "#059669"
+    },
+    {
+      label: "Franchise Cancelled", icon: XCircle, positive: false, trend: "Alert",
+      value: cards?.franchiseCancelledCount || 0,
+      gradient: "linear-gradient(135deg,#7f1d1d 0%,#0B1120 100%)",
+      iconBg: "#DC2626"
     },
     {
       label: "Total Users", icon: Users, positive: true, trend: "Users",
