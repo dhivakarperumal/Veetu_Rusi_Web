@@ -736,6 +736,10 @@ const createDeliveryLiveTrackingTable = async () => {
             UNIQUE KEY unique_order_tracking (order_id)
         )`;
         await pool.execute(sql);
+        try { await pool.execute('ALTER TABLE delivery_live_tracking ADD COLUMN user_id VARCHAR(255)'); } catch (e) {}
+        try { await pool.execute('ALTER TABLE delivery_live_tracking ADD COLUMN user_name VARCHAR(255)'); } catch (e) {}
+        try { await pool.execute('ALTER TABLE delivery_live_tracking ADD COLUMN user_mail_id VARCHAR(255)'); } catch (e) {}
+        try { await pool.execute('ALTER TABLE delivery_live_tracking ADD COLUMN ordered_product_details JSON'); } catch (e) {}
         console.log('✓ delivery_live_tracking table created or already exists');
     } catch (err) {
         console.error('✗ Error creating delivery_live_tracking table:', err.message || err);
