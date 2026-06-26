@@ -15,6 +15,11 @@ exports.getDashboardData = async (req, res) => {
     let deliveredOrdersCount = 0;
     let deliveredOrdersRevenue = 0;
 
+    let franchiseOrdersCount = 0;
+    let franchiseDeliveredCount = 0;
+    let franchiseCancelledCount = 0;
+    let franchiseDeliveredRevenue = 0;
+
     const currentUserId = req.user?.user_id || 'UNKNOWN';
     const currentIdInt = req.user?.id || -1;
     const isSuperAdmin = req.user?.role === 'superadmin';
@@ -120,6 +125,29 @@ exports.getDashboardData = async (req, res) => {
       });
     } catch (e) { 
       console.error('Error processing orders for dashboard:', e);
+    }
+
+    // Fetch Franchise Admin specific product orders (from Chef_Order)
+    try {
+      let query = "SELECT status, total_amount FROM Chef_Order WHERE 1=1";
+      const params = [];
+      if (!isSuperAdmin) {
+        query += " AND created_by = ?";
+        params.push(currentUserId);
+      }
+      const [franchiseOrders] = await pool.execute(query, params);
+      
+      franchiseOrders.forEach(order => {
+        franchiseOrdersCount++;
+        if (order.status === 'Cancelled') {
+          franchiseCancelledCount++;
+        } else if (order.status === 'Delivered') {
+          franchiseDeliveredCount++;
+          franchiseDeliveredRevenue += parseFloat(order.total_amount) || 0;
+        }
+      });
+    } catch (e) {
+      console.error('Error fetching Chef_Order for franchise:', e);
     }
 
     const stats = [
@@ -282,7 +310,14 @@ exports.getDashboardData = async (req, res) => {
         totalProducts,
         cancelledOrders,
         deliveredOrdersCount,
-        deliveredOrdersRevenue
+        deliveredOrdersRevenue,
+        pendingApprovals,
+        activeFranchises,
+        totalFranchises,
+        franchiseOrdersCount,
+        franchiseDeliveredCount,
+        franchiseCancelledCount,
+        franchiseDeliveredRevenue
       },
 
       recentOrders,
