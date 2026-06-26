@@ -45,15 +45,23 @@ exports.getDashboardData = async (req, res) => {
     } catch (_) { }
 
     try {
-      const [[tp]] = await pool.execute("SELECT COUNT(*) AS cnt FROM chef_products");
-      totalProducts = tp.cnt || 0;
+      if (isSuperAdmin) {
+        const [[tp]] = await pool.execute("SELECT COUNT(*) AS cnt FROM franchise_products");
+        totalProducts = tp.cnt || 0;
+      } else {
+        const [[tp]] = await pool.execute("SELECT COUNT(*) AS cnt FROM franchise_products WHERE franchise_user_id = ? OR created_by = ?", [currentUserId, currentUserId]);
+        totalProducts = tp.cnt || 0;
+      }
     } catch (_) { }
 
     try {
-      const [[ls]] = await pool.execute(
-        "SELECT COUNT(*) AS cnt FROM chef_products WHERE total_stock < 5"
-      );
-      lowStockCount = ls.cnt || 0;
+      if (isSuperAdmin) {
+        const [[ls]] = await pool.execute("SELECT COUNT(*) AS cnt FROM franchise_products WHERE total_stock < 5");
+        lowStockCount = ls.cnt || 0;
+      } else {
+        const [[ls]] = await pool.execute("SELECT COUNT(*) AS cnt FROM franchise_products WHERE total_stock < 5 AND (franchise_user_id = ? OR created_by = ?)", [currentUserId, currentUserId]);
+        lowStockCount = ls.cnt || 0;
+      }
     } catch (_) { }
 
     // Users
@@ -201,9 +209,15 @@ exports.getDashboardData = async (req, res) => {
     // ── Top Products ──────────────────────────────────────────────
     let topProducts = [];
     try {
-      const [rows] = await pool.execute(
-        "SELECT p.name, p.category AS cat, p.mrp AS rev, p.images AS img, COALESCE(p.total_stock, 0) AS sales FROM chef_products p ORDER BY p.mrp DESC LIMIT 5"
-      );
+      let query = "SELECT p.name, p.category AS cat, p.mrp AS rev, p.images AS img, COALESCE(p.total_stock, 0) AS sales FROM franchise_products p";
+      const params = [];
+      if (!isSuperAdmin) {
+        query += " WHERE p.franchise_user_id = ? OR p.created_by = ?";
+        params.push(currentUserId, currentUserId);
+      }
+      query += " ORDER BY p.mrp DESC LIMIT 5";
+      
+      const [rows] = await pool.execute(query, params);
       topProducts = rows.map(p => ({
         name: p.name,
         cat: p.cat || 'Sarees',
@@ -216,9 +230,15 @@ exports.getDashboardData = async (req, res) => {
     // ── Low Stock Alerts ──────────────────────────────────────────
     let lowStockAlerts = [];
     try {
-      const [rows] = await pool.execute(
-        "SELECT name, category AS cat, total_stock AS stock, images AS img FROM chef_products WHERE total_stock < 5 ORDER BY total_stock ASC LIMIT 8"
-      );
+      let query = "SELECT name, category AS cat, total_stock AS stock, images AS img FROM franchise_products WHERE total_stock < 5";
+      const params = [];
+      if (!isSuperAdmin) {
+        query += " AND (franchise_user_id = ? OR created_by = ?)";
+        params.push(currentUserId, currentUserId);
+      }
+      query += " ORDER BY total_stock ASC LIMIT 8";
+
+      const [rows] = await pool.execute(query, params);
       lowStockAlerts = rows.map(p => ({
         name: p.name,
         cat: p.cat || 'Sarees',
@@ -231,9 +251,15 @@ exports.getDashboardData = async (req, res) => {
     // ── Category Analytics ────────────────────────────────────────
     let categoryAnalytics = [];
     try {
-      const [rows] = await pool.execute(
-        "SELECT category AS name, COUNT(*) AS items, COALESCE(SUM(mrp), 0) AS revenue FROM chef_products GROUP BY category ORDER BY revenue DESC LIMIT 5"
-      );
+      let query = "SELECT category AS name, COUNT(*) AS items, COALESCE(SUM(mrp), 0) AS revenue FROM franchise_products";
+      const params = [];
+      if (!isSuperAdmin) {
+        query += " WHERE franchise_user_id = ? OR created_by = ?";
+        params.push(currentUserId, currentUserId);
+      }
+      query += " GROUP BY category ORDER BY revenue DESC LIMIT 5";
+
+      const [rows] = await pool.execute(query, params);
       const totalRev = rows.reduce((acc, r) => acc + parseFloat(r.revenue), 0) || 1;
       const COLORS = ['bg-blue-500', 'bg-indigo-400', 'bg-emerald-500', 'bg-amber-500', 'bg-rose-400'];
       categoryAnalytics = rows.map((r, i) => ({
