@@ -238,6 +238,7 @@ exports.createFood = async (req, res) => {
       expiry_date,
       mrp,
       offer,
+      offer_price,
       final_price,
       dietary_tag,
       net_weight,
@@ -265,7 +266,15 @@ exports.createFood = async (req, res) => {
     const createdBy = finalChefUserId || req.user?.user_id || req.user?.id || null;
     const updatedBy = createdBy;
 
-    const computedFinalPrice = Number(final_price) || (Number(mrp) - (Number(offer) || 0) * Number(mrp) / 100) || Number(mrp);
+    const incomingFinalPrice = offer_price !== undefined && offer_price !== null
+      ? Number(offer_price)
+      : final_price !== undefined && final_price !== null
+        ? Number(final_price)
+        : null;
+
+    const computedFinalPrice = incomingFinalPrice !== null
+      ? incomingFinalPrice
+      : (Number(mrp) - (Number(offer) || 0) * Number(mrp) / 100);
 
     // Normalize incoming images/variants (they might be JSON strings)
     const parsedVariants = Array.isArray(variants) ? variants : (parseJsonField(variants) || []);

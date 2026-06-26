@@ -582,6 +582,20 @@ const AddProducts = () => {
 
                                 {activeStepIndex === 1 && (
                                     <div className="space-y-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            <div>
+                                                <label className="block text-xs font-black text-slate-300 uppercase mb-2">Market MRP *</label>
+                                                <input type="number" name="mrp" value={formData.mrp} onChange={handleFormChange} min="0" step="0.01" placeholder="e.g. 199" className={fieldClass} required />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-black text-slate-300 uppercase mb-2">Offer (%)</label>
+                                                <input type="number" name="offer" value={formData.offer} onChange={handleFormChange} min="0" max="100" placeholder="e.g. 10" className={fieldClass} />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-black text-slate-300 uppercase mb-2">Final Price</label>
+                                                <input type="text" value={formData.offer_price || (formData.mrp ? Math.round((parseFloat(formData.mrp) || 0) - ((parseFloat(formData.mrp) || 0) * (parseFloat(formData.offer) || 0) / 100)).toString() : '')} readOnly className={fieldClass} />
+                                            </div>
+                                        </div>
                                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                             <div>
                                                 <label className="block text-xs font-black text-slate-300 uppercase mb-2">Packaging Type</label>
