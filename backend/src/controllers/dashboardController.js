@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const { getAllOrders } = require('./userFoodOrderController');
 
 // Admin Dashboard — returns stats, recentOrders, topProducts, lowStockAlerts, categoryAnalytics, revenueTrends, regionalSales
 exports.getDashboardData = async (req, res) => {
@@ -100,64 +101,25 @@ exports.getDashboardData = async (req, res) => {
       totalUsers += totalHomeChefs + totalDeliveryPartners;
     }
 
-    // Fetch Orders and filter by franchise admin's home chefs
+    // Fetch Orders using the exact same logic as /admin/food-orders/all
     try {
-      let chefProductIds = new Set();
-      
-      // If not superadmin, find the product IDs for the franchise's home chefs
-      if (!isSuperAdmin) {
-        const [chefs] = await pool.execute(`
-          SELECT user_id FROM home_chefs WHERE created_by IN (?, ?)
-        `, [currentUserId, currentIdInt]);
-        
-        const chefUserIds = chefs.map(c => c.user_id).filter(Boolean);
-        
-        if (chefUserIds.length > 0) {
-          const placeholders = chefUserIds.map(() => '?').join(',');
-          const [products] = await pool.execute(`
-            SELECT id FROM chef_products WHERE chef_user_id IN (${placeholders})
-          `, chefUserIds);
-          
-          products.forEach(p => chefProductIds.add(p.id));
-        }
-      }
-
-      const [orders] = await pool.execute('SELECT items, total_amount, status FROM Chef_Order');
+      const orders = await getAllOrders({
+        role: req.user?.role,
+        userId: req.user?.user_id,
+        numericId: req.user?.id
+      });
       
       orders.forEach(order => {
-        let items = [];
-        try {
-          items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
-        } catch(e) {}
-        
-        let hasFranchiseChefProduct = false;
-        
-        if (!isSuperAdmin) {
-          if (items && Array.isArray(items)) {
-            for (const item of items) {
-              const pid = Number(item.product_id) || Number(item.id);
-              if (chefProductIds.has(pid)) {
-                hasFranchiseChefProduct = true;
-                break;
-              }
-            }
-          }
-        } else {
-          hasFranchiseChefProduct = true;
-        }
-        
-        if (hasFranchiseChefProduct) {
-          totalOrders++;
-          if (order.status === 'Cancelled') {
-            cancelledOrders++;
-          } else if (order.status === 'Delivered') {
-            deliveredOrdersCount++;
-            deliveredOrdersRevenue += parseFloat(order.total_amount) || 0;
-          }
+        totalOrders++;
+        if (order.status === 'Cancelled') {
+          cancelledOrders++;
+        } else if (order.status === 'Delivered') {
+          deliveredOrdersCount++;
+          deliveredOrdersRevenue += parseFloat(order.total_amount) || 0;
         }
       });
     } catch (e) { 
-      console.error('Error processing orders for franchise:', e);
+      console.error('Error processing orders for dashboard:', e);
     }
 
     const stats = [
