@@ -1,1 +1,0 @@
-const pool = require('./backend/src/config/db'); async function run() { const [rows] = await pool.execute(SELECT * FROM user_food_order_table WHERE order_id = 'UFO-1782456682069-236'); console.log(rows); process.exit(0); } run();
