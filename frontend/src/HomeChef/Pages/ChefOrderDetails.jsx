@@ -44,7 +44,17 @@ const nextStatusMap = {
   "Out for Delivery": "Delivered",
 };
 
-const orderSteps = ["Pending", "Accepted", "Preparing", "Food Ready", "Out for Delivery", "Delivered"];
+const orderSteps = [
+  "New Order",
+  "Accepted",
+  "Preparing",
+  "Food Ready",
+  "Packing",
+  "Searching Delivery Partner",
+  "Delivery Partner Assigned",
+  "Out for Delivery",
+  "Delivered",
+];
 
 const ChefOrderDetails = () => {
   const { id } = useParams();
@@ -145,13 +155,21 @@ const ChefOrderDetails = () => {
   const orderedAt = order.ordered_at || order.created_at;
 
   const currentStepIndex = (() => {
-    if (order.status === "Accepted") return 1;
-    if (order.status === "Preparing") return 2;
-    if (order.status === "Food Ready" || order.status === "Packing") return 3;
-    if (order.status === "Searching Delivery Partner" || order.status === "Delivery Partner Assigned") return 4;
-    if (order.status === "Out for Delivery") return 4;
-    if (order.status === "Delivered" || order.status === "Completed") return 5;
-    return 0;
+    const statusToIndex = {
+      "Pending": 0,
+      "New Order": 0,
+      "Order Placed": 0,
+      "Accepted": 1,
+      "Preparing": 2,
+      "Food Ready": 3,
+      "Packing": 4,
+      "Searching Delivery Partner": 5,
+      "Delivery Partner Assigned": 6,
+      "Out for Delivery": 7,
+      "Delivered": 8,
+      "Completed": 8,
+    };
+    return statusToIndex[order.status] ?? 0;
   })();
 
   return (

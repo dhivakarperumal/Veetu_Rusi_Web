@@ -221,8 +221,8 @@ export default function MyFoodOrders({ isEmbedded = false }) {
                         <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Order ID</p>
                         <p className="mt-2 text-lg font-bold text-slate-900">{order.order_id}</p>
                       </div>
-                      <span className={`rounded-full px-3 py-1 text-sm font-semibold ${order.status === "Delivered" ? "bg-emerald-100 text-emerald-700" : order.status === "Pending" ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-700"}`}>
-                        {order.status}
+                      <span className={`rounded-full px-3 py-1 text-sm font-semibold ${order.status === "Delivered" || order.status === "Completed" ? "bg-emerald-100 text-emerald-700" : order.status === "Cancelled" ? "bg-red-100 text-red-700" : order.status === "New Order" || order.status === "Pending" ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"}`}>
+                        {order.status === "Pending" ? "New Order" : (order.status || "New Order")}
                       </span>
                     </div>
 
@@ -263,7 +263,7 @@ export default function MyFoodOrders({ isEmbedded = false }) {
                         </div>
                         <div className="rounded-3xl bg-slate-50 p-4">
                           <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Order status</p>
-                          <p className="mt-2 text-sm font-semibold text-slate-900">{order.status || 'Pending'}</p>
+                          <p className="mt-2 text-sm font-semibold text-slate-900">{order.status === "Pending" ? "New Order" : (order.status || 'New Order')}</p>
                         </div>
                       </div>
                     </div>
