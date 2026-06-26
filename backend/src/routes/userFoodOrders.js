@@ -201,6 +201,20 @@ router.post('/', verifyToken, async (req, res) => {
         return safeItem;
       });
 
+      // Auto-populate franchise_user_id if missing but we have chef_user_id
+      let finalFranchiseUserId = chefGroup.franchise_user_id || '';
+      
+      if (!finalFranchiseUserId && chefGroup.chef_user_id && chefGroup.chef_user_id !== 'unknown') {
+        try {
+          const [chefRows] = await pool.execute('SELECT created_by FROM home_chefs WHERE user_id = ? LIMIT 1', [chefGroup.chef_user_id]);
+          if (chefRows.length > 0 && chefRows[0].created_by) {
+            finalFranchiseUserId = chefRows[0].created_by;
+          }
+        } catch (e) {
+          console.error('Failed to auto-populate franchise_user_id:', e);
+        }
+      }
+
       const orderPayload = {
         ...payload,
         items: safeItems,
@@ -210,7 +224,7 @@ router.post('/', verifyToken, async (req, res) => {
         chef_name: chefGroup.chef_name,
         chef_email: chefGroup.chef_email,
         chef_phone: chefGroup.chef_phone,
-        franchise_user_id: chefGroup.franchise_user_id,
+        franchise_user_id: finalFranchiseUserId,
         franchise_id: chefGroup.franchise_id,
         franchise_name: chefGroup.franchise_name,
         franchise_email: chefGroup.franchise_email,
