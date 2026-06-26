@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import api from "../../api";
 import { toast } from "react-hot-toast";
-import { Search, Filter, Edit, Check } from "lucide-react";
+import { Search, Filter, Edit, Check, Eye, ChevronLeft, ChevronRight, X } from "lucide-react";
 
 const OrderManagement = () => {
   const location = useLocation();
@@ -17,6 +17,11 @@ const OrderManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [trackingOrder, setTrackingOrder] = useState(null);
   const [trackingDetails, setTrackingDetails] = useState(null);
+  
+  // Pagination and View states
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const [viewingOrder, setViewingOrder] = useState(null);
 
   // Fetch tracking details when modal opens
   useEffect(() => {
@@ -101,7 +106,15 @@ const OrderManagement = () => {
       }
     }
     setFilteredOrders(result);
+    setCurrentPage(1);
   }, [search, statusFilter, orders]);
+
+  // Pagination calculation
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const paginatedOrders = filteredOrders.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const handleUpdateOrder = async (e) => {
     e.preventDefault();
@@ -201,7 +214,7 @@ const OrderManagement = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {filteredOrders.map((order, idx) => {
+                {paginatedOrders.map((order, idx) => {
                   const chefQuantity = order.chef_total_quantity ?? order.items?.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0);
                   const chefAmount = parseFloat((order.chef_total_amount ?? order.total_amount) || 0);
                   
@@ -281,6 +294,13 @@ const OrderManagement = () => {
                       <td className="px-6 py-5">
                         <div className="flex items-center justify-center gap-2">
                           <button
+                            onClick={() => setViewingOrder(order)}
+                            className="p-2 hover:bg-white/10 text-white/70 hover:text-white rounded-xl transition"
+                            title="View Details"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
                             onClick={() => {
                               setEditingOrder(order);
                               setIsModalOpen(true);
@@ -304,7 +324,7 @@ const OrderManagement = () => {
                     </tr>
                   );
                 })}
-                {filteredOrders.length === 0 && (
+                {paginatedOrders.length === 0 && (
                   <tr>
                     <td colSpan="8" className="px-6 py-8 text-center text-xs text-white/30 italic">
                       No order logs available.
@@ -314,6 +334,31 @@ const OrderManagement = () => {
               </tbody>
             </table>
           </div>
+          
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-6 py-4 border-t border-white/5 bg-[#070b13]/30">
+              <span className="text-xs font-bold text-white/40 uppercase tracking-widest">
+                Page {currentPage} of {totalPages}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="p-2 bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:hover:bg-white/5 rounded-lg transition"
+                >
+                  <ChevronLeft className="w-4 h-4 text-white" />
+                </button>
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="p-2 bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:hover:bg-white/5 rounded-lg transition"
+                >
+                  <ChevronRight className="w-4 h-4 text-white" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -508,6 +553,97 @@ const OrderManagement = () => {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Details Modal */}
+      {viewingOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={() => setViewingOrder(null)}></div>
+          <div className="bg-[#0B1120] border border-white/5 w-full max-w-2xl rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[85vh]">
+            <div className="bg-[#1B4D22] p-8 text-white flex justify-between items-start">
+              <div>
+                <h3 className="text-xl font-black uppercase italic tracking-tight">Order Details</h3>
+                <p className="text-xs text-emerald-400 font-bold uppercase tracking-widest mt-1">{viewingOrder.order_id}</p>
+              </div>
+              <button onClick={() => setViewingOrder(null)} className="text-white hover:text-emerald-300 transition">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="p-8 space-y-6 text-white overflow-y-auto custom-scrollbar flex-1">
+              <div className="grid grid-cols-2 gap-6">
+                <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                  <h4 className="text-[10px] text-white/40 font-bold uppercase tracking-widest mb-3">Customer Information</h4>
+                  <p className="text-sm font-bold">{viewingOrder.customer_name}</p>
+                  <p className="text-xs text-white/70 mt-1">{viewingOrder.customer_phone || 'N/A'}</p>
+                  <p className="text-xs text-white/70 mt-1">{viewingOrder.customer_email || 'N/A'}</p>
+                </div>
+                <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                  <h4 className="text-[10px] text-white/40 font-bold uppercase tracking-widest mb-3">Delivery Address</h4>
+                  <p className="text-xs text-white/80 leading-relaxed">
+                    {viewingOrder.street_address}<br/>
+                    {viewingOrder.city}, {viewingOrder.district}<br/>
+                    {viewingOrder.state}, {viewingOrder.country} - {viewingOrder.zip_code}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-6">
+                <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                  <h4 className="text-[10px] text-white/40 font-bold uppercase tracking-widest mb-3">Order Status</h4>
+                  <p className="text-sm font-black text-emerald-400">{viewingOrder.status === "Pending" ? "New Order" : viewingOrder.status}</p>
+                  <p className="text-xs text-white/60 mt-2">Payment: {viewingOrder.payment_method} ({viewingOrder.payment_status})</p>
+                </div>
+                <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                  <h4 className="text-[10px] text-white/40 font-bold uppercase tracking-widest mb-3">Delivery Info</h4>
+                  <p className="text-xs text-white/80">Slot: {viewingOrder.delivery_date} {viewingOrder.delivery_time}</p>
+                  <p className="text-xs text-white/80 mt-1">Partner: {viewingOrder.delivery_partner || "Unassigned"}</p>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="text-[10px] text-white/40 font-bold uppercase tracking-widest mb-3">Order Items</h4>
+                <div className="bg-white/5 rounded-2xl border border-white/5 overflow-hidden">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-white/10 bg-[#070b13]/50 text-white/40 uppercase tracking-widest">
+                        <th className="px-4 py-3 font-bold">Item</th>
+                        <th className="px-4 py-3 font-bold">Price</th>
+                        <th className="px-4 py-3 font-bold text-center">Qty</th>
+                        <th className="px-4 py-3 font-bold text-right">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {(viewingOrder.items || []).map((item, i) => (
+                        <tr key={i} className="hover:bg-white/5">
+                          <td className="px-4 py-3 font-medium">{item.name || item.product_name}</td>
+                          <td className="px-4 py-3 text-white/70">₹{parseFloat(item.price || 0).toLocaleString()}</td>
+                          <td className="px-4 py-3 text-center">{item.quantity || 1}</td>
+                          <td className="px-4 py-3 font-bold text-right">₹{(parseFloat(item.price || 0) * (item.quantity || 1)).toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <div className="p-4 bg-[#070b13]/50 flex justify-between items-center border-t border-white/10">
+                    <span className="text-sm font-bold uppercase tracking-widest text-white/60">Chef Subtotal</span>
+                    <span className="text-lg font-black text-emerald-400">
+                      ₹{parseFloat(viewingOrder.chef_total_amount ?? viewingOrder.total_amount ?? 0).toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="p-6 border-t border-white/5 bg-[#070b13]/40 flex justify-end">
+              <button
+                onClick={() => setViewingOrder(null)}
+                className="px-6 py-2.5 bg-white/10 hover:bg-white/20 text-white font-black text-xs uppercase tracking-widest rounded-xl transition"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>
