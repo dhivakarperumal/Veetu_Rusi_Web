@@ -19,6 +19,10 @@ exports.getDashboardData = async (req, res) => {
     let franchiseDeliveredCount = 0;
     let franchiseCancelledCount = 0;
     let franchiseDeliveredRevenue = 0;
+    
+    let pendingApprovals = 0;
+    let activeFranchises = 0;
+    let totalFranchises = 0;
 
     const currentUserId = req.user?.user_id || 'UNKNOWN';
     const currentIdInt = req.user?.id || -1;
