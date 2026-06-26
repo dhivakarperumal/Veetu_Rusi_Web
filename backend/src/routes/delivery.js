@@ -71,8 +71,8 @@ router.get('/orders/available', async (req, res) => {
 
     // Fetch the delivery partner to find their franchise admin (created_by)
     const [dpRows] = await pool.execute(
-      'SELECT created_by FROM delivery_partners WHERE delivery_partner_code = ? OR id = ? LIMIT 1',
-      [deliveryBoyId, deliveryBoyId]
+      'SELECT created_by FROM delivery_partners WHERE user_id = ? OR id = ? OR delivery_partner_code = ? LIMIT 1',
+      [deliveryBoyId, deliveryBoyId, deliveryBoyId]
     );
 
     let franchiseAdminId = null;
