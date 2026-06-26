@@ -67,12 +67,46 @@ router.get('/orders', async (req, res) => {
 
 router.get('/orders/available', async (req, res) => {
   try {
-    const [rows] = await pool.execute(
-      `SELECT * FROM user_food_order_table
-       WHERE status = 'Searching Delivery Partner'
-         AND (delivery_partner IS NULL OR delivery_partner = '')
-       ORDER BY ordered_at DESC`
+    // Prioritize user_id (e.g. 'DEL-xxx') because req.user.id might be the ID from the global users table.
+    const deliveryBoyId = req.user?.user_id || req.user?.id;
+
+    // Fetch the delivery partner to find their franchise admin (created_by)
+    const [dpRows] = await pool.execute(
+      'SELECT created_by FROM delivery_partners WHERE user_id = ? OR id = ? OR delivery_partner_code = ? LIMIT 1',
+      [deliveryBoyId, deliveryBoyId, deliveryBoyId]
     );
+
+    let franchiseAdminId = null;
+    if (dpRows.length > 0 && dpRows[0].created_by) {
+      franchiseAdminId = dpRows[0].created_by;
+    }
+
+    console.log(`[orders/available] User: ${deliveryBoyId}, Found FranchiseAdminId: ${franchiseAdminId}`);
+
+    let query = `
+      SELECT o.* 
+      FROM user_food_order_table o
+      LEFT JOIN home_chefs c ON (o.chef_id = c.id OR o.chef_user_id = c.user_id)
+      WHERE o.status = 'Searching Delivery Partner'
+        AND (o.delivery_partner IS NULL OR o.delivery_partner = '')
+    `;
+    const params = [];
+
+    // If the delivery partner was created by a franchise admin, only show orders from the same franchise admin
+    if (franchiseAdminId) {
+      query += ` AND (c.created_by = ? OR o.franchise_user_id = ?)`;
+      params.push(franchiseAdminId, franchiseAdminId);
+    } else {
+      // If the delivery boy has NO franchise admin, DO NOT show any franchise orders.
+      // E.g., c.created_by IS NULL
+      query += ` AND c.created_by IS NULL AND o.franchise_user_id IS NULL`;
+    }
+
+    query += ` ORDER BY o.ordered_at DESC`;
+
+    console.log(`[orders/available] Query: ${query}, Params:`, params);
+
+    const [rows] = await pool.execute(query, params);
     res.json(rows);
   } catch (err) {
     console.error('Available Orders Error:', err);

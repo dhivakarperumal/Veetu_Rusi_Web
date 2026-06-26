@@ -41,7 +41,7 @@ const initUserFoodOrderTable = async () => {
         ordered_by_name VARCHAR(255),
         ordered_by_email VARCHAR(255),
         ordered_by_phone VARCHAR(20),
-        status VARCHAR(50) DEFAULT 'Pending',
+        status VARCHAR(50) DEFAULT 'New Order',
         ordered_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         KEY idx_user_id (user_id),
@@ -159,7 +159,111 @@ router.post('/', verifyToken, async (req, res) => {
       user_id: req.body.user_id || req.user?.user_id || req.user?.id || null
     };
 
-    const result = await controller.addUserFoodOrder(payload);
+    if (!payload.items || !payload.items.length) {
+      return res.status(400).json({ message: 'No items in order' });
+    }
+
+    // Group items by chef_user_id
+    const itemsByChef = payload.items.reduce((acc, item) => {
+      const chefId = item.chef_user_id || item.created_by || item.created_by_user_id || item.chef_id || 'unknown';
+      if (!acc[chefId]) {
+        acc[chefId] = {
+          chef_user_id: chefId,
+          chef_id: item.chef_id || '',
+          chef_name: item.chef_name || item.created_by_name || '',
+          chef_email: item.chef_email || item.created_by_email || '',
+          chef_phone: item.chef_phone || item.created_by_phone || '',
+          franchise_user_id: item.franchise_user_id || '',
+          franchise_id: item.franchise_id || '',
+          franchise_name: item.franchise_name || '',
+          franchise_email: item.franchise_email || '',
+          franchise_phone: item.franchise_phone || '',
+          items: [],
+          total_amount: 0
+        };
+      }
+      acc[chefId].items.push(item);
+      acc[chefId].total_amount += parseFloat(item.price || 0) * (item.quantity || 1);
+      return acc;
+    }, {});
+
+    const createdOrders = [];
+    const io = getIo();
+
+    for (const chefGroup of Object.values(itemsByChef)) {
+      // Strip large base64 images from items to prevent max_allowed_packet errors in MySQL
+      const safeItems = chefGroup.items.map(item => {
+        const safeItem = { ...item };
+        if (safeItem.image && typeof safeItem.image === 'string' && safeItem.image.length > 500) {
+          // If it's a large base64 string, remove it to save DB space and prevent errors
+          delete safeItem.image;
+        }
+        return safeItem;
+      });
+
+      // Auto-populate franchise_user_id if missing but we have chef_user_id
+      let finalFranchiseUserId = chefGroup.franchise_user_id || '';
+      
+      if (!finalFranchiseUserId && chefGroup.chef_user_id && chefGroup.chef_user_id !== 'unknown') {
+        try {
+          const [chefRows] = await pool.execute('SELECT created_by FROM home_chefs WHERE user_id = ? LIMIT 1', [chefGroup.chef_user_id]);
+          if (chefRows.length > 0 && chefRows[0].created_by) {
+            finalFranchiseUserId = chefRows[0].created_by;
+          }
+        } catch (e) {
+          console.error('Failed to auto-populate franchise_user_id:', e);
+        }
+      }
+
+      const orderPayload = {
+        ...payload,
+        items: safeItems,
+        total_amount: chefGroup.total_amount,
+        chef_user_id: chefGroup.chef_user_id === 'unknown' ? null : chefGroup.chef_user_id,
+        chef_id: chefGroup.chef_id,
+        chef_name: chefGroup.chef_name,
+        chef_email: chefGroup.chef_email,
+        chef_phone: chefGroup.chef_phone,
+        franchise_user_id: finalFranchiseUserId,
+        franchise_id: chefGroup.franchise_id,
+        franchise_name: chefGroup.franchise_name,
+        franchise_email: chefGroup.franchise_email,
+        franchise_phone: chefGroup.franchise_phone,
+      };
+
+      const result = await controller.addUserFoodOrder(orderPayload);
+      createdOrders.push(result);
+
+      // 🔔 Emit socket event to notify chef of new order
+      try {
+        if (io && orderPayload.chef_user_id) {
+          const chefRoom = `chef:${orderPayload.chef_user_id}`;
+          const orderData = {
+            id: result.insertId,
+            order_id: result.order_id,
+            customer_name: orderPayload.customer_name || 'Customer',
+            customer_phone: orderPayload.customer_phone || '',
+            customer_email: orderPayload.customer_email || '',
+            total_amount: orderPayload.total_amount || 0,
+            chef_total_amount: orderPayload.total_amount || 0,
+            status: 'New Order',
+            items: orderPayload.items || [],
+            street_address: orderPayload.street_address || '',
+            city: orderPayload.city || '',
+            district: orderPayload.district || '',
+            state: orderPayload.state || '',
+            delivery_date: orderPayload.delivery_date || '',
+            delivery_time: orderPayload.delivery_time || '',
+            created_at: new Date().toISOString()
+          };
+          
+          console.log(`📤 Emitting new_order event to chef:${orderPayload.chef_user_id}`, orderData);
+          io.to(chefRoom).emit('new_order', orderData);
+        }
+      } catch (socketErr) {
+        console.error('Failed to emit socket event:', socketErr.message || socketErr);
+      }
+    }
 
     if (payload.user_id) {
       try {
@@ -169,39 +273,12 @@ router.post('/', verifyToken, async (req, res) => {
       }
     }
 
-    // 🔔 Emit socket event to notify chef of new order
-    try {
-      const io = getIo();
-      if (io && payload.chef_user_id) {
-        const chefRoom = `chef:${payload.chef_user_id}`;
-        const orderData = {
-          id: result.insertId,
-          order_id: result.order_id,
-          customer_name: payload.customer_name || 'Customer',
-          customer_phone: payload.customer_phone || '',
-          customer_email: payload.customer_email || '',
-          total_amount: payload.total_amount || 0,
-          chef_total_amount: payload.total_amount || 0,
-          status: 'Pending',
-          items: payload.items || [],
-          street_address: payload.street_address || '',
-          city: payload.city || '',
-          district: payload.district || '',
-          state: payload.state || '',
-          delivery_date: payload.delivery_date || '',
-          delivery_time: payload.delivery_time || '',
-          created_at: new Date().toISOString()
-        };
-        
-        console.log(`📤 Emitting new_order event to chef:${payload.chef_user_id}`, orderData);
-        io.to(chefRoom).emit('new_order', orderData);
-      }
-    } catch (socketErr) {
-      console.error('Failed to emit socket event:', socketErr.message || socketErr);
-      // Don't fail the order creation if socket fails
-    }
-
-    res.status(201).json({ message: 'Order placed successfully', order_id: result.order_id, id: result.insertId });
+    res.status(201).json({ 
+      message: 'Order placed successfully', 
+      orders: createdOrders,
+      order_id: createdOrders[0]?.order_id, // Backward compatibility
+      id: createdOrders[0]?.insertId // Backward compatibility
+    });
   } catch (err) {
     console.error('Error placing user food order:', err);
     res.status(500).json({ message: 'Error placing order', error: err.message });

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { TrendingUp, ShoppingCart, Users, Star, AlertCircle, Utensils, Package, Eye } from "lucide-react";
+import { TrendingUp, ShoppingCart, Users, Star, AlertCircle, Utensils, Package, Eye, Clock } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -71,7 +71,7 @@ const AnalyticsDashboard = () => {
         setStats({
           totalOrders: orders.length,
           totalRevenue: revenue,
-          totalCustomers: new Set(orders.map(o => o.customer_id)).size,
+          totalCustomers: new Set(orders.map(o => o.user_id || o.customer_phone || o.customer_email).filter(Boolean)).size,
           avgRating: 4.8,
           foodCount,
           productsCount,
@@ -125,6 +125,27 @@ const AnalyticsDashboard = () => {
       color: "blue",
     },
     {
+      label: "In Progress Orders",
+      value: String(stats.inProgressOrders),
+      change: "Active",
+      icon: Clock,
+      color: "yellow",
+    },
+    {
+      label: "Delivered Orders",
+      value: String(stats.completedOrders),
+      change: "Active",
+      icon: Package,
+      color: "green",
+    },
+    {
+      label: "Cancelled Orders",
+      value: String(stats.cancelledOrders),
+      change: "Active",
+      icon: AlertCircle,
+      color: "red",
+    },
+    {
       label: "Total Revenue",
       value: `₹${(stats.totalRevenue || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`,
       change: "+8.2%",
@@ -166,6 +187,7 @@ const AnalyticsDashboard = () => {
     green: "from-green-50 to-green-100 border-green-200",
     purple: "from-purple-50 to-purple-100 border-purple-200",
     yellow: "from-yellow-50 to-yellow-100 border-yellow-200",
+    red: "from-red-50 to-red-100 border-red-200",
   };
 
   const iconColorMap = {
@@ -173,6 +195,7 @@ const AnalyticsDashboard = () => {
     green: "text-green-600",
     purple: "text-purple-600",
     yellow: "text-yellow-600",
+    red: "text-red-600",
   };
 
   return (

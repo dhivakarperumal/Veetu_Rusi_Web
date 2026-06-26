@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import api from "../../api";
 import { toast } from "react-hot-toast";
-import { Search, Filter, Edit, Check } from "lucide-react";
+import { Search, Filter, Edit, Check, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 
 const OrderManagement = () => {
   const location = useLocation();
@@ -17,6 +17,10 @@ const OrderManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [trackingOrder, setTrackingOrder] = useState(null);
   const [trackingDetails, setTrackingDetails] = useState(null);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // Fetch tracking details when modal opens
   useEffect(() => {
@@ -101,7 +105,15 @@ const OrderManagement = () => {
       }
     }
     setFilteredOrders(result);
+    setCurrentPage(1);
   }, [search, statusFilter, orders]);
+
+  // Pagination calculation
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const paginatedOrders = filteredOrders.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const handleUpdateOrder = async (e) => {
     e.preventDefault();
@@ -201,7 +213,7 @@ const OrderManagement = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {filteredOrders.map((order, idx) => {
+                {paginatedOrders.map((order, idx) => {
                   const chefQuantity = order.chef_total_quantity ?? order.items?.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0);
                   const chefAmount = parseFloat((order.chef_total_amount ?? order.total_amount) || 0);
                   
@@ -281,6 +293,13 @@ const OrderManagement = () => {
                       <td className="px-6 py-5">
                         <div className="flex items-center justify-center gap-2">
                           <button
+                            onClick={() => navigate(`/chef/orders/${order.id}`)}
+                            className="p-2 hover:bg-white/10 text-white/70 hover:text-white rounded-xl transition"
+                            title="View Details"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
                             onClick={() => {
                               setEditingOrder(order);
                               setIsModalOpen(true);
@@ -304,7 +323,7 @@ const OrderManagement = () => {
                     </tr>
                   );
                 })}
-                {filteredOrders.length === 0 && (
+                {paginatedOrders.length === 0 && (
                   <tr>
                     <td colSpan="8" className="px-6 py-8 text-center text-xs text-white/30 italic">
                       No order logs available.
@@ -314,6 +333,31 @@ const OrderManagement = () => {
               </tbody>
             </table>
           </div>
+          
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-6 py-4 border-t border-white/5 bg-[#070b13]/30">
+              <span className="text-xs font-bold text-white/40 uppercase tracking-widest">
+                Page {currentPage} of {totalPages}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="p-2 bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:hover:bg-white/5 rounded-lg transition"
+                >
+                  <ChevronLeft className="w-4 h-4 text-white" />
+                </button>
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="p-2 bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:hover:bg-white/5 rounded-lg transition"
+                >
+                  <ChevronRight className="w-4 h-4 text-white" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -512,6 +556,7 @@ const OrderManagement = () => {
           </div>
         </div>
       )}
+
     </div>
   );
 };

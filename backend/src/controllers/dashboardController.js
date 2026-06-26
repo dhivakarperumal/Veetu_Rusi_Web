@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const { getAllOrders } = require('./userFoodOrderController');
 
 // Admin Dashboard — returns stats, recentOrders, topProducts, lowStockAlerts, categoryAnalytics, revenueTrends, regionalSales
 exports.getDashboardData = async (req, res) => {
@@ -11,6 +12,17 @@ exports.getDashboardData = async (req, res) => {
     let totalDeliveryPartners = 0;
     let totalOrders = 0;
     let cancelledOrders = 0;
+    let deliveredOrdersCount = 0;
+    let deliveredOrdersRevenue = 0;
+
+    let franchiseOrdersCount = 0;
+    let franchiseDeliveredCount = 0;
+    let franchiseCancelledCount = 0;
+    let franchiseDeliveredRevenue = 0;
+    
+    let pendingApprovals = 0;
+    let activeFranchises = 0;
+    let totalFranchises = 0;
 
     const currentUserId = req.user?.user_id || 'UNKNOWN';
     const currentIdInt = req.user?.id || -1;
@@ -33,15 +45,23 @@ exports.getDashboardData = async (req, res) => {
     } catch (_) { }
 
     try {
-      const [[tp]] = await pool.execute("SELECT COUNT(*) AS cnt FROM chef_products");
-      totalProducts = tp.cnt || 0;
+      if (isSuperAdmin) {
+        const [[tp]] = await pool.execute("SELECT COUNT(*) AS cnt FROM franchise_products");
+        totalProducts = tp.cnt || 0;
+      } else {
+        const [[tp]] = await pool.execute("SELECT COUNT(*) AS cnt FROM franchise_products WHERE created_by = ?", [currentUserId]);
+        totalProducts = tp.cnt || 0;
+      }
     } catch (_) { }
 
     try {
-      const [[ls]] = await pool.execute(
-        "SELECT COUNT(*) AS cnt FROM chef_products WHERE total_stock < 5"
-      );
-      lowStockCount = ls.cnt || 0;
+      if (isSuperAdmin) {
+        const [[ls]] = await pool.execute("SELECT COUNT(*) AS cnt FROM franchise_products WHERE total_stock < 5");
+        lowStockCount = ls.cnt || 0;
+      } else {
+        const [[ls]] = await pool.execute("SELECT COUNT(*) AS cnt FROM franchise_products WHERE total_stock < 5 AND created_by = ?", [currentUserId]);
+        lowStockCount = ls.cnt || 0;
+      }
     } catch (_) { }
 
     // Users
@@ -98,24 +118,49 @@ exports.getDashboardData = async (req, res) => {
       totalUsers += totalHomeChefs + totalDeliveryPartners;
     }
 
-    // Orders
+    // Fetch Orders using the exact same logic as /admin/food-orders/all
     try {
-      const [[row]] = await pool.execute(`
-        SELECT COUNT(*) AS total
-        FROM Chef_Order
-    `);
-      totalOrders = row.total;
-    } catch (e) { }
+      const orders = await getAllOrders({
+        role: req.user?.role,
+        userId: req.user?.user_id,
+        numericId: req.user?.id
+      });
+      
+      orders.forEach(order => {
+        totalOrders++;
+        if (order.status === 'Cancelled') {
+          cancelledOrders++;
+        } else if (order.status === 'Delivered') {
+          deliveredOrdersCount++;
+          deliveredOrdersRevenue += parseFloat(order.total_amount) || 0;
+        }
+      });
+    } catch (e) { 
+      console.error('Error processing orders for dashboard:', e);
+    }
 
-    // Cancelled Orders
+    // Fetch Franchise Admin specific product orders (from Chef_Order)
     try {
-      const [[row]] = await pool.execute(`
-        SELECT COUNT(*) AS total
-        FROM Chef_Order
-        WHERE status='Cancelled'
-    `);
-      cancelledOrders = row.total;
-    } catch (e) { }
+      let query = "SELECT status, total_amount FROM Chef_Order WHERE 1=1";
+      const params = [];
+      if (!isSuperAdmin) {
+        query += " AND created_by = ?";
+        params.push(currentUserId);
+      }
+      const [franchiseOrders] = await pool.execute(query, params);
+      
+      franchiseOrders.forEach(order => {
+        franchiseOrdersCount++;
+        if (order.status === 'Cancelled') {
+          franchiseCancelledCount++;
+        } else if (order.status === 'Delivered') {
+          franchiseDeliveredCount++;
+          franchiseDeliveredRevenue += parseFloat(order.total_amount) || 0;
+        }
+      });
+    } catch (e) {
+      console.error('Error fetching Chef_Order for franchise:', e);
+    }
 
     const stats = [
       {
@@ -164,9 +209,15 @@ exports.getDashboardData = async (req, res) => {
     // ── Top Products ──────────────────────────────────────────────
     let topProducts = [];
     try {
-      const [rows] = await pool.execute(
-        "SELECT p.name, p.category AS cat, p.mrp AS rev, p.images AS img, COALESCE(p.total_stock, 0) AS sales FROM chef_products p ORDER BY p.mrp DESC LIMIT 5"
-      );
+      let query = "SELECT p.name, p.category AS cat, p.mrp AS rev, p.images AS img, COALESCE(p.total_stock, 0) AS sales FROM franchise_products p";
+      const params = [];
+      if (!isSuperAdmin) {
+        query += " WHERE p.created_by = ?";
+        params.push(currentUserId);
+      }
+      query += " ORDER BY p.mrp DESC LIMIT 5";
+      
+      const [rows] = await pool.execute(query, params);
       topProducts = rows.map(p => ({
         name: p.name,
         cat: p.cat || 'Sarees',
@@ -179,9 +230,15 @@ exports.getDashboardData = async (req, res) => {
     // ── Low Stock Alerts ──────────────────────────────────────────
     let lowStockAlerts = [];
     try {
-      const [rows] = await pool.execute(
-        "SELECT name, category AS cat, total_stock AS stock, images AS img FROM chef_products WHERE total_stock < 5 ORDER BY total_stock ASC LIMIT 8"
-      );
+      let query = "SELECT name, category AS cat, total_stock AS stock, images AS img FROM franchise_products WHERE total_stock < 5";
+      const params = [];
+      if (!isSuperAdmin) {
+        query += " AND created_by = ?";
+        params.push(currentUserId);
+      }
+      query += " ORDER BY total_stock ASC LIMIT 8";
+
+      const [rows] = await pool.execute(query, params);
       lowStockAlerts = rows.map(p => ({
         name: p.name,
         cat: p.cat || 'Sarees',
@@ -194,9 +251,15 @@ exports.getDashboardData = async (req, res) => {
     // ── Category Analytics ────────────────────────────────────────
     let categoryAnalytics = [];
     try {
-      const [rows] = await pool.execute(
-        "SELECT category AS name, COUNT(*) AS items, COALESCE(SUM(mrp), 0) AS revenue FROM chef_products GROUP BY category ORDER BY revenue DESC LIMIT 5"
-      );
+      let query = "SELECT category AS name, COUNT(*) AS items, COALESCE(SUM(mrp), 0) AS revenue FROM franchise_products";
+      const params = [];
+      if (!isSuperAdmin) {
+        query += " WHERE created_by = ?";
+        params.push(currentUserId);
+      }
+      query += " GROUP BY category ORDER BY revenue DESC LIMIT 5";
+
+      const [rows] = await pool.execute(query, params);
       const totalRev = rows.reduce((acc, r) => acc + parseFloat(r.revenue), 0) || 1;
       const COLORS = ['bg-blue-500', 'bg-indigo-400', 'bg-emerald-500', 'bg-amber-500', 'bg-rose-400'];
       categoryAnalytics = rows.map((r, i) => ({
@@ -275,7 +338,16 @@ exports.getDashboardData = async (req, res) => {
         totalDeliveryPartners,
         totalOrders,
         totalProducts,
-        cancelledOrders
+        cancelledOrders,
+        deliveredOrdersCount,
+        deliveredOrdersRevenue,
+        pendingApprovals,
+        activeFranchises,
+        totalFranchises,
+        franchiseOrdersCount,
+        franchiseDeliveredCount,
+        franchiseCancelledCount,
+        franchiseDeliveredRevenue
       },
 
       recentOrders,
