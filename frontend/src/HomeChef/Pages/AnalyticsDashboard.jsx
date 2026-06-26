@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { TrendingUp, ShoppingCart, Users, Star, AlertCircle, Utensils, Package, Eye } from "lucide-react";
+import { TrendingUp, ShoppingCart, Users, Star, AlertCircle, Utensils, Package, Eye, Clock } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -123,6 +123,13 @@ const AnalyticsDashboard = () => {
       change: "+12.5%",
       icon: ShoppingCart,
       color: "blue",
+    },
+    {
+      label: "In Progress Orders",
+      value: String(stats.inProgressOrders),
+      change: "Active",
+      icon: Clock,
+      color: "yellow",
     },
     {
       label: "Delivered Orders",
