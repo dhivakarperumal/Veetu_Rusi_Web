@@ -67,12 +67,37 @@ router.get('/orders', async (req, res) => {
 
 router.get('/orders/available', async (req, res) => {
   try {
-    const [rows] = await pool.execute(
-      `SELECT * FROM user_food_order_table
-       WHERE status = 'Searching Delivery Partner'
-         AND (delivery_partner IS NULL OR delivery_partner = '')
-       ORDER BY ordered_at DESC`
+    const deliveryBoyId = req.user?.id || req.user?.user_id;
+
+    // Fetch the delivery partner to find their franchise admin (created_by)
+    const [dpRows] = await pool.execute(
+      'SELECT created_by FROM delivery_partners WHERE delivery_partner_code = ? OR id = ? LIMIT 1',
+      [deliveryBoyId, deliveryBoyId]
     );
+
+    let franchiseAdminId = null;
+    if (dpRows.length > 0 && dpRows[0].created_by) {
+      franchiseAdminId = dpRows[0].created_by;
+    }
+
+    let query = `
+      SELECT o.* 
+      FROM user_food_order_table o
+      LEFT JOIN home_chefs c ON (o.chef_id = c.id OR o.chef_user_id = c.user_id)
+      WHERE o.status = 'Searching Delivery Partner'
+        AND (o.delivery_partner IS NULL OR o.delivery_partner = '')
+    `;
+    const params = [];
+
+    // If the delivery partner was created by a franchise admin, only show orders from the same franchise admin
+    if (franchiseAdminId) {
+      query += ` AND (c.created_by = ? OR o.franchise_user_id = ?)`;
+      params.push(franchiseAdminId, franchiseAdminId);
+    }
+
+    query += ` ORDER BY o.ordered_at DESC`;
+
+    const [rows] = await pool.execute(query, params);
     res.json(rows);
   } catch (err) {
     console.error('Available Orders Error:', err);
