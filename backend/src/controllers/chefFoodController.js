@@ -135,6 +135,14 @@ exports.getFoods = async (req, res) => {
       // superadmin can see all when no explicit filter is applied
     }
 
+    if (chef_user_id) {
+      query += ' AND cf.created_by = ?';
+      params.push(chef_user_id);
+    }
+    if (chef_id) {
+      query += ' AND cf.chef_id = ?';
+      params.push(chef_id);
+    }
     if (franchise_user_id) {
       query += ' AND cf.franchise_user_id = ?';
       params.push(franchise_user_id);

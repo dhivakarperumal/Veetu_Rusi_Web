@@ -35,7 +35,7 @@ const MyProducts = () => {
     if (!window.confirm('Are you sure you want to delete this product?')) return;
     setDeleting(true);
     try {
-      await api.delete(`/chef-foods/${id}`);
+      await api.delete(`/products/${id}`);
       toast.success('Product deleted successfully.');
       setProducts(prev => prev.filter(p => p.id !== id));
     } catch (err) {
@@ -50,16 +50,15 @@ const MyProducts = () => {
       try {
         const chefUserId = user?.user_id || user?.id;
         if (!chefUserId) return setProducts([]);
-        const res = await api.get('/chef-foods', { params: { chef_user_id: chefUserId } });
-        const allItems = Array.isArray(res.data) ? res.data : [];
-        const productsOnly = allItems.filter(item => {
-          if (!item.product_type) {
-            if (!item.category) return false;
-            return String(item.category).toLowerCase().includes('product');
-          }
-          return item.product_type === 'Food Product';
-        });
-        setProducts(productsOnly);
+        
+        // Fetch products directly from chef_products table using the new endpoint
+        const res = await api.get(`/products/user/${chefUserId}`);
+        
+        // Handle both old format (array) and new format (object with data property)
+        let allItems = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+        
+        // If response contains all chef_products, no need to filter
+        setProducts(allItems);
       } catch (err) {
         console.error('Failed to fetch products:', err);
         toast.error('Failed to load your products');

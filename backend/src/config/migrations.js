@@ -1,5 +1,33 @@
 const pool = require('./db');
 
+const ensureColumnExists = async (tableName, columnName, columnDefinition) => {
+    try {
+        const [rows] = await pool.execute(
+            'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?',
+            [tableName, columnName]
+        );
+        if (!rows || rows.length === 0) {
+            await pool.execute(`ALTER TABLE \`${tableName}\` ADD COLUMN ${columnName} ${columnDefinition}`);
+        }
+    } catch (err) {
+        // Ignore failures caused by unsupported syntax or existing columns
+    }
+};
+
+const dropColumnIfExists = async (tableName, columnName) => {
+    try {
+        const [rows] = await pool.execute(
+            'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?',
+            [tableName, columnName]
+        );
+        if (rows && rows.length > 0) {
+            await pool.execute(`ALTER TABLE \`${tableName}\` DROP COLUMN \`${columnName}\``);
+        }
+    } catch (err) {
+        // Ignore failures caused by unsupported syntax or missing columns
+    }
+};
+
 const createProductsTable = async () => {
     try {
         const createTableSQL = `
@@ -41,27 +69,18 @@ const createProductsTable = async () => {
             variants LONGTEXT,
             images LONGTEXT,
 
-            chef_id VARCHAR(255) NOT NULL,
-            chef_user_id VARCHAR(255),
-            chef_name VARCHAR(255),
-            chef_phone VARCHAR(20),
-            chef_email VARCHAR(255),
+           
 
-            created_by_user_id VARCHAR(255),
-            created_by_email VARCHAR(255),
-            created_by_name VARCHAR(255),
-            created_by_phone VARCHAR(20),
+            
 
             franchise_user_id VARCHAR(255),
-            franchise_name VARCHAR(255),
-            franchise_email VARCHAR(255),
-            franchise_phone VARCHAR(20),
-            franchise_id VARCHAR(255),
+           
 
+            created_by VARCHAR(255) DEFAULT NULL,
+            updated_by VARCHAR(255) DEFAULT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
-            KEY idx_chef_id (chef_id),
             KEY idx_category (category),
             KEY idx_status (status),
             KEY idx_created_at (created_at)
@@ -69,13 +88,25 @@ const createProductsTable = async () => {
         `;
 
         await pool.execute(createTableSQL);
-
-        try { await pool.execute('ALTER TABLE chef_products ADD COLUMN chef_user_id VARCHAR(255)'); } catch {}
-        try { await pool.execute('ALTER TABLE chef_products ADD COLUMN franchise_user_id VARCHAR(255)'); } catch {}
-        try { await pool.execute('ALTER TABLE chef_products ADD COLUMN franchise_name VARCHAR(255)'); } catch {}
-        try { await pool.execute('ALTER TABLE chef_products ADD COLUMN franchise_email VARCHAR(255)'); } catch {}
-        try { await pool.execute('ALTER TABLE chef_products ADD COLUMN franchise_phone VARCHAR(20)'); } catch {}
-        try { await pool.execute('ALTER TABLE chef_products ADD COLUMN images LONGTEXT'); } catch {}
+        await dropColumnIfExists('chef_products', 'chef_id');
+        await dropColumnIfExists('chef_products', 'chef_user_id');
+        await dropColumnIfExists('chef_products', 'chef_name');
+        await dropColumnIfExists('chef_products', 'chef_phone');
+        await dropColumnIfExists('chef_products', 'chef_email');
+        await dropColumnIfExists('chef_products', 'created_by_user_id');
+        await dropColumnIfExists('chef_products', 'created_by_email');
+        await dropColumnIfExists('chef_products', 'created_by_name');
+        await dropColumnIfExists('chef_products', 'created_by_phone');
+        await dropColumnIfExists('chef_products', 'franchise_name');
+        await dropColumnIfExists('chef_products', 'franchise_email');
+        await dropColumnIfExists('chef_products', 'franchise_phone');
+        await dropColumnIfExists('chef_products', 'franchise_id');
+        try { await pool.execute('ALTER TABLE chef_products MODIFY mrp DECIMAL(10,2) NULL'); } catch {}
+        try { await pool.execute('ALTER TABLE chef_products MODIFY offer_price DECIMAL(10,2) NULL'); } catch {}
+        await ensureColumnExists('chef_products', 'franchise_user_id', 'VARCHAR(255)');
+        await ensureColumnExists('chef_products', 'images', 'LONGTEXT');
+        await ensureColumnExists('chef_products', 'created_by', 'VARCHAR(255)');
+        await ensureColumnExists('chef_products', 'updated_by', 'VARCHAR(255)');
 
         console.log('✓ Chef products table created or already exists');
     } catch (error) {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import {
     FiArrowLeft,
     FiUploadCloud
@@ -15,7 +15,6 @@ const AddProducts = () => {
     const isEdit = !!id;
     const navigate = useNavigate();
     const [categories, setCategories] = useState([]);
-    const [_subcategories, setSubcategories] = useState([]);
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(isEdit);
 
@@ -27,9 +26,6 @@ const AddProducts = () => {
         product_type: "Food Product", // Food | Food Product
         subcategory: "",
         cuisine: "",
-        mrp: "",
-        offer: "",
-        offer_price: "",
         product_code: "",
         total_stock: "0",
         rating: "5",
@@ -88,28 +84,6 @@ const AddProducts = () => {
     // Track if total stock was manually edited
     const [isStockManuallyEdited, setIsStockManuallyEdited] = useState(false);
 
-    // 1. Auto-calculate Offer Price whenever MRP or Offer % changes
-    useEffect(() => {
-        const mrpValue = parseFloat(formData.mrp) || 0;
-        const offerValue = parseFloat(formData.offer) || 0;
-        if (mrpValue > 0) {
-            const calculatedPrice = mrpValue - (mrpValue * (offerValue / 100));
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setFormData(prev => ({ ...prev, offer_price: Math.round(calculatedPrice).toString() }));
-        } else {
-             
-            setFormData(prev => ({ ...prev, offer_price: "0" }));
-        }
-    }, [formData.mrp, formData.offer]);
-
-    const computedFinalPrice = useMemo(() => {
-        const mrpValue = parseFloat(formData.mrp) || 0;
-        const offerValue = parseFloat(formData.offer) || 0;
-        if (mrpValue <= 0) return "0";
-        const calculated = mrpValue - mrpValue * (offerValue / 100);
-        return Math.round(calculated).toString();
-    }, [formData.mrp, formData.offer]);
-
     // 2. Auto-calculate Total Stock whenever variants or sizesStock change
     useEffect(() => {
         if (!isStockManuallyEdited) {
@@ -129,9 +103,6 @@ const AddProducts = () => {
         }
     }, [variants, isStockManuallyEdited]);
 
-    // Portion size logic for chef products
-    const getSizesByCategory = () => ["Single", "Half", "Family", "Party", "250g", "500g", "1kg"];
-
     const computeVariantFinalPrice = (price, offer) => {
         const priceNum = parseFloat(price) || 0;
         const offerNum = parseFloat(offer) || 0;
@@ -147,7 +118,7 @@ const AddProducts = () => {
             try {
                 const profileRes = await api.get('/auth/profile');
                 const homeChef = profileRes.data?.homeChef || null;
-                adminUserId = homeChef?.created_by || homeChef?.franchise_user_id || homeChef?.created_by_user_id || null;
+                adminUserId = homeChef?.created_by || homeChef?.franchise_user_id || null;
             } catch (e) {
                 console.warn('Could not fetch chef profile for category filtering', e);
             }
@@ -156,7 +127,7 @@ const AddProducts = () => {
                 // Fetch categories and the product independently so one failure doesn't block the other
                 const [catsResult, productResult] = await Promise.allSettled([
                     api.get("/home-chef-categories"),
-                    api.get(`/chef-foods/${id}`)
+                    api.get(`/products/${id}`)
                 ]);
 
                 if (catsResult.status === 'fulfilled') {
@@ -165,7 +136,6 @@ const AddProducts = () => {
                     if (adminUserId) {
                         allCats = allCats.filter(cat =>
                             String(cat.created_by) === String(adminUserId) ||
-                            String(cat.created_by_user_id) === String(adminUserId) ||
                             String(cat.franchise_user_id) === String(adminUserId)
                         );
                     }
@@ -183,9 +153,6 @@ const AddProducts = () => {
                             category: p.category || "Food Product",
                             subcategory: p.subcategory || "",
                             cuisine: p.cuisine || "",
-                            mrp: p.mrp?.toString() || "",
-                            offer: p.offer?.toString() || "",
-                            offer_price: (p.offer_price || p.final_price)?.toString() || "",
                             product_code: p.product_code || "",
                             total_stock: p.total_stock?.toString() || "0",
                             rating: p.rating?.toString() || "5",
@@ -241,7 +208,6 @@ const AddProducts = () => {
                     if (adminUserId) {
                         filteredCats = filteredCats.filter(cat =>
                             String(cat.created_by) === String(adminUserId) ||
-                            String(cat.created_by_user_id) === String(adminUserId) ||
                             String(cat.franchise_user_id) === String(adminUserId)
                         );
                     }
@@ -263,24 +229,6 @@ const AddProducts = () => {
         };
         fetchEssentialData();
     }, [id, isEdit]);
-
-    // Update Subcategories when Category changes
-    useEffect(() => {
-        const selectedCat = categories.find(c => c.name === formData.category);
-        if (selectedCat && selectedCat.subcategory) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setSubcategories(selectedCat.subcategory);
-            // Only auto-select first subcat if it's currently empty
-            if (!formData.subcategory) {
-                 
-                setFormData(prev => ({ ...prev, subcategory: selectedCat.subcategory[0] || "" }));
-            }
-        } else {
-            setSubcategories([]);
-            if (!isEdit) setFormData(prev => ({ ...prev, subcategory: "" }));
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [formData.category, categories, isEdit]);
 
     const handleFormChange = (e) => {
         const { name, value } = e.target;
@@ -404,12 +352,6 @@ const AddProducts = () => {
 
 
             // Build a clean payload matching chef_food_table columns
-            const mrpNum = parseFloat(formData.mrp) || 0;
-            const offerNum = parseFloat(formData.offer) || 0;
-            const computedFinalPrice = formData.offer_price
-                ? parseFloat(formData.offer_price)
-                : mrpNum - mrpNum * (offerNum / 100);
-
             // Normalize variants/images
             const normalizedVariants = Array.isArray(variants) ? variants.map(v => ({
                 weight: v.weight || null,
@@ -434,9 +376,6 @@ const AddProducts = () => {
                 shelf_life_days: formData.shelf_life_days ? Number(formData.shelf_life_days) : null,
                 manufacture_date: formData.manufacture_date || null,
                 expiry_date: formData.expiry_date || null,
-                mrp: (formData.mrp && formData.mrp.toString().trim() !== '') ? mrpNum : undefined,
-                offer: (formData.offer && formData.offer.toString().trim() !== '') ? offerNum : undefined,
-                final_price: (formData.offer_price && formData.offer_price.toString().trim() !== '') ? computedFinalPrice : (formData.mrp && formData.mrp.toString().trim() !== '' ? mrpNum : undefined),
                 dietary_tag: formData.dietary_tag || null,
                 net_weight: formData.net_weight || null,
                 packaging_type: formData.packaging_type || null,
@@ -460,10 +399,10 @@ const AddProducts = () => {
             });
 
             if (isEdit) {
-                await api.put(`/chef-foods/${id}`, cleanPayload);
+                await api.put(`/products/${id}`, cleanPayload);
                 toast.success("Product updated successfully!");
             } else {
-                await api.post("/chef-foods", cleanPayload);
+                await api.post("/products", cleanPayload);
                 toast.success("Product added to your menu successfully!");
             }
 
@@ -582,21 +521,7 @@ const AddProducts = () => {
 
                                 {activeStepIndex === 1 && (
                                     <div className="space-y-6">
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                            <div>
-                                                <label className="block text-xs font-black text-slate-300 uppercase mb-2">Market MRP *</label>
-                                                <input type="number" name="mrp" value={formData.mrp} onChange={handleFormChange} min="0" step="0.01" placeholder="e.g. 199" className={fieldClass} required />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-black text-slate-300 uppercase mb-2">Offer (%)</label>
-                                                <input type="number" name="offer" value={formData.offer} onChange={handleFormChange} min="0" max="100" placeholder="e.g. 10" className={fieldClass} />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-black text-slate-300 uppercase mb-2">Final Price</label>
-                                                <input type="text" value={formData.offer_price || (formData.mrp ? Math.round((parseFloat(formData.mrp) || 0) - ((parseFloat(formData.mrp) || 0) * (parseFloat(formData.offer) || 0) / 100)).toString() : '')} readOnly className={fieldClass} />
-                                            </div>
-                                        </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div>
                                                 <label className="block text-xs font-black text-slate-300 uppercase mb-2">Packaging Type</label>
                                                 <select name="packaging_type" value={formData.packaging_type} onChange={handleFormChange} className={fieldClass}>
@@ -760,10 +685,7 @@ const AddProducts = () => {
                                                     <p><strong className="text-white">Total Stock:</strong> {formData.total_stock || '0'}</p>
                                                 </div>
                                                 <div className="bg-[#0b0d10] p-4 rounded-md text-sm text-slate-300">
-                                                    <p><strong className="text-white">Price:</strong> ₹{formData.mrp || '-'}</p>
-                                                    <p><strong className="text-white">Offer:</strong> {formData.offer || '0'}%</p>
-                                                    <p><strong className="text-white">Final Price:</strong> ₹{computedFinalPrice}</p>
-                                                    <p><strong className="text-white">Packaging:</strong> {formData.packaging_type || '-'}</p>
+                                                        <p><strong className="text-white">Packaging:</strong> {formData.packaging_type || '-'}</p>
                                                     <p><strong className="text-white">Shelf Life:</strong> {formData.shelf_life_days ? `${formData.shelf_life_days} days` : '-'}</p>
                                                 </div>
                                             </div>

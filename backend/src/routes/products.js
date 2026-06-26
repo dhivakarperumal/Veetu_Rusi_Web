@@ -6,6 +6,9 @@ const { attachUser } = require('../middleware/authMiddleware');
 // Get all products with filters
 router.get('/', productController.getAllProducts);
 
+// Get products by user ID
+router.get('/user/:user_id', productController.getProductsByUserId);
+
 // Get categories
 router.get('/categories', productController.getCategories);
 
