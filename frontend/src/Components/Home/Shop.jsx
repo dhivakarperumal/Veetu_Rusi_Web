@@ -10,12 +10,14 @@ const Shop = ({ defaultCategory = "" }) => {
   const { productsCache, setProductsCache, lastFetchTime, setLastFetchTime } =
     useContext(StoreContext);
 
-  const [products, setProducts] = useState(
-    Array.isArray(productsCache) ? productsCache : [],
-  );
-  const [filteredProducts, setFilteredProducts] = useState(
-    Array.isArray(productsCache) ? productsCache : [],
-  );
+  const [products, setProducts] = useState(() => {
+    const cache = Array.isArray(productsCache) ? productsCache : [];
+    return cache.filter(p => p.status?.toLowerCase() === 'active');
+  });
+  const [filteredProducts, setFilteredProducts] = useState(() => {
+    const cache = Array.isArray(productsCache) ? productsCache : [];
+    return cache.filter(p => p.status?.toLowerCase() === 'active');
+  });
   const [loading, setLoading] = useState(
     !productsCache || productsCache.length === 0,
   );

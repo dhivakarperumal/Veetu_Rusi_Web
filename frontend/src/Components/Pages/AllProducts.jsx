@@ -168,7 +168,7 @@ const AllProducts = () => {
                 </div>
             )}
 
-            {/* Results Count */}
+            {/* Results Count */}   
             <div className="flex items-center justify-between">
                 <p className="text-sm text-gray-400 font-medium">
                     Showing <span className="text-slate-800 font-black">{filtered.length}</span> results
