@@ -116,7 +116,15 @@ exports.getFoods = async (req, res) => {
 SELECT
     cf.*,
     u.full_name AS chef_name,
-    hc.delivery_radius
+
+    hc.delivery_radius,
+    hc.latitude,
+    hc.longitude,
+    hc.area_name,
+    hc.city,
+    hc.district,
+    hc.state,
+    hc.pincode
 `;
     if (!isNaN(lat) && !isNaN(lon)) {
       query += `, ( 6371 * acos( cos( radians(${lat}) ) * cos( radians( hc.latitude ) ) * cos( radians( hc.longitude ) - radians(${lon}) ) + sin( radians(${lat}) ) * sin( radians( hc.latitude ) ) ) ) AS distance`;
