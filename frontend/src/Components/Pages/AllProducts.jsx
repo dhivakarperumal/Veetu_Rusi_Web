@@ -27,10 +27,30 @@ const AllProducts = () => {
     const [showQR, setShowQR] = useState(null);
     const [showFilters, setShowFilters] = useState(false);
 
+    useEffect(() => {
+        if (Array.isArray(productsCache)) {
+            setProducts(productsCache);
+
+            const cats = [
+                "All",
+                ...new Set(productsCache.map(p => p.category).filter(Boolean)),
+            ];
+            setCategories(cats);
+        }
+    }, [productsCache]);
+
     const fetchProducts = async () => {
         // Cache for 5 minutes
         const isCacheValid = lastFetchTime && (Date.now() - lastFetchTime < 5 * 60 * 1000);
         if (isCacheValid && productsCache?.length > 0) {
+            setProducts(productsCache);
+
+            const cats = [
+                "All",
+                ...new Set(productsCache.map(p => p.category).filter(Boolean)),
+            ];
+            setCategories(cats);
+
             setLoading(false);
             return;
         }
