@@ -25,7 +25,7 @@ const mockIncentives = [
     id: 1,
     title: "Delivery Streak Bonus",
     description: "Complete 5 consecutive deliveries without cancellation.",
-    reward: "?500",
+    reward: "₹500",
     progress: { current: 4, target: 5 },
     status: "in-progress",
     icon: "TrendingUp",
@@ -35,7 +35,7 @@ const mockIncentives = [
     id: 2,
     title: "5-Star Rating Milestone",
     description: "Maintain 4.8+ rating across 20 deliveries.",
-    reward: "?1000",
+    reward: "₹1000",
     progress: { current: 18, target: 20 },
     status: "in-progress",
     icon: "Star",
@@ -45,7 +45,7 @@ const mockIncentives = [
     id: 3,
     title: "Speed Delivery Challenge",
     description: "Deliver 10 orders with an average time below 20 minutes.",
-    reward: "?750",
+    reward: "₹750",
     progress: { current: 7, target: 10 },
     status: "in-progress",
     icon: "Target",
@@ -55,7 +55,7 @@ const mockIncentives = [
     id: 4,
     title: "Weekend Warrior",
     description: "Complete 15+ weekend deliveries.",
-    reward: "?1200",
+    reward: "₹1200",
     progress: { current: 12, target: 15 },
     status: "in-progress",
     icon: "Award",
@@ -65,7 +65,7 @@ const mockIncentives = [
     id: 5,
     title: "Perfect Attendance",
     description: "Work 25 days without missing a shift.",
-    reward: "?1500",
+    reward: "₹1500",
     progress: { current: 22, target: 25 },
     status: "in-progress",
     icon: "CheckCircle",
@@ -75,7 +75,7 @@ const mockIncentives = [
     id: 6,
     title: "Referral Bonus",
     description: "Refer 3 delivery partners and they complete 10 deliveries each.",
-    reward: "?2000",
+    reward: "₹2000",
     progress: { current: 2, target: 3 },
     status: "locked",
     icon: "Gift",
@@ -84,7 +84,7 @@ const mockIncentives = [
 ];
 
 const stats = [
-  { label: "Total Available", value: "?7,450", icon: Gift, accent: "#10B981" },
+  { label: "Total Available", value: "₹7,450", icon: Gift, accent: "#10B981" },
   { label: "In Progress", value: "5", icon: TrendingUp, accent: "#38bdf8" },
   { label: "Completed", value: "12", icon: Award, accent: "#f59e0b" },
 ];
@@ -127,7 +127,7 @@ const Incentives = () => {
           <div className="rounded-[1.75rem] border border-white/10 bg-slate-900/80 p-5 shadow-lg backdrop-blur-xl">
             <p className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">Wallet Balance</p>
             <p className="mt-3 text-4xl font-black text-white">?7,450</p>
-            <p className="mt-2 text-xs uppercase tracking-[0.22em] text-slate-400">5 active challenges � 12 rewards earned</p>
+            <p className="mt-2 text-xs uppercase tracking-[0.22em] text-slate-400">5 active challenges • 12 rewards earned</p>
           </div>
         </div>
       </section>
@@ -195,7 +195,7 @@ const Incentives = () => {
                   <div className="rounded-3xl border border-dashed border-slate-800 bg-slate-900/80 p-4 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
                     <div className="flex items-center gap-2">
                       <Lock className="h-4 w-4" />
-                      <span>Locked challenge � complete active rewards first</span>
+                      <span>Locked challenge — complete active rewards first</span>
                     </div>
                   </div>
                 )}
