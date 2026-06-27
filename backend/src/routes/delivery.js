@@ -9,18 +9,18 @@ router.use(requireRole(['delivery_partner']));
 // Get dashboard stats
 router.get('/dashboard-stats', async (req, res) => {
   try {
-    const deliveryBoyId = req.user.id;
+    const deliveryBoyId = req.user?.user_id || req.user?.id;
     
     // Get total deliveries
     const [deliveries] = await pool.execute(
-      'SELECT COUNT(*) as count FROM user_food_order_table WHERE delivery_partner = ? AND status = "Delivered"',
-      [deliveryBoyId]
+      'SELECT COUNT(*) as count FROM user_food_order_table WHERE (delivery_partner = ? OR delivery_partner_user_id = ?) AND status = "Delivered"',
+      [deliveryBoyId, deliveryBoyId]
     );
     
     // Get pending deliveries
     const [pending] = await pool.execute(
-      'SELECT COUNT(*) as count FROM user_food_order_table WHERE delivery_partner = ? AND status IN ("Out for Delivery", "Assigned")',
-      [deliveryBoyId]
+      'SELECT COUNT(*) as count FROM user_food_order_table WHERE (delivery_partner = ? OR delivery_partner_user_id = ?) AND status IN ("Out for Delivery", "Assigned", "Picked Up")',
+      [deliveryBoyId, deliveryBoyId]
     );
 
     // Mock earnings for now, you can link to an earnings table later
@@ -44,11 +44,11 @@ router.get('/dashboard-stats', async (req, res) => {
 // Get assigned orders
 router.get('/orders', async (req, res) => {
   try {
-    const deliveryBoyId = req.user.id;
+    const deliveryBoyId = req.user?.user_id || req.user?.id;
     const { status } = req.query;
     
-    let query = 'SELECT * FROM user_food_order_table WHERE delivery_partner = ?';
-    const params = [deliveryBoyId];
+    let query = 'SELECT * FROM user_food_order_table WHERE (delivery_partner = ? OR delivery_partner_user_id = ?)';
+    const params = [deliveryBoyId, deliveryBoyId];
 
     if (status && status !== 'All') {
       query += ' AND status = ?';
@@ -199,45 +199,45 @@ router.patch('/orders/:id/assign', async (req, res) => {
 // Get earnings breakdown
 router.get('/earnings', async (req, res) => {
   try {
-    const deliveryBoyId = req.user.id;
+    const deliveryBoyId = req.user?.user_id || req.user?.id;
 
     // Total earnings (from delivered orders)
     const [totalResult] = await pool.execute(
       `SELECT SUM(total_amount) as total FROM user_food_order_table 
-       WHERE delivery_partner = ? AND status = 'Delivered'`,
-      [deliveryBoyId]
+       WHERE (delivery_partner = ? OR delivery_partner_user_id = ?) AND status = 'Delivered'`,
+      [deliveryBoyId, deliveryBoyId]
     );
 
     // Today's earnings
     const [todayResult] = await pool.execute(
       `SELECT SUM(total_amount) as today FROM user_food_order_table 
-       WHERE delivery_partner = ? AND status = 'Delivered' AND DATE(updated_at) = CURDATE()`,
-      [deliveryBoyId]
+       WHERE (delivery_partner = ? OR delivery_partner_user_id = ?) AND status = 'Delivered' AND DATE(updated_at) = CURDATE()`,
+      [deliveryBoyId, deliveryBoyId]
     );
 
     // Weekly earnings (last 7 days)
     const [weeklyResult] = await pool.execute(
       `SELECT SUM(total_amount) as weekly FROM user_food_order_table 
-       WHERE delivery_partner = ? AND status = 'Delivered' AND DATE(updated_at) >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)`,
-      [deliveryBoyId]
+       WHERE (delivery_partner = ? OR delivery_partner_user_id = ?) AND status = 'Delivered' AND DATE(updated_at) >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)`,
+      [deliveryBoyId, deliveryBoyId]
     );
 
     // Earnings by day (last 14 days)
     const [dailyResult] = await pool.execute(
       `SELECT DATE(updated_at) as date, COUNT(*) as deliveries, SUM(total_amount) as amount
        FROM user_food_order_table 
-       WHERE delivery_partner = ? AND status = 'Delivered' AND DATE(updated_at) >= DATE_SUB(CURDATE(), INTERVAL 14 DAY)
+       WHERE (delivery_partner = ? OR delivery_partner_user_id = ?) AND status = 'Delivered' AND DATE(updated_at) >= DATE_SUB(CURDATE(), INTERVAL 14 DAY)
        GROUP BY DATE(updated_at) ORDER BY date DESC`,
-      [deliveryBoyId]
+      [deliveryBoyId, deliveryBoyId]
     );
 
     // Recent completed orders
     const [recentOrders] = await pool.execute(
       `SELECT id, order_id, customer_name, customer_phone, total_amount, updated_at, status
        FROM user_food_order_table 
-       WHERE delivery_partner = ? AND status = 'Delivered'
+       WHERE (delivery_partner = ? OR delivery_partner_user_id = ?) AND status = 'Delivered'
        ORDER BY updated_at DESC LIMIT 20`,
-      [deliveryBoyId]
+      [deliveryBoyId, deliveryBoyId]
     );
 
     res.json({
