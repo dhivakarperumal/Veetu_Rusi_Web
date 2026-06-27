@@ -32,7 +32,7 @@ const AllProducts = () => {
     const [franchiseUserId, setFranchiseUserId] = useState(null);
     const [franchiseId, setFranchiseId] = useState(null);
     const [franchiseLoaded, setFranchiseLoaded] = useState(false);
-    const itemsPerPage = 8;
+    const itemsPerPage = 10;
 
     // Fetch franchise info on component mount
     useEffect(() => {
@@ -89,181 +89,181 @@ const AllProducts = () => {
     const [rapidSaving, setRapidSaving] = useState(false);
     const [rapidProd, setRapidProd] = useState({ name: "", mrp: "", status: "Active" });
 
-  // Rapid Add Product
-// Rapid Add Product
-const handleRapidAdd = async (e, shouldContinue = false) => {
-    if (e) e.preventDefault();
+    // Rapid Add Product
+    // Rapid Add Product
+    const handleRapidAdd = async (e, shouldContinue = false) => {
+        if (e) e.preventDefault();
 
-    if (!rapidProd.name || !rapidProd.mrp) {
-        return toast.error("Essentials missing!");
-    }
-
-    setRapidSaving(true);
-
-    try {
-        await api.post("/franchise-products", {
-            ...rapidProd,
-            category: "Saree",
-            total_stock: 0,
-            variants: [],
-            franchise_user_id: franchiseUserId,
-            franchise_id: franchiseId
-        });
-
-        toast.success("Product added successfully");
-
-        setRapidProd({
-            name: "",
-            mrp: "",
-            status: "Active"
-        });
-
-        if (!shouldContinue) {
-            setIsRapidAddOpen(false);
+        if (!rapidProd.name || !rapidProd.mrp) {
+            return toast.error("Essentials missing!");
         }
 
-        // clear cache + refresh
-        setProductsCached({});
-        fetchProducts();
+        setRapidSaving(true);
 
-    } catch (error) {
-        console.log("Create Error:", error);
-        toast.error(
-            error?.response?.data?.message ||
-            "Product creation failed"
-        );
-    } finally {
-        setRapidSaving(false);
-    }
-};
+        try {
+            await api.post("/franchise-products", {
+                ...rapidProd,
+                category: "Saree",
+                total_stock: 0,
+                variants: [],
+                franchise_user_id: franchiseUserId,
+                franchise_id: franchiseId
+            });
 
+            toast.success("Product added successfully");
 
+            setRapidProd({
+                name: "",
+                mrp: "",
+                status: "Active"
+            });
 
-// Fetch Products
-const fetchProducts = async () => {
+            if (!shouldContinue) {
+                setIsRapidAddOpen(false);
+            }
 
-    if (!franchiseLoaded) return;
+            // clear cache + refresh
+            setProductsCached({});
+            fetchProducts();
 
-    const params = {
-        page: currentPage,
-        limit: itemsPerPage,
-        search: searchTerm,
-        ...(franchiseUserId ? { franchise_user_id: franchiseUserId } : {}),
-        ...(franchiseId ? { franchise_id: franchiseId } : {}),
-        ...(showLowStockOnly ? { status: "Low Stock" } : {})
+        } catch (error) {
+            console.log("Create Error:", error);
+            toast.error(
+                error?.response?.data?.message ||
+                "Product creation failed"
+            );
+        } finally {
+            setRapidSaving(false);
+        }
     };
 
-    const cacheKey = JSON.stringify(params);
 
-    // Use cache
-    if (productsCache?.[cacheKey]) {
 
-        const cachedData = productsCache[cacheKey];
+    // Fetch Products
+    const fetchProducts = async () => {
 
-        setProducts(cachedData.products || []);
-        setPagination(
-            cachedData.pagination || {
-                total: 0,
-                totalPages: 1
-            }
-        );
+        if (!franchiseLoaded) return;
 
-        setStats(
-            cachedData.stats || {
-                total: 0,
-                active: 0,
-                lowStock: 0,
-                outOfStock: 0
-            }
-        );
-
-        return;
-    }
-
-    setLoading(true);
-
-    try {
-
-        console.log(
-            "Fetching Franchise Products:",
-            params
-        );
-
-        const response = await api.get(
-            "/franchise-products",
-            { params }
-        );
-
-        console.log(
-            "Franchise Products Response:",
-            response.data
-        );
-
-        const data = response.data;
-
-        const finalData = {
-
-            products:
-                data?.products ||
-                data ||
-                [],
-
-            pagination:
-                data?.pagination || {
-                    total:
-                        data?.length || 0,
-                    totalPages: 1
-                },
-
-            stats:
-                data?.stats || {
-                    total:
-                        data?.length || 0,
-
-                    active:
-                        data?.filter(
-                            p => p.status === "Active"
-                        ).length || 0,
-
-                    lowStock:
-                        data?.filter(
-                            p => p.status === "Low Stock"
-                        ).length || 0,
-
-                    outOfStock:
-                        data?.filter(
-                            p => p.status === "Out of Stock"
-                        ).length || 0
-                }
+        const params = {
+            page: currentPage,
+            limit: itemsPerPage,
+            search: searchTerm,
+            ...(franchiseUserId ? { franchise_user_id: franchiseUserId } : {}),
+            ...(franchiseId ? { franchise_id: franchiseId } : {}),
+            ...(showLowStockOnly ? { status: "Low Stock" } : {})
         };
 
-        setProducts(finalData.products);
-        setPagination(finalData.pagination);
-        setStats(finalData.stats);
+        const cacheKey = JSON.stringify(params);
 
-        // save cache
-        setProductsCached(prev => ({
-            ...prev,
-            [cacheKey]: finalData
-        }));
+        // Use cache
+        if (productsCache?.[cacheKey]) {
 
-    } catch (error) {
+            const cachedData = productsCache[cacheKey];
 
-        console.log(
-            "Fetch Error:",
-            error
-        );
+            setProducts(cachedData.products || []);
+            setPagination(
+                cachedData.pagination || {
+                    total: 0,
+                    totalPages: 1
+                }
+            );
 
-        toast.error(
-            error?.response?.data?.message ||
-            "Failed to load franchise products"
-        );
+            setStats(
+                cachedData.stats || {
+                    total: 0,
+                    active: 0,
+                    lowStock: 0,
+                    outOfStock: 0
+                }
+            );
 
-        setProducts([]);
-    } finally {
-        setLoading(false);
-    }
-};
+            return;
+        }
+
+        setLoading(true);
+
+        try {
+
+            console.log(
+                "Fetching Franchise Products:",
+                params
+            );
+
+            const response = await api.get(
+                "/franchise-products",
+                { params }
+            );
+
+            console.log(
+                "Franchise Products Response:",
+                response.data
+            );
+
+            const data = response.data;
+
+            const finalData = {
+
+                products:
+                    data?.products ||
+                    data ||
+                    [],
+
+                pagination:
+                    data?.pagination || {
+                        total:
+                            data?.length || 0,
+                        totalPages: 1
+                    },
+
+                stats:
+                    data?.stats || {
+                        total:
+                            data?.length || 0,
+
+                        active:
+                            data?.filter(
+                                p => p.status === "Active"
+                            ).length || 0,
+
+                        lowStock:
+                            data?.filter(
+                                p => p.status === "Low Stock"
+                            ).length || 0,
+
+                        outOfStock:
+                            data?.filter(
+                                p => p.status === "Out of Stock"
+                            ).length || 0
+                    }
+            };
+
+            setProducts(finalData.products);
+            setPagination(finalData.pagination);
+            setStats(finalData.stats);
+
+            // save cache
+            setProductsCached(prev => ({
+                ...prev,
+                [cacheKey]: finalData
+            }));
+
+        } catch (error) {
+
+            console.log(
+                "Fetch Error:",
+                error
+            );
+
+            toast.error(
+                error?.response?.data?.message ||
+                "Failed to load franchise products"
+            );
+
+            setProducts([]);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
         if (franchiseLoaded) {
@@ -468,7 +468,7 @@ const fetchProducts = async () => {
                                                         <span className="md:hidden text-[11px] font-black text-gray-400 uppercase tracking-widest">Product Name</span>
                                                         <div className="flex items-center gap-4 md:gap-5 text-left w-full min-w-0">
                                                             <div className="w-16 h-16 rounded-2xl bg-gray-50 border border-gray-100 overflow-hidden shrink-0 shadow-sm group-hover:scale-105 transition-transform duration-500">
-                                                                 <img
+                                                                <img
                                                                     src={getProductImage(product)}
                                                                     alt={product.name}
                                                                     loading="lazy"
@@ -611,39 +611,25 @@ const fetchProducts = async () => {
                         </div>
                     )}
 
-                    {/* Pagination UI */}
                     {totalPages > 1 && (
-                        <div className="mt-12 flex flex-col md:flex-row items-center justify-between gap-6 px-4">
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
-                                {/* Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, pagination.total)} of {pagination.total} Items */}
-                            </p>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                                    disabled={currentPage === 1}
-                                    className="px-6 py-2.5 bg-white border border-gray-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-blue-600 hover:border-blue-100 disabled:opacity-30 transition-all shadow-sm"
-                                >
-                                    Prev
-                                </button>
-                                <div className="flex items-center gap-1.5 overflow-x-auto max-w-[200px] md:max-w-none hide-scrollbar">
-                                    {[...Array(totalPages)].map((_, i) => (
-                                        <button
-                                            key={i}
-                                            onClick={() => setCurrentPage(i + 1)}
-                                            className={`min-w-[40px] h-10 rounded-xl text-[10px] font-black transition-all border shrink-0 ${currentPage === i + 1 ? "bg-slate-900 border-slate-900 text-white shadow-xl" : "bg-white border-gray-100 text-gray-400 hover:bg-gray-50"}`}
-                                        >
-                                            {i + 1}
-                                        </button>
-                                    ))}
-                                </div>
-                                <button
-                                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                                    disabled={currentPage === totalPages}
-                                    className="px-6 py-2.5 bg-white border border-gray-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-blue-600 hover:border-blue-100 disabled:opacity-30 transition-all shadow-sm"
-                                >
-                                    Next
-                                </button>
-                            </div>
+                        <div className="flex justify-center items-center gap-2 mt-6 mb-8">
+                            <button
+                                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                                disabled={currentPage === 1}
+                                className="px-4 py-2 cursor-pointer bg-slate-100 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-200 transition"
+                            >
+                                Previous
+                            </button>
+                            <span className="text-sm font-medium text-slate-800">
+                                Page {currentPage} of {totalPages}
+                            </span>
+                            <button
+                                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                                disabled={currentPage === totalPages}
+                                className="px-4 py-2 bg-slate-100 border cursor-pointer border-slate-200 rounded-lg text-sm font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-200 transition"
+                            >
+                                Next
+                            </button>
                         </div>
                     )}
 

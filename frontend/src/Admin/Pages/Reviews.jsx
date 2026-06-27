@@ -21,7 +21,8 @@ import {
   X,
   Plus,
   Camera,
-  Upload
+  Upload,
+  ChevronLeft,
 } from "lucide-react";
 import api from "../../api";
 import toast from "react-hot-toast";
@@ -53,6 +54,10 @@ const Reviews = () => {
     comment: "",
     review_image: null
   });
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const fetchReviews = async () => {
     try {
@@ -185,6 +190,20 @@ const Reviews = () => {
     }
   };
 
+  const totalPages = Math.ceil(reviews.length / itemsPerPage);
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+
+  const currentReviews = reviews.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter, selectedRating, searchQuery]);
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-10">
 
@@ -292,7 +311,7 @@ const Reviews = () => {
         </div>
       ) : reviews.length === 0 ? (
         <div className="min-h-[400px] flex flex-col items-center justify-center gap-4 superadmin-panel rounded-[2.5rem] border border-dashed border-white/10">
-            <div className="w-20 h-20 rounded-3xl bg-white/5 flex items-center justify-center text-slate-200 mb-2">
+          <div className="w-20 h-20 rounded-3xl bg-white/5 flex items-center justify-center text-slate-200 mb-2">
             <MessageSquare className="w-10 h-10" />
           </div>
           <p className="text-slate-900 font-black text-lg">No reviews found</p>
@@ -306,7 +325,7 @@ const Reviews = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {reviews.map((item) => (
+          {currentReviews.map((item) => (
             <div
               key={item.id}
               className={`group relative superadmin-card rounded-[2rem] flex flex-col overflow-hidden transition-all duration-500 hover:-translate-y-1 ${item.status === 'Pending' ? 'ring-2 ring-amber-500/20 shadow-lg shadow-amber-500/5' : ''}`}
@@ -596,6 +615,28 @@ const Reviews = () => {
               </button>
             </div>
           </div>
+        </div>
+      )}
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-2 mt-6 mb-8">
+          <button
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="px-4 py-2 cursor-pointer bg-slate-100 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-200 transition"
+          >
+            Previous
+          </button>
+          <span className="text-sm font-medium text-slate-800">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 bg-slate-100 border cursor-pointer border-slate-200 rounded-lg text-sm font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-200 transition"
+          >
+            Next
+          </button>
         </div>
       )}
     </div>
