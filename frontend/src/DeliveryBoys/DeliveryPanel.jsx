@@ -273,7 +273,7 @@ const AdminLayout = () => {
             {showPopup && popupOrder && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/80 p-4">
                     <div className="absolute inset-0 bg-black/70" aria-hidden="true"></div>
-                    <div className="relative z-10 w-full max-w-2xl rounded-4xl bg-slate-950/95 shadow-2xl ring-1 ring-white/10 overflow-hidden border border-white/10">
+                    <div className="relative z-10 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-4xl bg-slate-950/95 shadow-2xl ring-1 ring-white/10 border border-white/10">
                         <div className="p-6 sm:p-8">
                             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                                 <div>
