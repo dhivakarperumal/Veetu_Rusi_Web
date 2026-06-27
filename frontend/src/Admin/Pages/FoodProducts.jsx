@@ -18,6 +18,8 @@ const FoodProducts = () => {
   const [viewMode, setViewMode] = useState('table');
   const [approvalModalItem, setApprovalModalItem] = useState(null);
   const [approvalChecklist, setApprovalChecklist] = useState({ taste: false, quality: false, packaging: false });
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     const fetchChefs = async () => {
@@ -102,10 +104,21 @@ const FoodProducts = () => {
       } else if (statusFilter !== 'All') {
         matchesStatus = item.status === statusFilter;
       }
-      
+
       return matchesSearch && matchesStatus;
     });
   }, [foods, search, statusFilter]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, statusFilter]);
+
+  const paginatedFoods = filteredFoods.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const totalPages = Math.ceil(filteredFoods.length / itemsPerPage);
 
   const summary = useMemo(() => {
     const total = foods.length;
@@ -311,14 +324,14 @@ const FoodProducts = () => {
                   <tr>
                     <td colSpan="7" className="px-6 py-12 text-center text-slate-400">Loading food products...</td>
                   </tr>
-                ) : filteredFoods.length === 0 ? (
+                ) : paginatedFoods.length === 0 ? (
                   <tr>
                     <td colSpan="7" className="px-6 py-12 text-center text-slate-400">No food products found.</td>
                   </tr>
                 ) : (
-                  filteredFoods.map((item, index) => (
+                  paginatedFoods.map((item, index) => (
                     <tr key={item.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-6 py-4 text-sm font-black text-slate-500">{index + 1}</td>
+                      <td className="px-6 py-4 text-sm font-black text-slate-500">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                       <td className="px-6 py-4">
                         <div className="text-sm font-black text-slate-900">{item.name || item.product_code || 'Unnamed Food'}</div>
                         <div className="text-xs text-slate-500 mt-1">{getFoodDescription(item)}</div>
@@ -378,10 +391,10 @@ const FoodProducts = () => {
         <div className="grid gap-5 lg:grid-cols-2 xl:grid-cols-3">
           {loading ? (
             <div className="col-span-full rounded-3xl bg-white border border-slate-200 p-10 text-center text-slate-400">Loading food products...</div>
-          ) : filteredFoods.length === 0 ? (
+          ) : paginatedFoods.length === 0 ? (
             <div className="col-span-full rounded-3xl bg-white border border-slate-200 p-10 text-center text-slate-400">No food products found.</div>
           ) : (
-            filteredFoods.map((item) => (
+            paginatedFoods.map((item) => (
               <div key={item.id} className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm transition hover:shadow-lg">
                 <div className="bg-slate-950 px-5 py-4 text-white">
                   <div className="flex items-center justify-between gap-3">
@@ -462,6 +475,29 @@ const FoodProducts = () => {
               </div>
             ))
           )}
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-2 mt-6 mb-8">
+          <button
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="px-4 py-2 cursor-pointer bg-slate-100 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-200 transition"
+          >
+            Previous
+          </button>
+          <span className="text-sm font-medium text-slate-800">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 bg-slate-100 border cursor-pointer border-slate-200 rounded-lg text-sm font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-200 transition"
+          >
+            Next
+          </button>
         </div>
       )}
 
