@@ -293,6 +293,14 @@ const Shop = ({ defaultCategory = "" }) => {
   const startIndex = (currentPage - 1) * productsPerPage;
   const currentProducts = filteredProducts.slice(startIndex, startIndex + productsPerPage);
 
+  const uniqueHomeChefs = [
+    ...new Map(
+      currentProducts
+        .filter((p) => p.chef_name)
+        .map((p) => [p.chef_name, p])
+    ).values(),
+  ];
+
   /* ─── Grid class ─────────────────────────────────────────────── */
   const gridClass =
     gridView === 5
@@ -386,6 +394,26 @@ const Shop = ({ defaultCategory = "" }) => {
           )}
         </div>
       )}
+
+      {uniqueHomeChefs.length > 0 && (
+        <div className="px-4 md:px-10 mt-6 mb-4">
+          <h3 className="text-lg font-bold text-gray-800 mb-3">
+            Home Chefs
+          </h3>
+
+          <div className="flex flex-wrap gap-3">
+            {uniqueHomeChefs.map((chef) => (
+              <div
+                key={chef.chef_name}
+                className="px-4 py-2 bg-green-50 border border-green-200 rounded-full text-sm font-semibold text-primary"
+              >
+                {chef.chef_name}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
 
       {/* ── Toolbar ── */}
       <div className="px-4 md:px-10 mt-6">
@@ -653,6 +681,8 @@ const Shop = ({ defaultCategory = "" }) => {
             </div>
           </div>
         )}
+
+
 
         {/* PRODUCTS GRID */}
 
