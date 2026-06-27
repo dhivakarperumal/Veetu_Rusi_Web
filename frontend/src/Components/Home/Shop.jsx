@@ -7,17 +7,19 @@ import { BsGrid3X3Gap, BsGridFill, BsGrid1X2, BsGrid3X2 } from "react-icons/bs";
 import { StoreContext } from "../../PrivateRouter/StoreContext";
 
 const Shop = ({ defaultCategory = "" }) => {
-  const { productsCache, setProductsCache, lastFetchTime, setLastFetchTime } =
+  const { chefFoodsCache, setChefFoodsCache, lastChefFoodsFetchTime, setLastChefFoodsFetchTime } =
     useContext(StoreContext);
 
-  const [products, setProducts] = useState(
-    Array.isArray(productsCache) ? productsCache : [],
-  );
-  const [filteredProducts, setFilteredProducts] = useState(
-    Array.isArray(productsCache) ? productsCache : [],
-  );
+  const [products, setProducts] = useState(() => {
+    const cache = Array.isArray(chefFoodsCache) ? chefFoodsCache : [];
+    return cache.filter(p => p.status?.toLowerCase() === 'active');
+  });
+  const [filteredProducts, setFilteredProducts] = useState(() => {
+    const cache = Array.isArray(chefFoodsCache) ? chefFoodsCache : [];
+    return cache.filter(p => p.status?.toLowerCase() === 'active');
+  });
   const [loading, setLoading] = useState(
-    !productsCache || productsCache.length === 0,
+    !chefFoodsCache || chefFoodsCache.length === 0,
   );
 
   const [search, setSearch] = useState("");
@@ -86,10 +88,10 @@ const Shop = ({ defaultCategory = "" }) => {
   /* ─── Fetch Products ─────────────────────────────────────────── */
   const fetchProducts = async () => {
     // Use cache if fresh (5 min)
-    const isCacheValid = lastFetchTime && Date.now() - lastFetchTime < 5 * 60 * 1000;
-    if (isCacheValid && productsCache?.length > 0) {
+    const isCacheValid = lastChefFoodsFetchTime && Date.now() - lastChefFoodsFetchTime < 5 * 60 * 1000;
+    if (isCacheValid && chefFoodsCache?.length > 0) {
       // Only show active foods for shop
-      let myProducts = productsCache.filter(p => p.status?.toLowerCase() === 'active');
+      let myProducts = chefFoodsCache.filter(p => p.status?.toLowerCase() === 'active');
       setProducts(myProducts);
       setFilteredProducts(myProducts);
       setLoading(false);
@@ -100,8 +102,8 @@ const Shop = ({ defaultCategory = "" }) => {
       setLoading(true);
       const res = await api.get("/chef-foods");
       const data = Array.isArray(res.data) ? res.data : [];
-      setProductsCache(data);
-      setLastFetchTime(Date.now());
+      setChefFoodsCache(data);
+      setLastChefFoodsFetchTime(Date.now());
       
       // Only show active foods for shop
       let myProducts = data.filter(p => p.status?.toLowerCase() === 'active');
