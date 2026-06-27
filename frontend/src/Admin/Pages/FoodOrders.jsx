@@ -235,10 +235,9 @@ const OrderModal = ({ order, onClose, onStatusChange }) => {
               </p>
 
               <span
-                className={`mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-black uppercase tracking-wide ${
-                  STATUS_STYLES[order.status] ||
+                className={`mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-black uppercase tracking-wide ${STATUS_STYLES[order.status] ||
                   'bg-slate-100 text-slate-600'
-                }`}
+                  }`}
               >
                 {STATUS_ICONS[order.status]}
                 {order.status || 'Unknown'}
@@ -267,14 +266,12 @@ const OrderModal = ({ order, onClose, onStatusChange }) => {
                 <button
                   key={s}
                   onClick={() => setStatus(s)}
-                  className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-wide transition ${
-                    status === s
-                      ? `${
-                          STATUS_STYLES[s] ||
-                          'bg-slate-200 text-slate-700'
-                        } ring-2 ring-offset-1 ring-current`
+                  className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-wide transition ${status === s
+                      ? `${STATUS_STYLES[s] ||
+                      'bg-slate-200 text-slate-700'
+                      } ring-2 ring-offset-1 ring-current`
                       : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                  }`}
+                    }`}
                 >
                   {s}
                 </button>
@@ -474,6 +471,8 @@ const FoodOrders = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [expandedRow, setExpandedRow] = useState(null);
   const [viewMode, setViewMode] = useState("table");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     setStatusFilter(deriveStatusFromPath(location.pathname));
@@ -513,6 +512,7 @@ const FoodOrders = () => {
 
   useEffect(() => {
     fetchOrders();
+    setCurrentPage(1);
   }, [fetchOrders]);
 
   useEffect(() => {
@@ -523,6 +523,13 @@ const FoodOrders = () => {
       })
       .catch(() => { });
   }, []);
+
+  const paginatedOrders = orders.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const totalPages = Math.ceil(orders.length / itemsPerPage);
 
   const stats = useMemo(
     () => ({
@@ -717,18 +724,18 @@ const FoodOrders = () => {
       {/* TABLE */}
       <div className="rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden">
 
-                {loading ? (
-                  <div className="flex items-center justify-center py-24">
-                    <div className="h-12 w-12 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin" />
-                  </div>
-                ) : orders.length === 0 ? (
-                  <div className="py-24 text-center">
-                    No Orders Found
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
+        {loading ? (
+          <div className="flex items-center justify-center py-24">
+            <div className="h-12 w-12 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin" />
+          </div>
+        ) : orders.length === 0 ? (
+          <div className="py-24 text-center">
+            No Orders Found
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
 
-                    <table className="w-full text-left text-sm">
+            <table className="w-full text-left text-sm">
 
               <thead className="bg-slate-50 border-b border-slate-100">
                 <tr>
@@ -746,7 +753,7 @@ const FoodOrders = () => {
               </thead>
 
               <tbody className="divide-y divide-slate-100">
-                {orders.map((order) => {
+                {paginatedOrders.map((order) => {
                   const items = Array.isArray(order.items)
                     ? order.items
                     : [];
@@ -754,8 +761,8 @@ const FoodOrders = () => {
                   const isExpanded =
                     expandedRow === order.id;
 
-                          return (
-                            <React.Fragment key={order.id}>
+                  return (
+                    <React.Fragment key={order.id}>
 
                       <tr className="hover:bg-slate-50">
 
@@ -802,33 +809,33 @@ const FoodOrders = () => {
                           ))}
                         </td>
 
-                                <td className="px-5 py-4 font-black text-emerald-600">
-                                  {formatAmount(order.total_amount)}
-                                </td>
+                        <td className="px-5 py-4 font-black text-emerald-600">
+                          {formatAmount(order.total_amount)}
+                        </td>
 
-                                <td className="px-5 py-4">
-                                  <span
-                                    className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold ${STATUS_STYLES[
-                                      order.status
-                                    ]
-                                      }`}
-                                  >
-                                    {
-                                      STATUS_ICONS[
-                                      order.status
-                                      ]
-                                    }
+                        <td className="px-5 py-4">
+                          <span
+                            className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold ${STATUS_STYLES[
+                              order.status
+                            ]
+                              }`}
+                          >
+                            {
+                              STATUS_ICONS[
+                              order.status
+                              ]
+                            }
 
-                                    {order.status}
-                                  </span>
-                                </td>
+                            {order.status}
+                          </span>
+                        </td>
 
-                                <td className="px-5 py-4">
-                                  {formatDate(order.ordered_at)}
-                                </td>
+                        <td className="px-5 py-4">
+                          {formatDate(order.ordered_at)}
+                        </td>
 
-                                <td className="px-5 py-4">
-                                  <div className="flex justify-end gap-2">
+                        <td className="px-5 py-4">
+                          <div className="flex justify-end gap-2">
 
                             <button
                               onClick={() =>
@@ -856,9 +863,9 @@ const FoodOrders = () => {
                               )}
                             </button>
 
-                                  </div>
-                                </td>
-                              </tr>
+                          </div>
+                        </td>
+                      </tr>
 
                       {isExpanded &&
                         chefGroups.length > 0 && (
@@ -916,6 +923,29 @@ const FoodOrders = () => {
           </div>
         )}
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-2 mt-6 mb-8">
+          <button
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="px-4 py-2 cursor-pointer bg-slate-100 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-200 transition"
+          >
+            Previous
+          </button>
+          <span className="text-sm font-medium text-slate-800">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 bg-slate-100 border cursor-pointer border-slate-200 rounded-lg text-sm font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-200 transition"
+          >
+            Next
+          </button>
+        </div>
+      )}
 
       {/* MODAL */}
       {

@@ -225,6 +225,8 @@ const DeliveryPartnerManagement = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [viewMode, setViewMode] = useState("table");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const [selectedPartner, setSelectedPartner] = useState(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -288,6 +290,17 @@ const DeliveryPartnerManagement = () => {
     }
     return result;
   }, [search, statusFilter, partners]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, statusFilter]);
+
+  const paginatedPartners = filteredPartners.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+  
+  const totalPages = Math.ceil(filteredPartners.length / itemsPerPage);
 
   const handleDobChange = (e) => {
     const dob = e.target.value;
@@ -981,9 +994,9 @@ const DeliveryPartnerManagement = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredPartners.map((partner, index) => (
+                {paginatedPartners.map((partner, index) => (
                   <tr key={partner.id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="px-5 py-4 text-center text-sm font-black text-slate-400">{index + 1}</td>
+                    <td className="px-5 py-4 text-center text-sm font-black text-slate-400">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 border border-emerald-100">
@@ -1034,7 +1047,7 @@ const DeliveryPartnerManagement = () => {
                     </td>
                   </tr>
                 ))}
-                {filteredPartners.length === 0 && (
+                {paginatedPartners.length === 0 && (
                   <tr><td colSpan="8" className="px-6 py-8 text-center text-xs text-slate-400 italic">No delivery partners match your criteria.</td></tr>
                 )}
               </tbody>
@@ -1043,7 +1056,7 @@ const DeliveryPartnerManagement = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filteredPartners.map((partner) => (
+          {paginatedPartners.map((partner) => (
             <div key={partner.id} className="superadmin-card p-5 rounded-2xl flex flex-col justify-between transition-all duration-200">
               <div className="space-y-4">
                 <div className="flex justify-between items-start">
@@ -1074,7 +1087,30 @@ const DeliveryPartnerManagement = () => {
               </div>
             </div>
           ))}
-          {filteredPartners.length === 0 && <p className="col-span-full text-center text-xs text-slate-400 italic py-8">No delivery partners match your criteria.</p>}
+          {paginatedPartners.length === 0 && <p className="col-span-full text-center text-xs text-slate-400 italic py-8">No delivery partners match your criteria.</p>}
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-2 mt-6 mb-8">
+          <button
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="px-4 py-2 cursor-pointer bg-slate-100 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-200 transition"
+          >
+            Previous
+          </button>
+          <span className="text-sm font-medium text-slate-800">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 bg-slate-100 border cursor-pointer border-slate-200 rounded-lg text-sm font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-200 transition"
+          >
+            Next
+          </button>
         </div>
       )}
 

@@ -160,6 +160,8 @@ const HomeChefManagement = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [viewMode, setViewMode] = useState("table");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // View Details Modal
   const [selectedChef, setSelectedChef] = useState(null);
@@ -222,7 +224,15 @@ const HomeChefManagement = () => {
       result = result.filter((c) => c.status === statusFilter);
     }
     setFilteredChefs(result);
+    setCurrentPage(1);
   }, [search, statusFilter, chefs]);
+
+  const paginatedChefs = filteredChefs.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+  
+  const totalPages = Math.ceil(filteredChefs.length / itemsPerPage);
 
   const handleDobChange = (e) => {
     const dob = e.target.value;
@@ -1000,13 +1010,13 @@ const isDataUrl = (value) => typeof value === "string" && value.startsWith("data
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {filteredChefs.map((chef, index) => (
+                    {paginatedChefs.map((chef, index) => (
                       <tr
                         key={chef.id}
                         className="hover:bg-slate-900/80 transition-colors"
                       >
                         <td className="px-5 py-4 text-center text-sm font-black text-slate-400">
-                          {index + 1}
+                          {(currentPage - 1) * itemsPerPage + index + 1}
                         </td>
                         <td className="px-5 py-4">
                           <div>
@@ -1098,7 +1108,7 @@ const isDataUrl = (value) => typeof value === "string" && value.startsWith("data
                         </td>
                       </tr>
                     ))}
-                    {filteredChefs.length === 0 && (
+                    {paginatedChefs.length === 0 && (
                       <tr>
                         <td
                           colSpan="7"
@@ -1116,7 +1126,7 @@ const isDataUrl = (value) => typeof value === "string" && value.startsWith("data
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filteredChefs.map((chef) => (
+          {paginatedChefs.map((chef) => (
             <div
               key={chef.id}
               className="bg-slate-950/90 border border-white/10 p-5 rounded-2xl flex flex-col justify-between shadow-2xl transition-all duration-200 hover:shadow-2xl/40"
@@ -1181,11 +1191,34 @@ const isDataUrl = (value) => typeof value === "string" && value.startsWith("data
               </div>
             </div>
           ))}
-          {filteredChefs.length === 0 && (
+          {paginatedChefs.length === 0 && (
             <p className="col-span-full text-center text-xs text-slate-400 italic py-8">
               No home chefs match your criteria.
             </p>
           )}
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-2 mt-6">
+          <button
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="px-4 py-2 bg-slate-900 border border-white/10 rounded-lg text-sm font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-800 transition"
+          >
+            Previous
+          </button>
+          <span className="text-sm font-medium text-slate-300">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 bg-slate-900 border border-white/10 rounded-lg text-sm font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-800 transition"
+          >
+            Next
+          </button>
         </div>
       )}
 
