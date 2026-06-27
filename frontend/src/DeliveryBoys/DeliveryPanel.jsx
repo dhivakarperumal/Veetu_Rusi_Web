@@ -31,6 +31,52 @@ const AdminLayout = () => {
     const [fetchingLocation, setFetchingLocation] = useState(false);
     const [showLocationModal, setShowLocationModal] = useState(false);
 
+    // Online & Location Tracking State
+    const [isOnline, setIsOnline] = useState(() => localStorage.getItem("delivery_isOnline") === "true");
+    const [lastOnline, setLastOnline] = useState(() => localStorage.getItem("delivery_lastOnline") || "Never");
+    const watchIdRef = useRef(null);
+
+    useEffect(() => {
+        if (isOnline) {
+            localStorage.setItem("delivery_isOnline", "true");
+            if (navigator.geolocation) {
+                watchIdRef.current = navigator.geolocation.watchPosition(
+                    (position) => {
+                        const { latitude, longitude } = position.coords;
+                        // Mock sending background ping
+                        console.log(`[Auto Location Update] Lat: ${latitude}, Lng: ${longitude} at ${new Date().toLocaleTimeString()}`);
+                    },
+                    (error) => {
+                        console.error("Background Location tracking error:", error);
+                        if (error.code === 1) {
+                            setIsOnline(false);
+                            toast.error("Please allow location access to go online.");
+                        }
+                    },
+                    { enableHighAccuracy: true, maximumAge: 10000, timeout: 10000 }
+                );
+            }
+        } else {
+            localStorage.setItem("delivery_isOnline", "false");
+            const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            localStorage.setItem("delivery_lastOnline", now);
+            setLastOnline(now);
+            if (watchIdRef.current) {
+                navigator.geolocation.clearWatch(watchIdRef.current);
+                watchIdRef.current = null;
+            }
+        }
+
+        return () => {
+            if (watchIdRef.current) {
+                navigator.geolocation.clearWatch(watchIdRef.current);
+                watchIdRef.current = null;
+            }
+        };
+    }, [isOnline]);
+
+    const toggleOnlineStatus = () => setIsOnline(prev => !prev);
+
     const playNotificationSound = () => {
         try {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -190,7 +236,12 @@ const AdminLayout = () => {
         `}
             >
                 {/* Header */}
-                <Header onMenuClick={() => setSidebarOpen(true)} />
+                <Header 
+                    onMenuClick={() => setSidebarOpen(true)} 
+                    isOnline={isOnline} 
+                    lastOnline={lastOnline} 
+                    toggleOnlineStatus={toggleOnlineStatus}
+                />
 
                 {/* Page Content */}
                 <main className="relative flex-1 overflow-y-auto bg-gradient-to-b from-[#020806] via-[#06110f] to-[#040a08] px-4 py-4 sm:px-5 sm:py-5 lg:px-6 lg:py-6">

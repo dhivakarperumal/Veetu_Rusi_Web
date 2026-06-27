@@ -14,6 +14,9 @@ import {
   X,
   AlertTriangle,
   TrendingDown,
+  MapPin,
+  Share2,
+  Clock
 } from "lucide-react";
 
 import { useAuth } from "../PrivateRouter/AuthContext";
@@ -35,7 +38,7 @@ const pageTitles = {
   "/delivery/settings": "Settings",
 };
 
-const Header = ({ onMenuClick }) => {
+const Header = ({ onMenuClick, isOnline, lastOnline, toggleOnlineStatus }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
@@ -263,6 +266,16 @@ const Header = ({ onMenuClick }) => {
       ? role.charAt(0).toUpperCase() + role.slice(1)
       : "Administrator";
 
+  const handleShareLocation = () => {
+    if (!isOnline) {
+      toast.error("You must be online to share live location.");
+      return;
+    }
+    const trackingLink = `https://veeturusi.com/track/${userName.toLowerCase().replace(/\s+/g, '')}-${Date.now()}`;
+    navigator.clipboard.writeText(trackingLink);
+    toast.success("Live location link copied to clipboard!");
+  };
+
   return (
     <header className="sticky top-0 z-30 bg-[#07110f]/95 backdrop-blur-xl border-b border-white/10 shadow-[0_25px_50px_rgba(0,0,0,0.18)]">
 
@@ -289,6 +302,35 @@ const Header = ({ onMenuClick }) => {
 
         {/* RIGHT */}
         <div className="flex items-center gap-3">
+
+          {/* ONLINE STATUS TOGGLE & LAST ONLINE */}
+          <div className="hidden md:flex flex-col items-end mr-2">
+            <button
+              onClick={toggleOnlineStatus}
+              className={`relative flex items-center gap-2 px-3 py-1.5 rounded-full font-black text-[10px] uppercase tracking-widest transition-all ${
+                isOnline 
+                  ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.2)]" 
+                  : "bg-slate-800 text-slate-400 border border-white/10 hover:text-slate-300"
+              }`}
+            >
+              <div className={`w-2 h-2 rounded-full ${isOnline ? "bg-emerald-500 shadow-[0_0_8px_#10B981] animate-pulse" : "bg-slate-500"}`} />
+              {isOnline ? "Online" : "Offline"}
+            </button>
+            {!isOnline && (
+              <span className="text-[9px] text-slate-500 font-bold mt-1 tracking-wider flex items-center gap-1">
+                <Clock className="w-3 h-3" /> Last: {lastOnline}
+              </span>
+            )}
+          </div>
+
+          {/* SHARE LOCATION */}
+          <button
+            onClick={handleShareLocation}
+            title="Share Live Location"
+            className="p-2 rounded-xl bg-slate-900/80 text-blue-400 hover:text-blue-300 hover:bg-slate-900 border border-white/10 shadow-sm transition-all active:scale-95 flex items-center gap-1"
+          >
+            <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
+          </button>
 
           {/* SEARCH */}
           <div className="relative flex items-center" ref={searchWrapperRef}>
