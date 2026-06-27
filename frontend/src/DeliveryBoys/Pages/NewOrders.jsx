@@ -147,9 +147,9 @@ const NewOrders = () => {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+        <div className="rounded-3xl border border-white/10 bg-slate-950/90 p-6">
           <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Total Available</p>
-          <p className="mt-4 text-4xl font-black text-slate-900">{orders.length}</p>
+          <p className="mt-4 text-4xl font-black text-white">{orders.length}</p>
         </div>
         <div className="rounded-3xl border border-white/10 bg-slate-950/90 p-6">
           <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Visible</p>
@@ -205,7 +205,7 @@ const NewOrders = () => {
                         <span>{[order.street_address, order.city, order.district, order.state, order.zip_code].filter(Boolean).join(', ') || 'Address unavailable'}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 font-bold text-slate-900">₹{Number(order.total_amount || 0).toFixed(2)}</td>
+                    <td className="px-6 py-4 font-bold text-white">₹{Number(order.total_amount || 0).toFixed(2)}</td>
                     <td className="px-6 py-4 text-slate-500">
                       {new Date(order.ordered_at || order.created_at || Date.now()).toLocaleString()}
                     </td>
@@ -230,50 +230,50 @@ const NewOrders = () => {
       {/* Location Modal */}
       {showLocationModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-xl border border-slate-100">
+          <div className="bg-slate-950 rounded-3xl p-6 w-full max-w-md shadow-xl border border-white/10">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-black text-slate-900">Confirm Assignment</h3>
-              <button onClick={closeLocationModal} className="text-slate-400 hover:text-slate-600">✕</button>
+              <h3 className="text-xl font-black text-white">Confirm Assignment</h3>
+              <button onClick={closeLocationModal} className="text-slate-400 hover:text-white">✕</button>
             </div>
 
-            <p className="text-sm text-slate-500 mb-6">
+            <p className="text-sm text-slate-300 mb-6">
               Please share your current location to accept this order and update live tracking.
             </p>
 
             <div className="space-y-4">
               {fetchingLocation ? (
-                <div className="flex items-center justify-center p-4 bg-blue-50 text-blue-600 rounded-xl">
+                <div className="flex items-center justify-center p-4 bg-slate-900 text-slate-100 rounded-xl">
                   <span className="font-semibold text-sm">Fetching GPS & Address...</span>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div className="col-span-2">
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Coordinates</label>
-                    <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-slate-700 font-medium">
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Coordinates</label>
+                    <div className="p-2.5 bg-slate-900 rounded-xl border border-white/10 text-slate-100 font-medium">
                       {locationData.latitude ? `${locationData.latitude.toFixed(6)}, ${locationData.longitude.toFixed(6)}` : 'Not fetched'}
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Pincode</label>
-                    <input type="text" value={locationData.pincode} readOnly className="w-full p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-slate-700 focus:outline-none" />
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Pincode</label>
+                    <input type="text" value={locationData.pincode} readOnly className="w-full p-2.5 bg-slate-900 rounded-xl border border-white/10 text-slate-100 focus:outline-none" />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Area</label>
-                    <input type="text" value={locationData.area} readOnly className="w-full p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-slate-700 focus:outline-none" />
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Area</label>
+                    <input type="text" value={locationData.area} readOnly className="w-full p-2.5 bg-slate-900 rounded-xl border border-white/10 text-slate-100 focus:outline-none" />
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">District</label>
-                    <input type="text" value={locationData.district} readOnly className="w-full p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-slate-700 focus:outline-none" />
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">District</label>
+                    <input type="text" value={locationData.district} readOnly className="w-full p-2.5 bg-slate-900 rounded-xl border border-white/10 text-slate-100 focus:outline-none" />
                   </div>
                 </div>
               )}
 
-              <div className="flex items-center gap-3 mt-6 pt-4 border-t border-slate-100">
+              <div className="flex items-center gap-3 mt-6 pt-4 border-t border-white/10">
                 <button
                   type="button"
                   onClick={fetchCurrentLocation}
                   disabled={fetchingLocation}
-                  className="flex-1 rounded-2xl bg-slate-100 px-4 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-200 disabled:opacity-60"
+                  className="flex-1 rounded-2xl bg-slate-800 px-4 py-3 text-sm font-black text-white transition hover:bg-slate-700 disabled:opacity-60"
                 >
                   Retry GPS
                 </button>

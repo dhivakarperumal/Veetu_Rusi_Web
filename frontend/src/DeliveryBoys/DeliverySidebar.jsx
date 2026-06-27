@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { ChevronLeft, X } from "lucide-react";
 import {
@@ -60,7 +60,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
       {/* Mobile Overlay */}
       <div
         onClick={onClose}
-        className={`fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden transition-opacity ${
+        className={`fixed inset-0 z-40 bg-black lg:hidden transition-opacity ${
           isOpen ? "opacity-100 visible" : "opacity-0 invisible"
         }`}
       />
@@ -69,7 +69,8 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
       <aside
         className={`
           fixed top-0 left-0 z-50 h-full
-          bg-[#0A180E] border-r border-white/5
+          bg-[#071219] border-r border-slate-900/80
+          shadow-[0_35px_80px_rgba(0,0,0,0.35)]
           flex flex-col transition-all duration-300
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
           lg:translate-x-0
@@ -77,71 +78,75 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
         `}
       >
         {/* Brand Header */}
-        <div className="flex items-center gap-3 px-4 py-5 border-b border-white/5 overflow-hidden">
-          <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center shadow-lg shadow-emerald-600/10 shrink-0 overflow-hidden">
+        <div className="flex items-center gap-3 px-5 py-6 border-b border-slate-800/70 overflow-hidden">
+          <div className="w-11 h-11 rounded-2xl bg-[#0f1216] flex items-center justify-center shadow-lg shadow-emerald-500/10 shrink-0 overflow-hidden">
             <img
               src="/logo.png"
               alt="Logo"
               className="w-8 h-8 object-contain"
-              onError={(e) => {
-                e.target.src = "https://ui-avatars.com/api/?name=VR&background=1B4D22&color=fff";
-              }}
+              onError={(e) => { e.target.src = "https://ui-avatars.com/api/?name=VR&background=2563EB&color=fff"; }}
             />
           </div>
 
           {!collapsed && (
             <div className="overflow-hidden">
-              <h1 className="text-md font-black text-white tracking-tighter uppercase leading-none">
-                Veetu Rusi
-              </h1>
-              <p className="text-[9px] text-emerald-400 font-bold tracking-widest uppercase opacity-70 mt-1">
-                Delivery Partner
-              </p>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-emerald-400 opacity-80 mb-1">Platform Control</p>
+              <h1 className="text-lg font-black text-white tracking-tight">Veetu Rusi</h1>
             </div>
           )}
 
           <button
             onClick={onClose}
-            className="ml-auto p-2 rounded-xl text-white/40 hover:bg-white/5 lg:hidden border border-transparent hover:border-white/10 transition-all"
+            className="ml-auto p-2 rounded-2xl text-white/40 hover:bg-slate-800/70 lg:hidden border border-transparent hover:border-slate-700 transition-all"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Navigation Links */}
-        <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto hide-scrollbar">
+        {/* Navigation */}
+        <nav className="flex-1 px-3 py-6 space-y-2.5 overflow-y-auto hide-scrollbar">
           {navItems.map((item) => {
             const Icon = item.icon;
             if (item.children) {
               const isOpenMenu = openMenu[item.label];
               return (
-                <div key={item.label} className="space-y-1">
+                <div key={item.label} className="space-y-2">
                   <button
                     onClick={() => setOpenMenu(prev => ({ ...prev, [item.label]: !prev[item.label] }))}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-white/50 hover:bg-white/5 hover:text-white`}
+                    className={`
+                      relative w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-200
+                      ${isOpenMenu
+                        ? "bg-slate-900/80 text-white ring-1 ring-emerald-500/25"
+                        : "text-slate-300 hover:bg-slate-800/80 hover:text-white"
+                      }
+                    `}
                   >
-                    <Icon className="w-5 h-5 shrink-0" />
+                    <span className={`absolute left-0 top-1/2 h-10 w-1.5 -translate-y-1/2 rounded-r-full transition-all ${isOpenMenu ? 'bg-emerald-400' : 'bg-transparent'}`} />
+                    <Icon className="w-5 h-5 shrink-0 text-emerald-300" />
+
                     {!collapsed && (
-                      <span className="text-sm font-bold tracking-wide flex-1 text-left">{item.label}</span>
-                    )}
-                    {!collapsed && (
-                      isOpenMenu ? <FaChevronUp className="w-4 h-4" /> : <FaChevronDown className="w-4 h-4" />
+                      <>
+                        <span className="flex-1 text-left text-sm font-semibold tracking-wide">{item.label}</span>
+                        <span className={`text-slate-400 transition-transform duration-200 ${isOpenMenu ? 'rotate-180 text-white' : ''}`}>
+                          {isOpenMenu ? <FaChevronUp className="w-4 h-4" /> : <FaChevronDown className="w-4 h-4" />}
+                        </span>
+                      </>
                     )}
                   </button>
 
-                  {isOpenMenu && (
-                    <div className="pl-8 pr-2 space-y-1">
+                  {!collapsed && (
+                    <div className={`ml-4 pl-4 border-l border-slate-800/60 space-y-2 overflow-hidden transition-all duration-300 ${isOpenMenu ? 'max-h-72 opacity-100 py-2' : 'max-h-0 opacity-0'}`}>
                       {item.children.map((child) => {
                         const ChildIcon = child.icon;
                         return (
                           <NavLink
                             key={child.path}
                             to={child.path}
-                            className={({ isActive }) => `flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-all ${isActive ? 'bg-emerald-600 text-white' : 'text-white/50 hover:bg-white/5 hover:text-white'}`}
+                            className={({ isActive }) => `flex items-center gap-3 px-4 py-3 rounded-2xl text-[13px] font-semibold transition-all duration-200 ${isActive ? 'bg-emerald-500/10 text-white shadow-sm shadow-emerald-500/10 border border-emerald-500/20' : 'text-slate-400 hover:text-white hover:bg-slate-800/80'}`}
                             onClick={() => { if (isOpen) onClose(); }}
                           >
                             <ChildIcon className="w-4 h-4 shrink-0" />
-                            {!collapsed && <span className="font-bold tracking-wide">{child.label}</span>}
+                            <span className="truncate">{child.label}</span>
                           </NavLink>
                         );
                       })}
@@ -157,22 +162,18 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                 key={item.path}
                 to={item.path}
                 end={item.exact}
-                onClick={() => {
-                  if (isOpen) onClose();
-                }}
+                onClick={() => { if (isOpen) onClose(); }}
                 className={`
-                  flex items-center gap-3 px-4 py-3 rounded-xl transition-all
-                  ${
-                    active
-                      ? "bg-emerald-600 text-white shadow-xl shadow-emerald-600/20"
-                      : "text-white/50 hover:bg-white/5 hover:text-white"
+                  relative flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-200
+                  ${active
+                    ? 'bg-slate-900/90 text-white shadow-xl shadow-slate-950/40'
+                    : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
                   }
                 `}
               >
-                <Icon className="w-5 h-5 shrink-0" />
-                {!collapsed && (
-                  <span className="text-sm font-bold tracking-wide">{item.label}</span>
-                )}
+                <span className={`absolute left-0 top-1/2 h-10 w-1.5 -translate-y-1/2 rounded-r-full transition-all ${active ? 'bg-emerald-400' : 'bg-transparent'}`} />
+                <Icon className="w-5 h-5 shrink-0 text-emerald-300" />
+                {!collapsed && <span className="text-sm font-semibold tracking-wide">{item.label}</span>}
               </NavLink>
             );
           })}
@@ -180,23 +181,18 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
 
         {/* Footer Info */}
         {!collapsed && (
-          <div className="p-4 mx-3 mb-6 bg-white/5 rounded-2xl border border-white/5">
-            <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-3 pl-1">
-              Identity
-            </p>
+          <div className="p-4 mx-3 mb-6 bg-[#0f141a] rounded-[2rem] border border-slate-800 shadow-inner shadow-slate-950/30">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-300 mb-3">Secure Mode</p>
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-emerald-600 flex items-center justify-center text-white text-xs font-black shadow-lg shadow-emerald-600/40">
-                {profileName?.charAt(0) || "S"}
+              <div className="w-11 h-11 rounded-3xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-300 text-sm font-black shadow-sm">
+                {profileName?.charAt(0) || 'S'}
               </div>
               <div className="overflow-hidden">
-                <p className="text-xs font-black text-white truncate">
-                  {profileName || "Delivery Partner"}
-                </p>
-                <p className="text-[9px] text-emerald-400 font-bold uppercase truncate opacity-70">
-                  Delivery Partner
-                </p>
+                <p className="text-sm font-black text-white truncate">{profileName || 'Delivery Partner'}</p>
+                <p className="text-[10px] text-slate-400 uppercase tracking-[0.18em] mt-1">Delivery Partner</p>
               </div>
             </div>
+            <p className="mt-4 text-xs leading-5 text-slate-500">Manage deliveries, earnings, and routes from a secure command center.</p>
           </div>
         )}
 
@@ -205,16 +201,14 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
           onClick={onToggleCollapse}
           className="
             hidden lg:flex absolute -right-3 top-1/2 -translate-y-1/2
-            w-6 h-6 rounded-full
-            bg-white border border-slate-200
-            shadow-[0_4px_10px_rgba(0,0,0,0.1)]
+            w-8 h-8 rounded-full
+            bg-[#0b0d10] border border-slate-800
+            shadow-[0_8px_18px_rgba(2,6,23,0.6)]
             items-center justify-center
-            text-slate-500 hover:text-emerald-600 hover:scale-110 transition-all z-50
+            text-slate-300 hover:text-white hover:scale-110 transition-all z-50
           "
         >
-          <ChevronLeft
-            className={`w-4 h-4 transition-transform ${collapsed ? "rotate-180" : ""}`}
-          />
+          <ChevronLeft className={`w-4 h-4 transition-transform ${collapsed ? 'rotate-180' : ''}`} />
         </button>
       </aside>
     </>

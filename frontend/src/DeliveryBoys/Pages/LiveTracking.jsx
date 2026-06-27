@@ -37,14 +37,11 @@ const LiveTracking = () => {
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
       case "out for delivery":
-        return "bg-blue-100 text-blue-700 border-blue-200";
-      case "delivered":
-        return "bg-emerald-100 text-emerald-700 border-emerald-200";
-      case "picked up":
-        return "bg-amber-100 text-amber-700 border-amber-200";
-      default:
-        return "bg-slate-900 text-slate-300 border-slate-700";
-    }
+          return "bg-slate-900 text-cyan-300 border-cyan-800";
+        case "delivered":
+          return "bg-slate-900 text-emerald-300 border-emerald-800";
+        case "picked up":
+          return "bg-slate-900 text-amber-300 border-amber-800";
   };
 
   const getStatusIcon = (status) => {
@@ -63,8 +60,8 @@ const LiveTracking = () => {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-4 h-[60vh]">
-        <div className="w-10 h-10 border-4 border-blue-600/20 border-t-blue-600 rounded-full animate-spin"></div>
-        <p className="text-gray-400 font-black uppercase tracking-[0.2em] text-[10px]">Loading Live Tracking...</p>
+        <div className="w-10 h-10 border-4 border-cyan-600/20 border-t-cyan-600 rounded-full animate-spin"></div>
+        <p className="text-slate-400 font-black uppercase tracking-[0.2em] text-[10px]">Loading Live Tracking...</p>
       </div>
     );
   }
@@ -133,7 +130,7 @@ const LiveTracking = () => {
                       {order.status}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 text-[11px] font-bold text-gray-600">
+                  <div className="flex items-center gap-2 text-[11px] font-bold text-slate-400">
                     <User className="w-3 h-3" />
                     {order.customer_name || "Guest"}
                   </div>

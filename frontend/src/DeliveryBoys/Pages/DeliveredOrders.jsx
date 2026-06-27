@@ -122,7 +122,7 @@ const DeliveredOrders = () => {
                         <span>{[order.street_address, order.city, order.district, order.state, order.zip_code].filter(Boolean).join(", ") || "Address unavailable"}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 font-bold text-slate-900">₹{Number(order.total_amount || order.amount || 0).toFixed(2)}</td>
+                    <td className="px-6 py-4 font-bold text-white">₹{Number(order.total_amount || order.amount || 0).toFixed(2)}</td>
                     <td className="px-6 py-4 text-slate-500">{new Date(order.updated_at || order.ordered_at || Date.now()).toLocaleString()}</td>
                   </tr>
                 ))}

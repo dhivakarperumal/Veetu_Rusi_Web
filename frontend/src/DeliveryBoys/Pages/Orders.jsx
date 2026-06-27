@@ -139,12 +139,12 @@ const Orders = ({ statusFilter = "All" }) => {
 
     const getStatusStyle = (status) => {
         switch (status) {
-            case "Order Placed": return "bg-blue-100 text-blue-700 border-blue-200";
-            case "Packing": return "bg-indigo-100 text-indigo-700 border-indigo-200";
-            case "Shipping": return "bg-amber-100 text-amber-700 border-amber-200";
-            case "Out for Delivery": return "bg-cyan-100 text-cyan-700 border-cyan-200";
-            case "Delivered": return "bg-emerald-100 text-emerald-700 border-emerald-200";
-            case "Cancelled": return "bg-red-100 text-red-700 border-red-200";
+            case "Order Placed": return "bg-slate-900 text-blue-300 border-blue-800";
+            case "Packing": return "bg-slate-900 text-indigo-300 border-indigo-800";
+            case "Shipping": return "bg-slate-900 text-amber-300 border-amber-800";
+            case "Out for Delivery": return "bg-slate-900 text-cyan-300 border-cyan-800";
+            case "Delivered": return "bg-slate-900 text-emerald-300 border-emerald-800";
+            case "Cancelled": return "bg-slate-900 text-red-300 border-red-800";
             case "New": return "bg-slate-900 text-slate-300 border-slate-700";
             case "Processing": return "bg-slate-900 text-indigo-300 border-indigo-800";
             case "Shipped": return "bg-slate-900 text-amber-300 border-amber-800";
@@ -189,10 +189,10 @@ const Orders = ({ statusFilter = "All" }) => {
             {/* Summary Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {[
-                    { label: "Total Matches", value: filteredOrders.length, icon: <FiPackage />, color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-100", status: "All" },
-                    { label: "Pending Processing", value: orders.filter(o => ['Order Placed', 'Processing', 'New'].includes(o.status)).length, icon: <FiClock />, color: "text-amber-500", bg: "bg-amber-50", border: "border-amber-100", status: "Order Placed" },
-                    { label: "Shipping", value: orders.filter(o => ['Shipping', 'Out for Delivery', 'Shipped', 'Packing'].includes(o.status)).length, icon: <FiTruck />, color: "text-indigo-500", bg: "bg-indigo-50", border: "border-indigo-100", status: "Shipping" },
-                    { label: "Delivered", value: orders.filter(o => o.status === 'Delivered').length, icon: <FiCheckCircle />, color: "text-emerald-500", bg: "bg-emerald-50", border: "border-emerald-100", status: "Delivered" }
+                    { label: "Total Matches", value: filteredOrders.length, icon: <FiPackage />, color: "text-slate-200", bg: "bg-slate-950/90", border: "border-white/10", status: "All" },
+                    { label: "Pending Processing", value: orders.filter(o => ['Order Placed', 'Processing', 'New'].includes(o.status)).length, icon: <FiClock />, color: "text-amber-300", bg: "bg-slate-950/90", border: "border-white/10", status: "Order Placed" },
+                    { label: "Shipping", value: orders.filter(o => ['Shipping', 'Out for Delivery', 'Shipped', 'Packing'].includes(o.status)).length, icon: <FiTruck />, color: "text-indigo-300", bg: "bg-slate-950/90", border: "border-white/10", status: "Shipping" },
+                    { label: "Delivered", value: orders.filter(o => o.status === 'Delivered').length, icon: <FiCheckCircle />, color: "text-emerald-300", bg: "bg-slate-950/90", border: "border-white/10", status: "Delivered" }
                 ].map((stat, index) => (
                     <button
                         key={index}
@@ -247,7 +247,7 @@ const Orders = ({ statusFilter = "All" }) => {
                     {loading ? (
                         <div className="flex flex-col items-center justify-center py-24 gap-4">
                             <div className="w-10 h-10 border-4 border-blue-600/20 border-t-blue-600 rounded-full animate-spin"></div>
-                            <p className="text-gray-300 font-black uppercase tracking-[0.2em] text-[10px]">Syncing Database...</p>
+                            <p className="text-slate-300 font-black uppercase tracking-[0.2em] text-[10px]">Syncing Database...</p>
                         </div>
                     ) : (
                         <table className="w-full text-left border-collapse block md:table">
@@ -268,7 +268,7 @@ const Orders = ({ statusFilter = "All" }) => {
                                         <tr key={order.id} className="hover:bg-white/10 transition-colors group block md:table-row bg-slate-950/75 md:bg-transparent border border-white/10 md:border-0 rounded-2xl md:rounded-none mb-4 md:mb-0">
                                             <td className="px-3 py-4 md:px-8 md:py-6 block md:table-cell border-b border-slate-800 md:border-b-0">
                                                 <div className="flex md:block items-center justify-between w-full">
-                                                    <span className="md:hidden text-[10px] font-black text-gray-400 uppercase tracking-widest">ID / Date</span>
+                                                    <span className="md:hidden text-[10px] font-black text-slate-400 uppercase tracking-widest">ID / Date</span>
                                                     <div className="text-right md:text-left">
                                                         <p className="text-slate-100 font-black">#ORD-0{order.id}</p>
                                                         <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-tighter">
@@ -279,7 +279,7 @@ const Orders = ({ statusFilter = "All" }) => {
                                             </td>
                                             <td className="px-3 py-4 md:px-8 md:py-6 block md:table-cell border-b border-gray-50 md:border-b-0">
                                                 <div className="flex md:block items-center justify-between gap-3 w-full">
-                                                    <span className="md:hidden text-[10px] font-black text-gray-400 uppercase tracking-widest">Customer</span>
+                                                    <span className="md:hidden text-[10px] font-black text-slate-400 uppercase tracking-widest">Customer</span>
                                                     <div className="flex items-center gap-3 text-right md:text-left">
                                                         <div className="w-9 h-9 rounded-xl bg-slate-900/80 flex items-center justify-center text-[11px] font-black text-slate-100 uppercase shadow-sm">
                                                             {order.customer_name?.charAt(0) || 'C'}
@@ -293,7 +293,7 @@ const Orders = ({ statusFilter = "All" }) => {
                                             </td>
                                             <td className="px-3 py-4 md:px-8 md:py-6 block md:table-cell border-b border-gray-50 md:border-b-0">
                                                 <div className="flex md:block flex-col md:flex-row items-start md:items-center justify-between gap-2 w-full">
-                                                    <span className="md:hidden text-[10px] font-black text-gray-400 uppercase tracking-widest w-full">Pipeline Status</span>
+                                                    <span className="md:hidden text-[10px] font-black text-slate-400 uppercase tracking-widest w-full">Pipeline Status</span>
                                                     <div className="relative group/status flex flex-col gap-2 w-full md:w-auto mt-2 md:mt-0">
                                                         <div className="relative flex items-center">
                                                             <select
@@ -350,7 +350,7 @@ const Orders = ({ statusFilter = "All" }) => {
                                             </td>
                                             <td className="px-3 py-4 md:px-8 md:py-6 block md:table-cell border-b border-gray-50 md:border-b-0">
                                                 <div className="flex md:block items-center justify-between w-full">
-                                                    <span className="md:hidden text-[10px] font-black text-gray-400 uppercase tracking-widest">Method</span>
+                                                    <span className="md:hidden text-[10px] font-black text-slate-400 uppercase tracking-widest">Method</span>
                                                     <span className="text-slate-300 text-[10px] uppercase font-black tracking-widest bg-slate-900/80 px-2 py-1 rounded-lg border border-white/10 italic">
                                                         {order.payment_method || 'Method N/A'}
                                                     </span>
@@ -358,13 +358,13 @@ const Orders = ({ statusFilter = "All" }) => {
                                             </td>
                                             <td className="px-3 py-4 md:px-8 md:py-6 block md:table-cell border-b border-gray-50 md:border-b-0">
                                                 <div className="flex md:block items-center justify-between w-full">
-                                                    <span className="md:hidden text-[10px] font-black text-gray-400 uppercase tracking-widest">Amount</span>
+                                                    <span className="md:hidden text-[10px] font-black text-slate-400 uppercase tracking-widest">Amount</span>
                                                     <span className="font-black text-slate-100 text-lg italic tracking-tight">₹{parseFloat(order.total_amount || 0).toLocaleString()}</span>
                                                 </div>
                                             </td>
                                             <td className="px-3 py-4 md:px-8 md:py-6 block md:table-cell border-b border-gray-50 md:border-b-0">
                                                 <div className="flex md:block items-center justify-between w-full">
-                                                    <span className="md:hidden text-[10px] font-black text-gray-400 uppercase tracking-widest">Print</span>
+                                                    <span className="md:hidden text-[10px] font-black text-slate-400 uppercase tracking-widest">Print</span>
                                                     <Link
                                                         to={`/admin/orders/${order.id}`}
                                                         state={{ autoPrint: true }}
@@ -377,7 +377,7 @@ const Orders = ({ statusFilter = "All" }) => {
                                             </td>
                                             <td className="px-3 py-4 md:px-8 md:py-6 block md:table-cell">
                                                 <div className="flex md:block items-center justify-between w-full">
-                                                    <span className="md:hidden text-[10px] font-black text-gray-400 uppercase tracking-widest">Actions</span>
+                                                    <span className="md:hidden text-[10px] font-black text-slate-400 uppercase tracking-widest">Actions</span>
                                                     <div className="flex items-center justify-end gap-2 transition-opacity">
                                                         <Link
                                                             to={`/admin/orders/${order.id}`}

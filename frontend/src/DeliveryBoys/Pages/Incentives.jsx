@@ -160,6 +160,7 @@ const Incentives = () => {
                   </div>
                   {isLocked && <Lock className="w-5 h-5 text-slate-400 flex-shrink-0" />}
                   {isCompleted && <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />}
+                </div>
               {/* Reward Badge */}
               <div className="mb-4 inline-block px-3 py-1.5 rounded-xl bg-pink-900/80 border border-pink-500/30">
                 <p className="text-[10px] font-black text-pink-300 uppercase tracking-widest">{incentive.reward}</p>

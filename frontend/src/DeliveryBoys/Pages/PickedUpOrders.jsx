@@ -92,9 +92,9 @@ const PickedUpOrders = () => {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+        <div className="rounded-3xl border border-white/10 bg-slate-950/90 p-6">
           <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Total Picked Up</p>
-          <p className="mt-4 text-4xl font-black text-slate-900">{orders.length}</p>
+          <p className="mt-4 text-4xl font-black text-white">{orders.length}</p>
         </div>
         <div className="rounded-3xl border border-white/10 bg-slate-950/90 p-6">
           <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Visible</p>
@@ -150,7 +150,7 @@ const PickedUpOrders = () => {
                         <span>{[order.street_address, order.city, order.district, order.state, order.zip_code].filter(Boolean).join(", ") || "Address unavailable"}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 font-bold text-slate-900">₹{Number(order.total_amount || order.amount || 0).toFixed(2)}</td>
+                    <td className="px-6 py-4 font-bold text-white">₹{Number(order.total_amount || order.amount || 0).toFixed(2)}</td>
                     <td className="px-6 py-4 text-slate-500">{new Date(order.updated_at || order.ordered_at || Date.now()).toLocaleString()}</td>
                     <td className="px-6 py-4">
                       <label className="sr-only" htmlFor={`picked-up-action-${order.id}`}>Update status</label>
@@ -163,7 +163,7 @@ const PickedUpOrders = () => {
                           if (!value) return;
                           updateOrderStatus(order.id, value);
                         }}
-                        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 text-sm font-semibold text-slate-100 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         <option value="">Select action</option>
                         <option value="start_delivery">Start Delivery</option>

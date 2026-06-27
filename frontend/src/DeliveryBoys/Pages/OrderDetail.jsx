@@ -389,12 +389,12 @@ const OrderDetail = () => {
             <div className="hidden print:block border-b-4 border-slate-900 pb-8 mb-8">
                 <div className="flex justify-between items-start">
                     <div>
-                        <h1 className="text-4xl font-black text-slate-900 uppercase">Store Invoice</h1>
-                        <p className="text-sm font-bold text-slate-600 mt-2 italic">Official Manifest Record</p>
+                        <h1 className="text-4xl font-black text-white uppercase">Store Invoice</h1>
+                        <p className="text-sm font-bold text-slate-400 mt-2 italic">Official Manifest Record</p>
                     </div>
                     <div className="text-right">
-                        <h2 className="text-xl font-black text-slate-900">#ORD-0{order.id}</h2>
-                        <p className="text-xs font-bold text-slate-600 uppercase tracking-widest mt-1">Date: {new Date(order.created_at).toLocaleDateString()}</p>
+                        <h2 className="text-xl font-black text-white">#ORD-0{order.id}</h2>
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Date: {new Date(order.created_at).toLocaleDateString()}</p>
                     </div>
                 </div>
             </div>
@@ -468,18 +468,18 @@ const OrderDetail = () => {
                     </div>
 
                     {/* Payment */}
-                    {/* <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm flex flex-col md:flex-row gap-8 items-center group">
-                        <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center text-3xl shrink-0 group-hover:scale-110 transition-transform">
+                    {/* <div className="bg-slate-950 p-8 rounded-[2.5rem] border border-white/10 shadow-sm flex flex-col md:flex-row gap-8 items-center group">
+                        <div className="w-16 h-16 bg-slate-900 text-slate-200 rounded-3xl flex items-center justify-center text-3xl shrink-0 group-hover:scale-110 transition-transform">
                             <FiCreditCard />
                         </div>
                         <div className="flex-1 text-center md:text-left">
-                            <h3 className="text-lg font-black text-slate-800 tracking-tight">Payment Channel</h3>
-                            <p className="text-sm text-gray-400 font-bold mt-1">Processed via <span className="text-blue-600 font-black uppercase tracking-widest">{order.payment_method}</span> System</p>
+                            <h3 className="text-lg font-black text-white tracking-tight">Payment Channel</h3>
+                            <p className="text-sm text-slate-400 font-bold mt-1">Processed via <span className="text-cyan-300 font-black uppercase tracking-widest">{order.payment_method}</span> System</p>
                             {order.payment_id && (
-                                <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mt-2">Ref ID: <span className="text-slate-600">{order.payment_id}</span></p>
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-2">Ref ID: <span className="text-slate-300">{order.payment_id}</span></p>
                             )}
                         </div>
-                        <div className={`px-6 py-2 rounded-full font-black text-[10px] uppercase tracking-[0.2em] border ${order.payment_status === 'Paid' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
+                        <div className={`px-6 py-2 rounded-full font-black text-[10px] uppercase tracking-[0.2em] border ${order.payment_status === 'Paid' ? 'bg-slate-900 text-emerald-400 border-emerald-800' : 'bg-slate-900 text-amber-400 border-amber-800'}`}>
                             {order.payment_status || 'Verified Payment'}
                         </div>
                     </div> */}

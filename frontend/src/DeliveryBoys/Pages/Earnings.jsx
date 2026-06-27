@@ -35,7 +35,7 @@ const Earnings = () => {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-4 h-[60vh]">
         <div className="w-10 h-10 border-4 border-emerald-600/20 border-t-emerald-600 rounded-full animate-spin"></div>
-        <p className="text-gray-400 font-black uppercase tracking-[0.2em] text-[10px]">Loading Earnings...</p>
+        <p className="text-slate-400 font-black uppercase tracking-[0.2em] text-[10px]">Loading Earnings...</p>
       </div>
     );
   }
@@ -120,7 +120,7 @@ const Earnings = () => {
         </div>
 
         {recentDeliveries.length === 0 ? (
-          <div className="p-12 text-center text-gray-400">
+          <div className="p-12 text-center text-slate-400">
             <p className="font-black uppercase tracking-widest text-[10px]">No completed deliveries yet</p>
           </div>
         ) : (
@@ -136,7 +136,7 @@ const Earnings = () => {
                   <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-white/10">
                 {recentDeliveries.map((order) => (
                   <tr key={order.id} className="hover:bg-white/10 transition-colors">
                     <td className="px-8 py-4">
@@ -145,10 +145,10 @@ const Earnings = () => {
                     </td>
                     <td className="px-8 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-[10px] font-black text-blue-600">
+                        <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center text-[10px] font-black text-slate-100">
                           {order.customer_name?.charAt(0) || 'C'}
                         </div>
-                        <span className="font-bold text-slate-700">{order.customer_name || 'Guest'}</span>
+                        <span className="font-bold text-slate-100">{order.customer_name || 'Guest'}</span>
                       </div>
                     </td>
                     <td className="px-8 py-4 text-slate-400">{order.customer_phone || 'N/A'}</td>
