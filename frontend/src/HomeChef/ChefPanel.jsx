@@ -18,9 +18,22 @@ const AdminLayout = () => {
     const [popupOrder, setPopupOrder] = useState(null);
     const popupOrderRef = useRef(null);
     const displayedOrderIdsRef = useRef(new Set());
+    const [calculatedDistance, setCalculatedDistance] = useState(null);
 
     const navigate = useNavigate();
     const formatCurrency = (amount) => `₹${Number(amount || 0).toFixed(2)}`;
+
+    const calculateDistance = (lat1, lon1, lat2, lon2) => {
+        if (!lat1 || !lon1 || !lat2 || !lon2) return null;
+        const R = 6371;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return (R * c).toFixed(1);
+    };
 
     const playNotificationSound = () => {
         try {
@@ -114,6 +127,44 @@ const AdminLayout = () => {
         };
     }, []);
 
+    useEffect(() => {
+        if (popupOrder && !popupOrder.distance_km) {
+            setCalculatedDistance(null);
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(async (position) => {
+                    const chefLat = position.coords.latitude;
+                    const chefLng = position.coords.longitude;
+                    
+                    const addressStr = [popupOrder.street_address, popupOrder.city, popupOrder.district, popupOrder.state, popupOrder.zip_code].filter(Boolean).join(", ");
+                    if (addressStr) {
+                        try {
+                            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressStr)}`);
+                            const data = await response.json();
+                            if (data && data.length > 0) {
+                                const custLat = parseFloat(data[0].lat);
+                                const custLng = parseFloat(data[0].lon);
+                                const dist = calculateDistance(chefLat, chefLng, custLat, custLng);
+                                setCalculatedDistance(dist);
+                            } else {
+                                setCalculatedDistance('N/A');
+                            }
+                        } catch (e) {
+                            console.error("Geocoding failed", e);
+                            setCalculatedDistance('N/A');
+                        }
+                    } else {
+                        setCalculatedDistance('N/A');
+                    }
+                }, (error) => {
+                    console.error("Geolocation error:", error);
+                    setCalculatedDistance('N/A');
+                });
+            } else {
+                setCalculatedDistance('N/A');
+            }
+        }
+    }, [popupOrder]);
+
     const handleAccept = async () => {
         if (!popupOrder) return;
         try {
@@ -200,10 +251,34 @@ const AdminLayout = () => {
                                         <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Amount</p>
                                         <p className="mt-2 text-lg font-bold text-white">{formatCurrency(popupOrder.chef_total_amount ?? popupOrder.total_amount ?? 0)}</p>
                                     </div>
-                                        <div className="sm:col-span-2 rounded-3xl border border-slate-800 bg-[#0b0d10] p-5">
-                                        <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Customer</p>
-                                        <p className="mt-2 text-lg font-bold text-white">{popupOrder.customer_name || 'Unknown'}</p>
-                                        <p className="mt-2 text-sm text-slate-300">{popupOrder.customer_phone || 'No contact details'}</p>
+                                    <div className="sm:col-span-2 rounded-3xl border border-slate-800 bg-[#0b0d10] p-5">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">User Details</p>
+                                                <p className="mt-2 text-lg font-bold text-white">{popupOrder.customer_name || popupOrder.ordered_by_name || 'Unknown'}</p>
+                                                <p className="mt-2 text-sm text-slate-300">📞 {popupOrder.customer_phone || popupOrder.customer_email || 'No contact details'}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Distance</p>
+                                                <p className="mt-2 text-lg font-bold text-amber-400">
+                                                    {popupOrder.distance_km 
+                                                        ? `${popupOrder.distance_km} KM` 
+                                                        : calculatedDistance && calculatedDistance !== 'N/A' 
+                                                            ? `${calculatedDistance} KM` 
+                                                            : calculatedDistance === 'N/A' 
+                                                                ? 'N/A' 
+                                                                : 'Calculating...'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="mt-4 pt-4 border-t border-slate-800/50">
+                                            <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Delivery Address</p>
+                                            <p className="mt-2 text-sm text-slate-300 leading-6">
+                                                📍 {[popupOrder.street_address, popupOrder.city, popupOrder.district, popupOrder.state, popupOrder.zip_code]
+                                                    .filter(Boolean)
+                                                    .join(", ") || 'Not available'}
+                                            </p>
+                                        </div>
                                     </div>
 
                                         <div className="sm:col-span-2 rounded-3xl border border-slate-800 bg-[#0b0d10] p-5">
