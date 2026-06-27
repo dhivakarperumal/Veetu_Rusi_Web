@@ -72,36 +72,52 @@ exports.getAllProducts = async (req, res) => {
         // If caller requests chef-scoped results, query `chef_products` table
         if (source === 'chef_products' || chef_user_id || chef_id) {
             table = 'chef_products';
-            query = 'SELECT * FROM chef_products WHERE 1=1';
+            query = `
+                SELECT 
+                    t.*, 
+                    u.full_name AS chef_name, 
+                    hc.delivery_radius, 
+                    hc.latitude, 
+                    hc.longitude, 
+                    hc.area_name, 
+                    hc.city, 
+                    hc.district, 
+                    hc.state, 
+                    hc.pincode 
+                FROM chef_products t 
+                LEFT JOIN users u ON t.created_by = u.user_id 
+                LEFT JOIN home_chefs hc ON t.created_by = hc.user_id 
+                WHERE 1=1
+            `;
             const chefLookup = chef_user_id || chef_id;
             if (chefLookup) {
-                query += ' AND created_by = ?';
+                query += ' AND t.created_by = ?';
                 params.push(chefLookup);
             }
         } else {
             // Default to franchise_products for admin/franchise listings
             table = 'franchise_products';
-            query = 'SELECT * FROM franchise_products WHERE 1=1';
+            query = 'SELECT t.* FROM franchise_products t WHERE 1=1';
             if (franchise_id) {
-                query += ' AND franchise_id = ?';
+                query += ' AND t.franchise_id = ?';
                 params.push(franchise_id);
             }
             if (franchise_user_id) {
-                query += ' AND franchise_user_id = ?';
+                query += ' AND t.franchise_user_id = ?';
                 params.push(franchise_user_id);
             }
         }
 
         if (category) { 
-            query += ' AND category = ?'; 
+            query += ' AND t.category = ?'; 
             params.push(category); 
         }
         if (status && status !== 'All') { 
-            query += ' AND status = ?'; 
+            query += ' AND t.status = ?'; 
             params.push(status); 
         }
 
-        query += ' ORDER BY created_at DESC';
+        query += ' ORDER BY t.created_at DESC';
 
         const [products] = await pool.execute(query, params);
         const normalizedProducts = products.map((product) => ({

@@ -142,8 +142,14 @@ const Shop = ({ defaultCategory = "" }) => {
 
     try {
       setLoading(true);
-      const res = await api.get("/chef-foods");
-      const data = Array.isArray(res.data) ? res.data : [];
+      const [foodsRes, productsRes] = await Promise.all([
+        api.get("/chef-foods").catch((err) => { console.error(err); return { data: [] }; }),
+        api.get("/products", { params: { source: 'chef_products' } }).catch((err) => { console.error(err); return { data: [] }; })
+      ]);
+      const foodsData = Array.isArray(foodsRes.data) ? foodsRes.data : [];
+      const productsData = Array.isArray(productsRes.data) ? productsRes.data : [];
+      const data = [...foodsData, ...productsData];
+      
       setChefFoodsCache(data);
       setLastChefFoodsFetchTime(Date.now());
 
