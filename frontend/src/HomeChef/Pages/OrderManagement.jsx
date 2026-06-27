@@ -74,6 +74,11 @@ const OrderManagement = () => {
 
   useEffect(() => {
     let result = orders;
+
+    // Today's date as YYYY-MM-DD string in LOCAL timezone
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
     if (search.trim()) {
       const lower = search.toLowerCase();
       result = result.filter(
@@ -84,20 +89,22 @@ const OrderManagement = () => {
           (o.items || []).some((item) => (item.name || item.product_name || "").toLowerCase().includes(lower))
       );
     }
+
     if (statusFilter !== "All") {
-      // Treat Pending / Order Placed / New as equivalent
+      // Treat Pending / Order Placed / New / New Order as equivalent → TODAY ONLY
       const pendingAliases = ["Pending", "Order Placed", "New", "New Order"];
       if (pendingAliases.some(a => a.toLowerCase() === statusFilter.toLowerCase())) {
         result = result.filter((o) => o.status && pendingAliases.some(a => a.toLowerCase() === o.status.toLowerCase()));
-        // Show only today's orders for Pending status
-        const todayStr = new Date().toDateString();
+        // Show ONLY today's orders — compare local date strings
         result = result.filter((o) => {
-          const dateStr = o.ordered_at || o.created_at || o.updated_at;
-          if (!dateStr) return false;
-          return new Date(dateStr).toDateString() === todayStr;
+          const raw = o.ordered_at || o.created_at || o.updated_at;
+          if (!raw) return false;
+          const d = new Date(raw);
+          const dStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+          return dStr === todayStr;
         });
       } else if (statusFilter === "Delivered") {
-        result = result.filter((o) => 
+        result = result.filter((o) =>
           o.status && (o.status.toLowerCase() === "delivered" || o.status.toLowerCase() === "completed")
         );
       } else {
@@ -137,6 +144,10 @@ const OrderManagement = () => {
     }
   };
 
+  // Pending/New Order aliases for display checks
+  const pendingAliases = ["Pending", "Order Placed", "New", "New Order"];
+  const isPendingFilter = pendingAliases.some(a => a.toLowerCase() === statusFilter.toLowerCase());
+
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -146,7 +157,25 @@ const OrderManagement = () => {
             Dispatch orders, assign delivery drivers, and view live order states
           </p>
         </div>
+        <button
+          onClick={fetchOrders}
+          className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition active:scale-95 shadow-lg shadow-emerald-900/30"
+        >
+          🔄 Refresh
+        </button>
       </div>
+
+      {/* Today's New Orders Banner */}
+      {isPendingFilter && (
+        <div className="flex items-center gap-4 p-4 rounded-2xl border border-amber-500/20 bg-amber-500/5">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center text-xl shrink-0">🆕</div>
+          <div>
+            <p className="text-sm font-black text-amber-400 uppercase tracking-widest">Today's New Orders</p>
+            <p className="text-xs text-white/40 mt-0.5">Showing only today's orders with status: New Order</p>
+          </div>
+          <span className="ml-auto text-3xl font-black text-amber-400">{filteredOrders.length}</span>
+        </div>
+      )}
 
       {/* Filter and Search Bar */}
       <div className="flex flex-col md:flex-row gap-4 bg-[#0B1120]/40 backdrop-blur-md border border-white/5 p-4 rounded-3xl">
@@ -218,16 +247,17 @@ const OrderManagement = () => {
                   const chefAmount = parseFloat((order.chef_total_amount ?? order.total_amount) || 0);
                   
                   const nextStatusMap = {
-                    "Pending": "Accepted",
-                    "Order Placed": "Accepted",
-                    "New": "Accepted",
-                    "Accepted": "Preparing",
-                    "Preparing": "Food Ready",
-                    "Food Ready": "Packing",
-                    "Packing": "Searching Delivery Partner",
+                    "Pending":                    "Accepted",
+                    "New Order":                  "Accepted",
+                    "Order Placed":               "Accepted",
+                    "New":                        "Accepted",
+                    "Accepted":                   "Preparing",
+                    "Preparing":                  "Food Ready",
+                    "Food Ready":                 "Packing",
+                    "Packing":                    "Searching Delivery Partner",
                     "Searching Delivery Partner": "Delivery Partner Assigned",
-                    "Delivery Partner Assigned": "Out for Delivery",
-                    "Out for Delivery": "Delivered"
+                    "Delivery Partner Assigned":  "Out for Delivery",
+                    "Out for Delivery":           "Delivered"
                   };
                   const nextStatus = nextStatusMap[order.status];
 
@@ -260,16 +290,22 @@ const OrderManagement = () => {
                         <div className="flex flex-col gap-2 items-start">
                           <span
                             className={`text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider ${
-                              order.status === "Delivered"
+                              order.status === "Delivered" || order.status === "completed"
                                 ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
                                 : order.status === "Cancelled"
                                 ? "bg-red-500/10 text-red-400 border border-red-500/20"
-                                : order.status === "Pending" || order.status === "New Order"
+                                : ["Pending", "New Order", "New", "Order Placed"].includes(order.status)
                                 ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                                : order.status === "Accepted"
+                                ? "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                                : order.status === "Preparing" || order.status === "Food Ready"
+                                ? "bg-purple-500/10 text-purple-400 border border-purple-500/20"
+                                : order.status === "Out for Delivery"
+                                ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"
                                 : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
                             }`}
                           >
-                            {order.status === "Pending" ? "New Order" : order.status}
+                            {["Pending", "New", "Order Placed"].includes(order.status) ? "New Order" : order.status}
                           </span>
                           
                           {order.delivery_partner && (

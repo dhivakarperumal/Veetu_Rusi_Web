@@ -12,7 +12,7 @@ const AcceptedOrders = () => {
   const fetchAcceptedOrders = async () => {
     setLoading(true);
     try {
-      const { data } = await api.get("/delivery/orders?status=Assigned");
+      const { data } = await api.get("/delivery/orders?status=Delivery Partner Assigned");
       setOrders(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Failed to load accepted delivery orders:", error);
@@ -25,17 +25,14 @@ const AcceptedOrders = () => {
 
   const normalizeStatus = (status) => {
     if (!status) return status;
-    if (status === "start_delivery" || status === "out_for_delivery") return "Out for Delivery";
-    if (status === "delivered") return "Delivered";
-    if (status === "picked_up") return "Picked Up";
-    return status;
+    return status; // statuses are now passed as-is (plain English)
   };
 
   const updateOrderStatus = async (orderId, status) => {
     const normalizedStatus = normalizeStatus(status);
     setUpdatingId(orderId);
     try {
-      await api.patch(`/user-food-orders/status/${orderId}`, { status: normalizedStatus });
+      await api.patch(`/delivery/orders/${orderId}/status`, { status: normalizedStatus });
       toast.success(`Order updated to ${normalizedStatus}.`);
       await fetchAcceptedOrders();
     } catch (error) {
@@ -165,10 +162,9 @@ const AcceptedOrders = () => {
                         className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm font-semibold text-slate-100 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         <option value="">Select action</option>
-                        <option value="picked_up">Pickup Food</option>
-                        <option value="start_delivery">Start Delivery</option>
-                        <option value="out_for_delivery">Out for Delivery</option>
-                        <option value="delivered">Mark as Delivered</option>
+                        <option value="Picked Up">✅ Picked Up from Restaurant</option>
+                        <option value="Out for Delivery">🚴 Out for Delivery</option>
+                        <option value="Delivered">🎉 Mark as Delivered</option>
                       </select>
                       {updatingId === order.id && (
                         <p className="mt-2 text-xs text-slate-400">Updating status...</p>

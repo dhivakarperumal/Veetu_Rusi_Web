@@ -3,7 +3,8 @@ import api from "../api";
 import { toast } from "react-hot-toast";
 import {
   Bike, ShoppingBag, DollarSign,
-  Clock, TrendingUp, ArrowUpRight, TrendingDown
+  Clock, TrendingUp, ArrowUpRight, TrendingDown,
+  Star, Wallet, CheckCircle, Map, Timer, Percent, Box
 } from "lucide-react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
@@ -14,10 +15,20 @@ import { useAuth } from "../PrivateRouter/AuthContext";
 
 const FALLBACK = {
   cards: {
-    totalDeliveries: 0,
-    pendingDeliveries: 0,
+    ordersToday: 0,
+    completed: 0,
+    pending: 0,
+    cancelled: 0,
+    todayEarnings: 0,
     totalEarnings: 0,
-    todayEarnings: 0
+    walletBalance: 0,
+    rating: 0,
+    acceptanceRate: 0,
+    completionRate: 0,
+    onlineTime: "0h 0m",
+    distanceTravelled: 0,
+    activeTrackingCount: 0,
+    lastLocation: null
   }
 };
 
@@ -162,31 +173,74 @@ const DeliveryDashboard = () => {
   }
 
   const { cards } = data || FALLBACK;
+  const displayCards = { ...FALLBACK.cards, ...(cards || {}) };
 
   const statsCards = [
     {
-      label: "Total Earnings", icon: DollarSign, positive: true, trend: "Overall",
-      value: `₹${Number(cards?.totalEarnings || 0).toLocaleString()}`,
+      label: "Orders Today", icon: Box, positive: true, trend: "Today",
+      value: displayCards.ordersToday ?? 0,
+      gradient: "linear-gradient(135deg,#03120f 0%,#0B1120 100%)",
+      iconBg: "#3B82F6"
+    },
+    {
+      label: "Completed", icon: CheckCircle, positive: true, trend: "Done",
+      value: displayCards.completed ?? 0,
       gradient: "linear-gradient(135deg,#052e16 0%,#0B1120 100%)",
       iconBg: "#10B981"
     },
     {
-      label: "Today's Earnings", icon: DollarSign, positive: true, trend: "Today",
-      value: `₹${Number(cards?.todayEarnings || 0).toLocaleString()}`,
+      label: "Pending Orders", icon: Clock, positive: false, trend: "Active",
+      value: displayCards.pending ?? 0,
+      gradient: "linear-gradient(135deg,#2e0d05 0%,#0B1120 100%)",
+      iconBg: "#EF4444"
+    },
+    {
+      label: "Cancelled", icon: Box, positive: false, trend: "Cancelled",
+      value: displayCards.cancelled ?? 0,
+      gradient: "linear-gradient(135deg,#3b0000 0%,#0B1120 100%)",
+      iconBg: "#DC2626"
+    },
+    {
+      label: "Today's Earnings", icon: DollarSign, positive: true, trend: "Income",
+      value: `₹${Number(displayCards.todayEarnings ?? 0).toLocaleString()}`,
       gradient: "linear-gradient(135deg,#01140f 0%,#0B1120 100%)",
       iconBg: "#14B8A6"
     },
     {
-      label: "Total Deliveries", icon: Bike, positive: true, trend: "Completed",
-      value: cards?.totalDeliveries || 0,
-      gradient: "linear-gradient(135deg,#03120f 0%,#0B1120 100%)",
-      iconBg: "#06B6D4"
+      label: "Total Earnings", icon: Wallet, positive: true, trend: "All Time",
+      value: `₹${Number(displayCards.totalEarnings ?? 0).toLocaleString()}`,
+      gradient: "linear-gradient(135deg,#1e1b4b 0%,#0B1120 100%)",
+      iconBg: "#8B5CF6"
     },
     {
-      label: "Pending Orders", icon: Clock, positive: false, trend: "Active",
-      value: cards?.pendingDeliveries || 0,
-      gradient: "linear-gradient(135deg,#2e0d05 0%,#0B1120 100%)",
-      iconBg: "#EF4444"
+      label: "Rating", icon: Star, positive: true, trend: "Score",
+      value: `⭐ ${displayCards.rating ?? "N/A"}`,
+      gradient: "linear-gradient(135deg,#451a03 0%,#0B1120 100%)",
+      iconBg: "#F59E0B"
+    },
+    {
+      label: "Acceptance Rate", icon: Percent, positive: true, trend: "High",
+      value: `${displayCards.acceptanceRate ?? 0}%`,
+      gradient: "linear-gradient(135deg,#022c22 0%,#0B1120 100%)",
+      iconBg: "#059669"
+    },
+    {
+      label: "Completion Rate", icon: Percent, positive: true, trend: "Today",
+      value: `${displayCards.completionRate ?? 0}%`,
+      gradient: "linear-gradient(135deg,#064e3b 0%,#0B1120 100%)",
+      iconBg: "#34D399"
+    },
+    {
+      label: "Online Time", icon: Timer, positive: true, trend: "Active",
+      value: displayCards.onlineTime ?? "0h 0m",
+      gradient: "linear-gradient(135deg,#172554 0%,#0B1120 100%)",
+      iconBg: "#2563EB"
+    },
+    {
+      label: "Distance Travelled", icon: Map, positive: true, trend: "Today",
+      value: `${displayCards.distanceTravelled ?? 0} km`,
+      gradient: "linear-gradient(135deg,#312e81 0%,#0B1120 100%)",
+      iconBg: "#6366F1"
     }
   ];
 
@@ -217,7 +271,7 @@ const DeliveryDashboard = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {statsCards.map((c, i) => (
           <StatCard key={i} delay={i * 60} {...c} />
         ))}
@@ -241,15 +295,17 @@ const DeliveryDashboard = () => {
           </div>
         </ChartCard>
 
-        <div>
-          <h2 className="text-sm font-black text-slate-800 uppercase tracking-tight mb-4 flex items-center gap-2">
+          <div>
+          <h2 className="text-sm font-black text-slate-100 uppercase tracking-tight mb-4 flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_#10B981]" />
             Quick Actions
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
-              { label: "My Deliveries", icon: Bike, path: "/delivery/orders", gradient: "linear-gradient(135deg,#052e16 0%,#0B1120 100%)", iconBg: "#10B981" },
-              { label: "Profile", icon: ShoppingBag, path: "/delivery/profile", gradient: "linear-gradient(135deg,#01140f 0%,#0B1120 100%)", iconBg: "#14B8A6" },
+              { label: "My Deliveries", icon: Bike, path: "/delivery/all-orders", gradient: "linear-gradient(135deg,#052e16 0%,#0B1120 100%)", iconBg: "#10B981" },
+              { label: "Cancelled Orders", icon: ShoppingBag, path: "/delivery/cancelled-orders", gradient: "linear-gradient(135deg,#3b0000 0%,#0B1120 100%)", iconBg: "#DC2626" },
+              { label: "Earnings", icon: DollarSign, path: "/delivery/earnings", gradient: "linear-gradient(135deg,#01140f 0%,#0B1120 100%)", iconBg: "#14B8A6" },
+              { label: "Profile", icon: ShoppingBag, path: "/delivery/profile", gradient: "linear-gradient(135deg,#1e1b4b 0%,#0B1120 100%)", iconBg: "#8B5CF6" },
             ].map((item, i) => (
             <Link key={i} to={item.path}
               className="relative overflow-hidden group flex items-center gap-4 p-5 rounded-3xl border border-white/5 shadow-xl hover:-translate-y-1 transition-all duration-300"
@@ -268,6 +324,28 @@ const DeliveryDashboard = () => {
             </Link>
             ))}
           </div>
+
+          {/* Last Known Location from delivery_live_tracking */}
+          {displayCards.lastLocation && (
+            <div className="mt-4 relative overflow-hidden rounded-3xl p-5 border border-white/5 shadow-xl"
+              style={{ background: "linear-gradient(135deg,#0a1f1a 0%,#0B1120 100%)" }}>
+              <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full opacity-10 blur-2xl" style={{ background: "#10B981" }} />
+              <p className="text-[9px] font-black text-emerald-400 uppercase tracking-[0.25em] mb-2">📍 Last Known Location</p>
+              <p className="text-white font-bold text-sm">
+                {[displayCards.lastLocation.area, displayCards.lastLocation.district, displayCards.lastLocation.pincode].filter(Boolean).join(', ') || 'Location not available'}
+              </p>
+              {displayCards.lastLocation.latitude && (
+                <p className="text-white/40 text-xs mt-1 font-mono">
+                  {parseFloat(displayCards.lastLocation.latitude).toFixed(6)}, {parseFloat(displayCards.lastLocation.longitude).toFixed(6)}
+                </p>
+              )}
+              {displayCards.lastLocation.updated_at && (
+                <p className="text-white/30 text-[10px] mt-2 uppercase tracking-wider">
+                  Updated: {new Date(displayCards.lastLocation.updated_at).toLocaleString()}
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

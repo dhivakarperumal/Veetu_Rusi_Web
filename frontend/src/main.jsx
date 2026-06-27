@@ -265,6 +265,7 @@ const router = createBrowserRouter([
       { path: "accepted-orders", element: <DeliveryAcceptedOrders /> },
       { path: "picked-up-orders", element: <DeliveryPickedUpOrders /> },
       { path: "delivered-orders", element: <DeliveryDeliveredOrders /> },
+      { path: "cancelled-orders", element: <DeliveryAllOrders statusFilter="Cancelled" /> },
       { path: "live-tracking", element: <DeliveryLiveTracking /> },
       { path: "earnings", element: <DeliveryEarnings /> },
       { path: "incentives", element: <DeliveryIncentives /> },

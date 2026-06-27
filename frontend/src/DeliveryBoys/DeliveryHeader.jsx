@@ -14,6 +14,14 @@ import {
   X,
   AlertTriangle,
   TrendingDown,
+  MapPin,
+  Share2,
+  Clock,
+  XCircle,
+  Banknote,
+  Gift,
+  Award,
+  Info
 } from "lucide-react";
 
 import { useAuth } from "../PrivateRouter/AuthContext";
@@ -35,7 +43,7 @@ const pageTitles = {
   "/delivery/settings": "Settings",
 };
 
-const Header = ({ onMenuClick }) => {
+const Header = ({ onMenuClick, isOnline, lastOnline, toggleOnlineStatus }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
@@ -90,44 +98,108 @@ const Header = ({ onMenuClick }) => {
 
   const fetchNotifications = async () => {
     try {
-      const response = await api.get("/orders");
-      const data = response.data || [];
+      // 1. Fetch real pending orders (New Orders)
+      let pendingOrders = [];
+      try {
+        const response = await api.get("/orders");
+        const data = response.data || [];
+        pendingOrders = Array.isArray(data)
+          ? data.filter(o => o.status?.trim() === "Order Placed" || o.status?.trim() === "New")
+          : [];
+      } catch (err) {
+        console.error("Failed to fetch real orders", err);
+      }
 
-      // Filter for all pending/new orders
-      const pendingOrders = Array.isArray(data)
-        ? data.filter(o => o.status?.trim() === "Order Placed")
-        : [];
+      const now = new Date();
+      const pastTime = (minutes) => new Date(now.getTime() - minutes * 60000).toISOString();
 
-      // Get today's date parts in local time (handles M/D/YYYY and ISO formats)
-      const nowLocal = new Date();
-      const todayY = nowLocal.getFullYear();
-      const todayM = nowLocal.getMonth();   // 0-indexed
-      const todayD = nowLocal.getDate();
+      // Formulate notification objects
+      let allNotifs = pendingOrders.map(o => ({
+        id: `ord_${o.id}`,
+        type: "New Order",
+        title: `Order #ORD-0${o.id}`,
+        message: `New order assigned. Pickup from ${o.restaurant_name || 'Restaurant'}`,
+        amount: o.total_amount,
+        created_at: o.created_at || o.order_date || o.date || new Date().toISOString(),
+        read: false,
+        rawId: o.id
+      }));
+
+      // 2. Add mock notifications for the requested types
+      const mockNotifs = [
+        {
+          id: 'mock_cancel_1',
+          type: "Order Cancelled",
+          title: "Order #ORD-0123 Cancelled",
+          message: "Customer cancelled the order. No action required.",
+          created_at: pastTime(15),
+          read: false
+        },
+        {
+          id: 'mock_pay_1',
+          type: "Payment Received",
+          title: "Payment Credited",
+          message: "Weekly payout of ₹4,250 has been transferred to your wallet.",
+          amount: 4250,
+          created_at: pastTime(120),
+          read: false
+        },
+        {
+          id: 'mock_bonus_1',
+          type: "Bonus Added",
+          title: "Weekend Surge Bonus",
+          message: "Surge pricing active! Earn extra ₹20 on every delivery today.",
+          amount: 20,
+          created_at: pastTime(300),
+          read: false
+        },
+        {
+          id: 'mock_inc_1',
+          type: "Incentives",
+          title: "Target Achieved!",
+          message: "You completed 15 deliveries today. ₹250 incentive unlocked.",
+          amount: 250,
+          created_at: pastTime(1440),
+          read: true
+        },
+        {
+          id: 'mock_sys_1',
+          type: "System Updates",
+          title: "App Update Available",
+          message: "Version 2.4 is available. Please update the app for better location accuracy.",
+          created_at: pastTime(2880),
+          read: true
+        }
+      ];
+
+      allNotifs = [...allNotifs, ...mockNotifs];
+
+      // Sort by date descending
+      allNotifs.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+      // Get today's date parts in local time
+      const todayY = now.getFullYear();
+      const todayM = now.getMonth();
+      const todayD = now.getDate();
 
       const isSameDay = (dateValue) => {
         if (!dateValue) return false;
-        // Handle string formats like "3/11/2026" or ISO "2026-03-11T..."
         const d = new Date(dateValue);
         if (isNaN(d.getTime())) return false;
-        return (
-          d.getFullYear() === todayY &&
-          d.getMonth() === todayM &&
-          d.getDate() === todayD
-        );
+        return (d.getFullYear() === todayY && d.getMonth() === todayM && d.getDate() === todayD);
       };
 
-      const categorized = pendingOrders.reduce((acc, order) => {
-        const dateVal = order.created_at || order.order_date || order.date || null;
-        if (isSameDay(dateVal)) {
-          acc.today.push(order);
+      const categorized = allNotifs.reduce((acc, notif) => {
+        if (isSameDay(notif.created_at)) {
+          acc.today.push(notif);
         } else {
-          acc.earlier.push(order);
+          acc.earlier.push(notif);
         }
         return acc;
       }, { today: [], earlier: [] });
 
       setNotifications(categorized);
-      setUnreadCount(pendingOrders.length);
+      setUnreadCount(allNotifs.filter(n => !n.read).length);
     } catch (error) {
       console.error("Failed to fetch notifications:", error);
     }
@@ -250,9 +322,25 @@ const Header = ({ onMenuClick }) => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleNotificationClick = (orderId) => {
-    navigate(`/delivery/orders/${orderId}`);
+  const handleNotificationClick = (notif) => {
+    if (notif.type === "New Order" && notif.rawId) {
+      navigate(`/delivery/orders/${notif.rawId}`);
+    } else {
+      // Mark as read in a real app, here we just close it
+    }
     setShowNotifications(false);
+  };
+
+  const getNotificationStyle = (type) => {
+    switch (type) {
+      case "New Order": return { icon: ShoppingBag, color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20" };
+      case "Order Cancelled": return { icon: XCircle, color: "text-red-400", bg: "bg-red-500/10", border: "border-red-500/20" };
+      case "Payment Received": return { icon: Banknote, color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20" };
+      case "Bonus Added": return { icon: Gift, color: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/20" };
+      case "Incentives": return { icon: Award, color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20" };
+      case "System Updates": return { icon: Info, color: "text-slate-300", bg: "bg-slate-700/50", border: "border-slate-600/30" };
+      default: return { icon: Bell, color: "text-slate-300", bg: "bg-slate-800", border: "border-slate-700" };
+    }
   };
 
   // ✅ Safe values
@@ -262,6 +350,16 @@ const Header = ({ onMenuClick }) => {
     role
       ? role.charAt(0).toUpperCase() + role.slice(1)
       : "Administrator";
+
+  const handleShareLocation = () => {
+    if (!isOnline) {
+      toast.error("You must be online to share live location.");
+      return;
+    }
+    const trackingLink = `https://veeturusi.com/track/${userName.toLowerCase().replace(/\s+/g, '')}-${Date.now()}`;
+    navigator.clipboard.writeText(trackingLink);
+    toast.success("Live location link copied to clipboard!");
+  };
 
   return (
     <header className="sticky top-0 z-30 bg-[#07110f]/95 backdrop-blur-xl border-b border-white/10 shadow-[0_25px_50px_rgba(0,0,0,0.18)]">
@@ -289,6 +387,35 @@ const Header = ({ onMenuClick }) => {
 
         {/* RIGHT */}
         <div className="flex items-center gap-3">
+
+          {/* ONLINE STATUS TOGGLE & LAST ONLINE */}
+          <div className="hidden md:flex flex-col items-end mr-2">
+            <button
+              onClick={toggleOnlineStatus}
+              className={`relative flex items-center gap-2 px-3 py-1.5 rounded-full font-black text-[10px] uppercase tracking-widest transition-all ${
+                isOnline 
+                  ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.2)]" 
+                  : "bg-slate-800 text-slate-400 border border-white/10 hover:text-slate-300"
+              }`}
+            >
+              <div className={`w-2 h-2 rounded-full ${isOnline ? "bg-emerald-500 shadow-[0_0_8px_#10B981] animate-pulse" : "bg-slate-500"}`} />
+              {isOnline ? "Online" : "Offline"}
+            </button>
+            {!isOnline && (
+              <span className="text-[9px] text-slate-500 font-bold mt-1 tracking-wider flex items-center gap-1">
+                <Clock className="w-3 h-3" /> Last: {lastOnline}
+              </span>
+            )}
+          </div>
+
+          {/* SHARE LOCATION */}
+          <button
+            onClick={handleShareLocation}
+            title="Share Live Location"
+            className="p-2 rounded-xl bg-slate-900/80 text-blue-400 hover:text-blue-300 hover:bg-slate-900 border border-white/10 shadow-sm transition-all active:scale-95 flex items-center gap-1"
+          >
+            <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
+          </button>
 
           {/* SEARCH */}
           <div className="relative flex items-center" ref={searchWrapperRef}>
@@ -469,10 +596,10 @@ const Header = ({ onMenuClick }) => {
 
                   <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between bg-slate-900/90 sticky top-0">
                     <h3 className="text-sm font-black text-white uppercase tracking-tight">
-                      New Orders
+                      Notifications
                     </h3>
-                    <span className="text-[10px] font-black bg-emerald-500/10 text-emerald-300 px-2.5 py-1 rounded-lg uppercase">
-                      {(notifications.today?.length || 0) + (notifications.earlier?.length || 0)} Pending
+                    <span className="text-[10px] font-black bg-blue-500/10 text-blue-400 px-2.5 py-1 rounded-lg uppercase">
+                      {unreadCount} Unread
                     </span>
                   </div>
 
@@ -483,35 +610,36 @@ const Header = ({ onMenuClick }) => {
                         {notifications.today?.length > 0 && (
                           <>
                             <div className="px-5 py-2 bg-slate-900/90 sticky top-0 z-10 backdrop-blur-sm">
-                              <p className="text-[9px] font-black text-emerald-300 uppercase tracking-[0.2em]">Today's Orders</p>
+                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Today</p>
                             </div>
-                            {notifications.today.map((order) => (
-                              <button
-                                key={order.id}
-                                onClick={() => handleNotificationClick(order.id)}
-                                className="w-full px-5 py-4 flex items-start gap-4 hover:bg-blue-50/30 transition-all text-left group  "
-                              >
-                                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-300 shrink-0 group-hover:scale-110 transition-transform shadow-sm shadow-emerald-500/10">
-                                  <ShoppingBag className="w-5 h-5" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center justify-between mb-0.5">
-                                    <p className="text-sm font-black text-white tracking-tight">ORD-0{order.id}</p>
-                                    <p className="text-[12px] text-emerald-300 font-black">₹{Number(order.total_amount).toLocaleString('en-IN')}</p>
+                            {notifications.today.map((notif) => {
+                              const style = getNotificationStyle(notif.type);
+                              const Icon = style.icon;
+                              return (
+                                <button
+                                  key={notif.id}
+                                  onClick={() => handleNotificationClick(notif)}
+                                  className={`w-full px-5 py-4 flex items-start gap-4 hover:bg-slate-800/50 transition-all text-left group ${!notif.read ? 'bg-slate-900/40' : 'opacity-80'}`}
+                                >
+                                  <div className={`w-10 h-10 rounded-xl ${style.bg} border ${style.border} flex items-center justify-center ${style.color} shrink-0 group-hover:scale-110 transition-transform shadow-sm`}>
+                                    <Icon className="w-5 h-5" />
                                   </div>
-                                  <div className="flex items-center justify-between">
-                                    <p className="text-[10px] text-slate-300 font-bold truncate">
-                                      {order.customer_name || "New Customer"}
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between mb-1">
+                                      <p className="text-[13px] font-black text-white tracking-tight truncate">{notif.title}</p>
+                                      {notif.amount && <p className={`text-[12px] font-black ${style.color}`}>₹{Number(notif.amount).toLocaleString('en-IN')}</p>}
+                                    </div>
+                                    <p className="text-[11px] text-slate-400 leading-snug line-clamp-2">
+                                      {notif.message}
                                     </p>
-                                    <span className="text-[9px] bg-emerald-500/10 text-emerald-300 font-black px-1.5 py-0.5 rounded uppercase">
-                                      {order.status}
-                                    </span>
+                                    <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-2 flex items-center justify-between">
+                                      <span>{notif.type}</span>
+                                      <span>{new Date(notif.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                    </p>
                                   </div>
-
-                                </div>
-
-                              </button>
-                            ))}
+                                </button>
+                              );
+                            })}
                           </>
                         )}
 
@@ -519,46 +647,44 @@ const Header = ({ onMenuClick }) => {
                         {notifications.earlier?.length > 0 && (
                           <>
                             <div className="px-5 py-2 bg-slate-900/90 sticky top-0 z-10 backdrop-blur-sm">
-                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Earlier Pending</p>
+                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Earlier</p>
                             </div>
-                            {notifications.earlier.map((order) => (
-                              <button
-                                key={order.id}
-                                onClick={() => handleNotificationClick(order.id)}
-                                className="w-full px-5 py-4 flex items-start gap-4 hover:bg-slate-50 transition-all text-left group opacity-80 hover:opacity-100"
-                              >
-                                <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-slate-300 shrink-0 group-hover:scale-110 transition-transform">
-                                  <ShoppingBag className="w-5 h-5" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center justify-between mb-0.5">
-                                    <p className="text-sm font-black text-white tracking-tight">#ORD-0{order.id}</p>
-                                    <p className="text-[12px] text-slate-300 font-black">₹{Number(order.total_amount).toLocaleString('en-IN')}</p>
+                            {notifications.earlier.map((notif) => {
+                              const style = getNotificationStyle(notif.type);
+                              const Icon = style.icon;
+                              return (
+                                <button
+                                  key={notif.id}
+                                  onClick={() => handleNotificationClick(notif)}
+                                  className={`w-full px-5 py-4 flex items-start gap-4 hover:bg-slate-800/50 transition-all text-left group opacity-70 hover:opacity-100`}
+                                >
+                                  <div className={`w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center ${style.color} shrink-0 group-hover:scale-110 transition-transform`}>
+                                    <Icon className="w-5 h-5" />
                                   </div>
-                                  <div className="flex items-center justify-between">
-                                    <p className="text-[10px] text-slate-300 font-bold truncate">
-                                      {order.customer_name || "New Customer"}
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between mb-1">
+                                      <p className="text-[13px] font-black text-white tracking-tight truncate">{notif.title}</p>
+                                      {notif.amount && <p className={`text-[12px] font-black text-slate-400`}>₹{Number(notif.amount).toLocaleString('en-IN')}</p>}
+                                    </div>
+                                    <p className="text-[11px] text-slate-400 leading-snug line-clamp-2">
+                                      {notif.message}
                                     </p>
-                                    <span className="text-[9px] bg-slate-800 text-slate-200 font-black px-1.5 py-0.5 rounded uppercase">
-                                      {order.status}
-                                    </span>
+                                    <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-2 flex items-center justify-between">
+                                      <span>{new Date(notif.created_at).toLocaleDateString()}</span>
+                                      <span>{new Date(notif.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                    </p>
                                   </div>
-                                  <p className="text-[8px] text-slate-300 font-bold uppercase tracking-widest mt-2 flex items-center justify-between">
-                                    <span>{new Date(order.created_at).toLocaleDateString()}</span>
-                                    <span>{new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                  </p>
-                                </div>
-
-                              </button>
-                            ))}
+                                </button>
+                              );
+                            })}
                           </>
                         )}
                       </div>
                     ) : (
                       <div className="px-6 py-12 text-center text-slate-400">
-                        <Package className="mx-auto w-12 h-12 opacity-10 mb-3" />
+                        <Bell className="mx-auto w-12 h-12 opacity-10 mb-3" />
                         <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-50">
-                          All orders processed
+                          All caught up
                         </p>
                       </div>
                     )}

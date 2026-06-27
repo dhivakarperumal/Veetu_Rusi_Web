@@ -16,6 +16,7 @@ import {
   FaCog,
   FaChevronDown,
   FaChevronUp,
+  FaTimesCircle,
 } from "react-icons/fa";
 import { useAuth } from "../PrivateRouter/AuthContext";
 
@@ -30,6 +31,7 @@ const navItems = [
       { path: "/delivery/accepted-orders", label: "Accepted Orders", icon: FaCheckCircle },
       { path: "/delivery/picked-up-orders", label: "Picked Up Orders", icon: FaShoppingBag },
       { path: "/delivery/delivered-orders", label: "Delivered Orders", icon: FaTruck },
+      { path: "/delivery/cancelled-orders", label: "Cancelled Orders", icon: FaTimesCircle },
     ],
   },
   
