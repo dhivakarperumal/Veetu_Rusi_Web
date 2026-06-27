@@ -145,7 +145,7 @@ router.get('/orders/available', async (req, res) => {
       SELECT o.*, 
              c.name as home_chef_name, 
              c.mobile as home_chef_phone, 
-             c.address as home_chef_address,
+             c.kitchen_address as home_chef_address,
              c.latitude as home_chef_lat,
              c.longitude as home_chef_lng
       FROM user_food_order_table o
