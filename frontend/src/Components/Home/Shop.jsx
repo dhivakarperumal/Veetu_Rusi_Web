@@ -397,17 +397,23 @@ const Shop = ({ defaultCategory = "" }) => {
 
       {uniqueHomeChefs.length > 0 && (
         <div className="px-4 md:px-10 mt-6 mb-4">
-          <h3 className="text-lg font-bold text-gray-800 mb-3">
+          <h3 className="text-lg font-bold text-gray-800 mb-4">
             Home Chefs
           </h3>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-4">
             {uniqueHomeChefs.map((chef) => (
               <div
                 key={chef.chef_name}
-                className="px-4 py-2 bg-green-50 border border-green-200 rounded-full text-sm font-semibold text-primary"
+                className="bg-white border border-green-200 rounded-xl px-5 py-3 shadow-sm"
               >
-                {chef.chef_name}
+                <p className="font-semibold text-primary">
+                  {chef.chef_name}
+                </p>
+
+                <p className="text-sm text-gray-500 mt-1">
+                  📍 Delivery Radius : {chef.delivery_radius || "N/A"}
+                </p>
               </div>
             ))}
           </div>

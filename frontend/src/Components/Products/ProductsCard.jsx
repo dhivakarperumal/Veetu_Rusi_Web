@@ -179,9 +179,9 @@ const ProductCard = ({ product }) => {
                 By <span className="font-medium text-gray-700">{product.chef_name}</span>
               </p>
 
-                <p className="text-xs text-green-600 font-medium mt-1">
-                  Delivery Radius: {product.delivery_radius} km
-                </p>
+                {/* <p className="text-xs text-green-600 font-medium mt-1">
+                  Delivery Radius: {product.delivery_radius}
+                </p> */}
               
             </div>
           )}
