@@ -71,6 +71,82 @@ async function resolveCurrentUserAudit(req) {
   }
 }
 
+const UNIQUE_DELIVERY_PARTNER_FIELDS = [
+  'mobile',
+  'email',
+  'aadhaar_number',
+  'pan_number',
+  'bank_account_number',
+  'upi_id',
+];
+
+const UNIQUE_DELIVERY_PARTNER_LABELS = {
+  mobile: 'Mobile number',
+  email: 'Email address',
+  aadhaar_number: 'Aadhaar number',
+  pan_number: 'PAN number',
+  bank_account_number: 'Bank account number',
+  upi_id: 'UPI ID',
+};
+
+function normalizeUniqueValue(value) {
+  if (value === undefined || value === null) return null;
+  return typeof value === 'string' ? value.trim() : value;
+}
+
+async function getDuplicateDeliveryPartnerFields(values, excludeId = null) {
+  const searchValues = UNIQUE_DELIVERY_PARTNER_FIELDS.reduce((acc, field) => {
+    const normalized = normalizeUniqueValue(values[field]);
+    if (normalized !== null && normalized !== '') {
+      acc[field] = normalized;
+    }
+    return acc;
+  }, {});
+
+  const fieldsToCheck = Object.keys(searchValues);
+  if (fieldsToCheck.length === 0) return [];
+
+  const whereClauses = fieldsToCheck.map((field) => `${field} = ?`).join(' OR ');
+  const params = fieldsToCheck.map((field) => searchValues[field]);
+  let query = `SELECT id, ${UNIQUE_DELIVERY_PARTNER_FIELDS.join(', ')} FROM delivery_partners WHERE (${whereClauses})`;
+  if (excludeId) {
+    query += ' AND id != ?';
+    params.push(excludeId);
+  }
+
+  const [rows] = await pool.execute(query, params);
+  if (!rows || rows.length === 0) return [];
+
+  const duplicates = new Set();
+  rows.forEach((row) => {
+    fieldsToCheck.forEach((field) => {
+      if (
+        row[field] !== undefined &&
+        row[field] !== null &&
+        normalizeUniqueValue(row[field]) === searchValues[field]
+      ) {
+        duplicates.add(field);
+      }
+    });
+  });
+
+  return Array.from(duplicates);
+}
+
+function getDuplicateError(duplicateFields) {
+  const errors = duplicateFields.reduce((acc, field) => {
+    acc[field] = `${UNIQUE_DELIVERY_PARTNER_LABELS[field] || field} already exists.`;
+    return acc;
+  }, {});
+  const message = `${duplicateFields
+    .map((field) => UNIQUE_DELIVERY_PARTNER_LABELS[field] || field)
+    .join(', ')} already exists. Please use unique values.`;
+  const error = new Error(message);
+  error.status = 409;
+  error.errors = errors;
+  return error;
+}
+
 async function expireFranchiseSubscriptions() {
   try {
     const today = new Date();
@@ -1825,6 +1901,11 @@ exports.createDeliveryPartner = async (req, res) => {
     insertColumns.push('created_by', 'updated_by');
     values.push(createdBy, createdBy);
 
+    const duplicateFields = await getDuplicateDeliveryPartnerFields(req.body);
+    if (duplicateFields.length > 0) {
+      throw getDuplicateError(duplicateFields);
+    }
+
     // Replace undefined with null — MySQL2 rejects undefined bind params
     const sanitizedValues = values.map(v => v === undefined ? null : v);
 
@@ -1837,6 +1918,9 @@ exports.createDeliveryPartner = async (req, res) => {
     res.status(201).json({ message: 'Delivery Partner created successfully.', id: result.insertId });
   } catch (error) {
     console.error('❌ Error creating delivery partner:', error.stack || error);
+    if (error.errors) {
+      return res.status(error.status || 409).json({ message: error.message, errors: error.errors });
+    }
     if (error.code === 'ER_DUP_ENTRY') {
       return res.status(400).json({ message: 'Duplicate delivery partner field value detected.', error: error.sqlMessage || error.message });
     }
@@ -1863,6 +1947,11 @@ exports.updateDeliveryPartner = async (req, res) => {
       preferred_distance, delivery_radius, driving_experience,
       status
     } = req.body;
+
+    const duplicateFields = await getDuplicateDeliveryPartnerFields(req.body, id);
+    if (duplicateFields.length > 0) {
+      throw getDuplicateError(duplicateFields);
+    }
 
     const [existing] = await pool.execute('SELECT * FROM delivery_partners WHERE id = ?', [id]);
     if (!existing || existing.length === 0) {
@@ -1965,6 +2054,9 @@ exports.updateDeliveryPartner = async (req, res) => {
     res.json({ message: 'Delivery Partner updated successfully.' });
   } catch (error) {
     console.error('❌ Error updating delivery partner:', error.stack || error);
+    if (error.errors) {
+      return res.status(error.status || 409).json({ message: error.message, errors: error.errors });
+    }
     if (error.code === 'ER_DUP_ENTRY') {
       return res.status(400).json({ message: 'Duplicate delivery partner field value detected.', error: error.sqlMessage || error.message });
     }

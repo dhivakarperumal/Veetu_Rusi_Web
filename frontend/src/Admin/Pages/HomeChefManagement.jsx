@@ -533,6 +533,7 @@ const HomeChefManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setValidationErrors({});
     if (!editingChef && form.password !== form.confirmPassword) {
       toast.error("Passwords do not match.");
       return;
@@ -610,9 +611,15 @@ const HomeChefManagement = () => {
       setEditingChef(null);
       fetchChefs();
     } catch (error) {
-      toast.error(
-        error?.response?.data?.message || "Failed to save home chef.",
-      );
+      const duplicateErrors = error?.response?.data?.errors;
+      if (duplicateErrors) {
+        setValidationErrors(duplicateErrors);
+        toast.error(error?.response?.data?.message || "Duplicate values found.");
+      } else {
+        toast.error(
+          error?.response?.data?.message || "Failed to save home chef.",
+        );
+      }
     } finally {
       setSaving(false);
     }
