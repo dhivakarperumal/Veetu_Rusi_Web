@@ -221,7 +221,7 @@ const Orders = ({ statusFilter = "All" }) => {
                 {/* Search and Filters */}
                 <div className="p-8 border-b border-white/10 flex flex-col gap-6">
                     <div className="flex flex-wrap gap-2">
-                        {['All', 'Order Placed', 'Packing', 'Shipping', 'Out for Delivery', 'Delivered', 'Cancelled'].map((status) => (
+                        {['All', 'Delivery Partner Assigned', 'Picked Up', 'Out for Delivery', 'Delivered', 'Cancelled'].map((status) => (
                             <button
                                 key={status}
                                 onClick={() => setActiveStatus(status)}
@@ -307,11 +307,11 @@ const Orders = ({ statusFilter = "All" }) => {
                                                                 className={`appearance-none cursor-pointer flex items-center w-full min-w-[150px] gap-2 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border-2 outline-none transition-all ${getStatusStyle(order.status)}`}
                                                             >
                                                                 {(() => {
-                                                                    const flow = ["Order Placed", "Packing", "Shipping", "Out for Delivery", "Delivered"];
+                                                                    const flow = ["Delivery Partner Assigned", "Picked Up", "Out for Delivery", "Delivered"];
                                                                     const currentIndex = flow.indexOf(order.status);
                                                                     const options = currentIndex === -1 
                                                                         ? [...flow, "Cancelled", order.status] 
-                                                                        : [...flow.slice(currentIndex), ...(currentIndex < 2 ? ["Cancelled"] : [])];
+                                                                        : [...flow.slice(currentIndex), ...(currentIndex < 1 ? ["Cancelled"] : [])];
                                                                     
                                                                     return Array.from(new Set(options)).map(status => (
                                                                         <option key={status} value={status}>{status}</option>
