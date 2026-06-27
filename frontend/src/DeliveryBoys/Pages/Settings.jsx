@@ -90,7 +90,7 @@
 
 // export default Settings;
 
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   FiSettings,
   FiBell,
@@ -99,57 +99,21 @@ import {
   FiDatabase,
   FiUsers,
   FiCheck,
-  FiSave,
-  FiRefreshCw,
-  FiLock,
-  FiMail,
-  FiPhone,
-  FiMapPin,
-  FiDollarSign,
 } from "react-icons/fi";
 import { FaRupeeSign } from "react-icons/fa";
 
 const menuItems = [
-  {
-    id: "general",
-    title: "General Settings",
-    icon: <FiSettings />,
-  },
-  {
-    id: "notifications",
-    title: "Notifications",
-    icon: <FiBell />,
-  },
-  {
-    id: "security",
-    title: "Security & Access",
-    icon: <FiShield />,
-  },
-  {
-    id: "regional",
-    title: "Regional & Language",
-    icon: <FiGlobe />,
-  },
-  {
-    id: "payment",
-    title: "Payment Gateways",
-    icon: <FaRupeeSign />,
-  },
-  {
-    id: "team",
-    title: "Team Management",
-    icon: <FiUsers />,
-  },
-  {
-    id: "backup",
-    title: "Data & Backup",
-    icon: <FiDatabase />,
-  },
+  { id: "general", title: "General Settings", icon: FiSettings },
+  { id: "notifications", title: "Notifications", icon: FiBell },
+  { id: "security", title: "Security & Access", icon: FiShield },
+  { id: "regional", title: "Regional & Language", icon: FiGlobe },
+  { id: "payment", title: "Payment Gateways", icon: FaRupeeSign },
+  { id: "team", title: "Team Management", icon: FiUsers },
+  { id: "backup", title: "Data & Backup", icon: FiDatabase },
 ];
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState("general");
-
   const [settings, setSettings] = useState({
     storeName: "eMart Saree Collections",
     email: "admin@emart.com",
@@ -162,598 +126,420 @@ const Settings = () => {
     emailNotification: true,
     smsNotification: false,
     loginAlert: true,
-    backup: true,
+    backupEnabled: true,
+    backupSchedule: "Daily",
   });
 
   const handleChange = (field, value) => {
-    setSettings((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setSettings((prev) => ({ ...prev, [field]: value }));
   };
 
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case "notifications":
+        return (
+          <div className="grid gap-6">
+            <div className="space-y-2">
+              <label className="text-xs font-black uppercase tracking-[0.26em] text-slate-400">Email Alerts</label>
+              <div className="rounded-3xl border border-white/10 bg-slate-950/90 p-4 flex items-center justify-between">
+                <div>
+                  <p className="font-bold text-white">Email notifications</p>
+                  <p className="text-sm text-slate-400">Receive updates about orders, payouts, and partner activity.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleChange("emailNotification", !settings.emailNotification)}
+                  className={`relative inline-flex h-6 w-12 rounded-full transition-colors duration-200 ${settings.emailNotification ? "bg-emerald-500" : "bg-slate-700"}`}>
+                  <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${settings.emailNotification ? "translate-x-6" : "translate-x-1"}`} />
+                </button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-black uppercase tracking-[0.26em] text-slate-400">SMS Alerts</label>
+              <div className="rounded-3xl border border-white/10 bg-slate-950/90 p-4 flex items-center justify-between">
+                <div>
+                  <p className="font-bold text-white">SMS notifications</p>
+                  <p className="text-sm text-slate-400">Send account status and delivery reminders directly to your phone.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleChange("smsNotification", !settings.smsNotification)}
+                  className={`relative inline-flex h-6 w-12 rounded-full transition-colors duration-200 ${settings.smsNotification ? "bg-emerald-500" : "bg-slate-700"}`}>
+                  <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${settings.smsNotification ? "translate-x-6" : "translate-x-1"}`} />
+                </button>
+              </div>
+            </div>
+            <div className="rounded-3xl border border-white/10 bg-slate-950/90 p-5 text-slate-300">
+              <p className="text-sm font-black text-white mb-2">Notification rules</p>
+              <ul className="space-y-2 text-sm text-slate-400">
+                <li>• Order updates within 2 minutes</li>
+                <li>• Payout alerts after each weekly settlement</li>
+                <li>• Urgent security alerts for login activity</li>
+              </ul>
+            </div>
+          </div>
+        );
+      case "security":
+        return (
+          <div className="grid gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase tracking-[0.26em] text-slate-400">Login Email</label>
+                <input
+                  type="email"
+                  value={settings.email}
+                  onChange={(e) => handleChange("email", e.target.value)}
+                  className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-emerald-500"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase tracking-[0.26em] text-slate-400">Phone Number</label>
+                <input
+                  type="text"
+                  value={settings.phone}
+                  onChange={(e) => handleChange("phone", e.target.value)}
+                  className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-emerald-500"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-black uppercase tracking-[0.26em] text-slate-400">Access Protection</label>
+              <div className="rounded-3xl border border-white/10 bg-slate-950/90 p-4 flex items-center justify-between">
+                <div>
+                  <p className="font-bold text-white">Secure login alerts</p>
+                  <p className="text-sm text-slate-400">Get notified when unknown devices access your account.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleChange("loginAlert", !settings.loginAlert)}
+                  className={`relative inline-flex h-6 w-12 rounded-full transition-colors duration-200 ${settings.loginAlert ? "bg-emerald-500" : "bg-slate-700"}`}>
+                  <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${settings.loginAlert ? "translate-x-6" : "translate-x-1"}`} />
+                </button>
+              </div>
+            </div>
+            <div className="rounded-3xl border border-white/10 bg-slate-950/90 p-5 text-slate-300">
+              <p className="font-bold text-white">Security best practices</p>
+              <p className="text-sm text-slate-400 mt-2">Use a strong password, enable login alerts, and keep your device secure while on delivery routes.</p>
+            </div>
+          </div>
+        );
+      case "regional":
+        return (
+          <div className="grid gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase tracking-[0.26em] text-slate-400">Language</label>
+                <select
+                  value={settings.language}
+                  onChange={(e) => handleChange("language", e.target.value)}
+                  className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-emerald-500"
+                >
+                  <option>English</option>
+                  <option>Hindi</option>
+                  <option>Kannada</option>
+                  <option>Tamil</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase tracking-[0.26em] text-slate-400">Store Region</label>
+                <input
+                  type="text"
+                  value={settings.address}
+                  onChange={(e) => handleChange("address", e.target.value)}
+                  className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-emerald-500"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase tracking-[0.26em] text-slate-400">Default Currency</label>
+                <div className="rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white flex items-center gap-2">
+                  <FaRupeeSign className="text-emerald-400" />
+                  <span>{settings.currency}</span>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase tracking-[0.26em] text-slate-400">Delivery Zone</label>
+                <input
+                  type="text"
+                  value={settings.address}
+                  onChange={(e) => handleChange("address", e.target.value)}
+                  className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-emerald-500"
+                />
+              </div>
+            </div>
+          </div>
+        );
+      case "payment":
+        return (
+          <div className="grid gap-6">
+            <div className="space-y-2">
+              <label className="text-xs font-black uppercase tracking-[0.26em] text-slate-400">Payment Partner</label>
+              <div className="rounded-3xl border border-white/10 bg-slate-950/90 p-4">
+                <p className="font-bold text-white">Veetu Pay Gateway</p>
+                <p className="text-sm text-slate-400 mt-1">Accept payouts and partner settlements through a secure gateway.</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase tracking-[0.26em] text-slate-400">Currency</label>
+                <input
+                  type="text"
+                  value={settings.currency}
+                  onChange={(e) => handleChange("currency", e.target.value)}
+                  className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-emerald-500"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase tracking-[0.26em] text-slate-400">Settlement Hours</label>
+                <input
+                  type="text"
+                  value="24 hours"
+                  readOnly
+                  className="w-full rounded-2xl border border-slate-700 bg-slate-950/90 px-4 py-3 text-sm text-slate-300 outline-none"
+                />
+              </div>
+            </div>
+            <div className="rounded-3xl border border-white/10 bg-slate-950/90 p-4 text-sm text-slate-400">
+              <p className="font-bold text-white">Payment note</p>
+              <p className="mt-2">Enable the Veetu Pay gateway once your payout account details are verified. This keeps partner earnings flowing smoothly.</p>
+            </div>
+          </div>
+        );
+      case "team":
+        return (
+          <div className="grid gap-6">
+            <div className="rounded-3xl border border-white/10 bg-slate-950/90 p-5 space-y-3">
+              <p className="text-sm uppercase tracking-[0.35em] text-emerald-400">Team Capacity</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {[
+                  { label: "Active Partners", value: 18 },
+                  { label: "Pending Invites", value: 4 },
+                  { label: "Support Tickets", value: 2 },
+                ].map((item) => (
+                  <div key={item.label} className="rounded-3xl bg-slate-900 p-4 border border-white/10">
+                    <p className="text-sm text-slate-400 uppercase tracking-[0.24em]">{item.label}</p>
+                    <p className="mt-3 text-3xl font-black text-white">{item.value}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-3xl border border-white/10 bg-slate-950/90 p-5">
+              <p className="font-bold text-white">Team access control</p>
+              <p className="text-sm text-slate-400 mt-2">Invite partners, manage permissions, and assign delivery zones from the partner control panel.</p>
+            </div>
+          </div>
+        );
+      case "backup":
+        return (
+          <div className="grid gap-6">
+            <div className="rounded-3xl border border-white/10 bg-slate-950/90 p-5">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm uppercase tracking-[0.35em] text-emerald-400">Backup Status</p>
+                  <p className="mt-2 text-white font-bold">{settings.backupEnabled ? "Enabled" : "Disabled"}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleChange("backupEnabled", !settings.backupEnabled)}
+                  className={`rounded-full px-4 py-2 text-sm font-bold transition ${settings.backupEnabled ? "bg-emerald-500 text-slate-950" : "bg-slate-800 text-slate-200"}`}>
+                  {settings.backupEnabled ? "Turn Off" : "Enable"}
+                </button>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase tracking-[0.26em] text-slate-400">Backup Schedule</label>
+                <select
+                  value={settings.backupSchedule}
+                  onChange={(e) => handleChange("backupSchedule", e.target.value)}
+                  className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-emerald-500"
+                >
+                  <option>Daily</option>
+                  <option>Weekly</option>
+                  <option>Monthly</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase tracking-[0.26em] text-slate-400">Last Backup</label>
+                <input
+                  type="text"
+                  value="Today • 02:15 AM"
+                  readOnly
+                  className="w-full rounded-2xl border border-slate-700 bg-slate-950/90 px-4 py-3 text-sm text-slate-300 outline-none"
+                />
+              </div>
+            </div>
+          </div>
+        );
+      default:
+        return (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase tracking-[0.26em] text-slate-400">Store Name</label>
+                <input
+                  type="text"
+                  value={settings.storeName}
+                  onChange={(e) => handleChange("storeName", e.target.value)}
+                  className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-emerald-500"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase tracking-[0.26em] text-slate-400">Store Email</label>
+                <input
+                  type="email"
+                  value={settings.email}
+                  onChange={(e) => handleChange("email", e.target.value)}
+                  className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-emerald-500"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase tracking-[0.26em] text-slate-400">Address</label>
+                <input
+                  type="text"
+                  value={settings.address}
+                  onChange={(e) => handleChange("address", e.target.value)}
+                  className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-emerald-500"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase tracking-[0.26em] text-slate-400">Phone Number</label>
+                <input
+                  type="text"
+                  value={settings.phone}
+                  onChange={(e) => handleChange("phone", e.target.value)}
+                  className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-emerald-500"
+                />
+              </div>
+            </div>
+          </div>
+        );
+    }
+  };
+
+  const activeSection = menuItems.find((item) => item.id === activeTab);
+
   return (
-    <div className="min-h-screen bg-slate-950 p-6">
-
-      {/* Header */}
-
+    <div className="min-h-screen bg-[#040c0d] px-6 py-8 text-slate-100">
       <div className="mb-8">
-
-        <h1 className="text-3xl font-bold text-white">
-          System Preferences
-        </h1>
-
-        <p className="text-slate-400 mt-2">
-          Configure your administration panel settings.
-        </p>
-
+        <span className="text-[10px] font-black uppercase tracking-[0.35em] text-emerald-400">Delivery Partner Workspace</span>
+        <h1 className="mt-4 text-4xl font-black tracking-tight text-white">Settings</h1>
+        <p className="max-w-2xl text-sm text-slate-400 mt-3">Manage platform preferences, security, payouts, and partner access settings from a unified dark dashboard.</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-
-        {/* Sidebar */}
-
-        <div className="bg-slate-900 rounded-2xl border border-slate-800 p-5 h-fit">
-
-          <h2 className="text-lg font-bold text-white mb-5">
-            Settings
-          </h2>
-
-          <div className="space-y-2">
-
-            {menuItems.map((item) => (
-
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 text-left ${
-                  activeTab === item.id
-                    ? "bg-blue-600 text-white shadow-lg"
-                    : "text-slate-300 hover:bg-slate-800"
-                }`}
-              >
-                <span className="text-lg">
-                  {item.icon}
-                </span>
-
-                <span className="font-medium">
-                  {item.title}
-                </span>
-
-              </button>
-
-            ))}
-
+      <div className="grid grid-cols-1 xl:grid-cols-[320px_1fr] gap-6">
+        <aside className="rounded-[2rem] border border-white/10 bg-slate-950/95 p-5 shadow-2xl">
+          <div className="rounded-[1.75rem] border border-slate-800 bg-[#06110e] p-5 shadow-inner shadow-black/10">
+            <p className="text-xs uppercase tracking-[0.28em] text-emerald-300">Navigation</p>
+            <div className="mt-4 space-y-2">
+              {menuItems.map((item) => {
+                const Icon = item.icon;
+                const active = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveTab(item.id)}
+                    className={`w-full flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-semibold transition duration-200 ${
+                      active
+                        ? "bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/30"
+                        : "text-slate-300 hover:bg-slate-900/80"
+                    }`}
+                  >
+                    <span className={`grid h-10 w-10 place-items-center rounded-2xl ${active ? "bg-emerald-500/15 text-emerald-300" : "bg-slate-900 text-slate-400"}`}>
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <span>{item.title}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-        </div>
-
-        {/* Right Content */}
-
-        <div className="lg:col-span-3">
-
-          <div className="bg-slate-900 rounded-2xl border border-slate-800 p-8">
-
-            {activeTab === "general" && (
-
-              <div>
-
-                <h2 className="text-2xl font-bold text-white mb-6">
-                  General Configuration
-                </h2>
-
-                <div className="grid md:grid-cols-2 gap-6">
-                                      {/* Store Name */}
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
-                      Store Name
-                    </label>
-
-                    <input
-                      type="text"
-                      value={settings.storeName}
-                      onChange={(e) =>
-                        handleChange("storeName", e.target.value)
-                      }
-                      className="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                    />
-                  </div>
-
-                  {/* Store Email */}
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
-                      Store Email
-                    </label>
-
-                    <div className="relative">
-                      <FiMail className="absolute left-3 top-4 text-slate-400" />
-
-                      <input
-                        type="email"
-                        value={settings.email}
-                        onChange={(e) =>
-                          handleChange("email", e.target.value)
-                        }
-                        className="w-full rounded-xl border border-slate-700 bg-slate-800 py-3 pl-10 pr-4 text-white focus:border-blue-500 focus:outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Phone */}
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
-                      Phone Number
-                    </label>
-
-                    <div className="relative">
-                      <FiPhone className="absolute left-3 top-4 text-slate-400" />
-
-                      <input
-                        type="text"
-                        value={settings.phone}
-                        onChange={(e) =>
-                          handleChange("phone", e.target.value)
-                        }
-                        className="w-full rounded-xl border border-slate-700 bg-slate-800 py-3 pl-10 pr-4 text-white focus:border-blue-500 focus:outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Address */}
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
-                      Address
-                    </label>
-
-                    <div className="relative">
-                      <FiMapPin className="absolute left-3 top-4 text-slate-400" />
-
-                      <input
-                        type="text"
-                        value={settings.address}
-                        onChange={(e) =>
-                          handleChange("address", e.target.value)
-                        }
-                        className="w-full rounded-xl border border-slate-700 bg-slate-800 py-3 pl-10 pr-4 text-white focus:border-blue-500 focus:outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Currency */}
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
-                      Currency
-                    </label>
-
-                    <select
-                      value={settings.currency}
-                      onChange={(e) =>
-                        handleChange("currency", e.target.value)
-                      }
-                      className="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                    >
-                      <option value="INR">Indian Rupee (₹)</option>
-                      <option value="USD">US Dollar ($)</option>
-                      <option value="EUR">Euro (€)</option>
-                      <option value="GBP">British Pound (£)</option>
-                    </select>
-                  </div>
-
-                  {/* Language */}
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
-                      Language
-                    </label>
-
-                    <select
-                      value={settings.language}
-                      onChange={(e) =>
-                        handleChange("language", e.target.value)
-                      }
-                      className="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
-                    >
-                      <option value="English">English</option>
-                      <option value="Tamil">Tamil</option>
-                      <option value="Hindi">Hindi</option>
-                      <option value="Kannada">Kannada</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Switch Cards */}
-                <div className="mt-8 space-y-4">
-
-                  {/* Maintenance Mode */}
-                  <div className="flex items-center justify-between rounded-xl border border-slate-700 bg-slate-800 p-5">
-                    <div>
-                      <h3 className="text-lg font-semibold text-white">
-                        Maintenance Mode
-                      </h3>
-
-                      <p className="mt-1 text-sm text-slate-400">
-                        Disable customer access while updating the store.
-                      </p>
-                    </div>
-
-                    <input
-                      type="checkbox"
-                      checked={settings.maintenance}
-                      onChange={(e) =>
-                        handleChange("maintenance", e.target.checked)
-                      }
-                      className="h-6 w-6"
-                    />
-                  </div>
-
-                  {/* Auto Update */}
-                  <div className="flex items-center justify-between rounded-xl border border-slate-700 bg-slate-800 p-5">
-                    <div>
-                      <h3 className="text-lg font-semibold text-white">
-                        Automatic Updates
-                      </h3>
-
-                      <p className="mt-1 text-sm text-slate-400">
-                        Install the latest security updates automatically.
-                      </p>
-                    </div>
-
-                    <input
-                      type="checkbox"
-                      checked={settings.autoUpdate}
-                      onChange={(e) =>
-                        handleChange("autoUpdate", e.target.checked)
-                      }
-                      className="h-6 w-6"
-                    />
-                  </div>
-
-                </div>
-
+          <div className="mt-6 rounded-[1.75rem] border border-white/10 bg-slate-900/90 p-5">
+            <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Quick summary</p>
+            <div className="mt-4 space-y-4">
+              <div className="rounded-3xl bg-slate-950/80 p-4 border border-white/5">
+                <p className="text-xs uppercase tracking-[0.28em] text-slate-400">Status</p>
+                <p className="mt-2 text-lg font-black text-white">All systems normal</p>
               </div>
-            )}
-                </div>
-                            {/* ================= Notifications ================= */}
-            {activeTab === "notifications" && (
-              <div>
-                <h2 className="text-2xl font-bold text-white mb-6">
-                  Notification Settings
-                </h2>
-
-                <div className="space-y-5">
-
-                  <div className="flex items-center justify-between p-5 rounded-xl bg-slate-800 border border-slate-700">
-                    <div>
-                      <h3 className="text-white font-semibold">
-                        Email Notifications
-                      </h3>
-                      <p className="text-slate-400 text-sm">
-                        Receive important system emails.
-                      </p>
-                    </div>
-
-                    <input
-                      type="checkbox"
-                      checked={settings.emailNotification}
-                      onChange={(e) =>
-                        handleChange(
-                          "emailNotification",
-                          e.target.checked
-                        )
-                      }
-                      className="w-6 h-6"
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between p-5 rounded-xl bg-slate-800 border border-slate-700">
-                    <div>
-                      <h3 className="text-white font-semibold">
-                        SMS Notifications
-                      </h3>
-
-                      <p className="text-slate-400 text-sm">
-                        Receive SMS alerts.
-                      </p>
-                    </div>
-
-                    <input
-                      type="checkbox"
-                      checked={settings.smsNotification}
-                      onChange={(e) =>
-                        handleChange(
-                          "smsNotification",
-                          e.target.checked
-                        )
-                      }
-                      className="w-6 h-6"
-                    />
-                  </div>
-
-                </div>
+              <div className="rounded-3xl bg-slate-950/80 p-4 border border-white/5">
+                <p className="text-xs uppercase tracking-[0.28em] text-slate-400">Current tab</p>
+                <p className="mt-2 text-lg font-black text-white">{activeSection?.title}</p>
               </div>
-            )}
+            </div>
+          </div>
+        </aside>
 
-            {/* ================= Security ================= */}
-
-            {activeTab === "security" && (
-              <div>
-
-                <h2 className="text-2xl font-bold text-white mb-6">
-                  Security & Access
-                </h2>
-
-                <div className="space-y-6">
-
-                  <div>
-                    <label className="block text-slate-300 mb-2">
-                      Current Password
-                    </label>
-
-                    <input
-                      type="password"
-                      placeholder="********"
-                      className="w-full rounded-xl bg-slate-800 border border-slate-700 px-4 py-3 text-white"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-slate-300 mb-2">
-                      New Password
-                    </label>
-
-                    <input
-                      type="password"
-                      placeholder="New Password"
-                      className="w-full rounded-xl bg-slate-800 border border-slate-700 px-4 py-3 text-white"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-slate-300 mb-2">
-                      Confirm Password
-                    </label>
-
-                    <input
-                      type="password"
-                      placeholder="Confirm Password"
-                      className="w-full rounded-xl bg-slate-800 border border-slate-700 px-4 py-3 text-white"
-                    />
-                  </div>
-
-                  <div className="flex justify-end">
-                    <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold">
-                      Update Password
-                    </button>
-                  </div>
-
-                </div>
+        <main className="space-y-6">
+          <div className="rounded-[2rem] border border-white/10 bg-slate-950/95 p-6 shadow-2xl">
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+              <div className="space-y-2">
+                <div className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-xs uppercase tracking-[0.35em] text-emerald-300">{activeSection?.title}</div>
+                <h2 className="text-3xl font-black text-white">{activeSection?.title}</h2>
+                <p className="text-sm text-slate-400 max-w-2xl">Update your workspace preferences with the latest delivery partner style guidelines and secure payout controls.</p>
               </div>
-            )}
-
-            {/* ================= Regional ================= */}
-
-            {activeTab === "regional" && (
-              <div>
-
-                <h2 className="text-2xl font-bold text-white mb-6">
-                  Regional & Language
-                </h2>
-
-                <div className="grid md:grid-cols-2 gap-6">
-
-                  <div>
-                    <label className="block text-slate-300 mb-2">
-                      Time Zone
-                    </label>
-
-                    <select className="w-full rounded-xl bg-slate-800 border border-slate-700 px-4 py-3 text-white">
-
-                      <option>Asia/Kolkata</option>
-                      <option>Asia/Dubai</option>
-                      <option>UTC</option>
-
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-slate-300 mb-2">
-                      Date Format
-                    </label>
-
-                    <select className="w-full rounded-xl bg-slate-800 border border-slate-700 px-4 py-3 text-white">
-
-                      <option>DD/MM/YYYY</option>
-                      <option>MM/DD/YYYY</option>
-                      <option>YYYY/MM/DD</option>
-
-                    </select>
-                  </div>
-
-                </div>
-
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setSettings({
+                    storeName: "eMart Saree Collections",
+                    email: "admin@emart.com",
+                    phone: "+91 9876543210",
+                    address: "Bangalore, Karnataka",
+                    currency: "INR",
+                    language: "English",
+                    maintenance: false,
+                    autoUpdate: true,
+                    emailNotification: true,
+                    smsNotification: false,
+                    loginAlert: true,
+                    backupEnabled: true,
+                    backupSchedule: "Daily",
+                  })}
+                  className="rounded-2xl border border-slate-700 bg-slate-900/80 px-5 py-3 text-sm font-bold text-slate-300 transition hover:border-emerald-500 hover:text-emerald-300"
+                >
+                  Reset
+                </button>
+                <button className="rounded-2xl bg-emerald-500 px-6 py-3 text-sm font-black uppercase tracking-[0.18em] text-slate-950 shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-400">
+                  <FiCheck className="inline-block mr-2 h-4 w-4" /> Save Changes
+                </button>
               </div>
-            )}
+            </div>
 
-            {/* ================= Payment ================= */}
-
-            {activeTab === "payment" && (
-              <div>
-
-                <h2 className="text-2xl font-bold text-white mb-6">
-                  Payment Gateways
-                </h2>
-
-                <div className="grid md:grid-cols-2 gap-6">
-
-                  <div className="bg-slate-800 border border-slate-700 rounded-xl p-5">
-
-                    <h3 className="text-white font-bold mb-2">
-                      Razorpay
-                    </h3>
-
-                    <p className="text-slate-400 text-sm">
-                      Enable Razorpay payments.
-                    </p>
-
-                    <input
-                      type="checkbox"
-                      className="mt-5 w-6 h-6"
-                    />
-
-                  </div>
-
-                  <div className="bg-slate-800 border border-slate-700 rounded-xl p-5">
-
-                    <h3 className="text-white font-bold mb-2">
-                      Cashfree
-                    </h3>
-
-                    <p className="text-slate-400 text-sm">
-                      Enable Cashfree Gateway.
-                    </p>
-
-                    <input
-                      type="checkbox"
-                      className="mt-5 w-6 h-6"
-                    />
-
-                  </div>
-
-                </div>
-
-              </div>
-            )}
-
-            {/* ================= Team ================= */}
-
-            {activeTab === "team" && (
-              <div>
-
-                <h2 className="text-2xl font-bold text-white mb-6">
-                  Team Management
-                </h2>
-
-                <div className="overflow-x-auto">
-
-                  <table className="w-full">
-
-                    <thead>
-
-                      <tr className="border-b border-slate-700">
-
-                        <th className="text-left py-3 text-slate-300">
-                          Name
-                        </th>
-
-                        <th className="text-left py-3 text-slate-300">
-                          Role
-                        </th>
-
-                        <th className="text-left py-3 text-slate-300">
-                          Status
-                        </th>
-
-                      </tr>
-
-                    </thead>
-
-                    <tbody>
-
-                      <tr className="border-b border-slate-800">
-
-                        <td className="py-4 text-white">
-                          Admin
-                        </td>
-
-                        <td className="py-4 text-slate-400">
-                          Super Admin
-                        </td>
-
-                        <td className="py-4 text-green-400">
-                          Active
-                        </td>
-
-                      </tr>
-
-                      <tr>
-
-                        <td className="py-4 text-white">
-                          Manager
-                        </td>
-
-                        <td className="py-4 text-slate-400">
-                          Staff
-                        </td>
-
-                        <td className="py-4 text-green-400">
-                          Active
-                        </td>
-
-                      </tr>
-
-                    </tbody>
-
-                  </table>
-
-                </div>
-
-              </div>
-            )}
-
-            {/* ================= Backup ================= */}
-
-            {activeTab === "backup" && (
-              <div>
-
-                <h2 className="text-2xl font-bold text-white mb-6">
-                  Data & Backup
-                </h2>
-
-                <div className="space-y-6">
-
-                  <button className="flex items-center gap-3 bg-green-600 hover:bg-green-700 px-6 py-3 rounded-xl text-white font-semibold">
-
-                    <FiDatabase />
-
-                    Create Backup
-
-                  </button>
-
-                  <button className="flex items-center gap-3 bg-yellow-600 hover:bg-yellow-700 px-6 py-3 rounded-xl text-white font-semibold">
-
-                    <FiRefreshCw />
-
-                    Restore Backup
-
-                  </button>
-
-                </div>
-
-              </div>
-            )}
-                      {/* Bottom Action Buttons */}
-          <div className="mt-10 border-t border-slate-800 pt-6 flex flex-col sm:flex-row justify-end gap-4">
-
-            <button
-              type="button"
-              className="px-6 py-3 rounded-xl border border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700 transition"
-            >
-              Cancel
-            </button>
-
-            <button
-              type="button"
-              className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold transition"
-              onClick={() => {
-                alert("Settings saved successfully!");
-              }}
-            >
-              <FiSave className="text-lg" />
-              Save Settings
-            </button>
-
+            <div className="mt-8">{renderTabContent()}</div>
           </div>
 
-        </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="rounded-[2rem] border border-white/10 bg-slate-950/95 p-6 shadow-2xl">
+              <div className="flex items-center justify-between gap-4">
+                <p className="text-xs uppercase tracking-[0.35em] text-emerald-300">Partner health</p>
+                <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs text-emerald-300">Live</span>
+              </div>
+              <div className="mt-5 space-y-4">
+                <div className="rounded-3xl bg-slate-900/90 p-4 border border-white/5">
+                  <p className="text-sm text-slate-400">Current uptime</p>
+                  <p className="mt-2 text-2xl font-black text-white">99.98%</p>
+                </div>
+                <div className="rounded-3xl bg-slate-900/90 p-4 border border-white/5">
+                  <p className="text-sm text-slate-400">Next scheduled sync</p>
+                  <p className="mt-2 text-lg font-bold text-white">Today • 03:00 AM</p>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-[2rem] border border-white/10 bg-slate-950/95 p-6 shadow-2xl">
+              <p className="text-xs uppercase tracking-[0.35em] text-emerald-300">Tips</p>
+              <h3 className="mt-4 text-2xl font-black text-white">Optimize delivery earnings</h3>
+              <p className="mt-3 text-sm text-slate-400">Keep your profile updated, maintain high ratings, and complete partner challenges to increase payouts and unlock premium routes.</p>
+              <div className="mt-6 space-y-3 text-sm text-slate-300">
+                <div className="rounded-3xl bg-slate-900/90 p-4 border border-white/5">• Keep notifications enabled for instant payout alerts.</div>
+                <div className="rounded-3xl bg-slate-900/90 p-4 border border-white/5">• Verify your account details for faster settlements.</div>
+              </div>
+            </div>
+          </div>
+        </main>
       </div>
     </div>
   );

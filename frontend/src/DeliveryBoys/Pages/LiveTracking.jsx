@@ -37,11 +37,14 @@ const LiveTracking = () => {
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
       case "out for delivery":
-          return "bg-slate-900 text-cyan-300 border-cyan-800";
-        case "delivered":
-          return "bg-slate-900 text-emerald-300 border-emerald-800";
-        case "picked up":
-          return "bg-slate-900 text-amber-300 border-amber-800";
+        return "bg-slate-900 text-cyan-300 border-cyan-800";
+      case "delivered":
+        return "bg-slate-900 text-emerald-300 border-emerald-800";
+      case "picked up":
+        return "bg-slate-900 text-amber-300 border-amber-800";
+      default:
+        return "bg-slate-900 text-slate-300 border-slate-700";
+    }
   };
 
   const getStatusIcon = (status) => {
@@ -70,19 +73,14 @@ const LiveTracking = () => {
     <div className="space-y-6 pb-12">
       <Toaster position="top-right" />
 
-      {/* Header */}
       <div className="relative overflow-hidden rounded-[2rem] p-8 border border-white/5 shadow-2xl"
         style={{ background: "linear-gradient(130deg,#0a2010 0%,#0B1120 60%,#0a1020 100%)" }}>
         <div className="absolute inset-0 opacity-30"
           style={{ backgroundImage: "radial-gradient(circle at 80% 50%, #06B6D4 0%, transparent 60%)" }} />
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <p className="text-[10px] font-black text-cyan-400 uppercase tracking-[0.25em] mb-1">
-              Real-Time
-            </p>
-            <h1 className="text-3xl sm:text-4xl font-black text-white uppercase italic tracking-tight leading-none">
-              Live Tracking
-            </h1>
+            <p className="text-[10px] font-black text-cyan-400 uppercase tracking-[0.25em] mb-1">Real-Time</p>
+            <h1 className="text-3xl sm:text-4xl font-black text-white uppercase italic tracking-tight leading-none">Live Tracking</h1>
             <p className="text-xs text-white/30 font-semibold mt-2 uppercase tracking-widest">
               {orders.length} active delivery{orders.length !== 1 ? 's' : ''}
             </p>
@@ -100,13 +98,10 @@ const LiveTracking = () => {
       {orders.length === 0 ? (
         <div className="table-card rounded-[2.5rem] p-12 text-center border border-white/10 shadow-[0_30px_90px_rgba(0,0,0,0.45)]">
           <Truck className="w-16 h-16 text-slate-400 mx-auto mb-4" />
-          <p className="text-slate-300 font-black uppercase tracking-widest text-[10px]">
-            No active deliveries at this time
-          </p>
+          <p className="text-slate-300 font-black uppercase tracking-widest text-[10px]">No active deliveries at this time</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Active Deliveries List */}
           <div className="lg:col-span-1">
             <h2 className="text-sm font-black text-slate-100 uppercase tracking-tight mb-4">Active Orders</h2>
             <div className="space-y-3 max-h-[600px] overflow-y-auto">
@@ -139,7 +134,6 @@ const LiveTracking = () => {
             </div>
           </div>
 
-          {/* Order Details */}
           <div className="lg:col-span-2">
             {selectedOrder ? (
               <div className="table-card rounded-[2.5rem] overflow-hidden">
@@ -148,6 +142,7 @@ const LiveTracking = () => {
                     <div>
                       <h3 className="text-lg font-black text-slate-100">#ORD-0{selectedOrder.id}</h3>
                       <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-widest">{selectedOrder.order_id}</p>
+                    </div>
                     <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-black border ${getStatusColor(selectedOrder.status)}`}>
                       {getStatusIcon(selectedOrder.status)}
                       {selectedOrder.status}
@@ -155,7 +150,6 @@ const LiveTracking = () => {
                   </div>
                 </div>
 
-                {/* Customer Info */}
                 <div className="p-6 border-b border-white/10">
                   <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Customer Information</h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -178,7 +172,6 @@ const LiveTracking = () => {
                   </div>
                 </div>
 
-                {/* Delivery Location */}
                 <div className="p-6 border-b border-white/10">
                   <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                     <MapPin className="w-4 h-4" />
@@ -197,7 +190,6 @@ const LiveTracking = () => {
                   </div>
                 </div>
 
-                {/* Order Details */}
                 <div className="p-6 border-b border-white/10">
                   <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Order Details</h4>
                   <div className="grid grid-cols-2 gap-4">
@@ -215,7 +207,6 @@ const LiveTracking = () => {
                   </div>
                 </div>
 
-                {/* Progress */}
                 <div className="p-6">
                   <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Delivery Progress</h4>
                   <div className="space-y-3">
@@ -243,9 +234,7 @@ const LiveTracking = () => {
               </div>
             ) : (
               <div className="bg-slate-950 rounded-[2.5rem] border border-white/10 shadow-sm p-12 text-center">
-                <p className="text-slate-400 font-black uppercase tracking-widest text-[10px]">
-                  Select an order to view details
-                </p>
+                <p className="text-slate-400 font-black uppercase tracking-widest text-[10px]">Select an order to view details</p>
               </div>
             )}
           </div>

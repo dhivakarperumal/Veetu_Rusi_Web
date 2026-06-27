@@ -520,6 +520,7 @@ const DeliveryPartnerManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setValidationErrors({});
     if (!validateForm()) {
       toast.error("Please resolve the highlighted fields before submitting.");
       return;
@@ -547,7 +548,13 @@ const DeliveryPartnerManagement = () => {
       setEditingPartner(null);
       fetchPartners();
     } catch (err) {
-      toast.error(err?.response?.data?.message || "Failed to save delivery partner.");
+      const duplicateErrors = err?.response?.data?.errors;
+      if (duplicateErrors) {
+        setValidationErrors(duplicateErrors);
+        toast.error(err?.response?.data?.message || "Duplicate values found.");
+      } else {
+        toast.error(err?.response?.data?.message || "Failed to save delivery partner.");
+      }
     } finally {
       setSaving(false);
     }

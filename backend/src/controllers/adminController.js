@@ -74,6 +74,82 @@ async function resolveCurrentUserAudit(req) {
   }
 }
 
+const UNIQUE_HOMECHEF_FIELDS = [
+  'mobile',
+  'email',
+  'aadhaar_number',
+  'pan_number',
+  'bank_account_number',
+  'upi_id',
+];
+
+const UNIQUE_HOMECHEF_LABELS = {
+  mobile: 'Phone number',
+  email: 'Email address',
+  aadhaar_number: 'Aadhaar number',
+  pan_number: 'PAN number',
+  bank_account_number: 'Bank account number',
+  upi_id: 'UPI ID',
+};
+
+function normalizeUniqueValue(value) {
+  if (value === undefined || value === null) return null;
+  return typeof value === 'string' ? value.trim() : value;
+}
+
+async function getDuplicateHomeChefFields(values, excludeId = null) {
+  const searchValues = UNIQUE_HOMECHEF_FIELDS.reduce((acc, field) => {
+    const normalized = normalizeUniqueValue(values[field]);
+    if (normalized !== null && normalized !== '') {
+      acc[field] = normalized;
+    }
+    return acc;
+  }, {});
+
+  const fieldsToCheck = Object.keys(searchValues);
+  if (fieldsToCheck.length === 0) return [];
+
+  const whereClauses = fieldsToCheck.map((field) => `${field} = ?`).join(' OR ');
+  const params = fieldsToCheck.map((field) => searchValues[field]);
+  let query = `SELECT id, ${UNIQUE_HOMECHEF_FIELDS.join(', ')} FROM home_chefs WHERE (${whereClauses})`;
+  if (excludeId) {
+    query += ' AND id != ?';
+    params.push(excludeId);
+  }
+
+  const [rows] = await pool.execute(query, params);
+  if (!rows || rows.length === 0) return [];
+
+  const duplicates = new Set();
+  rows.forEach((row) => {
+    fieldsToCheck.forEach((field) => {
+      if (
+        row[field] !== undefined &&
+        row[field] !== null &&
+        normalizeUniqueValue(row[field]) === searchValues[field]
+      ) {
+        duplicates.add(field);
+      }
+    });
+  });
+
+  return Array.from(duplicates);
+}
+
+function getDuplicateError(duplicateFields) {
+  const errors = duplicateFields.reduce((acc, field) => {
+    acc[field] = `${UNIQUE_HOMECHEF_LABELS[field] || field} already exists.`;
+    return acc;
+  }, {});
+  const message = `${duplicateFields
+    .map((field) => UNIQUE_HOMECHEF_LABELS[field] || field)
+    .join(', ')} already exists. Please use unique values.`;
+  const error = new Error(message);
+  error.status = 409;
+  error.errors = errors;
+  return error;
+}
+
 // ==================== HOME CHEF MANAGEMENT ====================
 exports.getHomeChefs = async (req, res) => {
   try {
@@ -280,6 +356,11 @@ exports.createHomeChef = async (req, res) => {
         })
     );
 
+    const duplicateFields = await getDuplicateHomeChefFields(filteredData);
+    if (duplicateFields.length > 0) {
+      throw getDuplicateError(duplicateFields);
+    }
+
     // Validate required fields
     if (!filteredData.email) {
       throw new Error('Email is required');
@@ -307,6 +388,9 @@ exports.createHomeChef = async (req, res) => {
     res.status(201).json({ message: 'Home Chef created successfully.', id: result.insertId });
   } catch (error) {
     console.error('❌ Error creating home chef:', error.message);
+    if (error.errors) {
+      return res.status(error.status || 409).json({ message: error.message, errors: error.errors });
+    }
     res.status(500).json({ message: 'Error creating home chef.', error: error.message });
   }
 };
@@ -496,6 +580,12 @@ exports.updateHomeChef = async (req, res) => {
     };
 
     const validColumns = await getTableColumns('home_chefs');
+
+    const duplicateFields = await getDuplicateHomeChefFields(updateData, id);
+    if (duplicateFields.length > 0) {
+      throw getDuplicateError(duplicateFields);
+    }
+
     const filteredUpdate = Object.fromEntries(
       Object.entries(updateData).filter(([key, value]) => {
         if (!VALID_HOMECHEF_COLUMNS.includes(key) || !validColumns.includes(key)) {
@@ -582,6 +672,9 @@ exports.updateHomeChef = async (req, res) => {
     res.json({ message: 'Home Chef updated successfully.' });
   } catch (error) {
     console.error('❌ Error updating home chef:', error.message);
+    if (error.errors) {
+      return res.status(error.status || 409).json({ message: error.message, errors: error.errors });
+    }
     res.status(500).json({ message: 'Error updating home chef.', error: error.message });
   }
 };
