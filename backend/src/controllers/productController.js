@@ -365,20 +365,50 @@ exports.createProduct = async (req, res) => {
 exports.updateProduct = async (req, res) => {
     try {
         const { id } = req.params;
-        const {
-            name, description, category, product_type, subcategory, mrp, offer, offer_price,
-            product_code, total_stock, rating, status, material, nutrition_info, storage_instructions,
-            presentation_style, portion_format, service_type, packaging_notes, packaging_image, dietary_tag, heat_profile,
-            serving_size, prep_time, ingredients, instructions, spice_level, shelf_life_days, net_weight, package_count,
-            packaging_type, manufacture_date, expiry_date, variants, images,
-            franchise_user_id
-        } = req.body;
 
         // Check if product exists
-        const [existing] = await pool.execute('SELECT id FROM chef_products WHERE id = ?', [id]);
-        if (existing.length === 0) {
+        const [existingRows] = await pool.execute('SELECT * FROM chef_products WHERE id = ?', [id]);
+        if (existingRows.length === 0) {
             return res.status(404).json({ message: 'Product not found' });
         }
+        const existing = existingRows[0];
+
+        const name = req.body.name !== undefined ? req.body.name : existing.name;
+        const description = req.body.description !== undefined ? req.body.description : existing.description;
+        const category = req.body.category !== undefined ? req.body.category : existing.category;
+        const product_type = req.body.product_type !== undefined ? req.body.product_type : existing.product_type;
+        const subcategory = req.body.subcategory !== undefined ? req.body.subcategory : existing.subcategory;
+        const mrp = req.body.mrp !== undefined ? req.body.mrp : existing.mrp;
+        const offer = req.body.offer !== undefined ? req.body.offer : existing.offer;
+        const offer_price = req.body.offer_price !== undefined ? req.body.offer_price : existing.offer_price;
+        const product_code = req.body.product_code !== undefined ? req.body.product_code : existing.product_code;
+        const total_stock = req.body.total_stock !== undefined ? req.body.total_stock : existing.total_stock;
+        const rating = req.body.rating !== undefined ? req.body.rating : existing.rating;
+        const status = req.body.status !== undefined ? req.body.status : existing.status;
+        const material = req.body.material !== undefined ? req.body.material : existing.material;
+        const nutrition_info = req.body.nutrition_info !== undefined ? req.body.nutrition_info : existing.nutrition_info;
+        const storage_instructions = req.body.storage_instructions !== undefined ? req.body.storage_instructions : existing.storage_instructions;
+        const presentation_style = req.body.presentation_style !== undefined ? req.body.presentation_style : existing.presentation_style;
+        const portion_format = req.body.portion_format !== undefined ? req.body.portion_format : existing.portion_format;
+        const service_type = req.body.service_type !== undefined ? req.body.service_type : existing.service_type;
+        const packaging_notes = req.body.packaging_notes !== undefined ? req.body.packaging_notes : existing.packaging_notes;
+        const packaging_image = req.body.packaging_image !== undefined ? req.body.packaging_image : existing.packaging_image;
+        const dietary_tag = req.body.dietary_tag !== undefined ? req.body.dietary_tag : existing.dietary_tag;
+        const heat_profile = req.body.heat_profile !== undefined ? req.body.heat_profile : existing.heat_profile;
+        const serving_size = req.body.serving_size !== undefined ? req.body.serving_size : existing.serving_size;
+        const prep_time = req.body.prep_time !== undefined ? req.body.prep_time : existing.prep_time;
+        const ingredients = req.body.ingredients !== undefined ? req.body.ingredients : existing.ingredients;
+        const instructions = req.body.instructions !== undefined ? req.body.instructions : existing.instructions;
+        const spice_level = req.body.spice_level !== undefined ? req.body.spice_level : existing.spice_level;
+        const shelf_life_days = req.body.shelf_life_days !== undefined ? req.body.shelf_life_days : existing.shelf_life_days;
+        const net_weight = req.body.net_weight !== undefined ? req.body.net_weight : existing.net_weight;
+        const package_count = req.body.package_count !== undefined ? req.body.package_count : existing.package_count;
+        const packaging_type = req.body.packaging_type !== undefined ? req.body.packaging_type : existing.packaging_type;
+        const manufacture_date = req.body.manufacture_date !== undefined ? req.body.manufacture_date : existing.manufacture_date;
+        const expiry_date = req.body.expiry_date !== undefined ? req.body.expiry_date : existing.expiry_date;
+        const variants = req.body.variants !== undefined ? req.body.variants : parseJsonField(existing.variants);
+        const images = req.body.images !== undefined ? req.body.images : parseJsonField(existing.images);
+        const franchise_user_id = req.body.franchise_user_id !== undefined ? req.body.franchise_user_id : existing.franchise_user_id;
 
         const normalizedVariants = Array.isArray(variants)
             ? variants.map((variant) => ({
@@ -387,7 +417,7 @@ exports.updateProduct = async (req, res) => {
                 offer: variant.offer ? Number(variant.offer) : 0,
                 final_price: variant.final_price ? Number(variant.final_price) : 0,
                 stock: variant.stock ? Number(variant.stock) : 0,
-                images: Array.isArray(variant.images) ? variant.images : (variant.images ? JSON.parse(variant.images) : [])
+                images: Array.isArray(variant.images) ? variant.images : (variant.images ? (typeof variant.images === 'string' ? JSON.parse(variant.images) : variant.images) : [])
             }))
             : [];
 
