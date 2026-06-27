@@ -5,6 +5,8 @@ import PageHeader from "../CommenComponents/PageHeader";
 import { FiFilter, FiX, FiChevronLeft, FiChevronRight, FiSearch } from "react-icons/fi";
 import { BsGrid3X3Gap, BsGridFill, BsGrid1X2, BsGrid3X2 } from "react-icons/bs";
 import { StoreContext } from "../../PrivateRouter/StoreContext";
+import { AuthContext } from "../../PrivateRouter/AuthContext";
+import { FiMapPin, FiCheckCircle } from "react-icons/fi";
 
 const Shop = ({ defaultCategory = "" }) => {
   const { chefFoodsCache, setChefFoodsCache, lastChefFoodsFetchTime, setLastChefFoodsFetchTime } =
@@ -35,6 +37,7 @@ const Shop = ({ defaultCategory = "" }) => {
   const [homeChef, setHomeChef] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [groupedCategories, setGroupedCategories] = useState({});
+  const { user } = useContext(AuthContext);
 
   const [gridView, setGridView] = useState(5);
 
@@ -104,10 +107,10 @@ const Shop = ({ defaultCategory = "" }) => {
       const data = Array.isArray(res.data) ? res.data : [];
       setChefFoodsCache(data);
       setLastChefFoodsFetchTime(Date.now());
-      
+
       // Only show active foods for shop
       let myProducts = data.filter(p => p.status?.toLowerCase() === 'active');
-      
+
       setProducts(myProducts);
       setFilteredProducts(myProducts);
     } catch (error) {
@@ -150,7 +153,7 @@ const Shop = ({ defaultCategory = "" }) => {
       const normalizedSelectedCategory = decodeURIComponent(selectedCategory)
         .trim()
         .toLowerCase();
-      
+
       updated = updated.filter((p) => {
         const productCategory = p.category
           ? p.category.trim().toLowerCase()
@@ -223,8 +226,8 @@ const Shop = ({ defaultCategory = "" }) => {
   const categories = selectedType
     ? [...new Set((groupedCategories[selectedType] || []).map((cat) => cat.name?.trim()).filter(Boolean))]
     : apiCategoryNames.length > 0
-    ? [...new Set(apiCategoryNames)]
-    : [...new Set(products.map((p) => p.category).filter(Boolean).map((cat) => cat.trim()))];
+      ? [...new Set(apiCategoryNames)]
+      : [...new Set(products.map((p) => p.category).filter(Boolean).map((cat) => cat.trim()))];
 
   const subCategories = [
     ...new Set(
@@ -241,7 +244,7 @@ const Shop = ({ defaultCategory = "" }) => {
         .filter(Boolean),
     ),
   ];
-  
+
   const colors = selectedCategory
     ? [
       ...new Set(
@@ -257,7 +260,7 @@ const Shop = ({ defaultCategory = "" }) => {
       ),
     ]
     : [];
-  
+
   const sizes = selectedCategory
     ? [
       ...new Set(
@@ -295,12 +298,12 @@ const Shop = ({ defaultCategory = "" }) => {
     gridView === 5
       ? showFilters ? "grid-cols-2 lg:grid-cols-4" : "grid-cols-2 lg:grid-cols-5"
       : gridView === 4
-      ? "grid-cols-2 lg:grid-cols-4"
-      : gridView === 3
-      ? "grid-cols-2 lg:grid-cols-3"
-      : gridView === 2
-      ? "grid-cols-2"
-      : "grid-cols-1";
+        ? "grid-cols-2 lg:grid-cols-4"
+        : gridView === 3
+          ? "grid-cols-2 lg:grid-cols-3"
+          : gridView === 2
+            ? "grid-cols-2"
+            : "grid-cols-1";
 
   /* ─── Loading skeleton ───────────────────────────────────────── */
   if (loading) {
@@ -319,6 +322,70 @@ const Shop = ({ defaultCategory = "" }) => {
   return (
     <>
       <PageHeader title="Shop" />
+
+      {/* Current Location */}
+      {(user?.pincode || user?.latitude) && (
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-green-100 text-primary flex items-center justify-center">
+              <FiMapPin size={18} />
+            </div>
+
+            <div>
+              <h3 className="font-bold text-gray-800">
+                Current Delivery Location
+              </h3>
+              <p className="text-xs text-gray-400">
+                Products available for your area
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {user?.pincode && (
+              <div className="bg-green-50 border border-green-100 rounded-xl p-4 text-center">
+                <p className="text-xs text-gray-400 uppercase font-semibold">
+                  Pincode
+                </p>
+                <p className="text-xl font-black text-primary mt-1">
+                  {user.pincode}
+                </p>
+              </div>
+            )}
+
+            {user?.latitude && (
+              <div className="bg-gray-50 border rounded-xl p-4 text-center">
+                <p className="text-xs text-gray-400 uppercase font-semibold">
+                  Latitude
+                </p>
+                <p className="font-bold">
+                  {parseFloat(user.latitude).toFixed(4)}
+                </p>
+              </div>
+            )}
+
+            {user?.longitude && (
+              <div className="bg-gray-50 border rounded-xl p-4 text-center">
+                <p className="text-xs text-gray-400 uppercase font-semibold">
+                  Longitude
+                </p>
+                <p className="font-bold">
+                  {parseFloat(user.longitude).toFixed(4)}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {user?.location_name && (
+            <div className="mt-4 bg-gray-50 rounded-xl p-4 flex gap-2 items-start">
+              <FiCheckCircle className="text-green-500 mt-0.5" />
+              <p className="text-sm text-gray-600">
+                {user.location_name}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── Toolbar ── */}
       <div className="px-4 md:px-10 mt-6">
