@@ -45,6 +45,7 @@ const AdminLayout = () => {
                         const { latitude, longitude } = position.coords;
                         // Mock sending background ping
                         console.log(`[Auto Location Update] Lat: ${latitude}, Lng: ${longitude} at ${new Date().toLocaleTimeString()}`);
+                        setLocationData(prev => ({ ...prev, latitude, longitude }));
                     },
                     (error) => {
                         console.error("Background Location tracking error:", error);
@@ -97,6 +98,18 @@ const AdminLayout = () => {
         } catch (e) {
             console.warn('Notification sound unavailable', e);
         }
+    };
+
+    const calculateDistance = (lat1, lon1, lat2, lon2) => {
+        if (!lat1 || !lon1 || !lat2 || !lon2) return null;
+        const R = 6371;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return (R * c).toFixed(1);
     };
 
     const fetchPendingOrders = async () => {
@@ -287,15 +300,36 @@ const AdminLayout = () => {
                                     <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Amount</p>
                                     <p className="mt-2 text-lg font-bold text-white">₹{popupOrder.total_amount?.toFixed?.(2) ?? popupOrder.total_amount ?? 0}</p>
                                 </div>
+                                <div className="sm:col-span-2 rounded-3xl border border-emerald-500/20 bg-emerald-950/20 p-5">
+                                    <p className="text-[11px] font-black uppercase tracking-[0.28em] text-emerald-400">Home Chef Details</p>
+                                    <p className="mt-2 text-lg font-bold text-white">{popupOrder.home_chef_name || popupOrder.chef_name || 'Chef Name Not Available'}</p>
+                                    <p className="mt-2 text-sm text-slate-400">📞 {popupOrder.home_chef_phone || popupOrder.chef_phone || 'Phone Not Available'}</p>
+                                    <p className="mt-2 text-sm text-slate-300 leading-6">📍 {popupOrder.home_chef_address || 'Address Not Available'}</p>
+                                </div>
                                 <div className="sm:col-span-2 rounded-3xl border border-white/10 bg-slate-950/90 p-5">
-                                    <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Customer</p>
-                                    <p className="mt-2 text-lg font-bold text-white">{popupOrder.customer_name || popupOrder.ordered_by_name || 'Unknown'}</p>
-                                    <p className="mt-2 text-sm text-slate-400">{popupOrder.customer_phone || popupOrder.customer_email || 'No contact details'}</p>
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">User Details</p>
+                                            <p className="mt-2 text-lg font-bold text-white">{popupOrder.customer_name || popupOrder.ordered_by_name || 'Unknown'}</p>
+                                            <p className="mt-2 text-sm text-slate-400">📞 {popupOrder.customer_phone || popupOrder.customer_email || 'No contact details'}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Distance</p>
+                                            <p className="mt-2 text-lg font-bold text-amber-400">
+                                                {popupOrder.distance_km 
+                                                    ? `${popupOrder.distance_km} KM` 
+                                                    : locationData.latitude && popupOrder.home_chef_lat 
+                                                        ? `${calculateDistance(locationData.latitude, locationData.longitude, popupOrder.home_chef_lat, popupOrder.home_chef_lng)} KM`
+                                                        : 'N/A KM'
+                                                }
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div className="sm:col-span-2 rounded-3xl border border-white/10 bg-slate-950/90 p-5">
                                     <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Delivery Address</p>
                                     <p className="mt-2 text-sm text-slate-300 leading-6">
-                                        {[popupOrder.street_address, popupOrder.city, popupOrder.district, popupOrder.state, popupOrder.zip_code]
+                                        📍 {[popupOrder.street_address, popupOrder.city, popupOrder.district, popupOrder.state, popupOrder.zip_code]
                                             .filter(Boolean)
                                             .join(", ") || 'Not available'}
                                     </p>
@@ -303,7 +337,7 @@ const AdminLayout = () => {
                                 <div className="sm:col-span-2 rounded-3xl border border-white/10 bg-slate-950/90 p-5">
                                     <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Order Time</p>
                                     <p className="mt-2 text-sm text-slate-300">
-                                        {new Date(popupOrder.ordered_at || popupOrder.created_at || popupOrder.delivery_date || Date.now()).toLocaleString()}
+                                        ⏱ {new Date(popupOrder.ordered_at || popupOrder.created_at || popupOrder.delivery_date || Date.now()).toLocaleString()}
                                     </p>
                                 </div>
                             </div>
