@@ -401,19 +401,23 @@ const Shop = ({ defaultCategory = "" }) => {
             Home Chefs
           </h3>
 
-          <div className="flex flex-wrap gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {uniqueHomeChefs.map((chef) => (
               <div
                 key={chef.chef_name}
-                className="bg-white border border-green-200 rounded-xl px-5 py-3 shadow-sm"
+                className="bg-white border border-green-200 rounded-xl p-5 shadow-sm"
               >
-                <p className="font-semibold text-primary">
+                <h4 className="text-lg font-bold text-primary">
                   {chef.chef_name}
-                </p>
+                </h4>
 
-                <p className="text-sm text-gray-500 mt-1">
-                  📍 Delivery Radius : {chef.delivery_radius || "N/A"}
-                </p>
+                <div className="mt-3 space-y-1 text-sm text-gray-600">
+                  <p><strong>Delivery Radius:</strong> {chef.delivery_radius}</p>
+                  <p><strong>Area:</strong> {chef.area_name}</p>
+                  <p><strong>Latitude:</strong> {chef.latitude}</p>
+                  <p><strong>Longitude:</strong> {chef.longitude}</p>
+                  <p><strong>Pincode:</strong> {chef.pincode}</p>
+                </div>
               </div>
             ))}
           </div>
