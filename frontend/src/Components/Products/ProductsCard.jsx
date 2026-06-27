@@ -95,11 +95,10 @@ const ProductCard = ({ product }) => {
           {/* Tag Badge */}
           {(product?.product_type || product?.category) && (
             <div className="absolute top-4 left-4 z-20">
-              <span className={`text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-wider shadow-xl backdrop-blur-md border ${
-                (product.product_type?.toLowerCase() === 'food' || product.category?.toLowerCase() === 'food')
+              <span className={`text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-wider shadow-xl backdrop-blur-md border ${(product.product_type?.toLowerCase() === 'food' || product.category?.toLowerCase() === 'food')
                   ? "bg-orange-500/90 text-white border-orange-400/50"
                   : "bg-emerald-500/90 text-white border-emerald-400/50"
-              }`}>
+                }`}>
                 {product.product_type || product.category}
               </span>
             </div>
@@ -113,8 +112,8 @@ const ProductCard = ({ product }) => {
             <button
               onClick={() => toggleWishlist(product)}
               className={`w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center transition-all duration-300 ${isInWishlist
-                  ? "text-red-500 scale-110"
-                  : "text-gray-700 hover:text-primary"
+                ? "text-red-500 scale-110"
+                : "text-gray-700 hover:text-primary"
                 }`}
             >
               <FiHeart className={`${isInWishlist ? "fill-current" : ""}`} />
@@ -172,12 +171,19 @@ const ProductCard = ({ product }) => {
           <h3 className="text-lg font-bold text-gray-800 line-clamp-1">
             {product?.name}
           </h3>
-          
-          {/* Chef Name */}
+
+          {/* Home Chef Details */}
           {product?.chef_name && (
-            <p className="text-sm text-gray-500 mt-1 line-clamp-1">
-              By <span className="font-medium text-gray-700">{product.chef_name}</span>
-            </p>
+            <div className="mt-1">
+              <p className="text-sm text-gray-500">
+                By <span className="font-medium text-gray-700">{product.chef_name}</span>
+              </p>
+
+                <p className="text-xs text-green-600 font-medium mt-1">
+                  Delivery Radius: {product.delivery_radius} km
+                </p>
+              
+            </div>
           )}
 
           {/* Rating */}
@@ -186,8 +192,8 @@ const ProductCard = ({ product }) => {
               <FaStar
                 key={i}
                 className={`text-sm ${i < Math.round(product?.rating || 0)
-                    ? "text-yellow-400"
-                    : "text-gray-300"
+                  ? "text-yellow-400"
+                  : "text-gray-300"
                   }`}
               />
             ))}

@@ -112,7 +112,12 @@ exports.getFoods = async (req, res) => {
     const lon = parseFloat(user_lon || req.user?.longitude);
     const searchRadius = parseFloat(radius) || 10;
 
-    let query = 'SELECT cf.*, u.full_name as chef_name';
+    let query = `
+SELECT
+    cf.*,
+    u.full_name AS chef_name,
+    hc.delivery_radius
+`;
     if (!isNaN(lat) && !isNaN(lon)) {
       query += `, ( 6371 * acos( cos( radians(${lat}) ) * cos( radians( hc.latitude ) ) * cos( radians( hc.longitude ) - radians(${lon}) ) + sin( radians(${lat}) ) * sin( radians( hc.latitude ) ) ) ) AS distance`;
     } else {
