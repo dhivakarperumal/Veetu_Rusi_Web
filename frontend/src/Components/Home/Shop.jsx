@@ -43,6 +43,21 @@ const Shop = ({ defaultCategory = "" }) => {
 
   const [currentPage, setCurrentPage] = useState(1);
 
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    if (!lat1 || !lon1 || !lat2 || !lon2) return null;
+    const R = 6371; // Radius of the earth in km
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * (Math.PI / 180)) *
+      Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return (R * c).toFixed(2);
+  };
+
   useEffect(() => {
     const loadProfile = async () => {
       try {
@@ -94,7 +109,31 @@ const Shop = ({ defaultCategory = "" }) => {
     const isCacheValid = lastChefFoodsFetchTime && Date.now() - lastChefFoodsFetchTime < 5 * 60 * 1000;
     if (isCacheValid && chefFoodsCache?.length > 0) {
       // Only show active foods for shop
-      let myProducts = chefFoodsCache.filter(p => p.status?.toLowerCase() === 'active');
+      let myProducts = chefFoodsCache.filter((product) => {
+        if (product.status?.toLowerCase() !== "active") return false;
+
+        if (
+          !user?.latitude ||
+          !user?.longitude ||
+          !product.latitude ||
+          !product.longitude
+        ) {
+          return false;
+        }
+
+        const distance = parseFloat(
+          calculateDistance(
+            user.latitude,
+            user.longitude,
+            product.latitude,
+            product.longitude
+          )
+        );
+
+        const radius = parseFloat(product.delivery_radius || 0);
+
+        return distance <= radius;
+      });
       setProducts(myProducts);
       setFilteredProducts(myProducts);
       setLoading(false);
@@ -109,7 +148,31 @@ const Shop = ({ defaultCategory = "" }) => {
       setLastChefFoodsFetchTime(Date.now());
 
       // Only show active foods for shop
-      let myProducts = data.filter(p => p.status?.toLowerCase() === 'active');
+      let myProducts = data.filter((product) => {
+        if (product.status?.toLowerCase() !== "active") return false;
+
+        if (
+          !user?.latitude ||
+          !user?.longitude ||
+          !product.latitude ||
+          !product.longitude
+        ) {
+          return false;
+        }
+
+        const distance = parseFloat(
+          calculateDistance(
+            user.latitude,
+            user.longitude,
+            product.latitude,
+            product.longitude
+          )
+        );
+
+        const radius = parseFloat(product.delivery_radius || 0);
+
+        return distance <= radius;
+      });
 
       setProducts(myProducts);
       setFilteredProducts(myProducts);
@@ -417,6 +480,9 @@ const Shop = ({ defaultCategory = "" }) => {
                   <p><strong>Latitude:</strong> {chef.latitude}</p>
                   <p><strong>Longitude:</strong> {chef.longitude}</p>
                   <p><strong>Pincode:</strong> {chef.pincode}</p>
+                  {user?.latitude && user?.longitude && chef.latitude && chef.longitude && (
+                    <p><strong>Distance:</strong> {calculateDistance(user.latitude, user.longitude, chef.latitude, chef.longitude)} km</p>
+                  )}
                 </div>
               </div>
             ))}
