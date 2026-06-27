@@ -142,7 +142,12 @@ router.get('/orders/available', async (req, res) => {
     console.log(`[orders/available] User: ${deliveryBoyId}, Found FranchiseAdminId: ${franchiseAdminId}`);
 
     let query = `
-      SELECT o.* 
+      SELECT o.*, 
+             c.name as home_chef_name, 
+             c.mobile as home_chef_phone, 
+             c.kitchen_address as home_chef_address,
+             c.latitude as home_chef_lat,
+             c.longitude as home_chef_lng
       FROM user_food_order_table o
       LEFT JOIN home_chefs c ON (o.chef_id = c.id OR o.chef_user_id = c.user_id)
       WHERE o.status = 'Searching Delivery Partner'
