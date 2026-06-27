@@ -256,6 +256,7 @@ const Profile = () => {
                         <button
                             onClick={openPwdModal}
                             className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-6 py-3 rounded-xl font-bold transition-colors"
+                        >
                             Change Password
                         </button>
 

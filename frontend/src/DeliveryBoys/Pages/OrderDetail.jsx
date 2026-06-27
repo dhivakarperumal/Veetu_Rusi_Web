@@ -449,20 +449,14 @@ const OrderDetail = () => {
                         </div>
                         <div className="bg-slate-950 p-10 text-slate-100">
                             <div className="w-full max-w-xs ml-auto space-y-4 text-slate-100">
-
                                 <div className="flex justify-between text-md font-bold text-slate-400">
                                     <span>Subtotal</span>
                                     <span>₹{parseFloat(order.subtotal || order.total_amount).toLocaleString()}</span>
                                 </div>
-
                                 <div className="pt-2 border-t border-white/10 flex justify-between items-end">
-                                    <span className="font-bold text-slate-300">
-                                        Total Settlement
-                                    </span>
-
-                                    <span className="text-xl font-bold italic text-white">
+                                    <span className="font-bold text-slate-300">Total Settlement</span>
+                                    <span className="text-xl font-bold italic text-white">₹{Number(order.total_amount || 0).toLocaleString()}</span>
                                 </div>
-
                             </div>
                         </div>
                     </div>
@@ -588,117 +582,9 @@ const OrderDetail = () => {
                     </div>
 
                     {/* Status Update Control */}
-                    {/* <div className="bg-slate-900 p-8 rounded-[2.5rem] text-white shadow-2xl space-y-6 no-print">
-                        <div className="flex items-center justify-between">
-                            <h3 className="font-black uppercase tracking-widest text-[10px] opacity-40">Pipeline Control</h3>
-                            {order.status !== selectedStatus && (
-                                <span className="text-[9px] font-black bg-blue-600 px-2 py-0.5 rounded-full animate-pulse">Pending Sync</span>
-                            )}
-                        </div>
-
-                        <div className="space-y-4">
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-1">Update Order Progress</label>
-                                <select
-                                    value={selectedStatus}
-                                    onChange={(e) => setSelectedStatus(e.target.value)}
-                                    className="w-full bg-slate-900/80 border border-white/10 rounded-2xl px-5 py-4 font-black uppercase tracking-widest text-xs text-slate-100 outline-none focus:border-blue-500/50 transition-all appearance-none cursor-pointer"
-                                >
-                                    {(() => {
-                                        const flow = ["Order Placed", "Packing", "Shipping", "Out for Delivery", "Delivered"];
-                                        const currentIndex = flow.indexOf(order.status);
-                                        const options = currentIndex === -1 
-                                            ? [...flow, "Cancelled", order.status] 
-                                            : [...flow.slice(currentIndex), ...(currentIndex < 2 ? ["Cancelled"] : [])];
-                                        
-                                        // Since selectedStatus could be one of the future statuses the user is switching to,
-                                        // we should also make sure it's included just in case
-                                        const finalOptions = Array.from(new Set([...options, selectedStatus])).filter(Boolean);
-
-                                        return finalOptions.map(status => (
-                                            <option key={status} value={status} className="bg-slate-900">{status}</option>
-                                        ));
-                                    })()}
-                                </select>
+                </div>
             </div>
-
-
-            {selectedStatus === 'Shipping' && (
-                <div className="space-y-4 pt-2 animate-in slide-in-from-top-4 duration-300">
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-blue-400 ml-1">Docket Number / Tracking ID</label>
-                        <input
-                            type="text"
-                            value={trackingNumber}
-                            onChange={(e) => setTrackingNumber(e.target.value)}
-                            placeholder="Enter AWB or Docket Number"
-                            className="w-full bg-slate-900/80 border border-white/10 rounded-2xl px-5 py-3 font-bold text-sm outline-none focus:border-blue-500/50 transition-all text-white"
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-blue-400 ml-1">Courier Service Name</label>
-                        <input
-                            type="text"
-                            value={courierName}
-                            onChange={(e) => setCourierName(e.target.value)}
-                            placeholder="e.g. BlueDart, DTDC, Delhivery"
-                            className="w-full bg-slate-900/80 border border-white/10 rounded-2xl px-5 py-3 font-bold text-sm outline-none focus:border-blue-500/50 transition-all text-white"
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-blue-400 ml-1">Shipment Time</label>
-                        <input
-                            type="datetime-local"
-                            value={shippedAt || new Date().toISOString().slice(0, 16)}
-                            onChange={(e) => setShippedAt(e.target.value)}
-                            className="w-full bg-slate-900/80 border border-white/10 rounded-2xl px-5 py-3 font-bold text-sm outline-none focus:border-blue-500/50 transition-all text-white"
-                        />
-                    </div>
-                </div>
-            )}
-
-
-            {selectedStatus === 'Cancelled' && (
-                <div className="space-y-4 pt-2 animate-in slide-in-from-top-4 duration-300">
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-red-400 ml-1">Cancellation Reason</label>
-                        <textarea
-                            value={cancellationReason}
-                            onChange={(e) => setCancellationReason(e.target.value)}
-                            placeholder="Reason for cancellation..."
-                            rows="3"
-                            className="w-full bg-slate-900/80 border border-white/10 rounded-2xl px-5 py-3 font-bold text-sm outline-none focus:border-red-500/50 transition-all resize-none text-slate-100"
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-red-400 ml-1">Cancellation Time</label>
-                        <input
-                            type="datetime-local"
-                            value={cancelledAt || new Date().toISOString().slice(0, 16)}
-                            onChange={(e) => setCancelledAt(e.target.value)}
-                            className="w-full bg-slate-900/80 border border-white/10 rounded-2xl px-5 py-3 font-bold text-sm outline-none focus:border-red-500/50 transition-all text-white"
-                        />
-                    </div>
-                </div>
-            )}
-
-            <button
-                onClick={handleStatusUpdate}
-                disabled={updating || order.status === selectedStatus && !(['Shipping', 'Cancelled'].includes(selectedStatus) && (trackingNumber !== order.tracking_number || courierName !== order.courier_name || cancellationReason !== order.cancellation_reason))}
-                className={`w-full py-4 rounded-2xl font-black uppercase tracking-widest text-sm transition-all active:scale-95 shadow-xl ${updating ? 'bg-white/10 text-white/30 cursor-wait' : 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-500/20'}`}
-            >
-                {updating ? (
-                    <div className="flex items-center justify-center gap-2">
-                        <div className="w-4 h-4 border-2 border-t-white rounded-full animate-spin"></div>
-                        <span>Syncing...</span>
-                    </div>
-                ) : 'Execute Status Update'}
-            </button>
         </div>
-                    </div > */}
-                </div >
-            </div >
-        </div >
     );
 };
 
