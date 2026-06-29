@@ -128,42 +128,71 @@ const AdminLayout = () => {
     }, []);
 
     useEffect(() => {
-        if (popupOrder && !popupOrder.distance_km) {
-            setCalculatedDistance(null);
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(async (position) => {
-                    const chefLat = position.coords.latitude;
-                    const chefLng = position.coords.longitude;
-                    
-                    const addressStr = [popupOrder.street_address, popupOrder.city, popupOrder.district, popupOrder.state, popupOrder.zip_code].filter(Boolean).join(", ");
-                    if (addressStr) {
-                        try {
-                            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressStr)}`);
-                            const data = await response.json();
-                            if (data && data.length > 0) {
-                                const custLat = parseFloat(data[0].lat);
-                                const custLng = parseFloat(data[0].lon);
-                                const dist = calculateDistance(chefLat, chefLng, custLat, custLng);
-                                setCalculatedDistance(dist);
-                            } else {
-                                setCalculatedDistance('N/A');
-                            }
-                        } catch (e) {
-                            console.error("Geocoding failed", e);
-                            setCalculatedDistance('N/A');
-                        }
-                    } else {
-                        setCalculatedDistance('N/A');
-                    }
-                }, (error) => {
-                    console.error("Geolocation error:", error);
-                    setCalculatedDistance('N/A');
-                });
-            } else {
-                setCalculatedDistance('N/A');
-            }
+        if (!popupOrder || popupOrder.distance_km) {
+            if (popupOrder?.distance_km) setCalculatedDistance(popupOrder.distance_km);
+            return;
         }
+
+        setCalculatedDistance(null);
+
+        const custLat = popupOrder.customer_lat ? parseFloat(popupOrder.customer_lat) : null;
+        const custLng = popupOrder.customer_lng ? parseFloat(popupOrder.customer_lng) : null;
+        const chefLat = popupOrder.chef_lat     ? parseFloat(popupOrder.chef_lat)     : null;
+        const chefLng = popupOrder.chef_lng     ? parseFloat(popupOrder.chef_lng)     : null;
+
+        // ── Priority 1: Both chef & customer coords in DB → instant calculation ──
+        if (chefLat && chefLng && custLat && custLng) {
+            setCalculatedDistance(calculateDistance(chefLat, chefLng, custLat, custLng));
+            return;
+        }
+
+        // ── Priority 2: Customer coords in DB, get chef GPS live ──
+        if (custLat && custLng && navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    const dist = calculateDistance(pos.coords.latitude, pos.coords.longitude, custLat, custLng);
+                    setCalculatedDistance(dist || 'N/A');
+                },
+                () => setCalculatedDistance('N/A'),
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+            );
+            return;
+        }
+
+        // ── Priority 3: No customer coords → geocode address progressively ──
+        if (!navigator.geolocation) { setCalculatedDistance('N/A'); return; }
+
+        navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+                const fromLat = chefLat || pos.coords.latitude;
+                const fromLng = chefLng || pos.coords.longitude;
+
+                const { street_address, city, district, state, zip_code } = popupOrder;
+                const queries = [];
+                if (zip_code && state)       queries.push(`${zip_code}, ${state}, India`);
+                if (city && state)           queries.push(`${city}, ${state}, India`);
+                if (district && state)       queries.push(`${district}, ${state}, India`);
+                if (zip_code)               queries.push(`${zip_code}, India`);
+                if (street_address && city) queries.push(`${street_address}, ${city}, India`);
+
+                for (const q of queries) {
+                    try {
+                        const res  = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=in&q=${encodeURIComponent(q)}`);
+                        const data = await res.json();
+                        if (data?.length > 0) {
+                            const dist = calculateDistance(fromLat, fromLng, parseFloat(data[0].lat), parseFloat(data[0].lon));
+                            setCalculatedDistance(dist || 'N/A');
+                            return;
+                        }
+                    } catch (e) { console.warn('Geocoding failed:', q, e); }
+                }
+                setCalculatedDistance('N/A');
+            },
+            () => setCalculatedDistance('N/A'),
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+        );
     }, [popupOrder]);
+
 
     const handleAccept = async () => {
         if (!popupOrder) return;
@@ -260,15 +289,15 @@ const AdminLayout = () => {
                                             </div>
                                             <div className="text-right">
                                                 <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Distance</p>
-                                                <p className="mt-2 text-lg font-bold text-amber-400">
-                                                    {popupOrder.distance_km 
-                                                        ? `${popupOrder.distance_km} KM` 
-                                                        : calculatedDistance && calculatedDistance !== 'N/A' 
-                                                            ? `${calculatedDistance} KM` 
-                                                            : calculatedDistance === 'N/A' 
-                                                                ? 'N/A' 
-                                                                : 'Calculating...'}
-                                                </p>
+                                                {popupOrder.distance_km ? (
+                                                    <p className="mt-2 text-lg font-bold text-amber-400">{popupOrder.distance_km} KM</p>
+                                                ) : calculatedDistance === null ? (
+                                                    <p className="mt-2 text-sm font-semibold text-slate-400 animate-pulse">Calculating…</p>
+                                                ) : calculatedDistance === 'N/A' ? (
+                                                    <p className="mt-2 text-sm font-semibold text-slate-500">N/A</p>
+                                                ) : (
+                                                    <p className="mt-2 text-lg font-bold text-amber-400">{calculatedDistance} KM</p>
+                                                )}
                                             </div>
                                         </div>
                                         <div className="mt-4 pt-4 border-t border-slate-800/50">

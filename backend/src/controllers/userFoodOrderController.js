@@ -172,14 +172,21 @@ const getChefOrders = async (chefUserId) => {
   ];
 
   const [rows] = await pool.execute(
-    `SELECT * FROM user_food_order_table
-     WHERE chef_user_id = ?
-       OR chef_id = ?
-       OR items LIKE ?
-       OR items LIKE ?
-       OR items LIKE ?
-       OR items LIKE ?
-     ORDER BY COALESCE(ordered_at, updated_at) DESC`,
+    `SELECT ufo.*,
+            cust_u.latitude   AS customer_lat,
+            cust_u.longitude  AS customer_lng,
+            chef_u.latitude   AS chef_lat,
+            chef_u.longitude  AS chef_lng
+     FROM user_food_order_table ufo
+     LEFT JOIN users cust_u ON cust_u.user_id = ufo.user_id
+     LEFT JOIN users chef_u ON chef_u.user_id = ufo.chef_user_id
+     WHERE ufo.chef_user_id = ?
+        OR ufo.chef_id = ?
+        OR ufo.items LIKE ?
+        OR ufo.items LIKE ?
+        OR ufo.items LIKE ?
+        OR ufo.items LIKE ?
+     ORDER BY COALESCE(ufo.ordered_at, ufo.updated_at) DESC`,
     [chefUserId, chefUserId, ...patterns]
   );
 
@@ -220,6 +227,11 @@ const getChefOrders = async (chefUserId) => {
       chef_phone: chefPhones[0] || row.chef_phone,
       chef_total_amount: chefTotalAmount > 0 ? parseFloat(chefTotalAmount.toFixed(2)) : parseFloat(Number(row.total_amount || 0).toFixed(2)),
       chef_total_quantity: chefTotalQuantity > 0 ? chefTotalQuantity : effectiveItems.reduce((s, i) => s + (Number(i.quantity) || 1), 0),
+      // GPS coordinates from users table — used by frontend for accurate distance
+      customer_lat: row.customer_lat ? parseFloat(row.customer_lat) : null,
+      customer_lng: row.customer_lng ? parseFloat(row.customer_lng) : null,
+      chef_lat:     row.chef_lat     ? parseFloat(row.chef_lat)     : null,
+      chef_lng:     row.chef_lng     ? parseFloat(row.chef_lng)     : null,
     });
   }
 
