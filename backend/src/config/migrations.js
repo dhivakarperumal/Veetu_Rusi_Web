@@ -710,7 +710,7 @@ const createUserFoodOrderTable = async () => {
             ordered_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             KEY idx_user_id (user_id),
-            KEY idx_chef_user_id (chef_user_id),
+            KEY idx_chef_user_id (chef_user_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         `;
         await pool.execute(sql);
@@ -719,6 +719,10 @@ const createUserFoodOrderTable = async () => {
         try { await pool.execute('ALTER TABLE user_food_order_table ADD COLUMN delivery_partner_user_id VARCHAR(255)'); } catch (e) {}
         try { await pool.execute('ALTER TABLE user_food_order_table ADD COLUMN delivery_partner_name VARCHAR(255)'); } catch (e) {}
         try { await pool.execute('ALTER TABLE user_food_order_table ADD COLUMN delivery_partner_phone VARCHAR(50)'); } catch (e) {}
+        try { await pool.execute('ALTER TABLE user_food_order_table ADD COLUMN coupon_id INT DEFAULT NULL'); } catch (e) {}
+        try { await pool.execute('ALTER TABLE user_food_order_table ADD COLUMN coupon_code VARCHAR(50) DEFAULT NULL'); } catch (e) {}
+        try { await pool.execute('ALTER TABLE user_food_order_table ADD COLUMN discount_amount DECIMAL(10,2) DEFAULT 0'); } catch (e) {}
+        try { await pool.execute('ALTER TABLE user_food_order_table ADD COLUMN final_total DECIMAL(10,2) DEFAULT 0'); } catch (e) {}
         console.log('✓ user_food_order_table created or already exists');
     } catch (err) {
         console.error('✗ Error creating user_food_order_table:', err.message || err);
@@ -748,6 +752,12 @@ const createDeliveryLiveTrackingTable = async () => {
         try { await pool.execute('ALTER TABLE delivery_live_tracking ADD COLUMN user_name VARCHAR(255)'); } catch (e) {}
         try { await pool.execute('ALTER TABLE delivery_live_tracking ADD COLUMN user_mail_id VARCHAR(255)'); } catch (e) {}
         try { await pool.execute('ALTER TABLE delivery_live_tracking ADD COLUMN ordered_product_details JSON'); } catch (e) {}
+        // Real distance tracking columns
+        try { await pool.execute('ALTER TABLE delivery_live_tracking ADD COLUMN pickup_latitude DECIMAL(10, 8) DEFAULT NULL'); } catch (e) {}
+        try { await pool.execute('ALTER TABLE delivery_live_tracking ADD COLUMN pickup_longitude DECIMAL(11, 8) DEFAULT NULL'); } catch (e) {}
+        try { await pool.execute('ALTER TABLE delivery_live_tracking ADD COLUMN dropoff_latitude DECIMAL(10, 8) DEFAULT NULL'); } catch (e) {}
+        try { await pool.execute('ALTER TABLE delivery_live_tracking ADD COLUMN dropoff_longitude DECIMAL(11, 8) DEFAULT NULL'); } catch (e) {}
+        try { await pool.execute('ALTER TABLE delivery_live_tracking ADD COLUMN total_distance_km DECIMAL(8, 3) DEFAULT NULL'); } catch (e) {}
         console.log('✓ delivery_live_tracking table created or already exists');
     } catch (err) {
         console.error('✗ Error creating delivery_live_tracking table:', err.message || err);
@@ -823,6 +833,163 @@ const addDeliveryPartnerUniqueConstraints = async () => {
     }
 };
 
+const createDpEarningsTables = async () => {
+    try {
+        const settingsSQL = `
+        CREATE TABLE IF NOT EXISTS dp_earnings_settings (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            base_pickup_charge DECIMAL(10,2) DEFAULT 20.00,
+            base_delivery_charge DECIMAL(10,2) DEFAULT 15.00,
+            per_km_charge DECIMAL(10,2) DEFAULT 5.00,
+            minimum_charge DECIMAL(10,2) DEFAULT 30.00,
+            waiting_time_charge_per_min DECIMAL(10,2) DEFAULT 2.00,
+            free_waiting_time_mins INT DEFAULT 5,
+            return_delivery_charge DECIMAL(10,2) DEFAULT 10.00,
+            toll_charges DECIMAL(10,2) DEFAULT 0.00,
+            platform_commission_percent DECIMAL(5,2) DEFAULT 10.00,
+            gst_tax_percent DECIMAL(5,2) DEFAULT 18.00,
+            
+            cod_bonus DECIMAL(10,2) DEFAULT 5.00,
+            night_delivery_bonus DECIMAL(10,2) DEFAULT 15.00,
+            peak_hour_bonus DECIMAL(10,2) DEFAULT 10.00,
+            rain_weather_bonus DECIMAL(10,2) DEFAULT 20.00,
+            festival_bonus DECIMAL(10,2) DEFAULT 25.00,
+            heavy_parcel_charge DECIMAL(10,2) DEFAULT 10.00,
+            multi_order_bonus DECIMAL(10,2) DEFAULT 5.00,
+            ev_vehicle_bonus DECIMAL(10,2) DEFAULT 10.00,
+            
+            daily_incentive_target_orders INT DEFAULT 15,
+            daily_incentive_reward DECIMAL(10,2) DEFAULT 100.00,
+            
+            order_cancellation_penalty DECIMAL(10,2) DEFAULT 20.00,
+            late_delivery_penalty DECIMAL(10,2) DEFAULT 15.00,
+            customer_complaint_penalty DECIMAL(10,2) DEFAULT 50.00,
+            
+            updated_by VARCHAR(255) DEFAULT NULL,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `;
+
+        const historySQL = `
+        CREATE TABLE IF NOT EXISTS dp_earnings_history (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            delivery_partner_user_id VARCHAR(255) NOT NULL,
+            order_id VARCHAR(100),
+            
+            base_pay DECIMAL(10,2) DEFAULT 0.00,
+            distance_pay DECIMAL(10,2) DEFAULT 0.00,
+            waiting_pay DECIMAL(10,2) DEFAULT 0.00,
+            
+            bonuses_total DECIMAL(10,2) DEFAULT 0.00,
+            penalties_total DECIMAL(10,2) DEFAULT 0.00,
+            
+            platform_commission DECIMAL(10,2) DEFAULT 0.00,
+            tax_amount DECIMAL(10,2) DEFAULT 0.00,
+            net_earnings DECIMAL(10,2) DEFAULT 0.00,
+            
+            status VARCHAR(50) DEFAULT 'Credited',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            
+            KEY idx_dp_user_id (delivery_partner_user_id),
+            KEY idx_order_id (order_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `;
+
+        const payoutsSQL = `
+        CREATE TABLE IF NOT EXISTS dp_payouts (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            delivery_partner_user_id VARCHAR(255) NOT NULL,
+            amount DECIMAL(10,2) NOT NULL,
+            status VARCHAR(50) DEFAULT 'Pending',
+            transaction_id VARCHAR(100),
+            payment_method VARCHAR(50),
+            requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            processed_at TIMESTAMP NULL,
+            processed_by VARCHAR(255),
+            
+            KEY idx_dp_payout_user_id (delivery_partner_user_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `;
+
+        await pool.execute(settingsSQL);
+        await pool.execute(historySQL);
+        await pool.execute(payoutsSQL);
+
+        // Seed settings if empty
+        const [settingsCount] = await pool.execute('SELECT COUNT(*) as count FROM dp_earnings_settings');
+        if (settingsCount[0].count === 0) {
+            await pool.execute('INSERT INTO dp_earnings_settings () VALUES ()');
+        }
+
+        console.log('✓ Delivery Partner Earnings tables created');
+    } catch (err) {
+        console.error('✗ Error creating DP Earnings tables:', err.message || err);
+    }
+};
+
+const createCouponsTable = async () => {
+    try {
+        const sql = `
+        CREATE TABLE IF NOT EXISTS coupons (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            code VARCHAR(50) NOT NULL UNIQUE,
+            name VARCHAR(255) NOT NULL,
+            description TEXT,
+            discount_type ENUM('percentage', 'fixed') NOT NULL,
+            discount_value DECIMAL(10,2) NOT NULL,
+            max_discount_amount DECIMAL(10,2) DEFAULT NULL,
+            min_order_value DECIMAL(10,2) DEFAULT 0,
+            start_date DATETIME NOT NULL,
+            expiry_date DATETIME NOT NULL,
+            usage_limit_global INT DEFAULT NULL,
+            usage_limit_per_customer INT DEFAULT 1,
+            applicable_for_all TINYINT(1) DEFAULT 1,
+            specific_home_chefs JSON DEFAULT NULL,
+            specific_categories JSON DEFAULT NULL,
+            specific_products JSON DEFAULT NULL,
+            first_order_only TINYINT(1) DEFAULT 0,
+            new_customers_only TINYINT(1) DEFAULT 0,
+            excluded_products JSON DEFAULT NULL,
+            excluded_categories JSON DEFAULT NULL,
+            excluded_home_chefs JSON DEFAULT NULL,
+            status ENUM('active', 'inactive') DEFAULT 'active',
+            usage_count INT DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `;
+        await pool.execute(sql);
+        console.log('✓ coupons table created or already exists');
+    } catch (err) {
+        console.error('✗ Error creating coupons table:', err.message || err);
+    }
+};
+
+const createCouponUsageTable = async () => {
+    try {
+        const sql = `
+        CREATE TABLE IF NOT EXISTS coupon_usage (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            order_id VARCHAR(100) NOT NULL,
+            customer_id VARCHAR(255) NOT NULL,
+            coupon_id INT NOT NULL,
+            coupon_code VARCHAR(50) NOT NULL,
+            discount_amount DECIMAL(10,2) NOT NULL,
+            order_total DECIMAL(10,2) NOT NULL,
+            final_total DECIMAL(10,2) NOT NULL,
+            applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            KEY idx_customer_id (customer_id),
+            KEY idx_coupon_id (coupon_id),
+            KEY idx_order_id (order_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `;
+        await pool.execute(sql);
+        console.log('✓ coupon_usage table created or already exists');
+    } catch (err) {
+        console.error('✗ Error creating coupon_usage table:', err.message || err);
+    }
+};
+
     module.exports = {
         createProductsTable,
         createRecipeDetailsTable,
@@ -842,6 +1009,9 @@ const addDeliveryPartnerUniqueConstraints = async () => {
         cleanupHomeChefs,
         addHomeChefUniqueConstraints,
         addDeliveryPartnerUniqueConstraints,
+        createDpEarningsTables,
+        createCouponsTable,
+        createCouponUsageTable,
         // Ensure audit columns exist on all tables
         ensureAuditColumns: async () => {
             try {

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import api from '../../api';
 import { toast } from 'react-hot-toast';
 import { useLocation } from 'react-router-dom';
+import OrderCancellationModal from '../../Components/CommenComponents/OrderCancellationModal';
 import {
   Search,
   Eye,
@@ -472,6 +473,8 @@ const FoodOrders = () => {
   const [expandedRow, setExpandedRow] = useState(null);
   const [viewMode, setViewMode] = useState("table");
   const [currentPage, setCurrentPage] = useState(1);
+  const [cancelTargetOrder, setCancelTargetOrder] = useState(null);
+  const ADMIN_BLOCKED = ['delivered', 'completed', 'cancelled'];
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -863,6 +866,16 @@ const FoodOrders = () => {
                               )}
                             </button>
 
+                            {!ADMIN_BLOCKED.includes(String(order.status || '').toLowerCase()) && (
+                              <button
+                                onClick={() => setCancelTargetOrder(order)}
+                                title="Cancel Order"
+                                className="rounded-xl bg-red-50 border border-red-200 p-2 text-red-500 hover:bg-red-100 transition"
+                              >
+                                <XCircle className="w-4 h-4" />
+                              </button>
+                            )}
+
                           </div>
                         </td>
                       </tr>
@@ -947,7 +960,24 @@ const FoodOrders = () => {
         </div>
       )}
 
-      {/* MODAL */}
+      {/* CANCEL MODAL */}
+      {cancelTargetOrder && (
+        <OrderCancellationModal
+          order={cancelTargetOrder}
+          role="admin"
+          onClose={() => setCancelTargetOrder(null)}
+          onSuccess={() => {
+            setCancelTargetOrder(null);
+            toast.success('Order cancelled successfully.');
+            setOrders(prev => prev.map(o =>
+              o.id === cancelTargetOrder.id ? { ...o, status: 'Cancelled' } : o
+            ));
+          }}
+          apiCall={(id, payload) => api.post(`/user-food-orders/cancel/${id}`, payload)}
+        />
+      )}
+
+      {/* ORDER DETAIL MODAL */}
       {
         selectedOrder && (
           <OrderModal

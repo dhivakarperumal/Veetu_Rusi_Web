@@ -21,7 +21,8 @@ import {
   Bike,
   ShoppingBag,
   CreditCard,
-  ShieldCheck
+  ShieldCheck,
+  Ticket
 } from "lucide-react";
 
 import { useAuth } from "../PrivateRouter/AuthContext";
@@ -50,6 +51,7 @@ const navItems = [
     ],
   },
   { path: "/admin/food-products", label: "Food Products", icon: ShoppingBag },
+  { path: "/admin/coupons", label: "Coupons", icon: Ticket },
   { path: "/admin/users", label: "User Management", icon: Users },
   { path: "/admin/earnings", label: "Wallet & Earnings", icon: CreditCard },
   { path: "/admin/reviews", label: "Customer Reviews", icon: MessageSquare },

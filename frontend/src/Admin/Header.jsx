@@ -654,6 +654,13 @@ const Header = ({ onMenuClick }) => {
                     <User className="w-4 h-4 opacity-50" /> Profile
                   </Link>
 
+                  <Link
+                    to={getDynamicPath("/admin/settings")}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-900 hover:text-emerald-300 text-sm text-slate-300 transition font-bold"
+                  >
+                    <Settings className="w-4 h-4 opacity-50" /> Settings
+                  </Link>
+
                   <button
                     onClick={handleLogout}
                     className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-red-500/10 text-sm text-red-300 w-full transition"

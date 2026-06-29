@@ -205,7 +205,7 @@ const FoodItems = () => {
             {foods.map((food) => (
               <article
                 key={food.id}
-                className="group  bg-white rounded-3xl overflow-hidden border border-green-800 border-0.4 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                className="group  bg-white rounded-3xl overflow-hidden  shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
               >
                 {/* Image */}
                 <div className="relative h-70 overflow-hidden">

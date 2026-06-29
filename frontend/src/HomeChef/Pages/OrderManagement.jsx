@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import api from "../../api";
 import { toast } from "react-hot-toast";
-import { Search, Filter, Edit, Check, Eye, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Filter, Edit, Check, Eye, ChevronLeft, ChevronRight, XCircle } from "lucide-react";
+import OrderCancellationModal from "../../Components/CommenComponents/OrderCancellationModal";
 
 const OrderManagement = () => {
   const location = useLocation();
@@ -17,6 +18,9 @@ const OrderManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [trackingOrder, setTrackingOrder] = useState(null);
   const [trackingDetails, setTrackingDetails] = useState(null);
+  const [cancelTargetOrder, setCancelTargetOrder] = useState(null);
+
+  const CHEF_CANCEL_STATUSES = ['new order', 'order placed', 'order received', 'accepted', 'preparing'];
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -93,8 +97,8 @@ const OrderManagement = () => {
     if (statusFilter !== "All") {
       // Treat Pending / Order Placed / New / New Order as equivalent → TODAY ONLY
       const pendingAliases = ["Pending", "Order Placed", "New", "New Order"];
-      if (pendingAliases.some(a => a.toLowerCase() === statusFilter.toLowerCase())) {
-        result = result.filter((o) => o.status && pendingAliases.some(a => a.toLowerCase() === o.status.toLowerCase()));
+      if (pendingAliases.some(a => a.toLowerCase() === statusFilter.trim().toLowerCase())) {
+        result = result.filter((o) => o.status && pendingAliases.some(a => a.toLowerCase() === o.status.trim().toLowerCase()));
         // Show ONLY today's orders — compare local date strings
         result = result.filter((o) => {
           const raw = o.ordered_at || o.created_at || o.updated_at;
@@ -103,12 +107,12 @@ const OrderManagement = () => {
           const dStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
           return dStr === todayStr;
         });
-      } else if (statusFilter === "Delivered") {
+      } else if (statusFilter.trim().toLowerCase() === "delivered") {
         result = result.filter((o) =>
-          o.status && (o.status.toLowerCase() === "delivered" || o.status.toLowerCase() === "completed")
+          o.status && (o.status.trim().toLowerCase() === "delivered" || o.status.trim().toLowerCase() === "completed")
         );
       } else {
-        result = result.filter((o) => o.status && o.status.toLowerCase() === statusFilter.toLowerCase());
+        result = result.filter((o) => o.status && o.status.trim().toLowerCase() === statusFilter.trim().toLowerCase());
       }
     }
     setFilteredOrders(result);
@@ -149,6 +153,7 @@ const OrderManagement = () => {
   const isPendingFilter = pendingAliases.some(a => a.toLowerCase() === statusFilter.toLowerCase());
 
   return (
+    <>
     <div className="space-y-6 animate-in fade-in duration-300">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -343,6 +348,15 @@ const OrderManagement = () => {
                               title={`Update to: ${nextStatus}`}
                             >
                               <Check className="w-4 h-4" />
+                            </button>
+                          )}
+                          {CHEF_CANCEL_STATUSES.includes(String(order.status || '').toLowerCase()) && (
+                            <button
+                              onClick={() => setCancelTargetOrder(order)}
+                              className="p-2 hover:bg-red-500/10 text-red-400 hover:text-red-300 rounded-xl transition"
+                              title="Cancel Order"
+                            >
+                              <XCircle className="w-4 h-4" />
                             </button>
                           )}
                         </div>
@@ -585,6 +599,21 @@ const OrderManagement = () => {
       )}
 
     </div>
+
+      {cancelTargetOrder && (
+        <OrderCancellationModal
+          order={cancelTargetOrder}
+          role="chef"
+          onClose={() => setCancelTargetOrder(null)}
+          onSuccess={() => {
+            setCancelTargetOrder(null);
+            toast.success('Order cancelled successfully.');
+            fetchOrders();
+          }}
+          apiCall={(id, payload) => api.post(`/user-food-orders/cancel/${id}`, payload)}
+        />
+      )}
+    </>
   );
 };
 

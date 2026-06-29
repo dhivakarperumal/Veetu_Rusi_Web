@@ -334,21 +334,33 @@ const AdminLayout = () => {
                                         </div>
                                     </div>
 
-                                        <div className="sm:col-span-2 rounded-3xl border border-slate-800 bg-[#0b0d10] p-5">
+                                    <div className="sm:col-span-2 rounded-3xl border border-slate-800 bg-[#0b0d10] p-5">
                                         <div className="flex items-center justify-between mb-3">
                                             <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Items in Order</p>
                                             <p className="text-xs font-bold text-slate-500">{(popupOrder.items || []).length} items</p>
                                         </div>
-                                        <div className="space-y-3 max-h-40 overflow-y-auto pr-2">
-                                            {(popupOrder.items || []).map((item, idx) => (
+                                        <div className="space-y-3 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
+                                            {(popupOrder.items || []).map((item, idx) => {
+                                                const imageUrl = item.image || item.image_url || item.product_image || item.food_image || 'https://ui-avatars.com/api/?name=Food&background=10B981&color=fff';
+                                                return (
                                                 <div key={idx} className="rounded-2xl bg-[#0b0d10] p-3 border border-slate-800 flex items-center justify-between text-slate-200">
-                                                    <div>
-                                                        <p className="font-bold text-white">{item.name || item.title || item.product_name || 'Item'}</p>
-                                                        <p className="text-xs font-medium text-slate-400 mt-1">Qty: {item.quantity || item.qty || 1}</p>
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-12 h-12 rounded-lg bg-slate-900 shrink-0 overflow-hidden border border-slate-700">
+                                                            <img 
+                                                                src={imageUrl} 
+                                                                alt={item.name || 'Item'} 
+                                                                className="w-full h-full object-cover"
+                                                                onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Food&background=10B981&color=fff'; }}
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-bold text-white">{item.name || item.title || item.product_name || 'Item'}</p>
+                                                            <p className="text-xs font-medium text-slate-400 mt-1">Qty: {item.quantity || item.qty || 1}</p>
+                                                        </div>
                                                     </div>
                                                     <p className="font-bold text-white">{formatCurrency(item.price || item.final_price || item.amount)}</p>
                                                 </div>
-                                            ))}
+                                            )})}
                                         </div>
                                     </div>
                                     

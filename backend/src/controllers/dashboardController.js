@@ -23,6 +23,12 @@ exports.getDashboardData = async (req, res) => {
     let pendingApprovals = 0;
     let activeFranchises = 0;
     let totalFranchises = 0;
+    
+    // DP Earnings Stats
+    let totalDpEarnings = 0;
+    let totalDpBonuses = 0;
+    let totalDpPenalties = 0;
+    let totalPlatformCommission = 0;
 
     const currentUserId = req.user?.user_id || 'UNKNOWN';
     const currentIdInt = req.user?.id || -1;
@@ -160,6 +166,26 @@ exports.getDashboardData = async (req, res) => {
       });
     } catch (e) {
       console.error('Error fetching Chef_Order for franchise:', e);
+    }
+    
+    // Fetch DP Earnings Data
+    try {
+      if (isSuperAdmin) {
+        const [[dpStats]] = await pool.execute(`
+          SELECT 
+            SUM(net_earnings) as total_earnings,
+            SUM(bonuses_total) as total_bonuses,
+            SUM(penalties_total) as total_penalties,
+            SUM(platform_commission) as total_commission
+          FROM dp_earnings_history
+        `);
+        totalDpEarnings = dpStats.total_earnings || 0;
+        totalDpBonuses = dpStats.total_bonuses || 0;
+        totalDpPenalties = dpStats.total_penalties || 0;
+        totalPlatformCommission = dpStats.total_commission || 0;
+      }
+    } catch (e) {
+      console.error('Error fetching DP Earnings stats:', e);
     }
 
     const stats = [
@@ -347,7 +373,11 @@ exports.getDashboardData = async (req, res) => {
         franchiseOrdersCount,
         franchiseDeliveredCount,
         franchiseCancelledCount,
-        franchiseDeliveredRevenue
+        franchiseDeliveredRevenue,
+        totalDpEarnings,
+        totalDpBonuses,
+        totalDpPenalties,
+        totalPlatformCommission
       },
 
       recentOrders,

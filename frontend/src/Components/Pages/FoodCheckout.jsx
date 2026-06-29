@@ -34,7 +34,9 @@ export default function FoodCheckout() {
   const [savedAddresses, setSavedAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
   const location = useLocation();
-  const buyNowItem = location.state;
+  const buyNowItem = location.state?.product ? location.state : null;
+  const appliedCoupon = location.state?.appliedCoupon || null;
+  
   const checkoutItems = buyNowItem?.product
     ? [
       {
@@ -168,6 +170,10 @@ export default function FoodCheckout() {
         payment_method: paymentMethod,
         payment_status: paymentMethod === "Online Payment" ? "Paid" : "Pending",
         payment_id: paymentId || null,
+        coupon_id: appliedCoupon?.id || null,
+        coupon_code: appliedCoupon?.code || null,
+        discount_amount: appliedCoupon?.discountAmount || 0,
+        final_total: appliedCoupon ? appliedCoupon.finalTotal : subtotal,
         isBuyNow: Boolean(buyNowItem?.product),
         items: checkoutItems,
       });
@@ -629,9 +635,15 @@ ${selectedAddressId === address.id
                       <span>Shipping</span>
                       <span>Free</span>
                     </div>
+                    {appliedCoupon && (
+                      <div className="flex justify-between text-emerald-600 font-semibold mt-2">
+                        <span>Discount ({appliedCoupon.code})</span>
+                        <span>-₹{appliedCoupon.discountAmount.toFixed(2)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-lg font-black text-slate-900 mt-4">
                       <span>Total</span>
-                      <span>₹{subtotal.toFixed(2)}</span>
+                      <span>₹{appliedCoupon ? appliedCoupon.finalTotal.toFixed(2) : subtotal.toFixed(2)}</span>
                     </div>
                   </div>
                 </div>

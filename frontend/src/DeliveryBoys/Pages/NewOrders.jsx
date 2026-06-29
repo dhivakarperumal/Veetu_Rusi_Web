@@ -185,7 +185,7 @@ const NewOrders = () => {
   const filtered = orders.filter((o) => {
     // Exclude orders that are already assigned to a delivery partner
     if (o.delivery_boy_id) return false;
-    if (["Delivery Partner Assigned", "Picked Up", "Out for Delivery", "Delivered", "Cancelled"].includes(o.status)) {
+    if (["New Order", "Order Placed", "Delivery Partner Assigned", "Picked Up", "Out for Delivery", "Delivered", "Cancelled"].includes(o.status)) {
         return false;
     }
 
