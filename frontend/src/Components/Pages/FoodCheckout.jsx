@@ -8,8 +8,6 @@ import { toast } from "react-hot-toast";
 import { useLocation } from "react-router-dom";
 import { upsertUserAddress, readUserAddresses } from "../../utils/addressStorage";
 
-
-
 const getTomorrowDate = () => {
   const date = new Date();
   date.setDate(date.getDate() + 1);
@@ -126,6 +124,20 @@ export default function FoodCheckout() {
     return null;
   };
 
+  const fillAddress = (address) => {
+    setName(address.customer_name || "");
+    setEmail(address.customer_email || "");
+    setPhone(address.customer_phone || "");
+    setStreetAddress(address.street_address || "");
+    setCity(address.city || "");
+    setDistrict(address.district || "");
+    setStateValue(address.state || "");
+    setZipCode(address.zip_code || "");
+    setCountry(address.country || "India");
+
+    toast.success("Address loaded successfully.");
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const error = validateDelivery();
@@ -195,22 +207,64 @@ export default function FoodCheckout() {
               {savedAddresses.length > 0 && (
                 <div className="bg-white rounded-3xl shadow p-8">
                   <h2 className="text-2xl font-bold text-slate-900 mb-4">
-                    Saved Address
+                    Saved Addresses
                   </h2>
-                  <div className="space-y-3">
+
+                  <div className="space-y-4">
                     {savedAddresses.slice(0, 3).map((address) => (
-                      <div key={address.id} className="rounded-2xl border border-slate-200 p-4">
-                        <p className="font-semibold text-slate-900">{address.customer_name}</p>
-                        <p className="text-sm text-slate-600">{address.street_address}</p>
-                        <p className="text-sm text-slate-600">
-                          {address.city}, {address.district}
-                        </p>
-                        <p className="text-sm text-slate-600">
-                          {address.state} - {address.zip_code}
-                        </p>
-                        <p className="text-sm text-slate-600">{address.country}</p>
-                        <p className="text-sm text-slate-600">{address.customer_phone}</p>
-                        <p className="text-sm text-slate-600">{address.customer_email}</p>
+                      <div
+                        key={address.id}
+                        onClick={() => fillAddress(address)}
+                        className="rounded-2xl border border-slate-200 p-5 cursor-pointer transition hover:border-emerald-500 hover:bg-emerald-50"
+                      >
+                        <div className="grid md:grid-cols-2 gap-2 text-sm">
+
+                          <p>
+                            <span className="font-semibold">Name:</span>{" "}
+                            {address.customer_name}
+                          </p>
+
+                          <p>
+                            <span className="font-semibold">Email:</span>{" "}
+                            {address.customer_email}
+                          </p>
+
+                          <p>
+                            <span className="font-semibold">Phone:</span>{" "}
+                            {address.customer_phone}
+                          </p>
+
+                          <p>
+                            <span className="font-semibold">Street Address:</span>{" "}
+                            {address.street_address}
+                          </p>
+
+                          <p>
+                            <span className="font-semibold">City:</span>{" "}
+                            {address.city}
+                          </p>
+
+                          <p>
+                            <span className="font-semibold">District:</span>{" "}
+                            {address.district}
+                          </p>
+
+                          <p>
+                            <span className="font-semibold">State:</span>{" "}
+                            {address.state}
+                          </p>
+
+                          <p>
+                            <span className="font-semibold">ZIP Code:</span>{" "}
+                            {address.zip_code}
+                          </p>
+
+                          <p className="md:col-span-2">
+                            <span className="font-semibold">Country:</span>{" "}
+                            {address.country}
+                          </p>
+
+                        </div>
                       </div>
                     ))}
                   </div>
