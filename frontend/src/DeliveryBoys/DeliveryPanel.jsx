@@ -117,9 +117,10 @@ const AdminLayout = () => {
             setIsFetchingPopupOrder(true);
             const res = await api.get("/delivery/orders/available");
             const available = Array.isArray(res.data) ? res.data : [];
+            const searchingOrders = available.filter(order => order.status === 'Searching Delivery Partner');
 
             if (popupOrder) {
-                const stillPending = available.some(order => Number(order.id) === Number(popupOrder.id));
+                const stillPending = searchingOrders.some(order => Number(order.id) === Number(popupOrder.id));
                 if (!stillPending) {
                     setShowPopup(false);
                     setShowLocationModal(false);
@@ -129,7 +130,7 @@ const AdminLayout = () => {
                 return;
             }
 
-            const nextOrder = available.find(order => !displayedOrderIdsRef.current.has(Number(order.id)));
+            const nextOrder = searchingOrders.find(order => !displayedOrderIdsRef.current.has(Number(order.id)));
             if (nextOrder) {
                 displayedOrderIdsRef.current.add(Number(nextOrder.id));
                 setPopupOrder(nextOrder);
