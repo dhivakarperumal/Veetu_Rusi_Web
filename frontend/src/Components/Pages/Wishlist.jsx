@@ -45,9 +45,9 @@ export default function WishList() {
                 {wishlist.map((item, idx) => {
                   // Get image from multiple sources
                   let image = item?.image || item?.wishlist_image || item?.product_images || item?.images || null;
-                  
+
                   console.log(`Wishlist item ${idx}:`, { name: item?.name, imageLength: image?.length, hasImage: !!image });
-                  
+
                   // Parse JSON strings
                   if (typeof image === 'string') {
                     if (image.startsWith('[')) {
@@ -62,7 +62,7 @@ export default function WishList() {
                   } else if (Array.isArray(image)) {
                     image = image[0] || null;
                   }
-                  
+
                   // Validate image format
                   if (typeof image === 'string') {
                     // Check if it's a valid data URI or HTTP URL
@@ -89,7 +89,7 @@ export default function WishList() {
                   } else {
                     image = null;
                   }
-                  
+
                   // Fallback to placeholder
                   if (!image) {
                     image = `https://ui-avatars.com/api/?name=${encodeURIComponent(item?.name || 'Product')}&background=random`;
@@ -178,12 +178,7 @@ export default function WishList() {
                           {/* View Product */}
                           <button
                             onClick={() => {
-                              // Navigate to food or product detail based on available fields
-                              if (item?.chef_name || item?.dietary_tag || item?.prep_time) {
-                                navigate(`/food/${item.id}`);
-                              } else {
-                                navigate(`/products/${item.id}`);
-                              }
+                              navigate(`/products/${item.product_id}`);
                             }}
                             className="ml-auto bg-primary-dark text-white p-2 rounded-lg hover:bg-primary-light flex items-center justify-center transition cursor-pointer"
                           >
