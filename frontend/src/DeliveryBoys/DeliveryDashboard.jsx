@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import api from "../api";
 import { toast } from "react-hot-toast";
 import {
   Bike, ShoppingBag, DollarSign,
   Clock, TrendingUp, ArrowUpRight, TrendingDown,
-  Star, Wallet, CheckCircle, Map, Timer, Percent, Box
+  Star, Wallet, CheckCircle, Map, Timer, Percent, Box,
+  MapPin, Wifi, WifiOff, RefreshCw
 } from "lucide-react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
@@ -31,6 +32,31 @@ const FALLBACK = {
     lastLocation: null
   }
 };
+
+// Reverse geocode lat/lng → human-readable area name via OpenStreetMap Nominatim
+async function reverseGeocode(lat, lng) {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=14&addressdetails=1`,
+      { headers: { "Accept-Language": "en" } }
+    );
+    const data = await res.json();
+    const addr = data?.address || {};
+    const area =
+      addr.suburb || addr.neighbourhood || addr.village ||
+      addr.town || addr.city_district || addr.county || "";
+    const pincode = addr.postcode || "";
+    const displayName =
+      [area, addr.city || addr.town || addr.state_district, addr.state]
+        .filter(Boolean)
+        .join(", ");
+    return { location_name: displayName || null, pincode: pincode || null };
+  } catch {
+    return { location_name: null, pincode: null };
+  }
+}
+
+const LOCATION_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
 
 const StatCard = ({ icon: Icon, label, value, trend, positive, gradient, iconBg, delay }) => (
   <div
@@ -65,6 +91,68 @@ const DeliveryDashboard = () => {
   const [chartLoading, setChartLoading] = useState(true);
   const [todayOrders, setTodayOrders] = useState([]);
   const [todayLoading, setTodayLoading] = useState(true);
+
+  // Live location state
+  const [liveLocation, setLiveLocation] = useState(null); // { latitude, longitude, location_name, pincode, updated_at }
+  const [locationStatus, setLocationStatus] = useState("idle"); // idle | pushing | success | error | denied
+  const locationIntervalRef = useRef(null);
+
+  // ── Push live GPS location to backend ────────────────────────────────────
+  const pushLiveLocation = useCallback(async () => {
+    if (!navigator.geolocation) {
+      setLocationStatus("error");
+      return;
+    }
+    setLocationStatus("pushing");
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        try {
+          const { location_name, pincode } = await reverseGeocode(latitude, longitude);
+          const res = await api.post("/delivery/location/update", {
+            latitude, longitude, location_name, pincode
+          });
+          const now = new Date().toISOString();
+          setLiveLocation({ latitude, longitude, location_name, pincode, updated_at: now });
+          setLocationStatus("success");
+          console.log("📍 Live location pushed:", res.data);
+        } catch (err) {
+          console.error("Live location push failed:", err);
+          setLocationStatus("error");
+        }
+      },
+      (err) => {
+        console.warn("Geolocation denied/failed:", err.message);
+        setLocationStatus(err.code === 1 ? "denied" : "error");
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
+    );
+  }, []);
+
+  // ── Fetch the last stored location from backend on mount ────────────────
+  const fetchStoredLocation = useCallback(async () => {
+    try {
+      const res = await api.get("/delivery/location");
+      if (res.data && (res.data.latitude || res.data.longitude)) {
+        setLiveLocation(res.data);
+        setLocationStatus("success");
+      }
+    } catch {
+      // Non-critical — location might not exist yet
+    }
+  }, []);
+
+  // ── Start the 10-minute auto-push cycle ──────────────────────────────────
+  useEffect(() => {
+    fetchStoredLocation();
+    pushLiveLocation(); // Push immediately on mount
+
+    locationIntervalRef.current = setInterval(pushLiveLocation, LOCATION_INTERVAL_MS);
+
+    return () => {
+      if (locationIntervalRef.current) clearInterval(locationIntervalRef.current);
+    };
+  }, [pushLiveLocation, fetchStoredLocation]);
 
   useEffect(() => { fetchStats(); fetchChartData(); fetchTodayOrders(); }, []);
 
@@ -250,7 +338,7 @@ const DeliveryDashboard = () => {
         style={{ background: "linear-gradient(130deg,#0a2010 0%,#0B1120 60%,#0a1020 100%)" }}>
         <div className="absolute inset-0 opacity-30"
           style={{ backgroundImage: "radial-gradient(circle at 80% 50%, #10B981 0%, transparent 60%)" }} />
-        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div>
             <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.25em] mb-1">
               Welcome Back
@@ -261,13 +349,60 @@ const DeliveryDashboard = () => {
             <p className="text-xs text-white/30 font-semibold mt-2 uppercase tracking-widest">
               Track your deliveries and earnings
             </p>
+
+            {/* ── Live Location Status Pill ── */}
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              {locationStatus === "pushing" && (
+                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[10px] font-black uppercase tracking-wider">
+                  <RefreshCw className="w-3 h-3 animate-spin" /> Updating Location…
+                </span>
+              )}
+              {locationStatus === "success" && (
+                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-[10px] font-black uppercase tracking-wider">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_#10B981] animate-pulse" />
+                  <Wifi className="w-3 h-3" /> Location Live
+                </span>
+              )}
+              {locationStatus === "denied" && (
+                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-500/10 border border-red-500/30 text-red-300 text-[10px] font-black uppercase tracking-wider">
+                  <WifiOff className="w-3 h-3" /> Location Denied
+                </span>
+              )}
+              {locationStatus === "error" && (
+                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-500/10 border border-red-500/30 text-red-300 text-[10px] font-black uppercase tracking-wider">
+                  <WifiOff className="w-3 h-3" /> Location Error
+                </span>
+              )}
+              {liveLocation?.location_name && (
+                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/50 text-[10px] font-semibold">
+                  <MapPin className="w-3 h-3" /> {liveLocation.location_name}
+                </span>
+              )}
+              {liveLocation?.updated_at && (
+                <span className="text-[9px] text-white/25 font-semibold uppercase tracking-wider">
+                  Updated {new Date(liveLocation.updated_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  &nbsp;· auto-refreshes every 10 min
+                </span>
+              )}
+            </div>
           </div>
-          <button
-            onClick={fetchStats}
-            className="self-start sm:self-auto flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition active:scale-95 shadow-lg shadow-emerald-900/40"
-          >
-            <TrendingUp className="w-4 h-4" /> Refresh Stats
-          </button>
+
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 self-start">
+            <button
+              onClick={pushLiveLocation}
+              disabled={locationStatus === "pushing"}
+              title="Update my location now"
+              className="flex items-center gap-2 bg-cyan-700 hover:bg-cyan-600 disabled:opacity-50 text-white px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition active:scale-95 shadow-lg shadow-cyan-900/40"
+            >
+              <MapPin className="w-4 h-4" /> {locationStatus === "pushing" ? "Locating…" : "Update GPS"}
+            </button>
+            <button
+              onClick={fetchStats}
+              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition active:scale-95 shadow-lg shadow-emerald-900/40"
+            >
+              <TrendingUp className="w-4 h-4" /> Refresh Stats
+            </button>
+          </div>
         </div>
       </div>
 

@@ -358,10 +358,10 @@ router.get('/earnings', async (req, res) => {
   }
 });
 
-// Update Live Tracking
+// Update Live Tracking (order-specific)
 router.post('/tracking/update', async (req, res) => {
   try {
-    const deliveryBoyId = req.user.id || req.user.user_id;
+    const deliveryBoyId = req.user.user_id || req.user.id;
     const { order_id, latitude, longitude, pincode, area, district } = req.body;
 
     if (!order_id) {
@@ -369,7 +369,10 @@ router.post('/tracking/update', async (req, res) => {
     }
 
     // Fetch delivery boy details
-    const [partnerResult] = await pool.execute('SELECT name, mobile FROM delivery_partners WHERE user_id = ?', [deliveryBoyId]);
+    const [partnerResult] = await pool.execute(
+      'SELECT dp.name, dp.mobile FROM delivery_partners dp WHERE dp.user_id = ? LIMIT 1',
+      [deliveryBoyId]
+    );
     const name = partnerResult[0]?.name || '';
     const phone = partnerResult[0]?.mobile || '';
 
@@ -395,6 +398,107 @@ router.post('/tracking/update', async (req, res) => {
     res.json({ message: 'Tracking updated successfully' });
   } catch (err) {
     console.error('Update Tracking Error:', err);
+    res.status(500).json({ message: 'Internal server error', error: err.message });
+  }
+});
+
+// ─── Live Location Update ────────────────────────────────────────────────────
+// POST /delivery/location/update
+// Stores the delivery partner's current GPS coordinates in the users table
+// and in delivery_live_tracking (keyed to a synthetic order_id).
+// Called every 10 minutes by the frontend.
+router.post('/location/update', async (req, res) => {
+  try {
+    const deliveryBoyId = req.user.user_id || req.user.id;
+    const { latitude, longitude, location_name, pincode } = req.body;
+
+    if (!latitude || !longitude) {
+      return res.status(400).json({ message: 'latitude and longitude are required' });
+    }
+
+    // 1. Update the users table (primary live location store)
+    await pool.execute(
+      `UPDATE users
+         SET latitude      = ?,
+             longitude     = ?,
+             location_name = ?,
+             pincode       = ?,
+             updated_at    = NOW()
+       WHERE user_id = ? AND role = 'delivery_partner'`,
+      [
+        String(latitude),
+        String(longitude),
+        location_name || null,
+        pincode       || null,
+        deliveryBoyId
+      ]
+    );
+
+    // 2. Also upsert into delivery_live_tracking for a unified "live_location" row
+    const syntheticOrderId = `live_loc_${deliveryBoyId}`;
+    const [partnerResult] = await pool.execute(
+      `SELECT u.full_name AS name, u.mobile_number AS mobile
+         FROM users u
+        WHERE u.user_id = ? LIMIT 1`,
+      [deliveryBoyId]
+    );
+    const partnerName  = partnerResult[0]?.name   || '';
+    const partnerPhone = partnerResult[0]?.mobile  || '';
+
+    await pool.execute(
+      `INSERT INTO delivery_live_tracking
+         (order_id, delivery_partner_user_id, delivery_partner_name, delivery_partner_phone,
+          latitude, longitude, pincode, area, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Active')
+       ON DUPLICATE KEY UPDATE
+         latitude                = VALUES(latitude),
+         longitude               = VALUES(longitude),
+         pincode                 = VALUES(pincode),
+         area                    = VALUES(area),
+         delivery_partner_name   = VALUES(delivery_partner_name),
+         delivery_partner_phone  = VALUES(delivery_partner_phone),
+         status                  = 'Active',
+         updated_at              = CURRENT_TIMESTAMP`,
+      [
+        syntheticOrderId,
+        deliveryBoyId,
+        partnerName,
+        partnerPhone,
+        String(latitude),
+        String(longitude),
+        pincode       || null,
+        location_name || null
+      ]
+    );
+
+    console.log(`📍 [Live Location] Partner ${deliveryBoyId} → lat:${latitude}, lng:${longitude}, area:${location_name || '-'}`);
+    res.json({ message: 'Live location updated successfully', latitude, longitude });
+  } catch (err) {
+    console.error('Live Location Update Error:', err);
+    res.status(500).json({ message: 'Internal server error', error: err.message });
+  }
+});
+
+// GET /delivery/location — fetch this partner's last stored live location
+router.get('/location', async (req, res) => {
+  try {
+    const deliveryBoyId = req.user.user_id || req.user.id;
+
+    const [rows] = await pool.execute(
+      `SELECT latitude, longitude, location_name, pincode, updated_at
+         FROM users
+        WHERE user_id = ? AND role = 'delivery_partner'
+        LIMIT 1`,
+      [deliveryBoyId]
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({ message: 'Delivery partner not found' });
+    }
+
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('Get Location Error:', err);
     res.status(500).json({ message: 'Internal server error', error: err.message });
   }
 });
