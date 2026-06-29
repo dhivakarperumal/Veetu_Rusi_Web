@@ -128,10 +128,7 @@ const AdminLayout = () => {
     }, []);
 
     useEffect(() => {
-        if (!popupOrder || popupOrder.distance_km) {
-            if (popupOrder?.distance_km) setCalculatedDistance(popupOrder.distance_km);
-            return;
-        }
+        if (!popupOrder) return;
 
         setCalculatedDistance(null);
 
@@ -140,58 +137,85 @@ const AdminLayout = () => {
         const chefLat = popupOrder.chef_lat     ? parseFloat(popupOrder.chef_lat)     : null;
         const chefLng = popupOrder.chef_lng     ? parseFloat(popupOrder.chef_lng)     : null;
 
+        // Helper: check if distance is meaningful (not 0 and not null)
+        const isValidDist = (d) => d !== null && d !== 'N/A' && parseFloat(d) > 0;
+
         // ── Priority 1: Both chef & customer coords in DB → instant calculation ──
         if (chefLat && chefLng && custLat && custLng) {
-            setCalculatedDistance(calculateDistance(chefLat, chefLng, custLat, custLng));
-            return;
+            const dist = calculateDistance(chefLat, chefLng, custLat, custLng);
+            if (isValidDist(dist)) {
+                setCalculatedDistance(dist);
+                return;
+            }
+            // If distance is 0 (same location or bad data), fall through to geocoding
         }
 
-        // ── Priority 2: Customer coords in DB, get chef GPS live ──
+        // ── Priority 2: Customer coords in DB + live chef GPS ──
         if (custLat && custLng && navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (pos) => {
-                    const dist = calculateDistance(pos.coords.latitude, pos.coords.longitude, custLat, custLng);
-                    setCalculatedDistance(dist || 'N/A');
+                    const fromLat = chefLat || pos.coords.latitude;
+                    const fromLng = chefLng || pos.coords.longitude;
+                    const dist = calculateDistance(fromLat, fromLng, custLat, custLng);
+                    if (isValidDist(dist)) {
+                        setCalculatedDistance(dist);
+                        return;
+                    }
+                    // fall through to geocoding if 0
+                    geocodeAndCalculate(pos.coords.latitude, pos.coords.longitude, chefLat, chefLng);
                 },
-                () => setCalculatedDistance('N/A'),
+                () => geocodeAndCalculate(null, null, chefLat, chefLng),
                 { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
             );
             return;
         }
 
-        // ── Priority 3: No customer coords → geocode address progressively ──
+        // ── Priority 3: No customer coords → geocode delivery address ──
         if (!navigator.geolocation) { setCalculatedDistance('N/A'); return; }
 
         navigator.geolocation.getCurrentPosition(
-            async (pos) => {
-                const fromLat = chefLat || pos.coords.latitude;
-                const fromLng = chefLng || pos.coords.longitude;
-
-                const { street_address, city, district, state, zip_code } = popupOrder;
-                const queries = [];
-                if (zip_code && state)       queries.push(`${zip_code}, ${state}, India`);
-                if (city && state)           queries.push(`${city}, ${state}, India`);
-                if (district && state)       queries.push(`${district}, ${state}, India`);
-                if (zip_code)               queries.push(`${zip_code}, India`);
-                if (street_address && city) queries.push(`${street_address}, ${city}, India`);
-
-                for (const q of queries) {
-                    try {
-                        const res  = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=in&q=${encodeURIComponent(q)}`);
-                        const data = await res.json();
-                        if (data?.length > 0) {
-                            const dist = calculateDistance(fromLat, fromLng, parseFloat(data[0].lat), parseFloat(data[0].lon));
-                            setCalculatedDistance(dist || 'N/A');
-                            return;
-                        }
-                    } catch (e) { console.warn('Geocoding failed:', q, e); }
-                }
-                setCalculatedDistance('N/A');
+            (pos) => {
+                geocodeAndCalculate(pos.coords.latitude, pos.coords.longitude, chefLat, chefLng);
             },
-            () => setCalculatedDistance('N/A'),
+            () => geocodeAndCalculate(null, null, chefLat, chefLng),
             { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
         );
     }, [popupOrder]);
+
+    const geocodeAndCalculate = async (gpsLat, gpsLng, chefLat, chefLng) => {
+        const fromLat = chefLat || gpsLat;
+        const fromLng = chefLng || gpsLng;
+
+        if (!fromLat || !fromLng) {
+            setCalculatedDistance('N/A');
+            return;
+        }
+
+        const { street_address, city, district, state, zip_code } = popupOrder;
+        const queries = [];
+        if (zip_code && state)       queries.push(`${zip_code}, ${state}, India`);
+        if (city && state)           queries.push(`${city}, ${state}, India`);
+        if (district && state)       queries.push(`${district}, ${state}, India`);
+        if (zip_code)                queries.push(`${zip_code}, India`);
+        if (street_address && city)  queries.push(`${street_address}, ${city}, India`);
+
+        for (const q of queries) {
+            try {
+                const res  = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=in&q=${encodeURIComponent(q)}`);
+                const data = await res.json();
+                if (data?.length > 0) {
+                    const destLat = parseFloat(data[0].lat);
+                    const destLng = parseFloat(data[0].lon);
+                    const dist = calculateDistance(fromLat, fromLng, destLat, destLng);
+                    if (dist !== null && parseFloat(dist) > 0) {
+                        setCalculatedDistance(dist);
+                        return;
+                    }
+                }
+            } catch (e) { console.warn('Geocoding failed:', q, e); }
+        }
+        setCalculatedDistance('N/A');
+    };
 
 
     const handleAccept = async () => {
