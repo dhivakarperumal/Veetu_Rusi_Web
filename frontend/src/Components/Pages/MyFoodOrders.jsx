@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import api from "../../api";
 import PageHeader from "../CommenComponents/PageHeader";
 import PageContainer from "../CommenComponents/PageContainer";
 import { toast } from "react-hot-toast";
-import { Package, Clock, Calendar, MapPin, User, FileText } from "lucide-react";
+import { Package, Clock, Calendar, MapPin, User, FileText, XCircle } from "lucide-react";
+import OrderCancellationModal from "../CommenComponents/OrderCancellationModal";
 
 const formatDateTime = (value) => {
   if (!value) return "-";
@@ -62,6 +63,96 @@ const getItemSummary = (items) => {
   return `${names.slice(0, 2).join(", ")} +${names.length - 2} more`;
 };
 
+// ── Customer cancel window helpers ───────────────────────────────────────────
+const CANCEL_WINDOW_MS = 2 * 60 * 60 * 1000; // 2 hours
+
+function useCancelCountdown(orderedAt) {
+  const [remaining, setRemaining] = useState(null);
+
+  useEffect(() => {
+    if (!orderedAt) return;
+    const deadline = new Date(orderedAt).getTime() + CANCEL_WINDOW_MS;
+    const tick = () => {
+      const left = deadline - Date.now();
+      setRemaining(left > 0 ? left : 0);
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [orderedAt]);
+
+  return remaining;
+}
+
+function formatCountdown(ms) {
+  if (ms === null) return '';
+  if (ms <= 0) return 'Expired';
+  const totalSec = Math.floor(ms / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  return `${h}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Sub-component: shows countdown timer / cancellation not available bar
+function CustomerCancelBar({ order, onCancel }) {
+  const remaining = useCancelCountdown(order.ordered_at);
+  const s = String(order.status || '').toLowerCase();
+
+  if (s === 'cancelled') return null; // don't show bar on already-cancelled orders
+  if (s === 'delivered' || s === 'completed') return null;
+
+  const ineligibleReason =
+    s === 'picked up' ? 'Already Picked Up' :
+    s === 'out for delivery' ? 'Out for Delivery' :
+    (remaining !== null && remaining <= 0) ? 'Cancellation window expired (2hr limit)' :
+    null;
+
+  if (ineligibleReason) {
+    return (
+      <div style={{ margin: '0 24px 12px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 12, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <XCircle size={16} color="#dc2626" style={{ flexShrink: 0 }} />
+        <div>
+          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#dc2626' }}>Cancellation Not Available</span>
+          <span style={{ fontSize: '0.78rem', color: '#b91c1c', marginLeft: 6 }}>— {ineligibleReason}</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ margin: '0 24px 12px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 12, padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <Clock size={15} color="#d97706" style={{ flexShrink: 0 }} />
+        <span style={{ fontSize: '0.8rem', color: '#92400e' }}>
+          <b>Cancel window:</b>{' '}
+          <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#b45309' }}>
+            {remaining !== null ? formatCountdown(remaining) : '…'}
+          </span>
+          {' '}remaining
+        </span>
+      </div>
+      <button
+        onClick={onCancel}
+        style={{
+          background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+          border: 'none', borderRadius: 10, padding: '7px 14px',
+          fontSize: '0.8rem', fontWeight: 700, color: '#fff', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', gap: 6,
+          boxShadow: '0 2px 8px rgba(239,68,68,0.3)',
+          whiteSpace: 'nowrap'
+        }}
+      >
+        <XCircle size={14} />
+        Cancel Order
+      </button>
+    </div>
+  );
+}
+
+
 export default function MyFoodOrders({ isEmbedded = false }) {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -69,6 +160,7 @@ export default function MyFoodOrders({ isEmbedded = false }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [cancelOrder, setCancelOrder] = useState(null); // order being cancelled
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewOrder, setReviewOrder] = useState(null);
   const [reviewProductId, setReviewProductId] = useState('');
@@ -193,6 +285,23 @@ export default function MyFoodOrders({ isEmbedded = false }) {
     }
   };
 
+  const handleCancelSuccess = useCallback((updated) => {
+    setOrders(prev => prev.map(o => o.id === updated.id ? { ...o, status: 'Cancelled', cancellation_reason: updated.cancellation_reason } : o));
+    setCancelOrder(null);
+    toast.success('Order cancelled successfully.');
+  }, []);
+
+  const getCancellationEligibility = (order) => {
+    const s = String(order.status || '').toLowerCase();
+    if (s === 'cancelled') return { eligible: false, reason: 'Already Cancelled' };
+    if (s === 'delivered' || s === 'completed') return { eligible: false, reason: 'Order Delivered' };
+    if (s === 'picked up') return { eligible: false, reason: 'Already Picked Up' };
+    if (s === 'out for delivery') return { eligible: false, reason: 'Out for Delivery' };
+    const elapsed = Date.now() - new Date(order.ordered_at || 0).getTime();
+    if (elapsed > CANCEL_WINDOW_MS) return { eligible: false, reason: 'Time Expired (2hr limit)' };
+    return { eligible: true };
+  };
+
   const content = (
           <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -303,6 +412,9 @@ export default function MyFoodOrders({ isEmbedded = false }) {
                       )}
                     </div>
 
+                    {/* ── Cancellation countdown / status ── */}
+                    <CustomerCancelBar order={order} onCancel={() => setCancelOrder(order)} />
+
                     <div className="flex flex-wrap items-center gap-3 border-t border-slate-200 px-6 py-4 bg-white">
                       <button
                         onClick={() => openOrder(order)}
@@ -340,6 +452,17 @@ export default function MyFoodOrders({ isEmbedded = false }) {
       <div className={isEmbedded ? "" : "min-h-screen bg-slate-50 py-14"}>
         {isEmbedded ? content : <PageContainer>{content}</PageContainer>}
       </div>
+
+      {/* ── Cancellation modal ── */}
+      {cancelOrder && (
+        <OrderCancellationModal
+          order={cancelOrder}
+          role="customer"
+          onClose={() => setCancelOrder(null)}
+          onSuccess={handleCancelSuccess}
+          apiCall={(id, payload) => api.post(`/user-food-orders/cancel/${id}`, payload)}
+        />
+      )}
 
       {selectedOrder && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 p-4">

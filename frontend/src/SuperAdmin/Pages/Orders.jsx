@@ -18,6 +18,7 @@ import {
 } from "react-icons/fi";
 import api from "../../api";
 import { toast, Toaster } from "react-hot-toast";
+import OrderCancellationModal from "../../Components/CommenComponents/OrderCancellationModal";
 
 const Orders = ({ statusFilter = "All" }) => {
     const [searchTerm, setSearchTerm] = useState("");
@@ -40,6 +41,8 @@ const Orders = ({ statusFilter = "All" }) => {
     });
 
     const [activeStatus, setActiveStatus] = useState(statusFilter);
+    const [cancelTargetOrder, setCancelTargetOrder] = useState(null);
+    const SA_BLOCKED = ['delivered', 'completed', 'cancelled'];
 
     useEffect(() => {
         setActiveStatus(statusFilter);
@@ -386,6 +389,15 @@ const Orders = ({ statusFilter = "All" }) => {
                                                         >
                                                             <FiEye size={18} />
                                                         </Link>
+                                                        {!SA_BLOCKED.includes(String(order.status || '').toLowerCase()) && (
+                                                            <button
+                                                                onClick={() => setCancelTargetOrder(order)}
+                                                                className="p-2.5 text-red-400 hover:text-white hover:bg-red-500 rounded-xl transition-all shadow-sm border border-transparent hover:border-red-100"
+                                                                title="Cancel Order"
+                                                            >
+                                                                <FiXCircle size={18} />
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </td>
@@ -513,6 +525,23 @@ const Orders = ({ statusFilter = "All" }) => {
                 </div>
             )}
         </div>
+
+        {/* Cancel Order Modal */}
+        {cancelTargetOrder && (
+            <OrderCancellationModal
+                order={cancelTargetOrder}
+                role="admin"
+                onClose={() => setCancelTargetOrder(null)}
+                onSuccess={() => {
+                    setCancelTargetOrder(null);
+                    toast.success('Order cancelled successfully.');
+                    setOrders(prev => prev.map(o =>
+                        o.id === cancelTargetOrder.id ? { ...o, status: 'Cancelled' } : o
+                    ));
+                }}
+                apiCall={(id, payload) => api.post(`/user-food-orders/cancel/${id}`, payload)}
+            />
+        )}
     );
 };
 

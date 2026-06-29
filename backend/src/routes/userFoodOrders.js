@@ -424,4 +424,31 @@ router.patch('/status/:id', verifyToken, async (req, res) => {
   }
 });
 
+router.post('/cancel/:id', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { cancellation_reason, cancellation_notes } = req.body;
+
+    if (!cancellation_reason) {
+      return res.status(400).json({ message: 'Cancellation reason is required' });
+    }
+
+    const role = req.user?.role || '';
+    const userId = req.user?.user_id || req.user?.id || null;
+
+    const result = await controller.cancelOrder({
+      id,
+      role,
+      userId,
+      cancellation_reason,
+      cancellation_notes
+    });
+
+    res.json(result);
+  } catch (err) {
+    console.error('Error cancelling order:', err);
+    res.status(err.status || 500).json({ message: err.message || 'Error cancelling order' });
+  }
+});
+
 module.exports = router;
