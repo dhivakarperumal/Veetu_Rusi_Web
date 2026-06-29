@@ -266,6 +266,31 @@ export default function MyFoodOrders({ isEmbedded = false }) {
                           <p className="mt-2 text-sm font-semibold text-slate-900">{order.status === "Pending" ? "New Order" : (order.status || 'New Order')}</p>
                         </div>
                       </div>
+                      
+                      {/* Delivery Partner Info (Outer Card) */}
+                      {(order.status === "Delivery Partner Assigned" || order.status === "Picked Up" || order.status === "Out for Delivery" || order.status === "Delivered") && order.delivery_partner_name && (
+                        <div className="rounded-3xl bg-blue-50 p-4 border border-blue-100">
+                          <p className="text-xs uppercase tracking-[0.24em] text-blue-500">Delivery Partner</p>
+                          <div className="mt-2 flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-semibold text-slate-900">{order.delivery_partner_name}</p>
+                              <p className="text-xs font-medium text-slate-500 mt-0.5 flex items-center gap-1">
+                                <User className="w-3 h-3" /> {order.delivery_partner_phone || "N/A"}
+                              </p>
+                            </div>
+                            {order.status !== "Delivered" && (
+                              <button
+                                onClick={() => {
+                                  toast.info("Connecting to delivery partner live tracking...", { icon: "📍" });
+                                }}
+                                className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-white transition hover:bg-blue-500 shadow-sm"
+                              >
+                                <MapPin className="h-3 w-3" /> Track
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex flex-wrap items-center gap-3 border-t border-slate-200 px-6 py-4 bg-white">
@@ -440,6 +465,41 @@ export default function MyFoodOrders({ isEmbedded = false }) {
                     ))}
                   </div>
                 </div>
+
+                {/* Delivery Partner Details */}
+                {(selectedOrder.status === "Delivery Partner Assigned" || selectedOrder.status === "Picked Up" || selectedOrder.status === "Out for Delivery" || selectedOrder.status === "Delivered") && selectedOrder.delivery_partner_name && (
+                  <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
+                    <h4 className="text-sm uppercase tracking-[0.24em] text-slate-500">Delivery Partner</h4>
+                    <div className="mt-4 rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                      <div className="grid gap-3 sm:grid-cols-2 items-center">
+                        <div>
+                          <p className="font-semibold text-slate-900">{selectedOrder.delivery_partner_name}</p>
+                          <p className="text-xs uppercase tracking-[0.24em] text-slate-500 mt-2">Name</p>
+                        </div>
+                        <div>
+                          <p className="font-semibold text-slate-900">{selectedOrder.delivery_partner_phone || "N/A"}</p>
+                          <p className="text-xs uppercase tracking-[0.24em] text-slate-500 mt-2">Phone</p>
+                        </div>
+                      </div>
+                      
+                      {selectedOrder.status !== "Delivered" && (
+                        <div className="mt-4 pt-4 border-t border-slate-200 flex justify-end">
+                          <button
+                            onClick={() => {
+                              // Link to user-facing live tracking page when available
+                              toast.info("Connecting to delivery partner live tracking...", { icon: "📍" });
+                              // navigate(`/track-order/${selectedOrder.id}`); 
+                            }}
+                            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-blue-500 shadow-md shadow-blue-500/20"
+                          >
+                            <MapPin className="h-4 w-4" />
+                            Track Delivery Partner
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
