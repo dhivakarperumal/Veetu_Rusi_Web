@@ -47,17 +47,6 @@ router.get('/dashboard-stats', async (req, res) => {
       [deliveryBoyId, deliveryBoyId]
     );
 
-    // Today earnings (sum of delivered orders today)
-    const [todayEarningsResult] = await pool.execute(
-      'SELECT COALESCE(SUM(total_amount), 0) as total FROM user_food_order_table WHERE (delivery_partner = ? OR delivery_partner_user_id = ?) AND status = "Delivered" AND DATE(ordered_at) = CURDATE()',
-      [deliveryBoyId, deliveryBoyId]
-    );
-
-    // All time earnings (sum of all delivered orders)
-    const [allTimeEarningsResult] = await pool.execute(
-      'SELECT COALESCE(SUM(total_amount), 0) as total FROM user_food_order_table WHERE (delivery_partner = ? OR delivery_partner_user_id = ?) AND status = "Delivered"',
-      [deliveryBoyId, deliveryBoyId]
-    );
 
     // Latest live tracking entry for this partner
     const [trackingResult] = await pool.execute(
@@ -71,6 +60,42 @@ router.get('/dashboard-stats', async (req, res) => {
       [deliveryBoyId]
     );
 
+    // Real wallet balance from dp_earnings_history (net credited amount)
+    let walletBalance = 0;
+    let todayNetEarnings = 0;
+    let totalNetEarnings = 0;
+    let totalDistanceKm = 0;
+    try {
+      const [walletRows] = await pool.execute(
+        'SELECT COALESCE(wallet_balance, 0) as balance FROM delivery_partners WHERE user_id = ? LIMIT 1',
+        [deliveryBoyId]
+      );
+      walletBalance = parseFloat(walletRows[0]?.balance || 0);
+
+      const [todayEarningsRow] = await pool.execute(
+        'SELECT COALESCE(SUM(net_earnings), 0) as total FROM dp_earnings_history WHERE delivery_partner_user_id = ? AND DATE(created_at) = CURDATE()',
+        [deliveryBoyId]
+      );
+      todayNetEarnings = parseFloat(todayEarningsRow[0]?.total || 0);
+
+      const [totalEarningsRow] = await pool.execute(
+        'SELECT COALESCE(SUM(net_earnings), 0) as total FROM dp_earnings_history WHERE delivery_partner_user_id = ?',
+        [deliveryBoyId]
+      );
+      totalNetEarnings = parseFloat(totalEarningsRow[0]?.total || 0);
+
+      // Total distance from all completed deliveries for this partner
+      const [distRow] = await pool.execute(
+        `SELECT COALESCE(SUM(dlt.total_distance_km), 0) as total_km
+         FROM delivery_live_tracking dlt
+         WHERE dlt.delivery_partner_user_id = ? AND dlt.status = 'Completed'`,
+        [deliveryBoyId]
+      );
+      totalDistanceKm = parseFloat(distRow[0]?.total_km || 0);
+    } catch (e) {
+      console.error('Error fetching DP wallet/distance stats:', e.message);
+    }
+
     res.json({
       cards: {
         ordersToday: ordersToday[0].count,
@@ -79,16 +104,16 @@ router.get('/dashboard-stats', async (req, res) => {
         cancelled: cancelled[0].count,
         totalDeliveries: deliveries[0].count,
         pendingDeliveries: pending[0].count,
-        todayEarnings: parseFloat(todayEarningsResult[0].total) || 0,
-        totalEarnings: parseFloat(allTimeEarningsResult[0].total) || 0,
-        walletBalance: 0,
+        todayEarnings: todayNetEarnings,
+        totalEarnings: totalNetEarnings,
+        walletBalance,
         rating: 4.9,
         acceptanceRate: 96,
         completionRate: completedToday[0].count > 0
           ? Math.round((completedToday[0].count / Math.max(ordersToday[0].count, 1)) * 100)
           : 0,
         onlineTime: "0h 0m",
-        distanceTravelled: 0,
+        distanceTravelled: parseFloat(totalDistanceKm.toFixed(2)),
         activeTrackingCount: activeTracking[0].count,
         lastLocation: trackingResult[0] || null
       }
@@ -246,22 +271,54 @@ router.patch('/orders/:id/assign', async (req, res) => {
       return res.status(409).json({ message: 'This order has already been assigned.' });
     }
 
-    // Insert initial tracking record
-    const [orderRows] = await pool.execute('SELECT order_id, user_id, customer_name, customer_email, items FROM user_food_order_table WHERE id = ?', [orderId]);
+    // Insert initial tracking record with pickup (chef) and dropoff (customer) coordinates
+    const [orderRows] = await pool.execute(
+      `SELECT o.order_id, o.user_id, o.customer_name, o.customer_email, o.items,
+              COALESCE(hc.latitude, chef_u.latitude) AS pickup_lat,
+              COALESCE(hc.longitude, chef_u.longitude) AS pickup_lng,
+              cust_u.latitude AS dropoff_lat,
+              cust_u.longitude AS dropoff_lng
+       FROM user_food_order_table o
+       LEFT JOIN users chef_u ON chef_u.user_id = o.chef_user_id
+       LEFT JOIN home_chefs hc ON (hc.user_id = o.chef_user_id OR hc.id = o.chef_id)
+       LEFT JOIN users cust_u ON cust_u.user_id = o.user_id
+       WHERE o.id = ? LIMIT 1`,
+      [orderId]
+    );
     if (orderRows.length > 0) {
-      const realOrderId = orderRows[0].order_id;
-      const orderUserId = orderRows[0].user_id || null;
-      const orderUserName = orderRows[0].customer_name || null;
-      const orderUserEmail = orderRows[0].customer_email || null;
-      const orderedItems = JSON.stringify(orderRows[0].items || []);
+      const orderData = orderRows[0];
+      const realOrderId = orderData.order_id;
+      const orderUserId = orderData.user_id || null;
+      const orderUserName = orderData.customer_name || null;
+      const orderUserEmail = orderData.customer_email || null;
+      const orderedItems = JSON.stringify(orderData.items || []);
+
+      const pickupLat = orderData.pickup_lat ? parseFloat(orderData.pickup_lat) : null;
+      const pickupLng = orderData.pickup_lng ? parseFloat(orderData.pickup_lng) : null;
+      const dropoffLat = orderData.dropoff_lat ? parseFloat(orderData.dropoff_lat) : null;
+      const dropoffLng = orderData.dropoff_lng ? parseFloat(orderData.dropoff_lng) : null;
+
+      // Calculate straight-line distance (Haversine) between pickup and dropoff
+      let distanceKm = null;
+      if (pickupLat && pickupLng && dropoffLat && dropoffLng) {
+        const R = 6371; // Earth radius in km
+        const dLat = (dropoffLat - pickupLat) * Math.PI / 180;
+        const dLon = (dropoffLng - pickupLng) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                  Math.cos(pickupLat * Math.PI / 180) * Math.cos(dropoffLat * Math.PI / 180) *
+                  Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        distanceKm = parseFloat((R * c).toFixed(3));
+      }
 
       await pool.execute(
         `INSERT INTO delivery_live_tracking (
            order_id, delivery_partner_user_id, delivery_partner_name, delivery_partner_phone,
            user_id, user_name, user_mail_id, ordered_product_details,
-           latitude, longitude, pincode, area, district
+           latitude, longitude, pincode, area, district,
+           pickup_latitude, pickup_longitude, dropoff_latitude, dropoff_longitude, total_distance_km
          )
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE 
            delivery_partner_user_id = VALUES(delivery_partner_user_id),
            delivery_partner_name = VALUES(delivery_partner_name),
@@ -275,10 +332,21 @@ router.patch('/orders/:id/assign', async (req, res) => {
            pincode = VALUES(pincode),
            area = VALUES(area),
            district = VALUES(district),
+           pickup_latitude = VALUES(pickup_latitude),
+           pickup_longitude = VALUES(pickup_longitude),
+           dropoff_latitude = VALUES(dropoff_latitude),
+           dropoff_longitude = VALUES(dropoff_longitude),
+           total_distance_km = VALUES(total_distance_km),
            updated_at = CURRENT_TIMESTAMP`,
-        [realOrderId, partnerUserId, partnerName, partnerPhone, orderUserId, orderUserName, orderUserEmail, orderedItems, latitude || null, longitude || null, pincode || null, area || null, district || null]
+        [
+          realOrderId, partnerUserId, partnerName, partnerPhone,
+          orderUserId, orderUserName, orderUserEmail, orderedItems,
+          latitude || pickupLat || null, longitude || pickupLng || null,
+          pincode || null, area || null, district || null,
+          pickupLat, pickupLng, dropoffLat, dropoffLng, distanceKm
+        ]
       );
-      console.log('✅ [Tracking] Record saved for order:', realOrderId, 'partner:', partnerName);
+      console.log(`✅ [Tracking] Record saved for order: ${realOrderId}, partner: ${partnerName}, distance: ${distanceKm ?? 'unknown'} km`);
     }
 
     res.json({ message: 'Order assigned successfully.' });
@@ -314,11 +382,24 @@ router.patch('/orders/:id/status', async (req, res) => {
 
     // Update tracking status
     if (status === 'Delivered') {
+      // Mark tracking as completed
       await pool.execute(
         `UPDATE delivery_live_tracking SET status = 'Completed', updated_at = CURRENT_TIMESTAMP
          WHERE order_id = (SELECT order_id FROM user_food_order_table WHERE id = ? LIMIT 1)`,
         [orderId]
       ).catch(() => {}); // non-critical
+
+      // Auto-calculate and credit DP earnings
+      try {
+        const dpEarningsController = require('../controllers/dpEarningsController');
+        const [orderRows] = await pool.execute('SELECT order_id FROM user_food_order_table WHERE id = ? LIMIT 1', [orderId]);
+        if (orderRows.length > 0) {
+          const result = await dpEarningsController.calculateAndCreditEarnings(orderRows[0].order_id, deliveryBoyId);
+          console.log(`[Earnings via DP] Order ${orderRows[0].order_id} earnings:`, result);
+        }
+      } catch (calcErr) {
+        console.error('DP earnings calculation failed (non-critical):', calcErr.message);
+      }
     }
 
     console.log(`✅ [Status Update] Order #${orderId} → ${status} by ${deliveryBoyId}`);
@@ -334,56 +415,131 @@ router.get('/earnings', async (req, res) => {
   try {
     const deliveryBoyId = req.user?.user_id || req.user?.id;
 
-    // Total earnings (from delivered orders)
-    const [totalResult] = await pool.execute(
-      `SELECT SUM(total_amount) as total FROM user_food_order_table 
-       WHERE (delivery_partner = ? OR delivery_partner_user_id = ?) AND status = 'Delivered'`,
-      [deliveryBoyId, deliveryBoyId]
-    );
+    // Ensure tables exist (safe guard for first-run before backend restart)
+    try {
+      await pool.execute(`
+        CREATE TABLE IF NOT EXISTS dp_earnings_history (
+          id INT PRIMARY KEY AUTO_INCREMENT,
+          delivery_partner_user_id VARCHAR(255) NOT NULL,
+          order_id VARCHAR(100),
+          base_pay DECIMAL(10,2) DEFAULT 0.00,
+          distance_pay DECIMAL(10,2) DEFAULT 0.00,
+          waiting_pay DECIMAL(10,2) DEFAULT 0.00,
+          bonuses_total DECIMAL(10,2) DEFAULT 0.00,
+          penalties_total DECIMAL(10,2) DEFAULT 0.00,
+          platform_commission DECIMAL(10,2) DEFAULT 0.00,
+          tax_amount DECIMAL(10,2) DEFAULT 0.00,
+          net_earnings DECIMAL(10,2) DEFAULT 0.00,
+          status VARCHAR(50) DEFAULT 'Credited',
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+      `);
+      // Ensure total_distance_km column exists in delivery_live_tracking
+      await pool.execute('ALTER TABLE delivery_live_tracking ADD COLUMN IF NOT EXISTS total_distance_km DECIMAL(8,3) DEFAULT NULL').catch(() => {});
+      await pool.execute('ALTER TABLE delivery_live_tracking ADD COLUMN IF NOT EXISTS pickup_latitude DECIMAL(10,8) DEFAULT NULL').catch(() => {});
+      await pool.execute('ALTER TABLE delivery_live_tracking ADD COLUMN IF NOT EXISTS pickup_longitude DECIMAL(11,8) DEFAULT NULL').catch(() => {});
+      await pool.execute('ALTER TABLE delivery_live_tracking ADD COLUMN IF NOT EXISTS dropoff_latitude DECIMAL(10,8) DEFAULT NULL').catch(() => {});
+      await pool.execute('ALTER TABLE delivery_live_tracking ADD COLUMN IF NOT EXISTS dropoff_longitude DECIMAL(11,8) DEFAULT NULL').catch(() => {});
+    } catch (e) { /* ignore, table already exists */ }
 
-    // Today's earnings
-    const [todayResult] = await pool.execute(
-      `SELECT SUM(total_amount) as today FROM user_food_order_table 
-       WHERE (delivery_partner = ? OR delivery_partner_user_id = ?) AND status = 'Delivered' AND DATE(updated_at) = CURDATE()`,
-      [deliveryBoyId, deliveryBoyId]
-    );
+    let totalEarningsData = { total: 0, distance_pay: 0, bonuses: 0 };
+    let todayEarnings = 0;
+    let weeklyEarnings = 0;
+    let dailyResult = [];
+    let recentOrders = [];
+    let totalDistanceKm = 0;
+
+    // Total net earnings from dp_earnings_history (km-based calculated earnings)
+    try {
+      const [totalResult] = await pool.execute(
+        `SELECT COALESCE(SUM(net_earnings), 0) as total,
+                COALESCE(SUM(distance_pay), 0) as distance_pay,
+                COALESCE(SUM(bonuses_total), 0) as bonuses
+         FROM dp_earnings_history WHERE delivery_partner_user_id = ?`,
+        [deliveryBoyId]
+      );
+      totalEarningsData = totalResult[0] || totalEarningsData;
+    } catch (e) { console.error('[Earnings] total query error:', e.message); }
+
+    // Today's net earnings
+    try {
+      const [todayResult] = await pool.execute(
+        `SELECT COALESCE(SUM(net_earnings), 0) as today FROM dp_earnings_history 
+         WHERE delivery_partner_user_id = ? AND DATE(created_at) = CURDATE()`,
+        [deliveryBoyId]
+      );
+      todayEarnings = parseFloat(todayResult[0]?.today || 0);
+    } catch (e) { console.error('[Earnings] today query error:', e.message); }
 
     // Weekly earnings (last 7 days)
-    const [weeklyResult] = await pool.execute(
-      `SELECT SUM(total_amount) as weekly FROM user_food_order_table 
-       WHERE (delivery_partner = ? OR delivery_partner_user_id = ?) AND status = 'Delivered' AND DATE(updated_at) >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)`,
-      [deliveryBoyId, deliveryBoyId]
-    );
+    try {
+      const [weeklyResult] = await pool.execute(
+        `SELECT COALESCE(SUM(net_earnings), 0) as weekly FROM dp_earnings_history 
+         WHERE delivery_partner_user_id = ? AND DATE(created_at) >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)`,
+        [deliveryBoyId]
+      );
+      weeklyEarnings = parseFloat(weeklyResult[0]?.weekly || 0);
+    } catch (e) { console.error('[Earnings] weekly query error:', e.message); }
 
     // Earnings by day (last 14 days)
-    const [dailyResult] = await pool.execute(
-      `SELECT DATE(updated_at) as date, COUNT(*) as deliveries, SUM(total_amount) as amount
-       FROM user_food_order_table 
-       WHERE (delivery_partner = ? OR delivery_partner_user_id = ?) AND status = 'Delivered' AND DATE(updated_at) >= DATE_SUB(CURDATE(), INTERVAL 14 DAY)
-       GROUP BY DATE(updated_at) ORDER BY date DESC`,
-      [deliveryBoyId, deliveryBoyId]
-    );
+    try {
+      const [rows] = await pool.execute(
+        `SELECT DATE(created_at) as date, COUNT(*) as deliveries, 
+                SUM(net_earnings) as amount,
+                SUM(base_pay) as base_pay,
+                SUM(distance_pay) as distance_pay,
+                SUM(bonuses_total) as bonuses
+         FROM dp_earnings_history 
+         WHERE delivery_partner_user_id = ? AND DATE(created_at) >= DATE_SUB(CURDATE(), INTERVAL 14 DAY)
+         GROUP BY DATE(created_at) ORDER BY date DESC`,
+        [deliveryBoyId]
+      );
+      dailyResult = rows || [];
+    } catch (e) { console.error('[Earnings] daily query error:', e.message); }
 
-    // Recent completed orders
-    const [recentOrders] = await pool.execute(
-      `SELECT id, order_id, customer_name, customer_phone, total_amount, updated_at, status
-       FROM user_food_order_table 
-       WHERE (delivery_partner = ? OR delivery_partner_user_id = ?) AND status = 'Delivered'
-       ORDER BY updated_at DESC LIMIT 20`,
-      [deliveryBoyId, deliveryBoyId]
-    );
+    // Recent completed orders with km-based earnings breakdown
+    try {
+      const [rows] = await pool.execute(
+        `SELECT 
+           eh.order_id, eh.base_pay, eh.distance_pay, eh.bonuses_total,
+           eh.platform_commission, eh.tax_amount, eh.net_earnings, eh.created_at,
+           ufo.customer_name, ufo.customer_phone, ufo.total_amount as order_total,
+           ufo.street_address, ufo.city, ufo.status
+         FROM dp_earnings_history eh
+         LEFT JOIN user_food_order_table ufo ON ufo.order_id = eh.order_id
+         WHERE eh.delivery_partner_user_id = ?
+         ORDER BY eh.created_at DESC LIMIT 20`,
+        [deliveryBoyId]
+      );
+      recentOrders = rows || [];
+    } catch (e) { console.error('[Earnings] recent orders query error:', e.message); }
+
+    // Try to enrich with distance from delivery_live_tracking
+    try {
+      const [distRow] = await pool.execute(
+        `SELECT COALESCE(SUM(total_distance_km), 0) as total_km 
+         FROM delivery_live_tracking 
+         WHERE delivery_partner_user_id = ? AND status = 'Completed'`,
+        [deliveryBoyId]
+      );
+      totalDistanceKm = parseFloat(distRow[0]?.total_km || 0);
+    } catch (e) { console.error('[Earnings] distance query error:', e.message); }
 
     res.json({
       totals: {
-        totalEarnings: totalResult[0]?.total || 0,
-        todayEarnings: todayResult[0]?.today || 0,
-        weeklyEarnings: weeklyResult[0]?.weekly || 0
+        totalEarnings: parseFloat(totalEarningsData.total || 0),
+        todayEarnings,
+        weeklyEarnings,
+        totalDistancePay: parseFloat(totalEarningsData.distance_pay || 0),
+        totalBonuses: parseFloat(totalEarningsData.bonuses || 0),
+        totalDistanceKm
       },
-      dailyEarnings: dailyResult || [],
-      recentDeliveries: recentOrders || []
+      dailyEarnings: dailyResult,
+      recentDeliveries: recentOrders
     });
   } catch (err) {
-    res.status(500).json({ message: 'Internal server error' });
+    console.error('Earnings route error:', err);
+    res.status(500).json({ message: 'Internal server error', error: err.message });
   }
 });
 

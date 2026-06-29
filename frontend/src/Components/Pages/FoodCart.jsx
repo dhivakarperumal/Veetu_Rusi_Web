@@ -1,13 +1,17 @@
 import React, { useContext } from "react";
 import { FiShoppingCart, FiTrash2, FiPlus, FiMinus } from "react-icons/fi";
 import { StoreContext } from "../../PrivateRouter/StoreContext";
+import { useAuth } from "../../PrivateRouter/AuthContext";
 import { useNavigate } from "react-router-dom";
+import CouponSection from "../CommenComponents/CouponSection";
 import PageHeader from "../CommenComponents/PageHeader";
 import PageContainer from "../CommenComponents/PageContainer";
 
 export default function FoodCartPage() {
   const { userFoodCart, removeFromFoodCart, updateFoodCartQuantity } = useContext(StoreContext);
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const [appliedCoupon, setAppliedCoupon] = React.useState(null);
 
   const resolveImageUrl = (url) => {
     if (!url || typeof url !== 'string') return null;
@@ -112,11 +116,11 @@ export default function FoodCartPage() {
                 Order Summary
               </h2>
 
-              <div className="space-y-4">
+              <div className="space-y-4 mb-4">
 
                 <div className="flex justify-between text-gray-600">
                   <span>Subtotal</span>
-                  <span>₹{subtotal}</span>
+                  <span>₹{subtotal.toFixed(2)}</span>
                 </div>
 
                 <div className="flex justify-between text-gray-600">
@@ -124,15 +128,34 @@ export default function FoodCartPage() {
                   <span className="text-green-600 font-semibold">Free</span>
                 </div>
 
+                {appliedCoupon && (
+                  <div className="flex justify-between text-green-600 font-semibold">
+                    <span>Discount ({appliedCoupon.code})</span>
+                    <span>-₹{appliedCoupon.discountAmount.toFixed(2)}</span>
+                  </div>
+                )}
+
                 <div className="border-t pt-4 flex justify-between font-semibold text-lg">
                   <span>Total</span>
-                  <span className="text-primary-light">₹{subtotal}</span>
+                  <span className="text-primary-light">
+                    ₹{appliedCoupon ? appliedCoupon.finalTotal.toFixed(2) : subtotal.toFixed(2)}
+                  </span>
                 </div>
 
               </div>
 
+              {!isCartEmpty && (
+                <CouponSection 
+                  cartTotal={subtotal} 
+                  customerId={user?.id}
+                  appliedCoupon={appliedCoupon}
+                  onCouponApplied={setAppliedCoupon}
+                  onCouponRemoved={() => setAppliedCoupon(null)}
+                />
+              )}
+
               <button
-                onClick={() => navigate("/food-checkout")}
+                onClick={() => navigate("/food-checkout", { state: { appliedCoupon } })}
                 disabled={isCartEmpty}
                 className={`w-full mt-3 py-3 rounded-lg font-semibold transition ${isCartEmpty
                     ? "bg-gray-300 text-gray-500 cursor-not-allowed"

@@ -4,8 +4,11 @@ import api from "../../api";
 import { toast, Toaster } from "react-hot-toast";
 import {
   FiSearch, FiMapPin, FiPhone, FiRefreshCw,
-  FiPackage, FiEye, FiTruck, FiSave, FiX, FiGrid, FiList
+  FiPackage, FiEye, FiTruck, FiSave, FiX, FiGrid, FiList, FiXCircle
 } from "react-icons/fi";
+import OrderCancellationModal from "../../Components/CommenComponents/OrderCancellationModal";
+
+const DP_CANCEL_STATUSES = ['assigned', 'delivery partner assigned', 'searching delivery partner', 'on the way to pickup'];
 
 /* ─── Constants ─────────────────────────────────────────────────────── */
 const STATUS_STYLE = {
@@ -154,6 +157,7 @@ const AcceptedOrders = () => {
   const [loading, setLoading]           = useState(true);
   const [searchTerm, setSearchTerm]     = useState("");
   const [editingOrder, setEditingOrder] = useState(null);
+  const [cancelTargetOrder, setCancelTargetOrder] = useState(null);
   const [viewMode, setViewMode]         = useState("table"); // "card" | "table"
 
   const fetchOrders = async () => {
@@ -268,6 +272,13 @@ const AcceptedOrders = () => {
                 title="View Details">
                 <FiEye size={16} />
               </Link>
+              {DP_CANCEL_STATUSES.includes(String(order.status || '').toLowerCase()) && (
+                <button onClick={() => setCancelTargetOrder(order)}
+                  className="w-12 h-12 rounded-2xl border border-red-900/40 bg-red-950/60 flex items-center justify-center text-red-400 hover:text-red-300 hover:bg-red-900/40 transition"
+                  title="Cancel Order">
+                  <FiXCircle size={16} />
+                </button>
+              )}
             </div>
           </div>
         );
@@ -357,6 +368,13 @@ const AcceptedOrders = () => {
                         title="View Details">
                         <FiEye size={14} />
                       </Link>
+                      {DP_CANCEL_STATUSES.includes(String(order.status || '').toLowerCase()) && (
+                        <button onClick={() => setCancelTargetOrder(order)}
+                          className="w-9 h-9 rounded-xl border border-red-900/40 bg-red-950/60 flex items-center justify-center text-red-400 hover:text-red-300 hover:bg-red-900/40 transition"
+                          title="Cancel Order">
+                          <FiXCircle size={14} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -384,6 +402,20 @@ const AcceptedOrders = () => {
           order={editingOrder}
           onClose={() => setEditingOrder(null)}
           onSaved={fetchOrders}
+        />
+      )}
+
+      {cancelTargetOrder && (
+        <OrderCancellationModal
+          order={cancelTargetOrder}
+          role="delivery"
+          onClose={() => setCancelTargetOrder(null)}
+          onSuccess={() => {
+            setCancelTargetOrder(null);
+            toast.success('Order cancelled successfully.');
+            fetchOrders();
+          }}
+          apiCall={(id, payload) => api.post(`/user-food-orders/cancel/${id}`, payload)}
         />
       )}
 

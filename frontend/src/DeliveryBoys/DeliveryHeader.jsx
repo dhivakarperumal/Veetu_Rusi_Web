@@ -748,14 +748,12 @@ const Header = ({ onMenuClick, isOnline, lastOnline, toggleOnlineStatus }) => {
                     <User className="w-4 h-4 opacity-50" /> Profile
                   </Link>
 
-                  {/* <Link
+                  <Link
                     to="/delivery/settings"
-                    className="flex items-center gap-3 px-3 py-2.5 
-                    rounded-xl hover:bg-blue-50 hover:text-blue-600
-                    text-sm text-slate-600 transition font-bold"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-900/80 text-sm text-slate-100 transition font-bold"
                   >
                     <Settings className="w-4 h-4 opacity-50" /> Settings
-                  </Link> */}
+                  </Link>
 
                   <button
                     onClick={handleLogout}

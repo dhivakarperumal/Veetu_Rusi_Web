@@ -398,10 +398,56 @@ router.patch('/status/:id', verifyToken, async (req, res) => {
       return res.status(400).json({ message: 'Status is required' });
     }
     await controller.updateOrderStatus(id, status);
+
+    if (status.toLowerCase() === 'delivered') {
+      try {
+        const dpEarningsController = require('../controllers/dpEarningsController');
+        const [orderRows] = await pool.execute('SELECT * FROM user_food_order_table WHERE id = ?', [id]);
+        if (orderRows.length > 0) {
+          const order = orderRows[0];
+          const dpId = order.delivery_partner_user_id || order.delivery_partner;
+          if (dpId) {
+            // calculateAndCreditEarnings auto-fetches real distance from delivery_live_tracking
+            const result = await dpEarningsController.calculateAndCreditEarnings(order.order_id, dpId);
+            console.log(`[Earnings] Order ${order.order_id} earnings result:`, result);
+          }
+        }
+      } catch (calcErr) {
+        console.error('Failed to calculate DP earnings:', calcErr);
+      }
+    }
+
     res.json({ message: 'Order status updated successfully' });
   } catch (err) {
     console.error('Error updating order status:', err);
     res.status(500).json({ message: 'Error updating order status', error: err.message });
+  }
+});
+
+router.post('/cancel/:id', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { cancellation_reason, cancellation_notes } = req.body;
+
+    if (!cancellation_reason) {
+      return res.status(400).json({ message: 'Cancellation reason is required' });
+    }
+
+    const role = req.user?.role || '';
+    const userId = req.user?.user_id || req.user?.id || null;
+
+    const result = await controller.cancelOrder({
+      id,
+      role,
+      userId,
+      cancellation_reason,
+      cancellation_notes
+    });
+
+    res.json(result);
+  } catch (err) {
+    console.error('Error cancelling order:', err);
+    res.status(err.status || 500).json({ message: err.message || 'Error cancelling order' });
   }
 });
 

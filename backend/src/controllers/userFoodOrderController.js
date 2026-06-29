@@ -43,7 +43,11 @@ const addUserFoodOrder = async (payload) => {
     franchise_phone,
     ordered_by_name,
     ordered_by_email,
-    ordered_by_phone
+    ordered_by_phone,
+    coupon_id,
+    coupon_code,
+    discount_amount,
+    final_total
   } = payload;
 
   const order_id = `UFO-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
@@ -80,9 +84,13 @@ const addUserFoodOrder = async (payload) => {
       ordered_by_name,
       ordered_by_email,
       ordered_by_phone,
+      coupon_id,
+      coupon_code,
+      discount_amount,
+      final_total,
       ordered_at,
       status
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 'New Order')`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 'New Order')`,
     [
       order_id,
       user_id || null,
@@ -113,9 +121,28 @@ const addUserFoodOrder = async (payload) => {
       franchise_phone || null,
       ordered_by_name || null,
       ordered_by_email || null,
-      ordered_by_phone || null
+      ordered_by_phone || null,
+      coupon_id || null,
+      coupon_code || null,
+      discount_amount || 0,
+      final_total || total_amount || 0
     ]
   );
+
+  if (coupon_id && user_id) {
+    try {
+      await pool.execute(
+        `INSERT INTO coupon_usage (order_id, customer_id, coupon_id, coupon_code, discount_amount, order_total, final_total) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [order_id, user_id, coupon_id, coupon_code, discount_amount, total_amount, final_total || total_amount]
+      );
+      await pool.execute(
+        `UPDATE coupons SET usage_count = usage_count + 1 WHERE id = ?`,
+        [coupon_id]
+      );
+    } catch (e) {
+      console.error('Failed to record coupon usage:', e);
+    }
+  }
 
   // Fetch the inserted order to include items and full data
   let orderRecord = null;
@@ -241,7 +268,14 @@ const getChefOrders = async (chefUserId) => {
 
 const getUserOrders = async (userId) => {
   const [rows] = await pool.execute(
-    'SELECT * FROM user_food_order_table WHERE user_id = ? ORDER BY ordered_at DESC',
+    `SELECT o.*, 
+            COALESCE(lt.latitude, u.latitude) AS delivery_partner_lat,
+            COALESCE(lt.longitude, u.longitude) AS delivery_partner_lng
+     FROM user_food_order_table o
+     LEFT JOIN delivery_live_tracking lt ON lt.order_id COLLATE utf8mb4_unicode_ci = o.order_id COLLATE utf8mb4_unicode_ci
+     LEFT JOIN users u ON u.user_id COLLATE utf8mb4_unicode_ci = o.delivery_partner_user_id COLLATE utf8mb4_unicode_ci
+     WHERE o.user_id = ? 
+     ORDER BY o.ordered_at DESC`,
     [userId]
   );
 
@@ -289,7 +323,16 @@ const getUserOrders = async (userId) => {
 };
 
 const getOrderById = async (id) => {
-  const [rows] = await pool.execute('SELECT * FROM user_food_order_table WHERE id = ?', [id]);
+  const [rows] = await pool.execute(
+    `SELECT o.*, 
+            COALESCE(lt.latitude, u.latitude) AS delivery_partner_lat,
+            COALESCE(lt.longitude, u.longitude) AS delivery_partner_lng
+     FROM user_food_order_table o
+     LEFT JOIN delivery_live_tracking lt ON lt.order_id COLLATE utf8mb4_unicode_ci = o.order_id COLLATE utf8mb4_unicode_ci
+     LEFT JOIN users u ON u.user_id COLLATE utf8mb4_unicode_ci = o.delivery_partner_user_id COLLATE utf8mb4_unicode_ci
+     WHERE o.id = ?`,
+    [id]
+  );
   if (!rows.length) return null;
   const order = rows[0];
   return {
@@ -518,6 +561,114 @@ const getFranchiseAdminOrders = async (franchiseUserId) => {
 };
 
 
+
+// ─── Cancellation Rules ────────────────────────────────────────────────────
+const CUSTOMER_CANCEL_WINDOW_MS = 2 * 60 * 60 * 1000; // 2 hours
+
+const CHEF_ALLOWED_CANCEL_STATUSES = [
+  'new order', 'order placed', 'order received', 'accepted', 'preparing'
+];
+
+const DELIVERY_ALLOWED_CANCEL_STATUSES = [
+  'assigned', 'delivery partner assigned', 'searching delivery partner', 'on the way to pickup'
+];
+
+const ADMIN_BLOCKED_CANCEL_STATUSES = ['delivered', 'completed', 'cancelled'];
+
+const cancelOrder = async ({ id, role, userId, cancellation_reason, cancellation_notes }) => {
+  const [rows] = await pool.execute('SELECT * FROM user_food_order_table WHERE id = ?', [id]);
+  if (!rows.length) throw Object.assign(new Error('Order not found'), { status: 404 });
+
+  const order = rows[0];
+  const currentStatus = String(order.status || '').toLowerCase();
+
+  if (currentStatus === 'cancelled') {
+    throw Object.assign(new Error('Order is already cancelled'), { status: 400 });
+  }
+
+  // ── Role-based validation ──────────────────────────────────────────────────
+  if (role === 'customer' || role === 'user') {
+    const orderedAt = order.ordered_at ? new Date(order.ordered_at).getTime() : 0;
+    const elapsed = Date.now() - orderedAt;
+    if (elapsed > CUSTOMER_CANCEL_WINDOW_MS) {
+      throw Object.assign(new Error('Cancellation window has expired. Orders can only be cancelled within 2 hours of placing.'), { status: 400 });
+    }
+    if (['picked up', 'out for delivery', 'delivered', 'completed'].includes(currentStatus)) {
+      throw Object.assign(new Error(`Cannot cancel an order with status: ${order.status}`), { status: 400 });
+    }
+  } else if (role === 'chef' || role === 'homechef') {
+    if (!CHEF_ALLOWED_CANCEL_STATUSES.includes(currentStatus)) {
+      throw Object.assign(new Error(`Chef can only cancel orders before pickup. Current status: ${order.status}`), { status: 400 });
+    }
+  } else if (role === 'delivery' || role === 'deliveryboy' || role === 'delivery_partner') {
+    if (!DELIVERY_ALLOWED_CANCEL_STATUSES.includes(currentStatus)) {
+      throw Object.assign(new Error(`Delivery partner can only cancel before pickup. Current status: ${order.status}`), { status: 400 });
+    }
+  } else if (role === 'admin' || role === 'superadmin' || role === 'franchise') {
+    if (ADMIN_BLOCKED_CANCEL_STATUSES.includes(currentStatus)) {
+      throw Object.assign(new Error(`Cannot cancel an order with status: ${order.status}`), { status: 400 });
+    }
+  } else {
+    throw Object.assign(new Error('Unauthorized role for cancellation'), { status: 403 });
+  }
+
+  const cancelledBy = role === 'customer' || role === 'user' ? 'Customer'
+    : role === 'chef' || role === 'homechef' ? 'Home Chef'
+    : role === 'delivery' || role === 'deliveryboy' || role === 'delivery_partner' ? 'Delivery Partner'
+    : 'Admin';
+
+  await pool.execute(
+    `UPDATE user_food_order_table SET
+       status = 'Cancelled',
+       previous_status = ?,
+       cancelled_by = ?,
+       cancelled_user_id = ?,
+       cancellation_reason = ?,
+       cancellation_notes = ?,
+       cancelled_at = NOW(),
+       refund_status = ?,
+       updated_at = NOW()
+     WHERE id = ?`,
+    [
+      order.status,
+      cancelledBy,
+      userId || null,
+      cancellation_reason || null,
+      cancellation_notes || null,
+      (role === 'customer' || role === 'user') ? 'Pending' : 'Not Applicable',
+      id
+    ]
+  );
+
+  // ── Emit socket notifications ──────────────────────────────────────────────
+  try {
+    const io = getIo();
+    if (io) {
+      const payload = {
+        orderId: order.id,
+        order_id: order.order_id,
+        status: 'Cancelled',
+        cancelled_by: cancelledBy,
+        cancellation_reason: cancellation_reason || '',
+        previous_status: order.status
+      };
+      // Notify chef
+      if (order.chef_user_id) io.to(`chef:${order.chef_user_id}`).emit('order_cancelled', payload);
+      // Notify customer
+      if (order.user_id) io.to(`user:${order.user_id}`).emit('order_cancelled', payload);
+      // Notify delivery partner
+      if (order.delivery_partner || order.delivery_boy_id) {
+        io.to(`delivery:${order.delivery_partner || order.delivery_boy_id}`).emit('order_cancelled', payload);
+      }
+      io.to('admin_room').emit('order_cancelled', payload);
+    }
+  } catch (socketErr) {
+    console.error('Failed to emit cancel socket event:', socketErr.message);
+  }
+
+  return { message: 'Order cancelled successfully', order_id: order.order_id };
+};
+
 module.exports = {
   addUserFoodOrder,
   getAllOrders,
@@ -526,5 +677,7 @@ module.exports = {
   getOrderById,
   updateOrder,
   updateOrderStatus,
-  getFranchiseAdminOrders
+  getFranchiseAdminOrders,
+  cancelOrder,
+  CUSTOMER_CANCEL_WINDOW_MS
 };
