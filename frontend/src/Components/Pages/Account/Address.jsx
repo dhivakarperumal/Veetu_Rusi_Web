@@ -176,81 +176,79 @@ export default function Address() {
 
       {/* ADDRESS LIST */}
 
-      {addresses.map((address) => (
-        <div
-          key={address.id}
-          className="bg-white rounded-3xl shadow p-8 border border-slate-200"
-        >
-          <div className="grid md:grid-cols-2 gap-3 text-sm">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {addresses.map((address) => (
+          <div
+            key={address.id}
+            className="bg-white rounded-3xl shadow p-8 border border-slate-200 h-full"
+          >
+            <div className="grid md:grid-cols-2 gap-3 text-sm">
 
-            <p>
-              <span className="font-semibold text-slate-800">Name:</span>{" "}
-              <span className="text-slate-600">{address.customer_name}</span>
-            </p>
+              <p>
+                <span className="font-semibold text-slate-800">Name:</span>{" "}
+                <span className="text-slate-600">{address.customer_name}</span>
+              </p>
 
-            <p>
-              <span className="font-semibold text-slate-800">Email:</span>{" "}
-              <span className="text-slate-600">{address.customer_email}</span>
-            </p>
+              <p>
+                <span className="font-semibold text-slate-800">Email:</span>{" "}
+                <span className="text-slate-600">{address.customer_email}</span>
+              </p>
 
-            <p>
-              <span className="font-semibold text-slate-800">Phone:</span>{" "}
-              <span className="text-slate-600">{address.customer_phone}</span>
-            </p>
+              <p>
+                <span className="font-semibold text-slate-800">Phone:</span>{" "}
+                <span className="text-slate-600">{address.customer_phone}</span>
+              </p>
 
-            <p>
-              <span className="font-semibold text-slate-800">
-                Street Address:
-              </span>{" "}
-              <span className="text-slate-600">{address.street_address}</span>
-            </p>
+              <p>
+                <span className="font-semibold text-slate-800">Street Address:</span>{" "}
+                <span className="text-slate-600">{address.street_address}</span>
+              </p>
 
-            <p>
-              <span className="font-semibold text-slate-800">City:</span>{" "}
-              <span className="text-slate-600">{address.city}</span>
-            </p>
+              <p>
+                <span className="font-semibold text-slate-800">City:</span>{" "}
+                <span className="text-slate-600">{address.city}</span>
+              </p>
 
-            <p>
-              <span className="font-semibold text-slate-800">District:</span>{" "}
-              <span className="text-slate-600">{address.district}</span>
-            </p>
+              <p>
+                <span className="font-semibold text-slate-800">District:</span>{" "}
+                <span className="text-slate-600">{address.district}</span>
+              </p>
 
-            <p>
-              <span className="font-semibold text-slate-800">State:</span>{" "}
-              <span className="text-slate-600">{address.state}</span>
-            </p>
+              <p>
+                <span className="font-semibold text-slate-800">State:</span>{" "}
+                <span className="text-slate-600">{address.state}</span>
+              </p>
 
-            <p>
-              <span className="font-semibold text-slate-800">ZIP Code:</span>{" "}
-              <span className="text-slate-600">{address.zip_code}</span>
-            </p>
+              <p>
+                <span className="font-semibold text-slate-800">ZIP Code:</span>{" "}
+                <span className="text-slate-600">{address.zip_code}</span>
+              </p>
 
-            <p className="md:col-span-2">
-              <span className="font-semibold text-slate-800">Country:</span>{" "}
-              <span className="text-slate-600">{address.country}</span>
-            </p>
+              <p className="md:col-span-2">
+                <span className="font-semibold text-slate-800">Country:</span>{" "}
+                <span className="text-slate-600">{address.country}</span>
+              </p>
 
+            </div>
+
+            <div className="mt-6 flex gap-3 border-t border-slate-200 pt-5">
+              <button
+                onClick={() => editAddress(address)}
+                className="rounded-2xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
+              >
+                Edit Address
+              </button>
+
+              <button
+                onClick={() => deleteAddress(address.id)}
+                className="rounded-2xl border border-red-500 px-5 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50"
+              >
+                Delete Address
+              </button>
+            </div>
           </div>
-
-          <div className="mt-6 flex flex-wrap gap-3 border-t border-slate-200 pt-5">
-
-            <button
-              onClick={() => editAddress(address)}
-              className="rounded-2xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
-            >
-              Edit Address
-            </button>
-
-            <button
-              onClick={() => deleteAddress(address.id)}
-              className="rounded-2xl border border-red-500 px-5 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50"
-            >
-              Delete Address
-            </button>
-
-          </div>
-        </div>
-      ))}
+        ))}
+      </div>
 
       {/* ADDRESS FORM */}
 
