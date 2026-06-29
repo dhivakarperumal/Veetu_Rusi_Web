@@ -748,6 +748,12 @@ const createDeliveryLiveTrackingTable = async () => {
         try { await pool.execute('ALTER TABLE delivery_live_tracking ADD COLUMN user_name VARCHAR(255)'); } catch (e) {}
         try { await pool.execute('ALTER TABLE delivery_live_tracking ADD COLUMN user_mail_id VARCHAR(255)'); } catch (e) {}
         try { await pool.execute('ALTER TABLE delivery_live_tracking ADD COLUMN ordered_product_details JSON'); } catch (e) {}
+        // Real distance tracking columns
+        try { await pool.execute('ALTER TABLE delivery_live_tracking ADD COLUMN pickup_latitude DECIMAL(10, 8) DEFAULT NULL'); } catch (e) {}
+        try { await pool.execute('ALTER TABLE delivery_live_tracking ADD COLUMN pickup_longitude DECIMAL(11, 8) DEFAULT NULL'); } catch (e) {}
+        try { await pool.execute('ALTER TABLE delivery_live_tracking ADD COLUMN dropoff_latitude DECIMAL(10, 8) DEFAULT NULL'); } catch (e) {}
+        try { await pool.execute('ALTER TABLE delivery_live_tracking ADD COLUMN dropoff_longitude DECIMAL(11, 8) DEFAULT NULL'); } catch (e) {}
+        try { await pool.execute('ALTER TABLE delivery_live_tracking ADD COLUMN total_distance_km DECIMAL(8, 3) DEFAULT NULL'); } catch (e) {}
         console.log('✓ delivery_live_tracking table created or already exists');
     } catch (err) {
         console.error('✗ Error creating delivery_live_tracking table:', err.message || err);

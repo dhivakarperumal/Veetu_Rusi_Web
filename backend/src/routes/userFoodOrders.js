@@ -407,8 +407,9 @@ router.patch('/status/:id', verifyToken, async (req, res) => {
           const order = orderRows[0];
           const dpId = order.delivery_partner_user_id || order.delivery_partner;
           if (dpId) {
-            // Distance is mocked at 5.0 for now, ideally calculated from lat/lng
-            await dpEarningsController.calculateAndCreditEarnings(order.order_id, dpId, 5.0);
+            // calculateAndCreditEarnings auto-fetches real distance from delivery_live_tracking
+            const result = await dpEarningsController.calculateAndCreditEarnings(order.order_id, dpId);
+            console.log(`[Earnings] Order ${order.order_id} earnings result:`, result);
           }
         }
       } catch (calcErr) {

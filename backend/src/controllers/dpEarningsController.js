@@ -39,68 +39,159 @@ exports.updateEarningsSettings = async (req, res) => {
     }
 };
 
+// ─── Haversine distance helper (km) ─────────────────────────────────────────
+function haversineKm(lat1, lng1, lat2, lng2) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    return parseFloat((R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))).toFixed(3));
+}
+
+// ─── Auto-detect delivery context ────────────────────────────────────────────
+function detectContext(order) {
+    const now = new Date();
+    const hour = now.getHours();
+    const isNight = hour >= 22 || hour < 6;
+    const isPeak = (hour >= 12 && hour <= 14) || (hour >= 19 && hour <= 21);
+    const isCod = (order?.payment_method || '').toLowerCase() === 'cod';
+    return { isNight, isPeak, isCod };
+}
+
 // --- CORE CALCULATION ENGINE ---
-exports.calculateAndCreditEarnings = async (orderId, deliveryPartnerUserId, distanceInKm, waitingTimeMins = 0, isCod = false, isNight = false, isPeak = false, isRain = false, isFestival = false, isHeavy = false, isEv = false) => {
+exports.calculateAndCreditEarnings = async (orderId, deliveryPartnerUserId) => {
     try {
         // 1. Get Settings
         const [settingsRows] = await pool.execute('SELECT * FROM dp_earnings_settings LIMIT 1');
         if (settingsRows.length === 0) return { error: 'Settings not configured' };
         const settings = settingsRows[0];
 
-        // 2. Base & Distance Pay
-        let basePay = parseFloat(settings.base_pickup_charge) + parseFloat(settings.base_delivery_charge);
-        let distancePay = parseFloat(distanceInKm) * parseFloat(settings.per_km_charge);
-        
-        if ((basePay + distancePay) < parseFloat(settings.minimum_charge)) {
-            basePay = parseFloat(settings.minimum_charge);
-            distancePay = 0; // minimum charge covers distance
+        // 2. Fetch order & tracking data to get REAL distance
+        const [orderRows] = await pool.execute(
+            'SELECT * FROM user_food_order_table WHERE order_id = ? LIMIT 1',
+            [orderId]
+        );
+        const order = orderRows[0] || {};
+
+        // 3. Get real distance from delivery_live_tracking
+        const [trackingRows] = await pool.execute(
+            `SELECT total_distance_km,
+                    pickup_latitude, pickup_longitude,
+                    dropoff_latitude, dropoff_longitude
+             FROM delivery_live_tracking WHERE order_id = ? LIMIT 1`,
+            [orderId]
+        );
+        const tracking = trackingRows[0] || {};
+
+        let distanceKm = 0;
+        if (tracking.total_distance_km && parseFloat(tracking.total_distance_km) > 0) {
+            // Use the pre-calculated stored distance (set at order assignment)
+            distanceKm = parseFloat(tracking.total_distance_km);
+        } else if (
+            tracking.pickup_latitude && tracking.pickup_longitude &&
+            tracking.dropoff_latitude && tracking.dropoff_longitude
+        ) {
+            // Compute on-the-fly using Haversine
+            distanceKm = haversineKm(
+                parseFloat(tracking.pickup_latitude),
+                parseFloat(tracking.pickup_longitude),
+                parseFloat(tracking.dropoff_latitude),
+                parseFloat(tracking.dropoff_longitude)
+            );
+        } else {
+            // Fallback: compute from users table via order if tracking coords missing
+            const [coordRows] = await pool.execute(
+                `SELECT COALESCE(hc.latitude, cu.latitude) AS pickup_lat,
+                        COALESCE(hc.longitude, cu.longitude) AS pickup_lng,
+                        cust.latitude AS dropoff_lat,
+                        cust.longitude AS dropoff_lng
+                 FROM user_food_order_table o
+                 LEFT JOIN users cu ON cu.user_id = o.chef_user_id
+                 LEFT JOIN home_chefs hc ON (hc.user_id = o.chef_user_id OR hc.id = o.chef_id)
+                 LEFT JOIN users cust ON cust.user_id = o.user_id
+                 WHERE o.order_id = ? LIMIT 1`,
+                [orderId]
+            );
+            const coords = coordRows[0] || {};
+            if (coords.pickup_lat && coords.pickup_lng && coords.dropoff_lat && coords.dropoff_lng) {
+                distanceKm = haversineKm(
+                    parseFloat(coords.pickup_lat), parseFloat(coords.pickup_lng),
+                    parseFloat(coords.dropoff_lat), parseFloat(coords.dropoff_lng)
+                );
+                // Save it back to tracking for future reference
+                await pool.execute(
+                    'UPDATE delivery_live_tracking SET total_distance_km = ?, pickup_latitude = ?, pickup_longitude = ?, dropoff_latitude = ?, dropoff_longitude = ? WHERE order_id = ?',
+                    [distanceKm, coords.pickup_lat, coords.pickup_lng, coords.dropoff_lat, coords.dropoff_lng, orderId]
+                ).catch(() => {});
+            }
         }
 
-        // 3. Waiting Pay
+        console.log(`[DP Earnings] Order ${orderId} | Distance: ${distanceKm} km | Partner: ${deliveryPartnerUserId}`);
+
+        // 4. Auto-detect context (night, peak, COD)
+        const { isNight, isPeak, isCod } = detectContext(order);
+
+        // 5. Base & Distance Pay
+        let basePay = parseFloat(settings.base_pickup_charge || 0) + parseFloat(settings.base_delivery_charge || 0);
+        let distancePay = distanceKm * parseFloat(settings.per_km_charge || 0);
+
+        const totalBase = basePay + distancePay;
+        const minCharge = parseFloat(settings.minimum_charge || 0);
+        if (totalBase < minCharge) {
+            basePay = minCharge;
+            distancePay = 0;
+        }
+
+        // 6. Waiting Pay (default 0 — can be passed in future)
+        const waitingTimeMins = 0;
         let waitingPay = 0;
-        if (waitingTimeMins > parseInt(settings.free_waiting_time_mins)) {
-            const chargeableMins = waitingTimeMins - parseInt(settings.free_waiting_time_mins);
-            waitingPay = chargeableMins * parseFloat(settings.waiting_time_charge_per_min);
+        if (waitingTimeMins > parseInt(settings.free_waiting_time_mins || 5)) {
+            const chargeableMins = waitingTimeMins - parseInt(settings.free_waiting_time_mins || 5);
+            waitingPay = chargeableMins * parseFloat(settings.waiting_time_charge_per_min || 0);
         }
 
-        // 4. Bonuses
+        // 7. Bonuses
         let bonuses = 0;
-        if (isCod) bonuses += parseFloat(settings.cod_bonus);
-        if (isNight) bonuses += parseFloat(settings.night_delivery_bonus);
-        if (isPeak) bonuses += parseFloat(settings.peak_hour_bonus);
-        if (isRain) bonuses += parseFloat(settings.rain_weather_bonus);
-        if (isFestival) bonuses += parseFloat(settings.festival_bonus);
-        if (isHeavy) bonuses += parseFloat(settings.heavy_parcel_charge);
-        if (isEv) bonuses += parseFloat(settings.ev_vehicle_bonus);
-        
-        // 5. Penalties (handled separately if triggered, assuming 0 for normal flow)
+        if (isCod) bonuses += parseFloat(settings.cod_bonus || 0);
+        if (isNight) bonuses += parseFloat(settings.night_delivery_bonus || 0);
+        if (isPeak) bonuses += parseFloat(settings.peak_hour_bonus || 0);
+
+        // 8. Penalties (none in default flow)
         let penalties = 0;
 
-        // 6. Net Calculation
-        let grossEarnings = basePay + distancePay + waitingPay + bonuses - penalties;
-        
-        let platformCommission = grossEarnings * (parseFloat(settings.platform_commission_percent) / 100);
-        let netBeforeTax = grossEarnings - platformCommission;
-        let tax = netBeforeTax * (parseFloat(settings.gst_tax_percent) / 100);
-        let netEarnings = netBeforeTax - tax;
+        // 9. Net Calculation
+        const grossEarnings = basePay + distancePay + waitingPay + bonuses - penalties;
+        const platformCommission = grossEarnings * (parseFloat(settings.platform_commission_percent || 0) / 100);
+        const netBeforeTax = grossEarnings - platformCommission;
+        const tax = netBeforeTax * (parseFloat(settings.gst_tax_percent || 0) / 100);
+        const netEarnings = parseFloat((netBeforeTax - tax).toFixed(2));
 
-        // 7. Insert to Earnings History
+        // 10. Insert to Earnings History
         await pool.execute(
             `INSERT INTO dp_earnings_history 
             (delivery_partner_user_id, order_id, base_pay, distance_pay, waiting_pay, bonuses_total, penalties_total, platform_commission, tax_amount, net_earnings, status)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Credited')`,
-            [deliveryPartnerUserId, orderId, basePay, distancePay, waitingPay, bonuses, penalties, platformCommission, tax, netEarnings]
+            [deliveryPartnerUserId, orderId,
+             parseFloat(basePay.toFixed(2)), parseFloat(distancePay.toFixed(2)),
+             parseFloat(waitingPay.toFixed(2)), parseFloat(bonuses.toFixed(2)),
+             parseFloat(penalties.toFixed(2)), parseFloat(platformCommission.toFixed(2)),
+             parseFloat(tax.toFixed(2)), netEarnings]
         );
 
-        // 8. Update Wallet / Deliver Partner Balance (Assuming a wallet_balance column exists on delivery_partners or a separate wallet table, modifying delivery_partners for now or checking)
-        // Check if delivery_partners has wallet_balance
+        // 11. Update wallet_balance on delivery_partners
         const [colCheck] = await pool.execute("SHOW COLUMNS FROM delivery_partners LIKE 'wallet_balance'");
         if (colCheck.length === 0) {
             await pool.execute("ALTER TABLE delivery_partners ADD COLUMN wallet_balance DECIMAL(10,2) DEFAULT 0.00");
         }
-        await pool.execute("UPDATE delivery_partners SET wallet_balance = wallet_balance + ? WHERE user_id = ?", [netEarnings, deliveryPartnerUserId]);
+        await pool.execute(
+            "UPDATE delivery_partners SET wallet_balance = wallet_balance + ? WHERE user_id = ?",
+            [netEarnings, deliveryPartnerUserId]
+        );
 
-        return { success: true, netEarnings };
+        console.log(`✅ [DP Earnings] Order ${orderId}: dist=${distanceKm}km base=${basePay} dist_pay=${distancePay} bonuses=${bonuses} net=₹${netEarnings}`);
+        return { success: true, distanceKm, basePay, distancePay, bonuses, netEarnings };
     } catch (err) {
         console.error('Error in calculateAndCreditEarnings:', err);
         return { error: 'Calculation failed', details: err.message };

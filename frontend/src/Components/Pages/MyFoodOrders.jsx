@@ -255,7 +255,7 @@ export default function MyFoodOrders({ isEmbedded = false }) {
                         <p className="mt-2 text-sm font-semibold text-slate-900">{getItemSummary(order.items)}</p>
                       </div> */}
 
-                      {/* <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="grid gap-3 sm:grid-cols-2">
                         <div className="rounded-3xl bg-slate-50 p-4">
                           <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Items quantity</p>
                           <p className="mt-2 text-lg font-black text-slate-900">
@@ -266,7 +266,7 @@ export default function MyFoodOrders({ isEmbedded = false }) {
                           <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Total amount</p>
                           <p className="mt-2 text-lg font-black text-slate-900">₹{parseFloat(order.total_amount || 0).toFixed(2)}</p>
                         </div>
-                      </div> */}
+                      </div>
 
                       <div className="grid gap-3 sm:grid-cols-2">
                         <div className="rounded-3xl bg-slate-50 p-4">
