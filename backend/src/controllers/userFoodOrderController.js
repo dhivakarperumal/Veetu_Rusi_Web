@@ -43,7 +43,11 @@ const addUserFoodOrder = async (payload) => {
     franchise_phone,
     ordered_by_name,
     ordered_by_email,
-    ordered_by_phone
+    ordered_by_phone,
+    coupon_id,
+    coupon_code,
+    discount_amount,
+    final_total
   } = payload;
 
   const order_id = `UFO-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
@@ -78,11 +82,14 @@ const addUserFoodOrder = async (payload) => {
       franchise_email,
       franchise_phone,
       ordered_by_name,
-      ordered_by_email,
       ordered_by_phone,
+      coupon_id,
+      coupon_code,
+      discount_amount,
+      final_total,
       ordered_at,
       status
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 'New Order')`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 'New Order')`,
     [
       order_id,
       user_id || null,
@@ -113,9 +120,28 @@ const addUserFoodOrder = async (payload) => {
       franchise_phone || null,
       ordered_by_name || null,
       ordered_by_email || null,
-      ordered_by_phone || null
+      ordered_by_phone || null,
+      coupon_id || null,
+      coupon_code || null,
+      discount_amount || 0,
+      final_total || total_amount || 0
     ]
   );
+
+  if (coupon_id && user_id) {
+    try {
+      await pool.execute(
+        `INSERT INTO coupon_usage (order_id, customer_id, coupon_id, coupon_code, discount_amount, order_total, final_total) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [order_id, user_id, coupon_id, coupon_code, discount_amount, total_amount, final_total || total_amount]
+      );
+      await pool.execute(
+        `UPDATE coupons SET usage_count = usage_count + 1 WHERE id = ?`,
+        [coupon_id]
+      );
+    } catch (e) {
+      console.error('Failed to record coupon usage:', e);
+    }
+  }
 
   // Fetch the inserted order to include items and full data
   let orderRecord = null;

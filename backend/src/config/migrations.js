@@ -719,6 +719,10 @@ const createUserFoodOrderTable = async () => {
         try { await pool.execute('ALTER TABLE user_food_order_table ADD COLUMN delivery_partner_user_id VARCHAR(255)'); } catch (e) {}
         try { await pool.execute('ALTER TABLE user_food_order_table ADD COLUMN delivery_partner_name VARCHAR(255)'); } catch (e) {}
         try { await pool.execute('ALTER TABLE user_food_order_table ADD COLUMN delivery_partner_phone VARCHAR(50)'); } catch (e) {}
+        try { await pool.execute('ALTER TABLE user_food_order_table ADD COLUMN coupon_id INT DEFAULT NULL'); } catch (e) {}
+        try { await pool.execute('ALTER TABLE user_food_order_table ADD COLUMN coupon_code VARCHAR(50) DEFAULT NULL'); } catch (e) {}
+        try { await pool.execute('ALTER TABLE user_food_order_table ADD COLUMN discount_amount DECIMAL(10,2) DEFAULT 0'); } catch (e) {}
+        try { await pool.execute('ALTER TABLE user_food_order_table ADD COLUMN final_total DECIMAL(10,2) DEFAULT 0'); } catch (e) {}
         console.log('✓ user_food_order_table created or already exists');
     } catch (err) {
         console.error('✗ Error creating user_food_order_table:', err.message || err);
@@ -923,6 +927,69 @@ const createDpEarningsTables = async () => {
     }
 };
 
+const createCouponsTable = async () => {
+    try {
+        const sql = `
+        CREATE TABLE IF NOT EXISTS coupons (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            code VARCHAR(50) NOT NULL UNIQUE,
+            name VARCHAR(255) NOT NULL,
+            description TEXT,
+            discount_type ENUM('percentage', 'fixed') NOT NULL,
+            discount_value DECIMAL(10,2) NOT NULL,
+            max_discount_amount DECIMAL(10,2) DEFAULT NULL,
+            min_order_value DECIMAL(10,2) DEFAULT 0,
+            start_date DATETIME NOT NULL,
+            expiry_date DATETIME NOT NULL,
+            usage_limit_global INT DEFAULT NULL,
+            usage_limit_per_customer INT DEFAULT 1,
+            applicable_for_all TINYINT(1) DEFAULT 1,
+            specific_home_chefs JSON DEFAULT NULL,
+            specific_categories JSON DEFAULT NULL,
+            specific_products JSON DEFAULT NULL,
+            first_order_only TINYINT(1) DEFAULT 0,
+            new_customers_only TINYINT(1) DEFAULT 0,
+            excluded_products JSON DEFAULT NULL,
+            excluded_categories JSON DEFAULT NULL,
+            excluded_home_chefs JSON DEFAULT NULL,
+            status ENUM('active', 'inactive') DEFAULT 'active',
+            usage_count INT DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `;
+        await pool.execute(sql);
+        console.log('✓ coupons table created or already exists');
+    } catch (err) {
+        console.error('✗ Error creating coupons table:', err.message || err);
+    }
+};
+
+const createCouponUsageTable = async () => {
+    try {
+        const sql = `
+        CREATE TABLE IF NOT EXISTS coupon_usage (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            order_id VARCHAR(100) NOT NULL,
+            customer_id VARCHAR(255) NOT NULL,
+            coupon_id INT NOT NULL,
+            coupon_code VARCHAR(50) NOT NULL,
+            discount_amount DECIMAL(10,2) NOT NULL,
+            order_total DECIMAL(10,2) NOT NULL,
+            final_total DECIMAL(10,2) NOT NULL,
+            applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            KEY idx_customer_id (customer_id),
+            KEY idx_coupon_id (coupon_id),
+            KEY idx_order_id (order_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `;
+        await pool.execute(sql);
+        console.log('✓ coupon_usage table created or already exists');
+    } catch (err) {
+        console.error('✗ Error creating coupon_usage table:', err.message || err);
+    }
+};
+
     module.exports = {
         createProductsTable,
         createRecipeDetailsTable,
@@ -943,6 +1010,8 @@ const createDpEarningsTables = async () => {
         addHomeChefUniqueConstraints,
         addDeliveryPartnerUniqueConstraints,
         createDpEarningsTables,
+        createCouponsTable,
+        createCouponUsageTable,
         // Ensure audit columns exist on all tables
         ensureAuditColumns: async () => {
             try {

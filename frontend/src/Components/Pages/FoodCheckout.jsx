@@ -33,7 +33,9 @@ export default function FoodCheckout() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const location = useLocation();
-  const buyNowItem = location.state;
+  const buyNowItem = location.state?.product ? location.state : null;
+  const appliedCoupon = location.state?.appliedCoupon || null;
+  
   const checkoutItems = buyNowItem?.product
     ? [
       {
@@ -133,6 +135,10 @@ export default function FoodCheckout() {
         delivery_date: deliveryDate,
         delivery_time: deliveryTime,
         payment_method: paymentMethod,
+        coupon_id: appliedCoupon?.id || null,
+        coupon_code: appliedCoupon?.code || null,
+        discount_amount: appliedCoupon?.discountAmount || 0,
+        final_total: appliedCoupon ? appliedCoupon.finalTotal : subtotal,
       });
 
       toast.success("Order placed successfully.");
@@ -454,9 +460,15 @@ export default function FoodCheckout() {
                       <span>Shipping</span>
                       <span>Free</span>
                     </div>
+                    {appliedCoupon && (
+                      <div className="flex justify-between text-emerald-600 font-semibold mt-2">
+                        <span>Discount ({appliedCoupon.code})</span>
+                        <span>-₹{appliedCoupon.discountAmount.toFixed(2)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-lg font-black text-slate-900 mt-4">
                       <span>Total</span>
-                      <span>₹{subtotal.toFixed(2)}</span>
+                      <span>₹{appliedCoupon ? appliedCoupon.finalTotal.toFixed(2) : subtotal.toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
