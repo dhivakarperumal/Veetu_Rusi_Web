@@ -112,17 +112,13 @@ const Shop = ({ defaultCategory = "" }) => {
       let myProducts = chefFoodsCache.filter((product) => {
         if (product.status?.toLowerCase() !== "active") return false;
 
-        const hasLocationData =
-          product.latitude != null &&
-          product.longitude != null &&
-          product.delivery_radius != null;
-
-        if (!hasLocationData) {
-          return true;
-        }
-
-        if (!user?.latitude || !user?.longitude) {
-          return true;
+        if (
+          !user?.latitude ||
+          !user?.longitude ||
+          !product.latitude ||
+          !product.longitude
+        ) {
+          return false;
         }
 
         const distance = parseFloat(
@@ -136,9 +132,7 @@ const Shop = ({ defaultCategory = "" }) => {
 
         const radius = parseFloat(product.delivery_radius || 0);
 
-        return Number.isFinite(distance) && Number.isFinite(radius)
-          ? distance <= radius
-          : true;
+        return distance <= radius;
       });
       setProducts(myProducts);
       setFilteredProducts(myProducts);
@@ -163,17 +157,13 @@ const Shop = ({ defaultCategory = "" }) => {
       let myProducts = data.filter((product) => {
         if (product.status?.toLowerCase() !== "active") return false;
 
-        const hasLocationData =
-          product.latitude != null &&
-          product.longitude != null &&
-          product.delivery_radius != null;
-
-        if (!hasLocationData) {
-          return true;
-        }
-
-        if (!user?.latitude || !user?.longitude) {
-          return true;
+        if (
+          !user?.latitude ||
+          !user?.longitude ||
+          !product.latitude ||
+          !product.longitude
+        ) {
+          return false;
         }
 
         const distance = parseFloat(
@@ -187,9 +177,7 @@ const Shop = ({ defaultCategory = "" }) => {
 
         const radius = parseFloat(product.delivery_radius || 0);
 
-        return Number.isFinite(distance) && Number.isFinite(radius)
-          ? distance <= radius
-          : true;
+        return distance <= radius;
       });
 
       setProducts(myProducts);

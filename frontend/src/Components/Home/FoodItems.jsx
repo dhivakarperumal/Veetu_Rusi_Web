@@ -100,24 +100,22 @@ const FoodItems = () => {
         ? productsRes.data
         : [];
 
+      // Combine both
       const allItems = [...foods, ...products];
 
+      // Filter active + delivery radius
       const filtered = allItems.filter((item) => {
         if (item.status?.toLowerCase() !== "active") {
           return false;
         }
 
-        const hasLocationData =
-          item.latitude != null &&
-          item.longitude != null &&
-          item.delivery_radius != null;
-
-        if (!hasLocationData) {
-          return true;
-        }
-
-        if (!user?.latitude || !user?.longitude) {
-          return true;
+        if (
+          !user?.latitude ||
+          !user?.longitude ||
+          !item.latitude ||
+          !item.longitude
+        ) {
+          return false;
         }
 
         const distance = parseFloat(
@@ -131,9 +129,7 @@ const FoodItems = () => {
 
         const radius = parseFloat(item.delivery_radius || 0);
 
-        return Number.isFinite(distance) && Number.isFinite(radius)
-          ? distance <= radius
-          : true;
+        return distance <= radius;
       });
 
       setFoods(filtered);
