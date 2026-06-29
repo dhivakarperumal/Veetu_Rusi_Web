@@ -141,16 +141,17 @@ export default function FoodCheckout() {
     toast.success("Address loaded successfully.");
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const error = validateDelivery();
-    if (error) {
-      toast.error(error);
-      return;
-    }
+  const loadRazorpay = () =>
+    new Promise((resolve) => {
+      if (window.Razorpay) return resolve(true);
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
 
-    setIsSubmitting(true);
-
+  const finalizeOrder = async (paymentId = null) => {
     try {
       const res = await placeFoodOrder({
         name,
@@ -165,6 +166,8 @@ export default function FoodCheckout() {
         delivery_date: deliveryDate,
         delivery_time: deliveryTime,
         payment_method: paymentMethod,
+        payment_status: paymentMethod === "Online Payment" ? "Paid" : "Pending",
+        payment_id: paymentId || null,
         isBuyNow: Boolean(buyNowItem?.product),
         items: checkoutItems,
       });
@@ -197,6 +200,57 @@ export default function FoodCheckout() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const error = validateDelivery();
+    if (error) {
+      toast.error(error);
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    if (paymentMethod === "Online Payment") {
+      try {
+        const loaded = await loadRazorpay();
+        if (!loaded) {
+          toast.error("Razorpay SDK failed to load.");
+          setIsSubmitting(false);
+          return;
+        }
+
+        const options = {
+          key: "rzp_test_SGj8n5SyKSE10b",
+          amount: Math.round(subtotal * 100),
+          currency: "INR",
+          name: "Veetu Rusi",
+          description: "Food Order Payment",
+          handler: async function (response) {
+            await finalizeOrder(response.razorpay_payment_id);
+          },
+          prefill: {
+            name,
+            email,
+            contact: phone,
+          },
+          theme: {
+            color: "#059669",
+          },
+        };
+
+        const paymentObject = new window.Razorpay(options);
+        paymentObject.open();
+      } catch (err) {
+        console.error(err);
+        toast.error("Payment failed. Please try again.");
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
+    await finalizeOrder();
   };
 
   return (

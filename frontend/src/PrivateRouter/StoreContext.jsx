@@ -233,6 +233,8 @@ export const StoreProvider = ({ children }) => {
             ordered_by_name: customerName,
             ordered_by_email: customerEmail,
             ordered_by_phone: customerPhone,
+            payment_status: checkoutData?.payment_status || 'Pending',
+            payment_id: checkoutData?.payment_id || null,
             total_amount: totalAmount,
             items: orderItems.map((item) => ({
                 product_id: item.product_id || item.id,
