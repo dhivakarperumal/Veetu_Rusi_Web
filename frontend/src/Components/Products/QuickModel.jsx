@@ -48,7 +48,7 @@ const QuickViewModal = ({ product, onClose }) => {
   const stock = selectedVariant?.sizesStock?.[selectedSize];
 
   const handleBuyNow = () => {
-    navigate("/checkout", {
+    navigate("/food-checkout", {
       state: {
         product: product,
         variant: selectedVariant,

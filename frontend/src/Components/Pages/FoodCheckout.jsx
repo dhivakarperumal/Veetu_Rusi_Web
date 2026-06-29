@@ -5,6 +5,9 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import { StoreContext } from "../../PrivateRouter/StoreContext";
 import { toast } from "react-hot-toast";
+import { useLocation } from "react-router-dom";
+
+
 
 const getTomorrowDate = () => {
   const date = new Date();
@@ -26,14 +29,36 @@ export default function FoodCheckout() {
   const [deliveryTime, setDeliveryTime] = useState("12:00");
   const [paymentMethod, setPaymentMethod] = useState("Cash on Delivery");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const location = useLocation();
+  const buyNowItem = location.state;
+  const checkoutItems = buyNowItem?.product
+    ? [
+      {
+        id: buyNowItem.product.id,
+        name: buyNowItem.product.name,
+        image:
+          buyNowItem.variant?.images?.[0] ||
+          buyNowItem.product.images?.[0],
+        price:
+          buyNowItem.variant?.final_price ||
+          buyNowItem.product.final_price ||
+          buyNowItem.product.offer_price ||
+          buyNowItem.product.price,
+        quantity: buyNowItem.quantity,
+        variant: buyNowItem.variant,
+        size: buyNowItem.size,
+      },
+    ]
+    : userFoodCart;
 
   const subtotal = useMemo(
     () =>
-      userFoodCart.reduce(
-        (total, item) => total + parseFloat(item.price || 0) * (item.quantity || 1),
+      checkoutItems.reduce(
+        (total, item) =>
+          total + parseFloat(item.price || 0) * (item.quantity || 1),
         0
       ),
-    [userFoodCart]
+    [checkoutItems]
   );
 
   useEffect(() => {
@@ -43,7 +68,7 @@ export default function FoodCheckout() {
   const validateDelivery = () => {
     const requiredFields = [streetAddress, city, district, stateValue, country, zipCode];
     if (!user) return "Please login to continue.";
-    if (!userFoodCart.length) return "Your food cart is empty.";
+    if (!checkoutItems.length) return "Your food cart is empty.";
     if (requiredFields.some((field) => !field.trim())) return "Please fill in all address fields.";
     if (!deliveryDate || !deliveryTime) return "Please choose a delivery date and time.";
 
@@ -234,10 +259,10 @@ export default function FoodCheckout() {
                 <div className="space-y-4">
                   <div className="flex justify-between text-sm text-slate-600">
                     <span>Items</span>
-                    <span>{userFoodCart.length}</span>
+                    <span>{checkoutItems.length}</span>
                   </div>
                   <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
-                    {userFoodCart.map((item) => (
+                    {checkoutItems.map((item) => (
                       <div key={item.id} className="rounded-3xl border border-slate-200 p-4 bg-slate-50">
                         <div className="flex items-center justify-between gap-3">
                           <div>

@@ -6,6 +6,7 @@ import QuickViewModal from "../Products/QuickModel";
 import PageContainer from "../CommenComponents/PageContainer";
 import { useNavigate } from "react-router-dom";
 import { StoreContext } from "../../PrivateRouter/StoreContext";
+import { AuthContext } from "../../PrivateRouter/AuthContext";
 
 const parseJsonField = (value) => {
   if (!value) return [];
@@ -46,9 +47,10 @@ const FoodItems = () => {
   const [selectedFood, setSelectedFood] = useState(null);
   const [showQuickView, setShowQuickView] = useState(false);
   const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
 
   const goToDetails = (food) => {
-    navigate(`/food/${food.id}`);
+    navigate(`/products/${food.id}`);
   };
 
   const openQuickView = (food) => {
@@ -81,23 +83,90 @@ const FoodItems = () => {
     return mrp > 0 && selling < mrp;
   };
 
+
+  const fetchFoods = async () => {
+    try {
+      setLoading(true);
+
+      const [foodsRes, productsRes] = await Promise.all([
+        api.get("/chef-foods"),
+        api.get("/products", {
+          params: { source: "chef_products" },
+        }),
+      ]);
+
+      const foods = Array.isArray(foodsRes.data) ? foodsRes.data : [];
+      const products = Array.isArray(productsRes.data)
+        ? productsRes.data
+        : [];
+
+      // Combine both
+      const allItems = [...foods, ...products];
+
+      // Filter active + delivery radius
+      const filtered = allItems.filter((item) => {
+        if (item.status?.toLowerCase() !== "active") {
+          return false;
+        }
+
+        if (
+          !user?.latitude ||
+          !user?.longitude ||
+          !item.latitude ||
+          !item.longitude
+        ) {
+          return false;
+        }
+
+        const distance = parseFloat(
+          calculateDistance(
+            user.latitude,
+            user.longitude,
+            item.latitude,
+            item.longitude
+          )
+        );
+
+        const radius = parseFloat(item.delivery_radius || 0);
+
+        return distance <= radius;
+      });
+
+      setFoods(filtered);
+    } catch (err) {
+      console.error(err);
+      setError("Unable to load items.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   useEffect(() => {
-    const fetchFoods = async () => {
-      try {
-        const res = await api.get("/chef-foods");
-        const data = Array.isArray(res.data) ? res.data : [];
-        // Only show active foods on the home page
-        const activeFoods = data.filter(f => f.status?.toLowerCase() === 'active');
-        setFoods(activeFoods);
-      } catch (err) {
-        console.error("Error fetching food items:", err);
-        setError("Unable to load food items right now.");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchFoods();
-  }, []);
+    if (user?.latitude && user?.longitude) {
+      fetchFoods();
+    }
+  }, [user]);
+
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    if (!lat1 || !lon1 || !lat2 || !lon2) return null;
+
+    const R = 6371;
+
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * (Math.PI / 180)) *
+      Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return (R * c).toFixed(2);
+  };
 
   return (
     <section className="bg-slate-50 py-16">
@@ -157,11 +226,10 @@ const FoodItems = () => {
                   {/* Wishlist Heart Button */}
                   <button
                     onClick={(e) => { e.stopPropagation(); toggleWishlist(food); }}
-                    className={`absolute top-3 right-3 z-20 w-10 h-10 rounded-full bg-white/90 backdrop-blur-md shadow-lg flex items-center justify-center transition-all duration-300 ${
-                      wishlist.some(w => w.product_id === food.id || w.id === food.id)
-                        ? "text-red-500 scale-110"
-                        : "text-gray-500 hover:text-red-500 hover:scale-110"
-                    }`}
+                    className={`absolute top-3 right-3 z-20 w-10 h-10 rounded-full bg-white/90 backdrop-blur-md shadow-lg flex items-center justify-center transition-all duration-300 ${wishlist.some(w => w.product_id === food.id || w.id === food.id)
+                      ? "text-red-500 scale-110"
+                      : "text-gray-500 hover:text-red-500 hover:scale-110"
+                      }`}
                   >
                     <FiHeart
                       size={18}
@@ -172,11 +240,10 @@ const FoodItems = () => {
                   {/* Category Tag Badge */}
                   {(food.category || food.chef_category || food.product_type) && (
                     <div className="absolute bottom-4 left-4 z-10">
-                      <span className={`text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-wider shadow-xl backdrop-blur-md border ${
-                        (food.product_type?.toLowerCase() === 'food' || food.category?.toLowerCase() === 'food' || !food.product_type)
-                          ? "bg-orange-500/90 text-white border-orange-400/50"
-                          : "bg-emerald-500/90 text-white border-emerald-400/50"
-                      }`}>
+                      <span className={`text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-wider shadow-xl backdrop-blur-md border ${(food.product_type?.toLowerCase() === 'food' || food.category?.toLowerCase() === 'food' || !food.product_type)
+                        ? "bg-orange-500/90 text-white border-orange-400/50"
+                        : "bg-emerald-500/90 text-white border-emerald-400/50"
+                        }`}>
                         {food.product_type || food.category || food.chef_category}
                       </span>
                     </div>
