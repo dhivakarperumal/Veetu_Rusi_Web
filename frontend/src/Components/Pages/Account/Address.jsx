@@ -177,50 +177,79 @@ export default function Address() {
       {/* ADDRESS LIST */}
 
       {addresses.map((address) => (
-
         <div
           key={address.id}
-          className="bg-white border rounded-xl p-6 shadow-sm"
+          className="bg-white rounded-3xl shadow p-8 border border-slate-200"
         >
+          <div className="grid md:grid-cols-2 gap-3 text-sm">
 
-          <p className="text-sm leading-6">
+            <p>
+              <span className="font-semibold text-slate-800">Name:</span>{" "}
+              <span className="text-slate-600">{address.customer_name}</span>
+            </p>
 
-            {address.customer_name} <br />
+            <p>
+              <span className="font-semibold text-slate-800">Email:</span>{" "}
+              <span className="text-slate-600">{address.customer_email}</span>
+            </p>
 
-            {address.street_address} <br />
+            <p>
+              <span className="font-semibold text-slate-800">Phone:</span>{" "}
+              <span className="text-slate-600">{address.customer_phone}</span>
+            </p>
 
-            {address.city}, {address.district} <br />
+            <p>
+              <span className="font-semibold text-slate-800">
+                Street Address:
+              </span>{" "}
+              <span className="text-slate-600">{address.street_address}</span>
+            </p>
 
-            {address.state} - {address.zip_code} <br />
+            <p>
+              <span className="font-semibold text-slate-800">City:</span>{" "}
+              <span className="text-slate-600">{address.city}</span>
+            </p>
 
-            {address.country} <br />
+            <p>
+              <span className="font-semibold text-slate-800">District:</span>{" "}
+              <span className="text-slate-600">{address.district}</span>
+            </p>
 
-            Phone: {address.customer_phone} <br />
+            <p>
+              <span className="font-semibold text-slate-800">State:</span>{" "}
+              <span className="text-slate-600">{address.state}</span>
+            </p>
 
-            Email: {address.customer_email}
+            <p>
+              <span className="font-semibold text-slate-800">ZIP Code:</span>{" "}
+              <span className="text-slate-600">{address.zip_code}</span>
+            </p>
 
-          </p>
+            <p className="md:col-span-2">
+              <span className="font-semibold text-slate-800">Country:</span>{" "}
+              <span className="text-slate-600">{address.country}</span>
+            </p>
 
-          <div className="mt-4 flex gap-4">
+          </div>
+
+          <div className="mt-6 flex flex-wrap gap-3 border-t border-slate-200 pt-5">
 
             <button
               onClick={() => editAddress(address)}
-              className="text-blue-600"
+              className="rounded-2xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
             >
-              Edit
+              Edit Address
             </button>
 
             <button
               onClick={() => deleteAddress(address.id)}
-              className="text-red-600"
+              className="rounded-2xl border border-red-500 px-5 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50"
             >
-              Delete
+              Delete Address
             </button>
 
           </div>
-
         </div>
-
       ))}
 
       {/* ADDRESS FORM */}
