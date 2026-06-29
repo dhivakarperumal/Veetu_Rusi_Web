@@ -154,7 +154,7 @@ const AcceptedOrders = () => {
   const [loading, setLoading]           = useState(true);
   const [searchTerm, setSearchTerm]     = useState("");
   const [editingOrder, setEditingOrder] = useState(null);
-  const [viewMode, setViewMode]         = useState("card"); // "card" | "table"
+  const [viewMode, setViewMode]         = useState("table"); // "card" | "table"
 
   const fetchOrders = async () => {
     setLoading(true);
