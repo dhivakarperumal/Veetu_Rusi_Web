@@ -206,12 +206,16 @@ export const StoreProvider = ({ children }) => {
             return null;
         }
 
-        if (!userFoodCart.length) {
+        const orderItems = Array.isArray(checkoutData?.items) && checkoutData.items.length > 0
+            ? checkoutData.items
+            : userFoodCart;
+
+        if (!orderItems.length) {
             toast.error('Your food cart is empty');
             return null;
         }
 
-        const totalAmount = userFoodCart.reduce(
+        const totalAmount = orderItems.reduce(
             (sum, item) => sum + parseFloat(item.price || 0) * (item.quantity || 1),
             0
         );
@@ -230,14 +234,13 @@ export const StoreProvider = ({ children }) => {
             ordered_by_email: customerEmail,
             ordered_by_phone: customerPhone,
             total_amount: totalAmount,
-            items: userFoodCart.map((item) => ({
-                product_id: item.product_id,
+            items: orderItems.map((item) => ({
+                product_id: item.product_id || item.id,
                 name: item.name,
                 image: item.image,
                 price: item.price,
                 quantity: item.quantity,
-                total_price: item.total_price,
-                // Use correct chef_user_id with fallback chain
+                total_price: item.total_price || parseFloat(item.price || 0) * (item.quantity || 1),
                 chef_user_id: item.chef_user_id || item.created_by || item.created_by_user_id || '',
                 chef_id: item.chef_id || '',
                 chef_name: item.chef_name || item.created_by_name || '',
@@ -248,26 +251,27 @@ export const StoreProvider = ({ children }) => {
                 franchise_name: item.franchise_name || '',
                 franchise_email: item.franchise_email || '',
                 franchise_phone: item.franchise_phone || '',
-                ordered_by_name: item.ordered_by_name || '',
-                ordered_by_email: item.ordered_by_email || '',
-                ordered_by_phone: item.ordered_by_phone || '',
+                ordered_by_name: item.ordered_by_name || customerName,
+                ordered_by_email: item.ordered_by_email || customerEmail,
+                ordered_by_phone: item.ordered_by_phone || customerPhone,
             })),
-            // Order-level chef info from first cart item
-            chef_user_id: userFoodCart[0]?.chef_user_id || userFoodCart[0]?.created_by || userFoodCart[0]?.created_by_user_id || '',
-            chef_id: userFoodCart[0]?.chef_id || '',
-            chef_name: userFoodCart[0]?.chef_name || userFoodCart[0]?.created_by_name || '',
-            chef_email: userFoodCart[0]?.chef_email || userFoodCart[0]?.created_by_email || '',
-            chef_phone: userFoodCart[0]?.chef_phone || userFoodCart[0]?.created_by_phone || '',
-            franchise_user_id: userFoodCart[0]?.franchise_user_id || '',
-            franchise_id: userFoodCart[0]?.franchise_id || '',
-            franchise_name: userFoodCart[0]?.franchise_name || '',
-            franchise_email: userFoodCart[0]?.franchise_email || '',
-            franchise_phone: userFoodCart[0]?.franchise_phone || '',
+            chef_user_id: orderItems[0]?.chef_user_id || orderItems[0]?.created_by || orderItems[0]?.created_by_user_id || '',
+            chef_id: orderItems[0]?.chef_id || '',
+            chef_name: orderItems[0]?.chef_name || orderItems[0]?.created_by_name || '',
+            chef_email: orderItems[0]?.chef_email || orderItems[0]?.created_by_email || '',
+            chef_phone: orderItems[0]?.chef_phone || orderItems[0]?.created_by_phone || '',
+            franchise_user_id: orderItems[0]?.franchise_user_id || '',
+            franchise_id: orderItems[0]?.franchise_id || '',
+            franchise_name: orderItems[0]?.franchise_name || '',
+            franchise_email: orderItems[0]?.franchise_email || '',
+            franchise_phone: orderItems[0]?.franchise_phone || '',
         };
 
         try {
             const res = await api.post('/user-food-orders', orderPayload);
-            await clearUserFoodCart();
+            if (!checkoutData?.isBuyNow) {
+                await clearUserFoodCart();
+            }
             return res.data;
         } catch (err) {
             console.error('Place food order error:', err);

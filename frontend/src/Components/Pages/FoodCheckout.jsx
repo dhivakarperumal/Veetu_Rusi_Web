@@ -136,6 +136,8 @@ export default function FoodCheckout() {
         delivery_date: deliveryDate,
         delivery_time: deliveryTime,
         payment_method: paymentMethod,
+        isBuyNow: Boolean(buyNowItem?.product),
+        items: checkoutItems,
       });
 
       toast.success("Order placed successfully.");
