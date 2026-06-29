@@ -411,14 +411,14 @@ const Navbar = () => {
                   to="/food-orders"
                   className="text-primary hover:text-primary-light hover:scale-110 transition"
                 >
-                  <FiFileText size={20} />
+                  <Package size={22} />
                 </Link>
 
                 <Link
                   to="/food-cart"
                   className="relative text-primary hover:text-primary-light hover:scale-110 transition"
                 >
-                  <ShoppingCart size={20} />
+                  <ShoppingCart size={22} />
 
                   {userFoodCart && userFoodCart.length > 0 && (
                     <span className="absolute -top-2 -right-2 bg-rose-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">

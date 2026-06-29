@@ -401,7 +401,7 @@ const Shop = ({ defaultCategory = "" }) => {
       <PageHeader title="Shop" />
 
       {/* Current Location */}
-      {(user?.pincode || user?.latitude) && (
+      {/* {(user?.pincode || user?.latitude) && (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-xl bg-green-100 text-primary flex items-center justify-center">
@@ -462,9 +462,9 @@ const Shop = ({ defaultCategory = "" }) => {
             </div>
           )}
         </div>
-      )}
+      )} */}
 
-      {uniqueHomeChefs.length > 0 && (
+      {/* {uniqueHomeChefs.length > 0 && (
         <div className="px-4 md:px-10 mt-6 mb-4">
           <h3 className="text-lg font-bold text-gray-800 mb-4">
             Home Chefs
@@ -494,7 +494,7 @@ const Shop = ({ defaultCategory = "" }) => {
             ))}
           </div>
         </div>
-      )}
+      )} */}
 
 
       {/* ── Toolbar ── */}
