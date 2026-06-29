@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../../../PrivateRouter/AuthContext";
 import api from "../../../api";
+import { readUserAddresses, saveUserAddresses, upsertUserAddress, removeUserAddress } from "../../../utils/addressStorage";
 
 export default function Address() {
 
@@ -24,18 +25,44 @@ export default function Address() {
   });
 
   const fetchAddresses = async () => {
+    if (!user?.user_id) {
+      setAddresses([]);
+      return;
+    }
+
     try {
-
+      const storageAddresses = readUserAddresses(user.user_id);
       const res = await api.get("/orders");
+      const userOrders = (res.data || [])
+        .filter((order) => String(order.user_id) === String(user.user_id))
+        .map((order) => ({
+          id: order.id,
+          user_id: order.user_id,
+          customer_name: order.customer_name || order.ordered_by_name || "",
+          customer_email: order.customer_email || order.ordered_by_email || "",
+          customer_phone: order.customer_phone || order.ordered_by_phone || "",
+          street_address: order.street_address || "",
+          city: order.city || "",
+          district: order.district || "",
+          state: order.state || "",
+          country: order.country || "India",
+          zip_code: order.zip_code || "",
+        }));
 
-      const userOrders = res.data.filter(
-        (order) => order.user_id === user?.user_id
-      );
+      const mergedAddresses = [...storageAddresses, ...userOrders].filter((address, index, array) => {
+        const match = array.findIndex((item) => {
+          const first = `${address.customer_name || ""}|${address.customer_email || ""}|${address.customer_phone || ""}|${address.street_address || ""}|${address.city || ""}|${address.district || ""}|${address.state || ""}|${address.country || ""}|${address.zip_code || ""}`;
+          const second = `${item.customer_name || ""}|${item.customer_email || ""}|${item.customer_phone || ""}|${item.street_address || ""}|${item.city || ""}|${item.district || ""}|${item.state || ""}|${item.country || ""}|${item.zip_code || ""}`;
+          return first === second;
+        });
+        return match === index;
+      });
 
-      setAddresses(userOrders);
-
+      saveUserAddresses(user.user_id, mergedAddresses);
+      setAddresses(mergedAddresses);
     } catch (error) {
       console.error(error);
+      setAddresses(readUserAddresses(user.user_id));
     }
   };
 
@@ -50,10 +77,12 @@ export default function Address() {
   const addAddress = async () => {
 
     try {
+      if (user?.user_id) {
+        const nextAddresses = upsertUserAddress(user.user_id, { ...form, user_id: user.user_id });
+        setAddresses(nextAddresses);
+      }
 
-      await api.post("/order-addresses", form);
-
-      alert("Address added");
+      alert("Address saved");
 
       setForm({
         order_id: null,
@@ -87,8 +116,10 @@ export default function Address() {
   const updateAddress = async () => {
 
     try {
-
-      await api.put(`/order-addresses/${editingId}`, form);
+      if (user?.user_id) {
+        const nextAddresses = upsertUserAddress(user.user_id, { ...form, user_id: user.user_id, id: editingId });
+        setAddresses(nextAddresses);
+      }
 
       alert("Address updated");
 
@@ -106,9 +137,10 @@ export default function Address() {
     if (!window.confirm("Delete address?")) return;
 
     try {
-
-      await api.delete(`/order-addresses/${id}`);
-
+      if (user?.user_id) {
+        const nextAddresses = removeUserAddress(user.user_id, id);
+        setAddresses(nextAddresses);
+      }
       fetchAddresses();
 
     } catch (error) {

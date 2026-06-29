@@ -6,6 +6,7 @@ import { useAuth } from "../../PrivateRouter/AuthContext";
 import { StoreContext } from "../../PrivateRouter/StoreContext";
 import { toast } from "react-hot-toast";
 import { useLocation } from "react-router-dom";
+import { upsertUserAddress, readUserAddresses } from "../../utils/addressStorage";
 
 
 
@@ -32,6 +33,7 @@ export default function FoodCheckout() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [savedAddresses, setSavedAddresses] = useState([]);
   const location = useLocation();
   const buyNowItem = location.state;
   const checkoutItems = buyNowItem?.product
@@ -84,6 +86,7 @@ export default function FoodCheckout() {
       setName(user.name || user.username || "");
       setEmail(user.email || "");
       setPhone(user.phone || user.mobile || "");
+      setSavedAddresses(readUserAddresses(user.user_id));
     }
   }, [user]);
 
@@ -151,6 +154,22 @@ export default function FoodCheckout() {
         items: checkoutItems,
       });
 
+      if (user?.user_id) {
+        const nextAddresses = upsertUserAddress(user.user_id, {
+          user_id: user.user_id,
+          customer_name: name,
+          customer_email: email,
+          customer_phone: phone,
+          street_address: streetAddress,
+          city,
+          district,
+          state: stateValue,
+          country,
+          zip_code: zipCode,
+        });
+        setSavedAddresses(nextAddresses);
+      }
+
       toast.success("Order placed successfully.");
       const newOrderId = res?.id || res?.insertId || null;
       if (newOrderId) {
@@ -172,6 +191,31 @@ export default function FoodCheckout() {
         <PageContainer>
           <div className="grid gap-10 lg:grid-cols-3">
             <div className="lg:col-span-2 space-y-6">
+
+              {savedAddresses.length > 0 && (
+                <div className="bg-white rounded-3xl shadow p-8">
+                  <h2 className="text-2xl font-bold text-slate-900 mb-4">
+                    Saved Address
+                  </h2>
+                  <div className="space-y-3">
+                    {savedAddresses.slice(0, 3).map((address) => (
+                      <div key={address.id} className="rounded-2xl border border-slate-200 p-4">
+                        <p className="font-semibold text-slate-900">{address.customer_name}</p>
+                        <p className="text-sm text-slate-600">{address.street_address}</p>
+                        <p className="text-sm text-slate-600">
+                          {address.city}, {address.district}
+                        </p>
+                        <p className="text-sm text-slate-600">
+                          {address.state} - {address.zip_code}
+                        </p>
+                        <p className="text-sm text-slate-600">{address.country}</p>
+                        <p className="text-sm text-slate-600">{address.customer_phone}</p>
+                        <p className="text-sm text-slate-600">{address.customer_email}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Personal Information */}
               <div className="bg-white rounded-3xl shadow p-8">
