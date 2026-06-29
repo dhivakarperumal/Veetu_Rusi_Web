@@ -365,7 +365,7 @@ const QuickViewModal = ({ product, onClose }) => {
                   className="flex-1 flex items-center justify-center gap-2 bg-primary text-white py-3 rounded-xl"
                 >
                   <FiShoppingCart size={18} />
-                  Add To Cart · ₹{totalPrice}
+                  Add To Cart 
                 </button>
 
                 <button
