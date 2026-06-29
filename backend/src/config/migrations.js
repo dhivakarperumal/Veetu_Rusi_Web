@@ -710,7 +710,7 @@ const createUserFoodOrderTable = async () => {
             ordered_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             KEY idx_user_id (user_id),
-            KEY idx_chef_user_id (chef_user_id),
+            KEY idx_chef_user_id (chef_user_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         `;
         await pool.execute(sql);

@@ -8,13 +8,11 @@ async function test() {
     database: 'veetu_rusi',
   });
 
-  const [rows] = await pool.execute(`
-    SELECT id, code, start_date, expiry_date, NOW() as current_db_time,
-           (start_date <= NOW()) as is_started
-    FROM coupons
-  `);
+  try { await pool.execute('ALTER TABLE user_food_order_table ADD COLUMN coupon_id INT DEFAULT NULL'); console.log('Added coupon_id'); } catch (e) { console.log(e.message) }
+  try { await pool.execute('ALTER TABLE user_food_order_table ADD COLUMN coupon_code VARCHAR(50) DEFAULT NULL'); console.log('Added coupon_code'); } catch (e) { console.log(e.message) }
+  try { await pool.execute('ALTER TABLE user_food_order_table ADD COLUMN discount_amount DECIMAL(10,2) DEFAULT 0'); console.log('Added discount_amount'); } catch (e) { console.log(e.message) }
+  try { await pool.execute('ALTER TABLE user_food_order_table ADD COLUMN final_total DECIMAL(10,2) DEFAULT 0'); console.log('Added final_total'); } catch (e) { console.log(e.message) }
   
-  console.log(rows);
   process.exit();
 }
 test();

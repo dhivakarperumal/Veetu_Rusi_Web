@@ -82,6 +82,7 @@ const addUserFoodOrder = async (payload) => {
       franchise_email,
       franchise_phone,
       ordered_by_name,
+      ordered_by_email,
       ordered_by_phone,
       coupon_id,
       coupon_code,
