@@ -124,6 +124,9 @@ export default function FoodCheckout() {
 
     try {
       const res = await placeFoodOrder({
+        name,
+        email,
+        phone,
         street_address: streetAddress,
         city,
         district,
