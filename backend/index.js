@@ -43,6 +43,7 @@ let ensureAuditColumns = async () => {};
 let cleanupHomeChefs = async () => {};
 let addHomeChefUniqueConstraints = async () => {};
 let addDeliveryPartnerUniqueConstraints = async () => {};
+let createDpEarningsTables = async () => {};
 try {
   const migrations = require('./src/config/migrations');
   createProductsTable = migrations.createProductsTable || createProductsTable;
@@ -64,6 +65,7 @@ try {
   cleanupHomeChefs = migrations.cleanupHomeChefs || cleanupHomeChefs;
   addHomeChefUniqueConstraints = migrations.addHomeChefUniqueConstraints || addHomeChefUniqueConstraints;
   addDeliveryPartnerUniqueConstraints = migrations.addDeliveryPartnerUniqueConstraints || addDeliveryPartnerUniqueConstraints;
+  createDpEarningsTables = migrations.createDpEarningsTables || createDpEarningsTables;
 } catch (err) {
   console.error('Warning: could not load migrations module:', err.message || err);
 }
@@ -130,6 +132,9 @@ app.use('/api/user-food-orders', userFoodOrdersRouter);
 app.use('/api/userFoodOrders', userFoodOrdersRouter);
 app.use('/api/delivery', deliveryRouter);
 
+const dpEarningsRouter = require('./src/routes/dpEarnings');
+app.use('/api/dp-earnings', dpEarningsRouter);
+
 const nearbyChefsRouter = require('./src/routes/nearbyChefs');
 app.use('/api/nearby-chefs', nearbyChefsRouter);
 
@@ -161,6 +166,7 @@ const startServer = async () => {
     await createChefCategoryTable();
     await createFranchiseCategoryTable();
     await createWishlistTable();
+    await createDpEarningsTables();
   } catch (err) {
     console.error('Migration error:', err.message || err);
   }

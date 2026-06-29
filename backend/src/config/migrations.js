@@ -823,6 +823,100 @@ const addDeliveryPartnerUniqueConstraints = async () => {
     }
 };
 
+const createDpEarningsTables = async () => {
+    try {
+        const settingsSQL = `
+        CREATE TABLE IF NOT EXISTS dp_earnings_settings (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            base_pickup_charge DECIMAL(10,2) DEFAULT 20.00,
+            base_delivery_charge DECIMAL(10,2) DEFAULT 15.00,
+            per_km_charge DECIMAL(10,2) DEFAULT 5.00,
+            minimum_charge DECIMAL(10,2) DEFAULT 30.00,
+            waiting_time_charge_per_min DECIMAL(10,2) DEFAULT 2.00,
+            free_waiting_time_mins INT DEFAULT 5,
+            return_delivery_charge DECIMAL(10,2) DEFAULT 10.00,
+            toll_charges DECIMAL(10,2) DEFAULT 0.00,
+            platform_commission_percent DECIMAL(5,2) DEFAULT 10.00,
+            gst_tax_percent DECIMAL(5,2) DEFAULT 18.00,
+            
+            cod_bonus DECIMAL(10,2) DEFAULT 5.00,
+            night_delivery_bonus DECIMAL(10,2) DEFAULT 15.00,
+            peak_hour_bonus DECIMAL(10,2) DEFAULT 10.00,
+            rain_weather_bonus DECIMAL(10,2) DEFAULT 20.00,
+            festival_bonus DECIMAL(10,2) DEFAULT 25.00,
+            heavy_parcel_charge DECIMAL(10,2) DEFAULT 10.00,
+            multi_order_bonus DECIMAL(10,2) DEFAULT 5.00,
+            ev_vehicle_bonus DECIMAL(10,2) DEFAULT 10.00,
+            
+            daily_incentive_target_orders INT DEFAULT 15,
+            daily_incentive_reward DECIMAL(10,2) DEFAULT 100.00,
+            
+            order_cancellation_penalty DECIMAL(10,2) DEFAULT 20.00,
+            late_delivery_penalty DECIMAL(10,2) DEFAULT 15.00,
+            customer_complaint_penalty DECIMAL(10,2) DEFAULT 50.00,
+            
+            updated_by VARCHAR(255) DEFAULT NULL,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `;
+
+        const historySQL = `
+        CREATE TABLE IF NOT EXISTS dp_earnings_history (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            delivery_partner_user_id VARCHAR(255) NOT NULL,
+            order_id VARCHAR(100),
+            
+            base_pay DECIMAL(10,2) DEFAULT 0.00,
+            distance_pay DECIMAL(10,2) DEFAULT 0.00,
+            waiting_pay DECIMAL(10,2) DEFAULT 0.00,
+            
+            bonuses_total DECIMAL(10,2) DEFAULT 0.00,
+            penalties_total DECIMAL(10,2) DEFAULT 0.00,
+            
+            platform_commission DECIMAL(10,2) DEFAULT 0.00,
+            tax_amount DECIMAL(10,2) DEFAULT 0.00,
+            net_earnings DECIMAL(10,2) DEFAULT 0.00,
+            
+            status VARCHAR(50) DEFAULT 'Credited',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            
+            KEY idx_dp_user_id (delivery_partner_user_id),
+            KEY idx_order_id (order_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `;
+
+        const payoutsSQL = `
+        CREATE TABLE IF NOT EXISTS dp_payouts (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            delivery_partner_user_id VARCHAR(255) NOT NULL,
+            amount DECIMAL(10,2) NOT NULL,
+            status VARCHAR(50) DEFAULT 'Pending',
+            transaction_id VARCHAR(100),
+            payment_method VARCHAR(50),
+            requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            processed_at TIMESTAMP NULL,
+            processed_by VARCHAR(255),
+            
+            KEY idx_dp_payout_user_id (delivery_partner_user_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `;
+
+        await pool.execute(settingsSQL);
+        await pool.execute(historySQL);
+        await pool.execute(payoutsSQL);
+
+        // Seed settings if empty
+        const [settingsCount] = await pool.execute('SELECT COUNT(*) as count FROM dp_earnings_settings');
+        if (settingsCount[0].count === 0) {
+            await pool.execute('INSERT INTO dp_earnings_settings () VALUES ()');
+        }
+
+        console.log('✓ Delivery Partner Earnings tables created');
+    } catch (err) {
+        console.error('✗ Error creating DP Earnings tables:', err.message || err);
+    }
+};
+
     module.exports = {
         createProductsTable,
         createRecipeDetailsTable,
@@ -842,6 +936,7 @@ const addDeliveryPartnerUniqueConstraints = async () => {
         cleanupHomeChefs,
         addHomeChefUniqueConstraints,
         addDeliveryPartnerUniqueConstraints,
+        createDpEarningsTables,
         // Ensure audit columns exist on all tables
         ensureAuditColumns: async () => {
             try {

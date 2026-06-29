@@ -398,6 +398,24 @@ router.patch('/status/:id', verifyToken, async (req, res) => {
       return res.status(400).json({ message: 'Status is required' });
     }
     await controller.updateOrderStatus(id, status);
+
+    if (status.toLowerCase() === 'delivered') {
+      try {
+        const dpEarningsController = require('../controllers/dpEarningsController');
+        const [orderRows] = await pool.execute('SELECT * FROM user_food_order_table WHERE id = ?', [id]);
+        if (orderRows.length > 0) {
+          const order = orderRows[0];
+          const dpId = order.delivery_partner_user_id || order.delivery_partner;
+          if (dpId) {
+            // Distance is mocked at 5.0 for now, ideally calculated from lat/lng
+            await dpEarningsController.calculateAndCreditEarnings(order.order_id, dpId, 5.0);
+          }
+        }
+      } catch (calcErr) {
+        console.error('Failed to calculate DP earnings:', calcErr);
+      }
+    }
+
     res.json({ message: 'Order status updated successfully' });
   } catch (err) {
     console.error('Error updating order status:', err);

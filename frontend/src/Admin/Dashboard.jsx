@@ -19,7 +19,8 @@ const FALLBACK = {
     totalDeliveryPartners: 0, totalOrders: 0,
     pendingApprovals: 0,
     franchiseOrdersCount: 0, franchiseDeliveredCount: 0,
-    franchiseCancelledCount: 0, franchiseDeliveredRevenue: 0
+    franchiseCancelledCount: 0, franchiseDeliveredRevenue: 0,
+    totalDpEarnings: 0, totalDpBonuses: 0, totalDpPenalties: 0, totalPlatformCommission: 0
   },
   charts: {
     dailyOrders: [
@@ -249,6 +250,30 @@ const Dashboard = () => {
       value: cards?.totalProducts || 0,
       gradient: "linear-gradient(135deg,#03120f 0%,#0B1120 100%)",
       iconBg: "#06B6D4"
+    },
+    {
+      label: "DP Earnings", icon: DollarSign, positive: true, trend: "Paid",
+      value: `₹${Number(cards?.totalDpEarnings || 0).toLocaleString()}`,
+      gradient: "linear-gradient(135deg,#1f2937 0%,#0B1120 100%)",
+      iconBg: "#4F46E5"
+    },
+    {
+      label: "DP Bonuses", icon: TrendingUp, positive: true, trend: "Extra",
+      value: `₹${Number(cards?.totalDpBonuses || 0).toLocaleString()}`,
+      gradient: "linear-gradient(135deg,#064e3b 0%,#0B1120 100%)",
+      iconBg: "#10B981"
+    },
+    {
+      label: "DP Penalties", icon: TrendingDown, positive: false, trend: "Deducted",
+      value: `₹${Number(cards?.totalDpPenalties || 0).toLocaleString()}`,
+      gradient: "linear-gradient(135deg,#7f1d1d 0%,#0B1120 100%)",
+      iconBg: "#EF4444"
+    },
+    {
+      label: "Platform Comm.", icon: Landmark, positive: true, trend: "Revenue",
+      value: `₹${Number(cards?.totalPlatformCommission || 0).toLocaleString()}`,
+      gradient: "linear-gradient(135deg,#2e1a05 0%,#0B1120 100%)",
+      iconBg: "#F59E0B"
     }
   ];
 
