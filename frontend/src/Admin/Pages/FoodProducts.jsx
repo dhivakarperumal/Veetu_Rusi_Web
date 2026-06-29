@@ -210,6 +210,31 @@ const FoodProducts = () => {
     return 'bg-red-50 text-red-700 border border-red-200';
   };
 
+  const getImageUrl = (item) => {
+    let imgPath = null;
+    let parsedImages = item.images;
+    
+    if (typeof parsedImages === 'string') {
+      try {
+        parsedImages = JSON.parse(parsedImages);
+      } catch (e) {
+        // Not JSON
+      }
+    }
+
+    if (parsedImages && Array.isArray(parsedImages) && parsedImages.length > 0) {
+      imgPath = parsedImages[0];
+    } else if (item.image) {
+      imgPath = item.image;
+    }
+    
+    if (!imgPath || typeof imgPath !== 'string') return null;
+    if (imgPath.startsWith('http') || imgPath.startsWith('data:')) return imgPath;
+    
+    const baseUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'https://veeturusi.qtechx.com';
+    return `${baseUrl}${imgPath.startsWith('/') ? '' : '/'}${imgPath}`;
+  };
+
   return (
     <div className="space-y-6 p-6 min-h-screen">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -325,6 +350,7 @@ const FoodProducts = () => {
               <thead>
                 <tr className="bg-slate-700 border-b border-slate-200">
                   <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.33em] text-slate-300">S.No</th>
+                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.33em] text-slate-300">Image</th>
                   <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.33em] text-slate-300">Food Info</th>
                   <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.33em] text-slate-300">Kitchen Name</th>
                   <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.33em] text-slate-300">Cuisine</th>
@@ -345,6 +371,13 @@ const FoodProducts = () => {
                   paginatedFoods.map((item, index) => (
                     <tr key={item.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-6 py-4 text-sm font-black text-slate-500">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                      <td className="px-6 py-4">
+                        {getImageUrl(item) ? (
+                          <img src={getImageUrl(item)} alt={item.name} className="w-12 h-12 rounded-xl object-cover border border-slate-200 shadow-sm" />
+                        ) : (
+                          <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center text-[10px] font-black text-slate-400 border border-slate-200">NO IMG</div>
+                        )}
+                      </td>
                       <td className="px-6 py-4">
                         <div className="text-sm font-black text-slate-900">{item.name || item.product_code || 'Unnamed Food'}</div>
                         <div className="text-xs text-slate-500 mt-1">{getFoodDescription(item)}</div>
@@ -409,11 +442,14 @@ const FoodProducts = () => {
           ) : (
             paginatedFoods.map((item) => (
               <div key={item.id} className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm transition hover:shadow-lg">
-                <div className="bg-slate-950 px-5 py-4 text-white">
-                  <div className="flex items-center justify-between gap-3">
+                <div className="bg-slate-950 px-5 py-4 text-white relative overflow-hidden">
+                  {getImageUrl(item) && (
+                    <img src={getImageUrl(item)} alt={item.name} className="absolute inset-0 w-full h-full object-cover opacity-30" />
+                  )}
+                  <div className="relative flex items-center justify-between gap-3 z-10">
                     <div>
-                      <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{item.category || 'Food Product'}</p>
-                      <h3 className="mt-2 text-xl font-black text-white">{item.name || 'Unnamed Food'}</h3>
+                      <p className="text-xs uppercase tracking-[0.3em] text-slate-300">{item.category || 'Food Product'}</p>
+                      <h3 className="mt-2 text-xl font-black text-white drop-shadow-md">{item.name || 'Unnamed Food'}</h3>
                     </div>
                     <span className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${statusBadge(item.status)}`}>
                       {item.status || 'Unknown'}
