@@ -241,7 +241,14 @@ const getChefOrders = async (chefUserId) => {
 
 const getUserOrders = async (userId) => {
   const [rows] = await pool.execute(
-    'SELECT * FROM user_food_order_table WHERE user_id = ? ORDER BY ordered_at DESC',
+    `SELECT o.*, 
+            COALESCE(lt.latitude, u.latitude) AS delivery_partner_lat,
+            COALESCE(lt.longitude, u.longitude) AS delivery_partner_lng
+     FROM user_food_order_table o
+     LEFT JOIN delivery_live_tracking lt ON lt.order_id COLLATE utf8mb4_unicode_ci = o.order_id COLLATE utf8mb4_unicode_ci
+     LEFT JOIN users u ON u.user_id COLLATE utf8mb4_unicode_ci = o.delivery_partner_user_id COLLATE utf8mb4_unicode_ci
+     WHERE o.user_id = ? 
+     ORDER BY o.ordered_at DESC`,
     [userId]
   );
 
@@ -289,7 +296,16 @@ const getUserOrders = async (userId) => {
 };
 
 const getOrderById = async (id) => {
-  const [rows] = await pool.execute('SELECT * FROM user_food_order_table WHERE id = ?', [id]);
+  const [rows] = await pool.execute(
+    `SELECT o.*, 
+            COALESCE(lt.latitude, u.latitude) AS delivery_partner_lat,
+            COALESCE(lt.longitude, u.longitude) AS delivery_partner_lng
+     FROM user_food_order_table o
+     LEFT JOIN delivery_live_tracking lt ON lt.order_id COLLATE utf8mb4_unicode_ci = o.order_id COLLATE utf8mb4_unicode_ci
+     LEFT JOIN users u ON u.user_id COLLATE utf8mb4_unicode_ci = o.delivery_partner_user_id COLLATE utf8mb4_unicode_ci
+     WHERE o.id = ?`,
+    [id]
+  );
   if (!rows.length) return null;
   const order = rows[0];
   return {

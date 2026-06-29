@@ -181,6 +181,18 @@ export default function MyFoodOrders({ isEmbedded = false }) {
     }
   };
 
+  const handleTrack = (order) => {
+    const lat = order.delivery_partner_lat;
+    const lng = order.delivery_partner_lng;
+    
+    if (lat && lng) {
+      const url = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+      window.open(url, "_blank");
+    } else {
+      toast.error("Live tracking location is not available yet.");
+    }
+  };
+
   const content = (
           <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -238,12 +250,12 @@ export default function MyFoodOrders({ isEmbedded = false }) {
                         </div>
                       </div>
 
-                      <div className="rounded-3xl bg-slate-50 p-4">
+                      {/* <div className="rounded-3xl bg-slate-50 p-4">
                         <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Food items</p>
                         <p className="mt-2 text-sm font-semibold text-slate-900">{getItemSummary(order.items)}</p>
-                      </div>
+                      </div> */}
 
-                      <div className="grid gap-3 sm:grid-cols-2">
+                      {/* <div className="grid gap-3 sm:grid-cols-2">
                         <div className="rounded-3xl bg-slate-50 p-4">
                           <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Items quantity</p>
                           <p className="mt-2 text-lg font-black text-slate-900">
@@ -254,17 +266,17 @@ export default function MyFoodOrders({ isEmbedded = false }) {
                           <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Total amount</p>
                           <p className="mt-2 text-lg font-black text-slate-900">₹{parseFloat(order.total_amount || 0).toFixed(2)}</p>
                         </div>
-                      </div>
+                      </div> */}
 
                       <div className="grid gap-3 sm:grid-cols-2">
                         <div className="rounded-3xl bg-slate-50 p-4">
                           <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Chef</p>
                           <p className="mt-2 text-sm font-semibold text-slate-900">{getChefNames(order.items, order.chef_name)}</p>
                         </div>
-                        <div className="rounded-3xl bg-slate-50 p-4">
+                        {/* <div className="rounded-3xl bg-slate-50 p-4">
                           <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Order status</p>
                           <p className="mt-2 text-sm font-semibold text-slate-900">{order.status === "Pending" ? "New Order" : (order.status || 'New Order')}</p>
-                        </div>
+                        </div> */}
                       </div>
                       
                       {/* Delivery Partner Info (Outer Card) */}
@@ -280,9 +292,7 @@ export default function MyFoodOrders({ isEmbedded = false }) {
                             </div>
                             {order.status !== "Delivered" && (
                               <button
-                                onClick={() => {
-                                  toast.info("Connecting to delivery partner live tracking...", { icon: "📍" });
-                                }}
+                                onClick={() => handleTrack(order)}
                                 className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-white transition hover:bg-blue-500 shadow-sm"
                               >
                                 <MapPin className="h-3 w-3" /> Track
@@ -485,11 +495,7 @@ export default function MyFoodOrders({ isEmbedded = false }) {
                       {selectedOrder.status !== "Delivered" && (
                         <div className="mt-4 pt-4 border-t border-slate-200 flex justify-end">
                           <button
-                            onClick={() => {
-                              // Link to user-facing live tracking page when available
-                              toast.info("Connecting to delivery partner live tracking...", { icon: "📍" });
-                              // navigate(`/track-order/${selectedOrder.id}`); 
-                            }}
+                            onClick={() => handleTrack(selectedOrder)}
                             className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-blue-500 shadow-md shadow-blue-500/20"
                           >
                             <MapPin className="h-4 w-4" />
