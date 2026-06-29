@@ -211,6 +211,7 @@ export default function FoodCheckout() {
                       className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                     />
                   </div>
+                  
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-2">
                       City
