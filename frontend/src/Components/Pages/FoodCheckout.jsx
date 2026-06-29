@@ -38,6 +38,7 @@ export default function FoodCheckout() {
     ? [
       {
         id: buyNowItem.product.id,
+        product_id: buyNowItem.product.product_id || buyNowItem.product.id,
         name: buyNowItem.product.name,
         image:
           buyNowItem.variant?.images?.[0] ||
@@ -50,6 +51,16 @@ export default function FoodCheckout() {
         quantity: buyNowItem.quantity,
         variant: buyNowItem.variant,
         size: buyNowItem.size,
+        chef_user_id: buyNowItem.product.chef_user_id || buyNowItem.product.created_by || buyNowItem.product.created_by_user_id || "",
+        chef_id: buyNowItem.product.chef_id || "",
+        chef_name: buyNowItem.product.chef_name || buyNowItem.product.created_by_name || "",
+        chef_email: buyNowItem.product.chef_email || buyNowItem.product.created_by_email || "",
+        chef_phone: buyNowItem.product.chef_phone || buyNowItem.product.created_by_phone || "",
+        franchise_id: buyNowItem.product.franchise_id || "",
+        franchise_user_id: buyNowItem.product.franchise_user_id || "",
+        franchise_name: buyNowItem.product.franchise_name || "",
+        franchise_email: buyNowItem.product.franchise_email || "",
+        franchise_phone: buyNowItem.product.franchise_phone || "",
       },
     ]
     : userFoodCart;
