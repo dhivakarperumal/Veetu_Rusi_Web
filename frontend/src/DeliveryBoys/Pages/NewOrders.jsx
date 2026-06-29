@@ -183,6 +183,12 @@ const NewOrders = () => {
   useEffect(() => { fetchOrders(); }, []);
 
   const filtered = orders.filter((o) => {
+    // Exclude orders that are already assigned to a delivery partner
+    if (o.delivery_boy_id) return false;
+    if (["Delivery Partner Assigned", "Picked Up", "Out for Delivery", "Delivered", "Cancelled"].includes(o.status)) {
+        return false;
+    }
+
     const q = searchTerm.trim().toLowerCase();
     if (!q) return true;
     return [o.order_id, o.customer_name, o.customer_phone, String(o.id)]

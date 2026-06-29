@@ -237,7 +237,7 @@ router.patch('/orders/:id/assign', async (req, res) => {
            delivery_partner_phone = ?,
            updated_at = NOW()
        WHERE id = ?
-         AND status = 'Searching Delivery Partner'
+         AND status IN ('Searching Delivery Partner', 'Order Placed', 'Accepted', 'Preparing', 'Food Ready')
          AND (delivery_partner IS NULL OR delivery_partner = '')`,
       [deliveryBoyId, partnerUserId, partnerName, partnerPhone, orderId]
     );
