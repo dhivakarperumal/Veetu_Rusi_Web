@@ -385,12 +385,12 @@ const Navbar = () => {
               )}
             </Link>
 
-            <Link
+            {/* <Link
               to="/ordersmain"
               className="text-primary hover:text-primary-light hover:scale-110 transition"
             >
               <Package size={22} />
-            </Link>
+            </Link> */}
 
             {user?.role === "user" && (
               <>
@@ -418,7 +418,7 @@ const Navbar = () => {
                   to="/food-cart"
                   className="relative text-primary hover:text-primary-light hover:scale-110 transition"
                 >
-                  <FiShoppingBag size={20} />
+                  <ShoppingCart size={20} />
 
                   {userFoodCart && userFoodCart.length > 0 && (
                     <span className="absolute -top-2 -right-2 bg-rose-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">
@@ -429,7 +429,7 @@ const Navbar = () => {
               </>
             )}
 
-            <Link
+            {/* <Link
               to="/cart"
               className="relative text-primary hover:text-primary-light hover:scale-110 transition"
             >
@@ -439,7 +439,7 @@ const Navbar = () => {
                   {cart.length > 9 ? '9+' : cart.length}
                 </span>
               )}
-            </Link>
+            </Link> */}
 
             {/* User Dropdown */}
 

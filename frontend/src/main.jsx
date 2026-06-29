@@ -349,7 +349,7 @@ createRoot(document.getElementById("root")).render(
   <GoogleOAuthProvider clientId="92181265196-n9a9p26qe601hg7lar8acq6s4f1cknq7.apps.googleusercontent.com">
     <AuthProvider>
       <StoreProvider>
-        <Toaster position="top-right" reverseOrder={false} containerStyle={{
+        <Toaster position="top-left" reverseOrder={false} containerStyle={{
           zIndex: 99999,
         }} />
         <React.Suspense fallback={<Loader />}>
