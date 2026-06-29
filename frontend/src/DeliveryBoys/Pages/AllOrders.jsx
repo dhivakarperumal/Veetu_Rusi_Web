@@ -41,16 +41,23 @@ const EditOrderModal = ({ order, onClose, onSaved }) => {
     const [status, setStatus] = useState(order.status || "");
     const [saving, setSaving] = useState(false);
 
+    // Close on Escape key
+    useEffect(() => {
+        const onKey = (e) => { if (e.key === "Escape") onClose(); };
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, [onClose]);
+
     const handleSave = async (e) => {
         e.preventDefault();
         if (!status) return toast.error("Please select a status.");
         if (!DELIVERY_STATUSES.includes(status)) {
-            return toast.error(`Delivery boy can only set: ${DELIVERY_STATUSES.join(", ")}`);
+            return toast.error(`You can only update to: ${DELIVERY_STATUSES.join(", ")}`);
         }
         setSaving(true);
         try {
             await api.patch(`/delivery/orders/${order.id}/status`, { status });
-            toast.success(`Order status updated to "${status}"`);
+            toast.success(`Order moved to "${status}"`);
             onSaved();
             onClose();
         } catch (err) {
@@ -61,150 +68,170 @@ const EditOrderModal = ({ order, onClose, onSaved }) => {
         }
     };
 
+    const statusIcons = {
+        "Picked Up":        "🛵",
+        "Out for Delivery": "🚚",
+        "Delivered":        "✅",
+    };
+
     return (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
             {/* Backdrop */}
-            <div
-                className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-                onClick={onClose}
-            />
+            <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose} />
 
-            {/* Modal */}
-            <div className="relative w-full max-w-lg overflow-hidden rounded-[2.5rem] border border-white/10 bg-[#0b0f17] shadow-2xl shadow-black/60 animate-in fade-in slide-in-from-bottom-4 duration-300">
+            {/* Modal — flex column so header+footer are sticky */}
+            <div className="relative z-10 w-full max-w-md flex flex-col rounded-[2rem] border border-white/10 bg-[#0c1018] shadow-2xl shadow-black/70 max-h-[90vh]">
 
-                {/* Header */}
-                <div className="relative bg-gradient-to-br from-emerald-900 via-emerald-800 to-slate-900 px-8 py-7">
+                {/* ── Sticky Header ── */}
+                <div className="shrink-0 relative bg-gradient-to-r from-emerald-900 to-slate-900 rounded-t-[2rem] px-7 py-6">
                     <button
+                        type="button"
                         onClick={onClose}
-                        className="absolute right-5 top-5 p-2 rounded-full hover:bg-white/10 transition text-white/60 hover:text-white"
+                        className="absolute right-5 top-5 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/70 hover:text-white transition"
                     >
-                        <FiX size={18} />
+                        <FiX size={16} />
                     </button>
-                    <p className="text-[10px] font-black uppercase tracking-[0.35em] text-emerald-300 mb-2">
-                        Update Delivery Status
+                    <p className="text-[9px] font-black uppercase tracking-[0.4em] text-emerald-400 mb-1">
+                        Delivery Status Update
                     </p>
-                    <h3 className="text-2xl font-black text-white tracking-tight italic">
-                        Edit Order
-                    </h3>
-                    <p className="mt-1.5 text-xs font-bold text-emerald-300/70">
+                    <h3 className="text-xl font-black text-white italic">Edit Order</h3>
+                    <p className="text-[11px] font-bold text-emerald-300/70 mt-0.5">
                         {order.order_id || `#${order.id}`}
                     </p>
                 </div>
 
-                {/* Body */}
-                <form onSubmit={handleSave} className="p-8 space-y-6">
+                {/* ── Scrollable Body ── */}
+                <form onSubmit={handleSave} className="flex flex-col flex-1 min-h-0">
+                    <div className="overflow-y-auto flex-1 p-6 space-y-4">
 
-                    {/* Customer info (read-only) */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="rounded-2xl bg-slate-900/60 border border-white/5 p-4">
-                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1.5 flex items-center gap-1.5">
-                                <FiUser size={10} /> Customer Name
-                            </p>
-                            <p className="text-white font-bold text-sm truncate">
-                                {order.customer_name || "—"}
-                            </p>
+                        {/* Customer + Amount */}
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="rounded-2xl bg-slate-900 border border-white/5 p-4">
+                                <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1.5 flex items-center gap-1">
+                                    <FiUser size={9} /> Customer
+                                </p>
+                                <p className="text-white font-bold text-sm truncate">
+                                    {order.customer_name || "—"}
+                                </p>
+                            </div>
+                            <div className="rounded-2xl bg-slate-900 border border-white/5 p-4">
+                                <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1.5">
+                                    Amount
+                                </p>
+                                <p className="text-emerald-400 font-black text-sm">
+                                    {fmt(order.total_amount)}
+                                </p>
+                            </div>
                         </div>
-                        <div className="rounded-2xl bg-slate-900/60 border border-white/5 p-4">
-                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1.5">
-                                Order Amount (₹)
-                            </p>
-                            <p className="text-emerald-400 font-black text-sm">
-                                {fmt(order.total_amount)}
-                            </p>
+
+                        {/* Delivery Address */}
+                        {(order.street_address || order.city || order.district) && (
+                            <div className="rounded-2xl bg-slate-900 border border-white/5 p-4">
+                                <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1.5 flex items-center gap-1">
+                                    <FiMapPin size={9} /> Delivery Address
+                                </p>
+                                <p className="text-slate-300 text-xs font-semibold leading-5">
+                                    {[order.street_address, order.city, order.district, order.state, order.zip_code]
+                                        .filter(Boolean).join(", ")}
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Ordered At */}
+                        {order.ordered_at && (
+                            <div className="rounded-2xl bg-slate-900 border border-white/5 p-4">
+                                <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1.5 flex items-center gap-1">
+                                    <FiCalendar size={9} /> Ordered At
+                                </p>
+                                <p className="text-slate-300 text-xs font-semibold">
+                                    {new Date(order.ordered_at).toLocaleString("en-IN", {
+                                        day: "2-digit", month: "short", year: "numeric",
+                                        hour: "2-digit", minute: "2-digit"
+                                    })}
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Current Status */}
+                        <div className="flex items-center gap-3 px-1">
+                            <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">
+                                Current:
+                            </span>
+                            <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${getStatusStyle(order.status)}`}>
+                                {order.status}
+                            </span>
                         </div>
-                    </div>
 
-                    {/* Delivery Address */}
-                    {(order.street_address || order.city) && (
-                        <div className="rounded-2xl bg-slate-900/60 border border-white/5 p-4">
-                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1.5 flex items-center gap-1.5">
-                                <FiMapPin size={10} /> Delivery Address
-                            </p>
-                            <p className="text-slate-300 text-xs font-semibold leading-relaxed">
-                                {[order.street_address, order.city, order.district, order.state, order.zip_code]
-                                    .filter(Boolean).join(", ")}
-                            </p>
-                        </div>
-                    )}
+                        {/* Divider */}
+                        <div className="border-t border-white/5" />
 
-                    {/* Ordered At */}
-                    {order.ordered_at && (
-                        <div className="rounded-2xl bg-slate-900/60 border border-white/5 p-4">
-                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1.5 flex items-center gap-1.5">
-                                <FiCalendar size={10} /> Ordered At
+                        {/* Status Selector */}
+                        <div>
+                            <p className="text-[10px] font-black uppercase tracking-[0.32em] text-slate-400 mb-3">
+                                Update Delivery Status
                             </p>
-                            <p className="text-slate-300 text-xs font-semibold">
-                                {new Date(order.ordered_at).toLocaleString()}
-                            </p>
-                        </div>
-                    )}
-
-                    {/* Current Status Badge */}
-                    <div className="flex items-center gap-3">
-                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">
-                            Current Status:
-                        </p>
-                        <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${getStatusStyle(order.status)}`}>
-                            {order.status}
-                        </span>
-                    </div>
-
-                    {/* Delivery Status Select */}
-                    <div className="space-y-2">
-                        <label className="block text-[10px] font-black uppercase tracking-[0.32em] text-slate-400">
-                            Update Delivery Status
-                        </label>
-                        <div className="grid grid-cols-1 gap-2">
-                            {DELIVERY_STATUSES.map((s) => {
-                                const isSelected = status === s;
-                                const isCurrent  = order.status === s;
-                                return (
-                                    <button
-                                        key={s}
-                                        type="button"
-                                        onClick={() => setStatus(s)}
-                                        className={`flex items-center justify-between px-5 py-4 rounded-2xl border text-sm font-bold transition
-                                            ${isSelected
-                                                ? "border-emerald-500 bg-emerald-500/10 text-emerald-300"
-                                                : "border-white/10 bg-slate-900/50 text-slate-400 hover:border-emerald-500/40 hover:text-slate-200"}`}
-                                    >
-                                        <span>{s}</span>
-                                        <span className="flex items-center gap-2">
-                                            {isCurrent && (
-                                                <span className="text-[9px] text-slate-500 font-black uppercase tracking-widest">
-                                                    Current
+                            <div className="space-y-2">
+                                {DELIVERY_STATUSES.map((s) => {
+                                    const isSelected = status === s;
+                                    const isCurrent  = order.status === s;
+                                    return (
+                                        <button
+                                            key={s}
+                                            type="button"
+                                            onClick={() => setStatus(s)}
+                                            className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl border-2 text-sm font-bold transition-all duration-150
+                                                ${isSelected
+                                                    ? "border-emerald-500 bg-emerald-500/15 text-emerald-300 shadow-lg shadow-emerald-900/20"
+                                                    : "border-white/10 bg-slate-900/60 text-slate-400 hover:border-emerald-500/40 hover:text-white hover:bg-slate-800/60"
+                                                }`}
+                                        >
+                                            <span className="flex items-center gap-3">
+                                                <span className="text-lg">{statusIcons[s]}</span>
+                                                {s}
+                                            </span>
+                                            <span className="flex items-center gap-2 shrink-0">
+                                                {isCurrent && !isSelected && (
+                                                    <span className="text-[9px] text-slate-600 font-black uppercase tracking-widest border border-slate-700 px-2 py-0.5 rounded-full">
+                                                        Current
+                                                    </span>
+                                                )}
+                                                <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all
+                                                    ${isSelected
+                                                        ? "bg-emerald-500 border-emerald-500"
+                                                        : "border-slate-700 bg-transparent"}`}
+                                                >
+                                                    {isSelected && (
+                                                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                                                            <path d="M2 5l2.5 2.5L8 3" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                                                        </svg>
+                                                    )}
                                                 </span>
-                                            )}
-                                            {isSelected && (
-                                                <span className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
-                                                    <FiCheckCircle size={11} className="text-white" />
-                                                </span>
-                                            )}
-                                        </span>
-                                    </button>
-                                );
-                            })}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            <p className="text-[9px] text-slate-600 font-semibold mt-3 px-1">
+                                * As delivery boy, you can only update to: Picked Up, Out for Delivery, or Delivered.
+                            </p>
                         </div>
-                        <p className="text-[10px] text-slate-600 font-semibold pt-1">
-                            * Delivery boys can only update to: Picked Up, Out for Delivery, or Delivered.
-                        </p>
                     </div>
 
-                    {/* Actions */}
-                    <div className="flex gap-3 pt-2">
+                    {/* ── Sticky Footer ── */}
+                    <div className="shrink-0 p-5 border-t border-white/5 bg-[#0c1018] rounded-b-[2rem] flex gap-3">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 rounded-2xl border border-white/10 bg-slate-900 px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-300 hover:bg-slate-800 transition"
+                            className="flex-1 rounded-2xl border border-white/10 bg-slate-900 py-3.5 text-[10px] font-black uppercase tracking-widest text-slate-300 hover:bg-slate-800 transition"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
-                            disabled={saving || !status || status === order.status}
-                            className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 hover:bg-emerald-500 px-5 py-4 text-[10px] font-black uppercase tracking-widest text-white transition shadow-lg shadow-emerald-900/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={saving || !status || status === order.status || !DELIVERY_STATUSES.includes(status)}
+                            className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 hover:bg-emerald-500 py-3.5 text-[10px] font-black uppercase tracking-widest text-white transition shadow-lg shadow-emerald-900/30 disabled:opacity-40 disabled:cursor-not-allowed"
                         >
-                            <FiSave size={14} />
+                            <FiSave size={13} />
                             {saving ? "Saving…" : "Save Changes"}
                         </button>
                     </div>
@@ -214,7 +241,9 @@ const EditOrderModal = ({ order, onClose, onSaved }) => {
     );
 };
 
+
 /* ─── Main Component ───────────────────────────────────────────────────── */
+
 const Orders = ({ statusFilter = "All" }) => {
     const [searchTerm, setSearchTerm]     = useState("");
     const { ordersCache, setOrdersCache } = useAdmin();
