@@ -86,27 +86,27 @@ const QuickViewModal = ({ product, onClose }) => {
       <div
         className="relative bg-white w-full max-w-5xl rounded-3xl shadow-xl 
   overflow-y-auto md:overflow-hidden 
-  max-h-[95vh] flex flex-col p-2"
+  max-h-[90vh] flex flex-col p-3"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-50 bg-white rounded-full p-2 shadow hover:bg-red-50 hover:text-red-500 transition cursor-pointer"
+          className="absolute top-4 right-4 z-50 bg-white rounded-full p-3 shadow hover:bg-red-50 hover:text-red-500 transition cursor-pointer"
         >
           <FiX size={22} />
         </button>
 
-        <div className="flex flex-col md:flex-row md:h-[95vh]">
+        <div className="flex flex-col md:flex-row md:h-[87vh]">
           {/* LEFT IMAGE SECTION */}
-          <div className="md:w-1/2 w-full bg-white flex flex-col border-r border-gray-400">
+          <div className="md:w-1/2 w-full bg-white flex flex-col border-r border-gray-200">
 
             {/* Main Image */}
-            <div className="relative h-[500px] lg:h-[600px] overflow-hidden bg-gray-50">
+            <div className="relative h-[500px] lg:h-[600px] mr-3 overflow-hidden bg-gray-50">
               <img
                 src={selectedImage}
                 alt={product.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full rounded-2xl object-cover"
               />
 
               {/* Previous */}
