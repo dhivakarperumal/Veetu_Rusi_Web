@@ -213,7 +213,7 @@ const Navbar = () => {
                 </button>
 
                 {categoryMenu && (
-                  <div className="absolute top-12 left-0 w-60 bg-white/95 backdrop-blur-xl border border-gray-200 rounded-2xl shadow-2xl overflow-visible z-50 animate-fadeIn">
+                  <div className="absolute top-12 left-0 w-60 bg-white/95 backdrop-blur-xl border border-gray-200 rounded-2xl shadow-2xl p-2 overflow-visible z-50 animate-fadeIn">
 
                     {/* FOOD */}
                     <div
@@ -223,19 +223,19 @@ const Navbar = () => {
                         setActiveMainCategory("Food");
                       }}
                     >
-                      <div className="group flex items-center justify-between px-5 py-4 cursor-pointer transition-all duration-300 hover:bg-gradient-to-r hover:from-primary hover:to-primary-light hover:text-white">
+                      <div className="mx-2 my-1 rounded-xl group flex items-center justify-between px-5 py-4 cursor-pointer transition-all duration-300 hover:bg-gradient-to-r hover:from-primary hover:to-primary-light hover:text-white">
                         Food
                         <FiChevronRight />
                       </div>
 
                       {activeMainCategory === "Food" && (
-                        <div className="absolute left-full top-0 ml-1 w-60 bg-white border border-gray-200 rounded-2xl shadow-2xl z-50">
+                        <div className="absolute left-full top-0 ml-1 w-60 bg-white border border-gray-200 rounded-2xl shadow-2xl p-2 z-50">
                           {groupedCategories.Food?.map((cat) => (
                             <NavLink
                               key={cat.id}
                               to={`/category/${cat.id}`}
                               onClick={() => setCategoryMenu(false)}
-                              className="block px-4 py-3 text-sm text-gray-700 hover:bg-primary hover:text-white"
+                              className="block mx-2 my-1 px-4 py-3 rounded-xl text-sm text-gray-700 transition-all duration-300 hover:bg-gradient-to-r hover:from-primary hover:to-primary-light hover:text-white"
                             >
                               {cat.name}
                             </NavLink>
@@ -252,7 +252,7 @@ const Navbar = () => {
                         setActiveMainCategory("Products");
                       }}
                     >
-                      <div className="group flex items-center justify-between px-5 py-4 cursor-pointer transition-all duration-300 hover:bg-gradient-to-r hover:from-primary hover:to-primary-light hover:text-white">
+                      <div className="mx-2 my-1 rounded-xl group flex items-center justify-between px-5 py-4 cursor-pointer transition-all duration-300 hover:bg-gradient-to-r hover:from-primary hover:to-primary-light hover:text-white">
                         Products
                         <FiChevronRight />
                       </div>
@@ -273,7 +273,7 @@ const Navbar = () => {
                               key={cat.id}
                               to={`/category/${cat.id}`}
                               onClick={() => setCategoryMenu(false)}
-                              className="group flex items-center justify-between px-5 py-3 text-sm text-gray-700 transition-all duration-300 hover:bg-gradient-to-r hover:from-primary hover:to-primary-light hover:text-white"
+                              className="group flex items-center justify-between mx-2 my-1 px-5 py-3 rounded-xl text-sm text-gray-700 transition-all duration-300 hover:bg-gradient-to-r hover:from-primary hover:to-primary-light hover:text-white"
                             >
                               <>
                                 <span>{cat.name}</span>
