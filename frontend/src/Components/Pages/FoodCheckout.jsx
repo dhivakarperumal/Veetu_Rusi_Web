@@ -159,11 +159,12 @@ export default function FoodCheckout() {
 
               {/* Personal Information */}
               <div className="bg-white rounded-3xl shadow p-8">
-                <h2 className="text-2xl font-bold text-slate-900 mb-4">
+                <h2 className="text-2xl font-bold text-slate-900 mb-6">
                   Personal Information
                 </h2>
 
                 <div className="grid gap-4 md:grid-cols-2">
+
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-2">
                       Name
@@ -171,7 +172,7 @@ export default function FoodCheckout() {
                     <input
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                     />
                   </div>
 
@@ -182,51 +183,58 @@ export default function FoodCheckout() {
                     <input
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                     />
                   </div>
-                </div>
 
-                <div className="mt-4">
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Phone
-                  </label>
-                  <input
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                  />
-                </div>
-              </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      Phone
+                    </label>
+                    <input
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                    />
+                  </div>
 
-              <div className="bg-white rounded-3xl shadow p-8">
-                <h2 className="text-2xl font-bold text-slate-900 mb-4">Delivery details</h2>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Street Address</label>
-                    <textarea
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      Street Address
+                    </label>
+
+                    <input
+                      type="text"
                       value={streetAddress}
                       onChange={(e) => setStreetAddress(e.target.value)}
-                      rows={3}
-                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                      placeholder="Enter your street address"
+                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">City</label>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      City
+                    </label>
                     <input
                       value={city}
                       onChange={(e) => setCity(e.target.value)}
-                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                      placeholder="Enter your city"
+                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                     />
                   </div>
+
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">District</label>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      District
+                    </label>
                     <input
                       value={district}
                       onChange={(e) => setDistrict(e.target.value)}
-                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                      placeholder="Enter your district"
+                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                     />
                   </div>
+
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-2">
                       State
@@ -235,116 +243,119 @@ export default function FoodCheckout() {
                     <select
                       value={stateValue}
                       onChange={(e) => setStateValue(e.target.value)}
-                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 bg-white outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                     >
                       <option value="">Select State</option>
-                      <option value="Andhra Pradesh">Andhra Pradesh</option>
-                      <option value="Arunachal Pradesh">Arunachal Pradesh</option>
-                      <option value="Assam">Assam</option>
-                      <option value="Bihar">Bihar</option>
-                      <option value="Chhattisgarh">Chhattisgarh</option>
-                      <option value="Goa">Goa</option>
-                      <option value="Gujarat">Gujarat</option>
-                      <option value="Haryana">Haryana</option>
-                      <option value="Himachal Pradesh">Himachal Pradesh</option>
-                      <option value="Jharkhand">Jharkhand</option>
-                      <option value="Karnataka">Karnataka</option>
-                      <option value="Kerala">Kerala</option>
-                      <option value="Madhya Pradesh">Madhya Pradesh</option>
-                      <option value="Maharashtra">Maharashtra</option>
-                      <option value="Manipur">Manipur</option>
-                      <option value="Meghalaya">Meghalaya</option>
-                      <option value="Mizoram">Mizoram</option>
-                      <option value="Nagaland">Nagaland</option>
-                      <option value="Odisha">Odisha</option>
-                      <option value="Punjab">Punjab</option>
-                      <option value="Rajasthan">Rajasthan</option>
-                      <option value="Sikkim">Sikkim</option>
-                      <option value="Tamil Nadu">Tamil Nadu</option>
-                      <option value="Telangana">Telangana</option>
-                      <option value="Tripura">Tripura</option>
-                      <option value="Uttar Pradesh">Uttar Pradesh</option>
-                      <option value="Uttarakhand">Uttarakhand</option>
-                      <option value="West Bengal">West Bengal</option>
-
-                      <option value="Andaman and Nicobar Islands">
-                        Andaman and Nicobar Islands
-                      </option>
-                      <option value="Chandigarh">Chandigarh</option>
-                      <option value="Dadra and Nagar Haveli and Daman and Diu">
-                        Dadra and Nagar Haveli and Daman and Diu
-                      </option>
-                      <option value="Delhi">Delhi</option>
-                      <option value="Jammu and Kashmir">Jammu and Kashmir</option>
-                      <option value="Ladakh">Ladakh</option>
-                      <option value="Lakshadweep">Lakshadweep</option>
-                      <option value="Puducherry">Puducherry</option>
+                      <option>Tamil Nadu</option>
+                      <option>Kerala</option>
+                      <option>Karnataka</option>
+                      <option>Andhra Pradesh</option>
+                      <option>Telangana</option>
+                      <option>Maharashtra</option>
+                      <option>Delhi</option>
+                      <option>Gujarat</option>
+                      <option>West Bengal</option>
+                      <option>Uttar Pradesh</option>
+                      <option>Rajasthan</option>
+                      <option>Punjab</option>
+                      <option>Odisha</option>
+                      <option>Assam</option>
                     </select>
                   </div>
+
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">ZIP / Postal Code</label>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      ZIP Code
+                    </label>
                     <input
                       value={zipCode}
                       onChange={(e) => setZipCode(e.target.value)}
-                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                      placeholder="Enter your ZIP code"
+                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Country</label>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      Country
+                    </label>
                     <input
                       value={country}
                       onChange={(e) => setCountry(e.target.value)}
-                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                     />
                   </div>
+
                 </div>
               </div>
 
+              {/* Delivery Details */}
               <div className="bg-white rounded-3xl shadow p-8">
-                <h2 className="text-2xl font-bold text-slate-900 mb-4">Schedule delivery</h2>
-                <div className="grid gap-4 md:grid-cols-2">
+                <h2 className="text-2xl font-bold text-slate-900 mb-6">
+                  Delivery Details
+                </h2>
+
+                <div className="grid gap-6 md:grid-cols-2">
+
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Delivery Date</label>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      Delivery Date
+                    </label>
                     <input
                       type="date"
                       min={getTomorrowDate()}
                       value={deliveryDate}
                       onChange={(e) => setDeliveryDate(e.target.value)}
-                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                     />
                   </div>
+
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Delivery Time</label>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      Delivery Time
+                    </label>
                     <input
                       type="time"
                       value={deliveryTime}
                       onChange={(e) => setDeliveryTime(e.target.value)}
-                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                     />
                   </div>
+
                 </div>
-              </div>
 
-              {/* Payment Information */}
-              <div className="bg-white rounded-3xl shadow p-8">
-                <h2 className="text-2xl font-bold text-slate-900 mb-4">
-                  Payment Information
-                </h2>
+                <div className="mt-8 border-t pt-6">
+                  <h3 className="text-xl font-bold text-slate-900 mb-4">
+                    Payment Information
+                  </h3>
 
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Payment Method
-                  </label>
+                  <div className="space-y-4">
 
-                  <select
-                    value={paymentMethod}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                    className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                  >
-                    <option>Cash on Delivery</option>
-                    <option>Online Payment</option>
-                  </select>
+                    <label className="flex items-center gap-3 rounded-xl border border-slate-200 p-4 cursor-pointer hover:border-emerald-500">
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="Cash on Delivery"
+                        checked={paymentMethod === "Cash on Delivery"}
+                        onChange={(e) => setPaymentMethod(e.target.value)}
+                      />
+                      <span className="font-medium">Cash on Delivery</span>
+                    </label>
+
+                    <label className="flex items-center gap-3 rounded-xl border border-slate-200 p-4 cursor-pointer hover:border-emerald-500">
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="Online Payment"
+                        checked={paymentMethod === "Online Payment"}
+                        onChange={(e) => setPaymentMethod(e.target.value)}
+                      />
+                      <span className="font-medium">Online Payment</span>
+                    </label>
+
+                  </div>
                 </div>
+
               </div>
 
             </div>
