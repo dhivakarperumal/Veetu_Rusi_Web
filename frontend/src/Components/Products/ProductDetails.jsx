@@ -22,7 +22,12 @@ import { useAuth } from "../../PrivateRouter/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 const ProductDetails = () => {
-  const { addToCart, toggleWishlist, wishlist } = useContext(StoreContext);
+  const {
+    addToCart,
+    addToFoodCart,
+    toggleWishlist,
+    wishlist,
+  } = useContext(StoreContext);
 
   const { id } = useParams();
   console.log("Current Product ID:", id);
@@ -141,23 +146,14 @@ const ProductDetails = () => {
   };
 
   const handleBuyNow = () => {
-
-    if (!selectedVariant && product?.variants?.length > 0) {
-      alert("Please select a variant");
-      return;
-    }
-
-    const checkoutPath = (user?.role === "chef" || user?.role === "homechef") ? "/chef/checkout" : "/checkout";
-
-    navigate(checkoutPath, {
+    navigate("/food-checkout", {
       state: {
-        product: product,
+        product,
         variant: selectedVariant,
         size: selectedSize,
-        quantity: quantity
-      }
+        quantity,
+      },
     });
-
   };
 
   const handleMouseMove = (e) => {
@@ -328,7 +324,7 @@ const ProductDetails = () => {
               </div>
             </div>
           </div>
-          
+
         </PageContainer>
       </>
     );
@@ -336,7 +332,7 @@ const ProductDetails = () => {
   return (
     <>
       <PageHeader title={product.name} />
-      <PageContainer  className="py-8">
+      <PageContainer className="py-8">
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
           {/* LEFT SIDE IMAGES */}
           <div className="lg:h-fit lg:sticky lg:top-24">
@@ -607,7 +603,6 @@ const ProductDetails = () => {
             </div>
 
             {/* PRODUCT DETAILS */}
-            {/* PRODUCT DETAILS */}
             <div className="mt-10 bg-gray-50 border border-gray-100 rounded-2xl p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-primary-dark">
@@ -770,9 +765,27 @@ const ProductDetails = () => {
             <div className="mt-8 flex flex-col sm:flex-row gap-3">
 
               <button
-                onClick={() =>
-                  addToCart(product, selectedVariant, selectedSize, quantity)
-                }
+                onClick={() => {
+                  if (
+                    product?.chef_id ||
+                    product?.chef_user_id ||
+                    product?.chef_name
+                  ) {
+                    addToFoodCart(
+                      product,
+                      selectedVariant,
+                      selectedSize,
+                      quantity
+                    );
+                  } else {
+                    addToCart(
+                      product,
+                      selectedVariant,
+                      selectedSize,
+                      quantity
+                    );
+                  }
+                }}
                 className="flex-1 cursor-pointer flex items-center justify-center gap-2 bg-primary text-white px-6 py-3 rounded-lg"
               >
                 <FiShoppingCart size={18} />
@@ -809,273 +822,273 @@ const ProductDetails = () => {
 
             </div>
           </div>
-          </div>
-        </PageContainer>
-        <RelatedProducts
-          category={product?.category}
-          currentProductId={product?.id}
-        />
+        </div>
+      </PageContainer>
+      <RelatedProducts
+        category={product?.category}
+        currentProductId={product?.id}
+      />
 
-        {/* REVIEW SECTION */}
+      {/* REVIEW SECTION */}
 
-        <PageContainer className="mt-20">
-          {/* HEADER */}
+      <PageContainer className="mt-20">
+        {/* HEADER */}
 
-          <div className="flex items-center justify-between border-t border-gray-200 pt-10 mb-6">
-            <h2 className="text-2xl font-bold text-primary-light">Add Reviews</h2>
+        <div className="flex items-center justify-between border-t border-gray-200 pt-10 mb-6">
+          <h2 className="text-2xl font-bold text-primary-light">Add Reviews</h2>
 
-            {userReviewed ? (
-              <p className="text-green-600 font-semibold">
-                You already reviewed this product
-              </p>
-            ) : (
-              <button
-                onClick={() => setShowReviewForm(!showReviewForm)}
-                className="px-6 py-2 rounded-xl font-semibold text-white 
+          {userReviewed ? (
+            <p className="text-green-600 font-semibold">
+              You already reviewed this product
+            </p>
+          ) : (
+            <button
+              onClick={() => setShowReviewForm(!showReviewForm)}
+              className="px-6 py-2 rounded-xl font-semibold text-white 
     bg-gradient-to-r from-primary-light to-secondary 
     shadow-md hover:scale-105 transition cursor-pointer"
-              >
-                {showReviewForm ? "Hide Review Form" : "Write Review"}
-              </button>
-            )}
-          </div>
+            >
+              {showReviewForm ? "Hide Review Form" : "Write Review"}
+            </button>
+          )}
+        </div>
 
-          {/* REVIEW FORM */}
+        {/* REVIEW FORM */}
 
-          {showReviewForm && (
-            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-8 shadow-sm max-w-4xl">
-              <h3 className="text-lg font-semibold mb-6">
-                Share your experience
-              </h3>
+        {showReviewForm && (
+          <div className="bg-gray-50 border border-gray-200 rounded-2xl p-8 shadow-sm max-w-4xl">
+            <h3 className="text-lg font-semibold mb-6">
+              Share your experience
+            </h3>
 
-              {/* STAR RATING */}
+            {/* STAR RATING */}
 
-              <div className="mb-6">
-                <p className="font-medium mb-2">Rating</p>
+            <div className="mb-6">
+              <p className="font-medium mb-2">Rating</p>
 
-                <div className="flex gap-2">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <FaStar
-                      key={star}
-                      size={22}
-                      className={`cursor-pointer transition
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <FaStar
+                    key={star}
+                    size={22}
+                    className={`cursor-pointer transition
                 ${star <= (hoverRating || rating)
-                          ? "text-yellow-400"
-                          : "text-gray-300"
-                        }
+                        ? "text-yellow-400"
+                        : "text-gray-300"
+                      }
               `}
-                      onMouseEnter={() => setHoverRating(star)}
-                      onMouseLeave={() => setHoverRating(0)}
-                      onClick={() => setRating(star)}
+                    onMouseEnter={() => setHoverRating(star)}
+                    onMouseLeave={() => setHoverRating(0)}
+                    onClick={() => setRating(star)}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* REVIEW TEXT */}
+
+            <div className="mb-6">
+              <p className="font-medium mb-2">Review</p>
+
+              <textarea
+                value={reviewText}
+                onChange={(e) => setReviewText(e.target.value)}
+                placeholder="Write your review here..."
+                className="w-full border border-gray-300 rounded-xl p-4 min-h-[120px] focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+
+            <div className="mb-6">
+              <p className="font-medium mb-2">Upload Image (optional)</p>
+
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="w-full border border-gray-300 rounded-xl p-2"
+              />
+
+              {reviewImage && (
+                <img
+                  src={reviewImage}
+                  alt="preview"
+                  className="mt-4 w-32 h-32 object-cover rounded-lg border"
+                />
+              )}
+            </div>
+
+            {/* SUBMIT BUTTON */}
+
+            <button
+              onClick={submitReview}
+              className="bg-gradient-to-r from-primary-light to-secondary text-white 
+  px-6 py-3 rounded-xl font-semibold shadow-md hover:scale-105 transition"
+            >
+              Submit Review
+            </button>
+          </div>
+        )}
+      </PageContainer>
+
+      {/* REVIEWS LIST & STATS */}
+      <PageContainer className="mb-20">
+        <div className="grid lg:grid-cols-3 gap-12">
+          {/* STATS LEFT */}
+          <div className="lg:col-span-1">
+            <h3 className="text-xl font-bold mb-6">Customer Reviews</h3>
+
+            <div className="flex items-center gap-4 mb-4">
+              <div className="text-4xl font-bold text-gray-800">
+                {reviewStats.average_rating}
+              </div>
+              <div>
+                <div className="flex text-yellow-400">
+                  {[...Array(5)].map((_, i) => (
+                    <FaStar
+                      key={i}
+                      className={
+                        i < Math.round(reviewStats.average_rating)
+                          ? "text-yellow-400"
+                          : "text-gray-200"
+                      }
                     />
                   ))}
                 </div>
+                <p className="text-sm text-gray-500 mt-1">
+                  Based on {reviewStats.total_reviews} reviews
+                </p>
               </div>
-
-              {/* REVIEW TEXT */}
-
-              <div className="mb-6">
-                <p className="font-medium mb-2">Review</p>
-
-                <textarea
-                  value={reviewText}
-                  onChange={(e) => setReviewText(e.target.value)}
-                  placeholder="Write your review here..."
-                  className="w-full border border-gray-300 rounded-xl p-4 min-h-[120px] focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
-
-              <div className="mb-6">
-                <p className="font-medium mb-2">Upload Image (optional)</p>
-
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="w-full border border-gray-300 rounded-xl p-2"
-                />
-
-                {reviewImage && (
-                  <img
-                    src={reviewImage}
-                    alt="preview"
-                    className="mt-4 w-32 h-32 object-cover rounded-lg border"
-                  />
-                )}
-              </div>
-
-              {/* SUBMIT BUTTON */}
-
-              <button
-                onClick={submitReview}
-                className="bg-gradient-to-r from-primary-light to-secondary text-white 
-  px-6 py-3 rounded-xl font-semibold shadow-md hover:scale-105 transition"
-              >
-                Submit Review
-              </button>
             </div>
-          )}
-        </PageContainer>
 
-        {/* REVIEWS LIST & STATS */}
-        <PageContainer className="mb-20">
-          <div className="grid lg:grid-cols-3 gap-12">
-            {/* STATS LEFT */}
-            <div className="lg:col-span-1">
-              <h3 className="text-xl font-bold mb-6">Customer Reviews</h3>
+            {/* PROGRESS BARS */}
+            <div className="space-y-3">
+              {[5, 4, 3, 2, 1].map((star) => {
+                const count =
+                  reviewStats[
+                  `${star === 5
+                    ? "five"
+                    : star === 4
+                      ? "four"
+                      : star === 3
+                        ? "three"
+                        : star === 2
+                          ? "two"
+                          : "one"
+                  }_star`
+                  ] || 0;
+                const percentage =
+                  reviewStats.total_reviews > 0
+                    ? (count / reviewStats.total_reviews) * 100
+                    : 0;
 
-              <div className="flex items-center gap-4 mb-4">
-                <div className="text-4xl font-bold text-gray-800">
-                  {reviewStats.average_rating}
-                </div>
-                <div>
-                  <div className="flex text-yellow-400">
-                    {[...Array(5)].map((_, i) => (
-                      <FaStar
-                        key={i}
-                        className={
-                          i < Math.round(reviewStats.average_rating)
-                            ? "text-yellow-400"
-                            : "text-gray-200"
-                        }
-                      />
-                    ))}
+                return (
+                  <div key={star} className="flex items-center gap-3">
+                    <span className="text-sm font-medium w-3">{star}</span>
+                    <FaStar className="text-yellow-400" size={12} />
+                    <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-primary transition-all duration-500"
+                        style={{ width: `${percentage}%` }}
+                      ></div>
+                    </div>
+                    <span className="text-sm text-gray-500 w-8">{count}</span>
                   </div>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Based on {reviewStats.total_reviews} reviews
-                  </p>
-                </div>
-              </div>
-
-              {/* PROGRESS BARS */}
-              <div className="space-y-3">
-                {[5, 4, 3, 2, 1].map((star) => {
-                  const count =
-                    reviewStats[
-                    `${star === 5
-                      ? "five"
-                      : star === 4
-                        ? "four"
-                        : star === 3
-                          ? "three"
-                          : star === 2
-                            ? "two"
-                            : "one"
-                    }_star`
-                    ] || 0;
-                  const percentage =
-                    reviewStats.total_reviews > 0
-                      ? (count / reviewStats.total_reviews) * 100
-                      : 0;
-
-                  return (
-                    <div key={star} className="flex items-center gap-3">
-                      <span className="text-sm font-medium w-3">{star}</span>
-                      <FaStar className="text-yellow-400" size={12} />
-                      <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-primary transition-all duration-500"
-                          style={{ width: `${percentage}%` }}
-                        ></div>
-                      </div>
-                      <span className="text-sm text-gray-500 w-8">{count}</span>
-                    </div>
-                  );
-                })}
-              </div>
+                );
+              })}
             </div>
-
-            {/* REVIEWS LIST RIGHT */}
-            <div className="lg:col-span-2">
-              {loadingReviews ? (
-                <div className="animate-pulse space-y-6">
-                  {[...Array(2)].map((_, i) => (
-                    <div key={i} className="border-b pb-6">
-                      <div className="h-4 w-32 bg-gray-200 rounded mb-2"></div>
-                      <div className="h-4 w-full bg-gray-200 rounded mb-2"></div>
-                      <div className="h-4 w-2/3 bg-gray-200 rounded"></div>
-                    </div>
-                  ))}
-                </div>
-              ) : reviews.length > 0 ? (
-                <Swiper
-                  modules={[Pagination, Navigation, Autoplay]}
-                  spaceBetween={20}
-                  slidesPerView={1}
-                  breakpoints={{
-                    768: { slidesPerView: 2 },
-                    1024: { slidesPerView: 2 }
-                  }}
-                  autoplay={{ delay: 3000 }}
-                  className="review-swiper pb-12"
-                >
-                  {reviews.map((review) => (
-                    <SwiperSlide key={review.id}>
-                      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm h-full">
-                        <div className="flex justify-between items-start mb-4">
-                          <div>
-                            <h4 className="font-bold text-gray-800 text-lg">
-                              {review.user_name}
-                            </h4>
-                            <div className="flex text-yellow-400 gap-0.5 mt-1">
-                              {[...Array(5)].map((_, i) => (
-                                <FaStar
-                                  key={i}
-                                  size={14}
-                                  className={
-                                    i < review.rating
-                                      ? "text-yellow-400"
-                                      : "text-gray-200"
-                                  }
-                                />
-                              ))}
-                            </div>
-                          </div>
-                          <span className="text-sm text-gray-400 bg-gray-50 px-3 py-1 rounded-full">
-                            {new Date(review.created_at).toLocaleDateString()}
-                          </span>
-                        </div>
-
-                        <p className="text-gray-600 leading-relaxed italic">
-                          "{review.comment}"
-                        </p>
-
-                        {review.review_image && (
-                          <div className="mt-4 overflow-hidden rounded-xl border border-gray-100 w-fit">
-                            <img
-                              src={review.review_image}
-                              alt="Review"
-                              className="w-40 h-40 object-cover hover:scale-110 transition-transform duration-500"
-                            />
-                          </div>
-                        )}
-
-                        {review.admin_reply && (
-                          <div className="mt-6 bg-primary/5 p-4 rounded-xl border-l-4 border-primary/30">
-                            <p className="text-xs font-bold text-primary uppercase tracking-wider mb-1">
-                              Response from Seller
-                            </p>
-                            <p className="text-gray-600 text-sm italic">
-                              "{review.admin_reply}"
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </SwiperSlide>
-                  ))}
-                </Swiper>
-              ) : (
-                <div className="text-center py-10 bg-gray-50 rounded-2xl">
-                  <p className="text-gray-500 font-medium">
-                    No reviews yet. Be the first to share your experience!
-                  </p>
-                </div>
-              )}
-            </div>
-            
           </div>
-        </PageContainer>
-      
+
+          {/* REVIEWS LIST RIGHT */}
+          <div className="lg:col-span-2">
+            {loadingReviews ? (
+              <div className="animate-pulse space-y-6">
+                {[...Array(2)].map((_, i) => (
+                  <div key={i} className="border-b pb-6">
+                    <div className="h-4 w-32 bg-gray-200 rounded mb-2"></div>
+                    <div className="h-4 w-full bg-gray-200 rounded mb-2"></div>
+                    <div className="h-4 w-2/3 bg-gray-200 rounded"></div>
+                  </div>
+                ))}
+              </div>
+            ) : reviews.length > 0 ? (
+              <Swiper
+                modules={[Pagination, Navigation, Autoplay]}
+                spaceBetween={20}
+                slidesPerView={1}
+                breakpoints={{
+                  768: { slidesPerView: 2 },
+                  1024: { slidesPerView: 2 }
+                }}
+                autoplay={{ delay: 3000 }}
+                className="review-swiper pb-12"
+              >
+                {reviews.map((review) => (
+                  <SwiperSlide key={review.id}>
+                    <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm h-full">
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <h4 className="font-bold text-gray-800 text-lg">
+                            {review.user_name}
+                          </h4>
+                          <div className="flex text-yellow-400 gap-0.5 mt-1">
+                            {[...Array(5)].map((_, i) => (
+                              <FaStar
+                                key={i}
+                                size={14}
+                                className={
+                                  i < review.rating
+                                    ? "text-yellow-400"
+                                    : "text-gray-200"
+                                }
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        <span className="text-sm text-gray-400 bg-gray-50 px-3 py-1 rounded-full">
+                          {new Date(review.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+
+                      <p className="text-gray-600 leading-relaxed italic">
+                        "{review.comment}"
+                      </p>
+
+                      {review.review_image && (
+                        <div className="mt-4 overflow-hidden rounded-xl border border-gray-100 w-fit">
+                          <img
+                            src={review.review_image}
+                            alt="Review"
+                            className="w-40 h-40 object-cover hover:scale-110 transition-transform duration-500"
+                          />
+                        </div>
+                      )}
+
+                      {review.admin_reply && (
+                        <div className="mt-6 bg-primary/5 p-4 rounded-xl border-l-4 border-primary/30">
+                          <p className="text-xs font-bold text-primary uppercase tracking-wider mb-1">
+                            Response from Seller
+                          </p>
+                          <p className="text-gray-600 text-sm italic">
+                            "{review.admin_reply}"
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+            ) : (
+              <div className="text-center py-10 bg-gray-50 rounded-2xl">
+                <p className="text-gray-500 font-medium">
+                  No reviews yet. Be the first to share your experience!
+                </p>
+              </div>
+            )}
+          </div>
+
+        </div>
+      </PageContainer>
+
     </>
   );
 };
