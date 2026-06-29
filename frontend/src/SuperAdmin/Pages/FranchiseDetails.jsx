@@ -188,7 +188,11 @@ const FranchiseDetails = () => {
       if (franchise.franch_user_id) params.franchise_user_id = franchise.franch_user_id;
       const res = await api.get('/franchise-products', { params });
       const data = res.data;
-      setProducts(Array.isArray(data) ? data : Array.isArray(data.products) ? data.products : []);
+      const allProducts = Array.isArray(data) ? data : Array.isArray(data.products) ? data.products : [];
+      setProducts(allProducts.filter(p => {
+        const s = String(p.status || '').toLowerCase();
+        return s === 'approved' || s === 'active';
+      }));
     } catch (error) {
       console.error(error);
       setProductsError('Failed to load franchise products.');
@@ -207,7 +211,11 @@ const FranchiseDetails = () => {
       if (franchise.franchise_id) params.franchise_id = franchise.franchise_id;
       if (franchise.franch_user_id) params.franchise_user_id = franchise.franch_user_id;
       const res = await api.get('/chef-foods', { params });
-      setChefProducts(Array.isArray(res.data) ? res.data : []);
+      const allFoods = Array.isArray(res.data) ? res.data : [];
+      setChefProducts(allFoods.filter(f => {
+        const s = String(f.status || '').toLowerCase();
+        return s === 'approved' || s === 'active';
+      }));
     } catch (error) {
       console.error(error);
       setChefProductsError('Failed to load chef food products.');
@@ -645,7 +653,22 @@ const FranchiseDetails = () => {
                             <tr key={product.id || product.catId || product.product_code} className="hover:bg-slate-900/70 transition-colors group">
                               <td className="px-6 py-4">
                                 <div className="flex items-center gap-3">
-                                  <div className="h-10 w-10 rounded-2xl bg-slate-900 grid place-items-center text-slate-300 font-bold">{String(product.name || '').charAt(0).toUpperCase() || 'P'}</div>
+                                  <div className="h-10 w-10 rounded-2xl bg-slate-900 grid place-items-center text-slate-300 font-bold overflow-hidden border border-slate-700 shrink-0">
+                                    {(product.product_image || product.image || product.image_url) ? (
+                                        <img 
+                                            src={product.product_image || product.image || product.image_url} 
+                                            alt={product.name || 'Product'} 
+                                            className="h-full w-full object-cover" 
+                                            onError={(e) => {
+                                                e.target.style.display = 'none';
+                                                e.target.nextSibling && (e.target.nextSibling.style.display = 'grid');
+                                            }}
+                                        />
+                                    ) : null}
+                                    <span style={{ display: (product.product_image || product.image || product.image_url) ? 'none' : 'grid' }} className="h-full w-full place-items-center">
+                                        {String(product.name || '').charAt(0).toUpperCase() || 'P'}
+                                    </span>
+                                  </div>
                                   <div>
                                     <p className="font-bold text-slate-100">{product.name || product.catId || 'Unnamed Product'}</p>
                                     <p className="text-xs text-slate-400">{product.franchise_id ? 'Franchise item' : 'Catalog item'}</p>
@@ -716,7 +739,22 @@ const FranchiseDetails = () => {
                             <tr key={product.id} className="hover:bg-slate-900/70 transition-colors group">
                               <td className="px-6 py-4">
                                 <div className="flex items-center gap-3">
-                                  <div className="h-10 w-10 rounded-2xl bg-slate-900 grid place-items-center text-slate-300 font-bold">{String(product.name || '').charAt(0).toUpperCase() || 'F'}</div>
+                                  <div className="h-10 w-10 rounded-2xl bg-slate-900 grid place-items-center text-slate-300 font-bold overflow-hidden border border-slate-700 shrink-0">
+                                    {(product.food_image || product.image || product.image_url) ? (
+                                        <img 
+                                            src={product.food_image || product.image || product.image_url} 
+                                            alt={product.name || 'Food'} 
+                                            className="h-full w-full object-cover" 
+                                            onError={(e) => {
+                                                e.target.style.display = 'none';
+                                                e.target.nextSibling && (e.target.nextSibling.style.display = 'grid');
+                                            }}
+                                        />
+                                    ) : null}
+                                    <span style={{ display: (product.food_image || product.image || product.image_url) ? 'none' : 'grid' }} className="h-full w-full place-items-center">
+                                        {String(product.name || '').charAt(0).toUpperCase() || 'F'}
+                                    </span>
+                                  </div>
                                   <div>
                                     <p className="font-bold text-slate-100">{product.name}</p>
                                     <p className="text-xs text-slate-400">{product.cuisine || 'Home cooked'}</p>
