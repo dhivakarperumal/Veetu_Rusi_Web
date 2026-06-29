@@ -32,6 +32,7 @@ export default function FoodCheckout() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [savedAddresses, setSavedAddresses] = useState([]);
+  const [selectedAddressId, setSelectedAddressId] = useState(null);
   const location = useLocation();
   const buyNowItem = location.state;
   const checkoutItems = buyNowItem?.product
@@ -125,6 +126,8 @@ export default function FoodCheckout() {
   };
 
   const fillAddress = (address) => {
+    setSelectedAddressId(address.id);
+
     setName(address.customer_name || "");
     setEmail(address.customer_email || "");
     setPhone(address.customer_phone || "");
@@ -215,7 +218,11 @@ export default function FoodCheckout() {
                       <div
                         key={address.id}
                         onClick={() => fillAddress(address)}
-                        className="rounded-2xl border border-slate-200 p-5 cursor-pointer transition hover:border-emerald-500 hover:bg-emerald-50"
+                        className={`rounded-2xl p-5 cursor-pointer transition-all duration-200
+${selectedAddressId === address.id
+                            ? "border-2 border-emerald-600 bg-emerald-50 shadow-lg ring-2 ring-emerald-200"
+                            : "border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50"
+                          }`}
                       >
                         <div className="grid md:grid-cols-2 gap-2 text-sm">
 
