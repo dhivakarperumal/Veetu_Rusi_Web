@@ -49,11 +49,17 @@ const OfferProducts = () => {
         !lastFetchTime ||
         Date.now() - lastFetchTime > 5 * 60 * 1000
       ) {
-        const res = await api.get("/products", {
-          params: { source: "chef_products" },
-        });
+        const [foodsRes, productsRes] = await Promise.all([
+          api.get("/chef-foods"),
+          api.get("/products", {
+            params: { source: "chef_products" },
+          }),
+        ]);
 
-        data = Array.isArray(res.data) ? res.data : [];
+        const foods = Array.isArray(foodsRes.data) ? foodsRes.data : [];
+        const products = Array.isArray(productsRes.data) ? productsRes.data : [];
+
+        data = [...foods, ...products];
 
         setProductsCache(data);
         setLastFetchTime(Date.now());
@@ -145,7 +151,10 @@ const OfferProducts = () => {
         >
           {Array.isArray(products) && products.map((product) => (
             <SwiperSlide key={product.id} className="flex justify-center pb-10">
-              <ProductCard product={product} />
+              <ProductCard
+                product={product}
+                showOfferBadge={true}
+              />
             </SwiperSlide>
           ))}
         </Swiper>
