@@ -328,6 +328,7 @@ const ProductDetails = () => {
               </div>
             </div>
           </div>
+          
         </PageContainer>
       </>
     );
@@ -335,7 +336,7 @@ const ProductDetails = () => {
   return (
     <>
       <PageHeader title={product.name} />
-      <PageContainer className="py-8">
+      <PageContainer  className="py-8">
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
           {/* LEFT SIDE IMAGES */}
           <div className="lg:h-fit lg:sticky lg:top-24">
@@ -808,7 +809,8 @@ const ProductDetails = () => {
 
             </div>
           </div>
-        </div>
+          </div>
+        </PageContainer>
         <RelatedProducts
           category={product?.category}
           currentProductId={product?.id}
@@ -816,7 +818,7 @@ const ProductDetails = () => {
 
         {/* REVIEW SECTION */}
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 mt-20">
+        <PageContainer className="mt-20">
           {/* HEADER */}
 
           <div className="flex items-center justify-between border-t border-gray-200 pt-10 mb-6">
@@ -913,10 +915,10 @@ const ProductDetails = () => {
               </button>
             </div>
           )}
-        </div>
+        </PageContainer>
 
         {/* REVIEWS LIST & STATS */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 mb-20 overflow-hidden">
+        <PageContainer className="mb-20">
           <div className="grid lg:grid-cols-3 gap-12">
             {/* STATS LEFT */}
             <div className="lg:col-span-1">
@@ -1070,9 +1072,10 @@ const ProductDetails = () => {
                 </div>
               )}
             </div>
+            
           </div>
-        </div>
-      </PageContainer>
+        </PageContainer>
+      
     </>
   );
 };
