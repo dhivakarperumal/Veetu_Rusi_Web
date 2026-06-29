@@ -78,7 +78,11 @@ export default function Address() {
 
     try {
       if (user?.user_id) {
-        const nextAddresses = upsertUserAddress(user.user_id, { ...form, user_id: user.user_id });
+        const nextAddresses = upsertUserAddress(user.user_id, {
+          ...form,
+          id: Date.now().toString(),
+          user_id: user.user_id,
+        });;
         setAddresses(nextAddresses);
       }
 
@@ -114,19 +118,37 @@ export default function Address() {
   };
 
   const updateAddress = async () => {
-
     try {
       if (user?.user_id) {
-        const nextAddresses = upsertUserAddress(user.user_id, { ...form, user_id: user.user_id, id: editingId });
-        setAddresses(nextAddresses);
+        const updatedAddresses = addresses.map((address) =>
+          String(address.id) === String(editingId)
+            ? { ...address, ...form, id: editingId, user_id: user.user_id }
+            : address
+        );
+
+        setAddresses(updatedAddresses);
+        saveUserAddresses(user.user_id, updatedAddresses);
       }
 
       alert("Address updated");
 
       setEditingId(null);
 
-      fetchAddresses();
+      setForm({
+        order_id: null,
+        user_id: user?.user_id || "",
+        customer_name: "",
+        customer_email: "",
+        customer_phone: "",
+        street_address: "",
+        city: "",
+        district: "",
+        state: "",
+        country: "India",
+        zip_code: "",
+      });
 
+      fetchAddresses();
     } catch (error) {
       console.error(error);
     }
@@ -211,21 +233,21 @@ export default function Address() {
 
         <div className="grid md:grid-cols-2 gap-4">
 
-          <input name="customer_name" placeholder="Full Name" value={form.customer_name} onChange={handleChange} className="border p-3 rounded"/>
+          <input name="customer_name" placeholder="Full Name" value={form.customer_name} onChange={handleChange} className="border p-3 rounded" />
 
-          <input name="customer_email" placeholder="Email" value={form.customer_email} onChange={handleChange} className="border p-3 rounded"/>
+          <input name="customer_email" placeholder="Email" value={form.customer_email} onChange={handleChange} className="border p-3 rounded" />
 
-          <input name="customer_phone" placeholder="Phone" value={form.customer_phone} onChange={handleChange} className="border p-3 rounded"/>
+          <input name="customer_phone" placeholder="Phone" value={form.customer_phone} onChange={handleChange} className="border p-3 rounded" />
 
-          <textarea name="street_address" placeholder="Street Address" value={form.street_address} onChange={handleChange} className="border p-3 rounded col-span-2"/>
+          <textarea name="street_address" placeholder="Street Address" value={form.street_address} onChange={handleChange} className="border p-3 rounded col-span-2" />
 
-          <input name="city" placeholder="City" value={form.city} onChange={handleChange} className="border p-3 rounded"/>
+          <input name="city" placeholder="City" value={form.city} onChange={handleChange} className="border p-3 rounded" />
 
-          <input name="district" placeholder="District" value={form.district} onChange={handleChange} className="border p-3 rounded"/>
+          <input name="district" placeholder="District" value={form.district} onChange={handleChange} className="border p-3 rounded" />
 
-          <input name="state" placeholder="State" value={form.state} onChange={handleChange} className="border p-3 rounded"/>
+          <input name="state" placeholder="State" value={form.state} onChange={handleChange} className="border p-3 rounded" />
 
-          <input name="zip_code" placeholder="Zip Code" value={form.zip_code} onChange={handleChange} className="border p-3 rounded"/>
+          <input name="zip_code" placeholder="Zip Code" value={form.zip_code} onChange={handleChange} className="border p-3 rounded" />
 
         </div>
 
