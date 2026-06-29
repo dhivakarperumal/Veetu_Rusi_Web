@@ -69,7 +69,9 @@ const OfferProducts = () => {
         .filter((product) => {
           if (product.status?.toLowerCase() !== "active") return false;
 
-          if (!(product.offer > 0)) return false;
+          const offer = parseFloat(product.offer || 0);
+
+          if (offer <= 0) return false;
 
           if (
             !user?.latitude ||
@@ -93,7 +95,17 @@ const OfferProducts = () => {
 
           return distance <= radius;
         })
-        .sort((a, b) => b.offer - a.offer);
+        .sort((a, b) => {
+          const offerA = parseFloat(a.offer || 0);
+          const offerB = parseFloat(b.offer || 0);
+
+          if (offerB !== offerA) {
+            return offerB - offerA;
+          }
+
+          // If offers are the same, newest product first
+          return new Date(b.created_at) - new Date(a.created_at);
+        });
 
       setProducts(filteredProducts);
     } catch (error) {
