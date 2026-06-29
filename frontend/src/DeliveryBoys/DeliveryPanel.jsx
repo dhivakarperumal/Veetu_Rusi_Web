@@ -340,6 +340,49 @@ const AdminLayout = () => {
                                         ⏱ {new Date(popupOrder.ordered_at || popupOrder.created_at || popupOrder.delivery_date || Date.now()).toLocaleString()}
                                     </p>
                                 </div>
+                                <div className="sm:col-span-2 rounded-3xl border border-white/10 bg-slate-950/90 p-5">
+                                    <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Order Items & Details</p>
+                                    <div className="mt-3 space-y-2">
+                                        {(() => {
+                                            let items = [];
+                                            try {
+                                                items = typeof popupOrder.items === 'string' ? JSON.parse(popupOrder.items) : popupOrder.items || [];
+                                            } catch (e) {
+                                                items = [];
+                                            }
+                                            if (!items || items.length === 0) return <p className="text-sm text-slate-400 italic">Item details not available</p>;
+                                            
+                                            return items.map((item, idx) => {
+                                                const imageUrl = item.image || item.image_url || item.product_image || item.food_image || 'https://ui-avatars.com/api/?name=Food&background=10B981&color=fff';
+                                                
+                                                return (
+                                                <div key={idx} className="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-12 h-12 rounded-lg bg-slate-800 shrink-0 overflow-hidden border border-white/10">
+                                                            <img 
+                                                                src={imageUrl} 
+                                                                alt={item.name || 'Item'} 
+                                                                className="w-full h-full object-cover"
+                                                                onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Food&background=10B981&color=fff'; }}
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-bold text-white">{item.name || item.product_name || 'Item'}</p>
+                                                            {(item.weight || item.unit || item.size) && (
+                                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+                                                                    {item.weight || ''} {item.unit || item.size || ''}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <p className="text-sm font-black text-emerald-400">Qty: {item.quantity || 1}</p>
+                                                    </div>
+                                                </div>
+                                            )});
+                                        })()}
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-end">

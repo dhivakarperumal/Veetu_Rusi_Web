@@ -93,8 +93,8 @@ const OrderManagement = () => {
     if (statusFilter !== "All") {
       // Treat Pending / Order Placed / New / New Order as equivalent → TODAY ONLY
       const pendingAliases = ["Pending", "Order Placed", "New", "New Order"];
-      if (pendingAliases.some(a => a.toLowerCase() === statusFilter.toLowerCase())) {
-        result = result.filter((o) => o.status && pendingAliases.some(a => a.toLowerCase() === o.status.toLowerCase()));
+      if (pendingAliases.some(a => a.toLowerCase() === statusFilter.trim().toLowerCase())) {
+        result = result.filter((o) => o.status && pendingAliases.some(a => a.toLowerCase() === o.status.trim().toLowerCase()));
         // Show ONLY today's orders — compare local date strings
         result = result.filter((o) => {
           const raw = o.ordered_at || o.created_at || o.updated_at;
@@ -103,12 +103,12 @@ const OrderManagement = () => {
           const dStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
           return dStr === todayStr;
         });
-      } else if (statusFilter === "Delivered") {
+      } else if (statusFilter.trim().toLowerCase() === "delivered") {
         result = result.filter((o) =>
-          o.status && (o.status.toLowerCase() === "delivered" || o.status.toLowerCase() === "completed")
+          o.status && (o.status.trim().toLowerCase() === "delivered" || o.status.trim().toLowerCase() === "completed")
         );
       } else {
-        result = result.filter((o) => o.status && o.status.toLowerCase() === statusFilter.toLowerCase());
+        result = result.filter((o) => o.status && o.status.trim().toLowerCase() === statusFilter.trim().toLowerCase());
       }
     }
     setFilteredOrders(result);
