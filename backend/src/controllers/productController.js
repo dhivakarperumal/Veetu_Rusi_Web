@@ -94,6 +94,10 @@ exports.getAllProducts = async (req, res) => {
                 query += ' AND t.created_by = ?';
                 params.push(chefLookup);
             }
+            if (franchise_user_id) {
+                query += ' AND t.franchise_user_id = ?';
+                params.push(franchise_user_id);
+            }
         } else {
             // Default to franchise_products for admin/franchise listings
             table = 'franchise_products';

@@ -4,12 +4,14 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../../api';
 import { toast } from 'react-hot-toast';
 import { Eye, Edit2, Trash2, LayoutGrid, List, Search } from 'lucide-react';
+import { useAuth } from '../../PrivateRouter/AuthContext';
 
 const FoodProducts = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const sourceParam = new URLSearchParams(location.search).get('source');
   const activeTab = sourceParam === 'chef_products' ? 'foodProducts' : 'food';
+  const { user } = useAuth();
   const [foods, setFoods] = useState([]);
   const [chefs, setChefs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -70,6 +72,16 @@ const FoodProducts = () => {
         query.source = 'chef_products';
       }
 
+      // If the logged-in user is a home chef, restrict to their products only
+      if (user?.role === 'home_chef') {
+        query.chef_user_id = user.user_id || user.id;
+      }
+
+      // If the logged-in user is a franchise/admin, restrict to products in their franchise
+      if (user?.role === 'admin' || user?.role === 'franchise') {
+        query.franchise_user_id = user.user_id || user.id;
+      }
+
       const res = await api.get(endpoint, { params: query });
       setFoods(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
@@ -79,15 +91,16 @@ const FoodProducts = () => {
     } finally {
       setLoading(false);
     }
-  }, [location.search, activeTab]);
+  }, [location.search, activeTab, user]);
 
   useEffect(() => {
     const loadFoods = async () => {
+      if (user === undefined) return; // Wait for auth context to load
       await fetchFoods();
     };
 
     loadFoods();
-  }, [fetchFoods]);
+  }, [fetchFoods, user]);
 
   const filteredFoods = useMemo(() => {
     return foods.filter((item) => {
@@ -245,7 +258,7 @@ const FoodProducts = () => {
           />
         </div>
         <div className="flex items-center gap-3 self-end md:self-auto">
-          {chefs.length > 0 && (
+          {chefs.length > 0 && user?.role !== 'home_chef' && (
             <select
               value={new URLSearchParams(location.search).get('chef_id') || 'All'}
               onChange={(e) => handleChefChange(e.target.value)}
