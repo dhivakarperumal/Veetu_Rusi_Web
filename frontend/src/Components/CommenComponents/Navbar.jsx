@@ -213,20 +213,23 @@ const Navbar = () => {
                 </button>
 
                 {categoryMenu && (
-                  <div className="absolute top-10 left-0 w-64 bg-white border border-primary rounded-xl shadow-xl z-50">
+                  <div className="absolute top-12 left-0 w-60 bg-white/95 backdrop-blur-xl border border-gray-200 rounded-2xl shadow-2xl overflow-visible z-50 animate-fadeIn">
 
                     {/* FOOD */}
                     <div
                       className="relative"
-                      onMouseEnter={() => setActiveMainCategory("Food")}
+                      onMouseEnter={() => {
+                        clearTimeout(hoverTimeout.current);
+                        setActiveMainCategory("Food");
+                      }}
                     >
-                      <div className="px-4 py-3 cursor-pointer hover:bg-primary hover:text-white flex justify-between items-center">
+                      <div className="group flex items-center justify-between px-5 py-4 cursor-pointer transition-all duration-300 hover:bg-gradient-to-r hover:from-primary hover:to-primary-light hover:text-white">
                         Food
                         <FiChevronRight />
                       </div>
 
                       {activeMainCategory === "Food" && (
-                        <div className="absolute left-full top-0 w-60 bg-white border rounded-xl shadow-lg overflow-hidden">
+                        <div className="absolute left-full top-0 ml-1 w-60 bg-white border border-gray-200 rounded-2xl shadow-2xl z-50">
                           {groupedCategories.Food?.map((cat) => (
                             <NavLink
                               key={cat.id}
@@ -244,23 +247,38 @@ const Navbar = () => {
                     {/* PRODUCTS */}
                     <div
                       className="relative"
-                      onMouseEnter={() => setActiveMainCategory("Products")}
+                      onMouseEnter={() => {
+                        clearTimeout(hoverTimeout.current);
+                        setActiveMainCategory("Products");
+                      }}
                     >
-                      <div className="px-4 py-3 cursor-pointer hover:bg-primary hover:text-white flex justify-between items-center">
+                      <div className="group flex items-center justify-between px-5 py-4 cursor-pointer transition-all duration-300 hover:bg-gradient-to-r hover:from-primary hover:to-primary-light hover:text-white">
                         Products
                         <FiChevronRight />
                       </div>
 
                       {activeMainCategory === "Products" && (
-                        <div className="absolute left-full top-0 w-60 bg-white border rounded-xl shadow-lg overflow-hidden">
+                        <div
+                          className="absolute left-full top-0 w-60 bg-white/95 backdrop-blur-xl border border-gray-200 rounded-2xl shadow-2xl overflow-hidden z-50"
+                          onMouseEnter={() => clearTimeout(hoverTimeout.current)}
+                          onMouseLeave={() => {
+                            hoverTimeout.current = setTimeout(() => {
+                              setCategoryMenu(false);
+                              setActiveMainCategory(null);
+                            }, 300);
+                          }}
+                        >
                           {groupedCategories.Products?.map((cat) => (
                             <NavLink
                               key={cat.id}
                               to={`/category/${cat.id}`}
                               onClick={() => setCategoryMenu(false)}
-                              className="block px-4 py-3 text-sm text-gray-700 hover:bg-primary hover:text-white"
+                              className="group flex items-center justify-between px-5 py-3 text-sm text-gray-700 transition-all duration-300 hover:bg-gradient-to-r hover:from-primary hover:to-primary-light hover:text-white"
                             >
-                              {cat.name}
+                              <>
+                                <span>{cat.name}</span>
+                                <FiChevronRight className="opacity-0 group-hover:opacity-100 transition-all" />
+                              </>
                             </NavLink>
                           ))}
                         </div>
@@ -383,7 +401,7 @@ const Navbar = () => {
                   className="flex items-center gap-1 text-primary hover:text-primary-light hover:scale-110 transition relative group"
                 >
                   <FiMapPin size={20} />
-                
+
                   {!user?.pincode && (
                     <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
                   )}
