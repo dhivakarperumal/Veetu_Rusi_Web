@@ -12,34 +12,87 @@ import ProductCard from "../Products/ProductsCard";
 import Heading from "../Heading";
 
 import PageContainer from "../CommenComponents/PageContainer"
+import { AuthContext } from "../../PrivateRouter/AuthContext";
 
 const TrendingProducts = () => {
+  const { user } = useContext(AuthContext);
   const { productsCache, setProductsCache, lastFetchTime, setLastFetchTime } = useContext(StoreContext);
   const initialProducts = Array.isArray(productsCache) ? [...productsCache].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) : [];
   const [products, setProducts] = useState(initialProducts);
-  const [homeChef, setHomeChef] = useState(null);
+
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    if (!lat1 || !lon1 || !lat2 || !lon2) return null;
+
+    const R = 6371;
+
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * (Math.PI / 180)) *
+      Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return (R * c).toFixed(2);
+  };
 
   const fetchTrendingProducts = async () => {
     try {
       let data = productsCache;
 
-      if (!data || data.length === 0 || !lastFetchTime || (Date.now() - lastFetchTime > 5 * 60 * 1000)) {
-        const res = await api.get("/products");
+      if (
+        !data ||
+        data.length === 0 ||
+        !lastFetchTime ||
+        Date.now() - lastFetchTime > 5 * 60 * 1000
+      ) {
+        const res = await api.get("/products", {
+          params: { source: "chef_products" },
+        });
+
         data = Array.isArray(res.data) ? res.data : [];
+
         setProductsCache(data);
         setLastFetchTime(Date.now());
       }
 
-      const myProducts = (data || []).filter(
-        (product) =>
-          product.created_by_user_id === homeChef?.created_by
-      );
+      const filtered = data.filter((product) => {
+        if (product.status?.toLowerCase() !== "active") {
+          return false;
+        }
 
-      const sortedProducts = myProducts.sort(
+        if (
+          !user?.latitude ||
+          !user?.longitude ||
+          !product.latitude ||
+          !product.longitude
+        ) {
+          return false;
+        }
+
+        const distance = parseFloat(
+          calculateDistance(
+            parseFloat(user.latitude),
+            parseFloat(user.longitude),
+            parseFloat(product.latitude),
+            parseFloat(product.longitude)
+          )
+        );
+
+        const radius = parseFloat(product.delivery_radius || 0);
+
+        return distance <= radius;
+      });
+
+      filtered.sort(
         (a, b) => new Date(b.created_at) - new Date(a.created_at)
       );
 
-      setProducts(sortedProducts);
+      setProducts(filtered);
     } catch (error) {
       console.error("Error fetching trending products:", error);
       setProducts([]);
@@ -47,23 +100,10 @@ const TrendingProducts = () => {
   };
 
   useEffect(() => {
-    const loadProfile = async () => {
-      try {
-        const res = await api.get("/auth/profile");
-        setHomeChef(res.data.homeChef);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    loadProfile();
-  }, []);
-
-useEffect(() => {
-  if (homeChef?.created_by) {
-    fetchTrendingProducts();
-  }
-}, [homeChef]);
+    if (user?.latitude && user?.longitude) {
+      fetchTrendingProducts();
+    }
+  }, [user]);
 
   if (products.length === 0) {
     return (

@@ -8,7 +8,7 @@ import QuickViewModal from "./QuickModel";
 import { FaStar } from "react-icons/fa";
 import ReactDOM from "react-dom";
 
-const ProductCard = ({ product }) => {
+const ProductCard = ({ product, showOfferBadge = false }) => {
   const { addToCart, toggleWishlist, wishlist } = useContext(StoreContext);
   const navigate = useNavigate();
   const [showQR, setShowQR] = useState(false);
@@ -93,16 +93,27 @@ const ProductCard = ({ product }) => {
           onMouseLeave={() => setHovered(false)}
         >
           {/* Tag Badge */}
-          {(product?.product_type || product?.category) && (
-            <div className="absolute top-4 left-4 z-20">
-              <span className={`text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-wider shadow-xl backdrop-blur-md border ${(product.product_type?.toLowerCase() === 'food' || product.category?.toLowerCase() === 'food')
-                  ? "bg-orange-500/90 text-white border-orange-400/50"
-                  : "bg-emerald-500/90 text-white border-emerald-400/50"
-                }`}>
-                {product.product_type || product.category}
-              </span>
-            </div>
-          )}
+          <div className="absolute top-4 left-4 z-20">
+            {showOfferBadge ? (
+              product?.offer > 0 && (
+                <span className="text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-wider shadow-xl backdrop-blur-md border bg-red-500/90 text-white border-red-400/50">
+                  {Math.round(product.offer)}% OFF
+                </span>
+              )
+            ) : (
+              (product?.product_type || product?.category) && (
+                <span
+                  className={`text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-wider shadow-xl backdrop-blur-md border ${(product.product_type?.toLowerCase() === "food" ||
+                      product.category?.toLowerCase() === "food")
+                      ? "bg-orange-500/90 text-white border-orange-400/50"
+                      : "bg-emerald-500/90 text-white border-emerald-400/50"
+                    }`}
+                >
+                  {product.product_type || product.category}
+                </span>
+              )
+            )}
+          </div>
 
           {/* Action Icons */}
           <div
@@ -179,10 +190,10 @@ const ProductCard = ({ product }) => {
                 By <span className="font-medium text-gray-700">{product.chef_name}</span>
               </p>
 
-                {/* <p className="text-xs text-green-600 font-medium mt-1">
+              {/* <p className="text-xs text-green-600 font-medium mt-1">
                   Delivery Radius: {product.delivery_radius}
                 </p> */}
-              
+
             </div>
           )}
 
