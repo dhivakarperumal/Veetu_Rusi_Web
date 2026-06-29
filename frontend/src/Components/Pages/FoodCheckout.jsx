@@ -29,6 +29,9 @@ export default function FoodCheckout() {
   const [deliveryTime, setDeliveryTime] = useState("12:00");
   const [paymentMethod, setPaymentMethod] = useState("Cash on Delivery");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const location = useLocation();
   const buyNowItem = location.state;
   const checkoutItems = buyNowItem?.product
@@ -64,6 +67,32 @@ export default function FoodCheckout() {
   useEffect(() => {
     setDeliveryDate(getTomorrowDate());
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      setName(user.name || user.username || "");
+      setEmail(user.email || "");
+      setPhone(user.phone || user.mobile || "");
+    }
+  }, [user]);
+
+  const resolveImageUrl = (url) => {
+    if (!url || typeof url !== "string") return null;
+
+    if (url.startsWith("http") || url.startsWith("data:")) {
+      return url;
+    }
+
+    const backendUrl =
+      import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+
+    const cleanPath = url.replace(/\\/g, "/");
+    const finalPath = cleanPath.startsWith("/")
+      ? cleanPath
+      : `/${cleanPath}`;
+
+    return `${backendUrl}${finalPath}`;
+  };
 
   const validateDelivery = () => {
     const requiredFields = [streetAddress, city, district, stateValue, country, zipCode];
@@ -127,130 +156,209 @@ export default function FoodCheckout() {
         <PageContainer>
           <div className="grid gap-10 lg:grid-cols-3">
             <div className="lg:col-span-2 space-y-6">
+
+              {/* Personal Information */}
               <div className="bg-white rounded-3xl shadow p-8">
-                <h2 className="text-2xl font-bold text-slate-900 mb-4">Delivery details</h2>
+                <h2 className="text-2xl font-bold text-slate-900 mb-6">
+                  Personal Information
+                </h2>
+
                 <div className="grid gap-4 md:grid-cols-2">
+
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Street Address</label>
-                    <textarea
-                      value={streetAddress}
-                      onChange={(e) => setStreetAddress(e.target.value)}
-                      rows={3}
-                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      Name
+                    </label>
+                    <input
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                     />
                   </div>
+
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">City</label>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      Email
+                    </label>
+                    <input
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      Phone
+                    </label>
+                    <input
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      Street Address
+                    </label>
+
+                    <input
+                      type="text"
+                      value={streetAddress}
+                      onChange={(e) => setStreetAddress(e.target.value)}
+                      placeholder="Enter your street address"
+                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      City
+                    </label>
                     <input
                       value={city}
                       onChange={(e) => setCity(e.target.value)}
-                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                      placeholder="Enter your city"
+                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                     />
                   </div>
+
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">District</label>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      District
+                    </label>
                     <input
                       value={district}
                       onChange={(e) => setDistrict(e.target.value)}
-                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                      placeholder="Enter your district"
+                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                     />
                   </div>
+
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">State</label>
-                    <input
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      State
+                    </label>
+
+                    <select
                       value={stateValue}
                       onChange={(e) => setStateValue(e.target.value)}
-                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                    />
+                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 bg-white outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                    >
+                      <option value="">Select State</option>
+                      <option>Tamil Nadu</option>
+                      <option>Kerala</option>
+                      <option>Karnataka</option>
+                      <option>Andhra Pradesh</option>
+                      <option>Telangana</option>
+                      <option>Maharashtra</option>
+                      <option>Delhi</option>
+                      <option>Gujarat</option>
+                      <option>West Bengal</option>
+                      <option>Uttar Pradesh</option>
+                      <option>Rajasthan</option>
+                      <option>Punjab</option>
+                      <option>Odisha</option>
+                      <option>Assam</option>
+                    </select>
                   </div>
+
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">ZIP / Postal Code</label>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      ZIP Code
+                    </label>
                     <input
                       value={zipCode}
                       onChange={(e) => setZipCode(e.target.value)}
-                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                      placeholder="Enter your ZIP code"
+                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Country</label>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      Country
+                    </label>
                     <input
                       value={country}
                       onChange={(e) => setCountry(e.target.value)}
-                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                     />
                   </div>
+
                 </div>
               </div>
 
+              {/* Delivery Details */}
               <div className="bg-white rounded-3xl shadow p-8">
-                <h2 className="text-2xl font-bold text-slate-900 mb-4">Schedule delivery</h2>
-                <div className="grid gap-4 md:grid-cols-2">
+                <h2 className="text-2xl font-bold text-slate-900 mb-6">
+                  Delivery Details
+                </h2>
+
+                <div className="grid gap-6 md:grid-cols-2">
+
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Delivery Date</label>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      Delivery Date
+                    </label>
                     <input
                       type="date"
                       min={getTomorrowDate()}
                       value={deliveryDate}
                       onChange={(e) => setDeliveryDate(e.target.value)}
-                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                     />
                   </div>
+
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Delivery Time</label>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      Delivery Time
+                    </label>
                     <input
                       type="time"
                       value={deliveryTime}
                       onChange={(e) => setDeliveryTime(e.target.value)}
-                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                     />
                   </div>
+
                 </div>
-              </div>
 
-              <div className="bg-white rounded-3xl shadow p-8">
-                <h2 className="text-2xl font-bold text-slate-900 mb-4">Payment information</h2>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Payment Method</label>
-                    <select
-                      value={paymentMethod}
-                      onChange={(e) => setPaymentMethod(e.target.value)}
-                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                    >
-                      <option>Cash on Delivery</option>
-                      <option>Online Payment</option>
-                    </select>
-                  </div>
+                <div className="mt-8 border-t pt-6">
+                  <h3 className="text-xl font-bold text-slate-900 mb-4">
+                    Payment Information
+                  </h3>
 
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-2">Name</label>
+                  <div className="space-y-4">
+
+                    <label className="flex items-center gap-3 rounded-xl border border-slate-200 p-4 cursor-pointer hover:border-emerald-500">
                       <input
-                        value={user?.name || user?.username || ''}
-                        disabled
-                        className="w-full rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm text-slate-700"
+                        type="radio"
+                        name="paymentMethod"
+                        value="Cash on Delivery"
+                        checked={paymentMethod === "Cash on Delivery"}
+                        onChange={(e) => setPaymentMethod(e.target.value)}
                       />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-2">Email</label>
-                      <input
-                        value={user?.email || ''}
-                        disabled
-                        className="w-full rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm text-slate-700"
-                      />
-                    </div>
-                  </div>
+                      <span className="font-medium">Cash on Delivery</span>
+                    </label>
 
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Phone</label>
-                    <input
-                      value={user?.phone || user?.mobile || ''}
-                      disabled
-                      className="w-full rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm text-slate-700"
-                    />
+                    <label className="flex items-center gap-3 rounded-xl border border-slate-200 p-4 cursor-pointer hover:border-emerald-500">
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="Online Payment"
+                        checked={paymentMethod === "Online Payment"}
+                        onChange={(e) => setPaymentMethod(e.target.value)}
+                      />
+                      <span className="font-medium">Online Payment</span>
+                    </label>
+
                   </div>
                 </div>
+
               </div>
+
             </div>
 
             <div className="space-y-6">
@@ -262,17 +370,45 @@ export default function FoodCheckout() {
                     <span>{checkoutItems.length}</span>
                   </div>
                   <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
-                    {checkoutItems.map((item) => (
-                      <div key={item.id} className="rounded-3xl border border-slate-200 p-4 bg-slate-50">
-                        <div className="flex items-center justify-between gap-3">
-                          <div>
-                            <p className="font-semibold text-slate-900">{item.name}</p>
-                            <p className="text-sm text-slate-500">Qty {item.quantity} × ₹{parseFloat(item.price || 0).toFixed(2)}</p>
+                    {checkoutItems.map((item) => {
+                      const image = resolveImageUrl(item.image);
+
+                      return (
+                        <div
+                          key={item.id}
+                          className="rounded-3xl border border-slate-200 p-4 bg-slate-50"
+                        >
+                          <div className="flex items-center gap-4">
+
+                            <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gray-100 flex-shrink-0">
+                              <img
+                                src={image}
+                                alt={item.name}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.target.src = "/images/no-image.png";
+                                }}
+                              />
+                            </div>
+
+                            <div className="flex-1">
+                              <p className="font-semibold text-slate-900">
+                                {item.name}
+                              </p>
+
+                              <p className="text-sm text-slate-500 mt-1">
+                                Qty {item.quantity} × ₹{parseFloat(item.price || 0).toFixed(2)}
+                              </p>
+                            </div>
+
+                            <p className="font-semibold text-slate-900 whitespace-nowrap">
+                              ₹{(parseFloat(item.price || 0) * item.quantity).toFixed(2)}
+                            </p>
+
                           </div>
-                          <p className="font-semibold text-slate-900">₹{(parseFloat(item.price || 0) * item.quantity).toFixed(2)}</p>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
 
                   <div className="border-t border-slate-200 pt-4">

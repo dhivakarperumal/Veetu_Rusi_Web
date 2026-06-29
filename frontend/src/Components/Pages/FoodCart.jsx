@@ -23,6 +23,8 @@ export default function FoodCartPage() {
     0
   );
 
+  const isCartEmpty = userFoodCart.length === 0;
+
   return (
     <>
       <PageHeader title="My Food Cart" />
@@ -129,7 +131,14 @@ export default function FoodCartPage() {
 
               </div>
 
-              <button onClick={() => navigate("/food-checkout")} className="w-full mt-3 bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-lg font-semibold transition cursor-pointer">
+              <button
+                onClick={() => navigate("/food-checkout")}
+                disabled={isCartEmpty}
+                className={`w-full mt-3 py-3 rounded-lg font-semibold transition ${isCartEmpty
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+                  }`}
+              >
                 Food Checkout
               </button>
 

@@ -352,7 +352,7 @@ const QuickViewModal = ({ product, onClose }) => {
                         quantity
                       );
                     } else {
-                      addToCart(
+                      addToFoodCart(
                         product,
                         selectedVariant,
                         selectedSize,
