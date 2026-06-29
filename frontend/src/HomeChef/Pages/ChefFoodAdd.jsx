@@ -389,31 +389,63 @@ const ChefFoodAdd = () => {
                 {activeStepIndex === 3 && (
                   <div className="space-y-6">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      <label className="flex flex-col items-center justify-center w-full p-6 border-2 border-dashed border-slate-700 rounded-xl cursor-pointer bg-[#0b0d10]">
-                        <FiUploadCloud size={28} className="text-slate-400 mb-2" />
-                        <span className="text-sm text-slate-200">Upload food packaging image</span>
+                      <label className="flex flex-col items-center justify-center w-full p-6 border-2 border-dashed border-slate-700 rounded-xl cursor-pointer bg-[#0b0d10] hover:border-emerald-500/50 transition-colors">
+                        <FiUploadCloud size={28} className="text-slateald-400 mb-2" />
+                        <span className="text-sm text-slate-200 font-semibold">Upload Packaging Image</span>
+                        <span className="text-xs text-slate-500 mt-1">Click to browse</span>
                         <input type="file" accept="image/*" onChange={handlePackagingUpload} className="hidden" />
                       </label>
 
-                      <label className="flex flex-col items-center justify-center w-full p-6 border-2 border-dashed border-slate-700 rounded-xl cursor-pointer bg-[#0b0d10]">
+                      <label className="flex flex-col items-center justify-center w-full p-6 border-2 border-dashed border-slate-700 rounded-xl cursor-pointer bg-[#0b0d10] hover:border-emerald-500/50 transition-colors">
                         <FiUploadCloud size={28} className="text-slate-400 mb-2" />
-                        <span className="text-sm text-slate-200">Upload food gallery images</span>
+                        <span className="text-sm text-slate-200 font-semibold">Upload Gallery Images</span>
+                        <span className="text-xs text-slate-500 mt-1">Multiple images allowed</span>
                         <input type="file" multiple accept="image/*" onChange={handleImageUpload} className="hidden" />
                       </label>
                     </div>
 
                     {form.packaging_image && (
                       <div className="rounded-3xl overflow-hidden border border-white/10 bg-[#0a0f14] p-4">
-                        <p className="text-sm font-semibold text-white mb-3">Packaging Image</p>
-                        <img src={form.packaging_image} alt="Packaging" className="w-full rounded-3xl object-cover h-48" />
+                        <div className="flex items-center justify-between mb-3">
+                          <p className="text-sm font-semibold text-white">Packaging Image</p>
+                          <button
+                            type="button"
+                            onClick={() => setForm((p) => ({ ...p, packaging_image: "" }))}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-semibold hover:bg-red-500/20 transition-colors"
+                          >
+                            ✕ Remove
+                          </button>
+                        </div>
+                        <img src={form.packaging_image} alt="Packaging" className="w-full rounded-2xl object-cover h-48" />
                       </div>
                     )}
 
                     {form.images && form.images.length > 0 && (
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        {form.images.map((img, i) => (
-                          <img key={i} src={img} alt={`img-${i}`} className="w-full h-32 object-cover rounded-md" />
-                        ))}
+                      <div>
+                        <div className="flex items-center justify-between mb-3">
+                          <p className="text-sm font-semibold text-white">Gallery Images ({form.images.length})</p>
+                          <button
+                            type="button"
+                            onClick={() => setForm((p) => ({ ...p, images: [] }))}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-semibold hover:bg-red-500/20 transition-colors"
+                          >
+                            ✕ Remove All
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                          {form.images.map((img, i) => (
+                            <div key={i} className="relative group rounded-xl overflow-hidden border border-white/10">
+                              <img src={img} alt={`img-${i}`} className="w-full h-32 object-cover" />
+                              <button
+                                type="button"
+                                onClick={() => setForm((p) => ({ ...p, images: p.images.filter((_, idx) => idx !== i) }))}
+                                className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-red-500 text-white text-xs font-black flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-red-400"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
