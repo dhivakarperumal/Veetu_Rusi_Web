@@ -6,6 +6,7 @@ import { Navigation, Autoplay, Pagination } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
+import PageContainer from "../CommenComponents/PageContainer";
 
 import api from "../../api";
 import { StoreContext } from "../../PrivateRouter/StoreContext";
@@ -285,8 +286,8 @@ const ProductDetails = () => {
     return (
       <>
         <PageHeader title="Loading..." />
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-8 grid lg:grid-cols-2 gap-8 lg:gap-12 animate-pulse">
+        <PageContainer className="py-8">
+         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 animate-pulse">
           {/* LEFT IMAGE SKELETON */}
           <div>
             <div className="w-full h-[320px] sm:h-[420px] lg:h-[480px] bg-gray-200 rounded-xl"></div>
@@ -327,18 +328,20 @@ const ProductDetails = () => {
             </div>
           </div>
         </div>
+        </PageContainer>
       </>
     );
 
   return (
     <>
       <PageHeader title={product.name} />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-8 grid lg:grid-cols-2 gap-8 lg:gap-12">
-        {/* LEFT SIDE IMAGES */}
-        <div className="lg:h-fit lg:sticky lg:top-24">
-          {/* Main Image */}
-          <div
-            className="relative w-full h-[320px] sm:h-[420px] lg:h-[480px] bg-gray-100 rounded-xl"
+      <PageContainer className="py-8">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
+          {/* LEFT SIDE IMAGES */}
+          <div className="lg:h-fit lg:sticky lg:top-24">
+            {/* Main Image */}
+            <div
+              className="relative w-full h-[320px] sm:h-[420px] lg:h-[480px] bg-gray-100 rounded-xl"
             onMouseEnter={() => setZoomed(true)}
             onMouseLeave={() => setZoomed(false)}
             onMouseMove={handleMouseMove}
@@ -1070,6 +1073,7 @@ const ProductDetails = () => {
           </div>
         </div>
       </div>
+      </PageContainer>
     </>
   );
 };
