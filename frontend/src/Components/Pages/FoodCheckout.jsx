@@ -29,6 +29,9 @@ export default function FoodCheckout() {
   const [deliveryTime, setDeliveryTime] = useState("12:00");
   const [paymentMethod, setPaymentMethod] = useState("Cash on Delivery");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const location = useLocation();
   const buyNowItem = location.state;
   const checkoutItems = buyNowItem?.product
@@ -64,6 +67,14 @@ export default function FoodCheckout() {
   useEffect(() => {
     setDeliveryDate(getTomorrowDate());
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      setName(user.name || user.username || "");
+      setEmail(user.email || "");
+      setPhone(user.phone || user.mobile || "");
+    }
+  }, [user]);
 
   const resolveImageUrl = (url) => {
     if (!url || typeof url !== "string") return null;
@@ -146,6 +157,50 @@ export default function FoodCheckout() {
           <div className="grid gap-10 lg:grid-cols-3">
             <div className="lg:col-span-2 space-y-6">
               <div className="bg-white rounded-3xl shadow p-8">
+                <h2 className="text-2xl font-bold text-slate-900 mb-4">Payment information</h2>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Payment Method</label>
+                    <select
+                      value={paymentMethod}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                    >
+                      <option>Cash on Delivery</option>
+                      <option>Online Payment</option>
+                    </select>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">Name</label>
+                      <input
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">Email</label>
+                      <input
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Phone</label>
+                    <input
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white rounded-3xl shadow p-8">
                 <h2 className="text-2xl font-bold text-slate-900 mb-4">Delivery details</h2>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div>
@@ -225,50 +280,7 @@ export default function FoodCheckout() {
                 </div>
               </div>
 
-              <div className="bg-white rounded-3xl shadow p-8">
-                <h2 className="text-2xl font-bold text-slate-900 mb-4">Payment information</h2>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Payment Method</label>
-                    <select
-                      value={paymentMethod}
-                      onChange={(e) => setPaymentMethod(e.target.value)}
-                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                    >
-                      <option>Cash on Delivery</option>
-                      <option>Online Payment</option>
-                    </select>
-                  </div>
 
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-2">Name</label>
-                      <input
-                        value={user?.name || user?.username || ''}
-                        disabled
-                        className="w-full rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm text-slate-700"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-2">Email</label>
-                      <input
-                        value={user?.email || ''}
-                        disabled
-                        className="w-full rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm text-slate-700"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Phone</label>
-                    <input
-                      value={user?.phone || user?.mobile || ''}
-                      disabled
-                      className="w-full rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm text-slate-700"
-                    />
-                  </div>
-                </div>
-              </div>
             </div>
 
             <div className="space-y-6">
