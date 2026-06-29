@@ -137,7 +137,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                   </button>
 
                   {!collapsed && (
-                    <div className={`ml-4 pl-4 border-l border-slate-800/60 space-y-2 overflow-hidden transition-all duration-300 ${isOpenMenu ? 'max-h-72 opacity-100 py-2' : 'max-h-0 opacity-0'}`}>
+                    <div className={`ml-4 pl-4 border-l border-slate-800/60 space-y-1 overflow-hidden transition-all duration-300 ${isOpenMenu ? 'max-h-75 opacity-100 py-2' : 'max-h-0 opacity-0'}`}>
                       {item.children.map((child) => {
                         const ChildIcon = child.icon;
                         return (

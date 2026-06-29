@@ -390,8 +390,9 @@ const AcceptedOrders = () => {
       {/* ── Header ─────────────────────────────────────────────── */}
       <header className="rounded-[2rem] border border-white/10 bg-slate-950/95 p-8 shadow-2xl relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(6,182,212,0.14),transparent_40%)]" />
-        <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
+        <div className="relative">
+          {/* Header Title Area */}
+          <div className="mb-6">
             <p className="text-[10px] font-black uppercase tracking-[0.35em] text-cyan-400">
               Delivery Partner · Active Assignments
             </p>
@@ -399,42 +400,46 @@ const AcceptedOrders = () => {
             <p className="mt-2 text-sm text-slate-400">Orders assigned to you — pick them up and deliver.</p>
           </div>
 
-          <div className="flex items-center gap-3 flex-wrap">
-            {/* Search */}
-            <div className="relative">
+          {/* Header Controls Area */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t border-white/5 pt-6">
+            {/* Search (Left Side) */}
+            <div className="relative w-full sm:w-auto">
               <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
               <input type="text" value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search orders..."
-                className="w-52 rounded-full border border-white/10 bg-slate-900 pl-10 pr-4 py-2.5 text-xs font-semibold text-slate-200 placeholder:text-slate-600 focus:border-cyan-500 outline-none" />
+                className="w-full sm:w-72 rounded-full border border-white/10 bg-slate-900 pl-10 pr-4 py-3 text-xs font-semibold text-slate-200 placeholder:text-slate-600 focus:border-cyan-500 outline-none" />
             </div>
 
-            {/* View toggle */}
-            <div className="flex items-center rounded-full border border-white/10 bg-slate-900 p-1">
-              <button
-                onClick={() => setViewMode("card")}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider transition
-                  ${viewMode === "card" ? "bg-emerald-500 text-slate-950 shadow-lg" : "text-slate-400 hover:text-white"}`}
-                title="Card View"
-              >
-                <FiGrid size={13} /> Card
-              </button>
-              <button
-                onClick={() => setViewMode("table")}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider transition
-                  ${viewMode === "table" ? "bg-emerald-500 text-slate-950 shadow-lg" : "text-slate-400 hover:text-white"}`}
-                title="Table View"
-              >
-                <FiList size={13} /> Table
+            {/* Other Actions (Right Side) */}
+            <div className="flex items-center gap-3">
+              {/* View toggle */}
+              <div className="flex items-center rounded-full border border-white/10 bg-slate-900 p-1">
+                <button
+                  onClick={() => setViewMode("card")}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider transition
+                    ${viewMode === "card" ? "bg-emerald-500 text-slate-950 shadow-lg" : "text-slate-400 hover:text-white"}`}
+                  title="Card View"
+                >
+                  <FiGrid size={13} /> Card
+                </button>
+                <button
+                  onClick={() => setViewMode("table")}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider transition
+                    ${viewMode === "table" ? "bg-emerald-500 text-slate-950 shadow-lg" : "text-slate-400 hover:text-white"}`}
+                  title="Table View"
+                >
+                  <FiList size={13} /> Table
+                </button>
+              </div>
+
+              {/* Refresh */}
+              <button onClick={fetchOrders} disabled={loading}
+                className="flex items-center gap-2 rounded-full bg-emerald-500 px-5 py-2.5 text-[11px] font-black uppercase tracking-widest text-slate-950 hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20 disabled:opacity-50 h-[42px]">
+                <FiRefreshCw size={14} className={loading ? "animate-spin" : ""} />
+                Refresh
               </button>
             </div>
-
-            {/* Refresh */}
-            <button onClick={fetchOrders} disabled={loading}
-              className="flex items-center gap-2 rounded-full bg-emerald-500 px-5 py-2.5 text-[11px] font-black uppercase tracking-widest text-slate-950 hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20 disabled:opacity-50">
-              <FiRefreshCw size={14} className={loading ? "animate-spin" : ""} />
-              Refresh
-            </button>
           </div>
         </div>
       </header>
