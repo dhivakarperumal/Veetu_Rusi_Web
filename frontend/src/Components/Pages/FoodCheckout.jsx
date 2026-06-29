@@ -65,6 +65,24 @@ export default function FoodCheckout() {
     setDeliveryDate(getTomorrowDate());
   }, []);
 
+  const resolveImageUrl = (url) => {
+    if (!url || typeof url !== "string") return null;
+
+    if (url.startsWith("http") || url.startsWith("data:")) {
+      return url;
+    }
+
+    const backendUrl =
+      import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+
+    const cleanPath = url.replace(/\\/g, "/");
+    const finalPath = cleanPath.startsWith("/")
+      ? cleanPath
+      : `/${cleanPath}`;
+
+    return `${backendUrl}${finalPath}`;
+  };
+
   const validateDelivery = () => {
     const requiredFields = [streetAddress, city, district, stateValue, country, zipCode];
     if (!user) return "Please login to continue.";
@@ -262,17 +280,45 @@ export default function FoodCheckout() {
                     <span>{checkoutItems.length}</span>
                   </div>
                   <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
-                    {checkoutItems.map((item) => (
-                      <div key={item.id} className="rounded-3xl border border-slate-200 p-4 bg-slate-50">
-                        <div className="flex items-center justify-between gap-3">
-                          <div>
-                            <p className="font-semibold text-slate-900">{item.name}</p>
-                            <p className="text-sm text-slate-500">Qty {item.quantity} × ₹{parseFloat(item.price || 0).toFixed(2)}</p>
+                    {checkoutItems.map((item) => {
+                      const image = resolveImageUrl(item.image);
+
+                      return (
+                        <div
+                          key={item.id}
+                          className="rounded-3xl border border-slate-200 p-4 bg-slate-50"
+                        >
+                          <div className="flex items-center gap-4">
+
+                            <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gray-100 flex-shrink-0">
+                              <img
+                                src={image}
+                                alt={item.name}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.target.src = "/images/no-image.png";
+                                }}
+                              />
+                            </div>
+
+                            <div className="flex-1">
+                              <p className="font-semibold text-slate-900">
+                                {item.name}
+                              </p>
+
+                              <p className="text-sm text-slate-500 mt-1">
+                                Qty {item.quantity} × ₹{parseFloat(item.price || 0).toFixed(2)}
+                              </p>
+                            </div>
+
+                            <p className="font-semibold text-slate-900 whitespace-nowrap">
+                              ₹{(parseFloat(item.price || 0) * item.quantity).toFixed(2)}
+                            </p>
+
                           </div>
-                          <p className="font-semibold text-slate-900">₹{(parseFloat(item.price || 0) * item.quantity).toFixed(2)}</p>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
 
                   <div className="border-t border-slate-200 pt-4">

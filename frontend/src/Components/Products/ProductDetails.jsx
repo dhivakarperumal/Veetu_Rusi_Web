@@ -778,7 +778,7 @@ const ProductDetails = () => {
                       quantity
                     );
                   } else {
-                    addToCart(
+                    addToFoodCart(
                       product,
                       selectedVariant,
                       selectedSize,
