@@ -232,10 +232,10 @@ const OrderManagement = () => {
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">S.No</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Order ID</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Customer Name</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Food Items</th>
+
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Ordered Date</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Delivery Slot</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Qty</th>
+
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Amount</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Status</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em] text-center">Actions</th>
@@ -266,16 +266,7 @@ const OrderManagement = () => {
                       <td className="px-6 py-5 text-sm font-bold text-white/50">{idx + 1}</td>
                       <td className="px-6 py-5 text-sm font-black text-white">{order.order_id}</td>
                       <td className="px-6 py-5 text-sm font-bold text-white/60">{order.customer_name}</td>
-                      <td className="px-6 py-5 max-w-[18rem] text-sm text-white/70">
-                        <div className="space-y-1">
-                          {order.items?.slice(0, 2).map((item, idx) => (
-                            <p key={idx} className="truncate">{item.name || item.product_name || "Food item"} x{item.quantity || 1}</p>
-                          ))}
-                          {order.items && order.items.length > 2 && (
-                            <p className="text-xs text-slate-300">+{order.items.length - 2} more</p>
-                          )}
-                        </div>
-                      </td>
+                      
                       <td className="px-6 py-5 text-sm font-bold text-white/60">
                         {order.ordered_at || order.created_at
                           ? new Date(order.ordered_at || order.created_at).toLocaleString()
@@ -284,7 +275,7 @@ const OrderManagement = () => {
                       <td className="px-6 py-5 text-sm font-semibold text-white/50">
                         {order.delivery_date ? `${order.delivery_date} ${order.delivery_time || ""}` : "-"}
                       </td>
-                      <td className="px-6 py-5 text-sm font-black text-white">{chefQuantity}</td>
+                      
                       <td className="px-6 py-5 text-sm font-black text-white">₹{chefAmount.toLocaleString()}</td>
                       <td className="px-6 py-5">
                         <div className="flex flex-col gap-2 items-start">
