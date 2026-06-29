@@ -216,15 +216,19 @@ export const StoreProvider = ({ children }) => {
             0
         );
 
+        const customerName = checkoutData?.name?.trim() || user.name || user.username || user.fullname || '';
+        const customerEmail = checkoutData?.email?.trim() || user.email || '';
+        const customerPhone = checkoutData?.phone?.trim() || user.phone || user.mobile || '';
+
         const orderPayload = {
             ...checkoutData,
             user_id: user.user_id,
-            customer_name: user.name || user.username || user.fullname || '',
-            customer_email: user.email || '',
-            customer_phone: user.phone || user.mobile || '',
-            ordered_by_name: user.name || user.username || user.fullname || '',
-            ordered_by_email: user.email || '',
-            ordered_by_phone: user.phone || user.mobile || '',
+            customer_name: customerName,
+            customer_email: customerEmail,
+            customer_phone: customerPhone,
+            ordered_by_name: customerName,
+            ordered_by_email: customerEmail,
+            ordered_by_phone: customerPhone,
             total_amount: totalAmount,
             items: userFoodCart.map((item) => ({
                 product_id: item.product_id,
