@@ -10,7 +10,8 @@ import {
   PhoneCall,
   Sparkles,
   Shirt,
-  Gem
+  Gem,
+  Utensils,
 } from "lucide-react";
 import { FaFacebook, FaInstagram } from "react-icons/fa";
 import PageContainer from "./PageContainer";
@@ -19,7 +20,6 @@ import api from "../.././api";
 
 const Footer = () => {
   const [categories, setCategories] = useState([]);
-  const [homeChef, setHomeChef] = useState(null);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -35,24 +35,25 @@ const Footer = () => {
   }, []);
 
   useEffect(() => {
-    if (!homeChef?.created_by) return;
-
     const fetchCategories = async () => {
       try {
-        const res = await api.get("/categories");
+        const res = await api.get("/home-chef-categories");
 
-        const myCategories = res.data.filter(
-          (cat) => cat.created_by_user_id === homeChef.created_by
-        );
+        const data = Array.isArray(res.data) ? res.data : [];
 
-        setCategories(myCategories);
+        const mapped = data.map((cat) => ({
+          ...cat,
+          name: cat.c_name || cat.name || "",
+        }));
+
+        setCategories(mapped);
       } catch (err) {
-        console.error(err);
+        console.error("Error fetching categories:", err);
       }
     };
 
     fetchCategories();
-  }, [homeChef]);
+  }, []);
 
   return (
     <footer className="bg-gradient-to-r from-primary via-secondary to-primary-dark text-white mt-20">
@@ -138,21 +139,17 @@ const Footer = () => {
 
             <ul className="space-y-3 text-sm">
 
-              {categories.length > 0 ? (
-                categories.slice(0,4).map((cat) => (
-                  <li
-                    key={cat.id}
+              {categories.slice(0, 4).map((cat) => (
+                <li key={cat.id}>
+                  <Link
+                    to={`/category/${cat.name.toLowerCase()}`}
                     className="flex items-center gap-2 hover:translate-x-1 transition"
                   >
                     <Utensils size={16} />
                     {cat.name}
-                  </li>
-                ))
-              ) : (
-                <li className="text-white/70">
-                  No Categories Available
+                  </Link>
                 </li>
-              )}
+              ))}
 
             </ul>
           </div>

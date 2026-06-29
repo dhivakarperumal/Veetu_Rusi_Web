@@ -198,11 +198,11 @@ export default function FoodCheckout() {
                     />
                   </div>
 
-                  <div className="md:col-span-2">
+                  {/* Row 1 */}
+                  <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-2">
                       Street Address
                     </label>
-
                     <input
                       type="text"
                       value={streetAddress}
@@ -211,7 +211,7 @@ export default function FoodCheckout() {
                       className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                     />
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-2">
                       City
@@ -224,6 +224,7 @@ export default function FoodCheckout() {
                     />
                   </div>
 
+                  {/* Row 2 */}
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-2">
                       District
@@ -247,23 +248,54 @@ export default function FoodCheckout() {
                       className="w-full rounded-2xl border border-slate-200 px-4 py-3 bg-white outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                     >
                       <option value="">Select State</option>
-                      <option>Tamil Nadu</option>
-                      <option>Kerala</option>
-                      <option>Karnataka</option>
-                      <option>Andhra Pradesh</option>
-                      <option>Telangana</option>
-                      <option>Maharashtra</option>
-                      <option>Delhi</option>
-                      <option>Gujarat</option>
-                      <option>West Bengal</option>
-                      <option>Uttar Pradesh</option>
-                      <option>Rajasthan</option>
-                      <option>Punjab</option>
-                      <option>Odisha</option>
-                      <option>Assam</option>
+
+                      {/* States */}
+                      <option value="Andhra Pradesh">Andhra Pradesh</option>
+                      <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+                      <option value="Assam">Assam</option>
+                      <option value="Bihar">Bihar</option>
+                      <option value="Chhattisgarh">Chhattisgarh</option>
+                      <option value="Goa">Goa</option>
+                      <option value="Gujarat">Gujarat</option>
+                      <option value="Haryana">Haryana</option>
+                      <option value="Himachal Pradesh">Himachal Pradesh</option>
+                      <option value="Jharkhand">Jharkhand</option>
+                      <option value="Karnataka">Karnataka</option>
+                      <option value="Kerala">Kerala</option>
+                      <option value="Madhya Pradesh">Madhya Pradesh</option>
+                      <option value="Maharashtra">Maharashtra</option>
+                      <option value="Manipur">Manipur</option>
+                      <option value="Meghalaya">Meghalaya</option>
+                      <option value="Mizoram">Mizoram</option>
+                      <option value="Nagaland">Nagaland</option>
+                      <option value="Odisha">Odisha</option>
+                      <option value="Punjab">Punjab</option>
+                      <option value="Rajasthan">Rajasthan</option>
+                      <option value="Sikkim">Sikkim</option>
+                      <option value="Tamil Nadu">Tamil Nadu</option>
+                      <option value="Telangana">Telangana</option>
+                      <option value="Tripura">Tripura</option>
+                      <option value="Uttar Pradesh">Uttar Pradesh</option>
+                      <option value="Uttarakhand">Uttarakhand</option>
+                      <option value="West Bengal">West Bengal</option>
+
+                      {/* Union Territories */}
+                      <option value="Andaman and Nicobar Islands">
+                        Andaman and Nicobar Islands
+                      </option>
+                      <option value="Chandigarh">Chandigarh</option>
+                      <option value="Dadra and Nagar Haveli and Daman and Diu">
+                        Dadra and Nagar Haveli and Daman and Diu
+                      </option>
+                      <option value="Delhi">Delhi</option>
+                      <option value="Jammu and Kashmir">Jammu and Kashmir</option>
+                      <option value="Ladakh">Ladakh</option>
+                      <option value="Lakshadweep">Lakshadweep</option>
+                      <option value="Puducherry">Puducherry</option>
                     </select>
                   </div>
 
+                  {/* Row 3 */}
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-2">
                       ZIP Code
@@ -276,7 +308,7 @@ export default function FoodCheckout() {
                     />
                   </div>
 
-                  <div className="md:col-span-2">
+                  <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-2">
                       Country
                     </label>
@@ -325,33 +357,35 @@ export default function FoodCheckout() {
 
                 </div>
 
-                <div className="mt-8 border-t pt-6">
+                <div className="mt-8 border-t border-gray-300 pt-6">
                   <h3 className="text-xl font-bold text-slate-900 mb-4">
                     Payment Information
                   </h3>
 
-                  <div className="space-y-4">
+                  <div className="flex flex-wrap items-center gap-8">
 
-                    <label className="flex items-center gap-3 rounded-xl border border-slate-200 p-4 cursor-pointer hover:border-emerald-500">
+                    <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="radio"
                         name="paymentMethod"
                         value="Cash on Delivery"
                         checked={paymentMethod === "Cash on Delivery"}
                         onChange={(e) => setPaymentMethod(e.target.value)}
+                        className="cursor-pointer"
                       />
-                      <span className="font-medium">Cash on Delivery</span>
+                      <span>Cash on Delivery</span>
                     </label>
 
-                    <label className="flex items-center gap-3 rounded-xl border border-slate-200 p-4 cursor-pointer hover:border-emerald-500">
+                    <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="radio"
                         name="paymentMethod"
                         value="Online Payment"
                         checked={paymentMethod === "Online Payment"}
                         onChange={(e) => setPaymentMethod(e.target.value)}
+                        className="cursor-pointer"
                       />
-                      <span className="font-medium">Online Payment</span>
+                      <span>Online Payment</span>
                     </label>
 
                   </div>
