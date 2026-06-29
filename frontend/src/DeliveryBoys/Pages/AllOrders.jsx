@@ -54,7 +54,7 @@ const Orders = ({ statusFilter = "All" }) => {
     const performStatusUpdate = async (orderId, updateData) => {
         setLoading(true);
         try {
-            await api.put(`/orders/${orderId}/status`, updateData);
+            await api.patch(`/delivery/orders/${orderId}/status`, updateData);
             toast.success(`Pipeline synchronized to: ${updateData.status}`);
             fetchOrders();
         } catch (error) {
@@ -277,7 +277,7 @@ const Orders = ({ statusFilter = "All" }) => {
                                         </td>
                                         <td className="px-6 py-5 text-right align-top">
                                             <Link
-                                                to={`/admin/orders/${order.id}`}
+                                                to={`/delivery/orders/${order.id}`}
                                                 className="inline-flex h-12 min-w-[48px] items-center justify-center rounded-3xl border border-white/10 bg-slate-900 text-slate-300 hover:bg-emerald-500 hover:text-white transition"
                                                 title="View Full Manifest"
                                             >

@@ -73,6 +73,8 @@ async function createDatabaseAndTables() {
     await connection.execute("ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `longitude` VARCHAR(50) DEFAULT NULL");
     await connection.execute("ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `location_name` VARCHAR(255) DEFAULT NULL");
     await connection.execute("ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `pincode` VARCHAR(20) DEFAULT NULL");
+    await connection.execute("ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `franchise_user_id` VARCHAR(255) DEFAULT NULL");
+    await connection.execute("ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `created_by` VARCHAR(255) DEFAULT NULL");
     // Rename existing columns if they exist (ignoring errors if they don't or already renamed)
     try { await connection.execute("ALTER TABLE `users` CHANGE `name` `full_name` VARCHAR(255) NOT NULL"); } catch (e) {}
     try { await connection.execute("ALTER TABLE `users` CHANGE `phone` `mobile_number` VARCHAR(50) DEFAULT NULL"); } catch (e) {}
@@ -83,6 +85,7 @@ async function createDatabaseAndTables() {
   } catch (err) {
     console.log('User alter tables:', err.message);
   }
+
 
   // SuperAdmin Tables
   await connection.execute(`

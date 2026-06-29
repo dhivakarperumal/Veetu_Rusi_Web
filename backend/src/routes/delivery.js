@@ -105,7 +105,7 @@ router.get('/orders', async (req, res) => {
     const deliveryBoyId = req.user?.user_id || req.user?.id;
     const { status } = req.query;
     
-    let query = 'SELECT * FROM user_food_order_table WHERE (delivery_partner = ? OR delivery_partner_user_id = ?)';
+    let query = 'SELECT * FROM user_food_order_table WHERE (delivery_partner = ? OR delivery_partner_user_id = ?) AND DATE(ordered_at) = CURDATE()';
     const params = [deliveryBoyId, deliveryBoyId];
 
     if (status && status !== 'All') {
@@ -125,49 +125,78 @@ router.get('/orders', async (req, res) => {
 
 router.get('/orders/available', async (req, res) => {
   try {
-    // Prioritize user_id (e.g. 'DEL-xxx') because req.user.id might be the ID from the global users table.
     const deliveryBoyId = req.user?.user_id || req.user?.id;
 
-    // Fetch the delivery partner to find their franchise admin (created_by)
-    const [dpRows] = await pool.execute(
-      'SELECT created_by FROM delivery_partners WHERE user_id = ? OR id = ? OR delivery_partner_code = ? LIMIT 1',
-      [deliveryBoyId, deliveryBoyId, deliveryBoyId]
-    );
-
+    // ── Step 1: Try to find franchise/admin context from delivery_partners table ──
     let franchiseAdminId = null;
-    if (dpRows.length > 0 && dpRows[0].created_by) {
-      franchiseAdminId = dpRows[0].created_by;
+    try {
+      const [dpRows] = await pool.execute(
+        `SELECT created_by FROM delivery_partners
+          WHERE user_id = ? OR delivery_partner_user_id = ? OR id = ?
+          LIMIT 1`,
+        [deliveryBoyId, deliveryBoyId, deliveryBoyId]
+      );
+      if (dpRows.length > 0 && dpRows[0].created_by) {
+        franchiseAdminId = dpRows[0].created_by;
+      }
+    } catch (e) {
+      console.warn('[orders/available] delivery_partners lookup failed:', e.message);
     }
 
-    console.log(`[orders/available] User: ${deliveryBoyId}, Found FranchiseAdminId: ${franchiseAdminId}`);
+    // ── Step 2: Fallback — check users table for franchise context ──
+    if (!franchiseAdminId) {
+      try {
+        const [userRows] = await pool.execute(
+          `SELECT created_by, franchise_user_id
+             FROM users
+            WHERE user_id = ? AND role = 'delivery_partner'
+            LIMIT 1`,
+          [deliveryBoyId]
+        );
+        if (userRows.length > 0) {
+          franchiseAdminId =
+            userRows[0].franchise_user_id || userRows[0].created_by || null;
+        }
+      } catch (e) {
+        console.warn('[orders/available] users franchise lookup failed:', e.message);
+      }
+    }
 
+    console.log(`[orders/available] deliveryBoyId: ${deliveryBoyId}, franchiseAdminId: ${franchiseAdminId}`);
+
+    // ── Step 3: Build query ────────────────────────────────────────────────────
+    // Base: orders that are awaiting a delivery partner (unassigned)
     let query = `
-      SELECT o.*, 
-             c.name as home_chef_name, 
-             c.mobile as home_chef_phone, 
-             c.kitchen_address as home_chef_address,
-             c.latitude as home_chef_lat,
-             c.longitude as home_chef_lng
-      FROM user_food_order_table o
-      LEFT JOIN home_chefs c ON (o.chef_id = c.id OR o.chef_user_id = c.user_id)
-      WHERE o.status = 'Searching Delivery Partner'
-        AND (o.delivery_partner IS NULL OR o.delivery_partner = '')
+      SELECT o.*,
+             c.name           AS home_chef_name,
+             c.mobile         AS home_chef_phone,
+             c.kitchen_address AS home_chef_address,
+             c.latitude       AS home_chef_lat,
+             c.longitude      AS home_chef_lng
+        FROM user_food_order_table o
+        LEFT JOIN home_chefs c ON (o.chef_id = c.id OR o.chef_user_id = c.user_id)
+       WHERE o.status IN ('Searching Delivery Partner', 'Order Placed', 'Accepted')
+         AND (o.delivery_partner IS NULL OR o.delivery_partner = '')
+         AND (o.delivery_partner_user_id IS NULL OR o.delivery_partner_user_id = '')
+         AND DATE(o.ordered_at) = CURDATE()
     `;
     const params = [];
 
-    // If the delivery partner was created by a franchise admin, only show orders from the same franchise admin
     if (franchiseAdminId) {
-      query += ` AND (c.created_by = ? OR o.franchise_user_id = ?)`;
+      // Show orders that belong to the same franchise admin
+      // (either by chef's created_by or order's franchise_user_id)
+      query += ` AND (
+        c.created_by = ?
+        OR o.franchise_user_id = ?
+        OR c.created_by IS NULL
+      )`;
       params.push(franchiseAdminId, franchiseAdminId);
-    } else {
-      // If the delivery boy has NO franchise admin, DO NOT show any franchise orders.
-      // E.g., c.created_by IS NULL
-      query += ` AND c.created_by IS NULL AND o.franchise_user_id IS NULL`;
     }
+    // If no franchise context found → show ALL unassigned orders (no extra filter)
 
-    query += ` ORDER BY o.ordered_at DESC`;
+    query += ` ORDER BY o.ordered_at DESC LIMIT 100`;
 
-    console.log(`[orders/available] Query: ${query}, Params:`, params);
+    console.log(`[orders/available] Params:`, params);
 
     const [rows] = await pool.execute(query, params);
     res.json(rows);

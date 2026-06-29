@@ -83,7 +83,7 @@ const Orders = ({ statusFilter = "All" }) => {
     const performStatusUpdate = async (orderId, updateData) => {
         setLoading(true);
         try {
-            await api.put(`/orders/${orderId}/status`, updateData);
+            await api.patch(`/delivery/orders/${orderId}/status`, updateData);
             toast.success(`Pipeline synchronized to: ${updateData.status}`);
             fetchOrders();
         } catch (error) {
@@ -366,7 +366,7 @@ const Orders = ({ statusFilter = "All" }) => {
                                                 <div className="flex md:block items-center justify-between w-full">
                                                     <span className="md:hidden text-[10px] font-black text-slate-400 uppercase tracking-widest">Print</span>
                                                     <Link
-                                                        to={`/admin/orders/${order.id}`}
+                                                        to={`/delivery/orders/${order.id}`}
                                                         state={{ autoPrint: true }}
                                                         className="p-3 bg-slate-950/90 text-slate-100 rounded-2xl hover:bg-blue-600 hover:text-white transition-all shadow-sm border border-white/10 active:scale-90 inline-block"
                                                         title="Direct Print Invoice"
@@ -380,7 +380,7 @@ const Orders = ({ statusFilter = "All" }) => {
                                                     <span className="md:hidden text-[10px] font-black text-slate-400 uppercase tracking-widest">Actions</span>
                                                     <div className="flex items-center justify-end gap-2 transition-opacity">
                                                         <Link
-                                                            to={`/admin/orders/${order.id}`}
+                                                            to={`/delivery/orders/${order.id}`}
                                                             className="p-2.5 text-slate-300 hover:text-white hover:bg-blue-500 rounded-xl transition-all shadow-sm border border-white/10"
                                                             title="View Full Manifest"
                                                         >

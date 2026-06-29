@@ -51,7 +51,7 @@ const OrderDetail = () => {
     const fetchOrderDetail = async () => {
         setLoading(true);
         try {
-            const res = await api.get(`/orders/${id}`);
+            const res = await api.get(`/user-food-orders/${id}`);
             setOrder(res.data);
             setSelectedStatus(res.data.status);
             setTrackingNumber(res.data.tracking_number || "");
@@ -310,7 +310,7 @@ const OrderDetail = () => {
                 if (cancelledAt) updateData.cancelled_at = cancelledAt;
             }
 
-            await api.put(`/orders/${id}/status`, updateData);
+            await api.patch(`/delivery/orders/${id}/status`, updateData);
             toast.success(`Order updated to ${selectedStatus}`);
             fetchOrderDetail();
         } catch (error) {
