@@ -11,31 +11,89 @@ import ProductCard from "../Products/ProductsCard";
 import Heading from "../Heading";
 import PageContainer from "../CommenComponents/PageContainer";
 
+import { AuthContext } from "../../PrivateRouter/AuthContext";
+
 const SareeSwiper = () => {
   const [recentItems, setRecentItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useContext(AuthContext);
+
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    if (!lat1 || !lon1 || !lat2 || !lon2) return null;
+
+    const R = 6371;
+
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * (Math.PI / 180)) *
+      Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return (R * c).toFixed(2);
+  };
 
   const fetchRecentItems = async () => {
     try {
       setLoading(true);
-      const res = await api.get("/chef-foods");
-      const data = Array.isArray(res.data) ? res.data : [];
-      
-      // Filter active items
-      const activeItems = data.filter(item => item.status?.toLowerCase() === 'active');
 
-      // Sort by newest first (assuming higher ID or newer created_at)
-      const sorted = activeItems.sort((a, b) => {
+      const [foodsRes, productsRes] = await Promise.all([
+        api.get("/chef-foods"),
+        api.get("/products", {
+          params: { source: "chef_products" },
+        }),
+      ]);
+
+      const foods = Array.isArray(foodsRes.data) ? foodsRes.data : [];
+      const products = Array.isArray(productsRes.data)
+        ? productsRes.data
+        : [];
+
+      const allItems = [...foods, ...products];
+
+      const filtered = allItems.filter((item) => {
+        if (item.status?.toLowerCase() !== "active") return false;
+
+        if (
+          !user?.latitude ||
+          !user?.longitude ||
+          !item.latitude ||
+          !item.longitude
+        ) {
+          return false;
+        }
+
+        const distance = parseFloat(
+          calculateDistance(
+            parseFloat(user.latitude),
+            parseFloat(user.longitude),
+            parseFloat(item.latitude),
+            parseFloat(item.longitude)
+          )
+        );
+
+        const radius = parseFloat(item.delivery_radius || 0);
+
+        return distance <= radius;
+      });
+
+      const sorted = filtered.sort((a, b) => {
         const dateA = new Date(a.created_at || 0).getTime();
         const dateB = new Date(b.created_at || 0).getTime();
+
         if (dateB !== dateA) return dateB - dateA;
+
         return (b.id || 0) - (a.id || 0);
       });
 
-      // Show top 15 recent items
       setRecentItems(sorted.slice(0, 15));
     } catch (error) {
-      console.error("Error fetching recent chef items:", error);
+      console.error("Swiper Error:", error);
       setRecentItems([]);
     } finally {
       setLoading(false);
@@ -43,8 +101,10 @@ const SareeSwiper = () => {
   };
 
   useEffect(() => {
-    fetchRecentItems();
-  }, []);
+    if (user?.latitude && user?.longitude) {
+      fetchRecentItems();
+    }
+  }, [user]);
 
   if (loading) {
     return (
@@ -58,7 +118,7 @@ const SareeSwiper = () => {
                 <div className="p-4 space-y-2">
                   <div className="h-4 bg-gray-100 rounded-full w-3/4"></div>
                   <div className="h-3 bg-gray-100 rounded-full w-1/2"></div>
-                </div>  
+                </div>
               </div>
             ))}
           </div>
