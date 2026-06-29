@@ -50,7 +50,7 @@ const FoodItems = () => {
   const { user } = useContext(AuthContext);
 
   const goToDetails = (food) => {
-    navigate(`/food/${food.id}`);
+    navigate(`/products/${food.id}`);
   };
 
   const openQuickView = (food) => {
