@@ -47,6 +47,36 @@ const FoodProducts = () => {
     navigate(`${location.pathname}?${params.toString()}`);
   };
 
+  const normalizeStatusValue = (statusValue) => {
+    if (!statusValue) return 'All';
+    const normalized = String(statusValue).trim().toLowerCase();
+    if (normalized === 'all') return 'All';
+    if (normalized === 'active') return 'Active';
+    if (normalized === 'approved') return 'Approved';
+    if (normalized === 'not approved') return 'Not Approved';
+    if (normalized === 'inactive') return 'Inactive';
+    if (normalized === 'pending') return 'Pending';
+    if (normalized === 'suspended') return 'Suspended';
+    if (normalized === 'rejected') return 'Rejected';
+    return statusValue;
+  };
+
+  const handleStatusChange = (statusValue) => {
+    const params = new URLSearchParams(location.search);
+    if (statusValue && statusValue !== 'All') {
+      params.set('status', statusValue);
+    } else {
+      params.delete('status');
+    }
+    navigate(`${location.pathname}?${params.toString()}`);
+  };
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const statusParam = params.get('status');
+    setStatusFilter(normalizeStatusValue(statusParam));
+  }, [location.search]);
+
   const switchTab = (tab) => {
     const params = new URLSearchParams(location.search);
     if (tab === 'foodProducts') {
@@ -65,7 +95,11 @@ const FoodProducts = () => {
       if (params.get('chef_id')) query.chef_id = params.get('chef_id');
       if (params.get('chef_user_id')) query.chef_user_id = params.get('chef_user_id');
       if (params.get('category')) query.category = params.get('category');
-      if (params.get('status')) query.status = params.get('status');
+      // NOTE: status is intentionally NOT sent to the backend — filtering is done
+      // client-side so summary totals remain accurate for the full dataset.
+      if (search) {
+        query.search = search;
+      }
 
       const endpoint = activeTab === 'food' ? '/chef-foods' : '/products';
       if (activeTab === 'foodProducts') {
@@ -91,7 +125,7 @@ const FoodProducts = () => {
     } finally {
       setLoading(false);
     }
-  }, [location.search, activeTab, user]);
+  }, [location.search, activeTab, user, search]);
 
   useEffect(() => {
     const loadFoods = async () => {
@@ -238,7 +272,7 @@ const FoodProducts = () => {
   return (
     <div className="space-y-6 p-6 min-h-screen">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <div className="rounded-3xl bg-slate-950 px-6 py-6 text-white shadow-xl shadow-slate-950/10 ring-1 ring-white/5">
+        <div onClick={() => handleStatusChange('All')} className={`cursor-pointer rounded-3xl px-6 py-6 text-white shadow-xl shadow-slate-950/10 ring-1 ring-white/5 transition-colors ${statusFilter === 'All' ? 'bg-slate-900 border-2 border-violet-500' : 'bg-slate-950 hover:bg-slate-900'}`}>
           <div className="flex items-center justify-between gap-4">
             <div className="rounded-3xl bg-violet-600/20 p-3 text-violet-300">
               <div className="w-10 h-10 rounded-3xl bg-violet-500/10 flex items-center justify-center">🥘</div>
@@ -248,7 +282,7 @@ const FoodProducts = () => {
           <p className="mt-6 text-5xl font-black tracking-tight">{summary.total}</p>
           <p className="mt-2 text-sm text-slate-400">All chef food items currently loaded.</p>
         </div>
-        <div className="rounded-3xl bg-slate-950 px-6 py-6 text-white shadow-xl shadow-slate-950/10 ring-1 ring-white/5">
+        <div onClick={() => handleStatusChange('Approved')} className={`cursor-pointer rounded-3xl px-6 py-6 text-white shadow-xl shadow-slate-950/10 ring-1 ring-white/5 transition-colors ${statusFilter === 'Approved' ? 'bg-slate-900 border-2 border-emerald-500' : 'bg-slate-950 hover:bg-slate-900'}`}>
           <div className="flex items-center justify-between gap-4">
             <div className="rounded-3xl bg-emerald-600/20 p-3 text-emerald-200">
               <div className="w-10 h-10 rounded-3xl bg-emerald-500/10 flex items-center justify-center">✅</div>
@@ -258,7 +292,7 @@ const FoodProducts = () => {
           <p className="mt-6 text-5xl font-black tracking-tight">{summary.active}</p>
           <p className="mt-2 text-sm text-slate-400">Active food items ready for sale.</p>
         </div>
-        <div className="rounded-3xl bg-slate-950 px-6 py-6 text-white shadow-xl shadow-slate-950/10 ring-1 ring-white/5">
+        <div onClick={() => handleStatusChange('Not Approved')} className={`cursor-pointer rounded-3xl px-6 py-6 text-white shadow-xl shadow-slate-950/10 ring-1 ring-white/5 transition-colors ${statusFilter === 'Not Approved' ? 'bg-slate-900 border-2 border-rose-500' : 'bg-slate-950 hover:bg-slate-900'}`}>
           <div className="flex items-center justify-between gap-4">
             <div className="rounded-3xl bg-rose-600/20 p-3 text-rose-200">
               <div className="w-10 h-10 rounded-3xl bg-rose-500/10 flex items-center justify-center">⛔</div>
@@ -299,7 +333,7 @@ const FoodProducts = () => {
           )}
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => handleStatusChange(e.target.value)}
             className="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-xs uppercase tracking-widest text-slate-600 focus:bg-white focus:border-emerald-600/40 transition-all cursor-pointer"
           >
             {statusOptions.map((option) => (

@@ -144,7 +144,8 @@ app.use('/api/nearby-chefs', nearbyChefsRouter);
 
 const couponsRouter = require('./src/routes/coupons');
 app.use('/api/coupons', couponsRouter);
-
+const chatbotRouter = require('./src/routes/chatbot');
+app.use('/api/chatbot', chatbotRouter);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });

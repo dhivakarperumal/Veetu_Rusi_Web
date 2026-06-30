@@ -64,7 +64,7 @@ const resolveProductMetadata = async (req, body) => {
 // Otherwise fall back to franchise/admin `franchise_products` if desired by callers.
 exports.getAllProducts = async (req, res) => {
     try {
-        const { category, status, franchise_id, franchise_user_id, chef_user_id, chef_id, source } = req.query;
+        const { category, status, franchise_id, franchise_user_id, chef_user_id, chef_id, source, search } = req.query;
         const params = [];
         let query = '';
         let table = '';
@@ -112,32 +112,52 @@ exports.getAllProducts = async (req, res) => {
             }
         }
 
-        if (category) { 
-            query += ' AND t.category = ?'; 
-            params.push(category); 
+        if (category) {
+            query += ' AND t.category = ?';
+            params.push(category);
         }
-        if (status && status !== 'All') { 
-            query += ' AND t.status = ?'; 
-            params.push(status); 
+        if (status) {
+            const normalizedStatus = String(status || '').trim().toLowerCase();
+            if (normalizedStatus === 'all') {
+                // no status filtering
+            } else if (normalizedStatus === 'active' || normalizedStatus === 'approved') {
+                query += " AND (t.status = 'Active' OR t.status = 'Approved')";
+            } else if (normalizedStatus === 'not approved') {
+                query += " AND (t.status <> 'Active' AND t.status <> 'Approved')";
+            } else {
+                query += ' AND t.status = ?';
+                params.push(status);
+            }
+        }
+        if (search) {
+            const searchTerm = `%${search}%`;
+            query +=
+                ' AND (t.name LIKE ? OR t.product_code LIKE ? OR t.category LIKE ? OR t.description LIKE ? OR u.full_name LIKE ?)';
+            params.push(searchTerm, searchTerm, searchTerm, searchTerm, searchTerm);
         }
 
         query += ' ORDER BY t.created_at DESC';
 
         const [products] = await pool.execute(query, params);
+
         const normalizedProducts = products.map((product) => ({
             ...product,
             variants: parseJsonField(product.variants) || [],
-            images: parseJsonField(product.images) || []
+            images: parseJsonField(product.images) || [],
         }));
 
         res.json(normalizedProducts);
+
     } catch (error) {
         console.error('Error fetching products:', error);
-        res.status(500).json({ message: 'Failed to fetch products', error: error.message });
+        res.status(500).json({
+            message: 'Failed to fetch products',
+            error: error.message,
+        });
     }
 };
 
-// Get product by ID - from chef_products table
+// Get product by ID
 exports.getProductById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -175,7 +195,7 @@ exports.getProductsByUserId = async (req, res) => {
     try {
         const { user_id } = req.params;
         const { category, status } = req.query;
-        
+
         if (!user_id) {
             return res.status(400).json({ message: 'user_id parameter is required' });
         }
@@ -318,13 +338,15 @@ exports.createProduct = async (req, res) => {
             }))
             : [];
 
-        const computedMrp = mrp !== undefined && mrp !== null
+        const computedMrp = mrp !== undefined && mrp !== null && String(mrp).trim() !== ''
             ? Number(mrp)
             : (normalizedVariants.length > 0 ? Math.max(...normalizedVariants.map((v) => Number(v.price) || 0)) : null);
-        const computedOfferPrice = offer_price !== undefined && offer_price !== null
-            ? Number(offer_price)
+        const parsedOffer = offer !== undefined && offer !== null && String(offer).trim() !== '' ? Number(offer) : 0;
+        const parsedOfferPrice = offer_price !== undefined && offer_price !== null && String(offer_price).trim() !== '' ? Number(offer_price) : null;
+        const computedOfferPrice = parsedOfferPrice !== null && parsedOfferPrice > 0
+            ? parsedOfferPrice
             : (normalizedVariants.length > 0 ? Math.min(...normalizedVariants.map((v) => Number(v.final_price) || Number(v.price) || 0)) : null);
-        const finalOffer = offer !== undefined && offer !== null ? Number(offer) : 0;
+        const finalOffer = parsedOffer;
 
         if (!name || !category || !computedMrp || computedMrp <= 0) {
             return res.status(400).json({
@@ -340,7 +362,7 @@ exports.createProduct = async (req, res) => {
 
         const params = [
             name, description || null, category, product_type || 'Cooked Food', subcategory || null,
-            computedMrp, finalOffer, computedOfferPrice || computedMrp, finalProductCode, total_stock || 0,
+            computedMrp, finalOffer, (computedOfferPrice !== null && computedOfferPrice > 0 ? computedOfferPrice : (computedMrp > 0 && finalOffer > 0 ? Number((computedMrp - (computedMrp * finalOffer / 100)).toFixed(2)) : computedMrp)), finalProductCode, total_stock || 0,
             rating || 5, status || 'Active', material || null, nutrition_info || null,
             storage_instructions || 'Keep Refrigerated', presentation_style || null,
             portion_format || null, service_type || null, packaging_notes || null,
@@ -450,7 +472,10 @@ exports.updateProduct = async (req, res) => {
         const finalOffer = offer !== undefined && offer !== null ? Number(offer) : 0;
 
         const { finalFranchiseUserId } = await resolveProductMetadata(req, req.body);
-        const finalFranchiseUserIdResolved = finalFranchiseUserId || null;
+        // Preserve the existing franchise_user_id when the request body does not
+        // supply one (e.g. a status-only update like Inactive / Active). Without
+        // this fallback, the column is wiped to NULL on every quick-status change.
+        const finalFranchiseUserIdResolved = finalFranchiseUserId || existing.franchise_user_id || null;
         const updatedBy = req.user?.user_id || req.user?.id || req.user?.email || req.user?.name || req.body.updated_by || 'Admin';
 
         // Update product

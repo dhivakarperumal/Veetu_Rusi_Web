@@ -94,7 +94,7 @@ const Materials = () => {
             }
 
             setProducts(myProducts);
-            
+
             // Extract unique categories
             const cats = ["All", ...new Set(myProducts.map(p => p.category).filter(Boolean))];
             setCategories(cats);
@@ -362,16 +362,30 @@ const Materials = () => {
                                     </div>
 
                                     <div className="mt-3 flex items-center justify-between">
-                                        <div>
-                                            <p className="text-lg font-black text-slate-800 leading-none">
-                                                ₹{parseFloat(product.offer_price || product.price || 0).toLocaleString()}
-                                            </p>
-                                            {product.mrp && (
-                                                <p className="text-xs text-gray-300 line-through font-medium">
-                                                    ₹{parseFloat(product.mrp).toLocaleString()}
-                                                </p>
-                                            )}
-                                        </div>
+                                        {/* Price */}
+                                        <div className="mt-3 flex items-center justify-between">
+                                            <div>
+                                                {product.offer_price && product.mrp ? (
+                                                    <>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-lg font-black text-slate-800">
+                                                                ₹{product.offer_price}
+                                                            </span>
+
+                                                            <span className="text-sm text-gray-400 line-through">
+                                                                ₹{product.mrp}
+                                                            </span>
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <span className="text-lg font-black text-slate-800">
+                                                        ₹{Number(product.price || 0).toLocaleString("en-IN")}
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                           
+                                            </div>
                                         <button
                                             onClick={() => addToCart(product)}
                                             className="w-10 h-10 bg-slate-900 hover:bg-black text-white rounded-2xl flex items-center justify-center transition-all active:scale-90 shadow-lg shadow-slate-900/20"

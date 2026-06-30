@@ -59,8 +59,11 @@ export default function ChefCart() {
               }
 
               image = resolveImageUrl(image);
-              const price = item.price;
-              const mrp = item.mrp;
+              const price =
+                parseFloat(item.price ?? item.offer_price ?? 0);
+
+              const mrp =
+                parseFloat(item.mrp ?? item.price ?? item.offer_price ?? 0);
               return (
                 <div key={index} className="bg-[#0f1216] border border-slate-800 rounded-2xl shadow-md p-5 flex flex-col sm:flex-row gap-6 items-center">
                   {/* IMAGE */}
@@ -84,7 +87,13 @@ export default function ChefCart() {
 
                   {/* DETAILS */}
                   <div className="flex-1 w-full">
-                    <h3 className="font-semibold text-lg text-white">{item.name}</h3>
+                    <h3 className="font-semibold text-lg text-white">
+                      {item.name ||
+                        item.product_name ||
+                        item.productName ||
+                        item.title ||
+                        "Product"}
+                    </h3>
                     <div className="flex flex-wrap gap-2 mt-1">
                       {item.category && (
                         <span className="inline-block bg-slate-800 text-slate-300 text-xs px-2 py-1 rounded">
@@ -105,8 +114,15 @@ export default function ChefCart() {
 
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-3">
                       <div className="flex items-center gap-3">
-                        <span className="text-emerald-400 font-bold text-lg">₹{price} <span className="text-sm text-slate-400 font-normal">/ unit</span></span>
-                        {mrp && <span className="text-slate-500 line-through text-sm">₹{mrp}</span>}
+                        <span className="text-emerald-400 font-bold text-xl">
+                          ₹{price.toFixed(2)}
+                        </span>
+
+                        {mrp > price && (
+                          <span className="text-slate-500 line-through text-sm">
+                            ₹{mrp.toFixed(2)}
+                          </span>
+                        )}
                       </div>
                       <div className="text-white font-semibold text-sm">
                         Total: <span className="text-emerald-400 text-lg">₹{(parseFloat(price || 0) * item.quantity).toFixed(2)}</span>

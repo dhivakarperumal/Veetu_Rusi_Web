@@ -341,8 +341,31 @@ const SingleProductForm = ({ categories, franchiseId, franchiseUserId, onSuccess
     e.preventDefault();
     setLoading(true);
     try {
+      const variantRows = Array.isArray(form.variants) ? form.variants : [];
+      const parsedVariantRows = variantRows
+        .map((variant) => {
+          const mrpValue = Number(variant.mrp || 0);
+          const offerPercentValue = Number(variant.offerPercent || 0);
+          const offerPriceValue = Number(variant.offerPrice || 0);
+          const computedOfferPrice = offerPriceValue > 0
+            ? offerPriceValue
+            : (mrpValue > 0 && offerPercentValue > 0 ? Math.round(mrpValue - (mrpValue * offerPercentValue) / 100) : mrpValue);
+
+          return {
+            mrpValue,
+            offerPercentValue,
+            computedOfferPrice,
+          };
+        })
+        .filter((variant) => variant.mrpValue > 0);
+
       // Ensure backend-required top-level fields are present
-      const computedMrp = form.mrp || (Array.isArray(form.variants) && form.variants[0] && form.variants[0].mrp) || null;
+      const computedMrp = form.mrp || (parsedVariantRows[0]?.mrpValue) || null;
+      const computedOfferPercent = parsedVariantRows.find((variant) => variant.offerPercentValue > 0)?.offerPercentValue || 0;
+      const computedOfferPrice = parsedVariantRows.length > 0
+        ? Math.min(...parsedVariantRows.map((variant) => variant.computedOfferPrice || variant.mrpValue))
+        : computedMrp;
+
       if (!computedMrp) {
         toast.error('Please enter MRP for the first variant or set product MRP');
         setLoading(false);
@@ -352,6 +375,8 @@ const SingleProductForm = ({ categories, franchiseId, franchiseUserId, onSuccess
       const payload = {
         ...form,
         mrp: computedMrp,
+        offer: computedOfferPercent,
+        offer_price: computedOfferPrice || computedMrp,
         variants: form.variants,
         franchise_id: franchiseId
       };

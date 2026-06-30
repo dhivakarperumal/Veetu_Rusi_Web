@@ -25,8 +25,9 @@ const FranchiseDetails = () => {
   const [franchiseAdminOrders, setFranchiseAdminOrders] = useState([]);
   const [loadingFranchiseAdminOrders, setLoadingFranchiseAdminOrders] = useState(false);
   const [franchiseAdminOrdersError, setFranchiseAdminOrdersError] = useState(null);
-  const [activeDetailTab, setActiveDetailTab] = useState("franchise");
+  const [activeDetailTab, setActiveDetailTab] = useState("chefProducts");
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
+  const [chefInnerTab, setChefInnerTab] = useState('foods');
 
   const copy = (text) => { navigator.clipboard.writeText(text || ''); toast.success('Copied!'); };
 
@@ -183,10 +184,13 @@ const FranchiseDetails = () => {
     setLoadingProducts(true);
     setProductsError(null);
     try {
-      const params = {};
+      const params = {
+        source: 'chef_products',
+        status: 'Active'
+      };
       if (franchise.franchise_id) params.franchise_id = franchise.franchise_id;
       if (franchise.franch_user_id) params.franchise_user_id = franchise.franch_user_id;
-      const res = await api.get('/franchise-products', { params });
+      const res = await api.get('/products', { params });
       const data = res.data;
       const allProducts = Array.isArray(data) ? data : Array.isArray(data.products) ? data.products : [];
       setProducts(allProducts.filter(p => {
@@ -195,7 +199,7 @@ const FranchiseDetails = () => {
       }));
     } catch (error) {
       console.error(error);
-      setProductsError('Failed to load franchise products.');
+      setProductsError('Failed to load chef products.');
       setProducts([]);
     } finally {
       setLoadingProducts(false);
@@ -207,7 +211,9 @@ const FranchiseDetails = () => {
     setLoadingChefProducts(true);
     setChefProductsError(null);
     try {
-      const params = {};
+      const params = {
+        status: 'Active'
+      };
       if (franchise.franchise_id) params.franchise_id = franchise.franchise_id;
       if (franchise.franch_user_id) params.franchise_user_id = franchise.franch_user_id;
       const res = await api.get('/chef-foods', { params });
@@ -246,7 +252,9 @@ const FranchiseDetails = () => {
     if (activeDetailTab === 'products') {
       fetchProducts();
     } else if (activeDetailTab === 'chefProducts') {
+      // load both lists so nested tabs inside chefProducts can switch instantly
       fetchChefProducts();
+      fetchProducts();
     } else if (activeDetailTab === 'orders') {
       fetchFranchiseAdminOrders();
     }
@@ -361,8 +369,9 @@ const FranchiseDetails = () => {
                 { id: 'franchise', icon: Landmark, label: 'Franchise & Owner' },
                 { id: 'homechefs', icon: List, label: 'Home Chefs' },
                 { id: 'deliverypartners', icon: MapPin, label: 'Delivery Partners' },
-                { id: 'products', icon: Package, label: 'Our Products' },
+                // chef foods first for franchise admin view
                 { id: 'chefProducts', icon: Utensils, label: 'Chef Food Products' },
+                { id: 'products', icon: Package, label: 'Our Products' },
                 { id: 'orders', icon: ShoppingCart, label: 'Orders' },
                 { id: 'usersOrder', icon: ShoppingCart, label: 'User Orders' },
                 { id: 'subscription', icon: Clock, label: 'Subscription' },
@@ -712,77 +721,164 @@ const FranchiseDetails = () => {
                   <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-slate-300 border border-white/10">{chefProducts.length} items</span>
                 </div>
 
-                {loadingChefProducts ? (
-                  <div className="flex flex-col items-center justify-center rounded-[2rem] border border-slate-800 bg-slate-950 py-20 text-center">
-                    <div className="h-12 w-12 rounded-full border-4 border-orange-500 border-t-transparent animate-spin mb-4"></div>
-                    <p className="text-sm font-black uppercase tracking-widest text-slate-500">Loading chef foods...</p>
-                  </div>
-                ) : chefProductsError ? (
-                  <div className="rounded-[2rem] border border-rose-200 bg-rose-50 p-8 text-center text-rose-700">
-                    <p className="font-bold">{chefProductsError}</p>
-                  </div>
-                ) : chefProducts.length > 0 ? (
-                  <div className="overflow-hidden rounded-[2rem] border border-slate-800 bg-slate-950/95 shadow-[0_20px_60px_rgba(0,0,0,0.45)]">
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-sm">
-                        <thead className="bg-slate-900">
-                          <tr>
-                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Food Name</th>
-                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Category</th>
-                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Chef</th>
-                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Price</th>
-                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Status</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-800 bg-slate-950">
-                          {chefProducts.map((product) => (
-                            <tr key={product.id} className="hover:bg-slate-900/70 transition-colors group">
-                              <td className="px-6 py-4">
-                                <div className="flex items-center gap-3">
-                                  <div className="h-10 w-10 rounded-2xl bg-slate-900 grid place-items-center text-slate-300 font-bold overflow-hidden border border-slate-700 shrink-0">
-                                    {(product.food_image || product.image || product.image_url) ? (
-                                        <img 
-                                            src={product.food_image || product.image || product.image_url} 
-                                            alt={product.name || 'Food'} 
-                                            className="h-full w-full object-cover" 
-                                            onError={(e) => {
-                                                e.target.style.display = 'none';
-                                                e.target.nextSibling && (e.target.nextSibling.style.display = 'grid');
-                                            }}
-                                        />
-                                    ) : null}
-                                    <span style={{ display: (product.food_image || product.image || product.image_url) ? 'none' : 'grid' }} className="h-full w-full place-items-center">
-                                        {String(product.name || '').charAt(0).toUpperCase() || 'F'}
-                                    </span>
-                                  </div>
-                                  <div>
-                                    <p className="font-bold text-slate-100">{product.name}</p>
-                                    <p className="text-xs text-slate-400">{product.cuisine || 'Home cooked'}</p>
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 text-slate-600">{product.category}</td>
-                              <td className="px-6 py-4 text-slate-600 font-medium">{product.chef_name || product.chef_id || 'Unknown'}</td>
-                              <td className="px-6 py-4 font-bold text-emerald-600">₹{product.final_price ?? product.mrp ?? '0'}</td>
-                              <td className="px-6 py-4">
-                                <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${product.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-900/80 text-slate-300'}`}>
-                                  {product.status || 'Unknown'}
-                                </span>
-                              </td>
+                <div className="mt-4 mb-6 flex gap-3">
+                  <button
+                    onClick={() => setChefInnerTab('foods')}
+                    className={`rounded-xl px-4 py-2 text-sm font-black uppercase tracking-wider ${chefInnerTab === 'foods' ? 'bg-emerald-600 text-white' : 'bg-white/5 text-slate-300'}`}
+                  >Foods</button>
+                  <button
+                    onClick={() => setChefInnerTab('foodProducts')}
+                    className={`rounded-xl px-4 py-2 text-sm font-black uppercase tracking-wider ${chefInnerTab === 'foodProducts' ? 'bg-emerald-600 text-white' : 'bg-white/5 text-slate-300'}`}
+                  >Food Products</button>
+                </div>
+
+                {chefInnerTab === 'foods' ? (
+                  (loadingChefProducts ? (
+                    <div className="flex flex-col items-center justify-center rounded-[2rem] border border-slate-800 bg-slate-950 py-20 text-center">
+                      <div className="h-12 w-12 rounded-full border-4 border-orange-500 border-t-transparent animate-spin mb-4"></div>
+                      <p className="text-sm font-black uppercase tracking-widest text-slate-500">Loading chef foods...</p>
+                    </div>
+                  ) : chefProductsError ? (
+                    <div className="rounded-[2rem] border border-rose-200 bg-rose-50 p-8 text-center text-rose-700">
+                      <p className="font-bold">{chefProductsError}</p>
+                    </div>
+                  ) : chefProducts.length > 0 ? (
+                    <div className="overflow-hidden rounded-[2rem] border border-slate-800 bg-slate-950/95 shadow-[0_20px_60px_rgba(0,0,0,0.45)]">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm">
+                          <thead className="bg-slate-900">
+                            <tr>
+                              <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Food Name</th>
+                              <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Category</th>
+                              <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Chef</th>
+                              <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Price</th>
+                              <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Status</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody className="divide-y divide-slate-800 bg-slate-950">
+                            {chefProducts.map((product) => (
+                              <tr key={product.id} className="hover:bg-slate-900/70 transition-colors group">
+                                <td className="px-6 py-4">
+                                  <div className="flex items-center gap-3">
+                                    <div className="h-10 w-10 rounded-2xl bg-slate-900 grid place-items-center text-slate-300 font-bold overflow-hidden border border-slate-700 shrink-0">
+                                      {(product.food_image || product.image || product.image_url) ? (
+                                          <img 
+                                              src={product.food_image || product.image || product.image_url} 
+                                              alt={product.name || 'Food'} 
+                                              className="h-full w-full object-cover" 
+                                              onError={(e) => {
+                                                  e.target.style.display = 'none';
+                                                  e.target.nextSibling && (e.target.nextSibling.style.display = 'grid');
+                                              }}
+                                          />
+                                      ) : null}
+                                      <span style={{ display: (product.food_image || product.image || product.image_url) ? 'none' : 'grid' }} className="h-full w-full place-items-center">
+                                          {String(product.name || '').charAt(0).toUpperCase() || 'F'}
+                                      </span>
+                                    </div>
+                                    <div>
+                                      <p className="font-bold text-slate-100">{product.name}</p>
+                                      <p className="text-xs text-slate-400">{product.cuisine || 'Home cooked'}</p>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4 text-slate-600">{product.category}</td>
+                                <td className="px-6 py-4 text-slate-600 font-medium">{product.chef_name || product.chef_id || 'Unknown'}</td>
+                                <td className="px-6 py-4 font-bold text-emerald-600">₹{product.final_price ?? product.mrp ?? '0'}</td>
+                                <td className="px-6 py-4">
+                                  <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${product.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-900/80 text-slate-300'}`}>
+                                    {product.status || 'Unknown'}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-800 bg-slate-950 py-16 text-center">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-900 shadow-[0_10px_30px_rgba(0,0,0,0.25)] mb-4">
+                        <Utensils className="h-8 w-8 text-slate-300" />
+                      </div>
+                      <h4 className="text-lg font-bold text-slate-100">No Chef Foods Found</h4>
+                      <p className="mt-1 text-sm text-slate-400 max-w-sm">There are no home chef food products associated with this franchise yet.</p>
+                    </div>
+                  ))
                 ) : (
-                  <div className="flex flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-800 bg-slate-950 py-16 text-center">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-900 shadow-[0_10px_30px_rgba(0,0,0,0.25)] mb-4">
-                      <Utensils className="h-8 w-8 text-slate-300" />
+                  // Food Products nested view (reuse products state)
+                  (loadingProducts ? (
+                    <div className="flex flex-col items-center justify-center rounded-[2rem] border border-slate-800 bg-slate-950 py-20 text-center">
+                      <div className="h-12 w-12 rounded-full border-4 border-cyan-500 border-t-transparent animate-spin mb-4"></div>
+                      <p className="text-sm font-black uppercase tracking-widest text-slate-500">Loading products...</p>
                     </div>
-                    <h4 className="text-lg font-bold text-slate-100">No Chef Foods Found</h4>
-                    <p className="mt-1 text-sm text-slate-400 max-w-sm">There are no home chef food products associated with this franchise yet.</p>
-                  </div>
+                  ) : productsError ? (
+                    <div className="rounded-[2rem] border border-rose-500/40 bg-rose-500/10 p-8 text-center text-rose-200">
+                      <p className="font-bold">{productsError}</p>
+                    </div>
+                  ) : products.length > 0 ? (
+                    <div className="overflow-hidden rounded-[2rem] border border-slate-800 bg-slate-950/95 shadow-[0_20px_60px_rgba(0,0,0,0.45)]">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm">
+                          <thead className="bg-slate-900">
+                            <tr>
+                              <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Product</th>
+                              <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Category</th>
+                              <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Price</th>
+                              <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Status</th>
+                              <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Added</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-800 bg-slate-950">
+                            {products.map((product) => (
+                              <tr key={product.id || product.catId || product.product_code} className="hover:bg-slate-900/70 transition-colors group">
+                                <td className="px-6 py-4">
+                                  <div className="flex items-center gap-3">
+                                    <div className="h-10 w-10 rounded-2xl bg-slate-900 grid place-items-center text-slate-300 font-bold overflow-hidden border border-slate-700 shrink-0">
+                                      {(product.product_image || product.image || product.image_url) ? (
+                                          <img 
+                                              src={product.product_image || product.image || product.image_url} 
+                                              alt={product.name || 'Product'} 
+                                              className="h-full w-full object-cover" 
+                                              onError={(e) => {
+                                                  e.target.style.display = 'none';
+                                                  e.target.nextSibling && (e.target.nextSibling.style.display = 'grid');
+                                              }}
+                                          />
+                                      ) : null}
+                                      <span style={{ display: (product.product_image || product.image || product.image_url) ? 'none' : 'grid' }} className="h-full w-full place-items-center">
+                                          {String(product.name || '').charAt(0).toUpperCase() || 'P'}
+                                      </span>
+                                    </div>
+                                    <div>
+                                      <p className="font-bold text-slate-100">{product.name || product.catId || 'Unnamed Product'}</p>
+                                      <p className="text-xs text-slate-400">{product.franchise_id ? 'Franchise item' : 'Catalog item'}</p>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4 text-slate-600">{product.category || product.subcategory || 'N/A'}</td>
+                                <td className="px-6 py-4 font-bold text-emerald-400">₹{product.mrp ?? product.price ?? '0'}</td>
+                                <td className="px-6 py-4">
+                                  <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${product.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : product.status === 'Low Stock' ? 'bg-amber-100 text-amber-700' : 'bg-slate-900/80 text-slate-300'}`}>
+                                    {product.status || 'Unknown'}
+                                  </span>
+                                </td>
+                                <td className="px-6 py-4 text-slate-500">{product.created_at || product.createdAt || product.updated_at ? new Date(product.created_at || product.createdAt || product.updated_at).toLocaleDateString('en-IN') : 'N/A'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-800 bg-slate-950 py-16 text-center">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-900 shadow-[0_10px_30px_rgba(0,0,0,0.25)] mb-4">
+                        <Package className="h-8 w-8 text-slate-300" />
+                      </div>
+                      <h4 className="text-lg font-bold text-slate-100">No products found</h4>
+                      <p className="mt-1 text-sm text-slate-400 max-w-sm">This franchise does not have any products listed yet.</p>
+                    </div>
+                  ))
                 )}
               </div>
             )}

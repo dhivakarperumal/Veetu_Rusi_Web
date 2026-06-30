@@ -39,7 +39,7 @@ const ChefMaterialDetails = () => {
 
   const fetchProduct = async () => {
     try {
-      const res = await api.get(`/products/${id}`);
+      const res = await api.get(`/franchise-products/${id}`);
       const data = res.data;
       if (!data) throw new Error("Product data not found");
 
@@ -149,7 +149,7 @@ const ChefMaterialDetails = () => {
               ></div>
             )}
           </div>
-          
+
           {/* Thumbnails */}
           <div className="flex gap-3 mt-4 flex-wrap">
             {(() => {
@@ -179,9 +179,8 @@ const ChefMaterialDetails = () => {
                     key={index}
                     src={resolvedImg}
                     onClick={() => setSelectedImage(resolvedImg)}
-                    className={`w-16 h-16 object-cover object-center rounded-xl cursor-pointer border-2 transition-all ${
-                      selectedImage === resolvedImg ? "border-emerald-500 scale-105 shadow-lg shadow-emerald-500/20" : "border-slate-800 hover:border-slate-600"
-                    }`}
+                    className={`w-16 h-16 object-cover object-center rounded-xl cursor-pointer border-2 transition-all ${selectedImage === resolvedImg ? "border-emerald-500 scale-105 shadow-lg shadow-emerald-500/20" : "border-slate-800 hover:border-slate-600"
+                      }`}
                   />
                 );
               });
@@ -209,15 +208,15 @@ const ChefMaterialDetails = () => {
             )}
           </div>
 
-<div className="flex items-center gap-3">
-  <span className="text-2xl font-bold text-green-600">
-    ₹{product.offer_price}
-  </span>
+          <div className="flex items-center gap-3">
+            <span className="text-2xl font-bold text-green-600">
+              ₹{product.offer_price}
+            </span>
 
-  <span className="text-lg text-gray-500 line-through">
-    ₹{product.mrp}
-  </span>
-</div>
+            <span className="text-lg text-gray-500 line-through">
+              ₹{product.mrp}
+            </span>
+          </div>
 
           {/* Color Variants */}
           {product?.variants?.some(v => v.colorName) && (
@@ -243,11 +242,10 @@ const ChefMaterialDetails = () => {
                       <img
                         src={resolveImageUrl(parsed?.[0]) || `https://ui-avatars.com/api/?name=${variant.colorName}&background=random`}
                         alt={variant.colorName}
-                        className={`w-14 h-14 object-cover object-center rounded-xl border-2 transition-all ${
-                          selectedVariant?.color === variant.color
+                        className={`w-14 h-14 object-cover object-center rounded-xl border-2 transition-all ${selectedVariant?.color === variant.color
                             ? "border-emerald-500 scale-110 shadow-lg shadow-emerald-500/20"
                             : "border-slate-700 group-hover:border-slate-500"
-                        }`}
+                          }`}
                       />
                       <span className={`text-xs mt-2 font-medium ${selectedVariant?.color === variant.color ? "text-emerald-400" : "text-slate-400"}`}>
                         {variant.colorName}
@@ -272,11 +270,10 @@ const ChefMaterialDetails = () => {
                       setSelectedSize(variant.weight);
                       setQuantity(1);
                     }}
-                    className={`px-5 py-2 rounded-xl border font-semibold transition ${
-                      (selectedSize === variant.weight || selectedVariant?.weight === variant.weight)
+                    className={`px-5 py-2 rounded-xl border font-semibold transition ${(selectedSize === variant.weight || selectedVariant?.weight === variant.weight)
                         ? "bg-emerald-500/20 text-emerald-400 border-emerald-500"
                         : "bg-[#0b0d10] text-slate-400 border-slate-700 hover:border-slate-500 hover:text-white"
-                    }`}
+                      }`}
                   >
                     {variant.weight}
                   </button>
@@ -294,11 +291,10 @@ const ChefMaterialDetails = () => {
                   <button
                     key={index}
                     onClick={() => { setSelectedSize(size); setQuantity(1); }}
-                    className={`px-5 py-2 rounded-xl border font-semibold transition ${
-                      selectedSize === size
+                    className={`px-5 py-2 rounded-xl border font-semibold transition ${selectedSize === size
                         ? "bg-emerald-500/20 text-emerald-400 border-emerald-500"
                         : "bg-[#0b0d10] text-slate-400 border-slate-700 hover:border-slate-500 hover:text-white"
-                    }`}
+                      }`}
                   >
                     {size}
                   </button>
@@ -335,11 +331,10 @@ const ChefMaterialDetails = () => {
 
             <button
               onClick={() => toggleWishlist(product, selectedVariant)}
-              className={`flex items-center justify-center gap-2 px-6 py-4 rounded-xl border-2 font-bold transition active:scale-95 ${
-                inWishlist
+              className={`flex items-center justify-center gap-2 px-6 py-4 rounded-xl border-2 font-bold transition active:scale-95 ${inWishlist
                   ? "bg-rose-500/10 border-rose-500/50 text-rose-500"
                   : "bg-[#0b0d10] border-slate-700 text-slate-400 hover:border-rose-500/50 hover:text-rose-400"
-              }`}
+                }`}
             >
               <FiHeart size={20} className={inWishlist ? "fill-current" : ""} />
             </button>

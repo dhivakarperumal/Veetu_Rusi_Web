@@ -141,11 +141,11 @@ SELECT
       if (['chef', 'homechef'].includes(req.user.role) && currentUserId) {
         query += ' AND (cf.created_by = ? OR cf.updated_by = ?)';
         params.push(currentUserId, currentUserId);
-      } else if (['admin', 'franchise', 'superadmin'].includes(req.user.role) && currentUserId) {
+      } else if (['admin', 'franchise'].includes(req.user.role) && currentUserId && !franchise_user_id) {
         query += ' AND cf.franchise_user_id = ?';
         params.push(currentUserId);
       }
-      // superadmin can see all when no explicit filter is applied
+      // superadmin can see all chef foods when filtering by franchise_user_id or with no explicit restriction
     }
 
     if (chef_user_id) {
@@ -169,8 +169,15 @@ SELECT
       params.push(dietary_tag);
     }
     if (status && status !== 'All') {
-      query += ' AND cf.status = ?';
-      params.push(status);
+      const normalizedStatus = String(status || '').trim().toLowerCase();
+      if (normalizedStatus === 'active' || normalizedStatus === 'approved') {
+        query += " AND (cf.status = 'Active' OR cf.status = 'Approved')";
+      } else if (normalizedStatus === 'not approved') {
+        query += " AND (cf.status <> 'Active' AND cf.status <> 'Approved')";
+      } else {
+        query += ' AND cf.status = ?';
+        params.push(status);
+      }
     }
 
     if (area) {
