@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { FiPlus, FiEdit, FiTrash2, FiSearch, FiRefreshCw } from "react-icons/fi";
 import { toast } from "react-hot-toast";
 import Select from "react-select";
@@ -58,11 +59,23 @@ const Coupons = () => {
       ]);
 
       const allChefs = Array.isArray(chefRes.data) ? chefRes.data : [];
-      const chefList = allChefs.map(c => ({ value: c.id, label: c.name || c.store_name || `Chef ${c.id}` }));
+      const chefList = allChefs.map(c => {
+        const phone = c.phone || c.mobile || c.chef_phone || '';
+        const name = c.name || c.store_name || `Chef ${c.id}`;
+        return { value: c.id, label: phone ? `${name} (${phone})` : name };
+      });
       setChefs(chefList);
 
       const allFoods = Array.isArray(prodRes.data) ? prodRes.data : [];
-      const prodList = allFoods.map(p => ({ value: p.id, label: `${p.name || p.food_name || 'Product'} (${p.chef_name || p.kitchen_name || p.created_by || p.franchise_name || `Chef ID: ${p.chef_id || 'Unknown'}`})` }));
+      const prodList = allFoods.map(p => {
+        const phone = p.chef_phone || p.mobile || p.created_by_phone || '';
+        const chefName = p.chef_name || p.kitchen_name || p.created_by || p.franchise_name || `Chef ID: ${p.chef_id || 'Unknown'}`;
+        const productName = p.name || p.food_name || 'Product';
+        return { 
+          value: p.id, 
+          label: `${productName} (${chefName}${phone ? ` - ${phone}` : ''})` 
+        };
+      });
       setProducts(prodList);
 
       const allCategories = Array.isArray(catRes.data) ? catRes.data : [];
@@ -267,9 +280,9 @@ const Coupons = () => {
         </div>
       </div>
 
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+      {isModalOpen && createPortal(
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
+          <div className="bg-white rounded-2xl w-full max-w-[95vw] md:max-w-[90vw] lg:max-w-6xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
             <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
               <h2 className="text-xl font-bold text-gray-800">{currentCoupon ? 'Edit Coupon' : 'Create New Coupon'}</h2>
               <button onClick={handleCloseModal} className="text-gray-500 hover:text-gray-800"><FiTrash2 className="hidden" /> &times;</button>
@@ -418,7 +431,8 @@ const Coupons = () => {
               <button form="couponForm" type="submit" className="px-6 py-2.5 rounded-xl font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow transition">Save Coupon</button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
