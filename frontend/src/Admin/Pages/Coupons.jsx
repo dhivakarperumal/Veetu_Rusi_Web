@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { FiPlus, FiEdit, FiTrash2, FiSearch, FiRefreshCw } from "react-icons/fi";
+import { FiPlus, FiEdit, FiTrash2, FiSearch, FiRefreshCw, FiTag, FiCheckCircle, FiXCircle, FiList, FiGrid } from "react-icons/fi";
 import { toast } from "react-hot-toast";
 import Select from "react-select";
 import api from "../../api";
@@ -15,6 +15,7 @@ const Coupons = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentCoupon, setCurrentCoupon] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [viewMode, setViewMode] = useState("table");
 
   const [formData, setFormData] = useState({
     code: "",
@@ -185,91 +186,157 @@ const Coupons = () => {
 
   if (loading) return <Loader />;
 
+  const totalCount = coupons.length;
+  const activeCount = coupons.filter(c => c.status === 'active').length;
+  const inactiveCount = coupons.filter(c => c.status === 'inactive').length;
+
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Coupons Management</h1>
+    <div className="p-4 sm:p-6 lg:p-8 space-y-8 min-h-screen">
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-10">
+        <div className="flex items-center gap-5">
+          <div>
+            <h1 className="text-4xl lg:text-5xl font-black text-white tracking-tight">Coupons Management</h1>
+            <p className="max-w-2xl text-sm text-slate-400 mt-2">Premium dashboard for managing discount codes, validity, and usage limits.</p>
+          </div>
+        </div>
+
         <button
           onClick={() => handleOpenModal()}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition"
+          className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20 transition active:scale-95 self-start sm:self-auto"
         >
-          <FiPlus /> Add New Coupon
+          <FiPlus className="w-4 h-4" /> Add New Coupon
         </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-          <div className="relative w-64">
-            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search coupons..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-            />
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <div className="bg-white border border-slate-100 border-l-4 border-l-blue-500 p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 border border-blue-100/50 flex-shrink-0">
+            <FiTag className="w-5 h-5" />
           </div>
-          <button onClick={fetchCoupons} className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition">
-            <FiRefreshCw />
-          </button>
+          <div>
+            <p className="text-[10px] text-blue-600 font-bold uppercase tracking-widest">Total Coupons</p>
+            <h4 className="text-2xl font-black text-slate-800 mt-1 tracking-tight">{totalCount}</h4>
+          </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="bg-white border border-slate-100 border-l-4 border-l-emerald-500 p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 border border-emerald-100/50 flex-shrink-0">
+            <FiCheckCircle className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest">Active Coupons</p>
+            <h4 className="text-2xl font-black text-slate-800 mt-1 tracking-tight">{activeCount}</h4>
+          </div>
+        </div>
+
+        <div className="bg-white border border-slate-100 border-l-4 border-l-rose-500 p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600 border border-rose-100/50 flex-shrink-0">
+            <FiXCircle className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-[10px] text-rose-600 font-bold uppercase tracking-widest">Inactive Coupons</p>
+            <h4 className="text-2xl font-black text-slate-800 mt-1 tracking-tight">{inactiveCount}</h4>
+          </div>
+        </div>
+      </div>
+
+      {/* Toolbar: Search and Refresh */}
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-slate-900/95 border border-slate-800 p-5 rounded-[1.75rem] shadow-2xl shadow-slate-950/30">
+        <div className="relative flex-1 max-w-xl w-full">
+          <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search coupons by code or name..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-11 pr-4 py-3 bg-slate-950 border border-slate-800 rounded-2xl outline-none font-medium text-slate-100 text-sm focus:bg-slate-900 focus:border-blue-500/70 transition-all placeholder:text-slate-500"
+          />
+        </div>
+
+        <div className="flex items-center gap-3 self-end xl:self-auto">
+          <div className="flex bg-slate-950 border border-slate-800 p-1 rounded-2xl">
+            <button
+              onClick={() => setViewMode("table")}
+              className={`p-3 rounded-xl transition ${viewMode === "table" ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20" : "text-slate-400 hover:text-slate-100"}`}
+              title="Table View"
+            >
+              <FiList className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setViewMode("card")}
+              className={`p-3 rounded-xl transition ${viewMode === "card" ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20" : "text-slate-400 hover:text-slate-100"}`}
+              title="Card View"
+            >
+              <FiGrid className="w-4 h-4" />
+            </button>
+          </div>
+          <button onClick={fetchCoupons} className="p-3 bg-slate-950 border border-slate-800 text-slate-400 hover:text-white rounded-xl transition" title="Refresh">
+            <FiRefreshCw className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Main Content View */}
+      {viewMode === "table" ? (
+      <div className="bg-white rounded-2xl overflow-hidden shadow-sm animate-in fade-in duration-200">
+        <div className="overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider">
-                <th className="p-4 font-semibold">Code</th>
-                <th className="p-4 font-semibold">Name</th>
-                <th className="p-4 font-semibold">Discount</th>
-                <th className="p-4 font-semibold">Validity</th>
-                <th className="p-4 font-semibold">Usage</th>
-                <th className="p-4 font-semibold">Status</th>
-                <th className="p-4 font-semibold text-right">Actions</th>
+              <tr className="border-b border-slate-200 bg-slate-700">
+                <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Code</th>
+                <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Name</th>
+                <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Discount</th>
+                <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Validity</th>
+                <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Usage</th>
+                <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em] text-center">Status</th>
+                <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em] text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-slate-100">
               {filteredCoupons.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="p-8 text-center text-gray-500">
+                  <td colSpan="7" className="p-8 text-center text-slate-500 font-semibold">
                     No coupons found. Create one to get started.
                   </td>
                 </tr>
               ) : (
                 filteredCoupons.map((coupon) => (
-                  <tr key={coupon.id} className="hover:bg-gray-50/50 transition">
-                    <td className="p-4">
-                      <span className="inline-block px-3 py-1 bg-gray-100 text-gray-800 font-bold rounded-lg border border-gray-200">
+                  <tr key={coupon.id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <span className="inline-flex px-3 py-1 bg-slate-900 text-white font-bold text-xs uppercase tracking-wider rounded-lg shadow-sm border border-slate-800">
                         {coupon.code}
                       </span>
                     </td>
-                    <td className="p-4">
-                      <div className="font-semibold text-gray-800">{coupon.name}</div>
-                      <div className="text-xs text-gray-500 truncate max-w-[200px]">{coupon.description}</div>
+                    <td className="px-6 py-4">
+                      <div className="font-bold text-slate-800">{coupon.name}</div>
+                      <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mt-1 max-w-[200px] truncate">{coupon.description}</div>
                     </td>
-                    <td className="p-4">
-                      <div className="font-semibold text-blue-600">
+                    <td className="px-6 py-4">
+                      <div className="font-black text-blue-600 text-sm">
                         {coupon.discount_type === 'percentage' ? `${coupon.discount_value}%` : `₹${coupon.discount_value}`}
                       </div>
-                      {coupon.max_discount_amount && <div className="text-xs text-gray-500">Up to ₹{coupon.max_discount_amount}</div>}
+                      {coupon.max_discount_amount && <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mt-1">Up to ₹{coupon.max_discount_amount}</div>}
                     </td>
-                    <td className="p-4">
-                      <div className="text-sm">Start: {new Date(coupon.start_date).toLocaleDateString()}</div>
-                      <div className="text-sm">End: {new Date(coupon.expiry_date).toLocaleDateString()}</div>
+                    <td className="px-6 py-4">
+                      <div className="text-xs font-semibold text-slate-600">Start: {new Date(coupon.start_date).toLocaleDateString()}</div>
+                      <div className="text-xs font-semibold text-slate-600 mt-1">End: {new Date(coupon.expiry_date).toLocaleDateString()}</div>
                     </td>
-                    <td className="p-4">
-                      <div className="text-sm">{coupon.usage_count} {coupon.usage_limit_global ? `/ ${coupon.usage_limit_global}` : 'used'}</div>
+                    <td className="px-6 py-4">
+                      <div className="text-xs font-bold text-slate-700">{coupon.usage_count} {coupon.usage_limit_global ? `/ ${coupon.usage_limit_global}` : 'used'}</div>
                     </td>
-                    <td className="p-4">
-                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${coupon.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    <td className="px-6 py-4 text-center">
+                      <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg border ${coupon.status === 'active' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-rose-50 text-rose-600 border-rose-200'}`}>
                         {coupon.status}
                       </span>
                     </td>
-                    <td className="p-4 text-right">
-                      <button onClick={() => handleOpenModal(coupon)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition mr-2">
-                        <FiEdit />
+                    <td className="px-6 py-4 text-right">
+                      <button onClick={() => handleOpenModal(coupon)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition mr-2">
+                        <FiEdit className="w-4 h-4" />
                       </button>
-                      <button onClick={() => handleDelete(coupon.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition">
-                        <FiTrash2 />
+                      <button onClick={() => handleDelete(coupon.id)} className="p-2 text-rose-600 hover:bg-rose-50 rounded-xl transition">
+                        <FiTrash2 className="w-4 h-4" />
                       </button>
                     </td>
                   </tr>
@@ -279,6 +346,62 @@ const Coupons = () => {
           </table>
         </div>
       </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 animate-in fade-in duration-200">
+          {filteredCoupons.length === 0 ? (
+            <div className="col-span-full p-8 bg-white rounded-2xl text-center text-slate-500 font-semibold shadow-sm border border-slate-100">
+              No coupons found. Create one to get started.
+            </div>
+          ) : (
+            filteredCoupons.map((coupon) => (
+              <div key={coupon.id} className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition border border-slate-100 flex flex-col gap-4">
+                <div className="flex justify-between items-start gap-4">
+                  <div>
+                    <span className="inline-flex px-3 py-1 bg-slate-900 text-white font-bold text-xs uppercase tracking-wider rounded-lg shadow-sm border border-slate-800 mb-3">
+                      {coupon.code}
+                    </span>
+                    <h3 className="font-black text-slate-800 text-lg leading-tight">{coupon.name}</h3>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mt-1 line-clamp-2">{coupon.description}</p>
+                  </div>
+                  <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg border flex-shrink-0 ${coupon.status === 'active' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-rose-50 text-rose-600 border-rose-200'}`}>
+                    {coupon.status}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100 mt-2">
+                  <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Discount</p>
+                    <div className="font-black text-blue-600">
+                      {coupon.discount_type === 'percentage' ? `${coupon.discount_value}%` : `₹${coupon.discount_value}`}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Max Discount</p>
+                    <div className="font-bold text-slate-700 text-sm">{coupon.max_discount_amount ? `₹${coupon.max_discount_amount}` : 'N/A'}</div>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Usage</p>
+                    <div className="font-bold text-slate-700 text-sm">{coupon.usage_count} {coupon.usage_limit_global ? `/ ${coupon.usage_limit_global}` : ''}</div>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Valid Until</p>
+                    <div className="font-bold text-slate-700 text-sm">{new Date(coupon.expiry_date).toLocaleDateString()}</div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2 mt-auto pt-2">
+                  <button onClick={() => handleOpenModal(coupon)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition">
+                    <FiEdit className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => handleDelete(coupon.id)} className="p-2 text-rose-600 hover:bg-rose-50 rounded-xl transition">
+                    <FiTrash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
 
       {isModalOpen && createPortal(
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
