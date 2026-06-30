@@ -130,15 +130,26 @@ router.get('/orders', async (req, res) => {
     const deliveryBoyId = req.user?.user_id || req.user?.id;
     const { status } = req.query;
     
-    let query = 'SELECT * FROM user_food_order_table WHERE (delivery_partner = ? OR delivery_partner_user_id = ?) AND DATE(ordered_at) = CURDATE()';
+    let query = `
+      SELECT o.*,
+             c.latitude AS home_chef_lat,
+             c.longitude AS home_chef_lng,
+             u.latitude AS customer_lat,
+             u.longitude AS customer_lng
+        FROM user_food_order_table o
+        LEFT JOIN home_chefs c ON (o.chef_id = c.id OR o.chef_user_id = c.user_id)
+        LEFT JOIN users u ON o.user_id = u.user_id
+       WHERE (o.delivery_partner = ? OR o.delivery_partner_user_id = ?) 
+         AND DATE(o.ordered_at) = CURDATE()
+    `;
     const params = [deliveryBoyId, deliveryBoyId];
 
     if (status && status !== 'All') {
-      query += ' AND status = ?';
+      query += ' AND o.status = ?';
       params.push(status);
     }
     
-    query += ' ORDER BY ordered_at DESC';
+    query += ' ORDER BY o.ordered_at DESC';
 
     const [rows] = await pool.execute(query, params);
     res.json(rows);

@@ -318,10 +318,12 @@ const AdminLayout = () => {
                                             <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Distance</p>
                                             <p className="mt-2 text-lg font-bold text-amber-400">
                                                 {popupOrder.distance_km 
-                                                    ? `${popupOrder.distance_km} KM` 
-                                                    : locationData.latitude && popupOrder.home_chef_lat 
-                                                        ? `${calculateDistance(locationData.latitude, locationData.longitude, popupOrder.home_chef_lat, popupOrder.home_chef_lng)} KM`
-                                                        : 'N/A KM'
+                                                    ? `${parseFloat(popupOrder.distance_km).toFixed(2)} KM` 
+                                                    : !locationData.latitude
+                                                        ? 'Calculating...'
+                                                        : popupOrder.home_chef_lat 
+                                                            ? `${calculateDistance(locationData.latitude, locationData.longitude, popupOrder.home_chef_lat, popupOrder.home_chef_lng)} KM`
+                                                            : 'N/A KM'
                                                 }
                                             </p>
                                         </div>

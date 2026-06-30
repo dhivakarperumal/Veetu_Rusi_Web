@@ -4,8 +4,9 @@ import api from "../../api";
 import { toast, Toaster } from "react-hot-toast";
 import {
   FiSearch, FiMapPin, FiPhone, FiRefreshCw,
-  FiPackage, FiEye, FiTruck, FiSave, FiX, FiGrid, FiList
+  FiPackage, FiEye, FiTruck, FiSave, FiX, FiGrid, FiList, FiMap
 } from "react-icons/fi";
+import LiveTrackingMap from "../Components/LiveTrackingMap";
 
 /* ─── Constants ─────────────────────────────────────────────────────── */
 const STATUS_STYLE = {
@@ -154,6 +155,7 @@ const PickedUpOrders = () => {
   const [loading, setLoading]           = useState(true);
   const [searchTerm, setSearchTerm]     = useState("");
   const [editingOrder, setEditingOrder] = useState(null);
+  const [trackingOrder, setTrackingOrder] = useState(null);
   const [viewMode, setViewMode]         = useState("table"); // "card" | "table"
 
   const fetchOrders = async () => {
@@ -263,6 +265,10 @@ const PickedUpOrders = () => {
                 className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest transition shadow-lg shadow-emerald-900/20">
                 <FiTruck size={13} /> Update Status
               </button>
+              <button onClick={() => setTrackingOrder(order)}
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-black uppercase tracking-widest transition shadow-lg shadow-indigo-900/20">
+                <FiMap size={13} /> Track
+              </button>
               <Link to={`/delivery/orders/${order.id}`}
                 className="w-12 h-12 rounded-2xl border border-white/10 bg-slate-900 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 hover:border-sky-500/40 transition"
                 title="View Details">
@@ -352,6 +358,11 @@ const PickedUpOrders = () => {
                         title="Update Status">
                         <FiTruck size={11} /> Update
                       </button>
+                      <button onClick={() => setTrackingOrder(order)}
+                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-[9px] font-black uppercase tracking-wider transition"
+                        title="Live Tracking">
+                        <FiMap size={11} /> Track
+                      </button>
                       <Link to={`/delivery/orders/${order.id}`}
                         className="w-9 h-9 rounded-xl border border-white/10 bg-slate-900 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition"
                         title="View Details">
@@ -385,6 +396,34 @@ const PickedUpOrders = () => {
           onClose={() => setEditingOrder(null)}
           onSaved={fetchOrders}
         />
+      )}
+
+      {trackingOrder && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/80 p-4">
+          <div className="absolute inset-0 bg-black/70" aria-hidden="true" onClick={() => setTrackingOrder(null)}></div>
+          <div className="relative z-10 w-full max-w-4xl h-[90vh] flex flex-col rounded-3xl bg-slate-950/95 shadow-2xl ring-1 ring-white/10 overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b border-white/10 shrink-0">
+              <div>
+                <h2 className="text-xl font-black text-white">Live Route Tracking</h2>
+                <p className="text-sm text-slate-400 mt-1">Order {trackingOrder.order_id || `#${trackingOrder.id}`}</p>
+              </div>
+              <button
+                onClick={() => setTrackingOrder(null)}
+                className="p-3 rounded-full bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800 transition border border-white/10"
+              >
+                <FiX size={20} />
+              </button>
+            </div>
+            <div className="flex-1 p-6 bg-slate-900/50">
+              <LiveTrackingMap 
+                chefLat={trackingOrder.home_chef_lat} 
+                chefLng={trackingOrder.home_chef_lng} 
+                customerLat={trackingOrder.customer_lat} 
+                customerLng={trackingOrder.customer_lng} 
+              />
+            </div>
+          </div>
+        </div>
       )}
 
       {/* ── Header ─────────────────────────────────────────────── */}
