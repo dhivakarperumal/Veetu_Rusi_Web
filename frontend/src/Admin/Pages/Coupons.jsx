@@ -282,78 +282,86 @@ const Coupons = () => {
 
       {isModalOpen && createPortal(
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
-          <div className="bg-white rounded-2xl w-full max-w-[95vw] md:max-w-[90vw] lg:max-w-6xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
-            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-              <h2 className="text-xl font-bold text-gray-800">{currentCoupon ? 'Edit Coupon' : 'Create New Coupon'}</h2>
-              <button onClick={handleCloseModal} className="text-gray-500 hover:text-gray-800"><FiTrash2 className="hidden" /> &times;</button>
+          <div className="bg-white rounded-[3rem] w-full max-w-[95vw] md:max-w-[90vw] lg:max-w-6xl max-h-[95vh] overflow-hidden flex flex-col shadow-2xl relative z-[10000] animate-in zoom-in-95 slide-in-from-bottom-8 duration-500">
+            <div className="bg-blue-600 p-8 text-white relative flex-shrink-0">
+              <div className="absolute right-0 top-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl" />
+              <div className="relative flex items-center justify-between">
+                <div>
+                  <h3 className="text-2xl font-[900] tracking-tight uppercase">{currentCoupon ? 'Edit Coupon' : 'Create New Coupon'}</h3>
+                  <p className="text-[10px] font-black opacity-80 uppercase tracking-widest mt-1">Manage discount settings and limits</p>
+                </div>
+                <button type="button" onClick={handleCloseModal} className="p-3 bg-black/10 hover:bg-black/20 rounded-2xl transition-all text-xl font-bold">
+                  &times;
+                </button>
+              </div>
             </div>
             
-            <div className="p-6 overflow-y-auto flex-1">
+            <div className="p-8 overflow-y-auto flex-1 bg-white">
               <form id="couponForm" onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Coupon Code *</label>
-                    <input required type="text" name="code" value={formData.code} onChange={handleChange} className="w-full p-3 border rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. SUMMER50" />
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Coupon Code *</label>
+                    <input required type="text" name="code" value={formData.code} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 transition-all font-black text-black text-sm" placeholder="e.g. SUMMER50" />
                   </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Coupon Name *</label>
-                    <input required type="text" name="name" value={formData.name} onChange={handleChange} className="w-full p-3 border rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. Summer Special Sale" />
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Coupon Name *</label>
+                    <input required type="text" name="name" value={formData.name} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 transition-all font-black text-black text-sm" placeholder="e.g. Summer Special Sale" />
                   </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
-                    <textarea name="description" value={formData.description} onChange={handleChange} className="w-full p-3 border rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none" rows="2" placeholder="Brief description of the coupon..."></textarea>
+                  <div className="md:col-span-2 space-y-2">
+                    <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Description</label>
+                    <textarea name="description" value={formData.description} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-blue-600 transition-all font-black text-black text-sm resize-none" rows="2" placeholder="Brief description of the coupon..."></textarea>
                   </div>
                   
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Discount Type *</label>
-                    <select required name="discount_type" value={formData.discount_type} onChange={handleChange} className="w-full p-3 border rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Discount Type *</label>
+                    <select required name="discount_type" value={formData.discount_type} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 transition-all font-black text-black text-sm">
                       <option value="percentage">Percentage (%)</option>
                       <option value="fixed">Fixed Amount (₹)</option>
                     </select>
                   </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Discount Value *</label>
-                    <input required type="number" step="0.01" name="discount_value" value={formData.discount_value} onChange={handleChange} className="w-full p-3 border rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 50" />
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Discount Value *</label>
+                    <input required type="number" step="0.01" name="discount_value" value={formData.discount_value} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 transition-all font-black text-black text-sm" placeholder="e.g. 50" />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Max Discount Amount (₹)</label>
-                    <input type="number" step="0.01" name="max_discount_amount" value={formData.max_discount_amount} onChange={handleChange} className="w-full p-3 border rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Leave blank for no limit" />
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Max Discount Amount (₹)</label>
+                    <input type="number" step="0.01" name="max_discount_amount" value={formData.max_discount_amount} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 transition-all font-black text-black text-sm" placeholder="Leave blank for no limit" />
                   </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Min Order Value (₹)</label>
-                    <input type="number" step="0.01" name="min_order_value" value={formData.min_order_value} onChange={handleChange} className="w-full p-3 border rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none" />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Start Date & Time *</label>
-                    <input required type="datetime-local" name="start_date" value={formData.start_date} onChange={handleChange} className="w-full p-3 border rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Expiry Date & Time *</label>
-                    <input required type="datetime-local" name="expiry_date" value={formData.expiry_date} onChange={handleChange} className="w-full p-3 border rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none" />
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Min Order Value (₹)</label>
+                    <input type="number" step="0.01" name="min_order_value" value={formData.min_order_value} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 transition-all font-black text-black text-sm" />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Total Usage Limit (Global)</label>
-                    <input type="number" name="usage_limit_global" value={formData.usage_limit_global} onChange={handleChange} className="w-full p-3 border rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Leave blank for unlimited" />
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Start Date & Time *</label>
+                    <input required type="datetime-local" name="start_date" value={formData.start_date} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 transition-all font-black text-black text-sm" />
                   </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Usage Limit Per Customer</label>
-                    <input type="number" name="usage_limit_per_customer" value={formData.usage_limit_per_customer} onChange={handleChange} className="w-full p-3 border rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none" min="1" />
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Expiry Date & Time *</label>
+                    <input required type="datetime-local" name="expiry_date" value={formData.expiry_date} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 transition-all font-black text-black text-sm" />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Total Usage Limit (Global)</label>
+                    <input type="number" name="usage_limit_global" value={formData.usage_limit_global} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 transition-all font-black text-black text-sm" placeholder="Leave blank for unlimited" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Usage Limit Per Customer</label>
+                    <input type="number" name="usage_limit_per_customer" value={formData.usage_limit_per_customer} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 transition-all font-black text-black text-sm" min="1" />
                   </div>
                   
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
-                    <select name="status" value={formData.status} onChange={handleChange} className="w-full p-3 border rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Status</label>
+                    <select name="status" value={formData.status} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 transition-all font-black text-black text-sm">
                       <option value="active">Active</option>
                       <option value="inactive">Inactive</option>
                     </select>
                   </div>
 
-                  <div className="md:col-span-2 p-4 border rounded-xl bg-gray-50/50">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Coupon Applies To *</label>
-                    <select name="coupon_scope" value={formData.coupon_scope} onChange={handleChange} className="w-full p-3 border rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none mb-4">
+                  <div className="md:col-span-2 p-6 border-2 border-dashed border-blue-100 rounded-[2rem] bg-blue-50/30 shadow-sm">
+                    <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1 mb-2 block">Coupon Applies To *</label>
+                    <select name="coupon_scope" value={formData.coupon_scope} onChange={handleChange} className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 transition-all font-black text-black text-sm mb-4 shadow-sm">
                       <option value="all">All Products (Global)</option>
                       <option value="first_order_only">First Order Only</option>
                       <option value="new_customers_only">New Customers Only</option>
@@ -363,8 +371,8 @@ const Coupons = () => {
                     </select>
 
                     {formData.coupon_scope === 'specific_home_chef' && (
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Select Home Chefs</label>
+                      <div className="mb-4 animate-in fade-in zoom-in-95 duration-300">
+                        <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1 mb-2 block">Select Home Chefs</label>
                         <Select 
                           isMulti 
                           options={chefs} 
@@ -383,8 +391,8 @@ const Coupons = () => {
                     )}
 
                     {formData.coupon_scope === 'specific_products' && (
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Select Products</label>
+                      <div className="mb-4 animate-in fade-in zoom-in-95 duration-300">
+                        <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1 mb-2 block">Select Products</label>
                         <Select 
                           isMulti 
                           options={products} 
@@ -403,8 +411,8 @@ const Coupons = () => {
                     )}
 
                     {formData.coupon_scope === 'specific_categories' && (
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Select Categories</label>
+                      <div className="mb-4 animate-in fade-in zoom-in-95 duration-300">
+                        <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1 mb-2 block">Select Categories</label>
                         <Select 
                           isMulti 
                           options={categories} 
@@ -426,9 +434,9 @@ const Coupons = () => {
               </form>
             </div>
             
-            <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end gap-3">
-              <button onClick={handleCloseModal} className="px-6 py-2.5 rounded-xl font-semibold text-gray-600 bg-white border hover:bg-gray-50 transition">Cancel</button>
-              <button form="couponForm" type="submit" className="px-6 py-2.5 rounded-xl font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow transition">Save Coupon</button>
+            <div className="p-8 flex justify-end gap-3 bg-white">
+              <button type="button" onClick={handleCloseModal} className="px-8 py-3.5 rounded-2xl font-[900] text-slate-600 bg-slate-100 hover:bg-slate-200 transition-all uppercase tracking-widest text-xs">Cancel</button>
+              <button form="couponForm" type="submit" className="px-8 py-3.5 rounded-2xl font-[900] text-white bg-blue-600 hover:bg-blue-700 shadow-xl shadow-blue-200 transition-all uppercase tracking-widest text-xs flex items-center gap-2">Save Coupon</button>
             </div>
           </div>
         </div>,
