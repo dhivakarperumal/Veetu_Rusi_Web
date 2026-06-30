@@ -39,7 +39,7 @@ const ChefMaterialDetails = () => {
 
   const fetchProduct = async () => {
     try {
-      const res = await api.get(`/products/${id}`);
+      const res = await api.get(`/franchise-products/${id}`);
       const data = res.data;
       if (!data) throw new Error("Product data not found");
 

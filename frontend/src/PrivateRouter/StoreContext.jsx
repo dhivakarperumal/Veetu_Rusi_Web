@@ -99,12 +99,13 @@ export const StoreProvider = ({ children }) => {
             await api.post("/cart", {
                 user_id: user.user_id,
                 product_id: productId,
-                name: product.name,
+                name: product.name || product.product_name || product.title || product.productName || "Product",
                 variant_color: variantColor || "",
                 variant_size: selectedSize || "",
                 image: variantImage,
                 email: user.email || "",
                 price: price,
+                mrp: parseFloat(product.mrp ?? product.offer_price ?? product.price ?? price ?? 0),
                 total_price: price * qty,
                 quantity: qty,
             });
