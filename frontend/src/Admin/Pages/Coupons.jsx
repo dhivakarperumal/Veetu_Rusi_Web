@@ -51,30 +51,22 @@ const Coupons = () => {
 
   const fetchOptions = async () => {
     try {
-      // Assuming users with role 'chef' are fetched from /admin/users or /users
-      // If endpoint is not exact, we will just use dummy or skip fail gracefully
       const [chefRes, prodRes, catRes] = await Promise.all([
-        api.get('/users').catch(() => ({ data: { users: [] } })), // Adjust based on your API
-        api.get('/cheffoods').catch(() => ({ data: { foods: [] } })),
-        api.get('/cheffoodcategorys').catch(() => ({ data: { categories: [] } }))
+        api.get('/admin/homechefs').catch(() => ({ data: [] })),
+        api.get('/chef-foods').catch(() => ({ data: [] })),
+        api.get('/home-chef-categories').catch(() => ({ data: [] }))
       ]);
-      const allFoods = prodRes.data.foods || prodRes.data.data || [];
-      
-      const prodList = allFoods.map(p => ({ value: p.id, label: `${p.name} (Chef: ${p.chef_name || p.chef_id})` }));
+
+      const allChefs = Array.isArray(chefRes.data) ? chefRes.data : [];
+      const chefList = allChefs.map(c => ({ value: c.id, label: c.name || c.store_name || `Chef ${c.id}` }));
+      setChefs(chefList);
+
+      const allFoods = Array.isArray(prodRes.data) ? prodRes.data : [];
+      const prodList = allFoods.map(p => ({ value: p.id, label: `${p.name || p.food_name || 'Product'} (Chef ID: ${p.chef_id || 'Unknown'})` }));
       setProducts(prodList);
 
-      // Extract unique chefs from foods because home_chefs table was dropped
-      const uniqueChefs = new Map();
-      allFoods.forEach(food => {
-          if (food.chef_id) {
-              uniqueChefs.set(food.chef_id, {
-                  value: food.chef_id,
-                  label: food.chef_name || `Chef ${food.chef_id}`
-              });
-          }
-      });
-      setChefs(Array.from(uniqueChefs.values()));
-      const catList = (catRes.data.categories || catRes.data || []).map(c => ({ value: c.name, label: c.name }));
+      const allCategories = Array.isArray(catRes.data) ? catRes.data : [];
+      const catList = allCategories.map(c => ({ value: c.id, label: c.c_name || c.name || `Category ${c.id}` }));
       setCategories(catList);
     } catch (err) {
       console.error(err);
@@ -365,9 +357,14 @@ const Coupons = () => {
                           options={chefs} 
                           value={chefs.filter(c => formData.applicable_home_chef_ids.includes(c.value))}
                           onChange={(opts) => handleSelectChange(opts, 'applicable_home_chef_ids')}
-                          className="react-select-container"
+                          className="react-select-container text-black"
                           classNamePrefix="react-select"
                           placeholder="Search and select chefs..."
+                          styles={{
+                            option: (provided) => ({ ...provided, color: '#000' }),
+                            singleValue: (provided) => ({ ...provided, color: '#000' }),
+                            multiValueLabel: (provided) => ({ ...provided, color: '#000' })
+                          }}
                         />
                       </div>
                     )}
@@ -380,9 +377,14 @@ const Coupons = () => {
                           options={products} 
                           value={products.filter(p => formData.applicable_product_ids.includes(p.value))}
                           onChange={(opts) => handleSelectChange(opts, 'applicable_product_ids')}
-                          className="react-select-container"
+                          className="react-select-container text-black"
                           classNamePrefix="react-select"
                           placeholder="Search and select products..."
+                          styles={{
+                            option: (provided) => ({ ...provided, color: '#000' }),
+                            singleValue: (provided) => ({ ...provided, color: '#000' }),
+                            multiValueLabel: (provided) => ({ ...provided, color: '#000' })
+                          }}
                         />
                       </div>
                     )}
@@ -395,9 +397,14 @@ const Coupons = () => {
                           options={categories} 
                           value={categories.filter(c => formData.applicable_category_ids.includes(c.value))}
                           onChange={(opts) => handleSelectChange(opts, 'applicable_category_ids')}
-                          className="react-select-container"
+                          className="react-select-container text-black"
                           classNamePrefix="react-select"
                           placeholder="Search and select categories..."
+                          styles={{
+                            option: (provided) => ({ ...provided, color: '#000' }),
+                            singleValue: (provided) => ({ ...provided, color: '#000' }),
+                            multiValueLabel: (provided) => ({ ...provided, color: '#000' })
+                          }}
                         />
                       </div>
                     )}
