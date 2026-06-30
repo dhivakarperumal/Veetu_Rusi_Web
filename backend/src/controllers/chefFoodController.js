@@ -169,8 +169,15 @@ SELECT
       params.push(dietary_tag);
     }
     if (status && status !== 'All') {
-      query += ' AND cf.status = ?';
-      params.push(status);
+      const normalizedStatus = String(status || '').trim().toLowerCase();
+      if (normalizedStatus === 'active' || normalizedStatus === 'approved') {
+        query += " AND (cf.status = 'Active' OR cf.status = 'Approved')";
+      } else if (normalizedStatus === 'not approved') {
+        query += " AND (cf.status <> 'Active' AND cf.status <> 'Approved')";
+      } else {
+        query += ' AND cf.status = ?';
+        params.push(status);
+      }
     }
 
     if (area) {

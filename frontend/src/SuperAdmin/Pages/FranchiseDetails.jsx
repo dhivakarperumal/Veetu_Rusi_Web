@@ -185,7 +185,8 @@ const FranchiseDetails = () => {
     setProductsError(null);
     try {
       const params = {
-        source: 'chef_products'
+        source: 'chef_products',
+        status: 'Active'
       };
       if (franchise.franchise_id) params.franchise_id = franchise.franchise_id;
       if (franchise.franch_user_id) params.franchise_user_id = franchise.franch_user_id;
@@ -210,7 +211,9 @@ const FranchiseDetails = () => {
     setLoadingChefProducts(true);
     setChefProductsError(null);
     try {
-      const params = {};
+      const params = {
+        status: 'Active'
+      };
       if (franchise.franchise_id) params.franchise_id = franchise.franchise_id;
       if (franchise.franch_user_id) params.franchise_user_id = franchise.franch_user_id;
       const res = await api.get('/chef-foods', { params });

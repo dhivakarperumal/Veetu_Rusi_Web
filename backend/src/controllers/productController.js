@@ -112,13 +112,20 @@ exports.getAllProducts = async (req, res) => {
             }
         }
 
-        if (category) { 
-            query += ' AND t.category = ?'; 
-            params.push(category); 
+        if (category) {
+            query += ' AND t.category = ?';
+            params.push(category);
         }
-        if (status && status !== 'All') { 
-            query += ' AND t.status = ?'; 
-            params.push(status); 
+        if (status && status !== 'All') {
+            const normalizedStatus = String(status || '').trim().toLowerCase();
+            if (normalizedStatus === 'active' || normalizedStatus === 'approved') {
+                query += " AND (t.status = 'Active' OR t.status = 'Approved')";
+            } else if (normalizedStatus === 'not approved') {
+                query += " AND (t.status <> 'Active' AND t.status <> 'Approved')";
+            } else {
+                query += ' AND t.status = ?';
+                params.push(status);
+            }
         }
 
         query += ' ORDER BY t.created_at DESC';
