@@ -103,12 +103,12 @@ export default function ChefWishlist() {
                       {/* Price */}
                       <div className="flex items-center mt-2">
                         <div className="flex items-center gap-3">
-                          <span className="text-primary font-bold text-lg">
+                          <span className="text-white font-bold text-lg">
                             ₹{price}
                           </span>
 
                           {mrp && (
-                            <span className="text-gray-400 line-through text-sm">
+                            <span className="text-gray-200 line-through text-sm">
                               ₹{mrp}
                             </span>
                           )}

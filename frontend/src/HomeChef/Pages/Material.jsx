@@ -384,12 +384,7 @@ const Materials = () => {
                                                 )}
                                             </div>
 
-                                            <button
-                                                onClick={() => addToCart(product)}
-                                                className="w-10 h-10 bg-slate-900 hover:bg-black text-white rounded-2xl flex items-center justify-center transition-all active:scale-90 shadow-lg shadow-slate-900/20"
-                                            >
-                                                <FiShoppingCart size={16} />
-                                            </button>
+                                           
                                             </div>
                                         <button
                                             onClick={() => addToCart(product)}
