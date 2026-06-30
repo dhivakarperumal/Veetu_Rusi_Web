@@ -184,10 +184,12 @@ const FranchiseDetails = () => {
     setLoadingProducts(true);
     setProductsError(null);
     try {
-      const params = {};
+      const params = {
+        source: 'chef_products'
+      };
       if (franchise.franchise_id) params.franchise_id = franchise.franchise_id;
       if (franchise.franch_user_id) params.franchise_user_id = franchise.franch_user_id;
-      const res = await api.get('/franchise-products', { params });
+      const res = await api.get('/products', { params });
       const data = res.data;
       const allProducts = Array.isArray(data) ? data : Array.isArray(data.products) ? data.products : [];
       setProducts(allProducts.filter(p => {
@@ -196,7 +198,7 @@ const FranchiseDetails = () => {
       }));
     } catch (error) {
       console.error(error);
-      setProductsError('Failed to load franchise products.');
+      setProductsError('Failed to load chef products.');
       setProducts([]);
     } finally {
       setLoadingProducts(false);
