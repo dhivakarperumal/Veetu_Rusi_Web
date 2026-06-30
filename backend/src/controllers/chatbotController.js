@@ -153,30 +153,48 @@ async function getNearbyChefs() {
   }
 }
 
+function matchesSearchTerm(term, row) {
+  const searchTerm = String(term || '').trim().toLowerCase();
+  if (!searchTerm) return false;
+
+  const searchTokens = searchTerm.split(/\s+/).filter(Boolean);
+  if (!searchTokens.length) return false;
+
+  const searchableValues = Object.values(row || {})
+    .filter((value) => typeof value === 'string' || typeof value === 'number' || value === null)
+    .map((value) => String(value || '').toLowerCase());
+
+  return searchableValues.some((value) => searchTokens.every((token) => value.includes(token)));
+}
+
 async function searchProducts(term) {
   const searchTerm = String(term || '').trim().toLowerCase();
-  const searchTokens = searchTerm.split(/\s+/).filter(Boolean);
   const results = [];
 
-  const matchesRow = (row) => {
-    const searchableValues = Object.values(row || {})
-      .filter((value) => typeof value === 'string' || typeof value === 'number')
-      .map((value) => String(value).toLowerCase());
+  const tablesToSearch = [
+    { tableName: 'chef_food_table', columns: ['name', 'description', 'category', 'cuisine', 'ingredients', 'dietary_tag', 'instructions', 'variants'] },
+    { tableName: 'chef_products', columns: ['name', 'description', 'category', 'product_type', 'subcategory', 'ingredients', 'dietary_tag', 'instructions', 'variants'] },
+    { tableName: 'franchise_products', columns: ['name', 'description', 'category', 'product_type', 'subcategory', 'ingredients', 'dietary_tag', 'instructions', 'variants'] },
+  ];
 
-    return searchableValues.some((value) => searchTokens.every((token) => value.includes(token)));
-  };
-
-  for (const tableName of ['chef_products', 'franchise_products']) {
+  for (const { tableName, columns } of tablesToSearch) {
     try {
       const [rows] = await pool.execute(`SELECT * FROM \`${tableName}\` LIMIT 50`);
-      const matchedRows = rows.filter(matchesRow).slice(0, 5);
+      const matchedRows = rows.filter((row) => {
+        const values = columns.reduce((acc, column) => {
+          acc[column] = row[column];
+          return acc;
+        }, {});
+        return matchesSearchTerm(searchTerm, values);
+      }).slice(0, 5);
+
       results.push(...matchedRows.map((row) => ({ ...row, source: tableName })));
     } catch (error) {
       console.warn(`Chatbot product search failed for ${tableName}:`, error.message);
     }
   }
 
-  return results.slice(0, 5);
+  return results.slice(0, 10);
 }
 
 async function getSupportInfo() {
@@ -196,6 +214,7 @@ async function getCustomerWallet(userId) {
 
 exports.detectIntent = detectIntent;
 exports.buildFallbackReply = buildFallbackReply;
+exports.matchesSearchTerm = matchesSearchTerm;
 
 exports.handleChatbotMessage = async (req, res) => {
   try {
