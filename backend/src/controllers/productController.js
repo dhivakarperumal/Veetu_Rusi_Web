@@ -472,7 +472,10 @@ exports.updateProduct = async (req, res) => {
         const finalOffer = offer !== undefined && offer !== null ? Number(offer) : 0;
 
         const { finalFranchiseUserId } = await resolveProductMetadata(req, req.body);
-        const finalFranchiseUserIdResolved = finalFranchiseUserId || null;
+        // Preserve the existing franchise_user_id when the request body does not
+        // supply one (e.g. a status-only update like Inactive / Active). Without
+        // this fallback, the column is wiped to NULL on every quick-status change.
+        const finalFranchiseUserIdResolved = finalFranchiseUserId || existing.franchise_user_id || null;
         const updatedBy = req.user?.user_id || req.user?.id || req.user?.email || req.user?.name || req.body.updated_by || 'Admin';
 
         // Update product
