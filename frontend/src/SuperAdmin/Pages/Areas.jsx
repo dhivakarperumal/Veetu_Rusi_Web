@@ -11,6 +11,8 @@ const Areas = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedArea, setSelectedArea] = useState(null);
   const [statusUpdatingId, setStatusUpdatingId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const fetchAreas = async () => {
     setLoadingAreas(true);
@@ -29,6 +31,10 @@ const Areas = () => {
     fetchAreas();
   }, []);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
+
   const filteredAreas = useMemo(() => {
     if (!search.trim()) return areas;
     const term = search.toLowerCase();
@@ -39,6 +45,13 @@ const Areas = () => {
         area.created_by?.toLowerCase().includes(term)
     );
   }, [areas, search]);
+
+  const paginatedAreas = filteredAreas.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const totalPages = Math.ceil(filteredAreas.length / itemsPerPage);
 
   const handleAddClick = () => {
     setSelectedArea(null);
@@ -190,16 +203,16 @@ const Areas = () => {
                     <td className="h-16 px-5 py-4 bg-white/5 rounded-xl"></td>
                   </tr>
                 ))
-              ) : filteredAreas.length === 0 ? (
+              ) : paginatedAreas.length === 0 && filteredAreas.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-5 py-16 text-center text-sm text-slate-500">
                     No areas match your search.
                   </td>
                 </tr>
               ) : (
-                filteredAreas.map((area, index) => (
+                paginatedAreas.map((area, index) => (
                   <tr key={area.id || index} className="hover:bg-white/5 transition-colors">
-                    <td className="px-5 py-4 font-semibold text-slate-300">{index + 1}</td>
+                    <td className="px-5 py-4 font-semibold text-slate-300">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                     <td className="px-5 py-4 text-white font-semibold">{area.name}</td>
                     <td className="px-5 py-4 text-slate-300">{area.pincode}</td>
                     <td className="px-5 py-4 text-slate-300">{area.created_by || 'N/A'}</td>
@@ -210,11 +223,10 @@ const Areas = () => {
                         disabled={statusUpdatingId === area.id}
                         onDoubleClick={() => handleToggleStatus(area)}
                         title="Double click to toggle status"
-                        className={`rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-[0.24em] transition ${
-                          String(area.status || 'Active').toLowerCase() === 'active'
-                            ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 hover:bg-emerald-500/15'
-                            : 'bg-rose-500/10 text-rose-300 border border-rose-500/20 hover:bg-rose-500/15'
-                        } ${statusUpdatingId === area.id ? 'opacity-70 cursor-not-allowed' : ''}`}
+                        className={`rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-[0.24em] transition ${String(area.status || 'Active').toLowerCase() === 'active'
+                          ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 hover:bg-emerald-500/15'
+                          : 'bg-rose-500/10 text-rose-300 border border-rose-500/20 hover:bg-rose-500/15'
+                          } ${statusUpdatingId === area.id ? 'opacity-70 cursor-not-allowed' : ''}`}
                       >
                         {statusUpdatingId === area.id ? 'Updating...' : (area.status || 'Active')}
                       </button>
@@ -246,6 +258,30 @@ const Areas = () => {
           </table>
         </div>
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-2 mt-6">
+          <button
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="px-4 py-2 bg-slate-100 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-200 transition cursor-pointer"
+          >
+            Previous
+          </button>
+
+          <span className="text-sm font-medium text-white">
+            Page {currentPage} of {totalPages}
+          </span>
+
+          <button
+            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 bg-slate-100 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-200 transition cursor-pointer"
+          >
+            Next
+          </button>
+        </div>
+      )}
 
       {showModal && (
         <AddAreaModal
