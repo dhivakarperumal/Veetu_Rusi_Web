@@ -4,6 +4,25 @@ function normalizeMessage(message) {
   return String(message || '').toLowerCase().trim();
 }
 
+function looksLikeFoodSearch(text) {
+  const normalized = normalizeMessage(text);
+  if (!normalized) return false;
+
+  if (/(order|cart|coupon|wallet|support|contact|payment|refund|cancel|track|where|status|notification|faq|help|login|signup|register)/.test(normalized)) {
+    return false;
+  }
+
+  const stopWords = ['hello', 'hi', 'hey', 'thanks', 'thank', 'ok', 'okay', 'yes', 'no', 'what', 'who', 'when', 'how', 'why', 'can', 'could', 'please', 'show', 'give'];
+  if (stopWords.includes(normalized)) return false;
+
+  const words = normalized.split(/\s+/).filter(Boolean);
+  if (words.length <= 3) {
+    return !words.some((word) => word.length <= 2 && !/\d/.test(word));
+  }
+
+  return false;
+}
+
 function detectIntent(message) {
   const text = normalizeMessage(message);
 
@@ -27,7 +46,7 @@ function detectIntent(message) {
     return { intent: 'nearby_chefs' };
   }
 
-  if (/(search|find|look for).*(food|dish|meal|snack|biryani|pizza|burger|rice|chicken)/.test(text) || /(biryani|pizza|burger|chicken|pasta|roll|sandwich)/.test(text)) {
+  if (/(search|find|look for).*(food|dish|meal|snack|biryani|pizza|burger|rice|chicken)/.test(text) || /(biryani|pizza|burger|chicken|pasta|roll|sandwich|idli|dosa|sambar|parotta|rice|noodles|fried rice|biriyani)/.test(text) || looksLikeFoodSearch(text)) {
     return { intent: 'search_food' };
   }
 
@@ -117,8 +136,17 @@ async function getActiveCoupons() {
 
 async function getNearbyChefs() {
   try {
-    const [rows] = await pool.execute('SELECT * FROM home_chefs WHERE status = ? ORDER BY created_at DESC LIMIT 5', ['Active']);
-    return rows;
+    const [rows] = await pool.execute('SELECT * FROM home_chefs ORDER BY created_at DESC LIMIT 10');
+    const normalized = rows.map((row) => ({
+      id: row.id,
+      name: row.name || row.full_name || row.chef_name || 'Home Chef',
+      city: row.city || row.district || row.area_name || row.location || 'Location not set',
+      district: row.district || row.city || '',
+      status: row.status || 'Active',
+      phone: row.mobile || row.phone || row.contact_number || '',
+      email: row.email || '',
+    }));
+    return normalized.filter((row) => row.name);
   } catch (error) {
     console.warn('Chatbot nearby chefs lookup failed:', error.message);
     return [];
@@ -126,10 +154,29 @@ async function getNearbyChefs() {
 }
 
 async function searchProducts(term) {
-  const likeTerm = `%${term}%`;
-  const [chefRows] = await pool.execute('SELECT id, name, price, mrp, images, category FROM chef_products WHERE LOWER(name) LIKE ? LIMIT 5', [likeTerm]);
-  const [franchiseRows] = await pool.execute('SELECT id, name, price, mrp, images, category FROM franchise_products WHERE LOWER(name) LIKE ? LIMIT 5', [likeTerm]);
-  return [...chefRows, ...franchiseRows];
+  const searchTerm = String(term || '').trim().toLowerCase();
+  const searchTokens = searchTerm.split(/\s+/).filter(Boolean);
+  const results = [];
+
+  const matchesRow = (row) => {
+    const searchableValues = Object.values(row || {})
+      .filter((value) => typeof value === 'string' || typeof value === 'number')
+      .map((value) => String(value).toLowerCase());
+
+    return searchableValues.some((value) => searchTokens.every((token) => value.includes(token)));
+  };
+
+  for (const tableName of ['chef_products', 'franchise_products']) {
+    try {
+      const [rows] = await pool.execute(`SELECT * FROM \`${tableName}\` LIMIT 50`);
+      const matchedRows = rows.filter(matchesRow).slice(0, 5);
+      results.push(...matchedRows.map((row) => ({ ...row, source: tableName })));
+    } catch (error) {
+      console.warn(`Chatbot product search failed for ${tableName}:`, error.message);
+    }
+  }
+
+  return results.slice(0, 5);
 }
 
 async function getSupportInfo() {
