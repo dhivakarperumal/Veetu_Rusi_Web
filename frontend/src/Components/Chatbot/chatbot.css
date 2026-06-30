@@ -68,6 +68,22 @@
   cursor: pointer;
 }
 
+/* Ensure header icon (close) is perfectly centered */
+.chatbot-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 0;
+}
+
+/* Make sure svg icons inside buttons don't shift baseline */
+.chatbot-icon-btn svg,
+.chatbot-fab svg,
+.chatbot-input-row button svg {
+  display: block;
+}
+
 .chatbot-body {
   padding: 14px;
   display: flex;
