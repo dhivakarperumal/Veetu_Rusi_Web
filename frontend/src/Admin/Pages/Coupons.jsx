@@ -62,7 +62,7 @@ const Coupons = () => {
       setChefs(chefList);
 
       const allFoods = Array.isArray(prodRes.data) ? prodRes.data : [];
-      const prodList = allFoods.map(p => ({ value: p.id, label: `${p.name || p.food_name || 'Product'} (Chef ID: ${p.chef_id || 'Unknown'})` }));
+      const prodList = allFoods.map(p => ({ value: p.id, label: `${p.name || p.food_name || 'Product'} (${p.chef_name || p.kitchen_name || p.created_by || p.franchise_name || `Chef ID: ${p.chef_id || 'Unknown'}`})` }));
       setProducts(prodList);
 
       const allCategories = Array.isArray(catRes.data) ? catRes.data : [];
