@@ -28,6 +28,12 @@ const ChefFoodAll = () => {
   const [deleting, setDeleting] = useState(false);
   const [quickViewProduct, setQuickViewProduct] = useState(null);
   const navigate = useNavigate();
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
 
   const getStatusStyle = (status) => {
     switch ((status || "").toLowerCase()) {
@@ -138,6 +144,13 @@ const ChefFoodAll = () => {
       .some((value) => value.toLowerCase().includes(lowerSearch));
   });
 
+  const paginatedFoods = filteredFoods.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const totalPages = Math.ceil(filteredFoods.length / itemsPerPage);
+
   const activeCount = foods.filter((item) => (item.status || "").toLowerCase() === "active").length;
   const lowStockCount = foods.filter((item) => (item.status || "").toLowerCase() === "low stock").length;
   const outOfStockCount = foods.filter((item) => (item.status || "").toLowerCase() === "out of stock").length;
@@ -234,22 +247,20 @@ const ChefFoodAll = () => {
             <div className="flex bg-[#0f1216] p-1 rounded-lg border border-slate-800 shadow-inner">
               <button
                 onClick={() => setViewMode("table")}
-                className={`p-2 rounded-md transition-all ${
-                  viewMode === "table"
-                    ? "bg-[#0b0d10] text-white shadow-sm"
-                    : "text-slate-400 hover:text-slate-600"
-                }`}
+                className={`p-2 rounded-md transition-all ${viewMode === "table"
+                  ? "bg-[#0b0d10] text-white shadow-sm"
+                  : "text-slate-400 hover:text-slate-600"
+                  }`}
                 title="Table View"
               >
                 <FiList size={16} />
               </button>
               <button
                 onClick={() => setViewMode("grid")}
-                className={`p-2 rounded-md transition-all ${
-                  viewMode === "grid"
-                    ? "bg-[#0b0d10] text-white shadow-sm"
-                    : "text-slate-400 hover:text-slate-600"
-                }`}
+                className={`p-2 rounded-md transition-all ${viewMode === "grid"
+                  ? "bg-[#0b0d10] text-white shadow-sm"
+                  : "text-slate-400 hover:text-slate-600"
+                  }`}
                 title="Grid View"
               >
                 <FiGrid size={16} />
@@ -273,7 +284,7 @@ const ChefFoodAll = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800">
-                    {filteredFoods.map((item) => (
+                    {paginatedFoods.map((item) => (
                       <tr key={item.id} className="hover:bg-slate-900/40 transition-colors group">
                         <td className="px-8 py-6">
                           <div className="flex items-center gap-4">
@@ -351,7 +362,7 @@ const ChefFoodAll = () => {
         ) : (
           filteredFoods.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredFoods.map((item) => (
+              {paginatedFoods.map((item) => (
                 <div key={item.id} className="bg-[#0f1418] rounded-2xl border border-slate-800 shadow-sm overflow-hidden group hover:shadow-xl transition-all flex flex-col">
                   <div className="relative aspect-4/5 overflow-hidden bg-[#0b0d0f]">
                     <img
@@ -415,6 +426,48 @@ const ChefFoodAll = () => {
           )
         )}
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+          <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">
+            Showing {((currentPage - 1) * itemsPerPage) + 1} -{" "}
+            {Math.min(currentPage * itemsPerPage, filteredFoods.length)} of{" "}
+            {filteredFoods.length} foods
+          </p>
+
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-300 bg-[#111318] border border-slate-700 rounded-xl hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Prev
+            </button>
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={`w-9 h-9 rounded-xl text-[10px] font-black transition ${currentPage === page
+                    ? "bg-emerald-600 text-white"
+                    : "bg-[#111318] border border-slate-700 text-slate-300 hover:bg-slate-800"
+                  }`}
+              >
+                {page}
+              </button>
+            ))}
+
+            <button
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-300 bg-[#111318] border border-slate-700 rounded-xl hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
+      
       {quickViewProduct && (
         <QuickViewModal product={quickViewProduct} onClose={() => setQuickViewProduct(null)} />
       )}
