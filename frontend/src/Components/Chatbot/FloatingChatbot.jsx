@@ -1,7 +1,8 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
 import { MessageCircle, SendHorizonal, X, Sparkles, Clock3 } from 'lucide-react';
+import { StoreContext } from '../../PrivateRouter/StoreContext';
 
 const quickActions = [
   'Where is my order?',
@@ -84,6 +85,48 @@ function FloatingChatbot() {
     }
   };
 
+  // access cart helpers from StoreContext
+  const { addToCart, addToFoodCart } = useContext(StoreContext);
+
+  const fetchChefProducts = async (chef) => {
+    if (!chef) return;
+    const chefId = chef.user_id || chef.id;
+    const loadingMsg = {
+      id: Date.now() + 3,
+      role: 'assistant',
+      text: `Loading products for ${chef.name || 'chef'}...`,
+      time: new Date(),
+      data: [],
+      resultType: 'chef_products'
+    };
+    setMessages((prev) => [...prev, loadingMsg]);
+
+    try {
+      const [pRes, fRes] = await Promise.allSettled([
+        api.get(`/products/user/${chefId}`),
+        api.get('/chef-foods', { params: { chef_user_id: chefId } })
+      ]);
+
+      const products = (pRes.status === 'fulfilled' && Array.isArray(pRes.value.data) ? pRes.value.data : []).map(p => ({ ...p, source: 'chef_products' }));
+      const foods = (fRes.status === 'fulfilled' && Array.isArray(fRes.value.data) ? fRes.value.data : []).map(f => ({ ...f, source: 'chef_food_table' }));
+
+      const combined = [...products, ...foods].slice(0, 30);
+
+      const resultMessage = {
+        id: Date.now() + 4,
+        role: 'assistant',
+        text: `Showing ${combined.length} item(s) from ${chef.name || 'this chef'}.`,
+        time: new Date(),
+        data: combined,
+        resultType: 'chef_products'
+      };
+
+      setMessages((prev) => [...prev.filter(m => m.id !== loadingMsg.id), resultMessage]);
+    } catch (err) {
+      setMessages((prev) => [...prev, { id: Date.now() + 5, role: 'assistant', text: 'Failed to load chef products.', time: new Date() }]);
+    }
+  };
+
   return (
     <div className="chatbot-shell">
       {!open ? (
@@ -123,6 +166,38 @@ function FloatingChatbot() {
                               {item.category || item.cuisine || item.source || 'Product'}
                             </div>
                           </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {message.resultType === 'nearby' && message.data?.length > 0 && (
+                    <div className="chatbot-results">
+                      {message.data.slice(0, 6).map((chef) => (
+                        <button key={`${message.id}-chef-${chef.id || chef.email || chef.phone}`} className="chatbot-result-card" onClick={() => fetchChefProducts(chef)}>
+                          <div className="chatbot-result-title">{chef.name}</div>
+                          <div className="chatbot-result-meta">{chef.city || chef.district}</div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {message.resultType === 'chef_products' && message.data?.length > 0 && (
+                    <div className="chatbot-results">
+                      {message.data.slice(0, 8).map((item) => {
+                        const isFood = item.source === 'chef_food_table' || item.product_type === 'Food' || item.product_type === 'Food Product';
+                        const itemId = item.product_id || item.id;
+                        return (
+                          <div key={`${message.id}-prod-${itemId || Math.random()}`} className="chatbot-result-card">
+                            <div className="chatbot-result-title">{item.name || item.food_name || item.product_name || 'Item'}</div>
+                            <div className="chatbot-result-meta">₹{Number(item.final_price || item.price || item.mrp || 0).toFixed(2)}</div>
+                            <div className="chatbot-action-row">
+                              <button onClick={() => {
+                                if (isFood) addToFoodCart(item, null, null, 1);
+                                else addToCart(item, null, null, 1);
+                              }}>Add to cart</button>
+                              <button onClick={() => navigate(item.source === 'chef_products' ? `/products/${itemId}` : `/chef-foods/${itemId}`)}>View</button>
+                            </div>
+                          </div>
                         );
                       })}
                     </div>

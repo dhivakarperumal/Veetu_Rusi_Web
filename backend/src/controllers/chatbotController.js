@@ -303,9 +303,9 @@ exports.handleChatbotMessage = async (req, res) => {
     if (intent === 'nearby_chefs') {
       const chefs = await getNearbyChefs();
       if (!chefs.length) {
-        return res.json({ response: 'I could not find any nearby home chefs right now. Please try again later.', data: [] });
+        return res.json({ response: 'I could not find any nearby home chefs right now. Please try again later.', data: [], resultType: 'nearby' });
       }
-      return res.json({ response: `I found ${chefs.length} nearby home chef profile(s) you can explore.`, data: chefs.slice(0, 5) });
+      return res.json({ response: `I found ${chefs.length} nearby home chef profile(s) you can explore.`, data: chefs.slice(0, 5), resultType: 'nearby' });
     }
 
     if (intent === 'search_food') {
