@@ -30,7 +30,7 @@ const HomeChefCategories = () => {
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [viewMode, setViewMode] = useState("card");
+  const [viewMode, setViewMode] = useState("table");
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [subcatInput, setSubcatInput] = useState("");
