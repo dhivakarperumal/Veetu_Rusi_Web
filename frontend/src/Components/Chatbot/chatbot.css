@@ -1,7 +1,7 @@
 .chatbot-shell {
   position: fixed;
-  right: 18px;
-  bottom: 18px;
+  right: 15px;
+  bottom:40px; /* increased bottom margin to lift the FAB */
   z-index: 2000;
   font-family: Inter, system-ui, sans-serif;
 }
@@ -246,7 +246,7 @@
 @media (max-width: 640px) {
   .chatbot-shell {
     right: 10px;
-    bottom: 10px;
+    bottom: 24px; /* slightly higher on small screens */
   }
 
   .chatbot-window {
