@@ -9,7 +9,8 @@ const quickActions = [
   'Show my cart',
   'Find chicken biryani',
   'Show nearby home chefs',
-  'Show my wallet'
+  'Help with coupons',
+  'Need customer support'
 ];
 
 function formatTime(date) {
@@ -216,6 +217,24 @@ function FloatingChatbot() {
                           </div>
                         );
                       })}
+                    </div>
+                  )}
+                  {message.resultType === 'support' && message.data?.length > 0 && (
+                    <div className="chatbot-results">
+                      {message.data.map((item) => (
+                        <div key={`${message.id}-${item.title}`} className="chatbot-result-card">
+                          <div className="chatbot-result-title">{item.title}</div>
+                          <div className="chatbot-result-meta">{item.description}</div>
+                          <div className="chatbot-support-contact mt-3 text-sm text-slate-700">
+                            <div>
+                              Email: <a href={`mailto:${item.email}`} className="text-blue-600 hover:underline">{item.email}</a>
+                            </div>
+                            <div>
+                              Phone: <a href={`tel:${item.phone.replace(/\s+/g, '')}`} className="text-blue-600 hover:underline">{item.phone}</a>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
                   <div className="chatbot-time">

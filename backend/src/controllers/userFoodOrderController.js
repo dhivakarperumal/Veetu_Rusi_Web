@@ -270,7 +270,9 @@ const getUserOrders = async (userId) => {
   const [rows] = await pool.execute(
     `SELECT o.*, 
             COALESCE(lt.latitude, u.latitude) AS delivery_partner_lat,
-            COALESCE(lt.longitude, u.longitude) AS delivery_partner_lng
+            COALESCE(lt.longitude, u.longitude) AS delivery_partner_lng,
+            COALESCE(NULLIF(o.delivery_partner_name, ''), lt.delivery_partner_name) AS delivery_partner_name,
+            COALESCE(NULLIF(o.delivery_partner_phone, ''), lt.delivery_partner_phone) AS delivery_partner_phone
      FROM user_food_order_table o
      LEFT JOIN delivery_live_tracking lt ON lt.order_id COLLATE utf8mb4_unicode_ci = o.order_id COLLATE utf8mb4_unicode_ci
      LEFT JOIN users u ON u.user_id COLLATE utf8mb4_unicode_ci = o.delivery_partner_user_id COLLATE utf8mb4_unicode_ci
@@ -326,7 +328,9 @@ const getOrderById = async (id) => {
   const [rows] = await pool.execute(
     `SELECT o.*, 
             COALESCE(lt.latitude, u.latitude) AS delivery_partner_lat,
-            COALESCE(lt.longitude, u.longitude) AS delivery_partner_lng
+            COALESCE(lt.longitude, u.longitude) AS delivery_partner_lng,
+            COALESCE(NULLIF(o.delivery_partner_name, ''), lt.delivery_partner_name) AS delivery_partner_name,
+            COALESCE(NULLIF(o.delivery_partner_phone, ''), lt.delivery_partner_phone) AS delivery_partner_phone
      FROM user_food_order_table o
      LEFT JOIN delivery_live_tracking lt ON lt.order_id COLLATE utf8mb4_unicode_ci = o.order_id COLLATE utf8mb4_unicode_ci
      LEFT JOIN users u ON u.user_id COLLATE utf8mb4_unicode_ci = o.delivery_partner_user_id COLLATE utf8mb4_unicode_ci
@@ -360,7 +364,10 @@ const updateOrder = async (id, payload) => {
     'payment_status',
     'total_amount',
     'status',
-    'delivery_partner'
+    'delivery_partner',
+    'delivery_partner_user_id',
+    'delivery_partner_name',
+    'delivery_partner_phone'
   ];
 
   allowedFields.forEach((field) => {

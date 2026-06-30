@@ -257,8 +257,19 @@ export default function MyFoodOrders({ isEmbedded = false }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location?.state?.newOrderId]);
 
-  const openOrder = (order) => {
-    setSelectedOrder(order);
+  const openOrder = async (order) => {
+    if (order.delivery_partner_name || order.delivery_partner_phone) {
+      setSelectedOrder(order);
+      return;
+    }
+
+    try {
+      const res = await api.get(`/user-food-orders/${order.id}`);
+      setSelectedOrder(res.data || order);
+    } catch (err) {
+      console.error('Failed to load order details:', err);
+      setSelectedOrder(order);
+    }
   };
 
   const closeDetails = () => {

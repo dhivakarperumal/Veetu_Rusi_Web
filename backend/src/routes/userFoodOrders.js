@@ -28,6 +28,9 @@ const initUserFoodOrderTable = async () => {
         total_amount DECIMAL(10,2) DEFAULT 0,
         items JSON,
         delivery_partner VARCHAR(255),
+        delivery_partner_user_id VARCHAR(255),
+        delivery_partner_name VARCHAR(255),
+        delivery_partner_phone VARCHAR(50),
         chef_user_id VARCHAR(255),
         chef_id VARCHAR(255),
         chef_name VARCHAR(255),
@@ -51,6 +54,9 @@ const initUserFoodOrderTable = async () => {
         KEY idx_ordered_at (ordered_at)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
+    try { await pool.execute('ALTER TABLE user_food_order_table ADD COLUMN delivery_partner_user_id VARCHAR(255)'); } catch (e) {}
+    try { await pool.execute('ALTER TABLE user_food_order_table ADD COLUMN delivery_partner_name VARCHAR(255)'); } catch (e) {}
+    try { await pool.execute('ALTER TABLE user_food_order_table ADD COLUMN delivery_partner_phone VARCHAR(50)'); } catch (e) {}
   } catch (err) {
     console.error('Error creating user_food_order_table:', err.message || err);
   }
@@ -379,6 +385,13 @@ router.put('/:id', verifyToken, async (req, res) => {
              delivery_partner_phone = VALUES(delivery_partner_phone),
              updated_at = CURRENT_TIMESTAMP`,
           [realOrderId, partnerUserId, partnerName, partnerPhone]
+        );
+
+        await pool.execute(
+          `UPDATE user_food_order_table
+           SET delivery_partner_user_id = ?, delivery_partner_name = ?, delivery_partner_phone = ?, updated_at = CURRENT_TIMESTAMP
+           WHERE id = ?`,
+          [partnerUserId, partnerName, partnerPhone, id]
         );
       }
     }

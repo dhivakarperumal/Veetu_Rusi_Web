@@ -208,6 +208,17 @@ async function searchProducts(term) {
   return results.slice(0, 10);
 }
 
+function getSupportContacts() {
+  return [
+    {
+      title: 'Customer Support',
+      description: 'Order updates, payments, refunds and general support.',
+      email: 'support@veeturusi.com',
+      phone: '+91 98765 43210'
+    }
+  ];
+}
+
 async function getSupportInfo() {
   const [rows] = await pool.execute('SELECT * FROM notifications ORDER BY created_at DESC LIMIT 3');
   return rows;
@@ -359,8 +370,12 @@ exports.handleChatbotMessage = async (req, res) => {
     }
 
     if (intent === 'support') {
-      const supportItems = await getSupportInfo();
-      return res.json({ response: 'I can help you contact support. If your issue is urgent, please use the support contact in the app.', data: supportItems });
+      const supportItems = getSupportContacts();
+      return res.json({
+        response: 'I can help you contact support. Here are our customer support details:',
+        data: supportItems,
+        resultType: 'support'
+      });
     }
 
     if (intent === 'notifications') {
