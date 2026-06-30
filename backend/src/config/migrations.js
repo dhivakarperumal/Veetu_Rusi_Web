@@ -995,6 +995,98 @@ const createCouponUsageTable = async () => {
     }
 };
 
+const createReferralTables = async () => {
+    try {
+        await pool.execute(`
+            CREATE TABLE IF NOT EXISTS referral_settings (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                is_enabled TINYINT(1) DEFAULT 1,
+                referrer_reward_amount DECIMAL(10,2) DEFAULT 50.00,
+                referee_reward_amount DECIMAL(10,2) DEFAULT 50.00,
+                reward_type VARCHAR(50) DEFAULT 'wallet_credit',
+                min_order_value DECIMAL(10,2) DEFAULT 0.00,
+                first_order_only TINYINT(1) DEFAULT 1,
+                reward_expiry_days INT DEFAULT 30,
+                max_referrals_per_user INT DEFAULT 10,
+                daily_referral_limit INT DEFAULT 5,
+                monthly_referral_limit INT DEFAULT 20,
+                updated_by VARCHAR(255) DEFAULT 'system',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `);
+
+        await pool.execute(`
+            CREATE TABLE IF NOT EXISTS referrals (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                referral_code VARCHAR(50) NOT NULL,
+                referrer_user_id VARCHAR(255) NOT NULL,
+                referee_user_id VARCHAR(255) NOT NULL,
+                status VARCHAR(50) DEFAULT 'pending',
+                registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                first_order_id VARCHAR(100) DEFAULT NULL,
+                first_order_date DATETIME DEFAULT NULL,
+                first_order_value DECIMAL(10,2) DEFAULT 0.00,
+                reward_amount DECIMAL(10,2) DEFAULT 0.00,
+                reward_type VARCHAR(50) DEFAULT 'wallet_credit',
+                reward_status VARCHAR(50) DEFAULT 'pending',
+                reward_credited_at DATETIME DEFAULT NULL,
+                notes TEXT DEFAULT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                KEY idx_referrer_user_id (referrer_user_id),
+                KEY idx_referee_user_id (referee_user_id),
+                KEY idx_status (status)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `);
+
+        await pool.execute(`
+            CREATE TABLE IF NOT EXISTS wallet_transactions (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                user_id VARCHAR(255) NOT NULL,
+                amount DECIMAL(10,2) NOT NULL,
+                transaction_type VARCHAR(20) DEFAULT 'credit',
+                source VARCHAR(50) DEFAULT 'referral',
+                reference_id VARCHAR(255) DEFAULT NULL,
+                description TEXT DEFAULT NULL,
+                status VARCHAR(20) DEFAULT 'completed',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                KEY idx_user_id (user_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `);
+
+        await pool.execute(`
+            CREATE TABLE IF NOT EXISTS user_wallets (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                user_id VARCHAR(255) NOT NULL UNIQUE,
+                balance DECIMAL(10,2) DEFAULT 0.00,
+                total_earned DECIMAL(10,2) DEFAULT 0.00,
+                total_spent DECIMAL(10,2) DEFAULT 0.00,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                KEY idx_user_id (user_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `);
+
+        await ensureColumnExists('users', 'referral_code', 'VARCHAR(20) UNIQUE');
+        await ensureColumnExists('users', 'referred_by', 'VARCHAR(20)');
+
+        const [settingsCount] = await pool.execute('SELECT COUNT(*) as count FROM referral_settings');
+        if (settingsCount[0].count === 0) {
+            await pool.execute(`INSERT INTO referral_settings (
+                is_enabled, referrer_reward_amount, referee_reward_amount, reward_type,
+                min_order_value, first_order_only, reward_expiry_days, max_referrals_per_user,
+                daily_referral_limit, monthly_referral_limit, updated_by, updated_at
+            ) VALUES (1, 50.00, 50.00, 'wallet_credit', 0.00, 1, 30, 10, 5, 20, 'system', NOW())`);
+        }
+
+        console.log('✓ Referral and wallet tables created or already exists');
+    } catch (err) {
+        console.error('✗ Error creating referral tables:', err.message || err);
+    }
+};
+
     module.exports = {
         createProductsTable,
         createRecipeDetailsTable,
@@ -1017,6 +1109,7 @@ const createCouponUsageTable = async () => {
         createDpEarningsTables,
         createCouponsTable,
         createCouponUsageTable,
+        createReferralTables,
         // Ensure audit columns exist on all tables
         ensureAuditColumns: async () => {
             try {

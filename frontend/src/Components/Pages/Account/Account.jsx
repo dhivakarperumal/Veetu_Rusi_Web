@@ -1,7 +1,7 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import {
   FiUser, FiPackage, FiMapPin, FiLock, FiLogOut,
-  FiMail, FiPhone, FiShield, FiMapPin as FiLocation
+  FiMail, FiPhone, FiShield, FiMapPin as FiLocation, FiGift
 } from "react-icons/fi";
 import SetPassword from "./SetPassword";
 import PersonalInfo from "./PersonalInfo";
@@ -12,6 +12,7 @@ import { useSearchParams } from "react-router-dom";
 import { AuthContext } from "../../../PrivateRouter/AuthContext";
 import { useNavigate } from "react-router-dom";
 import MyFoodOrders from "../MyFoodOrders";
+import Referral from "../Referral";
 
 export default function Account() {
   const [searchParams] = useSearchParams();
@@ -21,10 +22,17 @@ export default function Account() {
   const navigate = useNavigate();
   const [logoutConfirm, setLogoutConfirm] = useState(false);
 
+  useEffect(() => {
+    if (tab && tab !== activeTab) {
+      setActiveTab(tab);
+    }
+  }, [tab, activeTab]);
+
   const menuItems = [
     { key: "personal", label: "Personal Info", icon: <FiUser size={18} /> },
     // { key: "orders",   label: "Product Orders", icon: <FiPackage size={18} /> },
     { key: "food_orders", label: "My Orders", icon: <FiPackage size={18} /> },
+    { key: "referrals", label: "Referrals", icon: <FiGift size={18} /> },
     { key: "address",  label: "Manage Address", icon: <FiMapPin size={18} /> },
     { key: "password", label: "Set Password",  icon: <FiLock size={18} /> },
   ];
@@ -98,6 +106,7 @@ export default function Account() {
               {activeTab === "personal" && <PersonalInfo />}
               {activeTab === "orders"   && <Orders />}
               {activeTab === "food_orders" && <MyFoodOrders isEmbedded={true} />}
+              {activeTab === "referrals" && <Referral />}
               {activeTab === "address"  && <Address />}
               {activeTab === "password" && <SetPassword />}
             </div>

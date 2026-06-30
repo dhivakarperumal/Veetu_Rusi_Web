@@ -428,6 +428,13 @@ router.patch('/status/:id', verifyToken, async (req, res) => {
       } catch (calcErr) {
         console.error('Failed to calculate DP earnings:', calcErr);
       }
+
+      try {
+        const referralResult = await require('../controllers/referralController').processFirstOrderReward(id);
+        console.log('[Referral] Order reward processing result:', referralResult);
+      } catch (referralErr) {
+        console.error('Failed to process referral reward:', referralErr);
+      }
     }
 
     res.json({ message: 'Order status updated successfully' });

@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
-import { Eye, EyeOff, User, Mail, Phone, Lock } from "lucide-react";
+import { Eye, EyeOff, User, Mail, Phone, Lock, Gift } from "lucide-react";
 
 function Register() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [form, setForm] = useState({
     username: "",
@@ -13,10 +14,19 @@ function Register() {
     phone: "",
     password: "",
     confirmPassword: "",
+    referral_code: "",
   });
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const referral = params.get('ref') || params.get('referral_code') || '';
+    if (referral) {
+      setForm((prev) => ({ ...prev, referral_code: referral.trim() }));
+    }
+  }, [location.search]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -35,6 +45,7 @@ function Register() {
         email: form.email,
         phone: form.phone,
         password: form.password,
+        referral_code: form.referral_code.trim(),
       });
       toast.success("Registration successful! Please login.");
       navigate("/login");
@@ -97,6 +108,7 @@ function Register() {
                 <input
                   name="username"
                   type="text"
+                  value={form.username}
                   placeholder="e.g. johndoe"
                   onChange={handleChange}
                   className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 text-[15px] placeholder-gray-400 focus:outline-none focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-50 transition-all shadow-sm"
@@ -115,6 +127,7 @@ function Register() {
                 <input
                   name="email"
                   type="email"
+                  value={form.email}
                   placeholder="e.g. awesome@user.com"
                   onChange={handleChange}
                   className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 text-[15px] placeholder-gray-400 focus:outline-none focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-50 transition-all shadow-sm"
@@ -133,10 +146,26 @@ function Register() {
                 <input
                   name="phone"
                   type="text"
+                  value={form.phone}
                   placeholder="e.g. +1 234 567 890"
                   onChange={handleChange}
                   className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 text-[15px] placeholder-gray-400 focus:outline-none focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-50 transition-all shadow-sm"
                   required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-sm font-bold text-gray-700 ml-1">Referral Code <span className="text-gray-400 font-medium">(optional)</span></label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-teal-500 text-gray-400">
+                  <Gift className="h-[18px] w-[18px]" />
+                </div>
+                <input
+                  name="referral_code"
+                  type="text"                    value={form.referral_code}                  placeholder="Enter invite code"
+                  onChange={handleChange}
+                  className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 text-[15px] placeholder-gray-400 focus:outline-none focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-50 transition-all shadow-sm"
                 />
               </div>
             </div>
@@ -152,6 +181,7 @@ function Register() {
                   <input
                     type={showPassword ? "text" : "password"}
                     name="password"
+                    value={form.password}
                     placeholder="••••••••"
                     onChange={handleChange}
                     className="w-full pl-9 pr-9 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 text-[15px] placeholder-gray-400 focus:outline-none focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-50 transition-all shadow-sm"
@@ -177,6 +207,7 @@ function Register() {
                   <input
                     type={showConfirmPassword ? "text" : "password"}
                     name="confirmPassword"
+                    value={form.confirmPassword}
                     placeholder="••••••••"
                     onChange={handleChange}
                     className="w-full pl-9 pr-9 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 text-[15px] placeholder-gray-400 focus:outline-none focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-50 transition-all shadow-sm"

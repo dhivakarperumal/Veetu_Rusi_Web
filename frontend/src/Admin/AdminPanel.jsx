@@ -35,10 +35,10 @@ const AdminLayout = () => {
       >
         <Header onMenuClick={() => setSidebarOpen(true)} />
 
-        <main className="relative flex-1 overflow-y-auto bg-gradient-to-b from-[#020806] via-[#06110f] to-[#040a08] px-4 py-4 sm:px-5 sm:py-5 lg:px-6 lg:py-6">
+        <main className="relative flex-1 overflow-y-auto bg-gradient-to-b from-[#020806] via-[#06110f] to-[#040a08] px-0 py-4">
           <div className="pointer-events-none absolute inset-x-0 top-0 h-44 bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,0.18),transparent_55%)]" />
           <div className="pointer-events-none absolute right-10 top-32 hidden h-72 w-72 rounded-full bg-emerald-400/5 blur-3xl xl:block" />
-          <div className="relative mx-auto w-full max-w-[1600px] overflow-hidden rounded-[2rem] border border-white/10 bg-[#08120f]/90 backdrop-blur-2xl shadow-[0_40px_120px_rgba(0,0,0,0.45)] p-6 sm:p-8 min-h-[calc(100vh-170px)]">
+          <div className="relative w-full overflow-hidden rounded-none border border-white/10 bg-[#08120f]/90 backdrop-blur-2xl shadow-[0_40px_120px_rgba(0,0,0,0.45)] p-6 sm:p-8 min-h-[calc(100vh-170px)]">
             <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#010704] via-transparent to-transparent opacity-70 pointer-events-none" />
             <div className="pointer-events-none absolute left-8 top-8 h-24 w-24 rounded-full bg-cyan-500/10 blur-3xl" />
             <div className="pointer-events-none absolute right-12 bottom-16 h-32 w-32 rounded-full bg-emerald-400/10 blur-3xl" />

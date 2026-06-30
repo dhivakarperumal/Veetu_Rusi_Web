@@ -52,6 +52,7 @@ const navItems = [
   },
   { path: "/admin/food-products", label: "Food Products", icon: ShoppingBag },
   { path: "/admin/coupons", label: "Coupons", icon: Ticket },
+  { path: "/admin/referrals", label: "Referral Management", icon: ShieldCheck },
   { path: "/admin/users", label: "User Management", icon: Users },
   { path: "/admin/earnings", label: "Wallet & Earnings", icon: CreditCard },
   { path: "/admin/reviews", label: "Customer Reviews", icon: MessageSquare },

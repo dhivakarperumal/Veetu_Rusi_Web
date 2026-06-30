@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 const { getIo } = require('../utils/socket');
+const referralController = require('./referralController');
 
 const parseJson = (value) => {
   if (!value) return [];

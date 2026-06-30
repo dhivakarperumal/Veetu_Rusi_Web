@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 const { generateRoleId } = require('../utils/idGenerator');
+const referralController = require('./referralController');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'default-secret';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
@@ -30,6 +31,8 @@ async function getUserSelectFields() {
 
     if (available.includes('district')) fields.push('district');
     if (available.includes('area')) fields.push('area');
+    if (available.includes('referral_code')) fields.push('referral_code');
+    if (available.includes('referred_by')) fields.push('referred_by');
 
     return fields.join(', ');
   } catch (err) {
@@ -92,7 +95,7 @@ async function validateFranchiseAdminLogin(user) {
 
 exports.register = async (req, res) => {
   try {
-    const { username, email, phone, password, district, area, pincode, latitude, longitude, location_name } = req.body;
+    const { username, email, phone, password, district, area, pincode, latitude, longitude, location_name, referral_code } = req.body;
 
     if (!username || !email || !password) {
       return res.status(400).json({ message: 'Username, email and password are required.' });
@@ -112,6 +115,31 @@ exports.register = async (req, res) => {
       [userId, username, email, phone || null, hashedPassword, role, district || null, area || null, pincode || null, latitude || null, longitude || null, location_name || null]
     );
 
+    const referralCode = await referralController.generateCodeForUser(result.insertId);
+
+    if (result?.insertId) {
+      await pool.execute('UPDATE users SET referral_code = ? WHERE id = ?', [referralCode, result.insertId]);
+    }
+
+    if (referral_code) {
+      try {
+        const [existingReferral] = await pool.execute('SELECT id FROM referrals WHERE referee_user_id = ? LIMIT 1', [userId]);
+        if (!existingReferral.length) {
+          const [referrerRows] = await pool.execute('SELECT id, user_id FROM users WHERE referral_code = ? LIMIT 1', [referral_code]);
+          if (referrerRows.length) {
+            const referrer = referrerRows[0];
+            await pool.execute(
+              'INSERT INTO referrals (referral_code, referrer_user_id, referee_user_id, status, registered_at, reward_amount, reward_type, reward_status, notes, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), ?, ?, ?, ?, NOW(), NOW())',
+              [referral_code, referrer.user_id || referrer.id, userId, 'pending', 50, 'wallet_credit', 'pending', 'Applied through signup',]
+            );
+            await pool.execute('UPDATE users SET referred_by = ? WHERE id = ?', [referral_code, result.insertId]);
+          }
+        }
+      } catch (referralErr) {
+        console.warn('Register referral application failed:', referralErr?.message || referralErr);
+      }
+    }
+
     const user = {
       id: result.insertId,
       user_id: userId,
@@ -124,7 +152,9 @@ exports.register = async (req, res) => {
       pincode: pincode || null,
       latitude: latitude || null,
       longitude: longitude || null,
-      location_name: location_name || null
+      location_name: location_name || null,
+      referral_code: referralCode,
+      referred_by: referral_code || null,
     };
 
     return res.status(201).json({ message: 'Registration successful', user });

@@ -46,6 +46,7 @@ let addDeliveryPartnerUniqueConstraints = async () => {};
 let createDpEarningsTables = async () => {};
 let createCouponsTable = async () => {};
 let createCouponUsageTable = async () => {};
+let createReferralTables = async () => {};
 try {
   const migrations = require('./src/config/migrations');
   createProductsTable = migrations.createProductsTable || createProductsTable;
@@ -70,6 +71,7 @@ try {
   createDpEarningsTables = migrations.createDpEarningsTables || createDpEarningsTables;
   createCouponsTable = migrations.createCouponsTable || createCouponsTable;
   createCouponUsageTable = migrations.createCouponUsageTable || createCouponUsageTable;
+  createReferralTables = migrations.createReferralTables || createReferralTables;
 } catch (err) {
   console.error('Warning: could not load migrations module:', err.message || err);
 }
@@ -79,6 +81,16 @@ const deliveryRouter = require('./src/routes/delivery');
 
 const app = express();
 const port = process.env.PORT || 5000;
+
+app.disable('etag');
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api')) {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+  }
+  next();
+});
 
 const corsOptions = {
   origin: process.env.FRONTEND_ORIGIN || '*',
@@ -144,6 +156,8 @@ app.use('/api/nearby-chefs', nearbyChefsRouter);
 
 const couponsRouter = require('./src/routes/coupons');
 app.use('/api/coupons', couponsRouter);
+const referralsRouter = require('./src/routes/referrals');
+app.use('/api/referrals', referralsRouter);
 const chatbotRouter = require('./src/routes/chatbot');
 app.use('/api/chatbot', chatbotRouter);
 
@@ -177,6 +191,7 @@ const startServer = async () => {
     await createDpEarningsTables();
     await createCouponsTable();
     await createCouponUsageTable();
+    await createReferralTables();
   } catch (err) {
     console.error('Migration error:', err.message || err);
   }

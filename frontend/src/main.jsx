@@ -67,6 +67,8 @@ const FoodProducts = React.lazy(() => import("./Admin/Pages/FoodProducts.jsx"));
 const FoodProductDetails = React.lazy(() => import("./Admin/Pages/FoodProductDetails.jsx"));
 const DeliveryPartnerManagement = React.lazy(() => import("./Admin/Pages/DeliveryPartnerManagement.jsx"));
 const DeliveryPartnerDetails = React.lazy(() => import("./Admin/Pages/DeliveryPartnerDetails.jsx"));
+const ReferralManagement = React.lazy(() => import("./Admin/Pages/ReferralManagement.jsx"));
+const Referral = React.lazy(() => import("./Components/Pages/Referral.jsx"));
 
 // Lazy Load SuperAdmin Components
 const SuperAdminPanel = React.lazy(() => import("./SuperAdmin/SuperAdminPanel.jsx"));
@@ -166,6 +168,7 @@ const router = createBrowserRouter([
       { path: "/food-orders", element: <MyFoodOrders /> },
       { path: "/termsandconditions", element: <TermsAndConditions /> },
       { path: "/food/:id", element: <FoodDetails /> },
+      { path: "/referrals", element: <Referral /> },
     ],
   },
   { path: "/login", element: <Login /> },
@@ -337,6 +340,7 @@ const router = createBrowserRouter([
       { path: "dealers/add", element: <AddDealer /> },
       { path: "invoices/add", element: <AddInvoice /> },
       { path: "reviews", element: <Reviews /> },
+      { path: "referrals", element: <ReferralManagement /> },
       { path: "reports", element: <Reports /> },
       { path: "videos", element: <VideoManagement /> },
       { path: "banners", element: <BannerManagement /> },
