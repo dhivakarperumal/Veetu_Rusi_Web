@@ -59,12 +59,13 @@ function FloatingChatbot() {
 
     try {
       const res = await api.post('/chatbot/message', { message: text });
-      const assistantMessage = {
+        const assistantMessage = {
         id: Date.now() + 1,
         role: 'assistant',
         text: res.data?.response || 'I could not process that request right now.',
         time: new Date(),
-        data: Array.isArray(res.data?.data) ? res.data.data : []
+        data: Array.isArray(res.data?.data) ? res.data.data : [],
+        resultType: res.data?.resultType || null
       };
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
@@ -106,7 +107,7 @@ function FloatingChatbot() {
               <div key={message.id} className={`chatbot-message ${message.role}`}>
                 <div className="chatbot-bubble">
                   <div>{message.text}</div>
-                  {message.data?.length > 0 && (
+                  {message.resultType === 'search' && message.data?.length > 0 && (
                     <div className="chatbot-results">
                       {message.data.slice(0, 4).map((item) => {
                         const itemId = item.id || item.product_id;

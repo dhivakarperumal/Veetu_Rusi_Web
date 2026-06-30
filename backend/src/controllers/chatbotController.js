@@ -274,9 +274,9 @@ exports.handleChatbotMessage = async (req, res) => {
       const term = extractSearchTerm(message);
       const items = await searchProducts(term);
       if (!items.length) {
-        return res.json({ response: `I could not find anything matching “${term}” right now. Try another dish name such as biryani, pizza, or burger.`, data: [] });
+        return res.json({ response: `I could not find anything matching “${term}” right now. Try another dish name such as biryani, pizza, or burger.`, data: [], resultType: 'search' });
       }
-      return res.json({ response: `I found ${items.length} matching item(s) for “${term}”.`, data: items.slice(0, 5) });
+      return res.json({ response: `I found ${items.length} matching item(s) for “${term}”.`, data: items.slice(0, 5), resultType: 'search' });
     }
 
     if (intent === 'payment_status') {
