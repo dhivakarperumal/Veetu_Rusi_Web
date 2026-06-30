@@ -467,7 +467,7 @@ const ChefFoodAll = () => {
           </div>
         </div>
       )}
-      
+
       {quickViewProduct && (
         <QuickViewModal product={quickViewProduct} onClose={() => setQuickViewProduct(null)} />
       )}
