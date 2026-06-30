@@ -154,6 +154,7 @@ async function getNearbyChefs() {
     const [rows] = await pool.execute('SELECT * FROM home_chefs ORDER BY created_at DESC LIMIT 10');
     const normalized = rows.map((row) => ({
       id: row.id,
+      user_id: row.user_id || row.created_by || row.created_by_user_id || null,
       name: row.name || row.full_name || row.chef_name || 'Home Chef',
       city: row.city || row.district || row.area_name || row.location || 'Location not set',
       district: row.district || row.city || '',

@@ -66,7 +66,12 @@ export default function FoodCartPage() {
                             <td className="px-6 py-4 align-top">
                               <div className="flex items-start gap-4">
                                 <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gray-100">
-                                  <img src={image} alt={item.name} className="w-full h-full object-cover" />
+                                  <img
+                                    src={image}
+                                    alt={item.name}
+                                    onError={(e) => { e.target.onerror = null; e.target.src = 'https://via.placeholder.com/150'; }}
+                                    className="w-full h-full object-cover"
+                                  />
                                 </div>
                                 <div>
                                   <p className="font-semibold text-gray-800">{item.name}</p>
@@ -79,7 +84,10 @@ export default function FoodCartPage() {
                               <div className="flex items-center gap-2">
                                 <button
                                   onClick={() => updateFoodCartQuantity(item.id, item.quantity - 1)}
-                                  className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200"
+                                  disabled={item.quantity <= 1}
+                                  title={item.quantity <= 1 ? "Minimum quantity is 1" : "Decrease quantity"}
+                                  aria-label="Decrease quantity"
+                                  className={`w-9 h-9 rounded-lg flex items-center justify-center text-gray-600 transition ${item.quantity <= 1 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-gray-100 hover:bg-gray-200'}`}
                                 >
                                   <FiMinus />
                                 </button>
@@ -96,7 +104,9 @@ export default function FoodCartPage() {
                             <td className="px-6 py-4 align-top">
                               <button
                                 onClick={() => removeFromFoodCart(item.id)}
-                                className="inline-flex items-center justify-center rounded-lg bg-primary-light px-3 py-2 text-white hover:bg-primary-dark transition"
+                                title="Remove item"
+                                aria-label={`Remove ${item.name} from cart`}
+                                className="inline-flex items-center justify-center rounded-lg bg-red-500 px-3 py-2 text-white hover:bg-red-600 transition"
                               >
                                 <FiTrash2 />
                               </button>
