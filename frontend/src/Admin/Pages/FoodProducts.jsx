@@ -47,6 +47,36 @@ const FoodProducts = () => {
     navigate(`${location.pathname}?${params.toString()}`);
   };
 
+  const normalizeStatusValue = (statusValue) => {
+    if (!statusValue) return 'All';
+    const normalized = String(statusValue).trim().toLowerCase();
+    if (normalized === 'all') return 'All';
+    if (normalized === 'active') return 'Active';
+    if (normalized === 'approved') return 'Approved';
+    if (normalized === 'not approved') return 'Not Approved';
+    if (normalized === 'inactive') return 'Inactive';
+    if (normalized === 'pending') return 'Pending';
+    if (normalized === 'suspended') return 'Suspended';
+    if (normalized === 'rejected') return 'Rejected';
+    return statusValue;
+  };
+
+  const handleStatusChange = (statusValue) => {
+    const params = new URLSearchParams(location.search);
+    if (statusValue && statusValue !== 'All') {
+      params.set('status', statusValue);
+    } else {
+      params.delete('status');
+    }
+    navigate(`${location.pathname}?${params.toString()}`);
+  };
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const statusParam = params.get('status');
+    setStatusFilter(normalizeStatusValue(statusParam));
+  }, [location.search]);
+
   const switchTab = (tab) => {
     const params = new URLSearchParams(location.search);
     if (tab === 'foodProducts') {
@@ -302,7 +332,7 @@ const FoodProducts = () => {
           )}
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => handleStatusChange(e.target.value)}
             className="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-xs uppercase tracking-widest text-slate-600 focus:bg-white focus:border-emerald-600/40 transition-all cursor-pointer"
           >
             {statusOptions.map((option) => (
