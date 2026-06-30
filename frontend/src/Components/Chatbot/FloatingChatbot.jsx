@@ -127,6 +127,22 @@ function FloatingChatbot() {
                       })}
                     </div>
                   )}
+                  {message.resultType === 'cart' && message.data?.length > 0 && (
+                    <div className="chatbot-results">
+                      {message.data.slice(0, 4).map((item) => {
+                        return (
+                          <div key={`${message.id}-${item.id || item.product_id || item.product_id || Math.random()}`} className="chatbot-cart-card">
+                            <div className="chatbot-result-title">{item.name || item.product_name || item.food_name || 'Cart item'}</div>
+                            <div className="chatbot-cart-meta">
+                              <span>Qty: {item.quantity || 1}</span>
+                              <span>Price: ₹{Number(item.price || item.mrp || 0).toFixed(2)}</span>
+                            </div>
+                            <div className="chatbot-cart-total">Total: ₹{Number(item.total_price != null ? item.total_price : (item.price || item.mrp || 0) * (item.quantity || 1)).toFixed(2)}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                   <div className="chatbot-time">
                     <Clock3 size={12} /> {formatTime(message.time)}
                   </div>

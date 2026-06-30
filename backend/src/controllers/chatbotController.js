@@ -125,8 +125,23 @@ async function getUserOrders(userId) {
 
 async function getUserCart(userId) {
   if (!userId) return [];
-  const [rows] = await pool.execute('SELECT * FROM `Chef_cart` WHERE user_id = ? ORDER BY updated_at DESC', [userId]);
-  return rows;
+  // Prefer the food cart used by regular users, fallback to Chef_cart if present
+  try {
+    const [userFoodRows] = await pool.execute('SELECT * FROM `user_food_cart` WHERE user_id = ? ORDER BY updated_at DESC', [userId]);
+    if (userFoodRows && userFoodRows.length) {
+      return userFoodRows.map((r) => ({ ...r, source: 'user_food_cart' }));
+    }
+  } catch (err) {
+    console.warn('Chatbot user_food_cart lookup failed:', err.message);
+  }
+
+  try {
+    const [rows] = await pool.execute('SELECT * FROM `Chef_cart` WHERE user_id = ? ORDER BY updated_at DESC', [userId]);
+    return rows.map((r) => ({ ...r, source: 'Chef_cart' }));
+  } catch (error) {
+    console.warn('Chatbot Chef_cart lookup failed:', error.message);
+    return [];
+  }
 }
 
 async function getActiveCoupons() {
@@ -176,7 +191,6 @@ async function searchProducts(term) {
     { tableName: 'chef_products', columns: ['name', 'description', 'category', 'product_type', 'subcategory', 'ingredients', 'dietary_tag', 'instructions', 'variants'] },
     { tableName: 'franchise_products', columns: ['name', 'description', 'category', 'product_type', 'subcategory', 'ingredients', 'dietary_tag', 'instructions', 'variants'] },
   ];
-
   for (const { tableName, columns } of tablesToSearch) {
     try {
       const [rows] = await pool.execute(`SELECT * FROM \`${tableName}\` LIMIT 50`);
@@ -247,11 +261,35 @@ exports.handleChatbotMessage = async (req, res) => {
     if (intent === 'view_cart') {
       const cart = await getUserCart(userId);
       if (!cart.length) {
-        return res.json({ response: 'Your cart is empty right now. I can help you add something tasty from the menu.', data: [] });
+        return res.json({ response: 'Your cart is empty right now. I can help you add something tasty from the menu.', data: [], resultType: 'cart' });
       }
 
-      const totalItems = cart.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
-      return res.json({ response: `You have ${totalItems} item(s) in your cart.`, data: cart.slice(0, 5) });
+      // Normalize cart items and compute distinct product count
+      const normalized = cart.map((item) => {
+        const price = Number(item.price ?? item.mrp ?? item.offer_price ?? 0);
+        const quantity = Number(item.quantity ?? 1);
+        const total_price = Number(item.total_price ?? price * quantity);
+        return {
+          id: item.id,
+          product_id: item.product_id || item.productId || item.product_id,
+          name: item.name || item.product_name || item.food_name || item.title || 'Item',
+          quantity,
+          price,
+          total_price,
+          source: item.source || null
+        };
+      });
+
+      const distinctProductIds = new Set(normalized.map((i) => String(i.product_id || i.id || '')).filter(Boolean));
+      const totalDistinct = distinctProductIds.size;
+      const totalQuantity = normalized.reduce((s, it) => s + (Number(it.quantity) || 0), 0);
+
+      return res.json({
+        response: `You have ${totalDistinct} item(s) in your cart (${totalQuantity} unit(s)).`,
+        data: normalized.slice(0, 10),
+        meta: { totalDistinct, totalQuantity },
+        resultType: 'cart'
+      });
     }
 
     if (intent === 'coupons') {
