@@ -384,3 +384,58 @@ exports.handleChatbotMessage = async (req, res) => {
     return res.status(500).json({ message: 'The chatbot could not answer that request.', error: error.message });
   }
 };
+
+// Add all items from the user's cart to their wishlist (idempotent)
+exports.addAllCartToWishlist = async (req, res) => {
+  try {
+    const userId = req.user?.user_id || req.user?.id || req.user?.userId || req.body?.user_id;
+    if (!userId) return res.status(401).json({ message: 'Please sign in to use this action.' });
+
+    const cart = await getUserCart(userId);
+    if (!cart || !cart.length) {
+      return res.json({ message: 'Your cart is empty. Nothing to add to favorites.', inserted: 0, skipped: 0, ids: [] });
+    }
+
+    const conn = await pool.getConnection();
+    try {
+      await conn.beginTransaction();
+      const insertedIds = [];
+      let skipped = 0;
+
+      for (const item of cart) {
+        const product_id = item.product_id || item.productId || item.productId || item.id;
+        if (!product_id) continue;
+
+        const [existing] = await conn.execute('SELECT id FROM wishlist WHERE user_id = ? AND product_id = ?', [userId, product_id]);
+        if (existing.length > 0) {
+          skipped += 1;
+          continue;
+        }
+
+        const name = item.name || item.product_name || item.food_name || item.title || null;
+        const price = Number(item.price ?? item.mrp ?? item.offer_price ?? 0);
+        const total_price = Number(item.total_price ?? price * (item.quantity ?? 1));
+        const image = item.image || item.images || null;
+
+        const [result] = await conn.execute(
+          'INSERT INTO wishlist (user_id, product_id, variant_color, variant_size, image, email, price, total_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+          [userId, product_id, '', '', image, null, price, total_price]
+        );
+
+        insertedIds.push(result.insertId);
+      }
+
+      await conn.commit();
+      return res.json({ message: `Added ${insertedIds.length} item(s) to favorites.`, inserted: insertedIds.length, skipped, ids: insertedIds });
+    } catch (err) {
+      await conn.rollback();
+      console.error('Error adding cart items to wishlist:', err);
+      return res.status(500).json({ message: 'Failed to add items to favorites', error: err.message });
+    } finally {
+      conn.release();
+    }
+  } catch (error) {
+    console.error('addAllCartToWishlist error:', error);
+    return res.status(500).json({ message: 'Internal error', error: error.message });
+  }
+};

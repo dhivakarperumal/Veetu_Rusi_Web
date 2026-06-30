@@ -108,6 +108,60 @@ router.post('/', async (req, res) => {
   }
 });
 
+// Bulk add items to wishlist. Expects { user_id, items: [{ product_id, variant_color, variant_size, image, email, price, total_price }] }
+router.post('/bulk-add', async (req, res) => {
+  const { user_id, items } = req.body;
+  if (!user_id || !Array.isArray(items)) {
+    return res.status(400).json({ message: 'user_id and items array are required' });
+  }
+
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    const insertedIds = [];
+    let skipped = 0;
+
+    for (const it of items) {
+      const product_id = it.product_id || it.productId || it.id;
+      if (!product_id) continue;
+
+      // Check existing
+      const [existing] = await conn.execute('SELECT id FROM wishlist WHERE user_id = ? AND product_id = ?', [user_id, product_id]);
+      if (existing.length > 0) {
+        skipped += 1;
+        continue;
+      }
+
+      // sanitize image
+      let sanitizedImage = null;
+      if (it.image && typeof it.image === 'string') {
+        if ((it.image.startsWith('data:') && it.image.length > 50) || it.image.startsWith('http')) {
+          sanitizedImage = it.image;
+        }
+      }
+
+      const savedVariantSize = it.variant_size !== undefined ? it.variant_size : '';
+      const savedVariantColor = it.variant_color !== undefined ? it.variant_color : '';
+
+      const [result] = await conn.execute(
+        'INSERT INTO wishlist (user_id, product_id, variant_color, variant_size, image, email, price, total_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [user_id, product_id, savedVariantColor, savedVariantSize, sanitizedImage, it.email || null, it.price || 0, it.total_price || 0]
+      );
+
+      insertedIds.push(result.insertId);
+    }
+
+    await conn.commit();
+    res.json({ message: 'Bulk add complete', inserted: insertedIds.length, skipped, ids: insertedIds });
+  } catch (err) {
+    await conn.rollback();
+    console.error('Error in bulk-add wishlist:', err);
+    res.status(500).json({ message: 'Failed to bulk add to wishlist', error: err.message });
+  } finally {
+    conn.release();
+  }
+});
+
 // Remove from wishlist
 router.delete('/:userId/:productId', async (req, res) => {
   try {
