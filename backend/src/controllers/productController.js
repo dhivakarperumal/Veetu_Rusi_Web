@@ -318,13 +318,15 @@ exports.createProduct = async (req, res) => {
             }))
             : [];
 
-        const computedMrp = mrp !== undefined && mrp !== null
+        const computedMrp = mrp !== undefined && mrp !== null && String(mrp).trim() !== ''
             ? Number(mrp)
             : (normalizedVariants.length > 0 ? Math.max(...normalizedVariants.map((v) => Number(v.price) || 0)) : null);
-        const computedOfferPrice = offer_price !== undefined && offer_price !== null
-            ? Number(offer_price)
+        const parsedOffer = offer !== undefined && offer !== null && String(offer).trim() !== '' ? Number(offer) : 0;
+        const parsedOfferPrice = offer_price !== undefined && offer_price !== null && String(offer_price).trim() !== '' ? Number(offer_price) : null;
+        const computedOfferPrice = parsedOfferPrice !== null && parsedOfferPrice > 0
+            ? parsedOfferPrice
             : (normalizedVariants.length > 0 ? Math.min(...normalizedVariants.map((v) => Number(v.final_price) || Number(v.price) || 0)) : null);
-        const finalOffer = offer !== undefined && offer !== null ? Number(offer) : 0;
+        const finalOffer = parsedOffer;
 
         if (!name || !category || !computedMrp || computedMrp <= 0) {
             return res.status(400).json({
@@ -340,7 +342,7 @@ exports.createProduct = async (req, res) => {
 
         const params = [
             name, description || null, category, product_type || 'Cooked Food', subcategory || null,
-            computedMrp, finalOffer, computedOfferPrice || computedMrp, finalProductCode, total_stock || 0,
+            computedMrp, finalOffer, (computedOfferPrice !== null && computedOfferPrice > 0 ? computedOfferPrice : (computedMrp > 0 && finalOffer > 0 ? Number((computedMrp - (computedMrp * finalOffer / 100)).toFixed(2)) : computedMrp)), finalProductCode, total_stock || 0,
             rating || 5, status || 'Active', material || null, nutrition_info || null,
             storage_instructions || 'Keep Refrigerated', presentation_style || null,
             portion_format || null, service_type || null, packaging_notes || null,

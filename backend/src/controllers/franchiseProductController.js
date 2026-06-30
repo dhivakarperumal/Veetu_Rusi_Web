@@ -174,7 +174,16 @@ exports.createProduct = async (req, res) => {
             images
         } = req.body;
 
-        if (!name || !category || !mrp) {
+        const parsedMrp = mrp !== undefined && mrp !== null && String(mrp).trim() !== '' ? Number(mrp) : null;
+        const parsedOffer = offer !== undefined && offer !== null && String(offer).trim() !== '' ? Number(offer) : 0;
+        const parsedOfferPrice = offer_price !== undefined && offer_price !== null && String(offer_price).trim() !== '' ? Number(offer_price) : null;
+        const computedOfferPrice = parsedOfferPrice !== null && parsedOfferPrice > 0
+            ? parsedOfferPrice
+            : (parsedMrp !== null && parsedMrp > 0 && parsedOffer > 0
+                ? Number((parsedMrp - (parsedMrp * parsedOffer / 100)).toFixed(2))
+                : parsedMrp);
+
+        if (!name || !category || !parsedMrp) {
             return res.status(400).json({ message: 'Required fields: name, category, mrp' });
         }
 
@@ -183,7 +192,7 @@ exports.createProduct = async (req, res) => {
 
         const params = [
             name, description || null, category, product_type || 'Cooked Food', subcategory || null,
-            mrp, offer || 0, offer_price || mrp, finalProductCode, total_stock || 0,
+            parsedMrp, parsedOffer, computedOfferPrice || parsedMrp, finalProductCode, total_stock || 0,
             rating || 5, status || 'Inactive', material || null, nutrition_info || null,
             storage_instructions || 'Keep Refrigerated', presentation_style || null,
             portion_format || null, service_type || null, packaging_notes || null,
@@ -237,6 +246,15 @@ exports.updateProduct = async (req, res) => {
             return res.status(404).json({ message: 'Franchise product not found' });
         }
 
+        const parsedMrp = mrp !== undefined && mrp !== null && String(mrp).trim() !== '' ? Number(mrp) : null;
+        const parsedOffer = offer !== undefined && offer !== null && String(offer).trim() !== '' ? Number(offer) : 0;
+        const parsedOfferPrice = offer_price !== undefined && offer_price !== null && String(offer_price).trim() !== '' ? Number(offer_price) : null;
+        const computedOfferPrice = parsedOfferPrice !== null && parsedOfferPrice > 0
+            ? parsedOfferPrice
+            : (parsedMrp !== null && parsedMrp > 0 && parsedOffer > 0
+                ? Number((parsedMrp - (parsedMrp * parsedOffer / 100)).toFixed(2))
+                : parsedMrp);
+
         const updatedBy = req.user?.user_id || req.user?.id || req.body?.updated_by || req.user?.email || 'Admin';
 
         const updateQuery = `UPDATE franchise_products SET
@@ -251,7 +269,7 @@ exports.updateProduct = async (req, res) => {
                 updated_at = NOW()
             WHERE id = ?`;
         const params = [
-            name, description, category, product_type, subcategory, mrp, offer, offer_price,
+            name, description, category, product_type, subcategory, parsedMrp, parsedOffer, computedOfferPrice || parsedMrp,
             product_code, total_stock, rating, status, material, nutrition_info, storage_instructions,
             presentation_style, portion_format, service_type, packaging_notes, dietary_tag, heat_profile,
             serving_size, prep_time, ingredients, spice_level, shelf_life_days, net_weight, package_count,
