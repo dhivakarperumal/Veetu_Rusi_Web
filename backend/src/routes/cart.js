@@ -23,8 +23,10 @@ const initCartTable = async () => {
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
+    await pool.execute("ALTER TABLE `Chef_cart` ADD COLUMN IF NOT EXISTS name VARCHAR(255)");
+    await pool.execute("ALTER TABLE `Chef_cart` ADD COLUMN IF NOT EXISTS mrp DECIMAL(10,2)");
   } catch (err) {
-    console.error("Error creating Chef_cart table:", err);
+    console.error("Error creating Chef_cart table or adding missing columns:", err);
   }
 };
 initCartTable();
