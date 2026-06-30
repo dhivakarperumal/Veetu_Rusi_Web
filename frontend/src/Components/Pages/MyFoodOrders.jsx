@@ -416,7 +416,14 @@ export default function MyFoodOrders({ isEmbedded = false }) {
                         </div>
                         <div className="rounded-3xl bg-slate-50 p-4">
                           <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Total amount</p>
-                          <p className="mt-2 text-lg font-black text-slate-900">₹{parseFloat(order.total_amount || 0).toFixed(2)}</p>
+                          <p className="mt-2 text-lg font-black text-slate-900">
+                            ₹{parseFloat(order.final_total != null ? order.final_total : order.total_amount || 0).toFixed(2)}
+                            {parseFloat(order.discount_amount || 0) > 0 && (
+                              <span className="text-sm font-normal text-slate-500 line-through ml-2">
+                                ₹{parseFloat(order.total_amount || 0).toFixed(2)}
+                              </span>
+                            )}
+                          </p>
                         </div>
                       </div>
 
@@ -610,9 +617,15 @@ export default function MyFoodOrders({ isEmbedded = false }) {
                       <span>Payment Method</span>
                       <span>{selectedOrder.payment_method || 'Cash on Delivery'}</span>
                     </div>
+                    {parseFloat(selectedOrder.discount_amount || 0) > 0 && (
+                      <div className="flex justify-between text-emerald-600">
+                        <span>Discount</span>
+                        <span>-₹{parseFloat(selectedOrder.discount_amount).toFixed(2)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-base font-black text-slate-900 pt-4 border-t border-slate-200">
                       <span>Total</span>
-                      <span>₹{parseFloat(selectedOrder.total_amount || 0).toFixed(2)}</span>
+                      <span>₹{parseFloat(selectedOrder.final_total != null ? selectedOrder.final_total : selectedOrder.total_amount || 0).toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
