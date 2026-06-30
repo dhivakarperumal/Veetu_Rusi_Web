@@ -60,10 +60,10 @@ export default function ChefCart() {
 
               image = resolveImageUrl(image);
               const price =
-                parseFloat(item.offer_price ?? item.price ?? 0);
+                parseFloat(item.price ?? item.offer_price ?? 0);
 
               const mrp =
-                parseFloat(item.mrp ?? item.price ?? 0);
+                parseFloat(item.mrp ?? item.price ?? item.offer_price ?? 0);
               return (
                 <div key={index} className="bg-[#0f1216] border border-slate-800 rounded-2xl shadow-md p-5 flex flex-col sm:flex-row gap-6 items-center">
                   {/* IMAGE */}

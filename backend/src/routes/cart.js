@@ -10,11 +10,13 @@ const initCartTable = async () => {
         id INT AUTO_INCREMENT PRIMARY KEY,
         user_id VARCHAR(255) NOT NULL,
         product_id INT NOT NULL,
+        name VARCHAR(255),
         variant_color VARCHAR(255),
         variant_size VARCHAR(255),
         image LONGTEXT,
         email VARCHAR(255),
         price DECIMAL(10,2),
+        mrp DECIMAL(10,2),
         total_price DECIMAL(10,2),
         quantity INT DEFAULT 1,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -41,7 +43,7 @@ router.get('/:user_id', async (req, res) => {
 // Add to cart
 router.post('/', async (req, res) => {
   try {
-    const { user_id, product_id, variant_color, variant_size, image, email, price, total_price, quantity } = req.body;
+    const { user_id, product_id, name, variant_color, variant_size, image, email, price, mrp, total_price, quantity } = req.body;
     const normalizedVariantSize = variant_size || '';
     
     // Check if the exact product variant already exists in cart for this user
@@ -64,8 +66,8 @@ router.post('/', async (req, res) => {
     } else {
       // Insert new
       const [result] = await pool.execute(
-        'INSERT INTO \`Chef_cart\` (user_id, product_id, variant_color, variant_size, image, email, price, total_price, quantity) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [user_id, product_id, variant_color || '', variant_size || '', image || '', email || '', price || 0, total_price || 0, quantity || 1]
+        'INSERT INTO `Chef_cart` (user_id, product_id, name, variant_color, variant_size, image, email, price, mrp, total_price, quantity) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [user_id, product_id, name || '', variant_color || '', variant_size || '', image || '', email || '', price || 0, mrp || 0, total_price || 0, quantity || 1]
       );
       return res.status(201).json({ message: 'Added to cart', cartItemId: result.insertId });
     }
