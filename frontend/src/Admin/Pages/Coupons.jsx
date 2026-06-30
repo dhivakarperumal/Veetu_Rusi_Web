@@ -290,6 +290,7 @@ const Coupons = () => {
                 <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Discount</th>
                 <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Validity</th>
                 <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Usage</th>
+                <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em]">Scope</th>
                 <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em] text-center">Status</th>
                 <th className="px-6 py-5 text-[10px] font-black text-slate-100 uppercase tracking-[0.2em] text-right">Actions</th>
               </tr>
@@ -325,6 +326,11 @@ const Coupons = () => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-xs font-bold text-slate-700">{coupon.usage_count} {coupon.usage_limit_global ? `/ ${coupon.usage_limit_global}` : 'used'}</div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-xs font-bold text-slate-700 capitalize">
+                        {coupon.coupon_scope ? coupon.coupon_scope.replace(/_/g, ' ') : 'All'}
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg border ${coupon.status === 'active' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-rose-50 text-rose-600 border-rose-200'}`}>
@@ -374,10 +380,11 @@ const Coupons = () => {
                     <div className="font-black text-blue-600">
                       {coupon.discount_type === 'percentage' ? `${coupon.discount_value}%` : `₹${coupon.discount_value}`}
                     </div>
+                    {coupon.max_discount_amount && <div className="text-[10px] font-semibold text-slate-500 mt-0.5">Up to ₹{coupon.max_discount_amount}</div>}
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Max Discount</p>
-                    <div className="font-bold text-slate-700 text-sm">{coupon.max_discount_amount ? `₹${coupon.max_discount_amount}` : 'N/A'}</div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Scope</p>
+                    <div className="font-bold text-slate-700 text-sm capitalize">{coupon.coupon_scope ? coupon.coupon_scope.replace(/_/g, ' ') : 'All'}</div>
                   </div>
                   <div>
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Usage</p>
