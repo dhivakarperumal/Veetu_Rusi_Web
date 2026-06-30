@@ -64,7 +64,7 @@ const resolveProductMetadata = async (req, body) => {
 // Otherwise fall back to franchise/admin `franchise_products` if desired by callers.
 exports.getAllProducts = async (req, res) => {
     try {
-        const { category, status, franchise_id, franchise_user_id, chef_user_id, chef_id, source } = req.query;
+        const { category, status, franchise_id, franchise_user_id, chef_user_id, chef_id, source, search } = req.query;
         const params = [];
         let query = '';
         let table = '';
@@ -129,24 +129,35 @@ exports.getAllProducts = async (req, res) => {
                 params.push(status);
             }
         }
+        if (search) {
+            const searchTerm = `%${search}%`;
+            query +=
+                ' AND (t.name LIKE ? OR t.product_code LIKE ? OR t.category LIKE ? OR t.description LIKE ? OR u.full_name LIKE ?)';
+            params.push(searchTerm, searchTerm, searchTerm, searchTerm, searchTerm);
+        }
 
         query += ' ORDER BY t.created_at DESC';
 
         const [products] = await pool.execute(query, params);
+
         const normalizedProducts = products.map((product) => ({
             ...product,
             variants: parseJsonField(product.variants) || [],
-            images: parseJsonField(product.images) || []
+            images: parseJsonField(product.images) || [],
         }));
 
         res.json(normalizedProducts);
+
     } catch (error) {
         console.error('Error fetching products:', error);
-        res.status(500).json({ message: 'Failed to fetch products', error: error.message });
+        res.status(500).json({
+            message: 'Failed to fetch products',
+            error: error.message,
+        });
     }
 };
 
-// Get product by ID - from chef_products table
+// Get product by ID
 exports.getProductById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -184,7 +195,7 @@ exports.getProductsByUserId = async (req, res) => {
     try {
         const { user_id } = req.params;
         const { category, status } = req.query;
-        
+
         if (!user_id) {
             return res.status(400).json({ message: 'user_id parameter is required' });
         }

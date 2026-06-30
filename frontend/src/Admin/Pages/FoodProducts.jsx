@@ -99,6 +99,9 @@ const FoodProducts = () => {
       if (statusParam && statusParam.toLowerCase() !== 'all') {
         query.status = statusParam;
       }
+      if (search) {
+        query.search = search;
+      }
 
       const endpoint = activeTab === 'food' ? '/chef-foods' : '/products';
       if (activeTab === 'foodProducts') {
@@ -124,7 +127,7 @@ const FoodProducts = () => {
     } finally {
       setLoading(false);
     }
-  }, [location.search, activeTab, user]);
+  }, [location.search, activeTab, user, search]);
 
   useEffect(() => {
     const loadFoods = async () => {
