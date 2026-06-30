@@ -1,11 +1,12 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useContext } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
+import { StoreContext } from "../../PrivateRouter/StoreContext";
 import api from "../../api";
 import PageHeader from "../CommenComponents/PageHeader";
 import PageContainer from "../CommenComponents/PageContainer";
 import { toast } from "react-hot-toast";
-import { Package, Clock, Calendar, MapPin, User, FileText, XCircle } from "lucide-react";
+import { Package, Clock, Calendar, MapPin, User, FileText, XCircle, RefreshCw } from "lucide-react";
 import OrderCancellationModal from "../CommenComponents/OrderCancellationModal";
 
 const formatDateTime = (value) => {
@@ -155,6 +156,7 @@ function CustomerCancelBar({ order, onCancel }) {
 
 export default function MyFoodOrders({ isEmbedded = false }) {
   const { user } = useAuth();
+  const { fetchUserFoodCart } = useContext(StoreContext);
   const navigate = useNavigate();
   const location = useLocation();
   const [orders, setOrders] = useState([]);
@@ -190,6 +192,47 @@ export default function MyFoodOrders({ isEmbedded = false }) {
 
     fetchOrders();
   }, [user, navigate]);
+
+  const handleReorder = async (e, order) => {
+    e.stopPropagation();
+    try {
+      setLoading(true);
+      const promises = order.items.map((item) => {
+        const payload = {
+            user_id: user.user_id,
+            product_id: item.product_id || item.food_id || item.id,
+            name: item.name || item.product_name,
+            image: item.image || '',
+            price: parseFloat(item.price || 0),
+            total_price: parseFloat(item.price || 0) * (item.quantity || 1),
+            quantity: item.quantity || 1,
+            chef_user_id: item.chef_user_id || item.created_by || '',
+            chef_id: item.chef_id || '',
+            chef_name: item.chef_name || item.chef || item.created_by_name || '',
+            chef_phone: item.chef_phone || '',
+            chef_email: item.chef_email || '',
+            franchise_id: item.franchise_id || '',
+            franchise_user_id: item.franchise_user_id || '',
+            franchise_email: item.franchise_email || '',
+            franchise_name: item.franchise_name || '',
+            franchise_phone: item.franchise_phone || '',
+            ordered_by_name: user.name || user.fullname || user.username || '',
+            ordered_by_user_id: user.user_id,
+            ordered_by_email: user.email || '',
+            ordered_by_phone: user.phone || user.mobile || ''
+        };
+        return api.post('/user-food', payload);
+      });
+      await Promise.all(promises);
+      await fetchUserFoodCart();
+      toast.success("Items added to cart for reorder!");
+      navigate("/food-cart");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to reorder items");
+      setLoading(false);
+    }
+  };
 
   // If navigated from checkout with a newly created order id, fetch and open it
   useEffect(() => {
@@ -424,12 +467,21 @@ export default function MyFoodOrders({ isEmbedded = false }) {
                         View details
                       </button>
                       {order.status === "Delivered" && (
-                        <button
-                          onClick={() => openReviewModal(order)}
-                          className="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
-                        >
-                          Review
-                        </button>
+                        <>
+                          <button
+                            onClick={() => openReviewModal(order)}
+                            className="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                          >
+                            Review
+                          </button>
+                          <button
+                            onClick={(e) => handleReorder(e, order)}
+                            className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-500 shadow-sm"
+                          >
+                            <RefreshCw className="h-4 w-4" />
+                            Reorder
+                          </button>
+                        </>
                       )}
                       <button
                         onClick={() => navigate("/food-cart")}
