@@ -116,9 +116,11 @@ exports.getAllProducts = async (req, res) => {
             query += ' AND t.category = ?';
             params.push(category);
         }
-        if (status && status !== 'All') {
+        if (status) {
             const normalizedStatus = String(status || '').trim().toLowerCase();
-            if (normalizedStatus === 'active' || normalizedStatus === 'approved') {
+            if (normalizedStatus === 'all') {
+                // no status filtering
+            } else if (normalizedStatus === 'active' || normalizedStatus === 'approved') {
                 query += " AND (t.status = 'Active' OR t.status = 'Approved')";
             } else if (normalizedStatus === 'not approved') {
                 query += " AND (t.status <> 'Active' AND t.status <> 'Approved')";
