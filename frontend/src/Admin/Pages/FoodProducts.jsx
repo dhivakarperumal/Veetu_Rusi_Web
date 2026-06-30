@@ -65,7 +65,7 @@ const FoodProducts = () => {
       if (params.get('chef_id')) query.chef_id = params.get('chef_id');
       if (params.get('chef_user_id')) query.chef_user_id = params.get('chef_user_id');
       if (params.get('category')) query.category = params.get('category');
-      if (params.get('status')) query.status = params.get('status');
+      query.status = params.get('status') || 'All';
 
       const endpoint = activeTab === 'food' ? '/chef-foods' : '/products';
       if (activeTab === 'foodProducts') {
