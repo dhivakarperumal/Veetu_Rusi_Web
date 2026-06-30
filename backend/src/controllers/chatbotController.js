@@ -135,13 +135,9 @@ async function getUserCart(userId) {
     console.warn('Chatbot user_food_cart lookup failed:', err.message);
   }
 
-  try {
-    const [rows] = await pool.execute('SELECT * FROM `Chef_cart` WHERE user_id = ? ORDER BY updated_at DESC', [userId]);
-    return rows.map((r) => ({ ...r, source: 'Chef_cart' }));
-  } catch (error) {
-    console.warn('Chatbot Chef_cart lookup failed:', error.message);
-    return [];
-  }
+  // If no entries found in user_food_cart, do not fallback to Chef_cart automatically.
+  // Returning an empty array avoids showing unrelated chef cart items to regular users.
+  return [];
 }
 
 async function getActiveCoupons() {
