@@ -959,6 +959,11 @@ const createCouponsTable = async () => {
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         `;
         await pool.execute(sql);
+        try { await pool.execute("ALTER TABLE coupons ADD COLUMN coupon_scope VARCHAR(50) DEFAULT 'all'"); } catch (e) {}
+        try { await pool.execute('ALTER TABLE coupons ADD COLUMN applicable_home_chef_ids JSON DEFAULT NULL'); } catch (e) {}
+        try { await pool.execute('ALTER TABLE coupons ADD COLUMN applicable_product_ids JSON DEFAULT NULL'); } catch (e) {}
+        try { await pool.execute('ALTER TABLE coupons ADD COLUMN applicable_category_ids JSON DEFAULT NULL'); } catch (e) {}
+        try { await pool.execute('ALTER TABLE coupons ADD COLUMN applicable_subcategory_ids JSON DEFAULT NULL'); } catch (e) {}
         console.log('✓ coupons table created or already exists');
     } catch (err) {
         console.error('✗ Error creating coupons table:', err.message || err);

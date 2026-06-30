@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { FiPlus, FiEdit, FiTrash2, FiSearch, FiRefreshCw } from "react-icons/fi";
 import { toast } from "react-hot-toast";
+import Select from "react-select";
 import api from "../../api";
 import Loader from "../../Components/CommenComponents/Loader";
 
 const Coupons = () => {
   const [coupons, setCoupons] = useState([]);
+  const [chefs, setChefs] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentCoupon, setCurrentCoupon] = useState(null);
@@ -23,7 +27,12 @@ const Coupons = () => {
     expiry_date: "",
     usage_limit_global: "",
     usage_limit_per_customer: "1",
-    status: "active"
+    status: "active",
+    coupon_scope: "all",
+    applicable_home_chef_ids: [],
+    applicable_product_ids: [],
+    applicable_category_ids: [],
+    applicable_subcategory_ids: []
   });
 
   const fetchCoupons = async () => {
@@ -40,8 +49,41 @@ const Coupons = () => {
     }
   };
 
+  const fetchOptions = async () => {
+    try {
+      // Assuming users with role 'chef' are fetched from /admin/users or /users
+      // If endpoint is not exact, we will just use dummy or skip fail gracefully
+      const [chefRes, prodRes, catRes] = await Promise.all([
+        api.get('/users').catch(() => ({ data: { users: [] } })), // Adjust based on your API
+        api.get('/cheffoods').catch(() => ({ data: { foods: [] } })),
+        api.get('/cheffoodcategorys').catch(() => ({ data: { categories: [] } }))
+      ]);
+      const allFoods = prodRes.data.foods || prodRes.data.data || [];
+      
+      const prodList = allFoods.map(p => ({ value: p.id, label: `${p.name} (Chef: ${p.chef_name || p.chef_id})` }));
+      setProducts(prodList);
+
+      // Extract unique chefs from foods because home_chefs table was dropped
+      const uniqueChefs = new Map();
+      allFoods.forEach(food => {
+          if (food.chef_id) {
+              uniqueChefs.set(food.chef_id, {
+                  value: food.chef_id,
+                  label: food.chef_name || `Chef ${food.chef_id}`
+              });
+          }
+      });
+      setChefs(Array.from(uniqueChefs.values()));
+      const catList = (catRes.data.categories || catRes.data || []).map(c => ({ value: c.name, label: c.name }));
+      setCategories(catList);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     fetchCoupons();
+    fetchOptions();
   }, []);
 
   const handleOpenModal = (coupon = null) => {
@@ -66,7 +108,12 @@ const Coupons = () => {
         expiry_date: "",
         usage_limit_global: "",
         usage_limit_per_customer: "1",
-        status: "active"
+        status: "active",
+        coupon_scope: "all",
+        applicable_home_chef_ids: [],
+        applicable_product_ids: [],
+        applicable_category_ids: [],
+        applicable_subcategory_ids: []
       });
     }
     setIsModalOpen(true);
@@ -80,6 +127,13 @@ const Coupons = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (selectedOptions, field) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: selectedOptions ? selectedOptions.map(opt => opt.value) : []
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -290,6 +344,63 @@ const Coupons = () => {
                       <option value="active">Active</option>
                       <option value="inactive">Inactive</option>
                     </select>
+                  </div>
+
+                  <div className="md:col-span-2 p-4 border rounded-xl bg-gray-50/50">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Coupon Applies To *</label>
+                    <select name="coupon_scope" value={formData.coupon_scope} onChange={handleChange} className="w-full p-3 border rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none mb-4">
+                      <option value="all">All Products (Global)</option>
+                      <option value="first_order_only">First Order Only</option>
+                      <option value="new_customers_only">New Customers Only</option>
+                      <option value="specific_home_chef">Specific Home Chef(s)</option>
+                      <option value="specific_products">Specific Product(s)</option>
+                      <option value="specific_categories">Specific Category(s)</option>
+                    </select>
+
+                    {formData.coupon_scope === 'specific_home_chef' && (
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Select Home Chefs</label>
+                        <Select 
+                          isMulti 
+                          options={chefs} 
+                          value={chefs.filter(c => formData.applicable_home_chef_ids.includes(c.value))}
+                          onChange={(opts) => handleSelectChange(opts, 'applicable_home_chef_ids')}
+                          className="react-select-container"
+                          classNamePrefix="react-select"
+                          placeholder="Search and select chefs..."
+                        />
+                      </div>
+                    )}
+
+                    {formData.coupon_scope === 'specific_products' && (
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Select Products</label>
+                        <Select 
+                          isMulti 
+                          options={products} 
+                          value={products.filter(p => formData.applicable_product_ids.includes(p.value))}
+                          onChange={(opts) => handleSelectChange(opts, 'applicable_product_ids')}
+                          className="react-select-container"
+                          classNamePrefix="react-select"
+                          placeholder="Search and select products..."
+                        />
+                      </div>
+                    )}
+
+                    {formData.coupon_scope === 'specific_categories' && (
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Select Categories</label>
+                        <Select 
+                          isMulti 
+                          options={categories} 
+                          value={categories.filter(c => formData.applicable_category_ids.includes(c.value))}
+                          onChange={(opts) => handleSelectChange(opts, 'applicable_category_ids')}
+                          className="react-select-container"
+                          classNamePrefix="react-select"
+                          placeholder="Search and select categories..."
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               </form>

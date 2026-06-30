@@ -3,7 +3,7 @@ import { FiTag, FiX } from 'react-icons/fi';
 import api from '../../api';
 import { toast } from 'react-hot-toast';
 
-const CouponSection = ({ cartTotal, customerId, onCouponApplied, onCouponRemoved, appliedCoupon }) => {
+const CouponSection = ({ cartItems = [], cartTotal, customerId, onCouponApplied, onCouponRemoved, appliedCoupon }) => {
     const [availableCoupons, setAvailableCoupons] = useState([]);
     const [couponCode, setCouponCode] = useState('');
     const [loading, setLoading] = useState(false);
@@ -34,7 +34,7 @@ const CouponSection = ({ cartTotal, customerId, onCouponApplied, onCouponRemoved
                 code: code,
                 cartTotal: cartTotal,
                 customerId: customerId,
-                cartItems: [] // Pass actual cart items here if needed for product-specific validation later
+                cartItems: cartItems
             });
 
             if (data.success) {
@@ -42,7 +42,9 @@ const CouponSection = ({ cartTotal, customerId, onCouponApplied, onCouponRemoved
                 onCouponApplied({
                     ...data.coupon,
                     discountAmount: data.discountAmount,
-                    finalTotal: data.finalTotal
+                    finalTotal: data.finalTotal,
+                    eligibleItems: data.eligibleItems || [],
+                    ineligibleItems: data.ineligibleItems || []
                 });
                 setCouponCode('');
                 setShowCoupons(false);
@@ -66,9 +68,15 @@ const CouponSection = ({ cartTotal, customerId, onCouponApplied, onCouponRemoved
 
             {appliedCoupon ? (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex justify-between items-center">
-                    <div>
+                    <div className="flex-1">
                         <div className="font-semibold text-green-700">{appliedCoupon.code} applied</div>
                         <div className="text-sm text-green-600">You saved ₹{appliedCoupon.discountAmount.toFixed(2)}</div>
+                        
+                        {appliedCoupon.ineligibleItems && appliedCoupon.ineligibleItems.length > 0 && (
+                            <div className="mt-2 text-xs text-red-600 bg-red-50 p-2 rounded border border-red-100">
+                                <strong>Note:</strong> Discount not applied to some items (e.g. {appliedCoupon.ineligibleItems[0].name}).
+                            </div>
+                        )}
                     </div>
                     <button 
                         onClick={onCouponRemoved}

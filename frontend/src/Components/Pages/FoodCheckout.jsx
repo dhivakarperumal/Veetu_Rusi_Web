@@ -636,10 +636,17 @@ ${selectedAddressId === address.id
                       <span>Free</span>
                     </div>
                     {appliedCoupon && (
-                      <div className="flex justify-between text-emerald-600 font-semibold mt-2">
-                        <span>Discount ({appliedCoupon.code})</span>
-                        <span>-₹{appliedCoupon.discountAmount.toFixed(2)}</span>
-                      </div>
+                      <>
+                        <div className="flex justify-between text-emerald-600 font-semibold mt-2">
+                          <span>Discount ({appliedCoupon.code})</span>
+                          <span>-₹{appliedCoupon.discountAmount.toFixed(2)}</span>
+                        </div>
+                        {appliedCoupon.ineligibleItems && appliedCoupon.ineligibleItems.length > 0 && (
+                          <div className="mt-2 text-xs text-red-600 bg-red-50 p-2 rounded border border-red-100">
+                            <strong>Note:</strong> Discount was not applied to {appliedCoupon.ineligibleItems.length} item(s).
+                          </div>
+                        )}
+                      </>
                     )}
                     <div className="flex justify-between text-lg font-black text-slate-900 mt-4">
                       <span>Total</span>

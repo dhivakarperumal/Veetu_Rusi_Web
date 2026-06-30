@@ -146,6 +146,7 @@ export default function FoodCartPage() {
 
               {!isCartEmpty && (
                 <CouponSection 
+                  cartItems={userFoodCart}
                   cartTotal={subtotal} 
                   customerId={user?.id}
                   appliedCoupon={appliedCoupon}
