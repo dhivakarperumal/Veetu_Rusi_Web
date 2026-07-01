@@ -27,6 +27,7 @@ export default function FoodCheckout() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [zipCode, setZipCode] = useState("");
   const [deliveryDate, setDeliveryDate] = useState(getTomorrowDate());
   const [deliveryTime, setDeliveryTime] = useState("12:00");
@@ -210,6 +211,9 @@ export default function FoodCheckout() {
     setZipCode(address.zip_code || "");
     setCountry(address.country || "India");
 
+    setSearchQuery("");
+    setSearchResults([]);
+    setIsSearchFocused(false);
     toast.success("Address loaded successfully.");
   };
 
@@ -350,20 +354,55 @@ export default function FoodCheckout() {
                       <input
                         value={searchQuery}
                         onChange={(e) => handleSearchAddress(e.target.value)}
+                        onFocus={() => setIsSearchFocused(true)}
+                        onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
                         placeholder="Search for your address..."
                         className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                       />
-                      {searchResults.length > 0 && (
+                      {(isSearchFocused || searchResults.length > 0) && (
                         <div className="absolute z-10 w-full mt-2 bg-white rounded-2xl shadow-xl border border-slate-100 max-h-60 overflow-y-auto">
-                          {searchResults.map((item, idx) => (
-                            <div
-                              key={idx}
-                              onClick={() => selectSearchResult(item)}
-                              className="px-4 py-3 hover:bg-emerald-50 cursor-pointer border-b border-slate-50 text-sm"
-                            >
-                              {item.display_name}
-                            </div>
-                          ))}
+                          {/* Saved Addresses Section */}
+                          {!searchQuery && savedAddresses.length > 0 && (
+                            <>
+                              <div className="px-4 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider bg-slate-50">
+                                Saved Addresses
+                              </div>
+                              {savedAddresses.map((address) => (
+                                <div
+                                  key={address.id}
+                                  onClick={() => fillAddress(address)}
+                                  className="px-4 py-3 hover:bg-emerald-50 cursor-pointer border-b border-slate-50 text-sm"
+                                >
+                                  <div className="font-semibold text-slate-800">{address.customer_name}</div>
+                                  <div className="text-slate-500 text-xs truncate">
+                                    {address.street_address}, {address.city}, {address.state} - {address.zip_code}
+                                  </div>
+                                </div>
+                              ))}
+                            </>
+                          )}
+
+                          {/* Search Results Section */}
+                          {searchResults.length > 0 && (
+                            <>
+                              <div className="px-4 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider bg-slate-50">
+                                Search Results
+                              </div>
+                              {searchResults.map((item, idx) => (
+                                <div
+                                  key={idx}
+                                  onClick={() => selectSearchResult(item)}
+                                  className="px-4 py-3 hover:bg-emerald-50 cursor-pointer border-b border-slate-50 text-sm"
+                                >
+                                  {item.display_name}
+                                </div>
+                              ))}
+                            </>
+                          )}
+
+                          {searchQuery && searchResults.length === 0 && isSearching && (
+                            <div className="px-4 py-3 text-sm text-slate-500">Searching...</div>
+                          )}
                         </div>
                       )}
                     </div>
