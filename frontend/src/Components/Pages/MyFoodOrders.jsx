@@ -340,6 +340,23 @@ export default function MyFoodOrders({ isEmbedded = false }) {
     setReviewSubmitting(true);
 
     try {
+      // Get the selected item to extract chef information
+      const selectedItem = reviewOrder?.items?.find(
+        item => (item.product_id || item.id) === reviewProductId
+      );
+
+      // Extract home chef details from the item or order
+      const homeChefId = selectedItem?.chef_id || selectedItem?.created_by || reviewOrder?.created_by || null;
+      const homeChefUserId = selectedItem?.chef_user_id || selectedItem?.created_by_user_id || reviewOrder?.created_by_user_id || null;
+      const homeChefName = selectedItem?.chef_name || selectedItem?.chef || selectedItem?.created_by_name || reviewOrder?.created_by_name || null;
+      const homeChefEmail = selectedItem?.chef_email || selectedItem?.email || reviewOrder?.created_by_email || null;
+      const homeChefPhone = selectedItem?.chef_phone || selectedItem?.phone || reviewOrder?.created_by_phone || null;
+
+      // Extract franchise admin details
+      const franchiseAdminId = selectedItem?.franchise_admin_id || selectedItem?.franchise_user_id || reviewOrder?.franchise_admin_id || reviewOrder?.franchise_user_id || null;
+      const franchiseAdminEmail = selectedItem?.franchise_admin_email || selectedItem?.franchise_email || reviewOrder?.franchise_admin_email || reviewOrder?.franchise_email || null;
+      const franchiseAdminName = selectedItem?.franchise_admin_name || selectedItem?.franchise_name || reviewOrder?.franchise_admin_name || reviewOrder?.franchise_name || null;
+
       await api.post("/reviews", {
         product_id: reviewProductId,
         user_id: user?.user_id || user?.id,
@@ -347,6 +364,14 @@ export default function MyFoodOrders({ isEmbedded = false }) {
         user_email: user?.email || null,
         rating: reviewRating,
         comment: reviewComment || "",
+        home_chef_id: homeChefId,
+        home_chef_user_id: homeChefUserId,
+        home_chef_name: homeChefName,
+        home_chef_email: homeChefEmail,
+        home_chef_phone: homeChefPhone,
+        franchise_admin_id: franchiseAdminId,
+        franchise_admin_email: franchiseAdminEmail,
+        franchise_admin_name: franchiseAdminName,
       });
 
       toast.success("Review submitted successfully.");

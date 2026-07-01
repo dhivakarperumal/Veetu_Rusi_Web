@@ -499,6 +499,45 @@ const createDeliveryPartnersTable = async () => {
 
 const createReviewsTable = async () => {
     try {
+        // Product Reviews Table
+        await pool.execute(`
+            CREATE TABLE IF NOT EXISTS reviews (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                product_id INT NOT NULL,
+                user_id VARCHAR(255),
+                user_name VARCHAR(255),
+                user_email VARCHAR(255),
+                rating DECIMAL(2,1) NOT NULL,
+                comment LONGTEXT,
+                review_image LONGTEXT,
+                status VARCHAR(50) DEFAULT 'Published',
+                admin_reply LONGTEXT,
+                
+                home_chef_id VARCHAR(255),
+                home_chef_user_id VARCHAR(255),
+                home_chef_name VARCHAR(255),
+                home_chef_email VARCHAR(255),
+                home_chef_phone VARCHAR(50),
+                
+                franchise_admin_id VARCHAR(255),
+                franchise_admin_email VARCHAR(255),
+                franchise_admin_name VARCHAR(255),
+                
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                
+                KEY idx_product_id (product_id),
+                KEY idx_user_id (user_id),
+                KEY idx_home_chef_id (home_chef_id),
+                KEY idx_franchise_admin_id (franchise_admin_id),
+                KEY idx_status (status),
+                KEY idx_created_at (created_at)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `);
+
+        console.log('✓ Product reviews table created or already exists');
+
+        // Delivery Partner Review Table
         await pool.execute(`
             CREATE TABLE IF NOT EXISTS deliverypartner_review (
                 id INT PRIMARY KEY AUTO_INCREMENT,
@@ -528,8 +567,19 @@ const createReviewsTable = async () => {
         `);
 
         console.log('✓ Delivery partner review table created or already exists');
+        
+        // Add new columns to reviews table if they don't exist
+        try { await pool.execute('ALTER TABLE reviews ADD COLUMN IF NOT EXISTS home_chef_id VARCHAR(255)'); } catch {}
+        try { await pool.execute('ALTER TABLE reviews ADD COLUMN IF NOT EXISTS home_chef_user_id VARCHAR(255)'); } catch {}
+        try { await pool.execute('ALTER TABLE reviews ADD COLUMN IF NOT EXISTS home_chef_name VARCHAR(255)'); } catch {}
+        try { await pool.execute('ALTER TABLE reviews ADD COLUMN IF NOT EXISTS home_chef_email VARCHAR(255)'); } catch {}
+        try { await pool.execute('ALTER TABLE reviews ADD COLUMN IF NOT EXISTS home_chef_phone VARCHAR(50)'); } catch {}
+        try { await pool.execute('ALTER TABLE reviews ADD COLUMN IF NOT EXISTS franchise_admin_id VARCHAR(255)'); } catch {}
+        try { await pool.execute('ALTER TABLE reviews ADD COLUMN IF NOT EXISTS franchise_admin_email VARCHAR(255)'); } catch {}
+        try { await pool.execute('ALTER TABLE reviews ADD COLUMN IF NOT EXISTS franchise_admin_name VARCHAR(255)'); } catch {}
+        
     } catch (error) {
-        console.error('✗ Error creating deliverypartner_review table:', error.message);
+        console.error('✗ Error creating reviews tables:', error.message);
     }
 };
 
