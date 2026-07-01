@@ -5,6 +5,7 @@ import { toast, Toaster } from 'react-hot-toast';
 import api from '../api';
 import ChefSidebar from "./ChefSidebar";
 import ChefHeader from "./ChefHeader";
+import OrderCancellationModal from "../Components/CommenComponents/OrderCancellationModal";
 
 const AdminLayout = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -232,18 +233,11 @@ const AdminLayout = () => {
         }
     };
 
-    const handleReject = async () => {
+    const [cancelTargetOrder, setCancelTargetOrder] = useState(null);
+
+    const handleReject = () => {
         if (!popupOrder) return;
-        try {
-            await api.patch(`/user-food-orders/status/${popupOrder.id}`, { status: 'Cancelled' });
-            toast.success('Order rejected');
-            setPopupVisible(false);
-            setPopupOrder(null);
-            popupOrderRef.current = null;
-        } catch (err) {
-            console.error(err);
-            toast.error('Failed to reject order');
-        }
+        setCancelTargetOrder(popupOrder);
     };
 
     const skipOrder = () => {
@@ -391,6 +385,22 @@ const AdminLayout = () => {
                             </div>
                         </div>
                     </div>
+                )}
+
+                {cancelTargetOrder && (
+                    <OrderCancellationModal
+                        order={cancelTargetOrder}
+                        role="chef"
+                        onClose={() => setCancelTargetOrder(null)}
+                        onSuccess={() => {
+                            setCancelTargetOrder(null);
+                            setPopupVisible(false);
+                            setPopupOrder(null);
+                            popupOrderRef.current = null;
+                            toast.success('Order cancelled successfully.');
+                        }}
+                        apiCall={(id, payload) => api.post(`/user-food-orders/cancel/${id}`, payload)}
+                    />
                 )}
 
                 <footer className="glass-footer text-center py-4 mt-10 text-sm text-white/70">
