@@ -23,6 +23,10 @@ export default function FoodCheckout() {
   const [district, setDistrict] = useState("");
   const [stateValue, setStateValue] = useState("");
   const [country, setCountry] = useState("India");
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
   const [zipCode, setZipCode] = useState("");
   const [deliveryDate, setDeliveryDate] = useState(getTomorrowDate());
   const [deliveryTime, setDeliveryTime] = useState("12:00");
@@ -107,6 +111,72 @@ export default function FoodCheckout() {
       : `/${cleanPath}`;
 
     return `${backendUrl}${finalPath}`;
+  };
+
+  const getLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported by your browser.");
+      return;
+    }
+    setIsLoadingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+          const data = await res.json();
+          if (data && data.address) {
+            setStreetAddress(data.address.road || data.address.suburb || data.display_name || "");
+            setCity(data.address.city || data.address.town || data.address.village || "");
+            setDistrict(data.address.state_district || data.address.county || "");
+            setStateValue(data.address.state || "");
+            setZipCode(data.address.postcode || "");
+            setCountry(data.address.country || "India");
+            toast.success("Location fetched successfully!");
+          } else {
+            toast.error("Could not fetch address from location.");
+          }
+        } catch (error) {
+          toast.error("Error fetching address.");
+        } finally {
+          setIsLoadingLocation(false);
+        }
+      },
+      (error) => {
+        setIsLoadingLocation(false);
+        toast.error("Unable to retrieve your location.");
+      }
+    );
+  };
+
+  const handleSearchAddress = async (query) => {
+    setSearchQuery(query);
+    if (query.length < 3) {
+      setSearchResults([]);
+      return;
+    }
+    setIsSearching(true);
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&limit=5`);
+      const data = await res.json();
+      setSearchResults(data || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const selectSearchResult = (item) => {
+    const addr = item.address || {};
+    setStreetAddress(item.display_name || "");
+    setCity(addr.city || addr.town || addr.village || "");
+    setDistrict(addr.state_district || addr.county || "");
+    setStateValue(addr.state || "");
+    setZipCode(addr.postcode || "");
+    setCountry(addr.country || "India");
+    setSearchQuery(item.display_name);
+    setSearchResults([]);
   };
 
   const validateDelivery = () => {
@@ -267,76 +337,47 @@ export default function FoodCheckout() {
           <div className="grid gap-10 lg:grid-cols-3">
             <div className="lg:col-span-2 space-y-6">
 
-              {savedAddresses.length > 0 && (
-                <div className="bg-white rounded-3xl shadow p-8">
-                  <h2 className="text-2xl font-bold text-slate-900 mb-4">
-                    Saved Addresses
-                  </h2>
 
-                  <div className="space-y-4">
-                    {savedAddresses.slice(0, 3).map((address) => (
-                      <div
-                        key={address.id}
-                        onClick={() => fillAddress(address)}
-                        className={`rounded-2xl p-5 cursor-pointer transition-all duration-200
-${selectedAddressId === address.id
-                            ? "border-2 border-emerald-600 bg-emerald-50 shadow-lg ring-2 ring-emerald-200"
-                            : "border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50"
-                          }`}
-                      >
-                        <div className="grid md:grid-cols-2 gap-2 text-sm">
 
-                          <p>
-                            <span className="font-semibold">Name:</span>{" "}
-                            {address.customer_name}
-                          </p>
-
-                          <p>
-                            <span className="font-semibold">Email:</span>{" "}
-                            {address.customer_email}
-                          </p>
-
-                          <p>
-                            <span className="font-semibold">Phone:</span>{" "}
-                            {address.customer_phone}
-                          </p>
-
-                          <p>
-                            <span className="font-semibold">Street Address:</span>{" "}
-                            {address.street_address}
-                          </p>
-
-                          <p>
-                            <span className="font-semibold">City:</span>{" "}
-                            {address.city}
-                          </p>
-
-                          <p>
-                            <span className="font-semibold">District:</span>{" "}
-                            {address.district}
-                          </p>
-
-                          <p>
-                            <span className="font-semibold">State:</span>{" "}
-                            {address.state}
-                          </p>
-
-                          <p>
-                            <span className="font-semibold">ZIP Code:</span>{" "}
-                            {address.zip_code}
-                          </p>
-
-                          <p className="md:col-span-2">
-                            <span className="font-semibold">Country:</span>{" "}
-                            {address.country}
-                          </p>
-
+              {/* Location Search */}
+              <div className="bg-white rounded-3xl shadow p-8">
+                <div className="relative">
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Search Address
+                  </label>
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="flex-1 relative">
+                      <input
+                        value={searchQuery}
+                        onChange={(e) => handleSearchAddress(e.target.value)}
+                        placeholder="Search for your address..."
+                        className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                      />
+                      {searchResults.length > 0 && (
+                        <div className="absolute z-10 w-full mt-2 bg-white rounded-2xl shadow-xl border border-slate-100 max-h-60 overflow-y-auto">
+                          {searchResults.map((item, idx) => (
+                            <div
+                              key={idx}
+                              onClick={() => selectSearchResult(item)}
+                              className="px-4 py-3 hover:bg-emerald-50 cursor-pointer border-b border-slate-50 text-sm"
+                            >
+                              {item.display_name}
+                            </div>
+                          ))}
                         </div>
-                      </div>
-                    ))}
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={getLocation}
+                      disabled={isLoadingLocation}
+                      className="flex items-center justify-center gap-2 rounded-2xl bg-emerald-100 px-6 py-3 text-sm font-bold text-emerald-700 hover:bg-emerald-200 transition disabled:opacity-70 whitespace-nowrap"
+                    >
+                      {isLoadingLocation ? "Fetching..." : "Use Location"}
+                    </button>
                   </div>
                 </div>
-              )}
+              </div>
 
               {/* Personal Information */}
               <div className="bg-white rounded-3xl shadow p-8">
@@ -379,7 +420,8 @@ ${selectedAddressId === address.id
                     />
                   </div>
 
-                  {/* Row 1 */}
+
+
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-2">
                       Street Address
