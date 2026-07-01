@@ -12,14 +12,19 @@ import LiveTrackingMap from "../Components/LiveTrackingMap";
 const STATUS_STYLE = {
   "Delivery Partner Assigned": "bg-cyan-950 text-cyan-300 border-cyan-800",
   "Picked Up":                 "bg-sky-950 text-sky-300 border-sky-800",
+  "Start Ride":                "bg-blue-950 text-blue-300 border-blue-800",
+  "Reached Location":          "bg-fuchsia-950 text-fuchsia-300 border-fuchsia-800",
+  "Waiting for Customer":      "bg-amber-950 text-amber-300 border-amber-800",
   "Out for Delivery":          "bg-indigo-950 text-indigo-300 border-indigo-800",
   "Delivered":                 "bg-emerald-950 text-emerald-300 border-emerald-800",
 };
 
 const DELIVERY_STATUSES = [
-  { key: "Picked Up",        icon: "🛵", desc: "Picked up from restaurant" },
-  { key: "Out for Delivery", icon: "🚚", desc: "On the way to customer"    },
-  { key: "Delivered",        icon: "✅", desc: "Successfully delivered"    },
+  { key: "Picked Up",            icon: "📦", desc: "Picked up from restaurant" },
+  { key: "Start Ride",           icon: "🛵", desc: "Started journey" },
+  { key: "Reached Location",     icon: "📍", desc: "Reached delivery location" },
+  { key: "Waiting for Customer", icon: "⏳", desc: "Waiting for customer" },
+  { key: "Delivered",            icon: "✅", desc: "Successfully delivered" },
 ];
 
 const fmt = (n) =>

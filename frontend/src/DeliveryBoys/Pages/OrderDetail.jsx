@@ -23,12 +23,23 @@ const PIPELINE = [
   { key: "Delivered",                    label: "Delivered",               icon: "🎉" },
 ];
 
-const DELIVERY_STATUSES = ["Picked Up", "Out for Delivery", "Delivered"];
+const DELIVERY_STATUSES = ["Picked Up", "Start Ride", "Reached Location", "Waiting for Customer", "Delivered"];
+
+const statusIcons = {
+  "Picked Up":            "📦",
+  "Start Ride":           "🛵",
+  "Reached Location":     "📍",
+  "Waiting for Customer": "⏳",
+  "Out for Delivery":     "🚚",
+  "Delivered":            "✅",
+};
 
 const NEXT_STATUS = {
   "Delivery Partner Assigned": "Picked Up",
-  "Picked Up":                 "Out for Delivery",
-  "Out for Delivery":          "Delivered",
+  "Picked Up":                 "Start Ride",
+  "Start Ride":                "Reached Location",
+  "Reached Location":          "Waiting for Customer",
+  "Waiting for Customer":      "Delivered",
 };
 
 const STATUS_COLOR = {
@@ -38,10 +49,13 @@ const STATUS_COLOR = {
   "Food Ready":                 "bg-orange-900 text-orange-300 border-orange-700",
   "Packing":                    "bg-amber-900 text-amber-300 border-amber-700",
   "Searching Delivery Partner": "bg-yellow-900 text-yellow-300 border-yellow-700",
-  "Delivery Partner Assigned":  "bg-cyan-900 text-cyan-300 border-cyan-700",
-  "Picked Up":                  "bg-indigo-900 text-indigo-300 border-indigo-700",
-  "Out for Delivery":           "bg-emerald-900 text-emerald-300 border-emerald-700",
-  "Delivered":                  "bg-green-900 text-green-300 border-green-700",
+  "Delivery Partner Assigned":  "bg-cyan-950 text-cyan-300 border-cyan-800",
+  "Picked Up":                  "bg-sky-950 text-sky-300 border-sky-800",
+  "Start Ride":                 "bg-blue-950 text-blue-300 border-blue-800",
+  "Reached Location":           "bg-fuchsia-950 text-fuchsia-300 border-fuchsia-800",
+  "Waiting for Customer":       "bg-amber-950 text-amber-300 border-amber-800",
+  "Out for Delivery":           "bg-cyan-950 text-cyan-300 border-cyan-800",
+  "Delivered":                  "bg-emerald-950 text-emerald-300 border-emerald-800",
   "Cancelled":                  "bg-red-900 text-red-300 border-red-700",
 };
 
