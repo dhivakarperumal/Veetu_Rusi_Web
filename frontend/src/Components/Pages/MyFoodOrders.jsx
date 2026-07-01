@@ -317,12 +317,12 @@ export default function MyFoodOrders({ isEmbedded = false }) {
     try {
 
       const formData = new FormData();
-      const deliveryPartnerId = deliveryReviewOrder?.delivery_partner_id || deliveryReviewOrder?.delivery_partner_user_id || deliveryReviewOrder?.delivery_partner || "";
-      const deliveryPartnerName = deliveryReviewOrder?.delivery_partner_name || deliveryReviewOrder?.delivery_partner || "";
-      const deliveryPartnerPhone = deliveryReviewOrder?.delivery_partner_phone || deliveryReviewOrder?.delivery_partner_mobile || "";
-      const deliveryPartnerEmail = deliveryReviewOrder?.delivery_partner_email || deliveryReviewOrder?.delivery_partnerEmail || deliveryReviewOrder?.delivery_partner_email_id || "";
-      const franchiseAdminId = deliveryReviewOrder?.franchise_admin_id || deliveryReviewOrder?.franchise_user_id || deliveryReviewOrder?.franchise_id || "";
-      const franchiseAdminName = deliveryReviewOrder?.franchise_admin_name || deliveryReviewOrder?.franchise_name || "";
+      const deliveryPartnerId = deliveryReviewOrder?.delivery_partner_id || deliveryReviewOrder?.delivery_partner_user_id || deliveryReviewOrder?.delivery_partner || deliveryReviewOrder?.dp_id || "";
+      const deliveryPartnerName = deliveryReviewOrder?.delivery_partner_name || deliveryReviewOrder?.delivery_partner || deliveryReviewOrder?.partner_name || "";
+      const deliveryPartnerPhone = deliveryReviewOrder?.delivery_partner_phone || deliveryReviewOrder?.delivery_partner_mobile || deliveryReviewOrder?.partner_phone || "";
+      const deliveryPartnerEmail = deliveryReviewOrder?.delivery_partner_email || deliveryReviewOrder?.delivery_partnerEmail || deliveryReviewOrder?.delivery_partner_email_id || deliveryReviewOrder?.partner_email || deliveryReviewOrder?.email || "";
+      const franchiseAdminId = deliveryReviewOrder?.franchise_admin_id || deliveryReviewOrder?.franchise_user_id || deliveryReviewOrder?.franchise_id || deliveryReviewOrder?.franchise_admin_user_id || "";
+      const franchiseAdminName = deliveryReviewOrder?.franchise_admin_name || deliveryReviewOrder?.franchise_name || deliveryReviewOrder?.franchise_admin || deliveryReviewOrder?.franchiseAdminName || "";
 
       formData.append(
         "user_id",

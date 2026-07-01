@@ -64,15 +64,45 @@ exports.addReview = async (req, res) => {
     const normalizedDeliveryPartnerId = delivery_partner_id || payload.delivery_partner_user_id || payload.delivery_partner || payload.dp_id || null;
     const normalizedDeliveryPartnerName = delivery_partner_name || payload.delivery_partner_name || payload.delivery_partner || null;
     const normalizedDeliveryPartnerPhone = delivery_partner_phone || payload.delivery_partner_phone || payload.delivery_partner_mobile || null;
-    const normalizedDeliveryPartnerEmail = delivery_partner_email || payload.delivery_partner_email || payload.delivery_partnerEmail || payload.dp_email || null;
+    const normalizedDeliveryPartnerEmail = delivery_partner_email || payload.delivery_partner_email || payload.delivery_partnerEmail || payload.dp_email || payload.partner_email || null;
     const normalizedFranchiseAdminId = franchise_admin_id || payload.franchise_user_id || payload.franchise_id || payload.franchise_admin_id || null;
-    const normalizedFranchiseAdminName = franchise_admin_name || payload.franchise_name || payload.franchise_admin_name || null;
+    const normalizedFranchiseAdminName = franchise_admin_name || payload.franchise_name || payload.franchise_admin_name || payload.franchise_admin || payload.franchiseAdminName || null;
 
     if (!user_id || !normalizedDeliveryPartnerId || !rating) {
       return res.status(400).json({
         success: false,
         message: "Required fields are missing.",
       });
+    }
+
+    let resolvedDeliveryPartnerEmail = normalizedDeliveryPartnerEmail;
+    let resolvedDeliveryPartnerName = normalizedDeliveryPartnerName;
+    let resolvedDeliveryPartnerPhone = normalizedDeliveryPartnerPhone;
+    let resolvedFranchiseAdminName = normalizedFranchiseAdminName;
+
+    if (normalizedDeliveryPartnerId) {
+      const [partnerRows] = await pool.query(
+        `SELECT name, mobile, email FROM delivery_partners WHERE user_id = ? OR delivery_partner_user_id = ? OR id = ? LIMIT 1`,
+        [normalizedDeliveryPartnerId, normalizedDeliveryPartnerId, normalizedDeliveryPartnerId]
+      );
+
+      if (partnerRows.length > 0) {
+        const partner = partnerRows[0];
+        resolvedDeliveryPartnerName = resolvedDeliveryPartnerName || partner.name || null;
+        resolvedDeliveryPartnerPhone = resolvedDeliveryPartnerPhone || partner.mobile || null;
+        resolvedDeliveryPartnerEmail = resolvedDeliveryPartnerEmail || partner.email || null;
+      }
+    }
+
+    if (!resolvedFranchiseAdminName && normalizedFranchiseAdminId) {
+      const [userRows] = await pool.query(
+        `SELECT name FROM users WHERE user_id = ? OR id = ? LIMIT 1`,
+        [normalizedFranchiseAdminId, normalizedFranchiseAdminId]
+      );
+
+      if (userRows.length > 0) {
+        resolvedFranchiseAdminName = userRows[0].name || null;
+      }
     }
 
     const [result] = await pool.query(
@@ -122,12 +152,12 @@ exports.addReview = async (req, res) => {
         image || null,
 
         normalizedDeliveryPartnerId,
-        normalizedDeliveryPartnerName,
-        normalizedDeliveryPartnerPhone,
-        normalizedDeliveryPartnerEmail,
+        resolvedDeliveryPartnerName,
+        resolvedDeliveryPartnerPhone,
+        resolvedDeliveryPartnerEmail,
 
         normalizedFranchiseAdminId,
-        normalizedFranchiseAdminName,
+        resolvedFranchiseAdminName,
 
         created_by,
         updated_by,
