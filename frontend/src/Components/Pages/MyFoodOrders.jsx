@@ -641,7 +641,7 @@ export default function MyFoodOrders({ isEmbedded = false }) {
                       onClick={() => openReviewModal(order)}
                       className="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
                     >
-                      Review
+                      Review Food
                     </button>
                           <button
                             onClick={(e) => handleReorder(e, order)}
