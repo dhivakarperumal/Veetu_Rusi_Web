@@ -162,11 +162,15 @@ const AdminLayout = () => {
     const openRejectModal = () => {
         setShowPopup(false);
         setShowRejectModal(true);
+        setRejectReason("");
     };
 
     const closeRejectModal = () => {
         setShowRejectModal(false);
         setRejectReason("");
+        if (popupOrder) {
+            setShowPopup(true);
+        }
     };
 
     const rejectOrder = async () => {
@@ -183,8 +187,10 @@ const AdminLayout = () => {
                 cancellation_notes: "Rejected by delivery partner"
             });
             toast.success("Order rejected successfully.");
-            closeRejectModal();
+            setShowRejectModal(false);
+            setShowPopup(false);
             setPopupOrder(null);
+            setRejectReason("");
             fetchPendingOrders();
         } catch (error) {
             console.error("Reject order failed:", error);
