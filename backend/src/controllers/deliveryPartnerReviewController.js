@@ -1,10 +1,42 @@
 const pool = require("../config/db");
 
+const ensureReviewTable = async () => {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS deliverypartner_review (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      user_id VARCHAR(255) NOT NULL,
+      user_name VARCHAR(255),
+      user_email VARCHAR(255),
+      rating DECIMAL(2,1) NOT NULL,
+      comment LONGTEXT,
+      image VARCHAR(255),
+      status VARCHAR(50) DEFAULT 'Pending',
+      delivery_partner_id VARCHAR(255) NOT NULL,
+      delivery_partner_name VARCHAR(255),
+      delivery_partner_phone VARCHAR(50),
+      delivery_partner_email VARCHAR(255),
+      admin_reply LONGTEXT,
+      franchise_admin_id VARCHAR(255),
+      franchise_admin_name VARCHAR(255),
+      created_by VARCHAR(255),
+      updated_by VARCHAR(255),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      KEY idx_delivery_partner_id (delivery_partner_id),
+      KEY idx_user_id (user_id),
+      KEY idx_status (status),
+      KEY idx_created_at (created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+};
+
 // =============================
 // Add Delivery Partner Review
 // =============================
 exports.addReview = async (req, res) => {
   try {
+    await ensureReviewTable();
+
     const image = req.file ? req.file.filename : null;
 
     const {
@@ -113,6 +145,8 @@ exports.addReview = async (req, res) => {
 // =============================
 exports.getReviews = async (req, res) => {
   try {
+    await ensureReviewTable();
+
     const [rows] = await pool.query(`
       SELECT *
       FROM deliverypartner_review
@@ -138,6 +172,8 @@ exports.getReviews = async (req, res) => {
 // =============================
 exports.getReviewById = async (req, res) => {
   try {
+    await ensureReviewTable();
+
     const { id } = req.params;
 
     const [rows] = await pool.query(
@@ -175,6 +211,8 @@ exports.getReviewById = async (req, res) => {
 // =============================
 exports.updateReview = async (req, res) => {
   try {
+    await ensureReviewTable();
+
     const { id } = req.params;
 
     const image = req.file ? req.file.filename : null;
@@ -223,6 +261,8 @@ exports.updateReview = async (req, res) => {
 // =============================
 exports.replyReview = async (req, res) => {
   try {
+    await ensureReviewTable();
+
     const { id } = req.params;
 
     const { admin_reply } = req.body;
@@ -257,6 +297,8 @@ exports.replyReview = async (req, res) => {
 // =============================
 exports.deleteReview = async (req, res) => {
   try {
+    await ensureReviewTable();
+
     const { id } = req.params;
 
     await pool.query(
