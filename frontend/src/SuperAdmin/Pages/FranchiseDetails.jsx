@@ -104,6 +104,13 @@ const FranchiseDetails = () => {
     });
   };
 
+  const getChefOrderCount = (chef) => {
+    if (!linkedUserOrders) return 0;
+    const chefId = String(chef.chef_id || '').trim();
+    const chefUserId = String(chef.user_id || '').trim();
+    return linkedUserOrders.filter(order => isBranchChefOrder(order, chefId ? [chefId] : [], chefUserId ? [chefUserId] : [])).length;
+  };
+
   const getSubscriptionLabel = (franchise) => {
     if (!franchise) return 'Unknown';
     if (franchise.status !== 'Active') return 'Inactive';
@@ -581,6 +588,7 @@ const FranchiseDetails = () => {
                             <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Chef Details</th>
                             <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Contact</th>
                             <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Code</th>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs text-center">Orders</th>
                             <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs text-center">Status</th>
                           </tr>
                         </thead>
@@ -599,6 +607,9 @@ const FranchiseDetails = () => {
                                 <span className="inline-flex items-center rounded-lg bg-slate-900/90 px-2 py-1 text-xs font-mono font-bold text-slate-300 border border-slate-800">
                                   {chef.chef_unique_code || chef.chef_id || '—'}
                                 </span>
+                              </td>
+                              <td className="px-6 py-4 text-center">
+                                <span className="font-bold text-slate-300">{getChefOrderCount(chef)}</span>
                               </td>
                               <td className="px-6 py-4 text-center">
                                 <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${chef.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
