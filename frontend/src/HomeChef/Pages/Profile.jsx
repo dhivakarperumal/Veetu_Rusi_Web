@@ -3,7 +3,8 @@ import { useLocation } from "react-router-dom";
 import { createPortal } from "react-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import api from "../../api";
-import { FiUser, FiMail, FiPhone, FiHash, FiShield, FiCalendar, FiMapPin } from "react-icons/fi";
+import { toast } from "react-hot-toast";
+import { FiUser, FiMail, FiPhone, FiHash, FiShield, FiCalendar, FiMapPin, FiCopy, FiShare2 } from "react-icons/fi";
 
 const formatLabel = (key) => {
   return key
@@ -21,6 +22,8 @@ const Profile = () => {
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [ordersError, setOrdersError] = useState(null);
+  const [referralCode, setReferralCode] = useState('');
+  const [codeCopied, setCodeCopied] = useState(false);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -30,8 +33,12 @@ const Profile = () => {
       }
 
       try {
-        const res = await api.get("/auth/profile");
-        setHomeChef(res.data.homeChef || null);
+        const [profileRes, referralRes] = await Promise.all([
+          api.get("/auth/profile"),
+          api.get("/referrals/dashboard").catch(() => ({ data: {} })),
+        ]);
+        setHomeChef(profileRes.data.homeChef || null);
+        setReferralCode(referralRes.data?.my_code || user?.referral_code || '');
       } catch (err) {
         setError(err.response?.data?.message || "Unable to load chef profile.");
       } finally {
@@ -41,6 +48,25 @@ const Profile = () => {
 
     loadProfile();
   }, [user]);
+
+  const handleCopyCode = async () => {
+    if (!referralCode) return;
+    try {
+      await navigator.clipboard.writeText(referralCode);
+      setCodeCopied(true);
+      toast.success('Referral code copied!');
+      setTimeout(() => setCodeCopied(false), 2000);
+    } catch {
+      toast.error('Unable to copy.');
+    }
+  };
+
+  const handleShareCode = () => {
+    if (!referralCode) return;
+    const shareUrl = `${window.location.origin}/register?ref=${referralCode}`;
+    const text = encodeURIComponent(`Join as a Home Chef using my referral code ${referralCode}: ${shareUrl}`);
+    window.open(`https://wa.me/?text=${text}`, '_blank', 'noopener,noreferrer');
+  };
 
   useEffect(() => {
     const loadOrders = async () => {
@@ -147,6 +173,38 @@ const Profile = () => {
           <div className="mt-6 inline-block w-full rounded-2xl bg-white/5 border border-white/5 px-4 py-4 shadow-inner">
             <p className="text-[10px] font-bold uppercase tracking-[0.35em] text-white/40">User ID</p>
             <p className="mt-2 text-sm font-black text-emerald-400 break-all">{user.user_id || "-"}</p>
+          </div>
+
+          {/* Referral Code Card */}
+          <div className="mt-4 w-full rounded-2xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-4 shadow-inner">
+            <p className="text-[10px] font-bold uppercase tracking-[0.35em] text-emerald-400/60">Referral Code</p>
+            {referralCode ? (
+              <>
+                <p className="mt-2 text-base font-black text-emerald-400 tracking-widest break-all">{referralCode}</p>
+                <div className="mt-3 flex gap-2">
+                  <button
+                    onClick={handleCopyCode}
+                    className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 ${
+                      codeCopied
+                        ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/40'
+                        : 'bg-white/5 text-white/60 border border-white/5 hover:bg-emerald-500/10 hover:text-emerald-400'
+                    }`}
+                  >
+                    <FiCopy className="w-3 h-3" />
+                    {codeCopied ? 'Copied!' : 'Copy'}
+                  </button>
+                  <button
+                    onClick={handleShareCode}
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-white/5 bg-white/5 py-2 text-[10px] font-black uppercase tracking-widest text-white/60 transition-all hover:bg-emerald-500/10 hover:text-emerald-400 active:scale-95"
+                  >
+                    <FiShare2 className="w-3 h-3" />
+                    Share
+                  </button>
+                </div>
+              </>
+            ) : (
+              <p className="mt-2 text-xs font-bold text-white/30 tracking-widest">Generating...</p>
+            )}
           </div>
         </div>
 
