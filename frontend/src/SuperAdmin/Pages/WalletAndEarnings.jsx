@@ -107,10 +107,12 @@ const SuperAdminWalletAndEarnings = () => {
   const formatDate = (d) => {
     if (!d) return '—';
     try {
-      const date = new Date(d);
-      if (isNaN(date.getTime())) return String(d).slice(0,10);
-      return date.toLocaleDateString();
-    } catch { return String(d).slice(0,10); }
+      // Append time to avoid timezone shift when parsing YYYY-MM-DD strings
+      const raw = String(d).trim();
+      const date = raw.length === 10 ? new Date(raw + 'T00:00:00') : new Date(raw);
+      if (isNaN(date.getTime())) return raw.slice(0, 10);
+      return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    } catch { return String(d).slice(0, 10); }
   };
 
   const loadingCards = [
@@ -287,8 +289,8 @@ const SuperAdminWalletAndEarnings = () => {
                       <td className="px-3 py-3 font-bold text-white">{f.franchise_name}</td>
                       <td className="px-3 py-3">{f.owner_name}</td>
                       <td className="px-3 py-3">{f.email}</td>
-                      <td className="px-3 py-3">{f.start_date ? new Date(f.start_date).toLocaleDateString() : '—'}</td>
-                      <td className="px-3 py-3">{f.expiry_date ? new Date(f.expiry_date).toLocaleDateString() : '—'}</td>
+                      <td className="px-3 py-3">{formatDate(f.start_date)}</td>
+                      <td className="px-3 py-3">{formatDate(f.expiry_date)}</td>
                       <td className="px-3 py-3 text-right">
                         <button onClick={() => openSubModal(f)} className="px-3 py-2 bg-emerald-600 text-white rounded-xl text-xs font-black">Add / Renew</button>
                       </td>
