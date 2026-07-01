@@ -19,6 +19,9 @@ const STATUS_STYLE = {
     "Searching Delivery Partner": "bg-yellow-950 text-yellow-300 border-yellow-800",
     "Delivery Partner Assigned":  "bg-cyan-950 text-cyan-300 border-cyan-800",
     "Picked Up":                  "bg-sky-950 text-sky-300 border-sky-800",
+    "Start Ride":                 "bg-blue-950 text-blue-300 border-blue-800",
+    "Reached Location":           "bg-fuchsia-950 text-fuchsia-300 border-fuchsia-800",
+    "Waiting for Customer":       "bg-amber-950 text-amber-300 border-amber-800",
     "Out for Delivery":           "bg-cyan-950 text-cyan-300 border-cyan-800",
     "Delivered":                  "bg-emerald-950 text-emerald-300 border-emerald-800",
     "Cancelled":                  "bg-red-950 text-red-300 border-red-800",
@@ -27,10 +30,10 @@ const STATUS_STYLE = {
 const ALL_STATUSES = [
     "New Order", "Accepted", "Preparing", "Food Ready", "Packing",
     "Searching Delivery Partner", "Delivery Partner Assigned",
-    "Picked Up", "Out for Delivery", "Delivered", "Cancelled",
+    "Picked Up", "Start Ride", "Reached Location", "Waiting for Customer", "Out for Delivery", "Delivered", "Cancelled",
 ];
 
-const DELIVERY_STATUSES = ["Picked Up", "Out for Delivery", "Delivered"];
+const DELIVERY_STATUSES = ["Picked Up", "Start Ride", "Reached Location", "Waiting for Customer", "Delivered"];
 
 const getStatusStyle = (s) => STATUS_STYLE[s] || "bg-slate-900 text-slate-300 border-slate-700";
 
@@ -69,9 +72,12 @@ const EditOrderModal = ({ order, onClose, onSaved }) => {
     };
 
     const statusIcons = {
-        "Picked Up":        "🛵",
-        "Out for Delivery": "🚚",
-        "Delivered":        "✅",
+        "Picked Up":            "📦",
+        "Start Ride":           "🛵",
+        "Reached Location":     "📍",
+        "Waiting for Customer": "⏳",
+        "Out for Delivery":     "🚚",
+        "Delivered":            "✅",
     };
 
     return (
@@ -212,7 +218,7 @@ const EditOrderModal = ({ order, onClose, onSaved }) => {
                                 })}
                             </div>
                             <p className="text-[9px] text-slate-600 font-semibold mt-3 px-1">
-                                * As delivery boy, you can only update to: Picked Up, Out for Delivery, or Delivered.
+                                * As delivery boy, you can only update to: Picked Up, Start Ride, Reached Location, Waiting for Customer, or Delivered.
                             </p>
                         </div>
                     </div>
