@@ -143,7 +143,6 @@ const ReferralManagement = () => {
             <p className="mt-2 text-sm text-slate-400">Manage rewards, approve pending referrals, and export the referral ledger.</p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <button onClick={openCreateModal} className="rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700"><span className="flex items-center gap-2"><Plus size={16} /> Add New Code</span></button>
             <button onClick={exportCsv} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-slate-100 transition hover:bg-white/10"><span className="flex items-center gap-2"><Download size={16} /> Export CSV</span></button>
             <button onClick={loadData} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-slate-100 transition hover:bg-white/10"><span className="flex items-center gap-2"><RefreshCw size={16} /> Refresh</span></button>
           </div>
@@ -197,8 +196,8 @@ const ReferralManagement = () => {
               <p className="text-sm text-slate-400">Approve, reject, cancel, or resend referrals.</p>
             </div>
           </div>
-          <div className="mt-6 overflow-x-auto">
-            <table className="min-w-full text-sm">
+          <div className="mt-6 overflow-x-auto w-full">
+            <table className="w-full min-w-full text-sm">
               <thead>
                 <tr className="border-b border-white/10 text-left text-slate-400">
                   <th className="py-3 pr-4 font-semibold">Referrer</th>
