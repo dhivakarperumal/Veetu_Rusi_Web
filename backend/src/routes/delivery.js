@@ -79,10 +79,23 @@ router.get('/dashboard-stats', async (req, res) => {
       todayNetEarnings = parseFloat(todayEarningsRow[0]?.total || 0);
 
       const [totalEarningsRow] = await pool.execute(
-        'SELECT COALESCE(SUM(net_earnings), 0) as total FROM dp_earnings_history WHERE delivery_partner_user_id = ?',
+        'SELECT COALESCE(SUM(net_earnings), 0) as total, COALESCE(SUM(bonuses_total), 0) as bonuses FROM dp_earnings_history WHERE delivery_partner_user_id = ?',
         [deliveryBoyId]
       );
       totalNetEarnings = parseFloat(totalEarningsRow[0]?.total || 0);
+      let totalBonuses = parseFloat(totalEarningsRow[0]?.bonuses || 0);
+
+      const [weeklyEarningsRow] = await pool.execute(
+        'SELECT COALESCE(SUM(net_earnings), 0) as total FROM dp_earnings_history WHERE delivery_partner_user_id = ? AND YEARWEEK(created_at, 1) = YEARWEEK(CURDATE(), 1)',
+        [deliveryBoyId]
+      );
+      let weeklyEarnings = parseFloat(weeklyEarningsRow[0]?.total || 0);
+
+      const [monthlyEarningsRow] = await pool.execute(
+        'SELECT COALESCE(SUM(net_earnings), 0) as total FROM dp_earnings_history WHERE delivery_partner_user_id = ? AND MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE())',
+        [deliveryBoyId]
+      );
+      let monthlyEarnings = parseFloat(monthlyEarningsRow[0]?.total || 0);
 
       // Total distance from all completed deliveries for this partner
       const [distRow] = await pool.execute(
@@ -105,8 +118,12 @@ router.get('/dashboard-stats', async (req, res) => {
         totalDeliveries: deliveries[0].count,
         pendingDeliveries: pending[0].count,
         todayEarnings: todayNetEarnings,
+        weeklyEarnings: typeof weeklyEarnings !== 'undefined' ? weeklyEarnings : 0,
+        monthlyEarnings: typeof monthlyEarnings !== 'undefined' ? monthlyEarnings : 0,
         totalEarnings: totalNetEarnings,
         walletBalance,
+        incentivesEarned: typeof totalBonuses !== 'undefined' ? totalBonuses : 0,
+        bonusEarned: typeof totalBonuses !== 'undefined' ? totalBonuses : 0, // Using same value for demo unless split
         rating: 4.9,
         acceptanceRate: 96,
         completionRate: completedToday[0].count > 0
@@ -155,6 +172,55 @@ router.get('/orders', async (req, res) => {
     res.json(rows);
   } catch (err) {
     console.error('Orders Error:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Get wallet history (ledger)
+router.get('/wallet-history', async (req, res) => {
+  try {
+    const deliveryBoyId = req.user?.user_id || req.user?.id;
+    
+    // We fetch from dp_earnings_history and map it to a ledger format
+    const [history] = await pool.execute(`
+      SELECT id, order_id, created_at, net_earnings, bonuses_total, penalties_total, 
+             (net_earnings + bonuses_total - penalties_total) as final_amount
+      FROM dp_earnings_history
+      WHERE delivery_partner_user_id = ?
+      ORDER BY created_at DESC
+      LIMIT 100
+    `, [deliveryBoyId]);
+
+    // Format for ledger
+    let runningBalance = 0;
+    
+    // We need to calculate running balance. Since we are getting DESC, we reverse it, 
+    // calculate balance, and then reverse back.
+    const reversedHistory = [...history].reverse();
+    const formattedHistory = reversedHistory.map(entry => {
+      let description = "Delivery Earnings";
+      let credit = entry.final_amount > 0 ? entry.final_amount : 0;
+      let debit = entry.final_amount < 0 ? Math.abs(entry.final_amount) : 0;
+      
+      if (entry.bonuses_total > 0) description += ` + Bonus`;
+      if (entry.penalties_total > 0) description += ` - Penalty`;
+      
+      runningBalance += entry.final_amount;
+      
+      return {
+        id: entry.id,
+        date: entry.created_at,
+        order_id: entry.order_id,
+        description,
+        credit,
+        debit,
+        balance: runningBalance
+      };
+    });
+
+    res.json(formattedHistory.reverse());
+  } catch (err) {
+    console.error('Wallet History Error:', err);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -367,14 +433,14 @@ router.patch('/orders/:id/assign', async (req, res) => {
   }
 });
 
-// Update order status (Picked Up → Out for Delivery → Delivered)
+// Update order status (Picked Up → Start Ride → Reached Location → Waiting for Customer → Delivered)
 router.patch('/orders/:id/status', async (req, res) => {
   try {
     const orderId = req.params.id;
     const deliveryBoyId = req.user?.user_id || req.user?.id;
     const { status } = req.body;
 
-    const allowedStatuses = ['Picked Up', 'Out for Delivery', 'Delivered'];
+    const allowedStatuses = ['Picked Up', 'Start Ride', 'Reached Location', 'Waiting for Customer', 'Out for Delivery', 'Delivered'];
     if (!allowedStatuses.includes(status)) {
       return res.status(400).json({ message: `Invalid status. Allowed: ${allowedStatuses.join(', ')}` });
     }

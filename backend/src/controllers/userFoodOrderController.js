@@ -368,6 +368,7 @@ const updateOrder = async (id, payload) => {
     'status',
     'delivery_partner',
     'delivery_partner_user_id',
+    'status_image',
     'delivery_partner_name',
     'delivery_partner_phone'
   ];

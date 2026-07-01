@@ -906,6 +906,13 @@ const createDpEarningsTables = async () => {
             order_cancellation_penalty DECIMAL(10,2) DEFAULT 20.00,
             late_delivery_penalty DECIMAL(10,2) DEFAULT 15.00,
             customer_complaint_penalty DECIMAL(10,2) DEFAULT 50.00,
+            -- Receipt settings
+            receipt_enabled TINYINT(1) DEFAULT 1,
+            receipt_header VARCHAR(255) DEFAULT NULL,
+            receipt_footer TEXT DEFAULT NULL,
+            receipt_logo VARCHAR(255) DEFAULT NULL,
+            receipt_show_item_sku TINYINT(1) DEFAULT 0,
+            receipt_printer_name VARCHAR(255) DEFAULT NULL,
             
             updated_by VARCHAR(255) DEFAULT NULL,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -954,6 +961,18 @@ const createDpEarningsTables = async () => {
         `;
 
         await pool.execute(settingsSQL);
+        // Ensure receipt columns exist on existing installations
+        try {
+            await pool.execute(`ALTER TABLE dp_earnings_settings ADD COLUMN IF NOT EXISTS receipt_enabled TINYINT(1) DEFAULT 1`);
+            await pool.execute(`ALTER TABLE dp_earnings_settings ADD COLUMN IF NOT EXISTS receipt_header VARCHAR(255) DEFAULT NULL`);
+            await pool.execute(`ALTER TABLE dp_earnings_settings ADD COLUMN IF NOT EXISTS receipt_footer TEXT DEFAULT NULL`);
+            await pool.execute(`ALTER TABLE dp_earnings_settings ADD COLUMN IF NOT EXISTS receipt_logo VARCHAR(255) DEFAULT NULL`);
+            await pool.execute(`ALTER TABLE dp_earnings_settings ADD COLUMN IF NOT EXISTS receipt_show_item_sku TINYINT(1) DEFAULT 0`);
+            await pool.execute(`ALTER TABLE dp_earnings_settings ADD COLUMN IF NOT EXISTS receipt_printer_name VARCHAR(255) DEFAULT NULL`);
+            console.log('✓ Ensured receipt columns on dp_earnings_settings');
+        } catch (e) {
+            console.warn('Could not ensure receipt columns (may already exist):', e.message || e);
+        }
         await pool.execute(historySQL);
         await pool.execute(payoutsSQL);
 

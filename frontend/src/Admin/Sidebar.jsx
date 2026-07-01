@@ -97,6 +97,7 @@ const navItems = [
   // { path: "/admin/videos", label: "Showcase Videos", icon: Video },
   // { path: "/admin/reviews", label: "Customer Reviews", icon: MessageSquare },
   { path: "/admin/reports", label: "Reports", icon: BarChart3 },
+  { path: "/admin/settings", label: "Settings", icon: ShieldCheck }, // Added Settings
   // { path: "/", label: "Back Home", icon: Home },
 ];
 

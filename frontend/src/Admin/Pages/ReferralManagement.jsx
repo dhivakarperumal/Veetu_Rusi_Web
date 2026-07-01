@@ -1,10 +1,10 @@
-import { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, Fragment } from 'react';
 import { toast } from 'react-hot-toast';
 import {
   Download, RefreshCw, ShieldCheck, Users, Wallet, Ticket, Clock3, Plus, X,
   Settings2, UtensilsCrossed, Bike, UserCheck, AlertTriangle, TrendingUp,
   Filter, Search, ChevronDown, CheckCircle2, XCircle, RotateCcw, Send,
-  Copy, Share2, BarChart3, FileText, Star, Zap
+  Copy, Share2, BarChart3, FileText, Star, Zap, List, LayoutGrid
 } from 'lucide-react';
 import api from '../../api';
 
@@ -72,6 +72,7 @@ const ReferralManagement = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading]     = useState(true);
   const [saving, setSaving]       = useState(false);
+  const [viewMode, setViewMode]   = useState('card');
 
   /* data */
   const [referrals, setReferrals] = useState([]);
@@ -220,72 +221,157 @@ const ReferralManagement = () => {
     return Object.values(map).sort((a, b) => b.count - a.count).slice(0, 10);
   }, [referrals]);
 
-  /* ── LEDGER TABLE ── */
-  const LedgerTable = ({ rows, emptyLabel }) => (
-    <div className="overflow-x-auto w-full">
-      {rows.length === 0 ? (
-        <div className="py-16 text-center text-slate-500 text-sm">{emptyLabel || 'No referrals found.'}</div>
-      ) : (
-        <table className="w-full min-w-[720px] text-sm">
-          <thead>
-            <tr className="border-b border-white/10 text-left text-slate-400">
-              <th className="py-3 pr-4 font-semibold">Code</th>
-              <th className="py-3 pr-4 font-semibold">Referrer</th>
-              <th className="py-3 pr-4 font-semibold">Referee</th>
-              <th className="py-3 pr-4 font-semibold">Type</th>
-              <th className="py-3 pr-4 font-semibold">Reward</th>
-              <th className="py-3 pr-4 font-semibold">Status</th>
-              <th className="py-3 pr-4 font-semibold">Date</th>
-              <th className="py-3 pr-4 font-semibold">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map(item => (
-              <tr key={item.id} className="border-b border-white/5 hover:bg-white/[0.02] transition">
-                <td className="py-3 pr-4">
-                  <span className="font-mono text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-2 py-0.5">{item.referral_code || '—'}</span>
-                </td>
-                <td className="py-3 pr-4">
-                  <div className="text-slate-200 font-medium">{item.referrer_name || '—'}</div>
-                  <div className="text-xs text-slate-500">{item.referrer_email || item.referrer_user_id || ''}</div>
-                </td>
-                <td className="py-3 pr-4">
-                  <div className="text-slate-200 font-medium">{item.referee_name || '—'}</div>
-                  <div className="text-xs text-slate-500">{item.referee_email || item.referee_user_id || ''}</div>
-                </td>
-                <td className="py-3 pr-4"><TypeBadge type={item.referral_type || item.type || 'customer'} /></td>
-                <td className="py-3 pr-4 font-semibold text-emerald-400">₹{Number(item.reward_amount || 0).toFixed(2)}</td>
-                <td className="py-3 pr-4"><StatusBadge status={item.status} /></td>
-                <td className="py-3 pr-4 text-xs text-slate-500">
-                  {item.created_at ? new Date(item.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
-                </td>
-                <td className="py-3 pr-4">
-                  <div className="flex flex-wrap gap-1.5">
-                    {item.status !== 'rewarded' && (
-                      <button onClick={() => changeStatus(item.id, 'approve')} title="Approve"
-                        className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-2 py-1 text-[11px] font-semibold text-emerald-300 hover:bg-emerald-500/20 transition flex items-center gap-1">
-                        <CheckCircle2 size={11} /> Approve
+  /* ── LEDGER VIEW (Table/Card + Pagination) ── */
+  const LedgerView = ({ rows, emptyLabel, hidePagination = false }) => {
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+    
+    // reset page if rows change
+    useEffect(() => { setCurrentPage(1); }, [rows, viewMode]);
+
+    const totalPages = Math.ceil(rows.length / itemsPerPage);
+    const paginatedRows = hidePagination ? rows : rows.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+    return (
+      <div className="w-full">
+        {rows.length === 0 ? (
+          <div className="py-16 text-center text-slate-500 text-sm">{emptyLabel || 'No referrals found.'}</div>
+        ) : (
+          <>
+            {viewMode === 'table' ? (
+              <div className="overflow-x-auto w-full">
+                <table className="w-full min-w-[720px] text-sm">
+                  <thead>
+                    <tr className="bg-white/5 text-left text-slate-400">
+                      <th className="py-3 pl-4 pr-4 font-semibold rounded-l-xl">Code</th>
+                      <th className="py-3 pr-4 font-semibold">Referrer</th>
+                      <th className="py-3 pr-4 font-semibold">Referee</th>
+                      <th className="py-3 pr-4 font-semibold">Type</th>
+                      <th className="py-3 pr-4 font-semibold">Reward</th>
+                      <th className="py-3 pr-4 font-semibold">Status</th>
+                      <th className="py-3 pr-4 font-semibold">Date</th>
+                      <th className="py-3 pr-4 font-semibold rounded-r-xl">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginatedRows.map(item => (
+                      <tr key={item.id} className="border-b border-white/5 hover:bg-white/[0.02] transition">
+                        <td className="py-3 pl-4 pr-4">
+                          <span className="font-mono text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-2 py-0.5">{item.referral_code || '—'}</span>
+                        </td>
+                        <td className="py-3 pr-4">
+                          <div className="text-slate-200 font-medium">{item.referrer_name || '—'}</div>
+                          <div className="text-xs text-slate-500">{item.referrer_email || item.referrer_user_id || ''}</div>
+                        </td>
+                        <td className="py-3 pr-4">
+                          <div className="text-slate-200 font-medium">{item.referee_name || '—'}</div>
+                          <div className="text-xs text-slate-500">{item.referee_email || item.referee_user_id || ''}</div>
+                        </td>
+                        <td className="py-3 pr-4"><TypeBadge type={item.referral_type || item.type || 'customer'} /></td>
+                        <td className="py-3 pr-4 font-semibold text-emerald-400">₹{Number(item.reward_amount || 0).toFixed(2)}</td>
+                        <td className="py-3 pr-4"><StatusBadge status={item.status} /></td>
+                        <td className="py-3 pr-4 text-xs text-slate-500">
+                          {item.created_at ? new Date(item.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                        </td>
+                        <td className="py-3 pr-4">
+                          <div className="flex flex-wrap gap-1.5">
+                            {item.status !== 'rewarded' && (
+                              <button onClick={() => changeStatus(item.id, 'approve')} title="Approve"
+                                className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-2 py-1 text-[11px] font-semibold text-emerald-300 hover:bg-emerald-500/20 transition flex items-center gap-1">
+                                <CheckCircle2 size={11} /> Approve
+                              </button>
+                            )}
+                            {item.status !== 'rejected' && (
+                              <button onClick={() => changeStatus(item.id, 'reject')} title="Reject"
+                                className="rounded-lg border border-rose-500/20 bg-rose-500/10 px-2 py-1 text-[11px] font-semibold text-rose-300 hover:bg-rose-500/20 transition flex items-center gap-1">
+                                <XCircle size={11} /> Reject
+                              </button>
+                            )}
+                            <button onClick={() => changeStatus(item.id, 'resend')} title="Resend"
+                              className="rounded-lg border border-sky-500/20 bg-sky-500/10 px-2 py-1 text-[11px] font-semibold text-sky-300 hover:bg-sky-500/20 transition flex items-center gap-1">
+                              <Send size={11} /> Resend
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                 {paginatedRows.map(item => (
+                   <div key={item.id} className="rounded-2xl border border-white/10 bg-[#0b1512] p-5 space-y-4 hover:border-emerald-500/30 transition">
+                     <div className="flex justify-between items-start">
+                        <span className="font-mono text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-2 py-0.5">{item.referral_code || '—'}</span>
+                        <StatusBadge status={item.status} />
+                     </div>
+                     <div className="grid grid-cols-2 gap-4">
+                       <div>
+                         <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1">Referrer</div>
+                         <div className="text-slate-200 font-semibold text-sm truncate" title={item.referrer_name || '—'}>{item.referrer_name || '—'}</div>
+                         <div className="text-xs text-slate-400 truncate" title={item.referrer_email || item.referrer_user_id || ''}>{item.referrer_email || item.referrer_user_id || ''}</div>
+                       </div>
+                       <div>
+                         <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1">Referee</div>
+                         <div className="text-slate-200 font-semibold text-sm truncate" title={item.referee_name || '—'}>{item.referee_name || '—'}</div>
+                         <div className="text-xs text-slate-400 truncate" title={item.referee_email || item.referee_user_id || ''}>{item.referee_email || item.referee_user_id || ''}</div>
+                       </div>
+                     </div>
+                     <div className="flex justify-between items-center pt-3 border-t border-white/5">
+                        <TypeBadge type={item.referral_type || item.type || 'customer'} />
+                        <span className="font-black text-emerald-400">₹{Number(item.reward_amount || 0).toFixed(2)}</span>
+                     </div>
+                     <div className="flex justify-between items-center text-[10px] text-slate-500">
+                        <span>{item.created_at ? new Date(item.created_at).toLocaleDateString('en-IN') : '—'}</span>
+                     </div>
+                     <div className="flex flex-wrap gap-2 pt-2 border-t border-white/5">
+                       {item.status !== 'rewarded' && (
+                         <button onClick={() => changeStatus(item.id, 'approve')}
+                           className="flex-1 rounded-xl border border-emerald-500/20 bg-emerald-500/10 py-1.5 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/20 transition flex justify-center items-center gap-1">
+                           <CheckCircle2 size={13} /> Approve
+                         </button>
+                       )}
+                       {item.status !== 'rejected' && (
+                         <button onClick={() => changeStatus(item.id, 'reject')}
+                           className="flex-1 rounded-xl border border-rose-500/20 bg-rose-500/10 py-1.5 text-xs font-semibold text-rose-300 hover:bg-rose-500/20 transition flex justify-center items-center gap-1">
+                           <XCircle size={13} /> Reject
+                         </button>
+                       )}
+                     </div>
+                   </div>
+                 ))}
+              </div>
+            )}
+            
+            {/* Pagination Controls */}
+            {!hidePagination && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-4 border-t border-white/10">
+                <div className="text-xs font-semibold text-slate-400">
+                  Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, rows.length)} of {rows.length} entries
+                </div>
+                <div className="flex gap-1.5">
+                  <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
+                    className="px-3 py-1.5 rounded-xl border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 disabled:opacity-50 transition text-xs font-bold">Prev</button>
+                  {Array.from({length: totalPages}, (_, i) => i + 1).filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1).map((p, i, arr) => (
+                    <Fragment key={p}>
+                      {i > 0 && arr[i-1] !== p - 1 && <span className="px-2 text-slate-500 flex items-center">...</span>}
+                      <button onClick={() => setCurrentPage(p)}
+                        className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition ${currentPage === p ? 'bg-emerald-600 border-emerald-500 text-white shadow-lg shadow-emerald-900/20' : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'}`}>
+                        {p}
                       </button>
-                    )}
-                    {item.status !== 'rejected' && (
-                      <button onClick={() => changeStatus(item.id, 'reject')} title="Reject"
-                        className="rounded-lg border border-rose-500/20 bg-rose-500/10 px-2 py-1 text-[11px] font-semibold text-rose-300 hover:bg-rose-500/20 transition flex items-center gap-1">
-                        <XCircle size={11} /> Reject
-                      </button>
-                    )}
-                    <button onClick={() => changeStatus(item.id, 'resend')} title="Resend"
-                      className="rounded-lg border border-sky-500/20 bg-sky-500/10 px-2 py-1 text-[11px] font-semibold text-sky-300 hover:bg-sky-500/20 transition flex items-center gap-1">
-                      <Send size={11} /> Resend
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-    </div>
-  );
+                    </Fragment>
+                  ))}
+                  <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
+                    className="px-3 py-1.5 rounded-xl border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 disabled:opacity-50 transition text-xs font-bold">Next</button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    );
+  };
 
   /* ── SECTION WRAPPER ── */
   const Section = ({ title, subtitle, action, children }) => (
@@ -303,22 +389,32 @@ const ReferralManagement = () => {
 
   /* ── FILTER BAR ── */
   const FilterBar = () => (
-    <div className="flex flex-wrap gap-3 mb-6">
-      <div className="relative flex-1 min-w-[200px]">
+    <div className="flex flex-col md:flex-row gap-4 mb-6 items-center justify-between">
+      <div className="relative w-full md:max-w-md">
         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
         <input value={search} onChange={e => setSearch(e.target.value)}
           placeholder="Search by name, email, or code…"
           className="w-full rounded-2xl border border-white/10 bg-white/5 pl-9 pr-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500/50 transition" />
       </div>
-      <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
-        className="rounded-2xl border border-white/10 bg-[#08120f] px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500/50 transition">
-        <option value="all">All Statuses</option>
-        <option value="pending">Pending</option>
-        <option value="verified">Verified</option>
-        <option value="rewarded">Rewarded</option>
-        <option value="rejected">Rejected</option>
-        <option value="cancelled">Cancelled</option>
-      </select>
+      <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
+          className="w-full sm:w-auto rounded-2xl border border-white/10 bg-[#08120f] px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500/50 transition">
+          <option value="all">All Statuses</option>
+          <option value="pending">Pending</option>
+          <option value="verified">Verified</option>
+          <option value="rewarded">Rewarded</option>
+          <option value="rejected">Rejected</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+        <div className="flex items-center rounded-2xl border border-white/10 bg-[#08120f] p-1 h-[42px]">
+          <button onClick={() => setViewMode('table')} className={`p-1.5 rounded-xl transition flex items-center justify-center ${viewMode === 'table' ? 'bg-white/10 text-emerald-400' : 'text-slate-400 hover:text-slate-200'}`} title="Table View">
+            <List size={18} />
+          </button>
+          <button onClick={() => setViewMode('card')} className={`p-1.5 rounded-xl transition flex items-center justify-center ${viewMode === 'card' ? 'bg-white/10 text-emerald-400' : 'text-slate-400 hover:text-slate-200'}`} title="Card View">
+            <LayoutGrid size={18} />
+          </button>
+        </div>
+      </div>
     </div>
   );
 
@@ -430,7 +526,8 @@ const ReferralManagement = () => {
                 <Plus size={15} /> Add New
               </button>
             }>
-            <LedgerTable rows={filtered.slice(0, 10)} />
+            <FilterBar />
+            <LedgerView rows={filtered.slice(0, 10)} hidePagination={true} />
           </Section>
         </div>
       )}
@@ -477,9 +574,9 @@ const ReferralManagement = () => {
             {loading ? (
               <div className="py-12 text-center text-slate-500 text-sm">Loading referrals…</div>
             ) : (
-              <LedgerTable rows={filtered} />
+              <LedgerView rows={filtered} />
             )}
-            <div className="mt-4 text-xs text-slate-500">{filtered.length} record{filtered.length !== 1 ? 's' : ''} found</div>
+            <div className="mt-4 text-xs font-semibold text-slate-500">{filtered.length} record{filtered.length !== 1 ? 's' : ''} found</div>
           </Section>
 
           {/* Fraud detection notice */}
@@ -565,7 +662,7 @@ const ReferralManagement = () => {
               </button>
             }>
             <FilterBar />
-            <LedgerTable rows={filtered} />
+            <LedgerView rows={filtered} />
           </Section>
         </div>
       )}

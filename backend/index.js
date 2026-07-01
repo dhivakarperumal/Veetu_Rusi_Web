@@ -150,6 +150,9 @@ app.use('/api/user-food-orders', userFoodOrdersRouter);
 app.use('/api/userFoodOrders', userFoodOrdersRouter);
 app.use('/api/delivery', deliveryRouter);
 
+const dpSettingsRoutes = require('./src/routes/dpSettingsRoutes');
+app.use('/api/settings/delivery-partner', dpSettingsRoutes);
+
 const dpEarningsRouter = require('./src/routes/dpEarnings');
 app.use('/api/dp-earnings', dpEarningsRouter);
 

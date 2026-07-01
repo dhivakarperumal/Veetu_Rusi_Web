@@ -27,9 +27,9 @@ const navItems = [
     icon: FaBox,
     children: [
       { path: "/delivery/new-orders", label: "New Orders", icon: FaBox },
-      { path: "/delivery/all-orders", label: "All Orders", icon: FaBox },
       { path: "/delivery/accepted-orders", label: "Accepted Orders", icon: FaCheckCircle },
       { path: "/delivery/picked-up-orders", label: "Picked Up Orders", icon: FaShoppingBag },
+      { path: "/delivery/all-orders", label: "All Orders", icon: FaBox },
       { path: "/delivery/delivered-orders", label: "Delivered Orders", icon: FaTruck },
       { path: "/delivery/cancelled-orders", label: "Cancelled Orders", icon: FaTimesCircle },
     ],

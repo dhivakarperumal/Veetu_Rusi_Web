@@ -6,11 +6,20 @@ import { useAuth } from "../../PrivateRouter/AuthContext";
 import { StoreContext } from "../../PrivateRouter/StoreContext";
 import { toast } from "react-hot-toast";
 import { useLocation } from "react-router-dom";
-import { upsertUserAddress, readUserAddresses } from "../../utils/addressStorage";
+import {
+  upsertUserAddress,
+  readUserAddresses,
+} from "../../utils/addressStorage";
 
 const getTomorrowDate = () => {
   const date = new Date();
   date.setDate(date.getDate() + 1);
+  return date.toISOString().split("T")[0];
+};
+
+const getMaxDate = () => {
+  const date = new Date();
+  date.setDate(date.getDate() + 3);
   return date.toISOString().split("T")[0];
 };
 
@@ -23,6 +32,11 @@ export default function FoodCheckout() {
   const [district, setDistrict] = useState("");
   const [stateValue, setStateValue] = useState("");
   const [country, setCountry] = useState("India");
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [zipCode, setZipCode] = useState("");
   const [deliveryDate, setDeliveryDate] = useState(getTomorrowDate());
   const [deliveryTime, setDeliveryTime] = useState("12:00");
@@ -36,36 +50,48 @@ export default function FoodCheckout() {
   const location = useLocation();
   const buyNowItem = location.state?.product ? location.state : null;
   const appliedCoupon = location.state?.appliedCoupon || null;
-  
+
   const checkoutItems = buyNowItem?.product
     ? [
-      {
-        id: buyNowItem.product.id,
-        product_id: buyNowItem.product.product_id || buyNowItem.product.id,
-        name: buyNowItem.product.name,
-        image:
-          buyNowItem.variant?.images?.[0] ||
-          buyNowItem.product.images?.[0],
-        price:
-          buyNowItem.variant?.final_price ||
-          buyNowItem.product.final_price ||
-          buyNowItem.product.offer_price ||
-          buyNowItem.product.price,
-        quantity: buyNowItem.quantity,
-        variant: buyNowItem.variant,
-        size: buyNowItem.size,
-        chef_user_id: buyNowItem.product.chef_user_id || buyNowItem.product.created_by || buyNowItem.product.created_by_user_id || "",
-        chef_id: buyNowItem.product.chef_id || "",
-        chef_name: buyNowItem.product.chef_name || buyNowItem.product.created_by_name || "",
-        chef_email: buyNowItem.product.chef_email || buyNowItem.product.created_by_email || "",
-        chef_phone: buyNowItem.product.chef_phone || buyNowItem.product.created_by_phone || "",
-        franchise_id: buyNowItem.product.franchise_id || "",
-        franchise_user_id: buyNowItem.product.franchise_user_id || "",
-        franchise_name: buyNowItem.product.franchise_name || "",
-        franchise_email: buyNowItem.product.franchise_email || "",
-        franchise_phone: buyNowItem.product.franchise_phone || "",
-      },
-    ]
+        {
+          id: buyNowItem.product.id,
+          product_id: buyNowItem.product.product_id || buyNowItem.product.id,
+          name: buyNowItem.product.name,
+          image:
+            buyNowItem.variant?.images?.[0] || buyNowItem.product.images?.[0],
+          price:
+            buyNowItem.variant?.final_price ||
+            buyNowItem.product.final_price ||
+            buyNowItem.product.offer_price ||
+            buyNowItem.product.price,
+          quantity: buyNowItem.quantity,
+          variant: buyNowItem.variant,
+          size: buyNowItem.size,
+          chef_user_id:
+            buyNowItem.product.chef_user_id ||
+            buyNowItem.product.created_by ||
+            buyNowItem.product.created_by_user_id ||
+            "",
+          chef_id: buyNowItem.product.chef_id || "",
+          chef_name:
+            buyNowItem.product.chef_name ||
+            buyNowItem.product.created_by_name ||
+            "",
+          chef_email:
+            buyNowItem.product.chef_email ||
+            buyNowItem.product.created_by_email ||
+            "",
+          chef_phone:
+            buyNowItem.product.chef_phone ||
+            buyNowItem.product.created_by_phone ||
+            "",
+          franchise_id: buyNowItem.product.franchise_id || "",
+          franchise_user_id: buyNowItem.product.franchise_user_id || "",
+          franchise_name: buyNowItem.product.franchise_name || "",
+          franchise_email: buyNowItem.product.franchise_email || "",
+          franchise_phone: buyNowItem.product.franchise_phone || "",
+        },
+      ]
     : userFoodCart;
 
   const subtotal = useMemo(
@@ -73,9 +99,9 @@ export default function FoodCheckout() {
       checkoutItems.reduce(
         (total, item) =>
           total + parseFloat(item.price || 0) * (item.quantity || 1),
-        0
+        0,
       ),
-    [checkoutItems]
+    [checkoutItems],
   );
 
   useEffect(() => {
@@ -102,19 +128,108 @@ export default function FoodCheckout() {
       import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 
     const cleanPath = url.replace(/\\/g, "/");
-    const finalPath = cleanPath.startsWith("/")
-      ? cleanPath
-      : `/${cleanPath}`;
+    const finalPath = cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`;
 
     return `${backendUrl}${finalPath}`;
   };
 
+  const getLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported by your browser.");
+      return;
+    }
+    setIsLoadingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+          );
+          const data = await res.json();
+          if (data && data.address) {
+            setStreetAddress(
+              data.address.road ||
+                data.address.suburb ||
+                data.display_name ||
+                "",
+            );
+            setCity(
+              data.address.city ||
+                data.address.town ||
+                data.address.village ||
+                "",
+            );
+            setDistrict(
+              data.address.state_district || data.address.county || "",
+            );
+            setStateValue(data.address.state || "");
+            setZipCode(data.address.postcode || "");
+            setCountry(data.address.country || "India");
+            toast.success("Location fetched successfully!");
+          } else {
+            toast.error("Could not fetch address from location.");
+          }
+        } catch (error) {
+          toast.error("Error fetching address.");
+        } finally {
+          setIsLoadingLocation(false);
+        }
+      },
+      (error) => {
+        setIsLoadingLocation(false);
+        toast.error("Unable to retrieve your location.");
+      },
+    );
+  };
+
+  const handleSearchAddress = async (query) => {
+    setSearchQuery(query);
+    if (query.length < 3) {
+      setSearchResults([]);
+      return;
+    }
+    setIsSearching(true);
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&limit=5`,
+      );
+      const data = await res.json();
+      setSearchResults(data || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const selectSearchResult = (item) => {
+    const addr = item.address || {};
+    setStreetAddress(item.display_name || "");
+    setCity(addr.city || addr.town || addr.village || "");
+    setDistrict(addr.state_district || addr.county || "");
+    setStateValue(addr.state || "");
+    setZipCode(addr.postcode || "");
+    setCountry(addr.country || "India");
+    setSearchQuery(item.display_name);
+    setSearchResults([]);
+  };
+
   const validateDelivery = () => {
-    const requiredFields = [streetAddress, city, district, stateValue, country, zipCode];
+    const requiredFields = [
+      streetAddress,
+      city,
+      district,
+      stateValue,
+      country,
+      zipCode,
+    ];
     if (!user) return "Please login to continue.";
     if (!checkoutItems.length) return "Your food cart is empty.";
-    if (requiredFields.some((field) => !field.trim())) return "Please fill in all address fields.";
-    if (!deliveryDate || !deliveryTime) return "Please choose a delivery date and time.";
+    if (requiredFields.some((field) => !field.trim()))
+      return "Please fill in all address fields.";
+    if (!deliveryDate || !deliveryTime)
+      return "Please choose a delivery date and time.";
 
     const selectedDateTime = new Date(`${deliveryDate}T${deliveryTime}`);
     const minDateTime = new Date();
@@ -140,6 +255,9 @@ export default function FoodCheckout() {
     setZipCode(address.zip_code || "");
     setCountry(address.country || "India");
 
+    setSearchQuery("");
+    setSearchResults([]);
+    setIsSearchFocused(false);
     toast.success("Address loaded successfully.");
   };
 
@@ -266,77 +384,89 @@ export default function FoodCheckout() {
         <PageContainer>
           <div className="grid gap-10 lg:grid-cols-3">
             <div className="lg:col-span-2 space-y-6">
+              {/* Location Search */}
+              <div className="bg-white rounded-3xl shadow p-8">
+                <div className="relative max-w-4xl">
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Search Address
+                  </label>
+                  <div className="flex items-center justify-between flex-col sm:flex-row gap-4">
+                    <div className="flex-1 relative">
+                      <input
+                        value={searchQuery}
+                        onChange={(e) => handleSearchAddress(e.target.value)}
+                        onFocus={() => setIsSearchFocused(true)}
+                        onBlur={() =>
+                          setTimeout(() => setIsSearchFocused(false), 200)
+                        }
+                        placeholder="Search for your address..."
+                        className="w-full sm:w-3/4 md:w-2/3 lg:w-1/2 rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                      />
+                      {(isSearchFocused || searchResults.length > 0) && (
+                        <div className="absolute z-10 w-full mt-2 bg-white rounded-2xl shadow-xl border border-slate-100 max-h-60 overflow-y-auto">
+                          {/* Saved Addresses Section */}
+                          {!searchQuery && savedAddresses.length > 0 && (
+                            <>
+                              <div className="px-4 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider bg-slate-50">
+                                Saved Addresses
+                              </div>
+                              {savedAddresses.map((address) => (
+                                <div
+                                  key={address.id}
+                                  onClick={() => fillAddress(address)}
+                                  className="px-4 py-3 hover:bg-emerald-50 cursor-pointer border-b border-slate-50 text-sm"
+                                >
+                                  <div className="font-semibold text-slate-800">
+                                    {address.customer_name}
+                                  </div>
+                                  <div className="text-slate-500 text-xs truncate">
+                                    {address.street_address}, {address.city},{" "}
+                                    {address.state} - {address.zip_code}
+                                  </div>
+                                </div>
+                              ))}
+                            </>
+                          )}
 
-              {savedAddresses.length > 0 && (
-                <div className="bg-white rounded-3xl shadow p-8">
-                  <h2 className="text-2xl font-bold text-slate-900 mb-4">
-                    Saved Addresses
-                  </h2>
+                          {/* Search Results Section */}
+                          {searchResults.length > 0 && (
+                            <>
+                              <div className="px-4 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider bg-slate-50">
+                                Search Results
+                              </div>
+                              {searchResults.map((item, idx) => (
+                                <div
+                                  key={idx}
+                                  onClick={() => selectSearchResult(item)}
+                                  className="px-4 py-3 hover:bg-emerald-50 cursor-pointer border-b border-slate-50 text-sm"
+                                >
+                                  {item.display_name}
+                                </div>
+                              ))}
+                            </>
+                          )}
 
-                  <div className="space-y-4">
-                    {savedAddresses.slice(0, 3).map((address) => (
-                      <div
-                        key={address.id}
-                        onClick={() => fillAddress(address)}
-                        className={`rounded-2xl p-5 cursor-pointer transition-all duration-200
-${selectedAddressId === address.id
-                            ? "border-2 border-emerald-600 bg-emerald-50 shadow-lg ring-2 ring-emerald-200"
-                            : "border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50"
-                          }`}
-                      >
-                        <div className="grid md:grid-cols-2 gap-2 text-sm">
-
-                          <p>
-                            <span className="font-semibold">Name:</span>{" "}
-                            {address.customer_name}
-                          </p>
-
-                          <p>
-                            <span className="font-semibold">Email:</span>{" "}
-                            {address.customer_email}
-                          </p>
-
-                          <p>
-                            <span className="font-semibold">Phone:</span>{" "}
-                            {address.customer_phone}
-                          </p>
-
-                          <p>
-                            <span className="font-semibold">Street Address:</span>{" "}
-                            {address.street_address}
-                          </p>
-
-                          <p>
-                            <span className="font-semibold">City:</span>{" "}
-                            {address.city}
-                          </p>
-
-                          <p>
-                            <span className="font-semibold">District:</span>{" "}
-                            {address.district}
-                          </p>
-
-                          <p>
-                            <span className="font-semibold">State:</span>{" "}
-                            {address.state}
-                          </p>
-
-                          <p>
-                            <span className="font-semibold">ZIP Code:</span>{" "}
-                            {address.zip_code}
-                          </p>
-
-                          <p className="md:col-span-2">
-                            <span className="font-semibold">Country:</span>{" "}
-                            {address.country}
-                          </p>
-
+                          {searchQuery &&
+                            searchResults.length === 0 &&
+                            isSearching && (
+                              <div className="px-4 py-3 text-sm text-slate-500">
+                                Searching...
+                              </div>
+                            )}
                         </div>
-                      </div>
-                    ))}
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={getLocation}
+                      disabled={isLoadingLocation}
+                      className="flex items-center justify-center gap-2 rounded-2xl bg-emerald-100 px-6 py-3 text-sm font-bold text-emerald-700 hover:bg-emerald-200 transition disabled:opacity-70 whitespace-nowrap"
+                    >
+                      {isLoadingLocation ? "Fetching..." : "Use Location"}
+                    </button>
                   </div>
                 </div>
-              )}
+              </div>
 
               {/* Personal Information */}
               <div className="bg-white rounded-3xl shadow p-8">
@@ -345,7 +475,6 @@ ${selectedAddressId === address.id
                 </h2>
 
                 <div className="grid gap-4 md:grid-cols-2">
-
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-2">
                       Name
@@ -379,7 +508,6 @@ ${selectedAddressId === address.id
                     />
                   </div>
 
-                  {/* Row 1 */}
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-2">
                       Street Address
@@ -432,7 +560,9 @@ ${selectedAddressId === address.id
 
                       {/* States */}
                       <option value="Andhra Pradesh">Andhra Pradesh</option>
-                      <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+                      <option value="Arunachal Pradesh">
+                        Arunachal Pradesh
+                      </option>
                       <option value="Assam">Assam</option>
                       <option value="Bihar">Bihar</option>
                       <option value="Chhattisgarh">Chhattisgarh</option>
@@ -469,7 +599,9 @@ ${selectedAddressId === address.id
                         Dadra and Nagar Haveli and Daman and Diu
                       </option>
                       <option value="Delhi">Delhi</option>
-                      <option value="Jammu and Kashmir">Jammu and Kashmir</option>
+                      <option value="Jammu and Kashmir">
+                        Jammu and Kashmir
+                      </option>
                       <option value="Ladakh">Ladakh</option>
                       <option value="Lakshadweep">Lakshadweep</option>
                       <option value="Puducherry">Puducherry</option>
@@ -499,7 +631,6 @@ ${selectedAddressId === address.id
                       className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                     />
                   </div>
-
                 </div>
               </div>
 
@@ -510,7 +641,6 @@ ${selectedAddressId === address.id
                 </h2>
 
                 <div className="grid gap-6 md:grid-cols-2">
-
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-2">
                       Delivery Date
@@ -518,6 +648,7 @@ ${selectedAddressId === address.id
                     <input
                       type="date"
                       min={getTomorrowDate()}
+                      max={getMaxDate()}
                       value={deliveryDate}
                       onChange={(e) => setDeliveryDate(e.target.value)}
                       className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
@@ -535,7 +666,6 @@ ${selectedAddressId === address.id
                       className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                     />
                   </div>
-
                 </div>
 
                 <div className="mt-8 border-t border-gray-300 pt-6">
@@ -544,7 +674,6 @@ ${selectedAddressId === address.id
                   </h3>
 
                   <div className="flex flex-wrap items-center gap-8">
-
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="radio"
@@ -568,17 +697,16 @@ ${selectedAddressId === address.id
                       />
                       <span>Online Payment</span>
                     </label>
-
                   </div>
                 </div>
-
               </div>
-
             </div>
 
             <div className="space-y-6">
               <div className="bg-white rounded-3xl shadow p-8">
-                <h2 className="text-2xl font-bold text-slate-900 mb-6">Order summary</h2>
+                <h2 className="text-2xl font-bold text-slate-900 mb-6">
+                  Order summary
+                </h2>
                 <div className="space-y-4">
                   <div className="flex justify-between text-sm text-slate-600">
                     <span>Items</span>
@@ -594,7 +722,6 @@ ${selectedAddressId === address.id
                           className="rounded-3xl border border-slate-200 p-4 bg-slate-50"
                         >
                           <div className="flex items-center gap-4">
-
                             <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gray-100 flex-shrink-0">
                               <img
                                 src={image}
@@ -612,14 +739,17 @@ ${selectedAddressId === address.id
                               </p>
 
                               <p className="text-sm text-slate-500 mt-1">
-                                Qty {item.quantity} × ₹{parseFloat(item.price || 0).toFixed(2)}
+                                Qty {item.quantity} × ₹
+                                {parseFloat(item.price || 0).toFixed(2)}
                               </p>
                             </div>
 
                             <p className="font-semibold text-slate-900 whitespace-nowrap">
-                              ₹{(parseFloat(item.price || 0) * item.quantity).toFixed(2)}
+                              ₹
+                              {(
+                                parseFloat(item.price || 0) * item.quantity
+                              ).toFixed(2)}
                             </p>
-
                           </div>
                         </div>
                       );
@@ -639,18 +769,27 @@ ${selectedAddressId === address.id
                       <>
                         <div className="flex justify-between text-emerald-600 font-semibold mt-2">
                           <span>Discount ({appliedCoupon.code})</span>
-                          <span>-₹{appliedCoupon.discountAmount.toFixed(2)}</span>
+                          <span>
+                            -₹{appliedCoupon.discountAmount.toFixed(2)}
+                          </span>
                         </div>
-                        {appliedCoupon.ineligibleItems && appliedCoupon.ineligibleItems.length > 0 && (
-                          <div className="mt-2 text-xs text-red-600 bg-red-50 p-2 rounded border border-red-100">
-                            <strong>Note:</strong> Discount was not applied to {appliedCoupon.ineligibleItems.length} item(s).
-                          </div>
-                        )}
+                        {appliedCoupon.ineligibleItems &&
+                          appliedCoupon.ineligibleItems.length > 0 && (
+                            <div className="mt-2 text-xs text-red-600 bg-red-50 p-2 rounded border border-red-100">
+                              <strong>Note:</strong> Discount was not applied to{" "}
+                              {appliedCoupon.ineligibleItems.length} item(s).
+                            </div>
+                          )}
                       </>
                     )}
                     <div className="flex justify-between text-lg font-black text-slate-900 mt-4">
                       <span>Total</span>
-                      <span>₹{appliedCoupon ? appliedCoupon.finalTotal.toFixed(2) : subtotal.toFixed(2)}</span>
+                      <span>
+                        ₹
+                        {appliedCoupon
+                          ? appliedCoupon.finalTotal.toFixed(2)
+                          : subtotal.toFixed(2)}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -660,12 +799,12 @@ ${selectedAddressId === address.id
                   disabled={isSubmitting}
                   className="mt-8 w-full rounded-2xl bg-emerald-600 px-6 py-4 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {isSubmitting ? 'Placing order...' : 'Place Order'}
+                  {isSubmitting ? "Placing order..." : "Place Order"}
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => navigate('/food-cart')}
+                  onClick={() => navigate("/food-cart")}
                   className="mt-3 w-full rounded-2xl border border-slate-200 bg-white px-6 py-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                 >
                   Back to cart
