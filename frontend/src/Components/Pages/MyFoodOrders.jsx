@@ -398,12 +398,7 @@ export default function MyFoodOrders({ isEmbedded = false }) {
 
       await api.post(
         "/delivery-partner-review",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
+        formData
       );
 
       toast.success(
