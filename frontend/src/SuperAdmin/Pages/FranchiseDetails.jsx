@@ -270,7 +270,7 @@ const FranchiseDetails = () => {
   if (!franchise) return null;
 
   return (
-    <div className="min-h-screen bg-[#05120f] px-4 py-6 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#05120f] px-2 py-6">
       <div className="mx-auto max-w-[1600px] space-y-8">
 
         {/* Header Banner */}
