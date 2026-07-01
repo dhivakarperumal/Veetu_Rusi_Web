@@ -227,6 +227,7 @@ const AdminLayout = () => {
             setPopupVisible(false);
             setPopupOrder(null);
             popupOrderRef.current = null;
+            fetchPendingOrders();
         } catch (err) {
             console.error(err);
             toast.error('Failed to accept order');
@@ -238,6 +239,15 @@ const AdminLayout = () => {
     const handleReject = () => {
         if (!popupOrder) return;
         setCancelTargetOrder(popupOrder);
+    };
+
+    const handleNextOrder = () => {
+        if (!popupOrder) return;
+        displayedOrderIdsRef.current.add(Number(popupOrder.id));
+        setPopupVisible(false);
+        setPopupOrder(null);
+        popupOrderRef.current = null;
+        fetchPendingOrders();
     };
 
     const skipOrder = () => {
@@ -367,6 +377,13 @@ const AdminLayout = () => {
                                 </div>
 
                                 <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-end">
+                                    <button
+                                        type="button"
+                                        onClick={handleNextOrder}
+                                        className="inline-flex justify-center rounded-2xl border border-slate-700/70 bg-slate-900/90 px-5 py-3 text-sm font-bold text-slate-200 hover:bg-slate-800 transition"
+                                    >
+                                        Next Order
+                                    </button>
                                     <button
                                         type="button"
                                         onClick={handleReject}
