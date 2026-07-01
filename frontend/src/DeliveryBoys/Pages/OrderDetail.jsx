@@ -424,9 +424,12 @@ const DeliveryOrderDetail = () => {
                 </p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {DELIVERY_STATUSES.map((s) => {
+                {DELIVERY_STATUSES.filter(s => {
                   const sIdx = getStatusIndex(s);
-                  const isPast = sIdx < statusIndex;
+                  return sIdx >= statusIndex || statusIndex === -1;
+                }).map((s) => {
+                  const sIdx = getStatusIndex(s);
+                  const isPast = false; // Never true now since we filtered them
                   const isCurr = s === order.status;
                   return (
                     <button

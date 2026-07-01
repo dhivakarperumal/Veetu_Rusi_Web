@@ -105,7 +105,10 @@ const StatusModal = ({ order, onClose, onSaved }) => {
             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">New Status</p>
 
             <div className="space-y-2">
-              {DELIVERY_STATUSES.map((s) => {
+              {DELIVERY_STATUSES.filter((s, i, arr) => {
+                const currentIdx = arr.findIndex(st => st.key === order.status);
+                return currentIdx === -1 || i >= currentIdx;
+              }).map((s) => {
                 const isSel = status === s.key;
                 const isCur = order.status === s.key;
                 return (

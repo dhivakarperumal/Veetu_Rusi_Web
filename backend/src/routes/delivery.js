@@ -433,14 +433,14 @@ router.patch('/orders/:id/assign', async (req, res) => {
   }
 });
 
-// Update order status (Picked Up → Out for Delivery → Delivered)
+// Update order status (Picked Up → Start Ride → Reached Location → Waiting for Customer → Delivered)
 router.patch('/orders/:id/status', async (req, res) => {
   try {
     const orderId = req.params.id;
     const deliveryBoyId = req.user?.user_id || req.user?.id;
     const { status } = req.body;
 
-    const allowedStatuses = ['Picked Up', 'Out for Delivery', 'Delivered'];
+    const allowedStatuses = ['Picked Up', 'Start Ride', 'Reached Location', 'Waiting for Customer', 'Out for Delivery', 'Delivered'];
     if (!allowedStatuses.includes(status)) {
       return res.status(400).json({ message: `Invalid status. Allowed: ${allowedStatuses.join(', ')}` });
     }

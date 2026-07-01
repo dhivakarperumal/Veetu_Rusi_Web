@@ -177,7 +177,10 @@ const EditOrderModal = ({ order, onClose, onSaved }) => {
                                 Update Delivery Status
                             </p>
                             <div className="space-y-2">
-                                {DELIVERY_STATUSES.map((s) => {
+                                {DELIVERY_STATUSES.filter((s, i, arr) => {
+                                    const currentIdx = arr.indexOf(order.status);
+                                    return currentIdx === -1 || i >= currentIdx;
+                                }).map((s) => {
                                     const isSelected = status === s;
                                     const isCurrent  = order.status === s;
                                     return (
