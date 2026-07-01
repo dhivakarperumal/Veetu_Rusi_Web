@@ -91,7 +91,7 @@ function formatCountdown(ms) {
   const h = Math.floor(totalSec / 3600);
   const m = Math.floor((totalSec % 3600) / 60);
   const s = totalSec % 60;
-  return `${h}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
+  return `${h}h ${String(m).padStart(2, '0')}m ${String(s).padStart(2, '0')}s`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -106,9 +106,9 @@ function CustomerCancelBar({ order, onCancel }) {
 
   const ineligibleReason =
     s === 'picked up' ? 'Already Picked Up' :
-    s === 'out for delivery' ? 'Out for Delivery' :
-    (remaining !== null && remaining <= 0) ? 'Cancellation window expired (2hr limit)' :
-    null;
+      s === 'out for delivery' ? 'Out for Delivery' :
+        (remaining !== null && remaining <= 0) ? 'Cancellation window expired (2hr limit)' :
+          null;
 
   if (ineligibleReason) {
     return (
@@ -168,6 +168,16 @@ export default function MyFoodOrders({ isEmbedded = false }) {
   const [reviewComment, setReviewComment] = useState('');
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
 
+  // Delivery Partner Review
+  const [showDeliveryReviewModal, setShowDeliveryReviewModal] = useState(false);
+  const [deliveryReviewOrder, setDeliveryReviewOrder] = useState(null);
+
+  const [deliveryRating, setDeliveryRating] = useState(5);
+  const [deliveryComment, setDeliveryComment] = useState("");
+
+  const [deliveryImage, setDeliveryImage] = useState(null);
+  const [deliverySubmitting, setDeliverySubmitting] = useState(false);
+
   useEffect(() => {
     if (user === null) {
       navigate("/login");
@@ -211,7 +221,7 @@ export default function MyFoodOrders({ isEmbedded = false }) {
     };
 
     fetchAndOpen();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location?.state?.newOrderId]);
 
   const openOrder = (order) => {
@@ -231,6 +241,16 @@ export default function MyFoodOrders({ isEmbedded = false }) {
     setShowReviewModal(true);
   };
 
+  const openDeliveryReviewModal = (order) => {
+    setDeliveryReviewOrder(order);
+
+    setDeliveryRating(5);
+    setDeliveryComment("");
+    setDeliveryImage(null);
+
+    setShowDeliveryReviewModal(true);
+  };
+
   const closeReviewModal = () => {
     setShowReviewModal(false);
     setReviewOrder(null);
@@ -238,6 +258,18 @@ export default function MyFoodOrders({ isEmbedded = false }) {
     setReviewRating(5);
     setReviewComment("");
     setReviewSubmitting(false);
+  };
+
+  const closeDeliveryReviewModal = () => {
+    setShowDeliveryReviewModal(false);
+
+    setDeliveryReviewOrder(null);
+
+    setDeliveryRating(5);
+    setDeliveryComment("");
+    setDeliveryImage(null);
+
+    setDeliverySubmitting(false);
   };
 
   const submitReview = async () => {
@@ -273,10 +305,128 @@ export default function MyFoodOrders({ isEmbedded = false }) {
     }
   };
 
+  const submitDeliveryReview = async () => {
+
+    if (!deliveryRating) {
+      toast.error("Please give a rating.");
+      return;
+    }
+
+    setDeliverySubmitting(true);
+
+    try {
+
+      const formData = new FormData();
+
+      formData.append(
+        "user_id",
+        user?.user_id || user?.id
+      );
+
+      formData.append(
+        "user_name",
+        user?.name
+      );
+
+      formData.append(
+        "user_email",
+        user?.email
+      );
+
+      formData.append(
+        "rating",
+        deliveryRating
+      );
+
+      formData.append(
+        "comment",
+        deliveryComment
+      );
+
+      formData.append(
+        "delivery_partner_id",
+        deliveryReviewOrder.delivery_partner_id
+      );
+
+      formData.append(
+        "delivery_partner_name",
+        deliveryReviewOrder.delivery_partner_name
+      );
+
+      formData.append(
+        "delivery_partner_phone",
+        deliveryReviewOrder.delivery_partner_phone
+      );
+
+      formData.append(
+        "delivery_partner_email",
+        deliveryReviewOrder.delivery_partner_email
+      );
+
+      formData.append(
+        "franchise_admin_id",
+        deliveryReviewOrder.franchise_admin_id
+      );
+
+      formData.append(
+        "franchise_admin_name",
+        deliveryReviewOrder.franchise_admin_name
+      );
+
+      formData.append(
+        "created_by",
+        user?.user_id || user?.id
+      );
+
+      formData.append(
+        "updated_by",
+        user?.user_id || user?.id
+      );
+
+      if (deliveryImage) {
+        formData.append(
+          "image",
+          deliveryImage
+        );
+      }
+
+      await api.post(
+        "/delivery-partner-review",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      toast.success(
+        "Delivery Partner Review Submitted Successfully."
+      );
+
+      closeDeliveryReviewModal();
+
+    } catch (err) {
+
+      console.log(err);
+
+      toast.error(
+        err.response?.data?.message ||
+        "Failed to submit review."
+      );
+
+    } finally {
+
+      setDeliverySubmitting(false);
+
+    }
+
+  };
+
   const handleTrack = (order) => {
     const lat = order.delivery_partner_lat;
     const lng = order.delivery_partner_lng;
-    
+
     if (lat && lng) {
       const url = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
       window.open(url, "_blank");
@@ -303,147 +453,156 @@ export default function MyFoodOrders({ isEmbedded = false }) {
   };
 
   const content = (
-          <div className="flex flex-col gap-6">
-            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-              <div>
-                <p className="text-sm uppercase tracking-[0.3em] text-slate-500">Food order history</p>
-                <h2 className="text-3xl font-black text-slate-900">Your food order dashboard</h2>
-              </div>
-              <button
-                onClick={() => navigate("/food-cart")}
-                className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-100 transition"
-              >
-                <Package className="h-4 w-4" />
-                Back to Food Cart
-              </button>
-            </div>
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p className="text-sm uppercase tracking-[0.3em] text-slate-500">Food order history</p>
+          <h2 className="text-3xl font-black text-slate-900">Your food order dashboard</h2>
+        </div>
+        <button
+          onClick={() => navigate("/food-cart")}
+          className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-100 transition"
+        >
+          <Package className="h-4 w-4" />
+          Back to Food Cart
+        </button>
+      </div>
 
-            {loading ? (
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {[1, 2, 3].map((index) => (
-                  <div key={index} className="h-56 rounded-[2rem] bg-white shadow-sm animate-pulse" />
-                ))}
+      {loading ? (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {[1, 2, 3].map((index) => (
+            <div key={index} className="h-56 rounded-[2rem] bg-white shadow-sm animate-pulse" />
+          ))}
+        </div>
+      ) : orders.length === 0 ? (
+        <div className="rounded-[2rem] border border-dashed border-slate-200 bg-white p-16 text-center text-slate-500">
+          <FileText className="mx-auto mb-4 h-10 w-10 text-slate-300" />
+          <h3 className="text-xl font-semibold text-slate-900">No food orders yet</h3>
+          <p className="mt-2 text-sm text-slate-500">Place your first food order from the food cart to view it here.</p>
+        </div>
+      ) : (
+        <div className="grid gap-6 lg:grid-cols-2">
+          {orders.map((order) => (
+            <div
+              key={order.id}
+              className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+            >
+              <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-5 bg-slate-50">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Order ID</p>
+                  <p className="mt-2 text-lg font-bold text-slate-900">{order.order_id}</p>
+                </div>
+                <span className={`rounded-full px-3 py-1 text-sm font-semibold ${order.status === "Delivered" || order.status === "Completed" ? "bg-emerald-100 text-emerald-700" : order.status === "Cancelled" ? "bg-red-100 text-red-700" : order.status === "New Order" || order.status === "Pending" ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"}`}>
+                  {order.status === "Pending" ? "New Order" : (order.status || "New Order")}
+                </span>
               </div>
-            ) : orders.length === 0 ? (
-              <div className="rounded-[2rem] border border-dashed border-slate-200 bg-white p-16 text-center text-slate-500">
-                <FileText className="mx-auto mb-4 h-10 w-10 text-slate-300" />
-                <h3 className="text-xl font-semibold text-slate-900">No food orders yet</h3>
-                <p className="mt-2 text-sm text-slate-500">Place your first food order from the food cart to view it here.</p>
-              </div>
-            ) : (
-              <div className="grid gap-6 lg:grid-cols-2">
-                {orders.map((order) => (
-                  <div
-                    key={order.id}
-                    className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
-                  >
-                    <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-5 bg-slate-50">
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Order ID</p>
-                        <p className="mt-2 text-lg font-bold text-slate-900">{order.order_id}</p>
-                      </div>
-                      <span className={`rounded-full px-3 py-1 text-sm font-semibold ${order.status === "Delivered" || order.status === "Completed" ? "bg-emerald-100 text-emerald-700" : order.status === "Cancelled" ? "bg-red-100 text-red-700" : order.status === "New Order" || order.status === "Pending" ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"}`}>
-                        {order.status === "Pending" ? "New Order" : (order.status || "New Order")}
-                      </span>
-                    </div>
 
-                    <div className="space-y-4 px-6 py-5">
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        <div className="rounded-3xl bg-slate-50 p-4">
-                          <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Order placed</p>
-                          <p className="mt-2 text-sm font-semibold text-slate-900">{formatDateTime(order.ordered_at)}</p>
-                        </div>
-                        <div className="rounded-3xl bg-slate-50 p-4">
-                          <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Delivery slot</p>
-                          <p className="mt-2 text-sm font-semibold text-slate-900">{order.delivery_date || "-"} {order.delivery_time ? `at ${order.delivery_time}` : ""}</p>
-                        </div>
-                      </div>
+              <div className="space-y-4 px-6 py-5">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-3xl bg-slate-50 p-4">
+                    <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Order placed</p>
+                    <p className="mt-2 text-sm font-semibold text-slate-900">{formatDateTime(order.ordered_at)}</p>
+                  </div>
+                  <div className="rounded-3xl bg-slate-50 p-4">
+                    <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Delivery slot</p>
+                    <p className="mt-2 text-sm font-semibold text-slate-900">{order.delivery_date || "-"} {order.delivery_time ? `at ${order.delivery_time}` : ""}</p>
+                  </div>
+                </div>
 
-                      {/* <div className="rounded-3xl bg-slate-50 p-4">
+                {/* <div className="rounded-3xl bg-slate-50 p-4">
                         <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Food items</p>
                         <p className="mt-2 text-sm font-semibold text-slate-900">{getItemSummary(order.items)}</p>
                       </div> */}
 
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        <div className="rounded-3xl bg-slate-50 p-4">
-                          <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Items quantity</p>
-                          <p className="mt-2 text-lg font-black text-slate-900">
-                            {order.items?.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0) || 0}
-                          </p>
-                        </div>
-                        <div className="rounded-3xl bg-slate-50 p-4">
-                          <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Total amount</p>
-                          <p className="mt-2 text-lg font-black text-slate-900">₹{parseFloat(order.total_amount || 0).toFixed(2)}</p>
-                        </div>
-                      </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-3xl bg-slate-50 p-4">
+                    <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Items quantity</p>
+                    <p className="mt-2 text-lg font-black text-slate-900">
+                      {order.items?.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0) || 0}
+                    </p>
+                  </div>
+                  <div className="rounded-3xl bg-slate-50 p-4">
+                    <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Total amount</p>
+                    <p className="mt-2 text-lg font-black text-slate-900">₹{parseFloat(order.total_amount || 0).toFixed(2)}</p>
+                  </div>
+                </div>
 
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        <div className="rounded-3xl bg-slate-50 p-4">
-                          <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Chef</p>
-                          <p className="mt-2 text-sm font-semibold text-slate-900">{getChefNames(order.items, order.chef_name)}</p>
-                        </div>
-                        {/* <div className="rounded-3xl bg-slate-50 p-4">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-3xl bg-slate-50 p-4">
+                    <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Chef</p>
+                    <p className="mt-2 text-sm font-semibold text-slate-900">{getChefNames(order.items, order.chef_name)}</p>
+                  </div>
+                  {/* <div className="rounded-3xl bg-slate-50 p-4">
                           <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Order status</p>
                           <p className="mt-2 text-sm font-semibold text-slate-900">{order.status === "Pending" ? "New Order" : (order.status || 'New Order')}</p>
                         </div> */}
+                </div>
+
+                {/* Delivery Partner Info (Outer Card) */}
+                {(order.status === "Delivery Partner Assigned" || order.status === "Picked Up" || order.status === "Out for Delivery" || order.status === "Delivered") && order.delivery_partner_name && (
+                  <div className="rounded-3xl bg-blue-50 p-4 border border-blue-100">
+                    <p className="text-xs uppercase tracking-[0.24em] text-blue-500">Delivery Partner</p>
+                    <div className="mt-2 flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">{order.delivery_partner_name}</p>
+                        <p className="text-xs font-medium text-slate-500 mt-0.5 flex items-center gap-1">
+                          <User className="w-3 h-3" /> {order.delivery_partner_phone || "N/A"}
+                        </p>
                       </div>
-                      
-                      {/* Delivery Partner Info (Outer Card) */}
-                      {(order.status === "Delivery Partner Assigned" || order.status === "Picked Up" || order.status === "Out for Delivery" || order.status === "Delivered") && order.delivery_partner_name && (
-                        <div className="rounded-3xl bg-blue-50 p-4 border border-blue-100">
-                          <p className="text-xs uppercase tracking-[0.24em] text-blue-500">Delivery Partner</p>
-                          <div className="mt-2 flex items-center justify-between">
-                            <div>
-                              <p className="text-sm font-semibold text-slate-900">{order.delivery_partner_name}</p>
-                              <p className="text-xs font-medium text-slate-500 mt-0.5 flex items-center gap-1">
-                                <User className="w-3 h-3" /> {order.delivery_partner_phone || "N/A"}
-                              </p>
-                            </div>
-                            {order.status !== "Delivered" && (
-                              <button
-                                onClick={() => handleTrack(order)}
-                                className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-white transition hover:bg-blue-500 shadow-sm"
-                              >
-                                <MapPin className="h-3 w-3" /> Track
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* ── Cancellation countdown / status ── */}
-                    <CustomerCancelBar order={order} onCancel={() => setCancelOrder(order)} />
-
-                    <div className="flex flex-wrap items-center gap-3 border-t border-slate-200 px-6 py-4 bg-white">
-                      <button
-                        onClick={() => openOrder(order)}
-                        className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-white transition hover:bg-primary-dark"
-                      >
-                        <Clock className="h-4 w-4" />
-                        View details
-                      </button>
-                      {order.status === "Delivered" && (
+                      {order.status !== "Delivered" && (
                         <button
-                          onClick={() => openReviewModal(order)}
-                          className="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                          onClick={() => handleTrack(order)}
+                          className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-white transition hover:bg-blue-500 shadow-sm"
                         >
-                          Review
+                          <MapPin className="h-3 w-3" /> Track
                         </button>
                       )}
-                      <button
-                        onClick={() => navigate("/food-cart")}
-                        className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
-                      >
-                        <Package className="h-4 w-4" />
-                        Back to cart
-                      </button>
                     </div>
                   </div>
-                ))}
+                )}
               </div>
-            )}
-          </div>
+
+              {/* ── Cancellation countdown / status ── */}
+              <CustomerCancelBar order={order} onCancel={() => setCancelOrder(order)} />
+
+              <div className="flex flex-wrap items-center gap-3 border-t border-slate-200 px-6 py-4 bg-white">
+                <button
+                  onClick={() => openOrder(order)}
+                  className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-white transition hover:bg-primary-dark"
+                >
+                  <Clock className="h-4 w-4" />
+                  View details
+                </button>
+                {order.status === "Delivered" && (
+                  <button
+                    onClick={() => openReviewModal(order)}
+                    className="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                  >
+                    Review
+                  </button>
+                )}
+
+                {order.status === "Delivered" && (
+                  <button
+                    onClick={() => openDeliveryReviewModal(order)}
+                    className="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
+                  >
+                    Review Delivery Partner
+                  </button>
+                )}
+                <button
+                  onClick={() => navigate("/food-cart")}
+                  className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                >
+                  <Package className="h-4 w-4" />
+                  Back to cart
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 
   return (
@@ -614,7 +773,7 @@ export default function MyFoodOrders({ isEmbedded = false }) {
                           <p className="text-xs uppercase tracking-[0.24em] text-slate-500 mt-2">Phone</p>
                         </div>
                       </div>
-                      
+
                       {selectedOrder.status !== "Delivered" && (
                         <div className="mt-4 pt-4 border-t border-slate-200 flex justify-end">
                           <button
@@ -719,6 +878,141 @@ export default function MyFoodOrders({ isEmbedded = false }) {
           </div>
         </div>
       )}
+
+      {showDeliveryReviewModal && deliveryReviewOrder && (
+        <div className="fixed inset-0 z-50 bg-black/50 overflow-y-auto p-4">
+          <div className="mx-auto max-w-2xl rounded-[30px] bg-white shadow-2xl">
+
+            {/* Header */}
+            <div className="flex items-center justify-between border-b p-6">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-800">
+                  Review Delivery Partner
+                </h2>
+
+                <p className="text-sm text-slate-500 mt-1">
+                  Share your delivery experience.
+                </p>
+              </div>
+
+              <button
+                onClick={closeDeliveryReviewModal}
+                className="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+
+              {/* Delivery Partner */}
+              <div className="rounded-3xl bg-blue-50 border border-blue-100 p-5">
+
+                <p className="text-xs uppercase tracking-wider text-blue-600">
+                  Delivery Partner
+                </p>
+
+                <h3 className="text-lg font-bold mt-2">
+                  {deliveryReviewOrder.delivery_partner_name}
+                </h3>
+
+                <p className="text-sm text-slate-500 mt-1">
+                  {deliveryReviewOrder.delivery_partner_phone}
+                </p>
+
+              </div>
+
+              {/* Rating */}
+              <div>
+
+                <label className="font-semibold">
+                  Rating
+                </label>
+
+                <div className="flex gap-3 mt-3">
+
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setDeliveryRating(star)}
+                      className={`w-12 h-12 rounded-full transition
+                ${deliveryRating >= star
+                          ? "bg-yellow-400 text-white"
+                          : "bg-slate-100 hover:bg-slate-200"
+                        }`}
+                    >
+                      ★
+                    </button>
+                  ))}
+
+                </div>
+
+              </div>
+
+              {/* Comment */}
+
+              <div>
+
+                <label className="font-semibold">
+                  Comment
+                </label>
+
+                <textarea
+                  rows={5}
+                  value={deliveryComment}
+                  onChange={(e) => setDeliveryComment(e.target.value)}
+                  placeholder="Tell us about the delivery experience..."
+                  className="mt-3 w-full rounded-2xl border p-4 outline-none focus:border-primary"
+                />
+
+              </div>
+
+              {/* Image */}
+
+              <div>
+
+                <label className="font-semibold">
+                  Upload Image (Optional)
+                </label>
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setDeliveryImage(e.target.files[0])}
+                  className="mt-3 block w-full"
+                />
+
+              </div>
+
+              {/* Buttons */}
+
+              <div className="flex justify-end gap-4">
+
+                <button
+                  onClick={closeDeliveryReviewModal}
+                  className="px-6 py-3 rounded-xl border"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={submitDeliveryReview}
+                  disabled={deliverySubmitting}
+                  className="px-8 py-3 rounded-xl bg-green-600 text-white hover:bg-green-700"
+                >
+                  {deliverySubmitting
+                    ? "Submitting..."
+                    : "Submit Review"}
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      )}  
     </>
   );
 }
