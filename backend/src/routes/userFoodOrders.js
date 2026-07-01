@@ -4,6 +4,7 @@ const controller = require('../controllers/userFoodOrderController');
 const { verifyToken } = require('../middleware/authMiddleware');
 const pool = require('../config/db');
 const { getIo } = require('../utils/socket');
+const upload = require('../config/multer');
 
 const initUserFoodOrderTable = async () => {
   try {
@@ -57,6 +58,7 @@ const initUserFoodOrderTable = async () => {
     try { await pool.execute('ALTER TABLE user_food_order_table ADD COLUMN delivery_partner_user_id VARCHAR(255)'); } catch (e) {}
     try { await pool.execute('ALTER TABLE user_food_order_table ADD COLUMN delivery_partner_name VARCHAR(255)'); } catch (e) {}
     try { await pool.execute('ALTER TABLE user_food_order_table ADD COLUMN delivery_partner_phone VARCHAR(50)'); } catch (e) {}
+    try { await pool.execute('ALTER TABLE user_food_order_table ADD COLUMN status_image VARCHAR(255)'); } catch (e) {}
   } catch (err) {
     console.error('Error creating user_food_order_table:', err.message || err);
   }
@@ -350,10 +352,14 @@ router.get('/:id', verifyToken, async (req, res) => {
   }
 });
 
-router.put('/:id', verifyToken, async (req, res) => {
+router.put('/:id', verifyToken, upload.single('status_image'), async (req, res) => {
   try {
     const { id } = req.params;
-    await controller.updateOrder(id, req.body);
+    const updateData = { ...req.body };
+    if (req.file) {
+      updateData.status_image = `/uploads/${req.file.filename}`;
+    }
+    await controller.updateOrder(id, updateData);
     
     // Check if delivery partner was assigned
     if (req.body.delivery_partner) {

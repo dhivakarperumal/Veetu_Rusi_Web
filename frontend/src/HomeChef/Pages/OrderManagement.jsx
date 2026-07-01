@@ -16,6 +16,7 @@ const OrderManagement = () => {
   const [statusFilter, setStatusFilter] = useState("All");
   const [editingOrder, setEditingOrder] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [statusImage, setStatusImage] = useState(null);
   const [trackingOrder, setTrackingOrder] = useState(null);
   const [trackingDetails, setTrackingDetails] = useState(null);
   const [cancelTargetOrder, setCancelTargetOrder] = useState(null);
@@ -134,7 +135,20 @@ const OrderManagement = () => {
   const handleUpdateOrder = async (e) => {
     e.preventDefault();
     try {
-      await api.put(`/user-food-orders/${editingOrder.id}`, editingOrder);
+      if (statusImage) {
+        const formData = new FormData();
+        Object.keys(editingOrder).forEach(key => {
+          if (editingOrder[key] !== null && editingOrder[key] !== undefined) {
+            formData.append(key, editingOrder[key]);
+          }
+        });
+        formData.append("status_image", statusImage);
+        await api.put(`/user-food-orders/${editingOrder.id}`, formData, {
+          headers: { "Content-Type": "multipart/form-data" }
+        });
+      } else {
+        await api.put(`/user-food-orders/${editingOrder.id}`, editingOrder);
+      }
       toast.success("Order details updated successfully.");
       setIsModalOpen(false);
       fetchOrders();
@@ -339,6 +353,7 @@ const OrderManagement = () => {
                           <button
                             onClick={() => {
                               setEditingOrder(order);
+                              setStatusImage(null);
                               setIsModalOpen(true);
                             }}
                             className="p-2 hover:bg-white/10 text-white/70 hover:text-white rounded-xl transition"
@@ -455,6 +470,19 @@ const OrderManagement = () => {
                   <option value="Cancelled">Cancelled</option>
                 </select>
               </div>
+
+              {['Food Ready', 'Packing', 'Delivered'].includes(editingOrder.status) && (
+                <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                  <label className="text-[10px] text-white/40 font-bold uppercase block mb-2">Upload Status Proof Image (Optional)</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setStatusImage(e.target.files[0])}
+                    className="w-full px-4 py-3 bg-[#070b13]/60 border border-white/5 rounded-2xl outline-none font-medium text-white text-sm focus:border-emerald-500/30 transition-all file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:uppercase file:tracking-widest file:bg-emerald-500/10 file:text-emerald-400 hover:file:bg-emerald-500/20"
+                  />
+                  {statusImage && <p className="text-xs text-emerald-400 mt-2 ml-2">Selected: {statusImage.name}</p>}
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
