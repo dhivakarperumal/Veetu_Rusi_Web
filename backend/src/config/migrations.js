@@ -348,9 +348,23 @@ const createChefFoodTable = async () => {
 
 const createSubscriptionPlansTable = async () => {
     try {
-        console.log('✓ createSubscriptionPlansTable is a no-op placeholder');
+        const createTableSQL = `
+        CREATE TABLE IF NOT EXISTS subscription_plans (
+            id VARCHAR(100) PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            amount DECIMAL(10, 2) NOT NULL,
+            currency VARCHAR(10) DEFAULT 'INR',
+            durationDays INT NOT NULL,
+            status VARCHAR(50) DEFAULT 'Active',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `;
+        await pool.execute(createTableSQL);
+        await ensureColumnExists('subscription_plans', 'durationDays', 'INT NOT NULL DEFAULT 30');
+        console.log('✓ subscription_plans table created or already exists');
     } catch (error) {
-        console.error('✗ Error in createSubscriptionPlansTable placeholder:', error.message);
+        console.error('✗ Error creating subscription_plans table:', error.message);
     }
 };
 
