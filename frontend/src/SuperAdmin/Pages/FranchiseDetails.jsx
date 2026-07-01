@@ -185,12 +185,11 @@ const FranchiseDetails = () => {
     setProductsError(null);
     try {
       const params = {
-        source: 'chef_products',
         status: 'Active'
       };
       if (franchise.franchise_id) params.franchise_id = franchise.franchise_id;
       if (franchise.franch_user_id) params.franchise_user_id = franchise.franch_user_id;
-      const res = await api.get('/products', { params });
+      const res = await api.get('/franchise-products', { params });
       const data = res.data;
       const allProducts = Array.isArray(data) ? data : Array.isArray(data.products) ? data.products : [];
       setProducts(allProducts.filter(p => {
@@ -371,7 +370,7 @@ const FranchiseDetails = () => {
                 { id: 'deliverypartners', icon: MapPin, label: 'Delivery Partners' },
                 // chef foods first for franchise admin view
                 { id: 'chefProducts', icon: Utensils, label: 'Chef Food Products' },
-                { id: 'products', icon: Package, label: 'Our Products' },
+                { id: 'products', icon: Package, label: 'Packing Products' },
                 { id: 'orders', icon: ShoppingCart, label: 'Orders' },
                 { id: 'usersOrder', icon: ShoppingCart, label: 'User Orders' },
                 { id: 'subscription', icon: Clock, label: 'Subscription' },
@@ -630,7 +629,7 @@ const FranchiseDetails = () => {
                 <div className="mb-6 flex items-center justify-between border-b border-slate-800 pb-4">
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/15 text-cyan-200"><Package className="h-5 w-5" /></div>
-                    <h3 className="text-xl font-black text-slate-100">Our Products</h3>
+                    <h3 className="text-xl font-black text-slate-100">Packing Products</h3>
                   </div>
                   <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-slate-300 border border-white/10">{products.length} items</span>
                 </div>
