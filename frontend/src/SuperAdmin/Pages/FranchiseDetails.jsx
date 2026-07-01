@@ -22,6 +22,9 @@ const FranchiseDetails = () => {
   const [chefProducts, setChefProducts] = useState([]);
   const [loadingChefProducts, setLoadingChefProducts] = useState(false);
   const [chefProductsError, setChefProductsError] = useState(null);
+  const [chefFoods, setChefFoods] = useState([]);
+  const [loadingChefFoods, setLoadingChefFoods] = useState(false);
+  const [chefFoodsError, setChefFoodsError] = useState(null);
   const [franchiseAdminOrders, setFranchiseAdminOrders] = useState([]);
   const [loadingFranchiseAdminOrders, setLoadingFranchiseAdminOrders] = useState(false);
   const [franchiseAdminOrdersError, setFranchiseAdminOrdersError] = useState(null);
@@ -229,22 +232,43 @@ const FranchiseDetails = () => {
     setChefProductsError(null);
     try {
       const params = {
+        source: 'chef_products',
         status: 'Active'
       };
       if (franchise.franchise_id) params.franchise_id = franchise.franchise_id;
       if (franchise.franch_user_id) params.franchise_user_id = franchise.franch_user_id;
-      const res = await api.get('/chef-foods', { params });
-      const allFoods = Array.isArray(res.data) ? res.data : [];
-      setChefProducts(allFoods.filter(f => {
-        const s = String(f.status || '').toLowerCase();
+      const res = await api.get('/products', { params });
+      const allProducts = Array.isArray(res.data) ? res.data : Array.isArray(res.data?.products) ? res.data.products : [];
+      setChefProducts(allProducts.filter(p => {
+        const s = String(p.status || '').toLowerCase();
         return s === 'approved' || s === 'active';
       }));
     } catch (error) {
       console.error(error);
-      setChefProductsError('Failed to load chef food products.');
+      setChefProductsError('Failed to load chef products.');
       setChefProducts([]);
     } finally {
       setLoadingChefProducts(false);
+    }
+  }, [franchise]);
+
+  const fetchChefFoods = useCallback(async () => {
+    if (!franchise) return;
+    setLoadingChefFoods(true);
+    setChefFoodsError(null);
+    try {
+      const params = {};
+      if (franchise.franch_user_id) params.franchise_user_id = franchise.franch_user_id;
+      if (franchise.franchise_id) params.franchise_id = franchise.franchise_id;
+      const res = await api.get('/chef-foods', { params });
+      const allFoods = Array.isArray(res.data) ? res.data : Array.isArray(res.data?.foods) ? res.data.foods : [];
+      setChefFoods(allFoods);
+    } catch (error) {
+      console.error(error);
+      setChefFoodsError('Failed to load chef foods.');
+      setChefFoods([]);
+    } finally {
+      setLoadingChefFoods(false);
     }
   }, [franchise]);
 
@@ -266,16 +290,15 @@ const FranchiseDetails = () => {
   }, [franchise]);
 
   useEffect(() => {
-    if (activeDetailTab === 'products') {
-      fetchProducts();
-    } else if (activeDetailTab === 'chefProducts') {
-      // load both lists so nested tabs inside chefProducts can switch instantly
+    if (activeDetailTab === 'chefProducts') {
+      fetchChefFoods();
       fetchChefProducts();
+    } else if (activeDetailTab === 'products') {
       fetchProducts();
     } else if (activeDetailTab === 'orders') {
       fetchFranchiseAdminOrders();
     }
-  }, [activeDetailTab, fetchProducts, fetchChefProducts, fetchFranchiseAdminOrders]);
+  }, [activeDetailTab, fetchProducts, fetchChefProducts, fetchChefFoods, fetchFranchiseAdminOrders]);
 
   if (loading) return (
     <div className="flex h-screen items-center justify-center bg-[#05120f]">
@@ -675,7 +698,7 @@ const FranchiseDetails = () => {
                             <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Category</th>
                             <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Price</th>
                             <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Status</th>
-                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Added</th>
+
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-800 bg-slate-950">
@@ -712,7 +735,7 @@ const FranchiseDetails = () => {
                                   {product.status || 'Unknown'}
                                 </span>
                               </td>
-                              <td className="px-6 py-4 text-slate-500">{product.created_at || product.createdAt || product.updated_at ? new Date(product.created_at || product.createdAt || product.updated_at).toLocaleDateString('en-IN') : 'N/A'}</td>
+                              
                             </tr>
                           ))}
                         </tbody>
@@ -754,16 +777,16 @@ const FranchiseDetails = () => {
                 </div>
 
                 {chefInnerTab === 'foods' ? (
-                  (loadingChefProducts ? (
+                  (loadingChefFoods ? (
                     <div className="flex flex-col items-center justify-center rounded-[2rem] border border-slate-800 bg-slate-950 py-20 text-center">
                       <div className="h-12 w-12 rounded-full border-4 border-orange-500 border-t-transparent animate-spin mb-4"></div>
                       <p className="text-sm font-black uppercase tracking-widest text-slate-500">Loading chef foods...</p>
                     </div>
-                  ) : chefProductsError ? (
+                  ) : chefFoodsError ? (
                     <div className="rounded-[2rem] border border-rose-200 bg-rose-50 p-8 text-center text-rose-700">
-                      <p className="font-bold">{chefProductsError}</p>
+                      <p className="font-bold">{chefFoodsError}</p>
                     </div>
-                  ) : chefProducts.length > 0 ? (
+                  ) : chefFoods.length > 0 ? (
                     <div className="overflow-hidden rounded-[2rem] border border-slate-800 bg-slate-950/95 shadow-[0_20px_60px_rgba(0,0,0,0.45)]">
                       <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm">
@@ -777,38 +800,38 @@ const FranchiseDetails = () => {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-800 bg-slate-950">
-                            {chefProducts.map((product) => (
-                              <tr key={product.id} className="hover:bg-slate-900/70 transition-colors group">
+                            {chefFoods.map((food) => (
+                              <tr key={food.id || food.food_id} className="hover:bg-slate-900/70 transition-colors group">
                                 <td className="px-6 py-4">
                                   <div className="flex items-center gap-3">
                                     <div className="h-10 w-10 rounded-2xl bg-slate-900 grid place-items-center text-slate-300 font-bold overflow-hidden border border-slate-700 shrink-0">
-                                      {(product.food_image || product.image || product.image_url) ? (
-                                          <img 
-                                              src={product.food_image || product.image || product.image_url} 
-                                              alt={product.name || 'Food'} 
-                                              className="h-full w-full object-cover" 
+                                      {(food.food_image || food.image || food.image_url) ? (
+                                          <img
+                                              src={food.food_image || food.image || food.image_url}
+                                              alt={food.name || 'Food'}
+                                              className="h-full w-full object-cover"
                                               onError={(e) => {
                                                   e.target.style.display = 'none';
                                                   e.target.nextSibling && (e.target.nextSibling.style.display = 'grid');
                                               }}
                                           />
                                       ) : null}
-                                      <span style={{ display: (product.food_image || product.image || product.image_url) ? 'none' : 'grid' }} className="h-full w-full place-items-center">
-                                          {String(product.name || '').charAt(0).toUpperCase() || 'F'}
+                                      <span style={{ display: (food.food_image || food.image || food.image_url) ? 'none' : 'grid' }} className="h-full w-full place-items-center">
+                                          {String(food.name || '').charAt(0).toUpperCase() || 'F'}
                                       </span>
                                     </div>
                                     <div>
-                                      <p className="font-bold text-slate-100">{product.name}</p>
-                                      <p className="text-xs text-slate-400">{product.cuisine || 'Home cooked'}</p>
+                                      <p className="font-bold text-slate-100">{food.name}</p>
+                                      <p className="text-xs text-slate-400">{food.cuisine || food.dietary_tag || 'Home cooked'}</p>
                                     </div>
                                   </div>
                                 </td>
-                                <td className="px-6 py-4 text-slate-600">{product.category}</td>
-                                <td className="px-6 py-4 text-slate-600 font-medium">{product.chef_name || product.chef_id || 'Unknown'}</td>
-                                <td className="px-6 py-4 font-bold text-emerald-600">₹{product.final_price ?? product.mrp ?? '0'}</td>
+                                <td className="px-6 py-4 text-slate-600">{food.category || 'N/A'}</td>
+                                <td className="px-6 py-4 text-slate-600 font-medium">{food.chef_name || food.chef_id || 'Unknown'}</td>
+                                <td className="px-6 py-4 font-bold text-emerald-600">₹{food.final_price ?? food.mrp ?? food.price ?? '0'}</td>
                                 <td className="px-6 py-4">
-                                  <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${product.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-900/80 text-slate-300'}`}>
-                                    {product.status || 'Unknown'}
+                                  <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${food.status === 'Active' || food.status === 'approved' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-900/80 text-slate-300'}`}>
+                                    {food.status || 'Unknown'}
                                   </span>
                                 </td>
                               </tr>
@@ -823,21 +846,21 @@ const FranchiseDetails = () => {
                         <Utensils className="h-8 w-8 text-slate-300" />
                       </div>
                       <h4 className="text-lg font-bold text-slate-100">No Chef Foods Found</h4>
-                      <p className="mt-1 text-sm text-slate-400 max-w-sm">There are no home chef food products associated with this franchise yet.</p>
+                      <p className="mt-1 text-sm text-slate-400 max-w-sm">There are no home chef food items associated with this franchise yet.</p>
                     </div>
                   ))
                 ) : (
-                  // Food Products nested view (reuse products state)
-                  (loadingProducts ? (
+                  // Food Products nested view — uses chefProducts (chef_products table)
+                  (loadingChefProducts ? (
                     <div className="flex flex-col items-center justify-center rounded-[2rem] border border-slate-800 bg-slate-950 py-20 text-center">
                       <div className="h-12 w-12 rounded-full border-4 border-cyan-500 border-t-transparent animate-spin mb-4"></div>
-                      <p className="text-sm font-black uppercase tracking-widest text-slate-500">Loading products...</p>
+                      <p className="text-sm font-black uppercase tracking-widest text-slate-500">Loading chef products...</p>
                     </div>
-                  ) : productsError ? (
+                  ) : chefProductsError ? (
                     <div className="rounded-[2rem] border border-rose-500/40 bg-rose-500/10 p-8 text-center text-rose-200">
-                      <p className="font-bold">{productsError}</p>
+                      <p className="font-bold">{chefProductsError}</p>
                     </div>
-                  ) : products.length > 0 ? (
+                  ) : chefProducts.length > 0 ? (
                     <div className="overflow-hidden rounded-[2rem] border border-slate-800 bg-slate-950/95 shadow-[0_20px_60px_rgba(0,0,0,0.45)]">
                       <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm">
@@ -845,22 +868,23 @@ const FranchiseDetails = () => {
                             <tr>
                               <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Product</th>
                               <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Category</th>
+                              <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Chef</th>
                               <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Price</th>
                               <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Status</th>
-                              <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Added</th>
+                              
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-800 bg-slate-950">
-                            {products.map((product) => (
-                              <tr key={product.id || product.catId || product.product_code} className="hover:bg-slate-900/70 transition-colors group">
+                            {chefProducts.map((product) => (
+                              <tr key={product.id || product.product_id || product.product_code} className="hover:bg-slate-900/70 transition-colors group">
                                 <td className="px-6 py-4">
                                   <div className="flex items-center gap-3">
                                     <div className="h-10 w-10 rounded-2xl bg-slate-900 grid place-items-center text-slate-300 font-bold overflow-hidden border border-slate-700 shrink-0">
                                       {(product.product_image || product.image || product.image_url) ? (
-                                          <img 
-                                              src={product.product_image || product.image || product.image_url} 
-                                              alt={product.name || 'Product'} 
-                                              className="h-full w-full object-cover" 
+                                          <img
+                                              src={product.product_image || product.image || product.image_url}
+                                              alt={product.name || 'Product'}
+                                              className="h-full w-full object-cover"
                                               onError={(e) => {
                                                   e.target.style.display = 'none';
                                                   e.target.nextSibling && (e.target.nextSibling.style.display = 'grid');
@@ -872,19 +896,20 @@ const FranchiseDetails = () => {
                                       </span>
                                     </div>
                                     <div>
-                                      <p className="font-bold text-slate-100">{product.name || product.catId || 'Unnamed Product'}</p>
-                                      <p className="text-xs text-slate-400">{product.franchise_id ? 'Franchise item' : 'Catalog item'}</p>
+                                      <p className="font-bold text-slate-100">{product.name || 'Unnamed Product'}</p>
+                                      <p className="text-xs text-slate-400">Chef Product</p>
                                     </div>
                                   </div>
                                 </td>
                                 <td className="px-6 py-4 text-slate-600">{product.category || product.subcategory || 'N/A'}</td>
+                                <td className="px-6 py-4 text-slate-600 font-medium">{product.chef_name || product.created_by || 'Unknown'}</td>
                                 <td className="px-6 py-4 font-bold text-emerald-400">₹{product.mrp ?? product.price ?? '0'}</td>
                                 <td className="px-6 py-4">
                                   <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${product.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : product.status === 'Low Stock' ? 'bg-amber-100 text-amber-700' : 'bg-slate-900/80 text-slate-300'}`}>
                                     {product.status || 'Unknown'}
                                   </span>
                                 </td>
-                                <td className="px-6 py-4 text-slate-500">{product.created_at || product.createdAt || product.updated_at ? new Date(product.created_at || product.createdAt || product.updated_at).toLocaleDateString('en-IN') : 'N/A'}</td>
+                                
                               </tr>
                             ))}
                           </tbody>
@@ -896,8 +921,8 @@ const FranchiseDetails = () => {
                       <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-900 shadow-[0_10px_30px_rgba(0,0,0,0.25)] mb-4">
                         <Package className="h-8 w-8 text-slate-300" />
                       </div>
-                      <h4 className="text-lg font-bold text-slate-100">No products found</h4>
-                      <p className="mt-1 text-sm text-slate-400 max-w-sm">This franchise does not have any products listed yet.</p>
+                      <h4 className="text-lg font-bold text-slate-100">No Chef Products Found</h4>
+                      <p className="mt-1 text-sm text-slate-400 max-w-sm">There are no chef products associated with this franchise yet.</p>
                     </div>
                   ))
                 )}
