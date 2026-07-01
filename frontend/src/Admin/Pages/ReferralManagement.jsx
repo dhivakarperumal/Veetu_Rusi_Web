@@ -242,21 +242,21 @@ const ReferralManagement = () => {
               <div className="overflow-x-auto w-full">
                 <table className="w-full min-w-[720px] text-sm">
                   <thead>
-                    <tr className="border-b border-white/10 text-left text-slate-400">
-                      <th className="py-3 pr-4 font-semibold">Code</th>
+                    <tr className="bg-white/5 text-left text-slate-400">
+                      <th className="py-3 pl-4 pr-4 font-semibold rounded-l-xl">Code</th>
                       <th className="py-3 pr-4 font-semibold">Referrer</th>
                       <th className="py-3 pr-4 font-semibold">Referee</th>
                       <th className="py-3 pr-4 font-semibold">Type</th>
                       <th className="py-3 pr-4 font-semibold">Reward</th>
                       <th className="py-3 pr-4 font-semibold">Status</th>
                       <th className="py-3 pr-4 font-semibold">Date</th>
-                      <th className="py-3 pr-4 font-semibold">Actions</th>
+                      <th className="py-3 pr-4 font-semibold rounded-r-xl">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {paginatedRows.map(item => (
                       <tr key={item.id} className="border-b border-white/5 hover:bg-white/[0.02] transition">
-                        <td className="py-3 pr-4">
+                        <td className="py-3 pl-4 pr-4">
                           <span className="font-mono text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-2 py-0.5">{item.referral_code || '—'}</span>
                         </td>
                         <td className="py-3 pr-4">
