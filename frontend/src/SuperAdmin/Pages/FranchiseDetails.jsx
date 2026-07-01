@@ -31,6 +31,8 @@ const FranchiseDetails = () => {
   const [activeDetailTab, setActiveDetailTab] = useState("chefProducts");
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [chefInnerTab, setChefInnerTab] = useState('foods');
+  const [userOrderPage, setUserOrderPage] = useState(1);
+  const USER_ORDERS_PER_PAGE = 10;
 
   const copy = (text) => { navigator.clipboard.writeText(text || ''); toast.success('Copied!'); };
 
@@ -415,7 +417,7 @@ const FranchiseDetails = () => {
                 { id: 'orders', icon: ShoppingCart, label: 'Packing Orders' },
                 { id: 'usersOrder', icon: ShoppingCart, label: 'User Orders' },
                 { id: 'subscription', icon: Clock, label: 'Subscription' },
-                { id: 'credentials', icon: KeyRound, label: 'Credentials & Access' },
+                
               ].map((tab) => {
                 const Icon = tab.icon;
                 const isActive = activeDetailTab === tab.id;
@@ -1077,56 +1079,102 @@ const FranchiseDetails = () => {
                 </div>
 
                 {linkedUserOrders.length > 0 ? (
-                  <div className="overflow-hidden rounded-[2rem] border border-slate-800 bg-slate-950/95 shadow-[0_20px_60px_rgba(0,0,0,0.45)]">
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-sm">
-                        <thead className="bg-slate-900">
-                          <tr>
-                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Order</th>
-                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Customer</th>
-                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Chefs</th>
-                           
-                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Amount</th>
-                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs text-center">Status</th>
-                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Date</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-800 bg-slate-950">
-                          {linkedUserOrders.map((order) => {
-                            const items = Array.isArray(order.items) ? order.items : [];
-                            const chefGroups = getChefGroups(items);
+                  (() => {
+                    const totalPages = Math.ceil(linkedUserOrders.length / USER_ORDERS_PER_PAGE);
+                    const paginated = linkedUserOrders.slice((userOrderPage - 1) * USER_ORDERS_PER_PAGE, userOrderPage * USER_ORDERS_PER_PAGE);
+                    return (
+                      <>
+                        <div className="overflow-hidden rounded-[2rem] border border-slate-800 bg-slate-950/95 shadow-[0_20px_60px_rgba(0,0,0,0.45)]">
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-left text-sm">
+                              <thead className="bg-slate-900">
+                                <tr>
+                                  <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Order</th>
+                                  <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Customer</th>
+                                  <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Chefs</th>
+                                  <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Amount</th>
+                                  <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs text-center">Status</th>
+                                  <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Date</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-800 bg-slate-950">
+                                {paginated.map((order) => {
+                                  const items = Array.isArray(order.items) ? order.items : [];
+                                  const chefGroups = getChefGroups(items);
+                                  return (
+                                    <tr key={order.id} className="hover:bg-slate-900/70 transition-colors group">
+                                      <td className="px-6 py-4 font-bold text-slate-100">#{order.order_id || order.id}</td>
+                                      <td className="px-6 py-4 text-slate-600">{order.customer_name || order.ordered_by_name || 'Guest'}</td>
+                                      <td className="px-6 py-4 space-y-2">
+                                        {chefGroups.length > 0 ? (
+                                          chefGroups.map((group) => (
+                                            <div key={group.name} className="rounded-2xl bg-slate-900/95 px-3 py-2">
+                                              <p className="text-sm font-semibold text-slate-900">{group.name}</p>
+                                              <p className="text-xs text-slate-500">Qty {group.total_quantity} · {group.items.length} item{group.items.length === 1 ? '' : 's'}</p>
+                                            </div>
+                                          ))
+                                        ) : (
+                                          <span className="text-xs text-slate-500">No chef info</span>
+                                        )}
+                                      </td>
+                                      <td className="px-6 py-4 font-bold text-emerald-600">{formatAmount(order.total_amount)}</td>
+                                      <td className="px-6 py-4 text-center">
+                                        <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${order.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                                          {order.status || 'Pending'}
+                                        </span>
+                                      </td>
+                                      <td className="px-6 py-4 text-slate-400 text-xs">{formatDate(order.created_at)}</td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
 
-                            return (
-                              <tr key={order.id} className="hover:bg-slate-900/70 transition-colors group">
-                                <td className="px-6 py-4 font-bold text-slate-100">#{order.order_id || order.id}</td>
-                                <td className="px-6 py-4 text-slate-600">{order.customer_name || order.ordered_by_name || 'Guest'}</td>
-                                <td className="px-6 py-4 space-y-2">
-                                  {chefGroups.length > 0 ? (
-                                    chefGroups.map((group) => (
-                                      <div key={group.name} className="rounded-2xl bg-slate-900/95 px-3 py-2">
-                                        <p className="text-sm font-semibold text-slate-900">{group.name}</p>
-                                        <p className="text-xs text-slate-500">Qty {group.total_quantity} · {group.items.length} item{group.items.length === 1 ? '' : 's'}</p>
-                                      </div>
-                                    ))
-                                  ) : (
-                                    <span className="text-xs text-slate-500">No chef info</span>
-                                  )}
-                                </td>
-                                
-                                <td className="px-6 py-4 font-bold text-emerald-600">{formatAmount(order.total_amount)}</td>
-                                <td className="px-6 py-4 text-center">
-                                  <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${order.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                                    {order.status || 'Pending'}
-                                  </span>
-                                </td>
-                                <td className="px-6 py-4 text-slate-400 text-xs">{formatDate(order.created_at)}</td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
+                        {/* Pagination Controls */}
+                        {totalPages > 1 && (
+                          <div className="mt-6 flex items-center justify-between">
+                            <p className="text-xs text-slate-500 font-medium">
+                              Showing <span className="text-slate-300 font-bold">{(userOrderPage - 1) * USER_ORDERS_PER_PAGE + 1}–{Math.min(userOrderPage * USER_ORDERS_PER_PAGE, linkedUserOrders.length)}</span> of <span className="text-slate-300 font-bold">{linkedUserOrders.length}</span> orders
+                            </p>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => setUserOrderPage(p => Math.max(1, p - 1))}
+                                disabled={userOrderPage === 1}
+                                className="flex items-center gap-1 rounded-xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-black uppercase tracking-wider text-slate-300 transition-all hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed"
+                              >
+                                ← Prev
+                              </button>
+                              {Array.from({ length: totalPages }, (_, i) => i + 1).filter(p => p === 1 || p === totalPages || Math.abs(p - userOrderPage) <= 1).map((p, idx, arr) => (
+                                <>
+                                  {idx > 0 && arr[idx - 1] !== p - 1 && <span key={`ellipsis-${p}`} className="text-slate-600 px-1">…</span>}
+                                  <button
+                                    key={p}
+                                    onClick={() => setUserOrderPage(p)}
+                                    className={`min-w-[36px] rounded-xl px-3 py-2 text-xs font-black transition-all ${
+                                      userOrderPage === p
+                                        ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/30'
+                                        : 'border border-slate-700 bg-slate-900 text-slate-400 hover:bg-slate-800'
+                                    }`}
+                                  >
+                                    {p}
+                                  </button>
+                                </>
+                              ))}
+                              <button
+                                onClick={() => setUserOrderPage(p => Math.min(totalPages, p + 1))}
+                                disabled={userOrderPage === totalPages}
+                                className="flex items-center gap-1 rounded-xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-black uppercase tracking-wider text-slate-300 transition-all hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed"
+                              >
+                                Next →
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()
                 ) : (
                   <div className="flex flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-800 bg-slate-950 py-16 text-center">
                     <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-900 shadow-[0_10px_30px_rgba(0,0,0,0.25)] mb-4">
