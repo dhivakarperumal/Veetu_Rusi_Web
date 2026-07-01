@@ -51,7 +51,8 @@ const addUserFoodOrder = async (payload) => {
     final_total
   } = payload;
 
-  const order_id = `UFO-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  const [[{ orderCount }]] = await pool.execute('SELECT COUNT(*) AS orderCount FROM user_food_order_table');
+  const order_id = `UFO_${String(orderCount + 1).padStart(3, '0')}`;
 
   const [result] = await pool.execute(
     `INSERT INTO user_food_order_table (
