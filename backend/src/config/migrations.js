@@ -499,9 +499,37 @@ const createDeliveryPartnersTable = async () => {
 
 const createReviewsTable = async () => {
     try {
-        console.log('✓ createReviewsTable is a no-op placeholder');
+        await pool.execute(`
+            CREATE TABLE IF NOT EXISTS deliverypartner_review (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                user_id VARCHAR(255) NOT NULL,
+                user_name VARCHAR(255),
+                user_email VARCHAR(255),
+                rating DECIMAL(2,1) NOT NULL,
+                comment LONGTEXT,
+                image VARCHAR(255),
+                status VARCHAR(50) DEFAULT 'Pending',
+                delivery_partner_id VARCHAR(255) NOT NULL,
+                delivery_partner_name VARCHAR(255),
+                delivery_partner_phone VARCHAR(50),
+                delivery_partner_email VARCHAR(255),
+                admin_reply LONGTEXT,
+                franchise_admin_id VARCHAR(255),
+                franchise_admin_name VARCHAR(255),
+                created_by VARCHAR(255),
+                updated_by VARCHAR(255),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                KEY idx_delivery_partner_id (delivery_partner_id),
+                KEY idx_user_id (user_id),
+                KEY idx_status (status),
+                KEY idx_created_at (created_at)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `);
+
+        console.log('✓ Delivery partner review table created or already exists');
     } catch (error) {
-        console.error('✗ Error in createReviewsTable placeholder:', error.message);
+        console.error('✗ Error creating deliverypartner_review table:', error.message);
     }
 };
 

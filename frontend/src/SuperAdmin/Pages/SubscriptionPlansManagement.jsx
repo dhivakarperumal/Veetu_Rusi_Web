@@ -13,7 +13,13 @@ const SubscriptionPlansManagement = () => {
   const [viewMode, setViewMode] = useState('table');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState(null);
-  
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, statusFilter]);
+
   const [form, setForm] = useState({
     id: '',
     name: '',
@@ -68,7 +74,7 @@ const SubscriptionPlansManagement = () => {
     e.preventDefault();
     const token = localStorage.getItem('token');
     const method = editingPlan ? 'PUT' : 'POST';
-    const url = editingPlan 
+    const url = editingPlan
       ? `${API_BASE_URL}/subscriptions/admin/plans/${editingPlan.id}`
       : `${API_BASE_URL}/subscriptions/admin/plans`;
 
@@ -81,7 +87,7 @@ const SubscriptionPlansManagement = () => {
         },
         body: JSON.stringify(form)
       });
-      
+
       const data = await res.json();
       if (res.ok) {
         toast.success(data.message || 'Plan saved successfully');
@@ -97,14 +103,14 @@ const SubscriptionPlansManagement = () => {
 
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this plan? It's recommended to mark it as 'Inactive' instead if users are currently using it.")) return;
-    
+
     try {
       const token = localStorage.getItem('token');
       const res = await fetch(`${API_BASE_URL}/subscriptions/admin/plans/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       if (res.ok) {
         toast.success('Plan deleted successfully');
         fetchPlans();
@@ -140,17 +146,30 @@ const SubscriptionPlansManagement = () => {
     }
   };
 
-  const filteredPlans = plans.filter(p => {
-    const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.id.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === 'ALL' || p.status.toUpperCase() === statusFilter;
+  const filteredPlans = plans.filter((p) => {
+    const matchesSearch =
+      p.name.toLowerCase().includes(search.toLowerCase()) ||
+      p.id.toLowerCase().includes(search.toLowerCase());
+
+    const matchesStatus =
+      statusFilter === "ALL" ||
+      p.status.toUpperCase() === statusFilter;
+
     return matchesSearch && matchesStatus;
   });
+
+  const paginatedPlans = filteredPlans.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const totalPages = Math.ceil(filteredPlans.length / itemsPerPage);
 
   const activePlans = plans.filter(p => p.status === 'Active').length;
 
   return (
     <div className="p-4 sm:p-8 w-full max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
-      
+
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
@@ -200,17 +219,17 @@ const SubscriptionPlansManagement = () => {
       <div className="bg-white border border-slate-200 rounded-2xl p-3 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
         <div className="relative flex-1 w-full max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input 
-            type="text" 
-            placeholder="Search by plan name or ID..." 
+          <input
+            type="text"
+            placeholder="Search by plan name or ID..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="w-full bg-slate-50 border border-slate-100 rounded-xl pl-9 pr-4 py-2.5 text-sm font-medium outline-none focus:bg-white focus:border-slate-300 transition-colors"
           />
         </div>
-        
+
         <div className="flex items-center gap-3 w-full md:w-auto">
-          <select 
+          <select
             value={statusFilter}
             onChange={e => setStatusFilter(e.target.value)}
             className="bg-slate-50 border border-slate-100 rounded-xl px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-slate-600 outline-none focus:bg-white focus:border-slate-300 transition-colors cursor-pointer"
@@ -221,13 +240,13 @@ const SubscriptionPlansManagement = () => {
           </select>
 
           <div className="flex items-center bg-slate-50 border border-slate-100 rounded-xl p-1">
-            <button 
+            <button
               onClick={() => setViewMode('table')}
               className={`p-1.5 rounded-lg transition-colors ${viewMode === 'table' ? 'bg-white shadow-sm text-[#1B4D22]' : 'text-slate-400 hover:text-slate-600'}`}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
             </button>
-            <button 
+            <button
               onClick={() => setViewMode('grid')}
               className={`p-1.5 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-white shadow-sm text-[#1B4D22]' : 'text-slate-400 hover:text-slate-600'}`}
             >
@@ -257,10 +276,10 @@ const SubscriptionPlansManagement = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredPlans.map((plan,ind) => (
+                {paginatedPlans.map((plan, ind) => (
                   <tr key={plan.id} className="hover:bg-slate-50/50 transition-colors">
-                   <td className="p-5 pl-8">
-                     {ind+1}
+                    <td className="p-5 pl-8">
+                      {(currentPage - 1) * itemsPerPage + ind + 1}
                     </td>
                     <td className="p-5 pl-8">
                       <div className="font-bold text-slate-800 text-base">{plan.name}</div>
@@ -275,28 +294,27 @@ const SubscriptionPlansManagement = () => {
                       {plan.durationDays} Days
                     </td>
                     <td className="p-5">
-                      <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full ${
-                        plan.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'
-                      }`}>
+                      <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full ${plan.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'
+                        }`}>
                         {plan.status}
                       </span>
                     </td>
                     <td className="p-5 pr-8 text-right">
                       <div className="flex items-center justify-end gap-2 flex-nowrap whitespace-nowrap">
-                        <button 
+                        <button
                           onClick={() => handleToggleStatus(plan)}
                           className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
                         >
                           {plan.status === 'Active' ? 'Deactivate' : 'Activate'}
                         </button>
-                        <button 
+                        <button
                           onClick={() => handleOpenModal(plan)}
                           className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors"
                           title="Edit Plan"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
-                        <button 
+                        <button
                           onClick={() => handleDelete(plan.id)}
                           className="p-2 text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl transition-colors"
                           title="Delete Plan"
@@ -307,7 +325,7 @@ const SubscriptionPlansManagement = () => {
                     </td>
                   </tr>
                 ))}
-                {filteredPlans.length === 0 && (
+                {paginatedPlans.length === 0 && (
                   <tr>
                     <td colSpan="5" className="p-12 text-center text-slate-500">
                       No plans found.
@@ -320,19 +338,17 @@ const SubscriptionPlansManagement = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredPlans.map((plan) => (
-            <div 
-              key={plan.id} 
-              className={`bg-white rounded-[2rem] border-2 transition-all duration-300 hover:-translate-y-1 shadow-sm hover:shadow-xl overflow-hidden flex flex-col ${
-                plan.status === 'Active' ? 'border-transparent hover:border-emerald-100' : 'border-slate-100 opacity-70'
-              }`}
+          {paginatedPlans.map((plan) => (
+            <div
+              key={plan.id}
+              className={`bg-white rounded-[2rem] border-2 transition-all duration-300 hover:-translate-y-1 shadow-sm hover:shadow-xl overflow-hidden flex flex-col ${plan.status === 'Active' ? 'border-transparent hover:border-emerald-100' : 'border-slate-100 opacity-70'
+                }`}
             >
               {/* Card Header */}
               <div className={`p-6 pb-4 ${plan.status === 'Active' ? 'bg-gradient-to-br from-emerald-600 to-teal-700 text-white' : 'bg-slate-100 text-slate-500'}`}>
                 <div className="flex justify-between items-start mb-2">
-                  <span className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${
-                    plan.status === 'Active' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-600'
-                  }`}>
+                  <span className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${plan.status === 'Active' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-600'
+                    }`}>
                     {plan.status}
                   </span>
                   {plan.durationDays >= 365 && plan.status === 'Active' && (
@@ -371,20 +387,20 @@ const SubscriptionPlansManagement = () => {
 
                 {/* Actions */}
                 <div className="flex gap-2 pt-4 border-t border-slate-100 mt-auto">
-                  <button 
+                  <button
                     onClick={() => handleToggleStatus(plan)}
                     className="flex-1 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors"
                   >
                     {plan.status === 'Active' ? 'Deactivate' : 'Activate'}
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleOpenModal(plan)}
                     className="p-2.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors"
                     title="Edit Plan"
                   >
                     <Edit2 className="w-4 h-4" />
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleDelete(plan.id)}
                     className="p-2.5 text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl transition-colors"
                     title="Delete Plan"
@@ -395,14 +411,40 @@ const SubscriptionPlansManagement = () => {
               </div>
             </div>
           ))}
-          
-          {filteredPlans.length === 0 && (
+
+          {paginatedPlans.length === 0 && (
             <div className="col-span-full py-20 text-center bg-white border border-slate-100 rounded-3xl">
               <CreditCard className="w-12 h-12 text-slate-200 mx-auto mb-4" />
               <h3 className="text-lg font-bold text-slate-700">No Plans Found</h3>
               <p className="text-sm text-slate-400 mt-1">Create a new subscription plan to get started.</p>
             </div>
           )}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-2 mt-6 mb-8">
+          <button
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="px-4 py-2 bg-slate-100 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-200 transition cursor-pointer"
+          >
+            Previous
+          </button>
+
+          <span className="text-sm font-medium text-slate-700">
+            Page {currentPage} of {totalPages}
+          </span>
+
+          <button
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 bg-slate-100 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-200 transition cursor-pointer"
+          >
+            Next
+          </button>
         </div>
       )}
 
@@ -420,30 +462,30 @@ const SubscriptionPlansManagement = () => {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             <div className="p-6 space-y-5 bg-slate-50">
               <div className="space-y-1">
                 <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block">Plan ID (Unique)</label>
-                <input 
-                  type="text" 
-                  required 
+                <input
+                  type="text"
+                  required
                   disabled={!!editingPlan}
-                  value={form.id} 
-                  onChange={e => setForm({...form, id: e.target.value})} 
+                  value={form.id}
+                  onChange={e => setForm({ ...form, id: e.target.value })}
                   placeholder="e.g. plan_monthly"
-                  className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold outline-none focus:border-[#1B4D22] focus:ring-2 focus:ring-[#1B4D22]/20 transition-all disabled:bg-slate-100 disabled:text-slate-400" 
+                  className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold outline-none focus:border-[#1B4D22] focus:ring-2 focus:ring-[#1B4D22]/20 transition-all disabled:bg-slate-100 disabled:text-slate-400"
                 />
               </div>
-              
+
               <div className="space-y-1">
                 <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block">Plan Name</label>
-                <input 
-                  type="text" 
-                  required 
-                  value={form.name} 
-                  onChange={e => setForm({...form, name: e.target.value})} 
+                <input
+                  type="text"
+                  required
+                  value={form.name}
+                  onChange={e => setForm({ ...form, name: e.target.value })}
                   placeholder="e.g. Monthly Standard"
-                  className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold outline-none focus:border-[#1B4D22] focus:ring-2 focus:ring-[#1B4D22]/20 transition-all" 
+                  className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold outline-none focus:border-[#1B4D22] focus:ring-2 focus:ring-[#1B4D22]/20 transition-all"
                 />
               </div>
 
@@ -452,31 +494,31 @@ const SubscriptionPlansManagement = () => {
                   <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block">Amount (₹)</label>
                   <div className="relative">
                     <IndianRupee className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input 
-                      type="number" 
-                      required 
+                    <input
+                      type="number"
+                      required
                       min="0"
                       step="0.01"
-                      value={form.amount} 
-                      onChange={e => setForm({...form, amount: e.target.value})} 
+                      value={form.amount}
+                      onChange={e => setForm({ ...form, amount: e.target.value })}
                       placeholder="1999"
-                      className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 py-3 text-sm font-semibold outline-none focus:border-[#1B4D22] focus:ring-2 focus:ring-[#1B4D22]/20 transition-all" 
+                      className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 py-3 text-sm font-semibold outline-none focus:border-[#1B4D22] focus:ring-2 focus:ring-[#1B4D22]/20 transition-all"
                     />
                   </div>
                 </div>
-                
+
                 <div className="space-y-1">
                   <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block">Duration (Days)</label>
                   <div className="relative">
                     <Clock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input 
-                      type="number" 
-                      required 
+                    <input
+                      type="number"
+                      required
                       min="1"
-                      value={form.durationDays} 
-                      onChange={e => setForm({...form, durationDays: e.target.value})} 
+                      value={form.durationDays}
+                      onChange={e => setForm({ ...form, durationDays: e.target.value })}
                       placeholder="30"
-                      className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 py-3 text-sm font-semibold outline-none focus:border-[#1B4D22] focus:ring-2 focus:ring-[#1B4D22]/20 transition-all" 
+                      className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 py-3 text-sm font-semibold outline-none focus:border-[#1B4D22] focus:ring-2 focus:ring-[#1B4D22]/20 transition-all"
                     />
                   </div>
                 </div>
@@ -484,9 +526,9 @@ const SubscriptionPlansManagement = () => {
 
               <div className="space-y-1">
                 <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block">Status</label>
-                <select 
-                  value={form.status} 
-                  onChange={e => setForm({...form, status: e.target.value})}
+                <select
+                  value={form.status}
+                  onChange={e => setForm({ ...form, status: e.target.value })}
                   className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold outline-none focus:border-[#1B4D22] focus:ring-2 focus:ring-[#1B4D22]/20 transition-all cursor-pointer"
                 >
                   <option value="Active">Active</option>
@@ -496,15 +538,15 @@ const SubscriptionPlansManagement = () => {
             </div>
 
             <div className="p-6 bg-white border-t border-slate-100 flex justify-end gap-3">
-              <button 
-                type="button" 
-                onClick={() => setIsModalOpen(false)} 
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
                 className="px-6 py-3 text-xs font-black uppercase tracking-widest text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
               >
                 Cancel
               </button>
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 className="px-8 py-3 text-xs font-black uppercase tracking-widest text-white bg-[#1B4D22] hover:bg-[#153b1a] rounded-xl shadow-lg shadow-[#1B4D22]/30 hover:-translate-y-0.5 transition-all"
               >
                 {editingPlan ? 'Save Changes' : 'Create Plan'}
@@ -512,7 +554,7 @@ const SubscriptionPlansManagement = () => {
             </div>
           </form>
         </div>
-      , document.body)}
+        , document.body)}
     </div>
   );
 };

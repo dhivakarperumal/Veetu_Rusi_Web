@@ -34,6 +34,8 @@ const Reviews = () => {
 
   const currentCacheKey = `${filter}-${selectedRating}-${searchQuery}`;
   const cachedData = reviewsCache[currentCacheKey];
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const [reviews, setReviews] = useState(cachedData?.reviews || []);
   const [stats, setStats] = useState(cachedData?.stats || null);
@@ -185,6 +187,17 @@ const Reviews = () => {
     }
   };
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter, selectedRating, searchQuery]);
+
+  const paginatedReviews = reviews.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const totalPages = Math.ceil(reviews.length / itemsPerPage);
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-10">
 
@@ -306,7 +319,7 @@ const Reviews = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {reviews.map((item) => (
+          {paginatedReviews.map((item) => (
             <div
               key={item.id}
               className={`group relative bg-white rounded-[2rem] border border-slate-100 flex flex-col overflow-hidden hover:shadow-2xl hover:shadow-blue-900/10 transition-all duration-500 hover:-translate-y-1
@@ -456,6 +469,34 @@ const Reviews = () => {
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-2 mt-8">
+          <button
+            onClick={() =>
+              setCurrentPage((prev) => Math.max(prev - 1, 1))
+            }
+            disabled={currentPage === 1}
+            className="px-4 py-2 bg-slate-100 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-200 transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          >
+            Previous
+          </button>
+
+          <span className="text-sm font-semibold text-slate-700">
+            Page {currentPage} of {totalPages}
+          </span>
+
+          <button
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 bg-slate-100 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-200 transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          >
+            Next
+          </button>
         </div>
       )}
 
