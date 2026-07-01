@@ -371,7 +371,7 @@ const FranchiseDetails = () => {
                 // chef foods first for franchise admin view
                 { id: 'chefProducts', icon: Utensils, label: 'Chef Food Products' },
                 { id: 'products', icon: Package, label: 'Packing Products' },
-                { id: 'orders', icon: ShoppingCart, label: 'Orders' },
+                { id: 'orders', icon: ShoppingCart, label: 'Packing Orders' },
                 { id: 'usersOrder', icon: ShoppingCart, label: 'User Orders' },
                 { id: 'subscription', icon: Clock, label: 'Subscription' },
                 { id: 'credentials', icon: KeyRound, label: 'Credentials & Access' },
@@ -950,7 +950,7 @@ const FranchiseDetails = () => {
                 <div className="mb-6 flex items-center justify-between border-b border-slate-800 pb-4">
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/15 text-blue-200"><ShoppingCart className="h-5 w-5" /></div>
-                    <h3 className="text-xl font-black text-slate-100">Home Chef Franchise Admin Orders</h3>
+                    <h3 className="text-xl font-black text-slate-100">Packing Orders</h3>
                   </div>
                   <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-slate-300 border border-white/10">{franchiseAdminOrders.length} Total</span>
                 </div>
