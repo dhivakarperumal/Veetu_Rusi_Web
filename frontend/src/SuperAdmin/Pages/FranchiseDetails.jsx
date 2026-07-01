@@ -1085,7 +1085,7 @@ const FranchiseDetails = () => {
                             <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Order</th>
                             <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Customer</th>
                             <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Chefs</th>
-                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Item Breakdown</th>
+                           
                             <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Amount</th>
                             <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs text-center">Status</th>
                             <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Date</th>
@@ -1112,20 +1112,7 @@ const FranchiseDetails = () => {
                                     <span className="text-xs text-slate-500">No chef info</span>
                                   )}
                                 </td>
-                                <td className="px-6 py-4 space-y-2">
-                                  {chefGroups.length > 0 ? (
-                                    chefGroups.map((group) => (
-                                      <div key={`${group.name}-items`} className="rounded-2xl bg-slate-900/95 px-3 py-2">
-                                        <p className="text-sm font-semibold text-slate-900">{group.name}</p>
-                                        <p className="text-xs text-slate-500">
-                                          {group.items.map((item) => `${item.name || 'Item'} x${item.quantity || 1}`).join(', ')}
-                                        </p>
-                                      </div>
-                                    ))
-                                  ) : (
-                                    <span className="text-xs text-slate-500">No items</span>
-                                  )}
-                                </td>
+                                
                                 <td className="px-6 py-4 font-bold text-emerald-600">{formatAmount(order.total_amount)}</td>
                                 <td className="px-6 py-4 text-center">
                                   <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${order.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
