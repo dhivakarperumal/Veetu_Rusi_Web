@@ -14,6 +14,12 @@ const getTomorrowDate = () => {
   return date.toISOString().split("T")[0];
 };
 
+const getMaxDate = () => {
+  const date = new Date();
+  date.setDate(date.getDate() + 3);
+  return date.toISOString().split("T")[0];
+};
+
 export default function FoodCheckout() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -599,6 +605,7 @@ export default function FoodCheckout() {
                     <input
                       type="date"
                       min={getTomorrowDate()}
+                      max={getMaxDate()}
                       value={deliveryDate}
                       onChange={(e) => setDeliveryDate(e.target.value)}
                       className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
