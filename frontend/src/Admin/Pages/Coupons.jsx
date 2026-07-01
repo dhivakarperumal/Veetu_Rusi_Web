@@ -23,7 +23,6 @@ const Coupons = () => {
     description: "",
     discount_type: "percentage",
     discount_value: "",
-    max_discount_amount: "",
     min_order_value: "0",
     start_date: "",
     expiry_date: "",
@@ -108,7 +107,6 @@ const Coupons = () => {
         description: "",
         discount_type: "percentage",
         discount_value: "",
-        max_discount_amount: "",
         min_order_value: "0",
         start_date: "",
         expiry_date: "",
@@ -318,7 +316,6 @@ const Coupons = () => {
                       <div className="font-black text-blue-600 text-sm">
                         {coupon.discount_type === 'percentage' ? `${coupon.discount_value}%` : `₹${coupon.discount_value}`}
                       </div>
-                      {coupon.max_discount_amount && <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mt-1">Up to ₹{coupon.max_discount_amount}</div>}
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-xs font-semibold text-slate-600">Start: {new Date(coupon.start_date).toLocaleDateString()}</div>
@@ -380,7 +377,6 @@ const Coupons = () => {
                     <div className="font-black text-blue-600">
                       {coupon.discount_type === 'percentage' ? `${coupon.discount_value}%` : `₹${coupon.discount_value}`}
                     </div>
-                    {coupon.max_discount_amount && <div className="text-[10px] font-semibold text-slate-500 mt-0.5">Up to ₹{coupon.max_discount_amount}</div>}
                   </div>
                   <div>
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Scope</p>
@@ -454,10 +450,6 @@ const Coupons = () => {
                     <input required type="number" step="0.01" name="discount_value" value={formData.discount_value} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 transition-all font-black text-black text-sm" placeholder="e.g. 50" />
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Max Discount Amount (₹)</label>
-                    <input type="number" step="0.01" name="max_discount_amount" value={formData.max_discount_amount} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 transition-all font-black text-black text-sm" placeholder="Leave blank for no limit" />
-                  </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Min Order Value (₹)</label>
                     <input type="number" step="0.01" name="min_order_value" value={formData.min_order_value} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 transition-all font-black text-black text-sm" />
