@@ -493,53 +493,61 @@ const OrderManagement = () => {
 
       {/* Tracking Modal */}
       {trackingOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 lg:pl-72">
           <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={() => setTrackingOrder(null)}></div>
-          <div className="bg-gradient-to-br from-[#0c1116] to-[#171a20] border border-white/10 w-full max-w-5xl rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col md:flex-row h-[85vh] max-h-[800px]">
-            
-            {/* Map Section - Left Side */}
-            <div className="w-full md:w-2/3 h-64 md:h-full bg-[#070b13] relative overflow-hidden flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-white/5">
-                <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mix-blend-overlay"></div>
-                <div className="absolute inset-0 bg-gradient-to-t from-[#070b13] via-transparent to-transparent z-0"></div>
-                
-                <div className="w-20 h-20 rounded-full bg-emerald-500/10 flex items-center justify-center animate-pulse mb-6 shadow-[0_0_50px_rgba(16,185,129,0.2)] relative z-10 border border-emerald-500/20">
-                  <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-400/30">
-                    <span className="text-3xl">📍</span>
-                  </div>
-                </div>
-                
-                <div className="relative z-10 text-center space-y-2">
-                  <h3 className="text-xl font-black uppercase tracking-[0.2em] text-emerald-400 drop-shadow-md">Live Tracking Map</h3>
-                  <p className="text-xs font-bold text-white/40 uppercase tracking-widest bg-white/5 px-4 py-2 rounded-full border border-white/5 backdrop-blur-sm">
-                    {trackingDetails?.area ? `${trackingDetails.area}, ${trackingDetails.district} - ${trackingDetails.pincode}` : "Awaiting GPS Coordinates"}
-                  </p>
-                </div>
+          <div className="bg-gradient-to-br from-[#0c1116] to-[#171a20] border border-white/10 w-full max-w-5xl rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col h-[85vh] max-h-[800px]">
+            {/* Unified Header */}
+            <div className="w-full bg-[#0B1120] border-b border-white/5 p-5 md:p-6 flex justify-between items-center relative z-20 shadow-lg">
+              <div>
+                <h3 className="text-xl md:text-2xl font-black uppercase italic tracking-tight text-white drop-shadow-sm flex items-center gap-3">
+                  <span className="text-emerald-400">Live</span> Tracking
+                </h3>
+                <p className="text-[10px] md:text-xs text-emerald-300/80 font-bold uppercase tracking-widest mt-1">Order ID: {trackingOrder.order_id}</p>
+              </div>
+              <button onClick={() => setTrackingOrder(null)} className="p-2.5 bg-white/5 hover:bg-red-500/20 border border-white/10 hover:border-red-500/30 rounded-xl transition text-white/60 hover:text-red-400 flex items-center justify-center group w-10 h-10">
+                <span className="group-hover:scale-110 transition-transform font-black">✕</span>
+              </button>
             </div>
-            
-            {/* Details Section - Right Side */}
-            <div className="w-full md:w-1/3 flex flex-col h-full bg-[#0B1120]/80">
-              <div className="bg-gradient-to-r from-[#1B4D22] to-emerald-900/40 p-6 text-white flex justify-between items-start border-b border-emerald-500/20 shadow-lg">
-                <div>
-                  <h3 className="text-2xl font-black uppercase italic tracking-tight drop-shadow-sm">Tracking</h3>
-                  <p className="text-[11px] text-emerald-300 font-bold uppercase tracking-widest mt-1 opacity-90">{trackingOrder.order_id}</p>
-                </div>
-                <button onClick={() => setTrackingOrder(null)} className="p-2 bg-black/30 hover:bg-black/50 border border-white/10 rounded-full transition w-10 h-10 flex items-center justify-center font-black text-white hover:scale-105 active:scale-95">
-                  ✕
-                </button>
+
+            {/* Modal Body */}
+            <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+              {/* Map Section - Left Side */}
+              <div className="w-full md:w-3/5 h-64 md:h-full bg-[#070b13] relative overflow-hidden flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-white/5">
+                  <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mix-blend-overlay"></div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#070b13] via-transparent to-transparent z-0"></div>
+                  
+                  <div className="w-20 h-20 rounded-full bg-emerald-500/10 flex items-center justify-center animate-pulse mb-6 shadow-[0_0_50px_rgba(16,185,129,0.2)] relative z-10 border border-emerald-500/20">
+                    <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-400/30">
+                      <span className="text-3xl">📍</span>
+                    </div>
+                  </div>
+                  
+                  <div className="relative z-10 text-center space-y-2">
+                    <h3 className="text-xl font-black uppercase tracking-[0.2em] text-emerald-400 drop-shadow-md">Live Tracking Map</h3>
+                    <p className="text-xs font-bold text-white/40 uppercase tracking-widest bg-white/5 px-4 py-2 rounded-full border border-white/5 backdrop-blur-sm">
+                      {trackingDetails?.area ? `${trackingDetails.area}, ${trackingDetails.district} - ${trackingDetails.pincode}` : "Awaiting GPS Coordinates"}
+                    </p>
+                  </div>
               </div>
               
-              <div className="p-6 md:p-8 space-y-8 flex-1 overflow-y-auto custom-scrollbar">
+              {/* Details Section - Right Side */}
+              <div className="w-full md:w-2/5 flex flex-col h-full bg-[#0B1120]/80">
+                <div className="p-6 md:p-8 space-y-8 flex-1 overflow-y-auto custom-scrollbar">
                 <div className="space-y-6">
                   <h4 className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] border-b border-white/5 pb-3">Delivery Status</h4>
                   
                   <div className="space-y-0 relative before:absolute before:inset-0 before:ml-[11px] before:translate-x-[-1px] before:h-full before:w-0.5 before:bg-gradient-to-b before:from-emerald-500/50 before:via-white/10 before:to-transparent">
                     {["Pending", "Preparing", "Out for Delivery", "Delivered"].map((step, index) => {
-                      const isActive = trackingOrder.status === step || (trackingOrder.status === "Accepted" && step === "Pending");
-                      
-                      // Determine if step is passed
-                      const steps = ["Pending", "Preparing", "Out for Delivery", "Delivered"];
-                      const currentIndex = trackingOrder.status === "Accepted" ? 0 : steps.indexOf(trackingOrder.status);
-                      const isPassed = index < currentIndex;
+                      const status = (trackingOrder.status || "").toLowerCase();
+                      let currentStepIndex = 0;
+                      if (["new", "new order", "order placed", "pending"].includes(status)) currentStepIndex = 0;
+                      else if (["accepted", "preparing", "food ready", "ready"].includes(status)) currentStepIndex = 1;
+                      else if (status === "out for delivery") currentStepIndex = 2;
+                      else if (["delivered", "completed"].includes(status)) currentStepIndex = 3;
+                      else if (status === "cancelled") currentStepIndex = -1;
+
+                      const isActive = index === currentStepIndex;
+                      const isPassed = index < currentStepIndex;
                       
                       return (
                         <div key={index} className="flex gap-5 relative group py-4">
@@ -591,6 +599,7 @@ const OrderManagement = () => {
                       </p>
                     )}
                   </div>
+                </div>
                 </div>
               </div>
             </div>
