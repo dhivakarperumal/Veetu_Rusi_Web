@@ -991,7 +991,9 @@ const DeliveryPartnerManagement = () => {
               <thead>
                 <tr className="bg-slate-700 border-b border-slate-200">
                   <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em] text-center w-16">S.No</th>
-                  <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em]">Partner Info</th>
+                  <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em]">Name</th>
+                  <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em]">Email ID</th>
+                  <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em]">Phone Number</th>
                   <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em]">Vehicle Details</th>
                   {/* <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em]">Address / Verification</th> */}
                   <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em]">Deliveries</th>
@@ -1009,11 +1011,14 @@ const DeliveryPartnerManagement = () => {
                         <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 border border-emerald-100">
                           <Bike className="w-4 h-4" />
                         </div>
-                        <div>
-                          <h4 className="text-sm font-bold text-slate-800">{partner.name}</h4>
-                          <p className="text-xs text-slate-400 font-medium">{partner.mobile}</p>
-                        </div>
+                        <h4 className="text-sm font-bold text-slate-800">{partner.name}</h4>
                       </div>
+                    </td>
+                    <td className="px-5 py-4 text-sm font-semibold text-slate-600">
+                      {partner.email || 'N/A'}
+                    </td>
+                    <td className="px-5 py-4 text-sm font-semibold text-slate-600">
+                      {partner.mobile}
                     </td>
                     <td className="px-5 py-4 text-sm font-semibold text-slate-600">
                       {partner.vehicle_type} &bull; {partner.vehicle_number}

@@ -30,6 +30,9 @@ const AdminLayout = () => {
     });
     const [fetchingLocation, setFetchingLocation] = useState(false);
     const [showLocationModal, setShowLocationModal] = useState(false);
+    const [showRejectModal, setShowRejectModal] = useState(false);
+    const [rejectReason, setRejectReason] = useState("");
+    const [isRejecting, setIsRejecting] = useState(false);
 
     // Online & Location Tracking State
     const [isOnline, setIsOnline] = useState(() => localStorage.getItem("delivery_isOnline") === "true");
@@ -156,6 +159,42 @@ const AdminLayout = () => {
         setLocationData({ latitude: "", longitude: "", pincode: "", area: "", district: "" });
     };
 
+    const openRejectModal = () => {
+        setShowPopup(false);
+        setShowRejectModal(true);
+    };
+
+    const closeRejectModal = () => {
+        setShowRejectModal(false);
+        setRejectReason("");
+    };
+
+    const rejectOrder = async () => {
+        if (!popupOrder) return;
+        if (!rejectReason.trim()) {
+            toast.error("Please enter a reason for rejecting this order.");
+            return;
+        }
+
+        setIsRejecting(true);
+        try {
+            await api.post(`/user-food-orders/cancel/${popupOrder.id}`, {
+                cancellation_reason: rejectReason.trim(),
+                cancellation_notes: "Rejected by delivery partner"
+            });
+            toast.success("Order rejected successfully.");
+            closeRejectModal();
+            setPopupOrder(null);
+            fetchPendingOrders();
+        } catch (error) {
+            console.error("Reject order failed:", error);
+            const message = error.response?.data?.message || "Unable to reject order. Please try again.";
+            toast.error(message);
+        } finally {
+            setIsRejecting(false);
+        }
+    };
+
     const fetchCurrentLocation = () => {
         if (!navigator.geolocation) {
             toast.error("Geolocation is not supported by your browser");
@@ -221,6 +260,33 @@ const AdminLayout = () => {
     const skipOrder = () => {
         setShowPopup(false);
         setPopupOrder(null);
+    };
+
+    const showNextOrder = async () => {
+        if (!popupOrder) return;
+        setIsFetchingPopupOrder(true);
+        try {
+            const res = await api.get("/delivery/orders/available");
+            const available = Array.isArray(res.data) ? res.data : [];
+            const searchingOrders = available.filter(order => order.status === 'Searching Delivery Partner');
+            const nextOrder = searchingOrders.find(order => Number(order.id) !== Number(popupOrder.id) && !displayedOrderIdsRef.current.has(Number(order.id)));
+
+            if (nextOrder) {
+                displayedOrderIdsRef.current.add(Number(nextOrder.id));
+                setPopupOrder(nextOrder);
+                setShowPopup(true);
+                playNotificationSound();
+            } else {
+                setShowPopup(false);
+                setPopupOrder(null);
+                toast("No more pending orders are available right now.");
+            }
+        } catch (error) {
+            console.error("Failed to fetch next order:", error);
+            toast.error("Unable to load the next order. Please try again.");
+        } finally {
+            setIsFetchingPopupOrder(false);
+        }
     };
 
     useEffect(() => {
@@ -391,10 +457,18 @@ const AdminLayout = () => {
                             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-end">
                                 <button
                                     type="button"
-                                    onClick={skipOrder}
+                                    onClick={openRejectModal}
                                     className="inline-flex justify-center rounded-2xl border border-red-500/20 bg-red-500/10 px-5 py-3 text-sm font-bold text-red-300 hover:bg-red-500/20 transition"
                                 >
                                     Skip Order
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={showNextOrder}
+                                    disabled={isFetchingPopupOrder}
+                                    className="inline-flex justify-center rounded-2xl border border-slate-500/20 bg-slate-800 px-5 py-3 text-sm font-bold text-slate-100 hover:bg-slate-700 transition disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    {isFetchingPopupOrder ? 'Loading Next…' : 'Next Order'}
                                 </button>
                                 <button
                                     type="button"
@@ -410,6 +484,52 @@ const AdminLayout = () => {
             )}
 
             {/* Location Modal */}
+            {showRejectModal && popupOrder && (
+                <div className="fixed inset-0 z-[75] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-xl border border-slate-100">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-xl font-black text-slate-900">Reject Order</h3>
+                            <button onClick={closeRejectModal} className="text-slate-400 hover:text-slate-600">✕</button>
+                        </div>
+
+                        <p className="text-sm text-slate-500 mb-6">
+                            Please provide a reason for rejecting this order. This reason will be recorded with the cancellation.
+                        </p>
+
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Rejection Reason</label>
+                                <textarea
+                                    rows="4"
+                                    value={rejectReason}
+                                    onChange={(e) => setRejectReason(e.target.value)}
+                                    placeholder="Enter reason for rejecting this order..."
+                                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-900 focus:border-blue-400 focus:outline-none"
+                                />
+                            </div>
+
+                            <div className="flex items-center gap-3 mt-6 pt-4 border-t border-slate-100">
+                                <button
+                                    type="button"
+                                    onClick={closeRejectModal}
+                                    className="flex-1 rounded-2xl bg-slate-100 px-4 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-200"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={rejectOrder}
+                                    disabled={isRejecting}
+                                    className="flex-1 rounded-2xl bg-red-600 px-4 py-3 text-sm font-black text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                    {isRejecting ? 'Rejecting...' : 'Submit Rejection'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {showLocationModal && popupOrder && (
                 <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
                     <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-xl border border-slate-100">

@@ -128,7 +128,9 @@ const DeliveryPartnerManagement = () => {
             <table className="w-full text-left">
               <thead>
                 <tr className="border-b border-white/5 bg-[#070b13]/30">
-                  <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Partner Info</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Name</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Email ID</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Phone Number</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Vehicle details</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Total Deliveries</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Earnings</th>
@@ -144,11 +146,14 @@ const DeliveryPartnerManagement = () => {
                         <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center text-emerald-400 border border-white/5">
                           <Bike className="w-4 h-4" />
                         </div>
-                        <div>
-                          <h4 className="text-sm font-black text-white">{partner.name}</h4>
-                          <p className="text-xs text-white/40 font-semibold">{partner.mobile}</p>
-                        </div>
+                        <h4 className="text-sm font-black text-white">{partner.name}</h4>
                       </div>
+                    </td>
+                    <td className="px-6 py-5 text-sm font-bold text-white/60">
+                      {partner.email || 'N/A'}
+                    </td>
+                    <td className="px-6 py-5 text-sm font-bold text-white/60">
+                      {partner.mobile}
                     </td>
                     <td className="px-6 py-5 text-sm font-bold text-white/60">
                       {partner.vehicle_type} ({partner.vehicle_number})
