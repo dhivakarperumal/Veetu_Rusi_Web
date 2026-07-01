@@ -5,7 +5,7 @@ import {
   Bike, ShoppingBag, DollarSign,
   Clock, TrendingUp, ArrowUpRight, TrendingDown,
   Star, Wallet, CheckCircle, Map, Timer, Percent, Box,
-  MapPin, Wifi, WifiOff, RefreshCw
+  Gift, MapPin, Wifi, WifiOff, RefreshCw
 } from "lucide-react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer

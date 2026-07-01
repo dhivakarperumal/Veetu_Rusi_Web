@@ -51,6 +51,8 @@ const Settings = () => {
         receipt_logo: '',
         receipt_show_item_sku: false,
         receipt_printer_name: '',
+        upi_enabled: false,
+        upi_id: '',
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -184,11 +186,37 @@ const Settings = () => {
             case "notifications":
             case "security":
             case "regional":
-            case "payments":
                 return (
                     <div className="flex flex-col items-center justify-center py-12 text-slate-400">
                         <SettingsIcon size={48} className="mb-4 opacity-20" />
                         <p>This settings module is currently under development.</p>
+                    </div>
+                );
+            case "payments":
+                return (
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between p-4 rounded-2xl border border-white/10 bg-[#08120f]/50">
+                            <div>
+                                <p className="text-sm font-bold text-white">Enable UPI Payments</p>
+                                <p className="text-xs text-slate-400">Show UPI QR code on receipts</p>
+                            </div>
+                            <input type="checkbox" name="upi_enabled" checked={!!settings.upi_enabled} onChange={handleChange} className="h-5 w-8" />
+                        </div>
+                        
+                        {settings.upi_enabled && (
+                            <div className="space-y-2 p-4 rounded-2xl border border-white/10 bg-white/5">
+                                <label className="text-xs font-semibold text-slate-400">Merchant UPI ID</label>
+                                <input 
+                                    type="text" 
+                                    name="upi_id" 
+                                    placeholder="e.g. merchant@upi"
+                                    value={settings.upi_id || ''} 
+                                    onChange={handleChange} 
+                                    className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500/50 transition" 
+                                />
+                                <p className="text-[10px] text-slate-500">This UPI ID will be used to generate the payment QR code.</p>
+                            </div>
+                        )}
                     </div>
                 );
             case "receipt":

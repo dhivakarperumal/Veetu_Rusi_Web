@@ -27,7 +27,9 @@ exports.updateSettings = async (req, res) => {
             'daily_incentive_reward', 'order_cancellation_penalty', 'late_delivery_penalty',
             'customer_complaint_penalty',
             // Receipt settings
-            'receipt_enabled', 'receipt_header', 'receipt_footer', 'receipt_logo', 'receipt_show_item_sku', 'receipt_printer_name'
+            'receipt_enabled', 'receipt_header', 'receipt_footer', 'receipt_logo', 'receipt_show_item_sku', 'receipt_printer_name',
+            // Payment settings
+            'upi_enabled', 'upi_id'
         ];
 
         const updates = {};
