@@ -182,7 +182,6 @@ exports.updateReview = async (req, res) => {
     const {
       rating,
       comment,
-      image,
       updated_by,
     } = req.body;
 
@@ -200,7 +199,6 @@ exports.updateReview = async (req, res) => {
       [
         rating,
         comment,
-        image,
         updated_by,
         id,
       ]

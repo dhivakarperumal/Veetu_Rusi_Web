@@ -10,7 +10,7 @@ const {
   deleteReview,
 } = require("../controllers/deliveryPartnerReviewController");
 
-const upload = require("../middleware/upload");
+const upload = require("../config/multer");
 
 // =========================
 // Create Review
@@ -30,7 +30,7 @@ router.get("/:id", getReviewById);
 // =========================
 // Update Review
 // =========================
-router.put("/:id", updateReview);
+router.put("/:id", upload.single("image"), updateReview);
 
 // =========================
 // Admin Reply

@@ -24,6 +24,7 @@ const wishlistRouter = require('./src/routes/wishlist');
 const dealersRouter = require('./src/routes/dealers');
 const { verifyToken, requireRole } = require('./src/middleware/authMiddleware');
 const superadminController = require('./src/controllers/superadminController');
+const deliveryPartnerReviewRouter = require('./src/routes/deliveryPartnerReviewRoutes');
 let createProductsTable = async () => {};
 let createRecipeDetailsTable = async () => {};
 let createFranchiseProductsTable = async () => {};
@@ -129,6 +130,7 @@ app.use('/api/cart', cartRouter);
 app.use('/api/wishlist', wishlistRouter);
 const homeChefCategorysRouter = require('./src/routes/homeChefCategorys');
 app.use('/api/home-chef-categories', homeChefCategorysRouter);
+app.use('/api/delivery-partner-review', deliveryPartnerReviewRouter);
 
 app.use('/api/dealers', dealersRouter);
 app.use('/api/user-food', userFoodRouter);
