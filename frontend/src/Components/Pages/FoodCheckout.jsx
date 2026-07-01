@@ -351,7 +351,7 @@ export default function FoodCheckout() {
 
               {/* Location Search */}
               <div className="bg-white rounded-3xl shadow p-8">
-                <div className="relative">
+                <div className="relative max-w-2xl">
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
                     Search Address
                   </label>
