@@ -111,6 +111,17 @@ const FranchiseDetails = () => {
     return linkedUserOrders.filter(order => isBranchChefOrder(order, chefId ? [chefId] : [], chefUserId ? [chefUserId] : [])).length;
   };
 
+  const getDeliveryPartnerOrderCount = (partner) => {
+    if (!linkedUserOrders) return 0;
+    const partnerId = String(partner.delivery_partner_code || partner.id || '').trim();
+    const partnerUserId = String(partner.user_id || '').trim();
+    return linkedUserOrders.filter(order => {
+       const orderDpId = String(order.delivery_partner || order.delivery_boy_id || '').trim();
+       const orderDpUserId = String(order.delivery_partner_user_id || '').trim();
+       return (orderDpId && orderDpId === partnerId) || (orderDpUserId && orderDpUserId === partnerUserId);
+    }).length;
+  };
+
   const getSubscriptionLabel = (franchise) => {
     if (!franchise) return 'Unknown';
     if (franchise.status !== 'Active') return 'Inactive';
@@ -913,6 +924,7 @@ const FranchiseDetails = () => {
                             <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Partner Details</th>
                             <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Contact</th>
                             <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs">Code</th>
+                            <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs text-center">Deliveries</th>
                             <th className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-xs text-center">Status</th>
                           </tr>
                         </thead>
@@ -931,6 +943,9 @@ const FranchiseDetails = () => {
                                 <span className="inline-flex items-center rounded-lg bg-slate-900/90 px-2 py-1 text-xs font-mono font-bold text-slate-300 border border-slate-800">
                                   {partner.delivery_partner_code || partner.id || '—'}
                                 </span>
+                              </td>
+                              <td className="px-6 py-4 text-center">
+                                <span className="font-bold text-slate-300">{getDeliveryPartnerOrderCount(partner)}</span>
                               </td>
                               <td className="px-6 py-4 text-center">
                                 <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${partner.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
