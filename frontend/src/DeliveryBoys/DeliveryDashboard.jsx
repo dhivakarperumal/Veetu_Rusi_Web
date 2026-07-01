@@ -23,6 +23,10 @@ const FALLBACK = {
     todayEarnings: 0,
     totalEarnings: 0,
     walletBalance: 0,
+    weeklyEarnings: 0,
+    monthlyEarnings: 0,
+    incentivesEarned: 0,
+    bonusEarned: 0,
     rating: 0,
     acceptanceRate: 0,
     completionRate: 0,
@@ -295,10 +299,34 @@ const DeliveryDashboard = () => {
       iconBg: "#14B8A6"
     },
     {
-      label: "Total Earnings", icon: Wallet, positive: true, trend: "All Time",
-      value: `₹${Number(displayCards.totalEarnings ?? 0).toLocaleString()}`,
+      label: "Weekly Earnings", icon: DollarSign, positive: true, trend: "Income",
+      value: `₹${Number(displayCards.weeklyEarnings ?? 0).toLocaleString()}`,
+      gradient: "linear-gradient(135deg,#022c22 0%,#0B1120 100%)",
+      iconBg: "#059669"
+    },
+    {
+      label: "Monthly Earnings", icon: DollarSign, positive: true, trend: "Income",
+      value: `₹${Number(displayCards.monthlyEarnings ?? 0).toLocaleString()}`,
+      gradient: "linear-gradient(135deg,#064e3b 0%,#0B1120 100%)",
+      iconBg: "#34D399"
+    },
+    {
+      label: "Wallet Balance", icon: Wallet, positive: true, trend: "Balance",
+      value: `₹${Number(displayCards.walletBalance ?? 0).toLocaleString()}`,
       gradient: "linear-gradient(135deg,#1e1b4b 0%,#0B1120 100%)",
       iconBg: "#8B5CF6"
+    },
+    {
+      label: "Incentives Earned", icon: Gift, positive: true, trend: "Extra",
+      value: `₹${Number(displayCards.incentivesEarned ?? 0).toLocaleString()}`,
+      gradient: "linear-gradient(135deg,#312e81 0%,#0B1120 100%)",
+      iconBg: "#6366F1"
+    },
+    {
+      label: "Bonus Earned", icon: Gift, positive: true, trend: "Extra",
+      value: `₹${Number(displayCards.bonusEarned ?? 0).toLocaleString()}`,
+      gradient: "linear-gradient(135deg,#2e0d05 0%,#0B1120 100%)",
+      iconBg: "#EF4444"
     },
     {
       label: "Rating", icon: Star, positive: true, trend: "Score",
