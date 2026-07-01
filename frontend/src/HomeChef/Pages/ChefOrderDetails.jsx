@@ -17,31 +17,39 @@ import {
 } from "lucide-react";
 
 const statusConfig = {
-  Delivered: { color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20", icon: CheckCircle },
-  Completed: { color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20", icon: CheckCircle },
-  Cancelled: { color: "bg-red-500/10 text-red-400 border-red-500/20", icon: XCircle },
-  Pending: { color: "bg-amber-500/10 text-amber-400 border-amber-500/20", icon: Clock },
-  "New Order": { color: "bg-amber-500/10 text-amber-400 border-amber-500/20", icon: Clock },
-  Accepted: { color: "bg-blue-500/10 text-blue-400 border-blue-500/20", icon: CheckCircle },
-  Preparing: { color: "bg-purple-500/10 text-purple-400 border-purple-500/20", icon: Package },
-  "Food Ready": { color: "bg-teal-500/10 text-teal-400 border-teal-500/20", icon: Package },
-  Packing: { color: "bg-teal-500/10 text-teal-400 border-teal-500/20", icon: Package },
-  "Out for Delivery": { color: "bg-blue-500/10 text-blue-400 border-blue-500/20", icon: Truck },
-  "Delivery Partner Assigned": { color: "bg-blue-500/10 text-blue-400 border-blue-500/20", icon: Truck },
+  Delivered:                    { color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20", icon: CheckCircle },
+  Completed:                    { color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20", icon: CheckCircle },
+  Cancelled:                    { color: "bg-red-500/10 text-red-400 border-red-500/20", icon: XCircle },
+  Pending:                      { color: "bg-amber-500/10 text-amber-400 border-amber-500/20", icon: Clock },
+  "New Order":                  { color: "bg-amber-500/10 text-amber-400 border-amber-500/20", icon: Clock },
+  Accepted:                     { color: "bg-blue-500/10 text-blue-400 border-blue-500/20", icon: CheckCircle },
+  Preparing:                    { color: "bg-purple-500/10 text-purple-400 border-purple-500/20", icon: Package },
+  "Food Ready":                 { color: "bg-teal-500/10 text-teal-400 border-teal-500/20", icon: Package },
+  Packing:                      { color: "bg-teal-500/10 text-teal-400 border-teal-500/20", icon: Package },
   "Searching Delivery Partner": { color: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20", icon: Truck },
+  "Delivery Partner Assigned":  { color: "bg-blue-500/10 text-blue-400 border-blue-500/20", icon: Truck },
+  "Picked Up":                  { color: "bg-sky-500/10 text-sky-400 border-sky-500/20", icon: Truck },
+  "Start Ride":                 { color: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20", icon: Truck },
+  "Reached Location":           { color: "bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/20", icon: MapPin },
+  "Waiting for Customer":       { color: "bg-amber-500/10 text-amber-400 border-amber-500/20", icon: Clock },
+  "Out for Delivery":           { color: "bg-blue-500/10 text-blue-400 border-blue-500/20", icon: Truck },
 };
 
 const nextStatusMap = {
-  Pending: "Accepted",
-  "Order Placed": "Accepted",
-  New: "Accepted",
-  Accepted: "Preparing",
-  Preparing: "Food Ready",
-  "Food Ready": "Packing",
-  Packing: "Searching Delivery Partner",
+  Pending:                      "Accepted",
+  "Order Placed":               "Accepted",
+  "New Order":                  "Accepted",
+  New:                          "Accepted",
+  Accepted:                     "Preparing",
+  Preparing:                    "Food Ready",
+  "Food Ready":                 "Packing",
+  Packing:                      "Searching Delivery Partner",
   "Searching Delivery Partner": "Delivery Partner Assigned",
-  "Delivery Partner Assigned": "Out for Delivery",
-  "Out for Delivery": "Delivered",
+  "Delivery Partner Assigned":  "Picked Up",
+  "Picked Up":                  "Start Ride",
+  "Start Ride":                 "Reached Location",
+  "Reached Location":           "Waiting for Customer",
+  "Waiting for Customer":       "Delivered",
 };
 
 const orderSteps = [
@@ -52,7 +60,10 @@ const orderSteps = [
   "Packing",
   "Searching Delivery Partner",
   "Delivery Partner Assigned",
-  "Out for Delivery",
+  "Picked Up",
+  "Start Ride",
+  "Reached Location",
+  "Waiting for Customer",
   "Delivered",
 ];
 
@@ -156,18 +167,21 @@ const ChefOrderDetails = () => {
 
   const currentStepIndex = (() => {
     const statusToIndex = {
-      "Pending": 0,
-      "New Order": 0,
-      "Order Placed": 0,
-      "Accepted": 1,
-      "Preparing": 2,
-      "Food Ready": 3,
-      "Packing": 4,
-      "Searching Delivery Partner": 5,
-      "Delivery Partner Assigned": 6,
-      "Out for Delivery": 7,
-      "Delivered": 8,
-      "Completed": 8,
+      "Pending":                     0,
+      "New Order":                   0,
+      "Order Placed":                0,
+      "Accepted":                    1,
+      "Preparing":                   2,
+      "Food Ready":                  3,
+      "Packing":                     4,
+      "Searching Delivery Partner":  5,
+      "Delivery Partner Assigned":   6,
+      "Picked Up":                   7,
+      "Start Ride":                  8,
+      "Reached Location":            9,
+      "Waiting for Customer":        10,
+      "Delivered":                   11,
+      "Completed":                   11,
     };
     return statusToIndex[order.status] ?? 0;
   })();
@@ -231,16 +245,29 @@ const ChefOrderDetails = () => {
               onChange={(e) => setNewStatus(e.target.value)}
               className="flex-1 px-4 py-2.5 bg-[#070b13]/60 border border-white/5 rounded-xl outline-none font-medium text-white text-sm focus:border-emerald-500/30 transition-all"
             >
-              <option value="Pending">New Order</option>
-              <option value="Accepted">Accepted</option>
-              <option value="Preparing">Preparing</option>
-              <option value="Food Ready">Food Ready</option>
-              <option value="Packing">Packing</option>
-              <option value="Searching Delivery Partner">Searching Delivery Partner</option>
-              <option value="Delivery Partner Assigned">Delivery Partner Assigned</option>
-              <option value="Out for Delivery">Out for Delivery</option>
-              <option value="Delivered">Delivered</option>
-              <option value="Cancelled">Cancelled</option>
+              {(() => {
+                const ALL_ORDER_STATUSES = [
+                  { value: "Pending",                    label: "New Order" },
+                  { value: "Accepted",                   label: "Accepted" },
+                  { value: "Preparing",                  label: "Preparing" },
+                  { value: "Food Ready",                 label: "Food Ready" },
+                  { value: "Packing",                    label: "Packing" },
+                  { value: "Searching Delivery Partner", label: "Searching Delivery Partner" },
+                  { value: "Delivery Partner Assigned",  label: "Delivery Partner Assigned" },
+                  { value: "Picked Up",                  label: "Picked Up" },
+                  { value: "Start Ride",                 label: "Start Ride" },
+                  { value: "Reached Location",           label: "Reached Location" },
+                  { value: "Waiting for Customer",       label: "Waiting for Customer" },
+                  { value: "Delivered",                  label: "Delivered" },
+                ];
+                const currentVal = ["New Order", "Pending", "Order Placed", "New"].includes(order.status) ? "Pending" : order.status;
+                const currentIdx = ALL_ORDER_STATUSES.findIndex(s => s.value === currentVal);
+                return ALL_ORDER_STATUSES
+                  .filter((_, i) => i >= currentIdx)
+                  .map(s => (
+                    <option key={s.value} value={s.value}>{s.label}</option>
+                  ));
+              })()}
             </select>
             <button
               onClick={handleStatusChange}

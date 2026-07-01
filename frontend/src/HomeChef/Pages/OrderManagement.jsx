@@ -458,16 +458,32 @@ const OrderManagement = () => {
                   onChange={(e) => setEditingOrder({ ...editingOrder, status: e.target.value })}
                   className="w-full px-4 py-3 bg-[#070b13]/60 border border-white/5 rounded-2xl outline-none font-medium text-white text-sm focus:border-emerald-500/30 transition-all cursor-pointer"
                 >
-                  <option value="Pending">New Order</option>
-                  <option value="Accepted">Accepted</option>
-                  <option value="Preparing">Preparing</option>
-                  <option value="Food Ready">Food Ready</option>
-                  <option value="Packing">Packing</option>
-                  <option value="Searching Delivery Partner">Searching Delivery Partner</option>
-                  <option value="Delivery Partner Assigned">Delivery Partner Assigned</option>
-                  <option value="Out for Delivery">Out for Delivery</option>
-                  <option value="Delivered">Delivered</option>
-                  <option value="Cancelled">Cancelled</option>
+                  {(() => {
+                    const ALL_ORDER_STATUSES = [
+                      { value: "Pending",                    label: "New Order" },
+                      { value: "Accepted",                   label: "Accepted" },
+                      { value: "Preparing",                  label: "Preparing" },
+                      { value: "Food Ready",                 label: "Food Ready" },
+                      { value: "Packing",                    label: "Packing" },
+                      { value: "Searching Delivery Partner", label: "Searching Delivery Partner" },
+                      { value: "Delivery Partner Assigned",  label: "Delivery Partner Assigned" },
+                      { value: "Picked Up",                  label: "Picked Up" },
+                      { value: "Start Ride",                 label: "Start Ride" },
+                      { value: "Reached Location",           label: "Reached Location" },
+                      { value: "Waiting for Customer",       label: "Waiting for Customer" },
+                      { value: "Out for Delivery",           label: "Out for Delivery" },
+                      { value: "Delivered",                  label: "Delivered" },
+                      { value: "Cancelled",                  label: "Cancelled" },
+                    ];
+                    const currentVal = editingOrder.status === "New Order" ? "Pending" : editingOrder.status;
+                    const currentIdx = ALL_ORDER_STATUSES.findIndex(s => s.value === currentVal);
+                    // Show current status onwards only
+                    return ALL_ORDER_STATUSES
+                      .filter((s, i) => i >= currentIdx)
+                      .map(s => (
+                        <option key={s.value} value={s.value}>{s.label}</option>
+                      ));
+                  })()}
                 </select>
               </div>
 
