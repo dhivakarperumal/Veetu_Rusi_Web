@@ -317,6 +317,12 @@ export default function MyFoodOrders({ isEmbedded = false }) {
     try {
 
       const formData = new FormData();
+      const deliveryPartnerId = deliveryReviewOrder?.delivery_partner_id || deliveryReviewOrder?.delivery_partner_user_id || deliveryReviewOrder?.delivery_partner || "";
+      const deliveryPartnerName = deliveryReviewOrder?.delivery_partner_name || deliveryReviewOrder?.delivery_partner || "";
+      const deliveryPartnerPhone = deliveryReviewOrder?.delivery_partner_phone || deliveryReviewOrder?.delivery_partner_mobile || "";
+      const deliveryPartnerEmail = deliveryReviewOrder?.delivery_partner_email || deliveryReviewOrder?.delivery_partnerEmail || deliveryReviewOrder?.delivery_partner_email_id || "";
+      const franchiseAdminId = deliveryReviewOrder?.franchise_admin_id || deliveryReviewOrder?.franchise_user_id || deliveryReviewOrder?.franchise_id || "";
+      const franchiseAdminName = deliveryReviewOrder?.franchise_admin_name || deliveryReviewOrder?.franchise_name || "";
 
       formData.append(
         "user_id",
@@ -345,32 +351,32 @@ export default function MyFoodOrders({ isEmbedded = false }) {
 
       formData.append(
         "delivery_partner_id",
-        deliveryReviewOrder.delivery_partner_id
+        deliveryPartnerId
       );
 
       formData.append(
         "delivery_partner_name",
-        deliveryReviewOrder.delivery_partner_name
+        deliveryPartnerName
       );
 
       formData.append(
         "delivery_partner_phone",
-        deliveryReviewOrder.delivery_partner_phone
+        deliveryPartnerPhone
       );
 
       formData.append(
         "delivery_partner_email",
-        deliveryReviewOrder.delivery_partner_email
+        deliveryPartnerEmail
       );
 
       formData.append(
         "franchise_admin_id",
-        deliveryReviewOrder.franchise_admin_id
+        franchiseAdminId
       );
 
       formData.append(
         "franchise_admin_name",
-        deliveryReviewOrder.franchise_admin_name
+        franchiseAdminName
       );
 
       formData.append(

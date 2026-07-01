@@ -39,6 +39,8 @@ exports.addReview = async (req, res) => {
 
     const image = req.file ? req.file.filename : null;
 
+    const payload = req.body || {};
+
     const {
       user_id,
       user_name,
@@ -57,9 +59,16 @@ exports.addReview = async (req, res) => {
 
       created_by,
       updated_by,
-    } = req.body;
+    } = payload;
 
-    if (!user_id || !delivery_partner_id || !rating) {
+    const normalizedDeliveryPartnerId = delivery_partner_id || payload.delivery_partner_user_id || payload.delivery_partner || payload.dp_id || null;
+    const normalizedDeliveryPartnerName = delivery_partner_name || payload.delivery_partner_name || payload.delivery_partner || null;
+    const normalizedDeliveryPartnerPhone = delivery_partner_phone || payload.delivery_partner_phone || payload.delivery_partner_mobile || null;
+    const normalizedDeliveryPartnerEmail = delivery_partner_email || payload.delivery_partner_email || payload.delivery_partnerEmail || payload.dp_email || null;
+    const normalizedFranchiseAdminId = franchise_admin_id || payload.franchise_user_id || payload.franchise_id || payload.franchise_admin_id || null;
+    const normalizedFranchiseAdminName = franchise_admin_name || payload.franchise_name || payload.franchise_admin_name || null;
+
+    if (!user_id || !normalizedDeliveryPartnerId || !rating) {
       return res.status(400).json({
         success: false,
         message: "Required fields are missing.",
@@ -112,13 +121,13 @@ exports.addReview = async (req, res) => {
         comment,
         image || null,
 
-        delivery_partner_id,
-        delivery_partner_name,
-        delivery_partner_phone,
-        delivery_partner_email,
+        normalizedDeliveryPartnerId,
+        normalizedDeliveryPartnerName,
+        normalizedDeliveryPartnerPhone,
+        normalizedDeliveryPartnerEmail,
 
-        franchise_admin_id,
-        franchise_admin_name,
+        normalizedFranchiseAdminId,
+        normalizedFranchiseAdminName,
 
         created_by,
         updated_by,
