@@ -96,12 +96,12 @@ exports.addReview = async (req, res) => {
 
     if (!resolvedFranchiseAdminName && normalizedFranchiseAdminId) {
       const [userRows] = await pool.query(
-        `SELECT name FROM users WHERE user_id = ? OR id = ? LIMIT 1`,
+        `SELECT full_name FROM users WHERE user_id = ? OR id = ? LIMIT 1`,
         [normalizedFranchiseAdminId, normalizedFranchiseAdminId]
       );
 
       if (userRows.length > 0) {
-        resolvedFranchiseAdminName = userRows[0].name || null;
+        resolvedFranchiseAdminName = userRows[0].full_name || null;
       }
     }
 
