@@ -26,14 +26,19 @@ const OrderManagement = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // Fetch tracking details when modal opens
+  // Fetch tracking details when modal opens + poll every 10s for live updates
   useEffect(() => {
-    if (trackingOrder) {
-      setTrackingDetails(null); // Reset
+    if (!trackingOrder) return;
+    let cancelled = false;
+    const fetchTracking = () => {
       api.get(`/user-food-orders/tracking/${trackingOrder.order_id}`)
-        .then(res => setTrackingDetails(res.data))
+        .then(res => { if (!cancelled) setTrackingDetails(res.data); })
         .catch(err => console.error("Error fetching tracking:", err));
-    }
+    };
+    setTrackingDetails(null);
+    fetchTracking();
+    const interval = setInterval(fetchTracking, 10000);
+    return () => { cancelled = true; clearInterval(interval); };
   }, [trackingOrder]);
 
   useEffect(() => {
@@ -497,47 +502,99 @@ const OrderManagement = () => {
           <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={() => setTrackingOrder(null)}></div>
           <div className="bg-gradient-to-br from-[#0c1116] to-[#171a20] border border-white/10 w-full max-w-5xl rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col h-[85vh] max-h-[800px]">
             {/* Unified Header */}
-            <div className="w-full bg-[#0B1120] border-b border-white/5 p-5 md:p-6 flex justify-between items-center relative z-20 shadow-lg">
-              <div>
-                <h3 className="text-xl md:text-2xl font-black uppercase italic tracking-tight text-white drop-shadow-sm flex items-center gap-3">
-                  <span className="text-emerald-400">Live</span> Tracking
-                </h3>
-                <p className="text-[10px] md:text-xs text-emerald-300/80 font-bold uppercase tracking-widest mt-1">Order ID: {trackingOrder.order_id}</p>
+            <div className="w-full bg-[#070b13] border-b border-emerald-500/20 p-4 md:p-5 flex justify-between items-center relative z-20">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30">
+                  <span className="text-sm">🛵</span>
+                </div>
+                <div>
+                  <h3 className="text-base md:text-lg font-black uppercase italic tracking-tight text-white flex items-center gap-2">
+                    <span className="text-emerald-400">Live</span> Tracking
+                    {trackingDetails?.latitude && (
+                      <span className="inline-flex items-center gap-1 text-[9px] font-black bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/30 animate-pulse">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block"></span> LIVE
+                      </span>
+                    )}
+                  </h3>
+                  <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest">Order: {trackingOrder.order_id}</p>
+                </div>
               </div>
-              <button onClick={() => setTrackingOrder(null)} className="p-2.5 bg-white/5 hover:bg-red-500/20 border border-white/10 hover:border-red-500/30 rounded-xl transition text-white/60 hover:text-red-400 flex items-center justify-center group w-10 h-10">
-                <span className="group-hover:scale-110 transition-transform font-black">✕</span>
+              <button onClick={() => setTrackingOrder(null)} className="p-2 bg-white/5 hover:bg-red-500/20 border border-white/10 hover:border-red-500/30 rounded-xl transition text-white/50 hover:text-red-400 w-9 h-9 flex items-center justify-center">
+                <span className="font-black text-sm">✕</span>
               </button>
             </div>
 
             {/* Modal Body */}
             <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
-              {/* Map Section - Left Side */}
-              <div className="w-full md:w-3/5 h-64 md:h-full bg-[#070b13] relative overflow-hidden flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-white/5">
-                  <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mix-blend-overlay"></div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#070b13] via-transparent to-transparent z-0"></div>
-                  
-                  <div className="w-20 h-20 rounded-full bg-emerald-500/10 flex items-center justify-center animate-pulse mb-6 shadow-[0_0_50px_rgba(16,185,129,0.2)] relative z-10 border border-emerald-500/20">
-                    <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-400/30">
-                      <span className="text-3xl">📍</span>
+
+              {/* ── MAP SECTION ── */}
+              <div className="w-full md:w-3/5 h-72 md:h-full relative overflow-hidden flex flex-col border-b md:border-b-0 md:border-r border-white/5">
+
+                {trackingDetails?.latitude && trackingDetails?.longitude ? (
+                  <>
+                    {/* Real OpenStreetMap iframe */}
+                    <iframe
+                      key={`${trackingDetails.latitude}-${trackingDetails.longitude}`}
+                      title="Live Delivery Map"
+                      className="w-full h-full border-0"
+                      src={`https://www.openstreetmap.org/export/embed.html?bbox=${parseFloat(trackingDetails.longitude)-0.018},${parseFloat(trackingDetails.latitude)-0.012},${parseFloat(trackingDetails.longitude)+0.018},${parseFloat(trackingDetails.latitude)+0.012}&layer=mapnik&marker=${trackingDetails.latitude},${trackingDetails.longitude}`}
+                      loading="lazy"
+                    />
+                    {/* Overlay badge: partner location */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#070b13] via-[#070b13]/80 to-transparent p-4 pointer-events-none">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">📍</span>
+                        <div>
+                          <p className="text-xs font-black text-white">{trackingDetails.area || "En Route"}{trackingDetails.district ? `, ${trackingDetails.district}` : ""}</p>
+                          <p className="text-[10px] text-white/50 font-bold">{trackingDetails.pincode ? `PIN: ${trackingDetails.pincode}` : ""} &nbsp;·&nbsp; Updated: {trackingDetails.updated_at ? new Date(trackingDetails.updated_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : "--"}</p>
+                        </div>
+                        {trackingDetails.total_distance_km && (
+                          <div className="ml-auto bg-emerald-500/20 border border-emerald-500/30 rounded-lg px-3 py-1">
+                            <p className="text-emerald-400 font-black text-xs">{parseFloat(trackingDetails.total_distance_km).toFixed(1)} km</p>
+                            <p className="text-[9px] text-emerald-400/60 uppercase tracking-wider">Total Route</p>
+                          </div>
+                        )}
+                      </div>
                     </div>
+                  </>
+                ) : (
+                  /* Placeholder when no GPS data yet */
+                  <div className="w-full h-full bg-[#070b13] flex flex-col items-center justify-center gap-4">
+                    <div className="absolute inset-0 opacity-10" style={{backgroundImage: "radial-gradient(circle, #10b981 1px, transparent 1px)", backgroundSize: "30px 30px"}}></div>
+                    <div className="w-20 h-20 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 relative">
+                      <span className="text-4xl">🛵</span>
+                      <div className="absolute inset-0 rounded-full border border-emerald-500/30 animate-ping opacity-30"></div>
+                    </div>
+                    <div className="text-center relative z-10">
+                      <p className="text-sm font-black text-white/60 uppercase tracking-widest">
+                        {trackingDetails === null ? "Fetching Location..." : "Awaiting GPS Signal"}
+                      </p>
+                      <p className="text-[10px] text-white/30 mt-1">Location updates every 10 seconds</p>
+                    </div>
+                    {trackingDetails === null && (
+                      <div className="flex gap-1.5">
+                        <div className="w-2 h-2 rounded-full bg-emerald-400 animate-bounce" style={{animationDelay:'0ms'}}></div>
+                        <div className="w-2 h-2 rounded-full bg-emerald-400 animate-bounce" style={{animationDelay:'150ms'}}></div>
+                        <div className="w-2 h-2 rounded-full bg-emerald-400 animate-bounce" style={{animationDelay:'300ms'}}></div>
+                      </div>
+                    )}
                   </div>
-                  
-                  <div className="relative z-10 text-center space-y-2">
-                    <h3 className="text-xl font-black uppercase tracking-[0.2em] text-emerald-400 drop-shadow-md">Live Tracking Map</h3>
-                    <p className="text-xs font-bold text-white/40 uppercase tracking-widest bg-white/5 px-4 py-2 rounded-full border border-white/5 backdrop-blur-sm">
-                      {trackingDetails?.area ? `${trackingDetails.area}, ${trackingDetails.district} - ${trackingDetails.pincode}` : "Awaiting GPS Coordinates"}
-                    </p>
-                  </div>
+                )}
               </div>
-              
-              {/* Details Section - Right Side */}
-              <div className="w-full md:w-2/5 flex flex-col h-full bg-[#0B1120]/80">
-                <div className="p-6 md:p-8 space-y-8 flex-1 overflow-y-auto custom-scrollbar">
-                <div className="space-y-6">
-                  <h4 className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] border-b border-white/5 pb-3">Delivery Status</h4>
-                  
-                  <div className="space-y-0 relative before:absolute before:inset-0 before:ml-[11px] before:translate-x-[-1px] before:h-full before:w-0.5 before:bg-gradient-to-b before:from-emerald-500/50 before:via-white/10 before:to-transparent">
-                    {["Pending", "Preparing", "Out for Delivery", "Delivered"].map((step, index) => {
+
+              {/* ── DETAILS PANEL ── */}
+              <div className="w-full md:w-2/5 flex flex-col h-full bg-[#0B1120]/90 overflow-y-auto custom-scrollbar">
+
+                {/* Delivery Status Timeline */}
+                <div className="p-5 border-b border-white/5">
+                  <h4 className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-4">Delivery Status</h4>
+                  <div className="space-y-0 relative before:absolute before:inset-0 before:ml-[10px] before:w-0.5 before:bg-gradient-to-b before:from-emerald-500/50 before:via-white/10 before:to-transparent">
+                    {[
+                      { label: "Order Placed", icon: "🧾" },
+                      { label: "Preparing", icon: "🍳" },
+                      { label: "Out for Delivery", icon: "🛵" },
+                      { label: "Delivered", icon: "✅" }
+                    ].map(({ label, icon }, index) => {
                       const status = (trackingOrder.status || "").toLowerCase();
                       let currentStepIndex = 0;
                       if (["new", "new order", "order placed", "pending"].includes(status)) currentStepIndex = 0;
@@ -545,62 +602,87 @@ const OrderManagement = () => {
                       else if (status === "out for delivery") currentStepIndex = 2;
                       else if (["delivered", "completed"].includes(status)) currentStepIndex = 3;
                       else if (status === "cancelled") currentStepIndex = -1;
-
                       const isActive = index === currentStepIndex;
                       const isPassed = index < currentStepIndex;
-                      
                       return (
-                        <div key={index} className="flex gap-5 relative group py-4">
-                          <div className={`w-6 h-6 rounded-full flex items-center justify-center z-10 shrink-0 border-2 transition-all duration-300 ${
-                            isActive 
-                              ? 'bg-[#1B4D22] border-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.4)] scale-110' 
-                              : isPassed 
-                                ? 'bg-emerald-500/20 border-emerald-500/50' 
-                                : 'bg-[#070b13] border-white/10'
+                        <div key={index} className={`flex items-center gap-3 relative py-3 transition-all ${isActive ? 'translate-x-1' : ''}`}>
+                          <div className={`w-5 h-5 rounded-full flex items-center justify-center z-10 shrink-0 border-2 transition-all duration-300 ${
+                            isActive ? 'bg-emerald-500 border-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.5)] scale-110'
+                            : isPassed ? 'bg-emerald-500/30 border-emerald-500/60'
+                            : 'bg-[#070b13] border-white/10'
                           }`}>
-                            {isPassed ? (
-                               <div className="w-2 h-2 rounded-full bg-emerald-400"></div>
-                            ) : isActive ? (
-                               <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></div>
-                            ) : null}
+                            {isPassed && <div className="w-2 h-2 rounded-full bg-emerald-400"></div>}
+                            {isActive && <div className="w-2 h-2 rounded-full bg-white animate-pulse"></div>}
                           </div>
-                          
-                          <div className={`pt-0.5 transition-all duration-300 ${isActive ? 'translate-x-1' : ''}`}>
-                            <p className={`text-sm font-black uppercase tracking-wider ${
-                              isActive ? 'text-emerald-400' : isPassed ? 'text-white/80' : 'text-white/30'
-                            }`}>{step}</p>
-                            {isActive && (
-                              <p className="text-[10px] text-emerald-400/60 font-bold mt-1 tracking-widest uppercase">Current Stage</p>
-                            )}
+                          <span className="text-base">{icon}</span>
+                          <div className="flex-1">
+                            <p className={`text-xs font-black uppercase tracking-wider ${isActive ? 'text-emerald-400' : isPassed ? 'text-white/70' : 'text-white/25'}`}>{label}</p>
+                            {isActive && <p className="text-[9px] text-emerald-400/60 font-bold tracking-widest uppercase mt-0.5">Current Stage</p>}
                           </div>
+                          {isActive && <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></div>}
                         </div>
-                      )
+                      );
                     })}
                   </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-[#070b13]/80 to-[#0B1120]/80 p-5 rounded-2xl border border-white/5 flex items-center gap-4 mt-8 shadow-inner relative overflow-hidden group hover:border-emerald-500/30 transition-colors">
-                  <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center text-emerald-400 font-black text-xl border border-emerald-500/20 shadow-lg relative z-10 shrink-0">
-                    {trackingOrder.delivery_partner ? (partners.find(p => p.user_id == trackingOrder.delivery_partner || p.name === trackingOrder.delivery_partner)?.name || trackingOrder.delivery_partner).charAt(0).toUpperCase() : "?"}
-                  </div>
-                  
-                  <div className="relative z-10 min-w-0 flex-1">
-                    <p className="text-base font-black text-white truncate drop-shadow-sm">
-                      {trackingOrder.delivery_partner ? (partners.find(p => p.user_id == trackingOrder.delivery_partner || p.name === trackingOrder.delivery_partner)?.name || trackingOrder.delivery_partner) : "Searching Partner"}
-                    </p>
-                    <p className="text-[10px] text-emerald-400/70 uppercase tracking-widest font-black mt-0.5">Assigned Delivery Partner</p>
-                    
-                    {trackingOrder.delivery_partner && (
-                      <p className="text-xs text-white/60 font-bold mt-2 flex items-center gap-2">
-                        <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded uppercase tracking-wider">Mobile</span> 
-                        {partners.find(p => p.user_id == trackingOrder.delivery_partner || p.name === trackingOrder.delivery_partner)?.mobile || "N/A"}
+                {/* Delivery Partner Card */}
+                <div className="p-5 border-b border-white/5">
+                  <h4 className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-3">Delivery Partner</h4>
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-full bg-gradient-to-br from-emerald-500/30 to-teal-500/20 flex items-center justify-center text-emerald-400 font-black text-lg border border-emerald-500/30 shrink-0">
+                      {(trackingDetails?.delivery_partner_name || trackingOrder.delivery_partner || "?").charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-black text-white truncate">
+                        {trackingDetails?.delivery_partner_name || (trackingOrder.delivery_partner ? (partners.find(p => p.user_id == trackingOrder.delivery_partner)?.name || trackingOrder.delivery_partner) : "Assigning Partner...")}
                       </p>
+                      <p className="text-[10px] text-emerald-400/70 uppercase tracking-widest font-bold">Delivery Partner</p>
+                    </div>
+                    {(trackingDetails?.delivery_partner_phone || partners.find(p => p.user_id == trackingOrder.delivery_partner)?.mobile) && (
+                      <a href={`tel:${trackingDetails?.delivery_partner_phone || partners.find(p => p.user_id == trackingOrder.delivery_partner)?.mobile}`}
+                        className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/30 hover:bg-emerald-500/30 flex items-center justify-center text-emerald-400 transition shrink-0" title="Call Partner">
+                        📞
+                      </a>
                     )}
                   </div>
                 </div>
-                </div>
+
+                {/* Route Info */}
+                {trackingDetails && (trackingDetails.pickup_latitude || trackingDetails.dropoff_latitude) && (
+                  <div className="p-5">
+                    <h4 className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-3">Route Info</h4>
+                    <div className="space-y-2">
+                      {trackingDetails.pickup_latitude && (
+                        <div className="flex items-start gap-2 bg-white/5 rounded-xl p-3">
+                          <span className="text-sm mt-0.5">🍽️</span>
+                          <div>
+                            <p className="text-[10px] text-white/40 font-bold uppercase tracking-wider">Pickup (Your Kitchen)</p>
+                            <p className="text-xs text-white/70 font-bold">{parseFloat(trackingDetails.pickup_latitude).toFixed(4)}°N, {parseFloat(trackingDetails.pickup_longitude).toFixed(4)}°E</p>
+                          </div>
+                        </div>
+                      )}
+                      {trackingDetails.dropoff_latitude && (
+                        <div className="flex items-start gap-2 bg-white/5 rounded-xl p-3">
+                          <span className="text-sm mt-0.5">🏠</span>
+                          <div>
+                            <p className="text-[10px] text-white/40 font-bold uppercase tracking-wider">Dropoff (Customer)</p>
+                            <p className="text-xs text-white/70 font-bold">{parseFloat(trackingDetails.dropoff_latitude).toFixed(4)}°N, {parseFloat(trackingDetails.dropoff_longitude).toFixed(4)}°E</p>
+                          </div>
+                        </div>
+                      )}
+                      {trackingDetails.total_distance_km && (
+                        <div className="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm">📏</span>
+                            <p className="text-[10px] text-emerald-400/70 font-bold uppercase tracking-wider">Total Distance</p>
+                          </div>
+                          <p className="text-sm font-black text-emerald-400">{parseFloat(trackingDetails.total_distance_km).toFixed(2)} km</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
