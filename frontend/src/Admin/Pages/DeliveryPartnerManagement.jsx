@@ -991,14 +991,11 @@ const DeliveryPartnerManagement = () => {
               <thead>
                 <tr className="bg-slate-700 border-b border-slate-200">
                   <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em] text-center w-16">S.No</th>
-                  <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em]">Name</th>
-                  <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em]">Email ID</th>
-                  <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em]">Phone Number</th>
+                  <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em]">Partner Info</th>
                   <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em]">Vehicle Details</th>
-                  {/* <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em]">Address / Verification</th> */}
-                  <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em]">Deliveries</th>
-                  <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em]">Earnings</th>
+                  <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em]">Mobile</th>
                   <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em]">Status</th>
+                  <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em]">Login Credentials</th>
                   <th className="px-5 py-4 text-[10px] font-black text-white uppercase tracking-[0.15em] text-center">Actions</th>
                 </tr>
               </thead>
@@ -1011,42 +1008,32 @@ const DeliveryPartnerManagement = () => {
                         <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 border border-emerald-100">
                           <Bike className="w-4 h-4" />
                         </div>
-                        <h4 className="text-sm font-bold text-slate-800">{partner.name}</h4>
+                        <div>
+                          <h4 className="text-sm font-bold text-slate-800">{partner.name}</h4>
+                          <p className="text-xs text-slate-500 font-medium">{partner.email || 'N/A'}</p>
+                        </div>
                       </div>
-                    </td>
-                    <td className="px-5 py-4 text-sm font-semibold text-slate-600">
-                      {partner.email || 'N/A'}
-                    </td>
-                    <td className="px-5 py-4 text-sm font-semibold text-slate-600">
-                      {partner.mobile}
                     </td>
                     <td className="px-5 py-4 text-sm font-semibold text-slate-600">
                       {partner.vehicle_type} &bull; {partner.vehicle_number}
                     </td>
-                    {/* <td className="px-5 py-4 text-sm text-slate-600">
-                      <div className="space-y-1.5 text-[11px] leading-snug">
-                        <p><span className="font-black text-slate-800">Current:</span> {partner.current_address || 'N/A'}</p>
-                        <p><span className="font-black text-slate-800">Permanent:</span> {partner.permanent_address || 'N/A'}</p>
-                        <p><span className="font-black text-slate-800">Live GPS:</span> {partner.live_location || 'N/A'}</p>
-                        <p><span className="font-black text-slate-800">Emergency:</span> {partner.emergency_contact_name ? `${partner.emergency_contact_name} (${partner.emergency_contact_relationship || 'N/A'}) ${partner.emergency_contact_mobile || ''}` : 'N/A'}</p>
-                        <p><span className="font-black text-slate-800">License Issue:</span> {partner.license_issue_date ? partner.license_issue_date.substring(0, 10) : 'N/A'}</p>
-                        <p><span className="font-black text-slate-800">Available:</span> {partner.available_areas || 'N/A'}</p>
-                        <p><span className="font-black text-slate-800">Time:</span> {[
-                          partner.available_time_morning ? 'Morning' : null,
-                          partner.available_time_afternoon ? 'Afternoon' : null,
-                          partner.available_time_evening ? 'Evening' : null,
-                          partner.available_time_night ? 'Night' : null,
-                        ].filter(Boolean).join(', ') || 'N/A'}</p>
-                        <p><span className="font-black text-slate-800">Verified:</span> {[partner.face_verified ? 'Face' : null, partner.location_verified ? 'Location' : null].filter(Boolean).join(', ') || 'N/A'}</p>
-                        <p><span className="font-black text-slate-800">Selfies:</span> {[partner.selfie_with_vehicle ? 'Vehicle' : null, partner.selfie_with_aadhaar ? 'Aadhaar' : null].filter(Boolean).join(', ') || 'N/A'}</p>
-                      </div>
-                    </td> */}
-                    <td className="px-5 py-4 text-sm font-black text-slate-700">{partner.total_deliveries || 0}</td>
-                    <td className="px-5 py-4 text-sm font-black text-emerald-600">₹{parseFloat(partner.earnings || 0).toLocaleString()}</td>
+                    <td className="px-5 py-4 text-sm font-semibold text-slate-600">
+                      {partner.mobile}
+                    </td>
                     <td className="px-5 py-4">
                       <span className={`text-[9px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider ${partner.status === "Approved" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : partner.status === "Pending" ? "bg-amber-50 text-amber-700 border border-amber-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
                         {partner.status}
                       </span>
+                    </td>
+                    <td className="px-5 py-4">
+                      {partner.status === "Approved" ? (
+                        <div className="text-xs text-slate-600">
+                          <p><span className="font-semibold text-slate-800">User:</span> {partner.email || 'N/A'}</p>
+                          <p><span className="font-semibold text-slate-800">Pass:</span> ********</p>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-slate-400 italic">N/A</span>
+                      )}
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center justify-center gap-1">
@@ -1088,8 +1075,7 @@ const DeliveryPartnerManagement = () => {
                 <div className="space-y-1.5 text-xs text-slate-500">
                   <p><strong className="text-slate-600">Mobile:</strong> {partner.mobile}</p>
                   <p><strong className="text-slate-600">Vehicle No:</strong> {partner.vehicle_number}</p>
-                  <p><strong className="text-slate-600">Deliveries:</strong> {partner.total_deliveries || 0}</p>
-                  <p><strong className="text-slate-600">Earnings:</strong> <span className="text-emerald-600 font-black">₹{parseFloat(partner.earnings || 0).toLocaleString()}</span></p>
+
                 </div>
               </div>
               <div className="flex items-center gap-2 mt-4 pt-4 border-t border-slate-100">
@@ -1258,8 +1244,7 @@ const DeliveryPartnerManagement = () => {
                   ["Selfie Vehicle", selectedPartner.selfie_with_vehicle ? 'Uploaded' : 'Missing'],
                   ["Selfie Aadhaar", selectedPartner.selfie_with_aadhaar ? 'Uploaded' : 'Missing'],
                   ["Aadhaar Number", selectedPartner.aadhaar_number || "N/A"],
-                  ["Total Deliveries", selectedPartner.total_deliveries || 0],
-                  ["Total Earnings", `₹${parseFloat(selectedPartner.earnings || 0).toLocaleString()}`],
+
                   ["KYC Status", selectedPartner.kyc_verification_status || "N/A"],
                   ["Status", selectedPartner.status],
                 ].map(([label, value]) => (
