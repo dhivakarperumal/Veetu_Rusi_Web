@@ -41,7 +41,7 @@ const navItems = [
   
   { path: "/delivery/attendance", label: "Attendance", icon: FaCalendarCheck },
   
-  { path: "/delivery/settings", label: "Settings", icon: FaCog },
+  
 ];
 
 const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {

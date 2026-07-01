@@ -15,7 +15,9 @@ import {
     FiEdit2,
     FiUser,
     FiCalendar,
-    FiLoader
+    FiLoader,
+    FiCopy,
+    FiShare2
 } from "react-icons/fi";
 
 const Profile = () => {
@@ -26,6 +28,8 @@ const Profile = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [changingPwd, setChangingPwd] = useState(false);
+    const [referralCode, setReferralCode] = useState('');
+    const [codeCopied, setCodeCopied] = useState(false);
 
     const [currentPwd, setCurrentPwd] = useState("");
     const [newPwd, setNewPwd] = useState("");
@@ -50,8 +54,11 @@ const Profile = () => {
     const fetchProfile = async () => {
         try {
             setLoading(true);
-            const res = await api.get(`/auth/profile`);
-            const profile = res.data.user || res.data;
+            const [profileRes, referralRes] = await Promise.all([
+                api.get(`/auth/profile`),
+                api.get(`/referrals/dashboard`).catch(() => ({ data: {} })),
+            ]);
+            const profile = profileRes.data.user || profileRes.data;
             setProfileData({
                 username: profile.username || "",
                 name: profile.name || "",
@@ -66,6 +73,7 @@ const Profile = () => {
                 role: profile.role || "",
                 created_at: profile.created_at || ""
             });
+            setReferralCode(referralRes.data?.my_code || user?.referral_code || '');
         } catch (err) {
             console.error("Failed to load profile:", err);
             // Fallback to local user data
@@ -91,6 +99,25 @@ const Profile = () => {
     useEffect(() => {
         if (user?.id) fetchProfile();
     }, [user?.id]);
+
+    const handleCopyCode = async () => {
+        if (!referralCode) return;
+        try {
+            await navigator.clipboard.writeText(referralCode);
+            setCodeCopied(true);
+            toast.success('Referral code copied!');
+            setTimeout(() => setCodeCopied(false), 2000);
+        } catch {
+            toast.error('Unable to copy.');
+        }
+    };
+
+    const handleShareCode = () => {
+        if (!referralCode) return;
+        const shareUrl = `${window.location.origin}/register?ref=${referralCode}`;
+        const text = encodeURIComponent(`Join as a Delivery Partner using my referral code ${referralCode}: ${shareUrl}`);
+        window.open(`https://wa.me/?text=${text}`, '_blank', 'noopener,noreferrer');
+    };
 
     const openPwdModal = () => setIsPwdModalOpen(true);
     const openEditModal = () => setIsEditModalOpen(true);
@@ -303,6 +330,41 @@ const Profile = () => {
                                 <p className="text-xs text-slate-400">Location</p>
                                 <p className="font-bold text-white">{locationDisplay}</p>
                             </div>
+                        </div>
+
+                        {/* Referral Code Card */}
+                        <div className="flex items-center gap-4 p-4 bg-emerald-500/5 rounded-2xl border border-emerald-500/20 md:col-span-2">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
+                                <FiShare2 className="text-emerald-400" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-xs text-slate-400">Your Referral Code</p>
+                                <p className="font-black text-emerald-400 text-lg tracking-widest mt-0.5">
+                                    {referralCode || <span className="text-slate-500 text-sm font-semibold">Generating...</span>}
+                                </p>
+                            </div>
+                            {referralCode && (
+                                <div className="flex gap-2 flex-shrink-0">
+                                    <button
+                                        onClick={handleCopyCode}
+                                        className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 ${
+                                            codeCopied
+                                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                                                : 'bg-slate-800 text-slate-300 border border-white/10 hover:bg-emerald-500/10 hover:text-emerald-400 hover:border-emerald-500/30'
+                                        }`}
+                                    >
+                                        <FiCopy className="w-3.5 h-3.5" />
+                                        {codeCopied ? 'Copied!' : 'Copy'}
+                                    </button>
+                                    <button
+                                        onClick={handleShareCode}
+                                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 border border-white/10 hover:bg-emerald-500/10 hover:text-emerald-400 hover:border-emerald-500/30 transition-all active:scale-95"
+                                    >
+                                        <FiShare2 className="w-3.5 h-3.5" />
+                                        Share
+                                    </button>
+                                </div>
+                            )}
                         </div>
 
                     </div>
