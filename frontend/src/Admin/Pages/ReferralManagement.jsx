@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { Download, RefreshCw, ShieldCheck, Users, Wallet, Ticket, Clock3, Plus, X } from 'lucide-react';
+import { Download, RefreshCw, ShieldCheck, Users, Wallet, Ticket, Clock3, Plus, X, Settings2 } from 'lucide-react';
 import api from '../../api';
 
 const generateReferralCode = () => {
@@ -40,6 +40,7 @@ const ReferralManagement = () => {
   const [referrals, setReferrals] = useState([]);
   const [saving, setSaving] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [creatingCode, setCreatingCode] = useState(false);
   const [userOptions, setUserOptions] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
@@ -145,6 +146,7 @@ const ReferralManagement = () => {
           <div className="flex flex-wrap gap-3">
             <button onClick={exportCsv} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-slate-100 transition hover:bg-white/10"><span className="flex items-center gap-2"><Download size={16} /> Export CSV</span></button>
             <button onClick={loadData} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-slate-100 transition hover:bg-white/10"><span className="flex items-center gap-2"><RefreshCw size={16} /> Refresh</span></button>
+            <button onClick={() => setShowSettingsModal(true)} className="rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700"><span className="flex items-center gap-2"><Settings2 size={16} /> Program Settings</span></button>
           </div>
         </div>
       </div>
@@ -273,6 +275,90 @@ const ReferralManagement = () => {
                 <button type="submit" disabled={creatingCode} className="rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50">{creatingCode ? 'Creating...' : 'Create code'}</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Program Settings Modal ── */}
+      {showSettingsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/60 backdrop-blur-sm" onClick={() => setShowSettingsModal(false)}>
+          <div
+            className="relative h-full w-full max-w-lg overflow-y-auto bg-[#08120f] border-l border-white/10 shadow-[0_0_80px_rgba(0,0,0,0.6)] p-8 flex flex-col gap-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-start justify-between">
+              <div>
+                <h2 className="text-xl font-black text-white">Program Settings</h2>
+                <p className="text-sm text-slate-400 mt-1">Control rewards and referral limits from one place.</p>
+              </div>
+              <button onClick={() => setShowSettingsModal(false)} className="rounded-full border border-white/10 bg-white/5 p-2 text-slate-300 transition hover:bg-white/10">
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Enable toggle */}
+            <label className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 cursor-pointer">
+              <span>Enable referral program</span>
+              <input type="checkbox" checked={Boolean(settings.is_enabled)} onChange={(e) => updateSetting('is_enabled', e.target.checked)} className="h-4 w-4 rounded border-slate-500 bg-transparent accent-emerald-500" />
+            </label>
+
+            {/* Reward amounts */}
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className="text-sm text-slate-300">
+                <span className="mb-2 block">Referrer reward (₹)</span>
+                <input type="number" value={settings.referrer_reward_amount || 0} onChange={(e) => updateSetting('referrer_reward_amount', Number(e.target.value))} className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none focus:border-emerald-500/50" />
+              </label>
+              <label className="text-sm text-slate-300">
+                <span className="mb-2 block">Referee reward (₹)</span>
+                <input type="number" value={settings.referee_reward_amount || 0} onChange={(e) => updateSetting('referee_reward_amount', Number(e.target.value))} className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none focus:border-emerald-500/50" />
+              </label>
+              <label className="text-sm text-slate-300">
+                <span className="mb-2 block">Reward type</span>
+                <select value={settings.reward_type || 'wallet_credit'} onChange={(e) => updateSetting('reward_type', e.target.value)} className="w-full rounded-2xl border border-white/10 bg-[#08120f] px-4 py-3 text-white outline-none focus:border-emerald-500/50">
+                  <option value="wallet_credit">Wallet Credit</option>
+                  <option value="coupon">Coupon</option>
+                  <option value="discount">Discount</option>
+                  <option value="cashback">Cashback</option>
+                </select>
+              </label>
+              <label className="text-sm text-slate-300">
+                <span className="mb-2 block">Minimum order value (₹)</span>
+                <input type="number" value={settings.min_order_value || 0} onChange={(e) => updateSetting('min_order_value', Number(e.target.value))} className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none focus:border-emerald-500/50" />
+              </label>
+              <label className="text-sm text-slate-300">
+                <span className="mb-2 block">Reward expiry days</span>
+                <input type="number" value={settings.reward_expiry_days || 0} onChange={(e) => updateSetting('reward_expiry_days', Number(e.target.value))} className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none focus:border-emerald-500/50" />
+              </label>
+              <label className="text-sm text-slate-300">
+                <span className="mb-2 block">Max referrals per user</span>
+                <input type="number" value={settings.max_referrals_per_user || 0} onChange={(e) => updateSetting('max_referrals_per_user', Number(e.target.value))} className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none focus:border-emerald-500/50" />
+              </label>
+              <label className="text-sm text-slate-300">
+                <span className="mb-2 block">Daily referral limit</span>
+                <input type="number" value={settings.daily_referral_limit || 0} onChange={(e) => updateSetting('daily_referral_limit', Number(e.target.value))} className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none focus:border-emerald-500/50" />
+              </label>
+              <label className="text-sm text-slate-300">
+                <span className="mb-2 block">Monthly referral limit</span>
+                <input type="number" value={settings.monthly_referral_limit || 0} onChange={(e) => updateSetting('monthly_referral_limit', Number(e.target.value))} className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none focus:border-emerald-500/50" />
+              </label>
+            </div>
+
+            {/* First order only */}
+            <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 cursor-pointer">
+              <input type="checkbox" checked={Boolean(settings.first_order_only)} onChange={(e) => updateSetting('first_order_only', e.target.checked)} className="h-4 w-4 rounded border-slate-500 bg-transparent accent-emerald-500" />
+              <span>Reward only on first completed order</span>
+            </label>
+
+            {/* Actions */}
+            <div className="flex gap-3 mt-auto pt-4 border-t border-white/10">
+              <button type="button" onClick={() => setShowSettingsModal(false)} className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-white/10">
+                Cancel
+              </button>
+              <button onClick={async () => { await saveSettings(); setShowSettingsModal(false); }} disabled={saving} className="flex-1 rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50">
+                {saving ? 'Saving...' : 'Save Settings'}
+              </button>
+            </div>
           </div>
         </div>
       )}
