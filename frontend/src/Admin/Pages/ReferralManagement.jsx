@@ -164,37 +164,19 @@ const ReferralManagement = () => {
         ))}
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-        <div className="rounded-4xl border border-white/10 bg-[#08120f]/85 p-6 shadow-[0_20px_80px_rgba(0,0,0,0.35)]">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-black text-white">Program settings</h2>
-              <p className="text-sm text-slate-400">Control rewards and referral limits from one place.</p>
-            </div>
-            <button onClick={saveSettings} disabled={saving} className="rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50">{saving ? 'Saving...' : 'Save settings'}</button>
-          </div>
-          <div className="mt-6 space-y-4">
-            <label className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200"><span>Enable referral program</span><input type="checkbox" checked={Boolean(settings.is_enabled)} onChange={(e) => updateSetting('is_enabled', e.target.checked)} className="h-4 w-4 rounded border-slate-500 bg-transparent" /></label>
-            <div className="grid gap-4 md:grid-cols-2">
-              <label className="text-sm text-slate-300"><span className="mb-2 block">Referrer reward</span><input type="number" value={settings.referrer_reward_amount || 0} onChange={(e) => updateSetting('referrer_reward_amount', Number(e.target.value))} className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none" /></label>
-              <label className="text-sm text-slate-300"><span className="mb-2 block">Referee reward</span><input type="number" value={settings.referee_reward_amount || 0} onChange={(e) => updateSetting('referee_reward_amount', Number(e.target.value))} className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none" /></label>
-              <label className="text-sm text-slate-300"><span className="mb-2 block">Reward type</span><select value={settings.reward_type || 'wallet_credit'} onChange={(e) => updateSetting('reward_type', e.target.value)} className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none"><option value="wallet_credit">Wallet Credit</option><option value="coupon">Coupon</option><option value="discount">Discount</option><option value="cashback">Cashback</option></select></label>
-              <label className="text-sm text-slate-300"><span className="mb-2 block">Minimum order value</span><input type="number" value={settings.min_order_value || 0} onChange={(e) => updateSetting('min_order_value', Number(e.target.value))} className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none" /></label>
-              <label className="text-sm text-slate-300"><span className="mb-2 block">Reward expiry days</span><input type="number" value={settings.reward_expiry_days || 0} onChange={(e) => updateSetting('reward_expiry_days', Number(e.target.value))} className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none" /></label>
-              <label className="text-sm text-slate-300"><span className="mb-2 block">Max referrals per user</span><input type="number" value={settings.max_referrals_per_user || 0} onChange={(e) => updateSetting('max_referrals_per_user', Number(e.target.value))} className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none" /></label>
-              <label className="text-sm text-slate-300"><span className="mb-2 block">Daily referral limit</span><input type="number" value={settings.daily_referral_limit || 0} onChange={(e) => updateSetting('daily_referral_limit', Number(e.target.value))} className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none" /></label>
-              <label className="text-sm text-slate-300"><span className="mb-2 block">Monthly referral limit</span><input type="number" value={settings.monthly_referral_limit || 0} onChange={(e) => updateSetting('monthly_referral_limit', Number(e.target.value))} className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none" /></label>
-            </div>
-            <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200"><input type="checkbox" checked={Boolean(settings.first_order_only)} onChange={(e) => updateSetting('first_order_only', e.target.checked)} className="h-4 w-4 rounded border-slate-500 bg-transparent" /><span>Reward only on first completed order</span></label>
-          </div>
-        </div>
-
+      <div className="grid gap-6">
         <div className="rounded-4xl border border-white/10 bg-[#08120f]/85 p-6 shadow-[0_20px_80px_rgba(0,0,0,0.35)]">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-black text-white">Referral ledger</h2>
               <p className="text-sm text-slate-400">Approve, reject, cancel, or resend referrals.</p>
             </div>
+            <button
+              onClick={openCreateModal}
+              className="flex items-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700"
+            >
+              <Plus size={16} /> Add New
+            </button>
           </div>
           <div className="mt-6 overflow-x-auto w-full">
             <table className="w-full min-w-full text-sm">
