@@ -104,9 +104,9 @@ const Reviews = () => {
 
   const fetchFranchiseAdmins = async () => {
     try {
-      const res = await api.get('/auth/users');
-      const admins = Array.isArray(res.data) ? res.data : res.data?.users || [];
-      setFranchiseAdmins(admins.filter((user) => user.role?.toLowerCase().includes('franchise')));
+      const res = await api.get('/superadmin/franchises');
+      const admins = Array.isArray(res.data) ? res.data : res.data?.franchises || [];
+      setFranchiseAdmins(admins.filter((franchise) => franchise?.franch_user_id || franchise?.id));
     } catch (err) {
       console.error('Failed to fetch franchise admins:', err);
       setFranchiseAdmins([]);
@@ -371,8 +371,8 @@ const Reviews = () => {
           >
             <option value="">All franchise admins</option>
             {franchiseAdmins.map((admin) => (
-              <option key={admin.user_id || admin.id} value={admin.user_id || admin.id}>
-                {admin.full_name || admin.name || admin.email}
+              <option key={admin.id || admin.franch_user_id} value={admin.franch_user_id || admin.id}>
+                {admin.owner_name || admin.franchise_name || admin.full_name || admin.name || admin.email || `Franchise ${admin.id || ''}`}
               </option>
             ))}
           </select>
