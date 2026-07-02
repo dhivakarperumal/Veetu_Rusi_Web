@@ -23,11 +23,33 @@ const ChefReviews = () => {
         return;
       }
 
-      const res = await api.get(`/products/user/${chefUserId}`);
-      const data = Array.isArray(res.data)
-        ? res.data
-        : res.data?.data || [];
-      setProducts(Array.isArray(data) ? data : []);
+      const [productRes, foodRes] = await Promise.all([
+        api.get(`/products/user/${chefUserId}`).catch(() => ({ data: [] })),
+        api.get(`/chef-foods`, { params: { chef_user_id: chefUserId } }).catch(() => ({ data: [] })),
+      ]);
+
+      const productList = Array.isArray(productRes.data)
+        ? productRes.data
+        : productRes.data?.data || [];
+      const foodList = Array.isArray(foodRes.data)
+        ? foodRes.data
+        : foodRes.data?.data || [];
+
+      const normalizedProducts = Array.isArray(productList)
+        ? productList.map((product) => ({
+            ...product,
+            source: 'chef_product',
+          }))
+        : [];
+      const normalizedFoods = Array.isArray(foodList)
+        ? foodList.map((food) => ({
+            ...food,
+            source: 'chef_food',
+            product_code: food.product_code || `CF${food.id}`,
+          }))
+        : [];
+
+      setProducts([...normalizedProducts, ...normalizedFoods]);
     } catch (err) {
       console.error("Failed to load products for review page:", err);
       toast.error("Unable to load products.");
