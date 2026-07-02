@@ -105,7 +105,15 @@ const Reviews = () => {
   useEffect(() => {
     fetchReviews();
     if (deliveryTab) fetchDeliveryReviews();
-  }, [filter, selectedRating]);
+  }, [filter, selectedRating, deliveryTab]);
+
+  // Active reviews source based on tab
+  const activeReviews = deliveryTab ? deliveryReviews : reviews;
+  const paginatedReviews = activeReviews.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+  const totalPages = Math.ceil(activeReviews.length / itemsPerPage);
 
   useEffect(() => {
     if (showAddModal) fetchProducts();
@@ -206,12 +214,6 @@ const Reviews = () => {
     setCurrentPage(1);
   }, [filter, selectedRating, searchQuery]);
 
-  const paginatedReviews = reviews.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  const totalPages = Math.ceil(reviews.length / itemsPerPage);
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-10">
@@ -263,6 +265,20 @@ const Reviews = () => {
           {/* STATS MINI CARDS */}
 
         </div>
+      </div>
+
+      {/* Tabs: Food vs Delivery Partner */}
+      <div className="mt-4 flex gap-2">
+        <button
+          onClick={() => { setDeliveryTab(false); fetchReviews(); }}
+          className={`px-4 py-2 rounded ${!deliveryTab ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'}`}>
+          Food Reviews
+        </button>
+        <button
+          onClick={() => { setDeliveryTab(true); fetchDeliveryReviews(); }}
+          className={`px-4 py-2 rounded ${deliveryTab ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'}`}>
+          Delivery Partner Reviews
+        </button>
       </div>
 
       {/* FILTERS AND SEARCH BAR */}
@@ -335,11 +351,24 @@ const Reviews = () => {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {paginatedReviews.map((item) => (
-            <div
-              key={item.id}
-              className={`group relative bg-white rounded-[2rem] border border-slate-100 flex flex-col overflow-hidden hover:shadow-2xl hover:shadow-blue-900/10 transition-all duration-500 hover:-translate-y-1
-                ${item.status === 'Pending' ? 'ring-2 ring-amber-500/20 shadow-lg shadow-amber-500/5' : ''}`}
-            >
+            deliveryTab ? (
+              <div key={`dp-${item.id}`} className="bg-white rounded-[2rem] border border-slate-100 p-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-black text-slate-800 text-sm">{item.user_name || item.user_email || 'Anonymous'}</h4>
+                    <p className="text-[10px] text-slate-500">Partner: {item.delivery_partner_name || item.delivery_partner_id || 'N/A'}</p>
+                  </div>
+                  <div className="text-amber-400 font-bold">{item.rating}</div>
+                </div>
+                <p className="mt-3 text-sm text-slate-600 italic">"{item.comment || 'No comment provided.'}"</p>
+                <div className="mt-3 text-xs text-slate-400">{new Date(item.created_at).toLocaleString()}</div>
+              </div>
+            ) : (
+              <div
+                key={item.id}
+                className={`group relative bg-white rounded-[2rem] border border-slate-100 flex flex-col overflow-hidden hover:shadow-2xl hover:shadow-blue-900/10 transition-all duration-500 hover:-translate-y-1
+                  ${item.status === 'Pending' ? 'ring-2 ring-amber-500/20 shadow-lg shadow-amber-500/5' : ''}`}
+              >
               {/* Header: User & Rating */}
               <div className="p-6 pb-2 space-y-4">
                 <div className="flex items-center justify-between">
