@@ -12,7 +12,6 @@ const formatDateTime = (value) => {
 const Ratings = () => {
   const { user } = useAuth();
   const [reviews, setReviews] = useState([]);
-  const [deliveryTab, setDeliveryTab] = useState(false);
   const [deliveryReviews, setDeliveryReviews] = useState([]);
   const [stats, setStats] = useState({
     total_reviews: 0,
@@ -28,6 +27,35 @@ const Ratings = () => {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  const isDeliveryPartner = ['delivery_partner', 'delivery', 'delivery_boy'].includes(user?.role);
+  const showTabs = user?.role === 'superadmin' || isDeliveryPartner;
+  const [deliveryTab, setDeliveryTab] = useState(isDeliveryPartner);
+  const activeReviews = deliveryTab ? deliveryReviews : reviews;
+
+  const computeStats = (items) => {
+    const total_reviews = items.length;
+    const ratings = items.reduce((acc, item) => {
+      const value = Number(item.rating) || 0;
+      if (value >= 5) acc.five_star += 1;
+      else if (value >= 4) acc.four_star += 1;
+      else if (value >= 3) acc.three_star += 1;
+      else if (value >= 2) acc.two_star += 1;
+      else if (value >= 1) acc.one_star += 1;
+      acc.sum += value;
+      return acc;
+    }, { five_star: 0, four_star: 0, three_star: 0, two_star: 0, one_star: 0, sum: 0 });
+
+    return {
+      total_reviews,
+      average_rating: total_reviews ? Number((ratings.sum / total_reviews).toFixed(1)) : 0,
+      five_star: ratings.five_star,
+      four_star: ratings.four_star,
+      three_star: ratings.three_star,
+      two_star: ratings.two_star,
+      one_star: ratings.one_star,
+    };
+  };
 
   const fetchReviews = async () => {
     setLoading(true);
@@ -56,23 +84,32 @@ const Ratings = () => {
     setLoading(true);
     try {
       const res = await api.get('/delivery-partner-review');
-      setDeliveryReviews((res.data && res.data.data) || []);
+      const reviews = (res.data && res.data.data) || [];
+      setDeliveryReviews(reviews);
+      setStats(computeStats(reviews));
     } catch (err) {
       console.error('Failed to load delivery reviews:', err);
       toast.error('Unable to load delivery partner ratings.');
       setDeliveryReviews([]);
+      setStats(computeStats([]));
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (user?.role === 'superadmin' && deliveryTab) {
+    if (isDeliveryPartner) {
+      setDeliveryTab(true);
+    }
+  }, [isDeliveryPartner]);
+
+  useEffect(() => {
+    if (deliveryTab) {
       fetchDeliveryReviews();
     } else {
       fetchReviews();
     }
-  }, []);
+  }, [deliveryTab]);
 
   const submitReview = async () => {
     if (!productId.trim()) {
@@ -115,10 +152,20 @@ const Ratings = () => {
         <p className="max-w-2xl text-sm text-slate-500">
           Customer ratings and feedback from reviews. Use this page to review recent ratings and provide new review feedback for a product.
         </p>
-        {user?.role === 'superadmin' && (
-          <div className="mt-4 flex gap-2">
-            <button onClick={() => { setDeliveryTab(false); fetchReviews(); }} className={`px-4 py-2 rounded ${!deliveryTab ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'}`}>Food Reviews</button>
-            <button onClick={() => { setDeliveryTab(true); fetchDeliveryReviews(); }} className={`px-4 py-2 rounded ${deliveryTab ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'}`}>Delivery Partner Reviews</button>
+        {showTabs && (
+          <div className="mt-4 inline-flex rounded-full border border-slate-700 bg-slate-950/80 p-1 shadow-lg shadow-slate-950/20">
+            <button
+              onClick={() => setDeliveryTab(false)}
+              className={`rounded-full px-5 py-2 text-sm font-black transition ${!deliveryTab ? 'bg-slate-900 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
+            >
+              Food Reviews
+            </button>
+            <button
+              onClick={() => setDeliveryTab(true)}
+              className={`rounded-full px-5 py-2 text-sm font-black transition ${deliveryTab ? 'bg-slate-900 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
+            >
+              Delivery Partner Reviews
+            </button>
           </div>
         )}
       </div>
@@ -228,45 +275,64 @@ const Ratings = () => {
         <div className="flex items-center justify-between gap-4">
           <div>
             <h2 className="text-xl font-black text-white">Recent Reviews</h2>
-            <p className="text-sm text-slate-400 mt-1">Latest customer feedback across reviewed products.</p>
+            <p className="text-sm text-slate-400 mt-1">Latest feedback from {deliveryTab ? 'delivery partner' : 'product'} reviews.</p>
           </div>
           <div className="rounded-full bg-slate-900/80 px-4 py-2 text-sm font-semibold text-slate-200">
-            {reviews.length} reviews
+            {activeReviews.length} reviews
           </div>
         </div>
 
         {loading ? (
           <div className="mt-8 text-sm text-slate-500">Loading reviews...</div>
-        ) : reviews.length === 0 ? (
+        ) : activeReviews.length === 0 ? (
           <div className="mt-8 rounded-3xl border border-dashed border-slate-200 p-10 text-center text-slate-500">
             No reviews available yet. Once customers submit ratings, they will appear here.
           </div>
         ) : (
-          <div className="mt-6 space-y-4">
-            {reviews.map((review) => (
-              <div key={review.id} className="rounded-3xl border border-white/10 bg-slate-950/95 p-5 shadow-[0_20px_60px_rgba(0,0,0,0.35)]">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <div className="flex items-center gap-2 text-slate-100">
-                      <FiUser className="text-slate-400" />
-                      <span className="font-semibold">{review.user_name || review.user_email || "Anonymous"}</span>
+          <div className="mt-6 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {activeReviews.map((review) => (
+              <div key={review.id} className="group rounded-4xl border border-slate-800/50 bg-slate-950/90 p-6 shadow-[0_20px_40px_rgba(15,23,42,0.35)] transition hover:-translate-y-1 hover:shadow-2xl">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-3xl bg-blue-500 text-white text-lg font-black">
+                        {deliveryTab
+                          ? (review.delivery_partner_name?.charAt(0) || 'D')
+                          : (review.user_name?.charAt(0) || review.user_email?.charAt(0) || 'R')}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-black text-white">
+                          {deliveryTab
+                            ? review.delivery_partner_name || review.delivery_partner_id || 'Delivery Partner'
+                            : review.user_name || review.user_email || 'Anonymous'}
+                        </p>
+                        <p className="truncate text-xs text-slate-400">
+                          {deliveryTab ? review.delivery_partner_email || review.delivery_partner_phone || 'Contact unavailable' : review.product_id ? `Product ${review.product_id}` : 'Product unavailable'}
+                        </p>
+                      </div>
                     </div>
-                    <div className="mt-1 text-xs uppercase tracking-[0.28em] text-slate-400">Product: {review.product_id || "N/A"}</div>
                   </div>
-
-                  <div className="flex items-center gap-2 text-amber-400">
-                    {Array.from({ length: 5 }, (_, i) => (
-                      <FiStar key={i} className={i < review.rating ? "h-4 w-4" : "h-4 w-4 opacity-30"} />
-                    ))}
-                    <span className="text-sm font-bold text-white">{review.rating || 0}</span>
+                  <div className="text-right">
+                    <div className="text-2xl font-black text-amber-400">{review.rating || 0}</div>
+                    <div className="mt-2 rounded-full bg-slate-900/80 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">
+                      {review.status || 'Published'}
+                    </div>
                   </div>
                 </div>
 
-                <p className="mt-4 text-sm text-slate-300">{review.comment || "No comment provided."}</p>
-                <div className="mt-4 flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.24em] text-slate-400">
-                  <span>{formatDateTime(review.created_at)}</span>
-                  <span>•</span>
-                  <span>{review.user_email || "Email unavailable"}</span>
+                <p className="mt-5 text-sm leading-relaxed text-slate-300 italic">"{review.comment || 'No comment provided.'}"</p>
+
+                <div className="mt-5 grid gap-3 text-[11px] text-slate-400">
+                  <div className="flex items-center justify-between rounded-3xl bg-slate-900/80 px-4 py-3">
+                    <span>Submitted</span>
+                    <span>{formatDateTime(review.created_at)}</span>
+                  </div>
+                  {deliveryTab && review.admin_reply && (
+                    <div className="rounded-3xl bg-blue-950/80 p-4 text-slate-200">
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-blue-400">Official Reply</p>
+                      <p className="mt-2 text-sm leading-snug">{review.admin_reply}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}

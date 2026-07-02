@@ -186,13 +186,37 @@ exports.getReviews = async (req, res) => {
   try {
     await ensureReviewTable();
 
-    const isSuperAdmin = req.user?.role === 'superadmin';
+    const userRole = req.user?.role;
+    const isSuperAdmin = userRole === 'superadmin';
+    const isDeliveryPartner = ['delivery_partner', 'delivery', 'delivery_boy'].includes(userRole);
+    const userDeliveryId = req.user?.user_id || req.user?.id || null;
+    const userEmail = req.user?.email || null;
     const franchiseUserId = isSuperAdmin ? null : (req.query.franchise_user_id || req.user?.user_id || req.user?.id || null);
 
     let rows;
     if (isSuperAdmin) {
       const [r] = await pool.query(`SELECT * FROM deliverypartner_review ORDER BY created_at DESC`);
       rows = r;
+    } else if (isDeliveryPartner && (userDeliveryId || userEmail)) {
+      if (userDeliveryId && userEmail) {
+        const [r] = await pool.query(
+          `SELECT * FROM deliverypartner_review WHERE delivery_partner_id = ? OR delivery_partner_email = ? ORDER BY created_at DESC`,
+          [userDeliveryId, userEmail]
+        );
+        rows = r;
+      } else if (userDeliveryId) {
+        const [r] = await pool.query(
+          `SELECT * FROM deliverypartner_review WHERE delivery_partner_id = ? ORDER BY created_at DESC`,
+          [userDeliveryId]
+        );
+        rows = r;
+      } else {
+        const [r] = await pool.query(
+          `SELECT * FROM deliverypartner_review WHERE delivery_partner_email = ? ORDER BY created_at DESC`,
+          [userEmail]
+        );
+        rows = r;
+      }
     } else if (franchiseUserId) {
       const [r] = await pool.query(
         `SELECT * FROM deliverypartner_review WHERE franchise_admin_id = ? OR created_by = ? ORDER BY created_at DESC`,
