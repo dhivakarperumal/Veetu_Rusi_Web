@@ -17,11 +17,21 @@ const ChefReviews = () => {
   const fetchProducts = async () => {
     setLoadingProducts(true);
     try {
-      const res = await api.get("/franchise-products");
-      setProducts(Array.isArray(res.data) ? res.data : []);
+      const chefUserId = user?.user_id || user?.id;
+      if (!chefUserId) {
+        setProducts([]);
+        return;
+      }
+
+      const res = await api.get(`/products/user/${chefUserId}`);
+      const data = Array.isArray(res.data)
+        ? res.data
+        : res.data?.data || [];
+      setProducts(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to load products for review page:", err);
       toast.error("Unable to load products.");
+      setProducts([]);
     } finally {
       setLoadingProducts(false);
     }
@@ -59,8 +69,10 @@ const ChefReviews = () => {
   };
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    if (user) {
+      fetchProducts();
+    }
+  }, [user]);
 
   useEffect(() => {
     if (products.length > 0) {
