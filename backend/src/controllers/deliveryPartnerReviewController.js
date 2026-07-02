@@ -186,7 +186,7 @@ exports.getReviews = async (req, res) => {
   try {
     await ensureReviewTable();
 
-    const { status, rating, search, franchise_admin_id } = req.query;
+    const { status, rating, search, franchise_admin_id, franchise_admin_name } = req.query;
     const userRole = req.user?.role;
     const isSuperAdmin = userRole === 'superadmin';
     const isDeliveryPartner = ['delivery_partner', 'delivery', 'delivery_boy'].includes(userRole);
@@ -214,8 +214,13 @@ exports.getReviews = async (req, res) => {
     }
 
     if (franchise_admin_id) {
-      query += ' AND franchise_admin_id = ?';
-      params.push(franchise_admin_id);
+      query += ' AND (franchise_admin_id = ? OR franchise_admin_name LIKE ?)';
+      params.push(franchise_admin_id, `%${franchise_admin_id}%`);
+    }
+
+    if (franchise_admin_name) {
+      query += ' AND franchise_admin_name LIKE ?';
+      params.push(`%${franchise_admin_name}%`);
     }
 
     if (status && status !== 'All') {

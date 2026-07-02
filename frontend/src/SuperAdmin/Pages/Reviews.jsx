@@ -34,9 +34,10 @@ const Reviews = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRating, setSelectedRating] = useState(null);
   const [selectedFranchiseAdmin, setSelectedFranchiseAdmin] = useState("");
+  const [selectedFranchiseAdminLabel, setSelectedFranchiseAdminLabel] = useState("");
   const [franchiseAdmins, setFranchiseAdmins] = useState([]);
 
-  const currentCacheKey = `${filter}-${selectedRating}-${searchQuery}-${selectedFranchiseAdmin}`;
+  const currentCacheKey = `${filter}-${selectedRating}-${searchQuery}-${selectedFranchiseAdmin}-${selectedFranchiseAdminLabel}`;
   const cachedData = reviewsCache[currentCacheKey];
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -62,17 +63,26 @@ const Reviews = () => {
 
   const fetchReviews = async () => {
     try {
-      const cacheKey = `${filter}-${selectedRating}-${searchQuery}-${selectedFranchiseAdmin}`;
+      const cacheKey = `${filter}-${selectedRating}-${searchQuery}-${selectedFranchiseAdmin}-${selectedFranchiseAdminLabel}`;
       if (!reviewsCache[cacheKey]) setLoading(true);
 
       const params = {};
       if (filter !== "All") params.status = filter;
       if (selectedRating) params.rating = selectedRating;
       if (searchQuery) params.search = searchQuery;
-      if (selectedFranchiseAdmin) params.franchise_admin_id = selectedFranchiseAdmin;
+      if (selectedFranchiseAdmin) {
+        params.franchise_admin_id = selectedFranchiseAdmin;
+        if (selectedFranchiseAdminLabel) params.franchise_admin_name = selectedFranchiseAdminLabel;
+      }
 
       const res = await api.get("/reviews/admin/all", { params });
-      const data = { reviews: res.data.reviews || [], stats: res.data.stats || null };
+      const fetchedReviews = res.data.reviews || [];
+      const filteredReviews = fetchedReviews.filter((review) => {
+        const matchesId = selectedFranchiseAdmin && String(review.franchise_admin_id) === String(selectedFranchiseAdmin);
+        const matchesName = selectedFranchiseAdminLabel && String(review.franchise_admin_name || "").toLowerCase().includes(selectedFranchiseAdminLabel.toLowerCase());
+        return selectedFranchiseAdmin ? matchesId || matchesName : true;
+      });
+      const data = { reviews: filteredReviews, stats: res.data.stats || null };
       setReviews(data.reviews);
       setStats(data.stats);
       setReviewsCache(prev => ({ ...prev, [cacheKey]: data }));
@@ -93,10 +103,19 @@ const Reviews = () => {
       if (filter !== "All") params.status = filter;
       if (selectedRating) params.rating = selectedRating;
       if (searchQuery) params.search = searchQuery;
-      if (selectedFranchiseAdmin) params.franchise_admin_id = selectedFranchiseAdmin;
+      if (selectedFranchiseAdmin) {
+        params.franchise_admin_id = selectedFranchiseAdmin;
+        if (selectedFranchiseAdminLabel) params.franchise_admin_name = selectedFranchiseAdminLabel;
+      }
 
       const res = await api.get('/delivery-partner-review', { params });
-      setDeliveryReviews((res.data && res.data.data) || []);
+      const fetchedReviews = (res.data && res.data.data) || [];
+      const filteredReviews = fetchedReviews.filter((review) => {
+        const matchesId = selectedFranchiseAdmin && String(review.franchise_admin_id) === String(selectedFranchiseAdmin);
+        const matchesName = selectedFranchiseAdminLabel && String(review.franchise_admin_name || "").toLowerCase().includes(selectedFranchiseAdminLabel.toLowerCase());
+        return selectedFranchiseAdmin ? matchesId || matchesName : true;
+      });
+      setDeliveryReviews(filteredReviews);
     } catch (err) {
       console.error('Failed to fetch delivery reviews:', err);
     }
@@ -366,15 +385,25 @@ const Reviews = () => {
           <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Franchise Admin</label>
           <select
             value={selectedFranchiseAdmin}
-            onChange={(e) => setSelectedFranchiseAdmin(e.target.value)}
+            onChange={(e) => {
+              setSelectedFranchiseAdmin(e.target.value);
+              setSelectedFranchiseAdminLabel(e.target.selectedOptions[0]?.dataset?.name || "");
+            }}
             className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-slate-500"
           >
-            <option value="">All franchise admins</option>
-            {franchiseAdmins.map((admin) => (
-              <option key={admin.id || admin.franch_user_id} value={admin.franch_user_id || admin.id}>
-                {admin.owner_name || admin.franchise_name || admin.full_name || admin.name || admin.email || `Franchise ${admin.id || ''}`}
-              </option>
-            ))}
+            <option value="" data-name="">All franchise admins</option>
+            {franchiseAdmins.map((admin) => {
+              const label = admin.owner_name || admin.franchise_name || admin.full_name || admin.name || admin.email || `Franchise ${admin.id || ''}`;
+              return (
+                <option
+                  key={admin.id || admin.franch_user_id}
+                  value={admin.franch_user_id || admin.id}
+                  data-name={label}
+                >
+                  {label}
+                </option>
+              );
+            })}
           </select>
         </div>
       </div>

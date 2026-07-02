@@ -38,7 +38,7 @@ exports.getReviewsByProduct = async (req, res) => {
 
 exports.getAllReviews = async (req, res) => {
   try {
-    const { status, rating, search, franchise_admin_id } = req.query;
+    const { status, rating, search, franchise_admin_id, franchise_admin_name } = req.query;
     const params = [];
     let query = `
       SELECT r.*, COALESCE(cp.name, fp.name) AS product_name
@@ -59,8 +59,13 @@ exports.getAllReviews = async (req, res) => {
     }
 
     if (franchise_admin_id) {
-      query += ' AND r.franchise_admin_id = ?';
-      params.push(franchise_admin_id);
+      query += ' AND (r.franchise_admin_id = ? OR r.franchise_admin_name LIKE ?)';
+      params.push(franchise_admin_id, `%${franchise_admin_id}%`);
+    }
+
+    if (franchise_admin_name) {
+      query += ' AND r.franchise_admin_name LIKE ?';
+      params.push(`%${franchise_admin_name}%`);
     }
 
     if (search) {
