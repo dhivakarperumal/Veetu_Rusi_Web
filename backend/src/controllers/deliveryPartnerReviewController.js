@@ -186,16 +186,22 @@ exports.getReviews = async (req, res) => {
   try {
     await ensureReviewTable();
 
-    const [rows] = await pool.query(`
-      SELECT *
-      FROM deliverypartner_review
-      ORDER BY created_at DESC
-    `);
+    // support optional franchise filter via query or the authenticated user
+    const franchiseUserId = req.query.franchise_user_id || req.user?.user_id || req.user?.id || null;
 
-    res.json({
-      success: true,
-      data: rows,
-    });
+    let rows;
+    if (franchiseUserId) {
+      const [r] = await pool.query(
+        `SELECT * FROM deliverypartner_review WHERE franchise_admin_id = ? OR created_by = ? ORDER BY created_at DESC`,
+        [franchiseUserId, franchiseUserId]
+      );
+      rows = r;
+    } else {
+      const [r] = await pool.query(`SELECT * FROM deliverypartner_review ORDER BY created_at DESC`);
+      rows = r;
+    }
+
+    res.json({ success: true, data: rows });
   } catch (error) {
     console.error(error);
 

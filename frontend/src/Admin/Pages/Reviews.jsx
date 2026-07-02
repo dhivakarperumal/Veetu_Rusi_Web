@@ -1,4 +1,5 @@
 import { useState, useEffect, useContext } from "react";
+import { useAuth } from "../../PrivateRouter/AuthContext";
 import { useAdmin } from "../../PrivateRouter/AdminContext";
 import {
   Star,
@@ -29,6 +30,7 @@ import toast from "react-hot-toast";
 
 const Reviews = () => {
   const { reviewsCache, setReviewsCache } = useAdmin();
+  const { user } = useAuth();
   const [filter, setFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRating, setSelectedRating] = useState(null);
@@ -69,8 +71,11 @@ const Reviews = () => {
       if (selectedRating) params.rating = selectedRating;
       if (searchQuery) params.search = searchQuery;
 
-      const res = await api.get("/reviews/admin/all", { params });
-      const data = { reviews: res.data.reviews || [], stats: res.data.stats || null };
+      // If logged-in user is a franchise admin, fetch franchise-scoped reviews
+      const res = user?.role === 'franchise'
+        ? await api.get('/reviews/franchise', { params })
+        : await api.get("/reviews/admin/all", { params });
+      const data = { reviews: res.data.reviews || res.data.reviews || [], stats: res.data.stats || res.data.stats || null };
       setReviews(data.reviews);
       setStats(data.stats);
       setReviewsCache(prev => ({ ...prev, [cacheKey]: data }));
@@ -79,6 +84,17 @@ const Reviews = () => {
       toast.error("Failed to load reviews");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Fetch delivery partner reviews for franchise admin view
+  const [deliveryReviews, setDeliveryReviews] = useState([]);
+  const fetchDeliveryReviews = async () => {
+    try {
+      const res = await api.get('/delivery-partner-review');
+      setDeliveryReviews((res.data && res.data.data) || []);
+    } catch (err) {
+      console.error('Failed to fetch delivery reviews:', err);
     }
   };
 
@@ -93,6 +109,8 @@ const Reviews = () => {
 
   useEffect(() => {
     fetchReviews();
+    // only fetch delivery reviews when franchise admin
+    if (user?.role === 'franchise') fetchDeliveryReviews();
   }, [filter, selectedRating]);
 
   useEffect(() => {
@@ -255,6 +273,34 @@ const Reviews = () => {
 
         </div>
       </div>
+
+      {/* DELIVERY PARTNER REVIEWS (Franchise view) */}
+      {user?.role === 'franchise' && (
+        <div className="table-card rounded-4xl p-6">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-black text-white">Delivery Partner Reviews (Your Franchise)</h2>
+              <p className="text-sm text-slate-400 mt-1">Reviews for delivery partners submitted under your franchise.</p>
+            </div>
+            <div className="rounded-full bg-slate-900/80 px-4 py-2 text-sm font-semibold text-slate-200">{deliveryReviews.length} reviews</div>
+          </div>
+
+          <div className="mt-6 space-y-4">
+            {deliveryReviews.map((r) => (
+              <div key={r.id} className="rounded-3xl border border-white/10 bg-slate-950/95 p-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-semibold text-white">{r.user_name || r.user_email || 'Anonymous'}</div>
+                    <div className="text-xs text-slate-400">Partner: {r.delivery_partner_name || r.delivery_partner_id || 'N/A'}</div>
+                  </div>
+                  <div className="text-amber-400 font-bold">{r.rating}</div>
+                </div>
+                <p className="mt-3 text-sm text-slate-300">{r.comment || 'No comment provided.'}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* FILTERS AND SEARCH BAR */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">

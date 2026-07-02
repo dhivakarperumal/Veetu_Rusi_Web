@@ -1,5 +1,6 @@
 import { useState, useEffect, useContext } from "react";
 import { useAdmin } from "../../PrivateRouter/AdminContext";
+import { useAuth } from "../../PrivateRouter/AuthContext";
 import {
   Star,
   Search,
@@ -28,6 +29,7 @@ import toast from "react-hot-toast";
 
 const Reviews = () => {
   const { reviewsCache, setReviewsCache } = useAdmin();
+  const { user } = useAuth();
   const [filter, setFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRating, setSelectedRating] = useState(null);
@@ -79,6 +81,18 @@ const Reviews = () => {
     }
   };
 
+  // fetch delivery partner reviews for superadmin tab
+  const [deliveryTab, setDeliveryTab] = useState(false);
+  const [deliveryReviews, setDeliveryReviews] = useState([]);
+  const fetchDeliveryReviews = async () => {
+    try {
+      const res = await api.get('/delivery-partner-review');
+      setDeliveryReviews((res.data && res.data.data) || []);
+    } catch (err) {
+      console.error('Failed to fetch delivery reviews:', err);
+    }
+  };
+
   const fetchProducts = async () => {
     try {
       const res = await api.get("/products");
@@ -90,6 +104,7 @@ const Reviews = () => {
 
   useEffect(() => {
     fetchReviews();
+    if (deliveryTab) fetchDeliveryReviews();
   }, [filter, selectedRating]);
 
   useEffect(() => {

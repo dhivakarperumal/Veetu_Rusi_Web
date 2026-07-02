@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const { verifyToken } = require('../middleware/authMiddleware');
 
 const {
   addReview,
@@ -31,7 +32,7 @@ router.post("/", (req, res, next) => {
 // =========================
 // Get All Reviews
 // =========================
-router.get("/", getReviews);
+router.get("/", verifyToken, getReviews);
 
 // =========================
 // Get Single Review

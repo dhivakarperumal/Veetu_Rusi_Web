@@ -92,6 +92,26 @@ exports.getAllReviews = async (req, res) => {
   }
 };
 
+// Get reviews visible to a franchise admin (reviews created by or assigned to their franchise)
+exports.getFranchiseReviews = async (req, res) => {
+  try {
+    const franchiseUserId = req.user?.user_id || req.user?.id;
+    if (!franchiseUserId) return res.status(403).json({ message: 'Franchise admin authentication required' });
+
+    const [rows] = await pool.execute(
+      `SELECT r.* FROM reviews r WHERE r.franchise_admin_id = ? OR r.created_by = ? ORDER BY r.created_at DESC`,
+      [franchiseUserId, franchiseUserId]
+    );
+
+    const reviews = rows.map(r => ({ ...r, review_image: parseJsonField(r.review_image) }));
+
+    res.json({ reviews });
+  } catch (error) {
+    console.error('Error fetching franchise reviews:', error);
+    res.status(500).json({ message: 'Failed to fetch franchise reviews', error: error.message });
+  }
+};
+
 exports.updateReviewStatus = async (req, res) => {
   try {
     const { id } = req.params;

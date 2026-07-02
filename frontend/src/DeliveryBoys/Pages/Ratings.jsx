@@ -12,6 +12,8 @@ const formatDateTime = (value) => {
 const Ratings = () => {
   const { user } = useAuth();
   const [reviews, setReviews] = useState([]);
+  const [deliveryTab, setDeliveryTab] = useState(false);
+  const [deliveryReviews, setDeliveryReviews] = useState([]);
   const [stats, setStats] = useState({
     total_reviews: 0,
     average_rating: 0,
@@ -50,8 +52,26 @@ const Ratings = () => {
     }
   };
 
+  const fetchDeliveryReviews = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/delivery-partner-review');
+      setDeliveryReviews((res.data && res.data.data) || []);
+    } catch (err) {
+      console.error('Failed to load delivery reviews:', err);
+      toast.error('Unable to load delivery partner ratings.');
+      setDeliveryReviews([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    fetchReviews();
+    if (user?.role === 'superadmin' && deliveryTab) {
+      fetchDeliveryReviews();
+    } else {
+      fetchReviews();
+    }
   }, []);
 
   const submitReview = async () => {
@@ -95,6 +115,12 @@ const Ratings = () => {
         <p className="max-w-2xl text-sm text-slate-500">
           Customer ratings and feedback from reviews. Use this page to review recent ratings and provide new review feedback for a product.
         </p>
+        {user?.role === 'superadmin' && (
+          <div className="mt-4 flex gap-2">
+            <button onClick={() => { setDeliveryTab(false); fetchReviews(); }} className={`px-4 py-2 rounded ${!deliveryTab ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'}`}>Food Reviews</button>
+            <button onClick={() => { setDeliveryTab(true); fetchDeliveryReviews(); }} className={`px-4 py-2 rounded ${deliveryTab ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'}`}>Delivery Partner Reviews</button>
+          </div>
+        )}
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
