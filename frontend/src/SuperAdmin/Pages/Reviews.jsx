@@ -353,16 +353,75 @@ const Reviews = () => {
           {paginatedReviews.map((item) => {
             if (deliveryTab) {
               return (
-                <div key={`dp-${item.id}`} className="bg-white rounded-[2rem] border border-slate-100 p-5">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-black text-slate-800 text-sm">{item.user_name || item.user_email || 'Anonymous'}</h4>
-                      <p className="text-[10px] text-slate-500">Partner: {item.delivery_partner_name || item.delivery_partner_id || 'N/A'}</p>
+                <div
+                  key={`dp-${item.id}`}
+                  className="group relative bg-white rounded-[2rem] border border-slate-100 overflow-hidden shadow-sm transition hover:shadow-xl hover:-translate-y-1 duration-300"
+                >
+                  <div className="p-6 space-y-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-12 h-12 rounded-3xl bg-slate-900 text-white flex items-center justify-center text-lg font-black">
+                          {item.delivery_partner_name?.charAt(0).toUpperCase() || item.delivery_partner_id?.charAt(0).toUpperCase() || 'D'}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-black text-slate-900 truncate">
+                            {item.delivery_partner_name || item.delivery_partner_id || 'Delivery Partner'}
+                          </p>
+                          <p className="text-[10px] text-slate-500 truncate">
+                            {item.delivery_partner_phone || item.delivery_partner_email || 'No contact available'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-2xl font-black text-amber-500">{item.rating || '0'}</div>
+                        <div className={`mt-2 inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${getStatusColor(item.status)}`}>
+                          {item.status || 'Pending'}
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-amber-400 font-bold">{item.rating}</div>
+
+                    <div className="rounded-3xl bg-slate-50 border border-slate-100 p-4">
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Reviewer</p>
+                      <p className="text-sm font-semibold text-slate-700 truncate">
+                        {item.user_name || item.user_email || 'Anonymous'}
+                      </p>
+                      {item.user_email && <p className="text-xs text-slate-500 truncate">{item.user_email}</p>}
+                    </div>
+
+                    <div className="space-y-3">
+                      <p className="text-sm text-slate-600 italic leading-relaxed line-clamp-4">
+                        "{item.comment || 'No comment provided.'}"
+                      </p>
+
+                      {item.image && (
+                        <div className="relative h-44 rounded-[1.5rem] overflow-hidden border border-slate-100">
+                          <img
+                            src={item.image}
+                            alt="Delivery review"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-2 gap-3 text-[10px] text-slate-500">
+                        <div className="space-y-1">
+                          <p className="font-black uppercase tracking-[0.2em]">Submitted</p>
+                          <p>{item.created_at ? new Date(item.created_at).toLocaleString() : 'Unknown'}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="font-black uppercase tracking-[0.2em]">Partner ID</p>
+                          <p className="truncate">{item.delivery_partner_id || 'N/A'}</p>
+                        </div>
+                      </div>
+
+                      {item.admin_reply && (
+                        <div className="rounded-3xl bg-blue-50 border border-blue-100 p-4 text-[11px] text-slate-600">
+                          <p className="font-black uppercase tracking-[0.2em] text-blue-600 mb-1">Official Reply</p>
+                          <p>{item.admin_reply}</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <p className="mt-3 text-sm text-slate-600 italic">"{item.comment || 'No comment provided.'}"</p>
-                  <div className="mt-3 text-xs text-slate-400">{new Date(item.created_at).toLocaleString()}</div>
                 </div>
               );
             }

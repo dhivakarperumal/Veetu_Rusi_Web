@@ -186,11 +186,14 @@ exports.getReviews = async (req, res) => {
   try {
     await ensureReviewTable();
 
-    // support optional franchise filter via query or the authenticated user
-    const franchiseUserId = req.query.franchise_user_id || req.user?.user_id || req.user?.id || null;
+    const isSuperAdmin = req.user?.role === 'superadmin';
+    const franchiseUserId = isSuperAdmin ? null : (req.query.franchise_user_id || req.user?.user_id || req.user?.id || null);
 
     let rows;
-    if (franchiseUserId) {
+    if (isSuperAdmin) {
+      const [r] = await pool.query(`SELECT * FROM deliverypartner_review ORDER BY created_at DESC`);
+      rows = r;
+    } else if (franchiseUserId) {
       const [r] = await pool.query(
         `SELECT * FROM deliverypartner_review WHERE franchise_admin_id = ? OR created_by = ? ORDER BY created_at DESC`,
         [franchiseUserId, franchiseUserId]
