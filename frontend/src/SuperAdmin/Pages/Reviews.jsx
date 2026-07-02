@@ -33,8 +33,10 @@ const Reviews = () => {
   const [filter, setFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRating, setSelectedRating] = useState(null);
+  const [selectedFranchiseAdmin, setSelectedFranchiseAdmin] = useState("");
+  const [franchiseAdmins, setFranchiseAdmins] = useState([]);
 
-  const currentCacheKey = `${filter}-${selectedRating}-${searchQuery}`;
+  const currentCacheKey = `${filter}-${selectedRating}-${searchQuery}-${selectedFranchiseAdmin}`;
   const cachedData = reviewsCache[currentCacheKey];
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -60,13 +62,14 @@ const Reviews = () => {
 
   const fetchReviews = async () => {
     try {
-      const cacheKey = `${filter}-${selectedRating}-${searchQuery}`;
+      const cacheKey = `${filter}-${selectedRating}-${searchQuery}-${selectedFranchiseAdmin}`;
       if (!reviewsCache[cacheKey]) setLoading(true);
 
       const params = {};
       if (filter !== "All") params.status = filter;
       if (selectedRating) params.rating = selectedRating;
       if (searchQuery) params.search = searchQuery;
+      if (selectedFranchiseAdmin) params.franchise_admin_id = selectedFranchiseAdmin;
 
       const res = await api.get("/reviews/admin/all", { params });
       const data = { reviews: res.data.reviews || [], stats: res.data.stats || null };
@@ -86,10 +89,27 @@ const Reviews = () => {
   const [deliveryReviews, setDeliveryReviews] = useState([]);
   const fetchDeliveryReviews = async () => {
     try {
-      const res = await api.get('/delivery-partner-review');
+      const params = {};
+      if (filter !== "All") params.status = filter;
+      if (selectedRating) params.rating = selectedRating;
+      if (searchQuery) params.search = searchQuery;
+      if (selectedFranchiseAdmin) params.franchise_admin_id = selectedFranchiseAdmin;
+
+      const res = await api.get('/delivery-partner-review', { params });
       setDeliveryReviews((res.data && res.data.data) || []);
     } catch (err) {
       console.error('Failed to fetch delivery reviews:', err);
+    }
+  };
+
+  const fetchFranchiseAdmins = async () => {
+    try {
+      const res = await api.get('/auth/users');
+      const admins = Array.isArray(res.data) ? res.data : res.data?.users || [];
+      setFranchiseAdmins(admins.filter((user) => user.role?.toLowerCase().includes('franchise')));
+    } catch (err) {
+      console.error('Failed to fetch franchise admins:', err);
+      setFranchiseAdmins([]);
     }
   };
 
@@ -103,9 +123,18 @@ const Reviews = () => {
   };
 
   useEffect(() => {
-    fetchReviews();
-    if (deliveryTab) fetchDeliveryReviews();
-  }, [filter, selectedRating, deliveryTab]);
+    const handleFetch = async () => {
+      if (deliveryTab) await fetchDeliveryReviews();
+      else await fetchReviews();
+    };
+
+    const timer = setTimeout(handleFetch, 250);
+    return () => clearTimeout(timer);
+  }, [filter, selectedRating, selectedFranchiseAdmin, searchQuery, deliveryTab]);
+
+  useEffect(() => {
+    fetchFranchiseAdmins();
+  }, []);
 
   // Active reviews source based on tab
   const activeReviews = deliveryTab ? deliveryReviews : reviews;
@@ -148,14 +177,19 @@ const Reviews = () => {
     }
   };
 
-  const handleReply = async (id) => {
+  const handleReply = async (id, isDelivery = false) => {
     if (!replyText.trim()) return;
     try {
-      await api.put(`/reviews/admin/${id}/reply`, { admin_reply: replyText });
+      if (isDelivery) {
+        await api.put(`/delivery-partner-review/reply/${id}`, { admin_reply: replyText });
+      } else {
+        await api.put(`/reviews/admin/${id}/reply`, { admin_reply: replyText });
+      }
       toast.success("Reply added");
       setReplyText("");
       setActiveReplyId(null);
-      fetchReviews();
+      if (isDelivery) fetchDeliveryReviews();
+      else fetchReviews();
     } catch (err) {
       toast.error("Failed to add reply");
     }
@@ -403,18 +437,23 @@ const Reviews = () => {
                         </div>
                       )}
 
-                      <div className="grid grid-cols-2 gap-3 text-[10px] text-slate-500">
-                        <div className="space-y-1">
-                          <p className="font-black uppercase tracking-[0.2em]">Submitted</p>
-                          <p>{item.created_at ? new Date(item.created_at).toLocaleString() : 'Unknown'}</p>
+                              <div className="grid grid-cols-2 gap-3 text-[10px] text-slate-500">
+                          <div className="space-y-1">
+                            <p className="font-black uppercase tracking-[0.2em]">Submitted</p>
+                            <p>{item.created_at ? new Date(item.created_at).toLocaleString() : 'Unknown'}</p>
+                          </div>
+                          <div className="space-y-1">
+                            <p className="font-black uppercase tracking-[0.2em]">Partner ID</p>
+                            <p className="truncate">{item.delivery_partner_id || 'N/A'}</p>
+                          </div>
                         </div>
-                        <div className="space-y-1">
-                          <p className="font-black uppercase tracking-[0.2em]">Partner ID</p>
-                          <p className="truncate">{item.delivery_partner_id || 'N/A'}</p>
-                        </div>
-                      </div>
 
-                      {item.admin_reply && (
+                        <div className="mt-4 text-[11px] text-slate-500">
+                          <p className="font-black uppercase tracking-[0.2em]">Franchise Admin</p>
+                          <p>{item.franchise_admin_name || 'Not assigned'}</p>
+                        </div>
+
+                        {item.admin_reply && (
                         <div className="rounded-3xl bg-blue-50 border border-blue-100 p-4 text-[11px] text-slate-600">
                           <p className="font-black uppercase tracking-[0.2em] text-blue-600 mb-1">Official Reply</p>
                           <p>{item.admin_reply}</p>
@@ -510,6 +549,10 @@ const Reviews = () => {
 
                 {/* Footer: Actions */}
                 <div className="p-4 mt-4 bg-slate-50/50 border-t border-slate-50 flex items-center justify-between">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Franchise Admin</span>
+                    <span className="text-[12px] font-bold text-slate-700">{item.franchise_admin_name || 'Not assigned'}</span>
+                  </div>
                   <div className="flex items-center gap-1">
                     {item.status !== "Published" && (
                       <button
