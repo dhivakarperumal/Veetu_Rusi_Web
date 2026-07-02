@@ -334,7 +334,7 @@ const Reviews = () => {
           </div>
           <p className="text-slate-400 font-black text-xs uppercase tracking-widest animate-pulse">Synchronizing Feedback...</p>
         </div>
-      ) : reviews.length === 0 ? (
+      ) : activeReviews.length === 0 ? (
         <div className="min-h-[400px] flex flex-col items-center justify-center gap-4 bg-white rounded-[2.5rem] border border-slate-100 border-dashed">
           <div className="w-20 h-20 rounded-3xl bg-slate-50 flex items-center justify-center text-slate-200 mb-2">
             <MessageSquare className="w-10 h-10" />
