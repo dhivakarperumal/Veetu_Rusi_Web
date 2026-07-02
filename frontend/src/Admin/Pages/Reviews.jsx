@@ -210,7 +210,11 @@ const Reviews = () => {
 
   const fetchDeliveryPartners = async () => {
     try {
-      const res = await api.get("/user-food-orders/delivery-partners/active");
+      const params = {};
+      if (user?.role === 'franchise') {
+        params.franchise_user_id = user?.user_id || user?.id;
+      }
+      const res = await api.get("/user-food-orders/delivery-partners/active", { params });
       setDeliveryPartners(res.data || []);
     } catch (err) {
       console.error("Failed to fetch delivery partners:", err);
