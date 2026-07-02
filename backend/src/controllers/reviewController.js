@@ -174,7 +174,7 @@ exports.createReview = async (req, res) => {
         home_chef_id, home_chef_user_id, home_chef_name, home_chef_email, home_chef_phone,
         franchise_admin_id, franchise_admin_email, franchise_admin_name, created_by, updated_by,
         created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
       [
         product_id, user_id || null, user_name || null, user_email || null, rating, comment || null, review_image || null, finalStatus, admin_reply || null,
         home_chef_id || null, home_chef_user_id || null, home_chef_name || null, home_chef_email || null, home_chef_phone || null,
