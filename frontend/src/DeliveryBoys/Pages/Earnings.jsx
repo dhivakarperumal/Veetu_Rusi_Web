@@ -14,8 +14,11 @@ const Earnings = () => {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
 
+  const [walletHistory, setWalletHistory] = useState([]);
+
   useEffect(() => {
     fetchEarnings();
+    fetchWalletHistory();
   }, []);
 
   const fetchEarnings = async () => {
@@ -28,6 +31,15 @@ const Earnings = () => {
       toast.error("Failed to load earnings data");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchWalletHistory = async () => {
+    try {
+      const res = await api.get("/delivery/wallet-history");
+      setWalletHistory(res.data || []);
+    } catch (error) {
+      console.error("Wallet history fetch error:", error);
     }
   };
 
@@ -112,67 +124,54 @@ const Earnings = () => {
         </div>
       </ChartCard>
 
-      {/* Recent Deliveries */}
-      <div className="table-card rounded-[2.5rem] overflow-hidden">
+      {/* Wallet History Ledger */}
+      <div className="table-card rounded-[2.5rem] overflow-hidden mt-8">
         <div className="p-8 border-b border-white/10">
-          <h2 className="text-lg font-black text-white">Recent Deliveries</h2>
-          <p className="text-sm text-slate-400 mt-1 font-bold uppercase tracking-widest">Orders you've completed</p>
+          <h2 className="text-lg font-black text-white">Wallet History</h2>
+          <p className="text-sm text-slate-400 mt-1 font-bold uppercase tracking-widest">Track your credits, debits, and balance</p>
         </div>
 
-        {recentDeliveries.length === 0 ? (
+        {walletHistory.length === 0 ? (
           <div className="p-12 text-center text-slate-400">
-            <p className="font-black uppercase tracking-widest text-[10px]">No completed deliveries yet</p>
+            <p className="font-black uppercase tracking-widest text-[10px]">No wallet transactions found</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm font-medium">
               <thead>
                 <tr className="bg-slate-950/80 border-b border-white/10">
-                  <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Order</th>
-                  <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Customer</th>
-                  <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Phone</th>
-                  <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Amount</th>
-                  <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Delivered</th>
-                  <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Action</th>
+                  <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Date</th>
+                  <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Order ID</th>
+                  <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Description</th>
+                  <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Credit</th>
+                  <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Debit</th>
+                  <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Balance</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/10">
-                {recentDeliveries.map((order) => (
-                  <tr key={order.id} className="hover:bg-white/10 transition-colors">
-                    <td className="px-8 py-4">
-                      <p className="font-black text-white">#ORD-0{order.id}</p>
-                      <p className="text-[10px] text-slate-400 font-bold mt-1">{order.order_id}</p>
-                    </td>
-                    <td className="px-8 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center text-[10px] font-black text-slate-100">
-                          {order.customer_name?.charAt(0) || 'C'}
-                        </div>
-                        <span className="font-bold text-slate-100">{order.customer_name || 'Guest'}</span>
-                      </div>
-                    </td>
-                    <td className="px-8 py-4 text-slate-400">{order.customer_phone || 'N/A'}</td>
-                    <td className="px-8 py-4">
-                      <span className="font-black text-emerald-400">₹{Number(order.total_amount || 0).toLocaleString()}</span>
-                    </td>
+                {walletHistory.map((txn, idx) => (
+                  <tr key={idx} className="hover:bg-white/10 transition-colors">
                     <td className="px-8 py-4 text-slate-400">
                       <span className="text-[11px] font-bold">
-                        {new Date(order.updated_at).toLocaleString(undefined, { 
-                          month: 'short', 
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
+                        {new Date(txn.date || txn.created_at).toLocaleString(undefined, { 
+                          month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
                         })}
                       </span>
                     </td>
+                    <td className="px-8 py-4">
+                      {txn.order_id ? <span className="font-black text-white">{txn.order_id}</span> : <span className="text-slate-500">—</span>}
+                    </td>
+                    <td className="px-8 py-4">
+                      <span className="font-bold text-slate-100">{txn.description}</span>
+                    </td>
+                    <td className="px-8 py-4">
+                      {txn.credit > 0 ? <span className="font-black text-emerald-400">+₹{Number(txn.credit).toLocaleString()}</span> : <span className="text-slate-500">—</span>}
+                    </td>
+                    <td className="px-8 py-4">
+                      {txn.debit > 0 ? <span className="font-black text-red-400">-₹{Number(txn.debit).toLocaleString()}</span> : <span className="text-slate-500">—</span>}
+                    </td>
                     <td className="px-8 py-4 text-right">
-                      <Link
-                        to={`/delivery/orders/${order.id}`}
-                        className="p-2.5 text-slate-300 hover:text-white hover:bg-blue-500 rounded-xl transition-all shadow-sm border border-white/10 inline-block"
-                        title="View Order"
-                      >
-                        <Eye size={18} />
-                      </Link>
+                      <span className="font-black text-white">₹{Number(txn.balance).toLocaleString()}</span>
                     </td>
                   </tr>
                 ))}

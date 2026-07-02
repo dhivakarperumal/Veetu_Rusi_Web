@@ -5,6 +5,7 @@ import { toast, Toaster } from 'react-hot-toast';
 import api from '../api';
 import ChefSidebar from "./ChefSidebar";
 import ChefHeader from "./ChefHeader";
+import OrderCancellationModal from "../Components/CommenComponents/OrderCancellationModal";
 
 const AdminLayout = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -226,24 +227,27 @@ const AdminLayout = () => {
             setPopupVisible(false);
             setPopupOrder(null);
             popupOrderRef.current = null;
+            fetchPendingOrders();
         } catch (err) {
             console.error(err);
             toast.error('Failed to accept order');
         }
     };
 
-    const handleReject = async () => {
+    const [cancelTargetOrder, setCancelTargetOrder] = useState(null);
+
+    const handleReject = () => {
         if (!popupOrder) return;
-        try {
-            await api.patch(`/user-food-orders/status/${popupOrder.id}`, { status: 'Cancelled' });
-            toast.success('Order rejected');
-            setPopupVisible(false);
-            setPopupOrder(null);
-            popupOrderRef.current = null;
-        } catch (err) {
-            console.error(err);
-            toast.error('Failed to reject order');
-        }
+        setCancelTargetOrder(popupOrder);
+    };
+
+    const handleNextOrder = () => {
+        if (!popupOrder) return;
+        displayedOrderIdsRef.current.add(Number(popupOrder.id));
+        setPopupVisible(false);
+        setPopupOrder(null);
+        popupOrderRef.current = null;
+        fetchPendingOrders();
     };
 
     const skipOrder = () => {
@@ -375,6 +379,13 @@ const AdminLayout = () => {
                                 <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-end">
                                     <button
                                         type="button"
+                                        onClick={handleNextOrder}
+                                        className="inline-flex justify-center rounded-2xl border border-slate-700/70 bg-slate-900/90 px-5 py-3 text-sm font-bold text-slate-200 hover:bg-slate-800 transition"
+                                    >
+                                        Next Order
+                                    </button>
+                                    <button
+                                        type="button"
                                         onClick={handleReject}
                                         className="inline-flex justify-center rounded-2xl border border-red-700/30 bg-transparent px-5 py-3 text-sm font-bold text-red-400 hover:bg-red-900/10 transition"
                                     >
@@ -391,6 +402,22 @@ const AdminLayout = () => {
                             </div>
                         </div>
                     </div>
+                )}
+
+                {cancelTargetOrder && (
+                    <OrderCancellationModal
+                        order={cancelTargetOrder}
+                        role="chef"
+                        onClose={() => setCancelTargetOrder(null)}
+                        onSuccess={() => {
+                            setCancelTargetOrder(null);
+                            setPopupVisible(false);
+                            setPopupOrder(null);
+                            popupOrderRef.current = null;
+                            toast.success('Order cancelled successfully.');
+                        }}
+                        apiCall={(id, payload) => api.post(`/user-food-orders/cancel/${id}`, payload)}
+                    />
                 )}
 
                 <footer className="glass-footer text-center py-4 mt-10 text-sm text-white/70">

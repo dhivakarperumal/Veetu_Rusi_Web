@@ -6,6 +6,7 @@ import OrderCancellationModal from '../../Components/CommenComponents/OrderCance
 import {
   Search,
   Eye,
+  FileText,
   X,
   ChevronDown,
   ChevronUp,
@@ -470,6 +471,8 @@ const FoodOrders = () => {
   const [chefFilter, setChefFilter] = useState('All');
 
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [receiptOrder, setReceiptOrder] = useState(null);
+  const [receiptSettings, setReceiptSettings] = useState(null);
   const [expandedRow, setExpandedRow] = useState(null);
   const [viewMode, setViewMode] = useState("table");
   const [currentPage, setCurrentPage] = useState(1);
@@ -850,6 +853,23 @@ const FoodOrders = () => {
                             </button>
 
                             <button
+                              onClick={async () => {
+                                setReceiptOrder(order);
+                                try {
+                                  const res = await api.get('/settings/delivery-partner');
+                                  setReceiptSettings(res.data?.data || {});
+                                } catch (e) {
+                                  console.error('Failed to load receipt settings', e);
+                                  setReceiptSettings({});
+                                }
+                              }}
+                              title="Show Receipt"
+                              className="rounded-xl bg-slate-100 p-2"
+                            >
+                              <FileText className="w-4 h-4" />
+                            </button>
+
+                            <button
                               onClick={() =>
                                 setExpandedRow(
                                   isExpanded
@@ -989,6 +1009,98 @@ const FoodOrders = () => {
           />
         )
       }
+
+      {/* RECEIPT MODAL */}
+      {receiptOrder && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="relative mx-auto max-w-md w-full overflow-hidden rounded-3xl bg-[#0f121b] border border-slate-800 shadow-2xl shadow-emerald-900/20">
+            {/* Top gradient accent */}
+            <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-500"></div>
+            
+            <div className="flex items-center justify-between px-8 py-5 bg-slate-900/50">
+              <h3 className="text-xl font-bold text-white tracking-wide">Order Receipt</h3>
+              <button 
+                onClick={() => setReceiptOrder(null)} 
+                className="p-2 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="px-8 py-6 space-y-6">
+              {/* Header Info */}
+              <div className="flex items-center gap-5">
+                <div className="h-16 w-16 rounded-xl bg-white p-1 flex-shrink-0 shadow-lg">
+                  <img src={receiptSettings?.receipt_logo || 'https://via.placeholder.com/120x60?text=Logo'} alt="logo" className="h-full w-full object-contain rounded-lg" />
+                </div>
+                <div>
+                  <div className="font-extrabold text-2xl text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400">Veetu Rusi</div>
+                  <div className="text-xs font-medium text-emerald-400 tracking-wider uppercase mt-1">Official Receipt</div>
+                </div>
+              </div>
+
+              <div className="h-px w-full bg-gradient-to-r from-transparent via-slate-700 to-transparent my-4"></div>
+
+              {/* Invoice Details */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <div className="text-[10px] uppercase font-bold text-slate-500 tracking-widest">Invoice No.</div>
+                  <div className="font-mono text-sm text-slate-200">{receiptOrder.order_id || '#'}</div>
+                </div>
+                <div className="space-y-1 text-right">
+                  <div className="text-[10px] uppercase font-bold text-slate-500 tracking-widest">Date & Time</div>
+                  <div className="text-sm font-medium text-slate-300">{formatDate(receiptOrder.ordered_at)}</div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-slate-800 bg-slate-900/30 overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-800/50">
+                    <tr className="text-left text-xs uppercase tracking-wider text-slate-400">
+                      <th className="px-4 py-3 font-semibold">Item</th>
+                      <th className="px-4 py-3 font-semibold text-center">Qty</th>
+                      <th className="px-4 py-3 font-semibold text-right">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/50">
+                    {(Array.isArray(receiptOrder.items) ? receiptOrder.items : []).map((it, idx) => (
+                      <tr key={idx} className="hover:bg-slate-800/20 transition-colors">
+                        <td className="px-4 py-3 text-slate-200 font-medium">{it.name}</td>
+                        <td className="px-4 py-3 text-slate-400 text-center">{it.quantity || 1}</td>
+                        <td className="px-4 py-3 text-right text-slate-200 font-mono">{formatAmount(getItemTotal(it))}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Totals */}
+              <div className="pt-2">
+                <div className="flex justify-between items-center bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4">
+                  <div className="text-sm font-bold text-emerald-400 uppercase tracking-wider">Total Amount</div>
+                  <div className="text-2xl font-black text-emerald-400 font-mono">{formatAmount(receiptOrder.total_amount)}</div>
+                </div>
+              </div>
+
+              {/* Footer QR */}
+              {receiptSettings?.upi_enabled && receiptSettings?.upi_id && (
+                <div className="flex items-center justify-between pt-4 border-t border-dashed border-slate-700">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs text-slate-400 font-medium">Scan to Pay (UPI)</span>
+                    <span className="text-[10px] text-slate-500">Scan via any UPI app</span>
+                  </div>
+                  <div className="h-16 w-16 bg-white p-1 rounded-xl shadow-lg">
+                    <img src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(`upi://pay?pa=${receiptSettings.upi_id}&pn=VeetuRusi&am=${receiptOrder.total_amount}&tr=${receiptOrder.order_id}`)}`} alt="upi qr" className="h-full w-full rounded-lg" />
+                  </div>
+                </div>
+              )}
+
+            </div>
+          </div>
+        </div>
+      )}
 
     </div >
   );

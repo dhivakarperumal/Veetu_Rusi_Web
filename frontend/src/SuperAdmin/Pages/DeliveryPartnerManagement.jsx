@@ -130,9 +130,9 @@ const DeliveryPartnerManagement = () => {
                 <tr className="border-b border-white/5 bg-[#070b13]/30">
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Partner Info</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Vehicle details</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Total Deliveries</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Earnings</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Mobile</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Status</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Login Credentials</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em] text-center">Actions</th>
                 </tr>
               </thead>
@@ -146,15 +146,16 @@ const DeliveryPartnerManagement = () => {
                         </div>
                         <div>
                           <h4 className="text-sm font-black text-white">{partner.name}</h4>
-                          <p className="text-xs text-white/40 font-semibold">{partner.mobile}</p>
+                          <p className="text-xs text-white/40 font-semibold">{partner.email || 'N/A'}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-5 text-sm font-bold text-white/60">
                       {partner.vehicle_type} ({partner.vehicle_number})
                     </td>
-                    <td className="px-6 py-5 text-sm font-black text-white/80">{partner.total_deliveries || 0}</td>
-                    <td className="px-6 py-5 text-sm font-black text-emerald-400">₹{parseFloat(partner.earnings || 0).toLocaleString()}</td>
+                    <td className="px-6 py-5 text-sm font-bold text-white/60">
+                      {partner.mobile}
+                    </td>
                     <td className="px-6 py-5">
                       <span
                         className={`text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider ${
@@ -167,6 +168,16 @@ const DeliveryPartnerManagement = () => {
                       >
                         {partner.status}
                       </span>
+                    </td>
+                    <td className="px-6 py-5">
+                      {partner.status === "Approved" ? (
+                        <div className="text-xs text-white/70">
+                          <p><span className="font-semibold text-white/40">User:</span> {partner.email || 'N/A'}</p>
+                          <p><span className="font-semibold text-white/40">Pass:</span> ********</p>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-white/30 italic">N/A</span>
+                      )}
                     </td>
                     <td className="px-6 py-5">
                       <div className="flex items-center justify-center gap-2">
@@ -265,14 +276,7 @@ const DeliveryPartnerManagement = () => {
                   <p className="text-[10px] text-white/40 font-bold uppercase">Approved At</p>
                   <p className="text-sm font-black mt-0.5">{selectedPartner.approval_date ? new Date(selectedPartner.approval_date).toLocaleString() : '—'}</p>
                 </div>
-                <div>
-                  <p className="text-[10px] text-white/40 font-bold uppercase">Total Deliveries</p>
-                  <p className="text-sm font-black mt-0.5 text-emerald-400">{selectedPartner.total_deliveries || 0} completed</p>
-                </div>
-                <div>
-                  <p className="text-[10px] text-white/40 font-bold uppercase">Total Earnings</p>
-                  <p className="text-sm font-black mt-0.5 text-emerald-400">₹{parseFloat(selectedPartner.earnings || 0).toLocaleString()}</p>
-                </div>
+
               </div>
             </div>
             <div className="p-8 border-t border-white/5 bg-[#070b13]/40 flex gap-3">
