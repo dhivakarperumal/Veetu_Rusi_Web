@@ -48,6 +48,7 @@ const FoodItems = () => {
   const [showQuickView, setShowQuickView] = useState(false);
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
+  
 
   const goToDetails = (food) => {
     navigate(`/products/${food.id}`);
@@ -83,9 +84,9 @@ const FoodItems = () => {
     return mrp > 0 && selling < mrp;
   };
 
-
+  const hasLocation = Boolean(user?.latitude && user?.longitude);
   const fetchFoods = async () => {
-    const hasLocation = Boolean(user?.latitude && user?.longitude);
+    setLoading(true);
 
     try {
       setLoading(true);

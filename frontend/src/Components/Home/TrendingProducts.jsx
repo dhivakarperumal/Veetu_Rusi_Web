@@ -20,6 +20,7 @@ const TrendingProducts = () => {
   const { productsCache, setProductsCache, lastFetchTime, setLastFetchTime } = useContext(StoreContext);
   const initialProducts = Array.isArray(productsCache) ? [...productsCache].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) : [];
   const [products, setProducts] = useState(initialProducts);
+  const [loading, setLoading] = useState(true);
 
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
     if (!lat1 || !lon1 || !lat2 || !lon2) return null;
@@ -42,6 +43,7 @@ const TrendingProducts = () => {
   };
 
   const fetchTrendingProducts = async () => {
+    setLoading(true);
     try {
       let data = productsCache;
       const hasLocation = Boolean(user?.latitude && user?.longitude);
@@ -93,6 +95,8 @@ const TrendingProducts = () => {
     } catch (error) {
       console.error("Error fetching trending products:", error);
       setProducts([]);
+    } finally {
+      setLoading(false);
     }
   };
 

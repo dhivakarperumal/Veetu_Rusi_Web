@@ -16,6 +16,7 @@ import { AuthContext } from "../../PrivateRouter/AuthContext";
 const OfferProducts = () => {
   const { productsCache, setProductsCache, lastFetchTime, setLastFetchTime } = useContext(StoreContext);
   const initialProducts = [];
+  const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState(initialProducts);
   const { user } = useContext(AuthContext);
   const hasLocation = Boolean(user?.latitude && user?.longitude);
@@ -41,6 +42,8 @@ const OfferProducts = () => {
   };
 
   const fetchOfferProducts = async () => {
+    setLoading(true);
+
     try {
       let data = productsCache;
       const hasLocation = Boolean(user?.latitude && user?.longitude);
@@ -106,6 +109,8 @@ const OfferProducts = () => {
     } catch (error) {
       console.error("Error fetching offer products:", error);
       setProducts([]);
+    } finally {
+      setLoading(false);
     }
   };
 
