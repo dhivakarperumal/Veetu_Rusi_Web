@@ -346,14 +346,14 @@ export default function MyFoodOrders({ isEmbedded = false }) {
       );
 
       // Extract home chef details from the item or order
-      const homeChefId = selectedItem?.chef_id || selectedItem?.created_by || reviewOrder?.created_by || null;
-      const homeChefUserId = selectedItem?.chef_user_id || selectedItem?.created_by_user_id || reviewOrder?.created_by_user_id || null;
-      const homeChefName = selectedItem?.chef_name || selectedItem?.chef || selectedItem?.created_by_name || reviewOrder?.created_by_name || null;
-      const homeChefEmail = selectedItem?.chef_email || selectedItem?.email || reviewOrder?.created_by_email || null;
-      const homeChefPhone = selectedItem?.chef_phone || selectedItem?.phone || reviewOrder?.created_by_phone || null;
+      const homeChefId = selectedItem?.chef_id || selectedItem?.created_by || reviewOrder?.chef_id || reviewOrder?.created_by || null;
+      const homeChefUserId = selectedItem?.chef_user_id || selectedItem?.created_by_user_id || reviewOrder?.chef_user_id || reviewOrder?.created_by_user_id || null;
+      const homeChefName = selectedItem?.chef_name || selectedItem?.chef || selectedItem?.created_by_name || reviewOrder?.chef_name || reviewOrder?.created_by_name || null;
+      const homeChefEmail = selectedItem?.chef_email || selectedItem?.email || selectedItem?.created_by_email || reviewOrder?.chef_email || reviewOrder?.created_by_email || null;
+      const homeChefPhone = selectedItem?.chef_phone || selectedItem?.phone || selectedItem?.created_by_phone || reviewOrder?.chef_phone || reviewOrder?.created_by_phone || null;
 
       // Extract franchise admin details
-      const franchiseAdminId = selectedItem?.franchise_admin_id || selectedItem?.franchise_user_id || reviewOrder?.franchise_admin_id || reviewOrder?.franchise_user_id || null;
+      const franchiseAdminId = selectedItem?.franchise_admin_id || selectedItem?.franchise_user_id || reviewOrder?.franchise_admin_id || reviewOrder?.franchise_user_id || reviewOrder?.franchise_id || null;
       const franchiseAdminEmail = selectedItem?.franchise_admin_email || selectedItem?.franchise_email || reviewOrder?.franchise_admin_email || reviewOrder?.franchise_email || null;
       const franchiseAdminName = selectedItem?.franchise_admin_name || selectedItem?.franchise_name || reviewOrder?.franchise_admin_name || reviewOrder?.franchise_name || null;
 
