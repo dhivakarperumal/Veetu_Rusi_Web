@@ -42,6 +42,7 @@ const Shop = ({ defaultCategory = "" }) => {
   const [gridView, setGridView] = useState(5);
 
   const [currentPage, setCurrentPage] = useState(1);
+  const hasLocation = Boolean(user?.latitude && user?.longitude);
 
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
     if (!lat1 || !lon1 || !lat2 || !lon2) return null;
@@ -374,6 +375,18 @@ const Shop = ({ defaultCategory = "" }) => {
           ))}
         </div>
       </>
+    );
+  }
+
+  if (!loading && !hasLocation) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-16 text-center">
+        <div className="inline-flex flex-col gap-3 items-center justify-center w-full max-w-2xl mx-auto p-10 rounded-3xl border border-dashed border-slate-200 bg-white shadow-sm">
+          <p className="text-sm text-slate-500">You still haven't fetched your location.</p>
+          <h2 className="text-2xl font-black text-slate-900">Please fetch your location to see nearby home chef products.</h2>
+          <p className="max-w-xl text-sm text-slate-500">Once your location is fetched, only nearby home chef products will appear here.</p>
+        </div>
+      </div>
     );
   }
 

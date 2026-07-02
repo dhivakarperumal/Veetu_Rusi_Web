@@ -160,6 +160,20 @@ const FoodItems = () => {
     return (R * c).toFixed(2);
   };
 
+  if (!loading && !hasLocation) {
+    return (
+      <section className="bg-slate-50 py-16">
+        <PageContainer>
+          <div className="rounded-3xl border border-dashed border-slate-200 bg-white shadow-sm p-10 text-center">
+            <p className="text-sm text-slate-500">You still haven't fetched your location.</p>
+            <h2 className="mt-2 text-2xl font-black text-slate-900">Please fetch your location to see nearby home chef products.</h2>
+            <p className="mt-3 text-sm text-slate-500">Once your location is fetched, nearby products from home chefs will appear here.</p>
+          </div>
+        </PageContainer>
+      </section>
+    );
+  }
+
   return (
     <section className="bg-slate-50 py-16">
       <PageContainer>

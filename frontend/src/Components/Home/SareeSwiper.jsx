@@ -17,6 +17,7 @@ const SareeSwiper = () => {
   const [recentItems, setRecentItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const { user } = useContext(AuthContext);
+  const hasLocation = Boolean(user?.latitude && user?.longitude);
 
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
     if (!lat1 || !lon1 || !lat2 || !lon2) return null;
@@ -123,6 +124,19 @@ const SareeSwiper = () => {
   }
 
   if (recentItems.length === 0) {
+    if (!loading && !hasLocation) {
+      return (
+        <PageContainer>
+          <div className="py-10 rounded-3xl border border-dashed border-slate-200 bg-white shadow-sm text-center">
+            <Heading title="Latest Foods & Products" />
+            <p className="mt-4 text-sm text-slate-500">You still haven't fetched your location.</p>
+            <p className="mt-2 text-base text-slate-900 font-black">Fetch your location to see nearby home chef products.</p>
+            <p className="mt-2 text-sm text-slate-500">Once your location is fetched, only nearby home chef products will appear here.</p>
+          </div>
+        </PageContainer>
+      );
+    }
+
     return null; // Don't render anything if there are no items
   }
 

@@ -16,6 +16,7 @@ import { AuthContext } from "../../PrivateRouter/AuthContext";
 
 const TrendingProducts = () => {
   const { user } = useContext(AuthContext);
+  const hasLocation = Boolean(user?.latitude && user?.longitude);
   const { productsCache, setProductsCache, lastFetchTime, setLastFetchTime } = useContext(StoreContext);
   const initialProducts = Array.isArray(productsCache) ? [...productsCache].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) : [];
   const [products, setProducts] = useState(initialProducts);
@@ -100,6 +101,19 @@ const TrendingProducts = () => {
   }, [user]);
 
   if (products.length === 0) {
+    if (!loading && !hasLocation) {
+      return (
+        <PageContainer>
+          <div className="py-10 rounded-3xl border border-dashed border-slate-200 bg-white shadow-sm text-center">
+            <Heading title="Trending Products" />
+            <p className="mt-4 text-sm text-slate-500">You still haven't fetched your location.</p>
+            <p className="mt-2 text-base text-slate-900 font-black">Fetch your location to see nearby home chef products.</p>
+            <p className="mt-2 text-sm text-slate-500">Once your location is fetched, only nearby home chef products will show here.</p>
+          </div>
+        </PageContainer>
+      );
+    }
+
     return (
       <PageContainer>
         <div className="py-5">
