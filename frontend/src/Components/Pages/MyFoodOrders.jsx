@@ -372,6 +372,8 @@ export default function MyFoodOrders({ isEmbedded = false }) {
         franchise_admin_id: franchiseAdminId,
         franchise_admin_email: franchiseAdminEmail,
         franchise_admin_name: franchiseAdminName,
+        created_by: user?.user_id || user?.id,
+        updated_by: user?.user_id || user?.id,
       });
 
       toast.success("Review submitted successfully.");

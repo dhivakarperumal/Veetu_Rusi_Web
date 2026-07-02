@@ -523,6 +523,9 @@ const createReviewsTable = async () => {
                 franchise_admin_email VARCHAR(255),
                 franchise_admin_name VARCHAR(255),
                 
+                created_by VARCHAR(255),
+                updated_by VARCHAR(255),
+                
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 
@@ -577,6 +580,8 @@ const createReviewsTable = async () => {
         try { await pool.execute('ALTER TABLE reviews ADD COLUMN IF NOT EXISTS franchise_admin_id VARCHAR(255)'); } catch {}
         try { await pool.execute('ALTER TABLE reviews ADD COLUMN IF NOT EXISTS franchise_admin_email VARCHAR(255)'); } catch {}
         try { await pool.execute('ALTER TABLE reviews ADD COLUMN IF NOT EXISTS franchise_admin_name VARCHAR(255)'); } catch {}
+        try { await pool.execute('ALTER TABLE reviews ADD COLUMN IF NOT EXISTS created_by VARCHAR(255)'); } catch {}
+        try { await pool.execute('ALTER TABLE reviews ADD COLUMN IF NOT EXISTS updated_by VARCHAR(255)'); } catch {}
         
     } catch (error) {
         console.error('✗ Error creating reviews tables:', error.message);

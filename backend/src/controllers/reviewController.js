@@ -149,18 +149,22 @@ exports.createReview = async (req, res) => {
     const {
       product_id, user_id, user_name, user_email, rating, comment, review_image, status, admin_reply,
       home_chef_id, home_chef_user_id, home_chef_name, home_chef_email, home_chef_phone,
-      franchise_admin_id, franchise_admin_email, franchise_admin_name
+      franchise_admin_id, franchise_admin_email, franchise_admin_name,
+      created_by: body_created_by, updated_by: body_updated_by
     } = req.body;
 
     if (!product_id || !rating) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
+    const createdBy = req.user?.user_id || req.user?.id || body_created_by || user_id || null;
+    const updatedBy = req.user?.user_id || req.user?.id || body_updated_by || user_id || null;
+
     // prevent duplicate review by same user for same product
-    if (user_id) {
-      const [existing] = await pool.execute('SELECT id FROM reviews WHERE product_id = ? AND user_id = ? LIMIT 1', [product_id, user_id]);
-      if (existing.length > 0) return res.status(400).json({ message: 'You have already submitted a review for this product' });
-    }
+    // if (user_id) {
+    //   const [existing] = await pool.execute('SELECT id FROM reviews WHERE product_id = ? AND user_id = ? LIMIT 1', [product_id, user_id]);
+    //   if (existing.length > 0) return res.status(400).json({ message: 'You have already submitted a review for this product' });
+    // }
 
     const finalStatus = status || 'Published';
 
@@ -168,13 +172,14 @@ exports.createReview = async (req, res) => {
       `INSERT INTO reviews (
         product_id, user_id, user_name, user_email, rating, comment, review_image, status, admin_reply,
         home_chef_id, home_chef_user_id, home_chef_name, home_chef_email, home_chef_phone,
-        franchise_admin_id, franchise_admin_email, franchise_admin_name,
+        franchise_admin_id, franchise_admin_email, franchise_admin_name, created_by, updated_by,
         created_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
       [
         product_id, user_id || null, user_name || null, user_email || null, rating, comment || null, review_image || null, finalStatus, admin_reply || null,
         home_chef_id || null, home_chef_user_id || null, home_chef_name || null, home_chef_email || null, home_chef_phone || null,
-        franchise_admin_id || null, franchise_admin_email || null, franchise_admin_name || null
+        franchise_admin_id || null, franchise_admin_email || null, franchise_admin_name || null,
+        createdBy, updatedBy
       ]
     );
 
