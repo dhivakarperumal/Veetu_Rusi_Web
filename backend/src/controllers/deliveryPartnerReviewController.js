@@ -186,6 +186,7 @@ exports.getReviews = async (req, res) => {
   try {
     await ensureReviewTable();
 
+    const { status, rating, search, franchise_admin_id } = req.query;
     const userRole = req.user?.role;
     const isSuperAdmin = userRole === 'superadmin';
     const isDeliveryPartner = ['delivery_partner', 'delivery', 'delivery_boy'].includes(userRole);
@@ -193,40 +194,49 @@ exports.getReviews = async (req, res) => {
     const userEmail = req.user?.email || null;
     const franchiseUserId = isSuperAdmin ? null : (req.query.franchise_user_id || req.user?.user_id || req.user?.id || null);
 
-    let rows;
-    if (isSuperAdmin) {
-      const [r] = await pool.query(`SELECT * FROM deliverypartner_review ORDER BY created_at DESC`);
-      rows = r;
-    } else if (isDeliveryPartner && (userDeliveryId || userEmail)) {
+    let query = 'SELECT * FROM deliverypartner_review WHERE 1=1';
+    const params = [];
+
+    if (!isSuperAdmin && isDeliveryPartner) {
       if (userDeliveryId && userEmail) {
-        const [r] = await pool.query(
-          `SELECT * FROM deliverypartner_review WHERE delivery_partner_id = ? OR delivery_partner_email = ? ORDER BY created_at DESC`,
-          [userDeliveryId, userEmail]
-        );
-        rows = r;
+        query += ' AND (delivery_partner_id = ? OR delivery_partner_email = ?)';
+        params.push(userDeliveryId, userEmail);
       } else if (userDeliveryId) {
-        const [r] = await pool.query(
-          `SELECT * FROM deliverypartner_review WHERE delivery_partner_id = ? ORDER BY created_at DESC`,
-          [userDeliveryId]
-        );
-        rows = r;
-      } else {
-        const [r] = await pool.query(
-          `SELECT * FROM deliverypartner_review WHERE delivery_partner_email = ? ORDER BY created_at DESC`,
-          [userEmail]
-        );
-        rows = r;
+        query += ' AND delivery_partner_id = ?';
+        params.push(userDeliveryId);
+      } else if (userEmail) {
+        query += ' AND delivery_partner_email = ?';
+        params.push(userEmail);
       }
-    } else if (franchiseUserId) {
-      const [r] = await pool.query(
-        `SELECT * FROM deliverypartner_review WHERE franchise_admin_id = ? OR created_by = ? ORDER BY created_at DESC`,
-        [franchiseUserId, franchiseUserId]
-      );
-      rows = r;
-    } else {
-      const [r] = await pool.query(`SELECT * FROM deliverypartner_review ORDER BY created_at DESC`);
-      rows = r;
+    } else if (!isSuperAdmin && franchiseUserId) {
+      query += ' AND (franchise_admin_id = ? OR created_by = ?)';
+      params.push(franchiseUserId, franchiseUserId);
     }
+
+    if (franchise_admin_id) {
+      query += ' AND franchise_admin_id = ?';
+      params.push(franchise_admin_id);
+    }
+
+    if (status && status !== 'All') {
+      query += ' AND status = ?';
+      params.push(status);
+    }
+
+    if (rating) {
+      query += ' AND rating = ?';
+      params.push(Number(rating));
+    }
+
+    if (search) {
+      const term = `%${search}%`;
+      query += ' AND (user_name LIKE ? OR user_email LIKE ? OR comment LIKE ? OR franchise_admin_name LIKE ? OR delivery_partner_name LIKE ?)';
+      params.push(term, term, term, term, term);
+    }
+
+    query += ' ORDER BY created_at DESC';
+
+    const [rows] = await pool.query(query, params);
 
     res.json({ success: true, data: rows });
   } catch (error) {

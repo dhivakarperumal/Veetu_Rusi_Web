@@ -151,10 +151,11 @@ const Reviews = () => {
   // Debounced search
   useEffect(() => {
     const timeout = setTimeout(() => {
-      fetchReviews();
+      if (deliveryTab) fetchDeliveryReviews();
+      else fetchReviews();
     }, 500);
     return () => clearTimeout(timeout);
-  }, [searchQuery]);
+  }, [searchQuery, deliveryTab]);
 
   const handleStatusUpdate = async (id, status) => {
     try {
@@ -246,7 +247,7 @@ const Reviews = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [filter, selectedRating, searchQuery]);
+  }, [filter, selectedRating, searchQuery, selectedFranchiseAdmin]);
 
 
   return (
@@ -360,6 +361,24 @@ const Reviews = () => {
         </div>
       </div>
 
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
+        <div className="xl:col-span-12 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+          <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Franchise Admin</label>
+          <select
+            value={selectedFranchiseAdmin}
+            onChange={(e) => setSelectedFranchiseAdmin(e.target.value)}
+            className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-slate-500"
+          >
+            <option value="">All franchise admins</option>
+            {franchiseAdmins.map((admin) => (
+              <option key={admin.user_id || admin.id} value={admin.user_id || admin.id}>
+                {admin.full_name || admin.name || admin.email}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       {/* REVIEWS GRID */}
       {loading ? (
         <div className="min-h-[400px] flex flex-col items-center justify-center gap-4 bg-white/50 rounded-[2.5rem] border border-dashed border-slate-200">
@@ -459,9 +478,44 @@ const Reviews = () => {
                           <p>{item.admin_reply}</p>
                         </div>
                       )}
+
+                        <button
+                          type="button"
+                          onClick={() => setActiveReplyId(activeReplyId === item.id ? null : item.id)}
+                          className={`w-full mt-3 rounded-2xl border px-4 py-3 text-sm font-black uppercase tracking-[0.16em] transition ${
+                            activeReplyId === item.id ? 'bg-slate-900 text-white border-slate-900' : 'bg-[#0b0d10] text-slate-300 border-slate-800 hover:bg-[#0f1216]'
+                          }`}
+                        >
+                          <Reply className="inline-block w-4 h-4 mr-2" />
+                          {activeReplyId === item.id ? 'Cancel reply' : 'Reply'}
+                        </button>
+
+                        {activeReplyId === item.id && (
+                          <div className="absolute inset-0 z-20 bg-white p-6 flex flex-col animate-in slide-in-from-bottom-full duration-300">
+                            <div className="flex items-center justify-between mb-4">
+                              <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest">Official Reply</span>
+                              <button onClick={() => setActiveReplyId(null)} className="text-slate-400 hover:text-slate-600">
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                            <textarea
+                              placeholder="Type response..."
+                              value={replyText}
+                              onChange={(e) => setReplyText(e.target.value)}
+                              className="flex-1 w-full p-4 rounded-2xl border border-slate-100 bg-slate-50 focus:outline-none focus:border-blue-500 text-xs font-semibold text-slate-700 resize-none mb-4"
+                            />
+                            <button
+                              onClick={() => handleReply(item.id, true)}
+                              disabled={!replyText.trim()}
+                              className="w-full py-3 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                            >
+                              <Send className="w-3 h-3" /> Send Reply
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
               );
             }
 
