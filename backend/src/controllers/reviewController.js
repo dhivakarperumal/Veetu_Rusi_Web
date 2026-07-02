@@ -168,6 +168,96 @@ exports.createReview = async (req, res) => {
 
     const finalStatus = status || 'Published';
 
+    // Resolve missing home chef details (email/phone/name) from home_chefs or users table when possible
+    let finalHomeChefId = home_chef_id || null;
+    let finalHomeChefUserId = home_chef_user_id || null;
+    let finalHomeChefName = home_chef_name || null;
+    let finalHomeChefEmail = home_chef_email || null;
+    let finalHomeChefPhone = home_chef_phone || null;
+
+    try {
+      const searchId = finalHomeChefUserId || finalHomeChefId;
+      if ((!finalHomeChefName || !finalHomeChefEmail || !finalHomeChefPhone) && searchId) {
+        try {
+          const [hcRows] = await pool.execute(
+            'SELECT name, email, mobile, user_id FROM home_chefs WHERE user_id = ? OR id = ? LIMIT 1',
+            [searchId, searchId]
+          );
+          if (hcRows.length > 0) {
+            const hc = hcRows[0];
+            finalHomeChefName = finalHomeChefName || hc.name || null;
+            finalHomeChefEmail = finalHomeChefEmail || hc.email || null;
+            finalHomeChefPhone = finalHomeChefPhone || hc.mobile || null;
+            finalHomeChefUserId = finalHomeChefUserId || hc.user_id || null;
+            finalHomeChefId = finalHomeChefId || (hc.id ? hc.id : null);
+          }
+        } catch (e) {
+          console.error('Error querying home_chefs for review fallback:', e.message);
+        }
+
+        if ((!finalHomeChefEmail || !finalHomeChefPhone || !finalHomeChefName) && finalHomeChefUserId) {
+          try {
+            const [uRows] = await pool.execute(
+              'SELECT name, full_name, email, phone FROM users WHERE user_id = ? OR id = ? LIMIT 1',
+              [finalHomeChefUserId, finalHomeChefUserId]
+            );
+            if (uRows.length > 0) {
+              const u = uRows[0];
+              finalHomeChefName = finalHomeChefName || u.name || u.full_name || null;
+              finalHomeChefEmail = finalHomeChefEmail || u.email || null;
+              finalHomeChefPhone = finalHomeChefPhone || u.phone || null;
+            }
+          } catch (e) {
+            console.error('Error querying users for home chef fallback:', e.message);
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Unexpected error resolving home chef details:', e.message);
+    }
+
+    // Resolve missing franchise admin details from users or franchise_owners
+    let finalFranchiseAdminId = franchise_admin_id || null;
+    let finalFranchiseAdminEmail = franchise_admin_email || null;
+    let finalFranchiseAdminName = franchise_admin_name || null;
+
+    try {
+      const searchFrId = finalFranchiseAdminId;
+      if ((!finalFranchiseAdminEmail || !finalFranchiseAdminName) && searchFrId) {
+        try {
+          const [uRows] = await pool.execute(
+            'SELECT name, full_name, email FROM users WHERE user_id = ? OR id = ? LIMIT 1',
+            [searchFrId, searchFrId]
+          );
+          if (uRows.length > 0) {
+            const u = uRows[0];
+            finalFranchiseAdminName = finalFranchiseAdminName || u.name || u.full_name || null;
+            finalFranchiseAdminEmail = finalFranchiseAdminEmail || u.email || null;
+          }
+        } catch (e) {
+          console.error('Error querying users for franchise admin fallback:', e.message);
+        }
+
+        if ((!finalFranchiseAdminEmail || !finalFranchiseAdminName) && searchFrId) {
+          try {
+            const [foRows] = await pool.execute(
+              'SELECT owner_name AS name, email FROM franchise_owners WHERE franch_user_id = ? OR franch_user_id = ? OR id = ? LIMIT 1',
+              [searchFrId, searchFrId, searchFrId]
+            );
+            if (foRows.length > 0) {
+              const fo = foRows[0];
+              finalFranchiseAdminName = finalFranchiseAdminName || fo.name || null;
+              finalFranchiseAdminEmail = finalFranchiseAdminEmail || fo.email || null;
+            }
+          } catch (e) {
+            // ignore
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Unexpected error resolving franchise admin details:', e.message);
+    }
+
     const [result] = await pool.execute(
       `INSERT INTO reviews (
         product_id, user_id, user_name, user_email, rating, comment, review_image, status, admin_reply,
@@ -177,8 +267,8 @@ exports.createReview = async (req, res) => {
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
       [
         product_id, user_id || null, user_name || null, user_email || null, rating, comment || null, review_image || null, finalStatus, admin_reply || null,
-        home_chef_id || null, home_chef_user_id || null, home_chef_name || null, home_chef_email || null, home_chef_phone || null,
-        franchise_admin_id || null, franchise_admin_email || null, franchise_admin_name || null,
+        finalHomeChefId || null, finalHomeChefUserId || null, finalHomeChefName || null, finalHomeChefEmail || null, finalHomeChefPhone || null,
+        finalFranchiseAdminId || null, finalFranchiseAdminEmail || null, finalFranchiseAdminName || null,
         createdBy, updatedBy
       ]
     );
