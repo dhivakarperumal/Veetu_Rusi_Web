@@ -105,21 +105,13 @@ const Shop = ({ defaultCategory = "" }) => {
 
   /* ─── Fetch Products ─────────────────────────────────────────── */
   const fetchProducts = async () => {
-    // Use cache if fresh (5 min)
     const isCacheValid = lastChefFoodsFetchTime && Date.now() - lastChefFoodsFetchTime < 5 * 60 * 1000;
+    const hasLocation = Boolean(user?.latitude && user?.longitude);
+
     if (isCacheValid && chefFoodsCache?.length > 0) {
-      // Only show active foods for shop
       let myProducts = chefFoodsCache.filter((product) => {
         if (product.status?.toLowerCase() !== "active") return false;
-
-        if (
-          !user?.latitude ||
-          !user?.longitude ||
-          !product.latitude ||
-          !product.longitude
-        ) {
-          return false;
-        }
+        if (!hasLocation || !product.latitude || !product.longitude) return true;
 
         const distance = parseFloat(
           calculateDistance(
@@ -131,7 +123,6 @@ const Shop = ({ defaultCategory = "" }) => {
         );
 
         const radius = parseFloat(product.delivery_radius || 0);
-
         return distance <= radius;
       });
       setProducts(myProducts);
@@ -149,22 +140,13 @@ const Shop = ({ defaultCategory = "" }) => {
       const foodsData = Array.isArray(foodsRes.data) ? foodsRes.data : [];
       const productsData = Array.isArray(productsRes.data) ? productsRes.data : [];
       const data = [...foodsData, ...productsData];
-      
+
       setChefFoodsCache(data);
       setLastChefFoodsFetchTime(Date.now());
 
-      // Only show active foods for shop
       let myProducts = data.filter((product) => {
         if (product.status?.toLowerCase() !== "active") return false;
-
-        if (
-          !user?.latitude ||
-          !user?.longitude ||
-          !product.latitude ||
-          !product.longitude
-        ) {
-          return false;
-        }
+        if (!hasLocation || !product.latitude || !product.longitude) return true;
 
         const distance = parseFloat(
           calculateDistance(
@@ -176,7 +158,6 @@ const Shop = ({ defaultCategory = "" }) => {
         );
 
         const radius = parseFloat(product.delivery_radius || 0);
-
         return distance <= radius;
       });
 
@@ -193,7 +174,7 @@ const Shop = ({ defaultCategory = "" }) => {
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [user]);
 
   /* ─── Filter Logic ───────────────────────────────────────────── */
   useEffect(() => {

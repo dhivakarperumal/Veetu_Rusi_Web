@@ -39,6 +39,8 @@ const SareeSwiper = () => {
   };
 
   const fetchRecentItems = async () => {
+    const hasLocation = Boolean(user?.latitude && user?.longitude);
+
     try {
       setLoading(true);
 
@@ -59,13 +61,8 @@ const SareeSwiper = () => {
       const filtered = allItems.filter((item) => {
         if (item.status?.toLowerCase() !== "active") return false;
 
-        if (
-          !user?.latitude ||
-          !user?.longitude ||
-          !item.latitude ||
-          !item.longitude
-        ) {
-          return false;
+        if (!hasLocation || !item.latitude || !item.longitude) {
+          return true;
         }
 
         const distance = parseFloat(
@@ -101,9 +98,7 @@ const SareeSwiper = () => {
   };
 
   useEffect(() => {
-    if (user?.latitude && user?.longitude) {
-      fetchRecentItems();
-    }
+    fetchRecentItems();
   }, [user]);
 
   if (loading) {

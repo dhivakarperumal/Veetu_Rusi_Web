@@ -85,6 +85,8 @@ const FoodItems = () => {
 
 
   const fetchFoods = async () => {
+    const hasLocation = Boolean(user?.latitude && user?.longitude);
+
     try {
       setLoading(true);
 
@@ -100,35 +102,27 @@ const FoodItems = () => {
         ? productsRes.data
         : [];
 
-      // Combine both
       const allItems = [...foods, ...products];
 
-      // Filter active + delivery radius
       const filtered = allItems.filter((item) => {
         if (item.status?.toLowerCase() !== "active") {
           return false;
         }
 
-        if (
-          !user?.latitude ||
-          !user?.longitude ||
-          !item.latitude ||
-          !item.longitude
-        ) {
-          return false;
+        if (!hasLocation || !item.latitude || !item.longitude) {
+          return true;
         }
 
         const distance = parseFloat(
           calculateDistance(
-            user.latitude,
-            user.longitude,
-            item.latitude,
-            item.longitude
+            parseFloat(user.latitude),
+            parseFloat(user.longitude),
+            parseFloat(item.latitude),
+            parseFloat(item.longitude)
           )
         );
 
         const radius = parseFloat(item.delivery_radius || 0);
-
         return distance <= radius;
       });
 
@@ -143,9 +137,7 @@ const FoodItems = () => {
 
 
   useEffect(() => {
-    if (user?.latitude && user?.longitude) {
-      fetchFoods();
-    }
+    fetchFoods();
   }, [user]);
 
   const calculateDistance = (lat1, lon1, lat2, lon2) => {

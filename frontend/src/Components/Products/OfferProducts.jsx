@@ -42,6 +42,7 @@ const OfferProducts = () => {
   const fetchOfferProducts = async () => {
     try {
       let data = productsCache;
+      const hasLocation = Boolean(user?.latitude && user?.longitude);
 
       if (
         !data ||
@@ -70,16 +71,10 @@ const OfferProducts = () => {
           if (product.status?.toLowerCase() !== "active") return false;
 
           const offer = parseFloat(product.offer || 0);
-
           if (offer <= 0) return false;
 
-          if (
-            !user?.latitude ||
-            !user?.longitude ||
-            !product.latitude ||
-            !product.longitude
-          ) {
-            return false;
+          if (!hasLocation || !product.latitude || !product.longitude) {
+            return true;
           }
 
           const distance = parseFloat(
@@ -103,7 +98,6 @@ const OfferProducts = () => {
             return offerB - offerA;
           }
 
-          // If offers are the same, newest product first
           return new Date(b.created_at) - new Date(a.created_at);
         });
 
@@ -115,9 +109,7 @@ const OfferProducts = () => {
   };
 
   useEffect(() => {
-    if (user?.latitude && user?.longitude) {
-      fetchOfferProducts();
-    }
+    fetchOfferProducts();
   }, [user]);
 
   if (products.length === 0) {

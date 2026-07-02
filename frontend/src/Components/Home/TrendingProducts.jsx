@@ -43,6 +43,7 @@ const TrendingProducts = () => {
   const fetchTrendingProducts = async () => {
     try {
       let data = productsCache;
+      const hasLocation = Boolean(user?.latitude && user?.longitude);
 
       if (
         !data ||
@@ -65,13 +66,8 @@ const TrendingProducts = () => {
           return false;
         }
 
-        if (
-          !user?.latitude ||
-          !user?.longitude ||
-          !product.latitude ||
-          !product.longitude
-        ) {
-          return false;
+        if (!hasLocation || !product.latitude || !product.longitude) {
+          return true;
         }
 
         const distance = parseFloat(
@@ -100,9 +96,7 @@ const TrendingProducts = () => {
   };
 
   useEffect(() => {
-    if (user?.latitude && user?.longitude) {
-      fetchTrendingProducts();
-    }
+    fetchTrendingProducts();
   }, [user]);
 
   if (products.length === 0) {
