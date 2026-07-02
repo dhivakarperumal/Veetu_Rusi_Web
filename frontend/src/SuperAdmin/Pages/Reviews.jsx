@@ -61,6 +61,14 @@ const Reviews = () => {
     review_image: null
   });
 
+  const [showDeliveryReviewModal, setShowDeliveryReviewModal] = useState(false);
+  const [deliveryPartners, setDeliveryPartners] = useState([]);
+  const [selectedDeliveryPartnerId, setSelectedDeliveryPartnerId] = useState("");
+  const [deliveryRating, setDeliveryRating] = useState(5);
+  const [deliveryComment, setDeliveryComment] = useState("");
+  const [deliveryImage, setDeliveryImage] = useState(null);
+  const [deliverySubmitting, setDeliverySubmitting] = useState(false);
+
   const fetchReviews = async () => {
     try {
       const cacheKey = `${filter}-${selectedRating}-${searchQuery}-${selectedFranchiseAdmin}-${selectedFranchiseAdminLabel}`;
@@ -255,6 +263,75 @@ const Reviews = () => {
     }
   };
 
+  const fetchDeliveryPartners = async () => {
+    try {
+      const res = await api.get("/user-food-orders/delivery-partners/active");
+      setDeliveryPartners(res.data || []);
+    } catch (err) {
+      console.error("Failed to fetch delivery partners:", err);
+      toast.error("Unable to load delivery partners");
+    }
+  };
+
+  const closeDeliveryReviewModal = () => {
+    setShowDeliveryReviewModal(false);
+    setSelectedDeliveryPartnerId("");
+    setDeliveryRating(5);
+    setDeliveryComment("");
+    setDeliveryImage(null);
+  };
+
+  const submitDeliveryReview = async (e) => {
+    e.preventDefault();
+
+    if (!selectedDeliveryPartnerId) {
+      toast.error("Please select a delivery partner.");
+      return;
+    }
+
+    if (!deliveryRating) {
+      toast.error("Please select a rating.");
+      return;
+    }
+
+    setDeliverySubmitting(true);
+
+    try {
+      const partner = deliveryPartners.find((partner) =>
+        String(partner.user_id) === String(selectedDeliveryPartnerId) ||
+        String(partner.id) === String(selectedDeliveryPartnerId) ||
+        String(partner.delivery_partner_user_id) === String(selectedDeliveryPartnerId) ||
+        String(partner.delivery_partner_id) === String(selectedDeliveryPartnerId)
+      ) || {};
+
+      const formData = new FormData();
+      formData.append("user_id", user?.user_id || user?.id || "");
+      formData.append("user_name", user?.name || user?.username || user?.email || "Admin");
+      formData.append("user_email", user?.email || "");
+      formData.append("rating", deliveryRating);
+      formData.append("comment", deliveryComment);
+      formData.append("delivery_partner_id", selectedDeliveryPartnerId);
+      formData.append("delivery_partner_name", partner.name || partner.full_name || partner.partner_name || partner.delivery_partner_name || "");
+      formData.append("delivery_partner_phone", partner.mobile || partner.phone || "");
+      formData.append("delivery_partner_email", partner.email || "");
+      formData.append("created_by", user?.user_id || user?.id || "");
+      formData.append("updated_by", user?.user_id || user?.id || "");
+      if (deliveryImage) {
+        formData.append("image", deliveryImage);
+      }
+
+      await api.post("/delivery-partner-review", formData);
+      toast.success("Delivery partner review submitted successfully.");
+      closeDeliveryReviewModal();
+      fetchDeliveryReviews();
+    } catch (err) {
+      console.error("Failed to submit delivery review:", err);
+      toast.error(err.response?.data?.message || "Failed to submit delivery review.");
+    } finally {
+      setDeliverySubmitting(false);
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case "Published": return "text-emerald-500 bg-emerald-500/10 border-emerald-500/20";
@@ -314,6 +391,16 @@ const Reviews = () => {
             className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-blue-600 shadow-xl shadow-slate-900/10 transition-all active:scale-95"
           >
             <Plus className="w-4 h-6" /> Add Review
+          </button>
+
+          <button
+            onClick={() => {
+              setShowDeliveryReviewModal(true);
+              if (!deliveryPartners.length) fetchDeliveryPartners();
+            }}
+            className="flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-emerald-700 shadow-xl shadow-emerald-600/20 transition-all active:scale-95"
+          >
+            <Plus className="w-4 h-6" /> Add Delivery Partner Review
           </button>
 
           {/* STATS MINI CARDS */}
@@ -880,6 +967,126 @@ const Reviews = () => {
               >
                 {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
                 {submitting ? "Creating..." : "Create Review"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDeliveryReviewModal && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 sm:p-6">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={closeDeliveryReviewModal}></div>
+          <div className="relative w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
+            <div className="px-8 py-6 border-b border-slate-50 flex items-center justify-between bg-white sticky top-0 z-10">
+              <div>
+                <h2 className="text-xl font-black text-slate-800 uppercase tracking-tight">Create Delivery Partner Review</h2>
+                <p className="text-xs text-slate-400 font-bold mt-1 uppercase tracking-widest">Manual review entry</p>
+              </div>
+              <button onClick={closeDeliveryReviewModal} className="p-2 hover:bg-slate-100 rounded-xl transition-all">
+                <X className="w-6 h-6 text-slate-400" />
+              </button>
+            </div>
+
+            <form onSubmit={submitDeliveryReview} className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Delivery Partner *</label>
+                <select
+                  required
+                  value={selectedDeliveryPartnerId}
+                  onChange={(e) => setSelectedDeliveryPartnerId(e.target.value)}
+                  className="w-full p-4 rounded-2xl border border-slate-100 bg-slate-50 focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 text-sm font-semibold transition-all"
+                >
+                  <option value="">Select a Delivery Partner</option>
+                  {deliveryPartners.map((partner) => {
+                    const optionKey = partner.id || partner.user_id || partner.delivery_partner_user_id || partner.delivery_partner_id;
+                    const optionLabel = partner.name || partner.full_name || partner.partner_name || partner.delivery_partner_name || `Partner ${optionKey}`;
+                    const optionMeta = partner.mobile || partner.email ? `(${partner.mobile || partner.email})` : "";
+                    return (
+                      <option key={optionKey} value={partner.user_id || partner.id || partner.delivery_partner_user_id || partner.delivery_partner_id}>
+                        {optionLabel} {optionMeta}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+
+              {selectedDeliveryPartnerId && (
+                <div className="rounded-3xl bg-slate-50 border border-slate-200 p-5">
+                  <p className="text-xs uppercase tracking-wider text-slate-500">Selected Partner</p>
+                  <p className="text-lg font-bold mt-2">
+                    {deliveryPartners.find((partner) =>
+                      String(partner.user_id) === String(selectedDeliveryPartnerId) ||
+                      String(partner.id) === String(selectedDeliveryPartnerId) ||
+                      String(partner.delivery_partner_user_id) === String(selectedDeliveryPartnerId) ||
+                      String(partner.delivery_partner_id) === String(selectedDeliveryPartnerId)
+                    )?.name || "Selected Partner"}
+                  </p>
+                  <p className="text-sm text-slate-500 mt-1">
+                    {deliveryPartners.find((partner) =>
+                      String(partner.user_id) === String(selectedDeliveryPartnerId) ||
+                      String(partner.id) === String(selectedDeliveryPartnerId) ||
+                      String(partner.delivery_partner_user_id) === String(selectedDeliveryPartnerId) ||
+                      String(partner.delivery_partner_id) === String(selectedDeliveryPartnerId)
+                    )?.mobile || ""}
+                  </p>
+                </div>
+              )}
+
+              <div>
+                <label className="font-semibold">Rating</label>
+                <div className="flex gap-3 mt-3">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setDeliveryRating(star)}
+                      className={`w-12 h-12 rounded-full transition ${deliveryRating >= star ? "bg-yellow-400 text-white" : "bg-slate-100 hover:bg-slate-200"}`}
+                    >
+                      ★
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="font-semibold">Comment</label>
+                <textarea
+                  rows={5}
+                  value={deliveryComment}
+                  onChange={(e) => setDeliveryComment(e.target.value)}
+                  placeholder="Tell us about the delivery experience..."
+                  className="mt-3 w-full rounded-2xl border p-4 outline-none focus:border-primary"
+                />
+              </div>
+
+              <div>
+                <label className="font-semibold">Upload Image (Optional)</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setDeliveryImage(e.target.files[0])}
+                  className="mt-3 block w-full"
+                />
+                {deliveryImage && <p className="text-xs text-slate-500 mt-2">Selected file: {deliveryImage.name}</p>}
+              </div>
+            </form>
+
+            <div className="p-8 border-t border-slate-50 bg-slate-50/30 flex items-center justify-end gap-3 sticky bottom-0">
+              <button
+                type="button"
+                onClick={closeDeliveryReviewModal}
+                className="px-6 py-3 text-slate-400 text-xs font-black uppercase tracking-widest hover:text-slate-600 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={submitDeliveryReview}
+                disabled={deliverySubmitting}
+                className="flex items-center gap-2 px-8 py-3 bg-emerald-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-emerald-700 shadow-xl shadow-emerald-600/20 transition-all active:scale-95 disabled:opacity-50"
+              >
+                {deliverySubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                {deliverySubmitting ? "Submitting..." : "Submit Review"}
               </button>
             </div>
           </div>
