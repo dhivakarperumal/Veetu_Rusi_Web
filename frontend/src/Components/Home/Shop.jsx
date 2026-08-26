@@ -541,7 +541,7 @@ const Shop = ({ defaultCategory = "" }) => {
             </div>
           )}
         </div>
-      )} */}
+      )}  */}
 
       {/* {uniqueHomeChefs.length > 0 && (
         <div className="px-4 md:px-10 mt-6 mb-4">
@@ -573,7 +573,7 @@ const Shop = ({ defaultCategory = "" }) => {
             ))}
           </div>
         </div>
-      )} */}
+      )} 
 
 
       {/* ── Toolbar ── */}
