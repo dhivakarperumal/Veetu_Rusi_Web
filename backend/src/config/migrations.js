@@ -368,6 +368,27 @@ const createSubscriptionPlansTable = async () => {
     }
 };
 
+const createSubscriptionPaymentsTable = async () => {
+    try {
+        await pool.execute(`
+            CREATE TABLE IF NOT EXISTS subscription_payments (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                franchise_id INT,
+                plan_id VARCHAR(100),
+                amount DECIMAL(10,2),
+                currency VARCHAR(10),
+                payment_id VARCHAR(255),
+                razorpay_order_id VARCHAR(255),
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        `);
+        await ensureColumnExists('subscription_payments', 'franchise_id', 'INT');
+        console.log('✓ subscription_payments table created or already exists');
+    } catch (error) {
+        console.error('✗ Error creating subscription_payments table:', error.message);
+    }
+};
+
 const createDeliveryPartnersTable = async () => {
     try {
         const createTableSQL = `
@@ -1210,6 +1231,7 @@ const createReferralTables = async () => {
         createChefFoodTable,
         createDeliveryPartnersTable,
         createSubscriptionPlansTable,
+        createSubscriptionPaymentsTable,
         createReviewsTable,
         createUserFoodCartTable,
         createUserFoodOrderTable,
