@@ -1,8 +1,8 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api"
-  // baseURL: import.meta.env.VITE_API_URL || "https://veeturusi.qtechx.com/api"
+  // baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api"
+  baseURL: import.meta.env.VITE_API_URL || "https://veeturusi.qtechx.com/api"
 });
 
 // Automatically inject JWT token into requests
@@ -28,17 +28,21 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      console.error('API request unauthorized:', error.config?.url, 'token present:', !!(localStorage.getItem('token') || sessionStorage.getItem('token')));
+      const storedToken = localStorage.getItem('token') || sessionStorage.getItem('token');
+      const hasToken = typeof storedToken === 'string' && storedToken.trim() !== '';
+
+      console.error('API request unauthorized:', error.config?.url, 'token present:', hasToken);
       localStorage.removeItem('token');
       sessionStorage.removeItem('token');
-      // Redirect to login so user can re-authenticate
+
+      // Public pages may make optional authenticated requests, so do not
+      // redirect visitors to login when no session exists.
       try {
-        const current = window.location.pathname || '/';
-        // If already on login page, do nothing
-        if (!current.includes('/login')) {
-          window.location.href = '/login';
+        const currentRoute = `${window.location.pathname}${window.location.hash}`;
+        if (hasToken && !currentRoute.includes('/login')) {
+          window.location.hash = '/login';
         }
-      } catch (e) {
+      } catch {
         // ignore navigation errors in non-browser environments
       }
     }

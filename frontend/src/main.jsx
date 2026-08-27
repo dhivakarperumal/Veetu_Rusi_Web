@@ -2,7 +2,7 @@ import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.jsx";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createHashRouter, RouterProvider } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { AuthProvider } from "./PrivateRouter/AuthContext.jsx";
 import { StoreProvider } from "./PrivateRouter/StoreContext.jsx";
@@ -146,7 +146,7 @@ const DeliveryProfile = React.lazy(() => import("./DeliveryBoys/Pages/Profile.js
 const DeliverySettings = React.lazy(() => import("./DeliveryBoys/Pages/Settings.jsx"));
 const DeliveryOrderDetail = React.lazy(() => import("./DeliveryBoys/Pages/OrderDetail.jsx"));
 
-const router = createBrowserRouter([
+const router = createHashRouter([
   {
     path: "/",
     element: <App />,

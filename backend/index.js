@@ -170,6 +170,20 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
+const frontendDistPath = path.join(__dirname, '..', 'frontend', 'dist');
+app.use(express.static(frontendDistPath));
+app.get('*', (req, res, next) => {
+  if (req.path === '/api' || req.path.startsWith('/api/')) {
+    return next();
+  }
+
+  res.sendFile(path.join(frontendDistPath, 'index.html'), (err) => {
+    if (err) {
+      next();
+    }
+  });
+});
+
 const startServer = async () => {
   try {
     await initDb();
