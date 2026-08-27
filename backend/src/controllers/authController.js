@@ -249,6 +249,7 @@ exports.profile = async (req, res) => {
           }
           response.franchise = {
             ...franchise,
+            subscriptionStatus: franchise.start_date && franchise.expiry_date && franchise.status === 'Active' ? 'Active' : 'Inactive',
             daysRemaining: expiry ? Math.ceil((expiry - today) / (1000 * 60 * 60 * 24)) : null,
             isExpired: expiry ? expiry < today : false,
           };

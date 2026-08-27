@@ -45,11 +45,12 @@ router.get('/status', attachUser, async (req, res) => {
       }
     }
 
+    const subscriptionActive = franchise.status === 'Active' && franchise.start_date && franchise.expiry_date;
     res.json({
       subscription: franchise,
       isExpired,
       daysRemaining,
-      status: franchise.status
+      status: subscriptionActive ? 'Active' : 'Inactive'
     });
   } catch (err) {
     console.error('Status error:', err);

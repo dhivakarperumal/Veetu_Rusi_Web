@@ -341,7 +341,9 @@ exports.getDashboardData = async (req, res) => {
             }
             console.log('Subscription expiry check:', { isExpired: subscriptionInfo.isExpired, daysRemaining: subscriptionInfo.daysRemaining });
           }
-          subscriptionInfo.status = franchise.status;
+          subscriptionInfo.status = franchise.start_date && franchise.expiry_date && franchise.status === 'Active'
+            ? 'Active'
+            : 'Inactive';
           subscriptionInfo.expiryDate = franchise.expiry_date;
           subscriptionInfo.startDate = franchise.start_date;
         } else {

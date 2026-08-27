@@ -327,8 +327,8 @@ const Profile = () => {
                                 <h2 className="text-xl font-black text-slate-800">Subscription</h2>
                                 <p className="text-sm text-gray-400">Current plan and previous purchases</p>
                             </div>
-                            <span className={`rounded-full px-4 py-2 text-sm font-bold ${franchise.isExpired || franchise.status !== "Active" ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700"}`}>
-                                {franchise.isExpired ? "Expired" : franchise.status || "Inactive"}
+                            <span className={`rounded-full px-4 py-2 text-sm font-bold ${franchise.isExpired || franchise.subscriptionStatus !== "Active" ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700"}`}>
+                                {franchise.isExpired ? "Expired" : franchise.subscriptionStatus || "Inactive"}
                             </span>
                         </div>
 
