@@ -13,13 +13,34 @@ const RAZOR_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || process.env.RAZOR_KE
 router.post('/lookup', async (req, res) => {
   try {
     const identifier = String(req.body?.identifier || '').trim();
-    if (!identifier) return res.status(400).json({ message: 'Email is required.' });
-    const [rows] = await pool.execute(
-      'SELECT id, franchise_name, owner_name, email FROM franchise_owners WHERE email = ? LIMIT 1',
-      [identifier]
+    if (!identifier) return res.status(400).json({ message: 'Identifier is required.' });
+
+    let [rows] = await pool.execute(
+      'SELECT id, franchise_id, franchise_name, owner_name, email, franch_user_id FROM franchise_owners WHERE email = ? OR franch_user_id = ? OR mobile = ? OR username = ? LIMIT 1',
+      [identifier, identifier, identifier, identifier]
     );
+
+    if (!rows.length) {
+      const [users] = await pool.execute(
+        'SELECT id, user_id, email, full_name, mobile_number FROM `users` WHERE email = ? OR full_name = ? OR mobile_number = ? OR user_id = ? LIMIT 1',
+        [identifier, identifier, identifier, identifier]
+      );
+      if (users.length > 0) {
+        const u = users[0];
+        const [fRows] = await pool.execute(
+          'SELECT id, franchise_id, franchise_name, owner_name, email, franch_user_id FROM franchise_owners WHERE email = ? OR franch_user_id = ? LIMIT 1',
+          [u.email || '', u.user_id || '']
+        );
+        if (fRows.length > 0) {
+          rows = fRows;
+        }
+      }
+    }
+
     if (!rows.length) return res.status(404).json({ message: 'Franchise admin not found.' });
-    return res.json({ franchise: rows[0] });
+
+    const franchise = rows[0];
+    return res.json({ franchise, franchiseId: franchise.id, franchise_id: franchise.id });
   } catch (err) {
     console.error('Subscription lookup error:', err);
     return res.status(500).json({ message: 'Unable to find franchise admin.' });
