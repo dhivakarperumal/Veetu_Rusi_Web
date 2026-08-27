@@ -375,6 +375,11 @@ const createSubscriptionPaymentsTable = async () => {
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 franchise_id INT,
                 plan_id VARCHAR(100),
+                plan_name VARCHAR(255),
+                plan_amount DECIMAL(10,2),
+                duration_days INT,
+                subscription_start_date DATE,
+                subscription_expiry_date DATE,
                 amount DECIMAL(10,2),
                 currency VARCHAR(10),
                 payment_id VARCHAR(255),
@@ -383,6 +388,11 @@ const createSubscriptionPaymentsTable = async () => {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         `);
         await ensureColumnExists('subscription_payments', 'franchise_id', 'INT');
+        await ensureColumnExists('subscription_payments', 'plan_name', 'VARCHAR(255)');
+        await ensureColumnExists('subscription_payments', 'plan_amount', 'DECIMAL(10,2)');
+        await ensureColumnExists('subscription_payments', 'duration_days', 'INT');
+        await ensureColumnExists('subscription_payments', 'subscription_start_date', 'DATE');
+        await ensureColumnExists('subscription_payments', 'subscription_expiry_date', 'DATE');
         console.log('✓ subscription_payments table created or already exists');
     } catch (error) {
         console.error('✗ Error creating subscription_payments table:', error.message);

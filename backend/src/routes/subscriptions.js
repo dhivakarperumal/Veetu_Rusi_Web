@@ -139,6 +139,11 @@ router.post('/confirm', async (req, res) => {
           id INT AUTO_INCREMENT PRIMARY KEY,
           franchise_id INT,
           plan_id VARCHAR(100),
+          plan_name VARCHAR(255),
+          plan_amount DECIMAL(10,2),
+          duration_days INT,
+          subscription_start_date DATE,
+          subscription_expiry_date DATE,
           amount DECIMAL(10,2),
           currency VARCHAR(10),
           payment_id VARCHAR(255),
@@ -146,11 +151,31 @@ router.post('/confirm', async (req, res) => {
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
       `);
+      const paymentColumns = [
+        ['plan_name', 'VARCHAR(255)'],
+        ['plan_amount', 'DECIMAL(10,2)'],
+        ['duration_days', 'INT'],
+        ['subscription_start_date', 'DATE'],
+        ['subscription_expiry_date', 'DATE'],
+      ];
+      for (const [column, definition] of paymentColumns) {
+        const [columnRows] = await pool.execute(
+          'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?',
+          ['subscription_payments', column]
+        );
+        if (!columnRows.length) await pool.execute(`ALTER TABLE subscription_payments ADD COLUMN ${column} ${definition}`);
+      }
 
       const paymentId = razorpay_payment_id || `TEST_${Date.now()}`;
       await pool.execute(
-        'INSERT INTO subscription_payments (franchise_id, plan_id, amount, currency, payment_id, razorpay_order_id) VALUES (?, ?, ?, ?, ?, ?)',
-        [franchiseId, plan.id, plan.amount, plan.currency || 'INR', paymentId, razorpay_order_id || null]
+        `INSERT INTO subscription_payments (
+          franchise_id, plan_id, plan_name, plan_amount, duration_days,
+          subscription_start_date, subscription_expiry_date, amount, currency,
+          payment_id, razorpay_order_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [franchiseId, plan.id, plan.name, plan.amount, plan.durationDays,
+          startDate.toISOString().slice(0, 10), expiryDate.toISOString().slice(0, 10),
+          plan.amount, plan.currency || 'INR', paymentId, razorpay_order_id || null]
       );
     } catch (err) {
       console.error('Failed to record subscription payment:', err);

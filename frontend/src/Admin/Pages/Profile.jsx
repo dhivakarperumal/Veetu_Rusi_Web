@@ -355,11 +355,13 @@ const Profile = () => {
                                 <p className="rounded-2xl bg-gray-50 p-4 text-sm text-gray-500">No purchased plans found.</p>
                             ) : (
                                 <table className="min-w-full text-left text-sm">
-                                    <thead><tr className="border-b border-gray-200 text-xs uppercase tracking-wider text-gray-400"><th className="px-3 py-3">Plan</th><th className="px-3 py-3">Amount</th><th className="px-3 py-3">Purchased</th><th className="px-3 py-3">Payment ID</th></tr></thead>
+                                    <thead><tr className="border-b border-gray-200 text-xs uppercase tracking-wider text-gray-400"><th className="px-3 py-3">Plan</th><th className="px-3 py-3">Amount</th><th className="px-3 py-3">Duration</th><th className="px-3 py-3">Plan period</th><th className="px-3 py-3">Purchased</th><th className="px-3 py-3">Payment ID</th></tr></thead>
                                     <tbody>{subscriptionHistory.map((payment) => (
                                         <tr key={payment.id} className="border-b border-gray-100 text-slate-700">
                                             <td className="px-3 py-3 font-bold">{payment.plan_name || payment.plan_id || "Plan"}</td>
-                                            <td className="px-3 py-3 font-bold">{payment.currency || "INR"} {Number(payment.amount || 0).toFixed(2)}</td>
+                                            <td className="px-3 py-3 font-bold">{payment.currency || "INR"} {Number(payment.plan_amount ?? payment.amount ?? 0).toFixed(2)}</td>
+                                            <td className="px-3 py-3">{payment.duration_days ? `${payment.duration_days} days` : "-"}</td>
+                                            <td className="whitespace-nowrap px-3 py-3">{formatDate(payment.subscription_start_date)} - {formatDate(payment.subscription_expiry_date)}</td>
                                             <td className="px-3 py-3">{formatDate(payment.created_at)}</td>
                                             <td className="px-3 py-3 font-mono text-xs">{payment.payment_id || "-"}</td>
                                         </tr>

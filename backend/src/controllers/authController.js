@@ -257,8 +257,11 @@ exports.profile = async (req, res) => {
           try {
             const [payments] = await pool.execute(
               `SELECT sp.id, sp.plan_id, sp.amount, sp.currency, sp.payment_id,
-                      sp.razorpay_order_id, sp.created_at, p.name AS plan_name,
-                      p.durationDays
+                      sp.razorpay_order_id, sp.created_at,
+                      COALESCE(sp.plan_name, p.name) AS plan_name,
+                      COALESCE(sp.plan_amount, sp.amount, p.amount) AS plan_amount,
+                      COALESCE(sp.duration_days, p.durationDays) AS duration_days,
+                      sp.subscription_start_date, sp.subscription_expiry_date
                FROM subscription_payments sp
                LEFT JOIN subscription_plans p ON p.id = sp.plan_id
                WHERE sp.franchise_id = ?
@@ -266,6 +269,7 @@ exports.profile = async (req, res) => {
               [franchise.id]
             );
             response.subscriptionHistory = payments;
+            response.currentPlan = payments[0] || null;
           } catch (paymentError) {
             console.warn('Profile: failed to query subscription history:', paymentError?.message || paymentError);
             response.subscriptionHistory = [];
