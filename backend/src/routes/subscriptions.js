@@ -152,11 +152,17 @@ router.post('/confirm', async (req, res) => {
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
       `);
       const paymentColumns = [
+        ['plan_id', 'VARCHAR(100)'],
         ['plan_name', 'VARCHAR(255)'],
         ['plan_amount', 'DECIMAL(10,2)'],
         ['duration_days', 'INT'],
         ['subscription_start_date', 'DATE'],
         ['subscription_expiry_date', 'DATE'],
+        ['amount', 'DECIMAL(10,2)'],
+        ['currency', 'VARCHAR(10)'],
+        ['payment_id', 'VARCHAR(255)'],
+        ['razorpay_order_id', 'VARCHAR(255)'],
+        ['created_at', 'DATETIME DEFAULT CURRENT_TIMESTAMP'],
       ];
       for (const [column, definition] of paymentColumns) {
         const [columnRows] = await pool.execute(

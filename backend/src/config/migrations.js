@@ -388,11 +388,17 @@ const createSubscriptionPaymentsTable = async () => {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         `);
         await ensureColumnExists('subscription_payments', 'franchise_id', 'INT');
+        await ensureColumnExists('subscription_payments', 'plan_id', 'VARCHAR(100)');
         await ensureColumnExists('subscription_payments', 'plan_name', 'VARCHAR(255)');
         await ensureColumnExists('subscription_payments', 'plan_amount', 'DECIMAL(10,2)');
         await ensureColumnExists('subscription_payments', 'duration_days', 'INT');
         await ensureColumnExists('subscription_payments', 'subscription_start_date', 'DATE');
         await ensureColumnExists('subscription_payments', 'subscription_expiry_date', 'DATE');
+        await ensureColumnExists('subscription_payments', 'amount', 'DECIMAL(10,2)');
+        await ensureColumnExists('subscription_payments', 'currency', 'VARCHAR(10)');
+        await ensureColumnExists('subscription_payments', 'payment_id', 'VARCHAR(255)');
+        await ensureColumnExists('subscription_payments', 'razorpay_order_id', 'VARCHAR(255)');
+        await ensureColumnExists('subscription_payments', 'created_at', 'DATETIME DEFAULT CURRENT_TIMESTAMP');
         console.log('✓ subscription_payments table created or already exists');
     } catch (error) {
         console.error('✗ Error creating subscription_payments table:', error.message);
