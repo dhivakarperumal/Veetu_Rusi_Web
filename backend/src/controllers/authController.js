@@ -238,9 +238,37 @@ exports.profile = async (req, res) => {
 
     if (role === 'admin') {
       try {
-        const [rows] = await pool.execute('SELECT id, franchise_id, franchise_name, franch_user_id, status FROM franchise_owners WHERE email = ? LIMIT 1', [email]);
+        const [rows] = await pool.execute('SELECT id, franchise_id, franchise_name, franch_user_id, status, start_date, expiry_date FROM franchise_owners WHERE email = ? LIMIT 1', [email]);
         if (rows.length > 0) {
-          response.franchise = rows[0];
+          const franchise = rows[0];
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const expiry = franchise.expiry_date ? new Date(franchise.expiry_date) : null;
+          if (expiry && !Number.isNaN(expiry.getTime())) {
+            expiry.setHours(0, 0, 0, 0);
+          }
+          response.franchise = {
+            ...franchise,
+            daysRemaining: expiry ? Math.ceil((expiry - today) / (1000 * 60 * 60 * 24)) : null,
+            isExpired: expiry ? expiry < today : false,
+          };
+
+          try {
+            const [payments] = await pool.execute(
+              `SELECT sp.id, sp.plan_id, sp.amount, sp.currency, sp.payment_id,
+                      sp.razorpay_order_id, sp.created_at, p.name AS plan_name,
+                      p.durationDays
+               FROM subscription_payments sp
+               LEFT JOIN subscription_plans p ON p.id = sp.plan_id
+               WHERE sp.franchise_id = ?
+               ORDER BY sp.created_at DESC`,
+              [franchise.id]
+            );
+            response.subscriptionHistory = payments;
+          } catch (paymentError) {
+            console.warn('Profile: failed to query subscription history:', paymentError?.message || paymentError);
+            response.subscriptionHistory = [];
+          }
         }
       } catch (err) {
         console.warn('Profile: failed to query franchise_owners:', err?.message || err);
