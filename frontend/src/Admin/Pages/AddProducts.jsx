@@ -322,16 +322,13 @@ const SingleProductForm = ({ categories, franchiseId, franchiseUserId, onSuccess
     const rawFiles = Array.from(e.target.files);
     try {
       toast.loading("Compressing...", { id: "up-p" });
-      const base64 = await Promise.all(
-        rawFiles.map((file) =>
-          imageCompression(file, { maxSizeMB: 0.2, maxWidthOrHeight: 800, useWebWorker: true }).then((blob) => {
-            return new Promise((res) => {
-              const r = new FileReader(); r.onloadend = () => res(r.result); r.readAsDataURL(blob);
-            });
-          }),
-        ),
-      );
-      setForm((prev) => ({ ...prev, images: [...prev.images, ...base64] }));
+      const compressedFiles = await Promise.all(rawFiles.map((file) =>
+        imageCompression(file, { maxSizeMB: 0.2, maxWidthOrHeight: 800, useWebWorker: true })
+      ));
+      const imagePayload = new FormData();
+      compressedFiles.forEach((file, index) => imagePayload.append("images", file, rawFiles[index].name));
+      const response = await api.post("/upload/images?folder=franchiseProducts", imagePayload);
+      setForm((prev) => ({ ...prev, images: [...prev.images, ...(response.data.urls || [])] }));
       toast.success("Ready!", { id: "up-p" });
     } catch { toast.error("Fail", { id: "up-p" }); }
     finally { e.target.value = ""; }

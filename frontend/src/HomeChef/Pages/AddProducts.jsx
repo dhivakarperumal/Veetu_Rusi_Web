@@ -305,7 +305,7 @@ const AddProducts = () => {
             const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
             const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
 
-            const res = await fetch(`${baseUrl}/api/upload/images`, {
+            const res = await fetch(`${baseUrl}/api/upload/images?folder=homechefProducts`, {
                 method: 'POST',
                 headers: token ? { Authorization: `Bearer ${token}`, 'x-access-token': token } : {},
                 body: formPayload

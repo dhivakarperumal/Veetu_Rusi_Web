@@ -7,9 +7,7 @@ const storage = multer.diskStorage({
     let folder = 'uploads/';
     const fieldname = file.fieldname;
     const requestPath = req.originalUrl.split('?')[0];
-    const isFranchiseUpload = requestPath.includes('/franchises');
     const isDeliveryPartnerUpload = requestPath.includes('/delivery-partners');
-    const isHomeChefCategoryUpload = requestPath.includes('/home-chef-categories');
 
     const homeChefFields = [
       'profile_photo',
@@ -56,12 +54,8 @@ const storage = multer.diskStorage({
       'license_back_image'
     ];
 
-    if (isFranchiseUpload) {
-      folder += 'franchises/';
-    } else if (isDeliveryPartnerUpload) {
+    if (isDeliveryPartnerUpload) {
       folder += 'deliverypartners/';
-    } else if (isHomeChefCategoryUpload) {
-      folder += 'homechefCategories/';
     } else if (homeChefFields.includes(fieldname)) {
       folder += 'homechefs/';
     } else if (restaurantFields.includes(fieldname)) {

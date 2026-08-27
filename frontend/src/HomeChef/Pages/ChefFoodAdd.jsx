@@ -159,7 +159,7 @@ const ChefFoodAdd = () => {
         formData.append("images", compressed, file.name || "image.jpg");
       }
       
-      const res = await api.post("/upload/images", formData, {
+      const res = await api.post("/upload/images?folder=homechefFoods", formData, {
         headers: { "Content-Type": "multipart/form-data" }
       });
       
@@ -183,7 +183,7 @@ const ChefFoodAdd = () => {
       const formData = new FormData();
       formData.append("images", compressed, file.name || "packaging.jpg");
       
-      const res = await api.post("/upload/images", formData, {
+      const res = await api.post("/upload/images?folder=homechefFoods", formData, {
         headers: { "Content-Type": "multipart/form-data" }
       });
       

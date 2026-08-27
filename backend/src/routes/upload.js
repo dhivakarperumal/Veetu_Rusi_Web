@@ -5,14 +5,15 @@ const path = require('path');
 const fs = require('fs');
 const { attachUser } = require('../middleware/authMiddleware');
 
-// Ensure upload directory exists
-const uploadDir = path.join(__dirname, '../../uploads/chef-foods');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
 const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, uploadDir),
+  destination: (req, _file, cb) => {
+    const folder = ['franchiseProducts', 'homechefFoods', 'homechefProducts'].includes(req.query.folder)
+      ? req.query.folder
+      : 'chef-foods';
+    const uploadDir = path.join(__dirname, '../../uploads', folder);
+    fs.mkdirSync(uploadDir, { recursive: true });
+    cb(null, uploadDir);
+  },
   filename: (_req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
     const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
@@ -44,7 +45,10 @@ router.post('/images', attachUser, upload.array('images', 10), (req, res) => {
 
     const baseUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 5000}`;
 
-    const urls = req.files.map(file => `${baseUrl}/uploads/chef-foods/${file.filename}`);
+    const folder = ['franchiseProducts', 'homechefFoods', 'homechefProducts'].includes(req.query.folder)
+      ? req.query.folder
+      : 'chef-foods';
+    const urls = req.files.map(file => `${baseUrl}/uploads/${folder}/${file.filename}`);
 
     return res.status(201).json({ urls });
   } catch (err) {
