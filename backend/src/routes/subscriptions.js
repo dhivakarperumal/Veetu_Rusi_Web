@@ -202,8 +202,8 @@ router.post('/confirm', async (req, res) => {
           franchise_id, user_id, plan_id, plan_name, plan_amount, duration_days,
           subscription_start_date, subscription_expiry_date, amount, currency,
           payment_id, razorpay_order_id
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [franchiseId, franchise.franch_user_id || null, plan.id, plan.name, plan.amount, plan.durationDays,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [franchiseId, franchise.franch_user_id || null, plan.id, plan.name, plan.amount, plan.durationDays,
           startDate.toISOString().slice(0, 10), expiryDate.toISOString().slice(0, 10),
           plan.amount, plan.currency || 'INR', paymentId, razorpay_order_id || null]
       );
