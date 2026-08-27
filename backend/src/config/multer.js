@@ -6,7 +6,9 @@ const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     let folder = 'uploads/';
     const fieldname = file.fieldname;
-    const isFranchiseUpload = req.originalUrl.split('?')[0].includes('/franchises');
+    const requestPath = req.originalUrl.split('?')[0];
+    const isFranchiseUpload = requestPath.includes('/franchises');
+    const isDeliveryPartnerUpload = requestPath.includes('/delivery-partners');
 
     const homeChefFields = [
       'profile_photo',
@@ -17,6 +19,8 @@ const storage = multer.diskStorage({
       'gst_certificate_url',
       'signature_url',
       'selfie_verification_url',
+      'passbook_image',
+      'introduction_video',
       'kitchen_photos',
       'kitchen_videos',
       'cooking_area_photo',
@@ -53,6 +57,8 @@ const storage = multer.diskStorage({
 
     if (isFranchiseUpload) {
       folder += 'franchises/';
+    } else if (isDeliveryPartnerUpload) {
+      folder += 'deliverypartners/';
     } else if (homeChefFields.includes(fieldname)) {
       folder += 'homechefs/';
     } else if (restaurantFields.includes(fieldname)) {
