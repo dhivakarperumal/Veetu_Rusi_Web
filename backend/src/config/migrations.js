@@ -1147,6 +1147,10 @@ const createReferralTables = async () => {
                 max_referrals_per_user INT DEFAULT 10,
                 daily_referral_limit INT DEFAULT 5,
                 monthly_referral_limit INT DEFAULT 20,
+                    chef_referrer_reward DECIMAL(10,2) DEFAULT 500.00,
+                    chef_referee_reward DECIMAL(10,2) DEFAULT 200.00,
+                    dp_referrer_reward DECIMAL(10,2) DEFAULT 500.00,
+                    dp_referee_reward DECIMAL(10,2) DEFAULT 200.00,
                 updated_by VARCHAR(255) DEFAULT 'system',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -1157,6 +1161,7 @@ const createReferralTables = async () => {
             CREATE TABLE IF NOT EXISTS referrals (
                 id INT PRIMARY KEY AUTO_INCREMENT,
                 referral_code VARCHAR(50) NOT NULL,
+                referral_type VARCHAR(30) DEFAULT 'customer',
                 referrer_user_id VARCHAR(255) NOT NULL,
                 referee_user_id VARCHAR(255) NOT NULL,
                 status VARCHAR(50) DEFAULT 'pending',
@@ -1175,6 +1180,23 @@ const createReferralTables = async () => {
                 KEY idx_referee_user_id (referee_user_id),
                 KEY idx_status (status)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `);
+
+        await ensureColumnExists('referral_settings', 'chef_referrer_reward', 'DECIMAL(10,2) DEFAULT 500.00');
+        await ensureColumnExists('referral_settings', 'chef_referee_reward', 'DECIMAL(10,2) DEFAULT 200.00');
+        await ensureColumnExists('referral_settings', 'dp_referrer_reward', 'DECIMAL(10,2) DEFAULT 500.00');
+        await ensureColumnExists('referral_settings', 'dp_referee_reward', 'DECIMAL(10,2) DEFAULT 200.00');
+        await ensureColumnExists('referrals', 'referral_type', "VARCHAR(30) DEFAULT 'customer'");
+        await ensureColumnExists('users', 'referral_type', "VARCHAR(30) DEFAULT 'customer'");
+        await pool.execute(`
+            UPDATE referrals r
+            INNER JOIN users u ON u.user_id = r.referrer_user_id
+            SET r.referral_type = CASE
+                WHEN LOWER(REPLACE(REPLACE(u.role, '-', '_'), ' ', '_')) IN ('chef', 'homechef', 'home_chef') THEN 'home_chef'
+                WHEN LOWER(REPLACE(REPLACE(u.role, '-', '_'), ' ', '_')) IN ('delivery', 'deliveryboy', 'delivery_boy', 'delivery_partner') THEN 'delivery_partner'
+                ELSE 'customer'
+            END
+            WHERE r.referral_type IS NULL OR r.referral_type = 'customer'
         `);
 
         await pool.execute(`

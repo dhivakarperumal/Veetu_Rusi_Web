@@ -125,12 +125,15 @@ exports.register = async (req, res) => {
       try {
         const [existingReferral] = await pool.execute('SELECT id FROM referrals WHERE referee_user_id = ? LIMIT 1', [userId]);
         if (!existingReferral.length) {
-          const [referrerRows] = await pool.execute('SELECT id, user_id FROM users WHERE referral_code = ? LIMIT 1', [referral_code]);
+          const [referrerRows] = await pool.execute('SELECT id, user_id, role FROM users WHERE referral_code = ? LIMIT 1', [referral_code]);
           if (referrerRows.length) {
             const referrer = referrerRows[0];
+            const settings = await referralController.ensureSettings();
+            const referralType = referralController.getReferralType(referrer);
+            const rewardAmounts = referralController.getRewardAmounts(referralType, settings);
             await pool.execute(
-              'INSERT INTO referrals (referral_code, referrer_user_id, referee_user_id, status, registered_at, reward_amount, reward_type, reward_status, notes, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), ?, ?, ?, ?, NOW(), NOW())',
-              [referral_code, referrer.user_id || referrer.id, userId, 'pending', 50, 'wallet_credit', 'pending', 'Applied through signup',]
+              'INSERT INTO referrals (referral_code, referral_type, referrer_user_id, referee_user_id, status, registered_at, reward_amount, reward_type, reward_status, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, NOW(), NOW())',
+              [referral_code, referralType, referrer.user_id || referrer.id, userId, 'pending', rewardAmounts.referrer, settings.reward_type || 'wallet_credit', 'pending', 'Applied through signup']
             );
             await pool.execute('UPDATE users SET referred_by = ? WHERE id = ?', [referral_code, result.insertId]);
           }
