@@ -5,7 +5,7 @@ import api from "../api";
 import { toast } from "react-hot-toast";
 import { useAuth } from "../PrivateRouter/AuthContext";
 
-const SubscriptionPaymentModal = ({ isOpen, onClose, franchiseId }) => {
+const SubscriptionPaymentModal = ({ isOpen, onClose, franchiseId, customerEmail = "" }) => {
   const { email: userEmail } = useAuth();
   const [plans, setPlans] = useState([]);
   const [selectedPlan, setSelectedPlan] = useState(null);
@@ -70,12 +70,15 @@ const SubscriptionPaymentModal = ({ isOpen, onClose, franchiseId }) => {
 
       if (!key_id) {
         // Fallback for testing without Razorpay
-        toast.success("Demo mode: Subscription activated for testing");
+        await api.post("/subscriptions/confirm", {
+          franchiseId,
+          planId: selectedPlan,
+          razorpay_payment_id: `TEST_PAYMENT_${Date.now()}`,
+          razorpay_order_id: `TEST_ORDER_${Date.now()}`,
+        });
+        toast.success("Subscription activated successfully!");
         setPaymentSuccess(true);
-        setTimeout(() => {
-          onClose();
-          setPaymentSuccess(false);
-        }, 2000);
+        setTimeout(() => window.location.reload(), 1500);
         return;
       }
 
@@ -113,7 +116,7 @@ const SubscriptionPaymentModal = ({ isOpen, onClose, franchiseId }) => {
         },
         prefill: {
           name: "Franchise Owner",
-          email: userEmail || "",
+          email: userEmail || customerEmail || "",
           contact: "",
         },
         notes: {

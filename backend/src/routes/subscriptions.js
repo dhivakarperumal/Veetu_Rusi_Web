@@ -9,6 +9,23 @@ require('dotenv').config();
 const RAZOR_KEY_ID = process.env.RAZORPAY_KEY_ID || process.env.RAZOR_KEY_ID;
 const RAZOR_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || process.env.RAZOR_KEY_SECRET;
 
+// Allow an admin who has no active subscription to identify their franchise before login.
+router.post('/lookup', async (req, res) => {
+  try {
+    const identifier = String(req.body?.identifier || '').trim();
+    if (!identifier) return res.status(400).json({ message: 'Email is required.' });
+    const [rows] = await pool.execute(
+      'SELECT id, franchise_name, owner_name, email FROM franchise_owners WHERE email = ? LIMIT 1',
+      [identifier]
+    );
+    if (!rows.length) return res.status(404).json({ message: 'Franchise admin not found.' });
+    return res.json({ franchise: rows[0] });
+  } catch (err) {
+    console.error('Subscription lookup error:', err);
+    return res.status(500).json({ message: 'Unable to find franchise admin.' });
+  }
+});
+
 // Get subscription status (requires auth)
 router.get('/status', attachUser, async (req, res) => {
   try {
