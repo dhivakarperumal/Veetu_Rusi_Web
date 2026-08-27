@@ -7,6 +7,6 @@ const upload = require('../config/multer');
 router.get('/', homeChefCategorysController.getAll);
 router.post('/', verifyTokenWithoutSubscription, upload.array('image', 10), homeChefCategorysController.create);
 router.put('/:id', verifyTokenWithoutSubscription, upload.array('image', 10), homeChefCategorysController.update);
-router.delete('/:id', verifyToken, homeChefCategorysController.delete);
+router.delete('/:id', verifyTokenWithoutSubscription, homeChefCategorysController.delete);
 
 module.exports = router;
