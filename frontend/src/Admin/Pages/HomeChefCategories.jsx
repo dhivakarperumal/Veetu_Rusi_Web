@@ -105,7 +105,7 @@ const HomeChefCategories = () => {
         )
       );
 
-      setCategory((prev) => ({ ...prev, image: base64Images }));
+      setCategory((prev) => ({ ...prev, image: compressedFiles }));
       setPreviewImgs(base64Images);
       toast.success("Images ready!");
     } catch (error) {
@@ -165,11 +165,22 @@ const HomeChefCategories = () => {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     const userId = user.user_id || user.id;
 
-    const payload = {
-      ...category,
-      created_by: userId,
-      updated_by: userId
-    };
+    const payload = new FormData();
+    payload.append("CatId", category.CatId || "");
+    payload.append("c_name", category.c_name);
+    payload.append("discripti", category.discripti);
+    payload.append("subcategory", JSON.stringify(category.subcategory));
+    payload.append("category_type", category.category_type || "Food");
+    payload.append("created_by", userId || "");
+    payload.append("updated_by", userId || "");
+
+    const existingImages = category.image.filter(image => typeof image === "string");
+    if (existingImages.length) {
+      payload.append("existing_images", JSON.stringify(existingImages));
+    }
+    category.image
+      .filter(image => image instanceof File)
+      .forEach(image => payload.append("image", image));
 
     setLoading(true);
     try {

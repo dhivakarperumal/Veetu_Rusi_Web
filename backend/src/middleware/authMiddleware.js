@@ -31,7 +31,7 @@ async function validateFranchiseAdminSubscription(user) {
   }
 }
 
-exports.verifyToken = async (req, res, next) => {
+const verifyTokenRequest = async (req, res, next, checkSubscription = true) => {
   const authHeader = req.headers['authorization'] || req.headers['x-access-token'];
   if (!authHeader) {
     console.warn(`verifyToken failed: missing Authorization header for ${req.method} ${req.originalUrl}`);
@@ -47,10 +47,12 @@ exports.verifyToken = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
     req.user = decoded;
-    const subscriptionError = await validateFranchiseAdminSubscription(decoded);
-    if (subscriptionError) {
-      console.warn(`verifyToken subscription failure for user ${decoded?.email || decoded?.user_id}: ${subscriptionError}`);
-      return res.status(403).json({ message: subscriptionError });
+    if (checkSubscription) {
+      const subscriptionError = await validateFranchiseAdminSubscription(decoded);
+      if (subscriptionError) {
+        console.warn(`verifyToken subscription failure for user ${decoded?.email || decoded?.user_id}: ${subscriptionError}`);
+        return res.status(403).json({ message: subscriptionError });
+      }
     }
     next();
   } catch (error) {
@@ -61,6 +63,9 @@ exports.verifyToken = async (req, res, next) => {
     return res.status(401).json({ message: 'Unauthorized: Invalid token.' });
   }
 };
+
+exports.verifyToken = (req, res, next) => verifyTokenRequest(req, res, next, true);
+exports.verifyTokenWithoutSubscription = (req, res, next) => verifyTokenRequest(req, res, next, false);
 
 exports.attachUser = (req, res, next) => {
   const authHeader = req.headers['authorization'];

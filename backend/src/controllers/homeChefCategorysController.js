@@ -28,7 +28,9 @@ exports.create = async (req, res) => {
 
     // Convert subcategory array to JSON string
     const subcategoryStr = Array.isArray(subcategory) ? JSON.stringify(subcategory) : subcategory;
-    const imageStr = Array.isArray(image) ? JSON.stringify(image) : image;
+    const uploadedImages = (req.files || []).map(file => `/uploads/homechefCategories/${file.filename}`);
+    const imageValues = uploadedImages.length ? uploadedImages : (Array.isArray(image) ? image : image ? [image] : []);
+    const imageStr = JSON.stringify(imageValues);
 
     const [result] = await pool.execute(
       `INSERT INTO home_chef_categorys (CatId, c_name, discripti, image, subcategory, category_type, created_by, updated_by)
@@ -50,7 +52,9 @@ exports.update = async (req, res) => {
     const updated_by = req.user ? req.user.id : null;
 
     const subcategoryStr = Array.isArray(subcategory) ? JSON.stringify(subcategory) : subcategory;
-    const imageStr = Array.isArray(image) ? JSON.stringify(image) : image;
+    const uploadedImages = (req.files || []).map(file => `/uploads/homechefCategories/${file.filename}`);
+    const existingImages = req.body.existing_images ? JSON.parse(req.body.existing_images) : (Array.isArray(image) ? image : image ? [image] : []);
+    const imageStr = JSON.stringify(uploadedImages.length ? uploadedImages : existingImages);
 
     const [result] = await pool.execute(
       `UPDATE home_chef_categorys 
