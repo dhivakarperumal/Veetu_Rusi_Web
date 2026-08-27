@@ -6,6 +6,7 @@ const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     let folder = 'uploads/';
     const fieldname = file.fieldname;
+    const isFranchiseUpload = req.originalUrl.split('?')[0].includes('/franchises');
 
     const homeChefFields = [
       'profile_photo',
@@ -50,7 +51,9 @@ const storage = multer.diskStorage({
       'license_back_image'
     ];
 
-    if (homeChefFields.includes(fieldname)) {
+    if (isFranchiseUpload) {
+      folder += 'franchises/';
+    } else if (homeChefFields.includes(fieldname)) {
       folder += 'homechefs/';
     } else if (restaurantFields.includes(fieldname)) {
       folder += 'restaurants/';

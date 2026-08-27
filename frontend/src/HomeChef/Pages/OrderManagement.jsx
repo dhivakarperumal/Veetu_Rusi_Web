@@ -139,7 +139,12 @@ const OrderManagement = () => {
         const formData = new FormData();
         Object.keys(editingOrder).forEach(key => {
           if (editingOrder[key] !== null && editingOrder[key] !== undefined) {
-            formData.append(key, editingOrder[key]);
+            const val = editingOrder[key];
+            if (typeof val === 'object' && !(val instanceof File)) {
+              formData.append(key, JSON.stringify(val));
+            } else {
+              formData.append(key, val);
+            }
           }
         });
         formData.append("status_image", statusImage);
@@ -270,24 +275,25 @@ const OrderManagement = () => {
                   const chefQuantity = order.chef_total_quantity ?? order.items?.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0);
                   const chefAmount = parseFloat((order.chef_total_amount ?? order.total_amount) || 0);
                   
+                  const statusKey = (order.status || "").trim().toLowerCase();
                   const nextStatusMap = {
-                    "Pending":                    "Accepted",
-                    "New Order":                  "Accepted",
-                    "Order Placed":               "Accepted",
-                    "New":                        "Accepted",
-                    "Accepted":                   "Preparing",
-                    "Preparing":                  "Food Ready",
-                    "Food Ready":                 "Packing",
-                    "Packing":                    "Searching Delivery Partner",
-                    "Searching Delivery Partner": "Delivery Partner Assigned",
-                    "Delivery Partner Assigned":  "Out for Delivery",
-                    "Out for Delivery":           "Delivered"
+                    "pending":                    "Accepted",
+                    "new order":                  "Accepted",
+                    "order placed":               "Accepted",
+                    "new":                        "Accepted",
+                    "accepted":                   "Preparing",
+                    "preparing":                  "Food Ready",
+                    "food ready":                 "Packing",
+                    "packing":                    "Searching Delivery Partner",
+                    "searching delivery partner": "Delivery Partner Assigned",
+                    "delivery partner assigned":  "Out for Delivery",
+                    "out for delivery":           "Delivered"
                   };
-                  const nextStatus = nextStatusMap[order.status];
+                  const nextStatus = nextStatusMap[statusKey];
 
                   return (
                     <tr key={order.id} className="hover:bg-white/5 transition-colors">
-                      <td className="px-6 py-5 text-sm font-bold text-white/50">{idx + 1}</td>
+                      <td className="px-6 py-5 text-sm font-bold text-white/50">{(currentPage - 1) * itemsPerPage + idx + 1}</td>
                       <td className="px-6 py-5 text-sm font-black text-white">{order.order_id}</td>
                       <td className="px-6 py-5 text-sm font-bold text-white/60">{order.customer_name}</td>
                       
@@ -454,7 +460,13 @@ const OrderManagement = () => {
               <div>
                 <label className="text-[10px] text-white/40 font-bold uppercase block mb-2">Order Status</label>
                 <select
-                  value={editingOrder.status}
+                  value={(() => {
+                    const st = (editingOrder.status || "").toLowerCase();
+                    const aliases = ["new order", "new", "order placed", "pending"];
+                    if (aliases.includes(st)) return "Pending";
+                    const found = ["Accepted", "Preparing", "Food Ready", "Packing", "Searching Delivery Partner", "Delivery Partner Assigned", "Picked Up", "Start Ride", "Reached Location", "Waiting for Customer", "Out for Delivery", "Delivered", "Cancelled"].find(s => s.toLowerCase() === st);
+                    return found || editingOrder.status;
+                  })()}
                   onChange={(e) => setEditingOrder({ ...editingOrder, status: e.target.value })}
                   className="w-full px-4 py-3 bg-[#070b13]/60 border border-white/5 rounded-2xl outline-none font-medium text-white text-sm focus:border-emerald-500/30 transition-all cursor-pointer"
                 >
@@ -475,11 +487,16 @@ const OrderManagement = () => {
                       { value: "Delivered",                  label: "Delivered" },
                       { value: "Cancelled",                  label: "Cancelled" },
                     ];
-                    const currentVal = editingOrder.status === "New Order" ? "Pending" : editingOrder.status;
-                    const currentIdx = ALL_ORDER_STATUSES.findIndex(s => s.value === currentVal);
+                    const currentVal = (editingOrder.status || "").toLowerCase();
+                    const aliases = ["new order", "new", "order placed", "pending"];
+                    const currentIdx = ALL_ORDER_STATUSES.findIndex(s => 
+                      s.value.toLowerCase() === currentVal || 
+                      (aliases.includes(currentVal) && s.value === "Pending")
+                    );
+                    const safeIdx = currentIdx !== -1 ? currentIdx : 0;
                     // Show current status onwards only
                     return ALL_ORDER_STATUSES
-                      .filter((s, i) => i >= currentIdx)
+                      .filter((s, i) => i >= safeIdx)
                       .map(s => (
                         <option key={s.value} value={s.value}>{s.label}</option>
                       ));
