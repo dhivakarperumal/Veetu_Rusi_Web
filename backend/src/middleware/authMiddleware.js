@@ -8,26 +8,20 @@ async function validateFranchiseAdminSubscription(user) {
   if (!user || user.role !== 'admin' || !user.email) return null;
   try {
     const [rows] = await pool.execute(
-      'SELECT id, status, expiry_date FROM franchise_owners WHERE email = ? LIMIT 1',
+      'SELECT id FROM franchise_owners WHERE email = ? LIMIT 1',
       [user.email]
     );
     if (!rows.length) return null;
 
-    const franchise = rows[0];
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    if (franchise.expiry_date) {
-      const expiry = new Date(franchise.expiry_date);
-      expiry.setHours(0, 0, 0, 0);
-      if (expiry < today) {
-        return 'Your franchise subscription has expired. Please renew to continue.';
-      }
-    }
-
-    if (franchise.status !== 'Active') {
-      return 'Your franchise status is not active. Please contact support.';
-    }
+    const [payments] = await pool.execute(
+      `SELECT sp.id FROM subscription_payments sp
+       LEFT JOIN subscription_plans p ON p.id = sp.plan_id
+       WHERE sp.franchise_id = ?
+         AND COALESCE(sp.subscription_expiry_date, DATE_ADD(sp.created_at, INTERVAL COALESCE(sp.duration_days, p.durationDays, 0) DAY)) >= CURDATE()
+       ORDER BY COALESCE(sp.subscription_expiry_date, DATE_ADD(sp.created_at, INTERVAL COALESCE(sp.duration_days, p.durationDays, 0) DAY)) DESC LIMIT 1`,
+      [rows[0].id]
+    );
+    if (!payments.length) return 'No active subscription found. Please purchase a plan to continue.';
 
     return null;
   } catch (err) {

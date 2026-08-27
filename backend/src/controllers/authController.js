@@ -63,29 +63,20 @@ function createToken(user) {
 async function validateFranchiseAdminLogin(user) {
   if (!user || user.role !== 'admin' || !user.email) return null;
   try {
-    const [rows] = await pool.execute(
-      'SELECT id, status, expiry_date FROM franchise_owners WHERE email = ? LIMIT 1',
-      [user.email]
-    );
+    const [rows] = await pool.execute('SELECT id FROM franchise_owners WHERE email = ? LIMIT 1', [user.email]);
     if (!rows.length) return null;
 
-    const franchise = rows[0];
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+    const [payments] = await pool.execute(
+      `SELECT sp.id FROM subscription_payments sp
+       LEFT JOIN subscription_plans p ON p.id = sp.plan_id
+       WHERE sp.franchise_id = ?
+         AND COALESCE(sp.subscription_expiry_date, DATE_ADD(sp.created_at, INTERVAL COALESCE(sp.duration_days, p.durationDays, 0) DAY)) >= CURDATE()
+       ORDER BY COALESCE(sp.subscription_expiry_date, DATE_ADD(sp.created_at, INTERVAL COALESCE(sp.duration_days, p.durationDays, 0) DAY)) DESC LIMIT 1`,
+      [rows[0].id]
+    );
+    if (!payments.length) return 'No active subscription found. Please purchase a plan to continue.';
 
-    if (franchise.expiry_date) {
-    const expiry = new Date(franchise.expiry_date);
-    expiry.setHours(0, 0, 0, 0);
-    if (expiry < today) {
-      return 'Your franchise subscription has expired. Please renew to continue.';
-    }
-  }
-
-  if (franchise.status !== 'Active') {
-    return 'Your franchise status is not active. Please contact support.';
-  }
-
-  return null;
+    return null;
   } catch (err) {
     console.warn('validateFranchiseAdminLogin: failed to query franchise_owners:', err?.message || err);
     // If franchise table/query fails, allow login flow to continue rather than throwing a 500
@@ -247,11 +238,24 @@ exports.profile = async (req, res) => {
           if (expiry && !Number.isNaN(expiry.getTime())) {
             expiry.setHours(0, 0, 0, 0);
           }
+          const [activePayments] = await pool.execute(
+            `SELECT COALESCE(sp.subscription_expiry_date, DATE_ADD(sp.created_at, INTERVAL COALESCE(sp.duration_days, p.durationDays, 0) DAY)) AS payment_expiry_date
+             FROM subscription_payments sp
+             LEFT JOIN subscription_plans p ON p.id = sp.plan_id
+             WHERE sp.franchise_id = ?
+               AND COALESCE(sp.subscription_expiry_date, DATE_ADD(sp.created_at, INTERVAL COALESCE(sp.duration_days, p.durationDays, 0) DAY)) >= CURDATE()
+             ORDER BY payment_expiry_date DESC LIMIT 1`,
+            [franchise.id]
+          );
+          const hasActivePayment = activePayments.length > 0;
+          const activePaymentExpiry = activePayments[0]?.payment_expiry_date;
+          const effectiveExpiry = activePaymentExpiry ? new Date(activePaymentExpiry) : expiry;
+          if (effectiveExpiry && !Number.isNaN(effectiveExpiry.getTime())) effectiveExpiry.setHours(0, 0, 0, 0);
           response.franchise = {
             ...franchise,
-            subscriptionStatus: franchise.start_date && franchise.expiry_date && franchise.status === 'Active' ? 'Active' : 'Inactive',
-            daysRemaining: expiry ? Math.ceil((expiry - today) / (1000 * 60 * 60 * 24)) : null,
-            isExpired: expiry ? expiry < today : false,
+            subscriptionStatus: hasActivePayment ? 'Active' : 'Inactive',
+            daysRemaining: hasActivePayment && effectiveExpiry ? Math.ceil((effectiveExpiry - today) / (1000 * 60 * 60 * 24)) : null,
+            isExpired: hasActivePayment && effectiveExpiry ? effectiveExpiry < today : false,
           };
 
           try {

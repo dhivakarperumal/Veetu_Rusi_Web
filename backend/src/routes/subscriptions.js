@@ -120,17 +120,22 @@ router.post('/confirm', async (req, res) => {
     let startDate = now;
     let expiryDate = new Date(now.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
 
-    if (franchise.expiry_date) {
-      const currentExpiry = new Date(franchise.expiry_date);
+    const [paidPayments] = await pool.execute(
+      `SELECT COALESCE(sp.subscription_expiry_date, DATE_ADD(sp.created_at, INTERVAL COALESCE(sp.duration_days, p.durationDays, 0) DAY)) AS subscription_expiry_date
+       FROM subscription_payments sp
+       LEFT JOIN subscription_plans p ON p.id = sp.plan_id
+       WHERE sp.franchise_id = ?
+         AND COALESCE(sp.subscription_expiry_date, DATE_ADD(sp.created_at, INTERVAL COALESCE(sp.duration_days, p.durationDays, 0) DAY)) >= CURDATE()
+       ORDER BY subscription_expiry_date DESC LIMIT 1`,
+      [franchiseId]
+    );
+    if (paidPayments[0]?.subscription_expiry_date) {
+      const currentExpiry = new Date(paidPayments[0].subscription_expiry_date);
       if (!isNaN(currentExpiry.getTime()) && currentExpiry > now) {
         startDate = currentExpiry;
         expiryDate = new Date(currentExpiry.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
       }
     }
-
-    await pool.execute("UPDATE franchise_owners SET status = 'Active', start_date = ?, expiry_date = ? WHERE id = ?", [
-      startDate.toISOString().slice(0,10), expiryDate.toISOString().slice(0,10), franchiseId
-    ]);
 
     // Ensure a subscription_payments table exists and record this payment (for reporting)
     try {
@@ -185,7 +190,12 @@ router.post('/confirm', async (req, res) => {
       );
     } catch (err) {
       console.error('Failed to record subscription payment:', err);
+      return res.status(500).json({ message: 'Payment received but subscription could not be recorded. Please contact support.' });
     }
+
+    await pool.execute("UPDATE franchise_owners SET status = 'Active', start_date = ?, expiry_date = ? WHERE id = ?", [
+      startDate.toISOString().slice(0,10), expiryDate.toISOString().slice(0,10), franchiseId
+    ]);
 
     const [[franchiseUser]] = await pool.execute('SELECT email, franch_user_id FROM franchise_owners WHERE id = ? LIMIT 1', [franchiseId]);
     if (franchiseUser) {
