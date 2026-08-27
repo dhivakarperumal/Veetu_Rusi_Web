@@ -7,11 +7,14 @@ import { GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
 import { Eye, EyeOff, User, Lock } from "lucide-react";
 import { FaFacebookF, FaTwitter, FaLinkedinIn } from "react-icons/fa";
+import SubscriptionPaymentModal from "../SubscriptionPaymentModal";
 
 function Login() {
   const navigate = useNavigate();
   const { login } = useContext(AuthContext);
   const [showPassword, setShowPassword] = useState(false);
+  const [subscriptionPrompt, setSubscriptionPrompt] = useState(null);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 
   const [form, setForm] = useState({
     identifier: "",
@@ -51,6 +54,14 @@ function Login() {
       if (error.response?.status === 403) {
         const currentTime = new Date().toLocaleString();
         errorMessage = `${errorMessage} (Login attempt at: ${currentTime})`;
+        if (error.response?.data?.message?.includes("No active subscription")) {
+          try {
+            const lookup = await api.post("/subscriptions/lookup", { identifier: form.identifier });
+            setSubscriptionPrompt(lookup.data.franchise);
+          } catch (lookupError) {
+            console.error("Subscription lookup failed:", lookupError);
+          }
+        }
       }
 
       toast.error(errorMessage, { position: "top-right" });
@@ -196,6 +207,19 @@ function Login() {
               Log In
             </button>
 
+            {subscriptionPrompt && (
+              <div className="mx-auto max-w-xs rounded-2xl border border-amber-200 bg-amber-50 p-4 text-center">
+                <p className="text-sm font-semibold text-amber-900">No active subscription found.</p>
+                <button
+                  type="button"
+                  onClick={() => setShowSubscriptionModal(true)}
+                  className="mt-3 w-full rounded-xl bg-amber-600 px-4 py-3 font-bold text-white transition hover:bg-amber-700"
+                >
+                  Buy Subscription
+                </button>
+              </div>
+            )}
+
             <p className="text-center text-base text-gray-500 mt-6 font-medium">
               Don't have an account?{" "}
               <Link to="/register" className="text-teal-600 font-bold hover:text-teal-500 hover:underline underline-offset-4 transition-colors">
@@ -230,6 +254,14 @@ function Login() {
           </form>
         </div>
       </div>
+      {subscriptionPrompt && (
+        <SubscriptionPaymentModal
+          isOpen={showSubscriptionModal}
+          onClose={() => setShowSubscriptionModal(false)}
+          franchiseId={subscriptionPrompt.id}
+          customerEmail={subscriptionPrompt.email}
+        />
+      )}
     </div>
   );
 }

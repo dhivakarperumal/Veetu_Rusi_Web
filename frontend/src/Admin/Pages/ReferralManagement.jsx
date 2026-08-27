@@ -18,6 +18,7 @@ const genCode = (prefix) => {
 
 const STATUS_MAP = {
   rewarded:  { label: 'Rewarded',  cls: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' },
+  approved:  { label: 'Approved',  cls: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' },
   pending:   { label: 'Pending',   cls: 'bg-amber-500/15  text-amber-400  border-amber-500/30' },
   verified:  { label: 'Verified',  cls: 'bg-sky-500/15    text-sky-400    border-sky-400/30' },
   rejected:  { label: 'Rejected',  cls: 'bg-rose-500/15   text-rose-400   border-rose-500/30' },
@@ -275,7 +276,7 @@ const ReferralManagement = () => {
                         </td>
                         <td className="py-3 pr-4">
                           <div className="flex flex-wrap gap-1.5">
-                            {item.status !== 'rewarded' && (
+                            {item.status !== 'rewarded' && item.status !== 'approved' && (
                               <button onClick={() => changeStatus(item.id, 'approve')} title="Approve"
                                 className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-2 py-1 text-[11px] font-semibold text-emerald-300 hover:bg-emerald-500/20 transition flex items-center gap-1">
                                 <CheckCircle2 size={11} /> Approve
@@ -326,7 +327,7 @@ const ReferralManagement = () => {
                         <span>{item.created_at ? new Date(item.created_at).toLocaleDateString('en-IN') : '—'}</span>
                      </div>
                      <div className="flex flex-wrap gap-2 pt-2 border-t border-white/5">
-                       {item.status !== 'rewarded' && (
+                       {item.status !== 'rewarded' && item.status !== 'approved' && (
                          <button onClick={() => changeStatus(item.id, 'approve')}
                            className="flex-1 rounded-xl border border-emerald-500/20 bg-emerald-500/10 py-1.5 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/20 transition flex justify-center items-center gap-1">
                            <CheckCircle2 size={13} /> Approve

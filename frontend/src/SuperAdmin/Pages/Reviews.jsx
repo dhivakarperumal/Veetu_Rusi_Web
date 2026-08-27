@@ -33,8 +33,11 @@ const Reviews = () => {
   const [filter, setFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRating, setSelectedRating] = useState(null);
+  const [selectedFranchiseAdmin, setSelectedFranchiseAdmin] = useState("");
+  const [selectedFranchiseAdminLabel, setSelectedFranchiseAdminLabel] = useState("");
+  const [franchiseAdmins, setFranchiseAdmins] = useState([]);
 
-  const currentCacheKey = `${filter}-${selectedRating}-${searchQuery}`;
+  const currentCacheKey = `${filter}-${selectedRating}-${searchQuery}-${selectedFranchiseAdmin}-${selectedFranchiseAdminLabel}`;
   const cachedData = reviewsCache[currentCacheKey];
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -58,18 +61,36 @@ const Reviews = () => {
     review_image: null
   });
 
+  const [showDeliveryReviewModal, setShowDeliveryReviewModal] = useState(false);
+  const [deliveryPartners, setDeliveryPartners] = useState([]);
+  const [selectedDeliveryPartnerId, setSelectedDeliveryPartnerId] = useState("");
+  const [deliveryRating, setDeliveryRating] = useState(5);
+  const [deliveryComment, setDeliveryComment] = useState("");
+  const [deliveryImage, setDeliveryImage] = useState(null);
+  const [deliverySubmitting, setDeliverySubmitting] = useState(false);
+
   const fetchReviews = async () => {
     try {
-      const cacheKey = `${filter}-${selectedRating}-${searchQuery}`;
+      const cacheKey = `${filter}-${selectedRating}-${searchQuery}-${selectedFranchiseAdmin}-${selectedFranchiseAdminLabel}`;
       if (!reviewsCache[cacheKey]) setLoading(true);
 
       const params = {};
       if (filter !== "All") params.status = filter;
       if (selectedRating) params.rating = selectedRating;
       if (searchQuery) params.search = searchQuery;
+      if (selectedFranchiseAdmin) {
+        params.franchise_admin_id = selectedFranchiseAdmin;
+        if (selectedFranchiseAdminLabel) params.franchise_admin_name = selectedFranchiseAdminLabel;
+      }
 
       const res = await api.get("/reviews/admin/all", { params });
-      const data = { reviews: res.data.reviews || [], stats: res.data.stats || null };
+      const fetchedReviews = res.data.reviews || [];
+      const filteredReviews = fetchedReviews.filter((review) => {
+        const matchesId = selectedFranchiseAdmin && String(review.franchise_admin_id) === String(selectedFranchiseAdmin);
+        const matchesName = selectedFranchiseAdminLabel && String(review.franchise_admin_name || "").toLowerCase().includes(selectedFranchiseAdminLabel.toLowerCase());
+        return selectedFranchiseAdmin ? matchesId || matchesName : true;
+      });
+      const data = { reviews: filteredReviews, stats: res.data.stats || null };
       setReviews(data.reviews);
       setStats(data.stats);
       setReviewsCache(prev => ({ ...prev, [cacheKey]: data }));
@@ -86,10 +107,36 @@ const Reviews = () => {
   const [deliveryReviews, setDeliveryReviews] = useState([]);
   const fetchDeliveryReviews = async () => {
     try {
-      const res = await api.get('/delivery-partner-review');
-      setDeliveryReviews((res.data && res.data.data) || []);
+      const params = {};
+      if (filter !== "All") params.status = filter;
+      if (selectedRating) params.rating = selectedRating;
+      if (searchQuery) params.search = searchQuery;
+      if (selectedFranchiseAdmin) {
+        params.franchise_admin_id = selectedFranchiseAdmin;
+        if (selectedFranchiseAdminLabel) params.franchise_admin_name = selectedFranchiseAdminLabel;
+      }
+
+      const res = await api.get('/delivery-partner-review', { params });
+      const fetchedReviews = (res.data && res.data.data) || [];
+      const filteredReviews = fetchedReviews.filter((review) => {
+        const matchesId = selectedFranchiseAdmin && String(review.franchise_admin_id) === String(selectedFranchiseAdmin);
+        const matchesName = selectedFranchiseAdminLabel && String(review.franchise_admin_name || "").toLowerCase().includes(selectedFranchiseAdminLabel.toLowerCase());
+        return selectedFranchiseAdmin ? matchesId || matchesName : true;
+      });
+      setDeliveryReviews(filteredReviews);
     } catch (err) {
       console.error('Failed to fetch delivery reviews:', err);
+    }
+  };
+
+  const fetchFranchiseAdmins = async () => {
+    try {
+      const res = await api.get('/superadmin/franchises');
+      const admins = Array.isArray(res.data) ? res.data : res.data?.franchises || [];
+      setFranchiseAdmins(admins.filter((franchise) => franchise?.franch_user_id || franchise?.id));
+    } catch (err) {
+      console.error('Failed to fetch franchise admins:', err);
+      setFranchiseAdmins([]);
     }
   };
 
@@ -103,9 +150,18 @@ const Reviews = () => {
   };
 
   useEffect(() => {
-    fetchReviews();
-    if (deliveryTab) fetchDeliveryReviews();
-  }, [filter, selectedRating, deliveryTab]);
+    const handleFetch = async () => {
+      if (deliveryTab) await fetchDeliveryReviews();
+      else await fetchReviews();
+    };
+
+    const timer = setTimeout(handleFetch, 250);
+    return () => clearTimeout(timer);
+  }, [filter, selectedRating, selectedFranchiseAdmin, searchQuery, deliveryTab]);
+
+  useEffect(() => {
+    fetchFranchiseAdmins();
+  }, []);
 
   // Active reviews source based on tab
   const activeReviews = deliveryTab ? deliveryReviews : reviews;
@@ -122,10 +178,11 @@ const Reviews = () => {
   // Debounced search
   useEffect(() => {
     const timeout = setTimeout(() => {
-      fetchReviews();
+      if (deliveryTab) fetchDeliveryReviews();
+      else fetchReviews();
     }, 500);
     return () => clearTimeout(timeout);
-  }, [searchQuery]);
+  }, [searchQuery, deliveryTab]);
 
   const handleStatusUpdate = async (id, status) => {
     try {
@@ -148,14 +205,19 @@ const Reviews = () => {
     }
   };
 
-  const handleReply = async (id) => {
+  const handleReply = async (id, isDelivery = false) => {
     if (!replyText.trim()) return;
     try {
-      await api.put(`/reviews/admin/${id}/reply`, { admin_reply: replyText });
+      if (isDelivery) {
+        await api.put(`/delivery-partner-review/reply/${id}`, { admin_reply: replyText });
+      } else {
+        await api.put(`/reviews/admin/${id}/reply`, { admin_reply: replyText });
+      }
       toast.success("Reply added");
       setReplyText("");
       setActiveReplyId(null);
-      fetchReviews();
+      if (isDelivery) fetchDeliveryReviews();
+      else fetchReviews();
     } catch (err) {
       toast.error("Failed to add reply");
     }
@@ -201,6 +263,75 @@ const Reviews = () => {
     }
   };
 
+  const fetchDeliveryPartners = async () => {
+    try {
+      const res = await api.get("/user-food-orders/delivery-partners/active");
+      setDeliveryPartners(res.data || []);
+    } catch (err) {
+      console.error("Failed to fetch delivery partners:", err);
+      toast.error("Unable to load delivery partners");
+    }
+  };
+
+  const closeDeliveryReviewModal = () => {
+    setShowDeliveryReviewModal(false);
+    setSelectedDeliveryPartnerId("");
+    setDeliveryRating(5);
+    setDeliveryComment("");
+    setDeliveryImage(null);
+  };
+
+  const submitDeliveryReview = async (e) => {
+    e.preventDefault();
+
+    if (!selectedDeliveryPartnerId) {
+      toast.error("Please select a delivery partner.");
+      return;
+    }
+
+    if (!deliveryRating) {
+      toast.error("Please select a rating.");
+      return;
+    }
+
+    setDeliverySubmitting(true);
+
+    try {
+      const partner = deliveryPartners.find((partner) =>
+        String(partner.user_id) === String(selectedDeliveryPartnerId) ||
+        String(partner.id) === String(selectedDeliveryPartnerId) ||
+        String(partner.delivery_partner_user_id) === String(selectedDeliveryPartnerId) ||
+        String(partner.delivery_partner_id) === String(selectedDeliveryPartnerId)
+      ) || {};
+
+      const formData = new FormData();
+      formData.append("user_id", user?.user_id || user?.id || "");
+      formData.append("user_name", user?.name || user?.username || user?.email || "Admin");
+      formData.append("user_email", user?.email || "");
+      formData.append("rating", deliveryRating);
+      formData.append("comment", deliveryComment);
+      formData.append("delivery_partner_id", selectedDeliveryPartnerId);
+      formData.append("delivery_partner_name", partner.name || partner.full_name || partner.partner_name || partner.delivery_partner_name || "");
+      formData.append("delivery_partner_phone", partner.mobile || partner.phone || "");
+      formData.append("delivery_partner_email", partner.email || "");
+      formData.append("created_by", user?.user_id || user?.id || "");
+      formData.append("updated_by", user?.user_id || user?.id || "");
+      if (deliveryImage) {
+        formData.append("image", deliveryImage);
+      }
+
+      await api.post("/delivery-partner-review", formData);
+      toast.success("Delivery partner review submitted successfully.");
+      closeDeliveryReviewModal();
+      fetchDeliveryReviews();
+    } catch (err) {
+      console.error("Failed to submit delivery review:", err);
+      toast.error(err.response?.data?.message || "Failed to submit delivery review.");
+    } finally {
+      setDeliverySubmitting(false);
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case "Published": return "text-emerald-500 bg-emerald-500/10 border-emerald-500/20";
@@ -212,7 +343,7 @@ const Reviews = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [filter, selectedRating, searchQuery]);
+  }, [filter, selectedRating, searchQuery, selectedFranchiseAdmin]);
 
 
   return (
@@ -260,6 +391,16 @@ const Reviews = () => {
             className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-blue-600 shadow-xl shadow-slate-900/10 transition-all active:scale-95"
           >
             <Plus className="w-4 h-6" /> Add Review
+          </button>
+
+          <button
+            onClick={() => {
+              setShowDeliveryReviewModal(true);
+              if (!deliveryPartners.length) fetchDeliveryPartners();
+            }}
+            className="flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-emerald-700 shadow-xl shadow-emerald-600/20 transition-all active:scale-95"
+          >
+            <Plus className="w-4 h-6" /> Add Delivery Partner Review
           </button>
 
           {/* STATS MINI CARDS */}
@@ -323,6 +464,34 @@ const Reviews = () => {
               <Star className={`w-3 h-3 ${selectedRating === r ? "fill-white" : ""}`} />
             </button>
           ))}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
+        <div className="xl:col-span-12 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+          <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Franchise Admin</label>
+          <select
+            value={selectedFranchiseAdmin}
+            onChange={(e) => {
+              setSelectedFranchiseAdmin(e.target.value);
+              setSelectedFranchiseAdminLabel(e.target.selectedOptions[0]?.dataset?.name || "");
+            }}
+            className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-slate-500"
+          >
+            <option value="" data-name="">All franchise admins</option>
+            {franchiseAdmins.map((admin) => {
+              const label = admin.owner_name || admin.franchise_name || admin.full_name || admin.name || admin.email || `Franchise ${admin.id || ''}`;
+              return (
+                <option
+                  key={admin.id || admin.franch_user_id}
+                  value={admin.franch_user_id || admin.id}
+                  data-name={label}
+                >
+                  {label}
+                </option>
+              );
+            })}
+          </select>
         </div>
       </div>
 
@@ -403,26 +572,66 @@ const Reviews = () => {
                         </div>
                       )}
 
-                      <div className="grid grid-cols-2 gap-3 text-[10px] text-slate-500">
-                        <div className="space-y-1">
-                          <p className="font-black uppercase tracking-[0.2em]">Submitted</p>
-                          <p>{item.created_at ? new Date(item.created_at).toLocaleString() : 'Unknown'}</p>
+                              <div className="grid grid-cols-2 gap-3 text-[10px] text-slate-500">
+                          <div className="space-y-1">
+                            <p className="font-black uppercase tracking-[0.2em]">Submitted</p>
+                            <p>{item.created_at ? new Date(item.created_at).toLocaleString() : 'Unknown'}</p>
+                          </div>
+                          <div className="space-y-1">
+                            <p className="font-black uppercase tracking-[0.2em]">Partner ID</p>
+                            <p className="truncate">{item.delivery_partner_id || 'N/A'}</p>
+                          </div>
                         </div>
-                        <div className="space-y-1">
-                          <p className="font-black uppercase tracking-[0.2em]">Partner ID</p>
-                          <p className="truncate">{item.delivery_partner_id || 'N/A'}</p>
-                        </div>
-                      </div>
 
-                      {item.admin_reply && (
+                        <div className="mt-4 text-[11px] text-slate-500">
+                          <p className="font-black uppercase tracking-[0.2em]">Franchise Admin</p>
+                          <p>{item.franchise_admin_name || 'Not assigned'}</p>
+                        </div>
+
+                        {item.admin_reply && (
                         <div className="rounded-3xl bg-blue-50 border border-blue-100 p-4 text-[11px] text-slate-600">
                           <p className="font-black uppercase tracking-[0.2em] text-blue-600 mb-1">Official Reply</p>
                           <p>{item.admin_reply}</p>
                         </div>
                       )}
+
+                        <button
+                          type="button"
+                          onClick={() => setActiveReplyId(activeReplyId === item.id ? null : item.id)}
+                          className={`w-full mt-3 rounded-2xl border px-4 py-3 text-sm font-black uppercase tracking-[0.16em] transition ${
+                            activeReplyId === item.id ? 'bg-slate-900 text-white border-slate-900' : 'bg-[#0b0d10] text-slate-300 border-slate-800 hover:bg-[#0f1216]'
+                          }`}
+                        >
+                          <Reply className="inline-block w-4 h-4 mr-2" />
+                          {activeReplyId === item.id ? 'Cancel reply' : 'Reply'}
+                        </button>
+
+                        {activeReplyId === item.id && (
+                          <div className="absolute inset-0 z-20 bg-white p-6 flex flex-col animate-in slide-in-from-bottom-full duration-300">
+                            <div className="flex items-center justify-between mb-4">
+                              <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest">Official Reply</span>
+                              <button onClick={() => setActiveReplyId(null)} className="text-slate-400 hover:text-slate-600">
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                            <textarea
+                              placeholder="Type response..."
+                              value={replyText}
+                              onChange={(e) => setReplyText(e.target.value)}
+                              className="flex-1 w-full p-4 rounded-2xl border border-slate-100 bg-slate-50 focus:outline-none focus:border-blue-500 text-xs font-semibold text-slate-700 resize-none mb-4"
+                            />
+                            <button
+                              onClick={() => handleReply(item.id, true)}
+                              disabled={!replyText.trim()}
+                              className="w-full py-3 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                            >
+                              <Send className="w-3 h-3" /> Send Reply
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
               );
             }
 
@@ -510,6 +719,10 @@ const Reviews = () => {
 
                 {/* Footer: Actions */}
                 <div className="p-4 mt-4 bg-slate-50/50 border-t border-slate-50 flex items-center justify-between">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Franchise Admin</span>
+                    <span className="text-[12px] font-bold text-slate-700">{item.franchise_admin_name || 'Not assigned'}</span>
+                  </div>
                   <div className="flex items-center gap-1">
                     {item.status !== "Published" && (
                       <button
@@ -754,6 +967,126 @@ const Reviews = () => {
               >
                 {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
                 {submitting ? "Creating..." : "Create Review"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDeliveryReviewModal && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 sm:p-6">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={closeDeliveryReviewModal}></div>
+          <div className="relative w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
+            <div className="px-8 py-6 border-b border-slate-50 flex items-center justify-between bg-white sticky top-0 z-10">
+              <div>
+                <h2 className="text-xl font-black text-slate-800 uppercase tracking-tight">Create Delivery Partner Review</h2>
+                <p className="text-xs text-slate-400 font-bold mt-1 uppercase tracking-widest">Manual review entry</p>
+              </div>
+              <button onClick={closeDeliveryReviewModal} className="p-2 hover:bg-slate-100 rounded-xl transition-all">
+                <X className="w-6 h-6 text-slate-400" />
+              </button>
+            </div>
+
+            <form onSubmit={submitDeliveryReview} className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Delivery Partner *</label>
+                <select
+                  required
+                  value={selectedDeliveryPartnerId}
+                  onChange={(e) => setSelectedDeliveryPartnerId(e.target.value)}
+                  className="w-full p-4 rounded-2xl border border-slate-100 bg-slate-50 focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 text-sm font-semibold transition-all"
+                >
+                  <option value="">Select a Delivery Partner</option>
+                  {deliveryPartners.map((partner) => {
+                    const optionKey = partner.id || partner.user_id || partner.delivery_partner_user_id || partner.delivery_partner_id;
+                    const optionLabel = partner.name || partner.full_name || partner.partner_name || partner.delivery_partner_name || `Partner ${optionKey}`;
+                    const optionMeta = partner.mobile || partner.email ? `(${partner.mobile || partner.email})` : "";
+                    return (
+                      <option key={optionKey} value={partner.user_id || partner.id || partner.delivery_partner_user_id || partner.delivery_partner_id}>
+                        {optionLabel} {optionMeta}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+
+              {selectedDeliveryPartnerId && (
+                <div className="rounded-3xl bg-slate-50 border border-slate-200 p-5">
+                  <p className="text-xs uppercase tracking-wider text-slate-500">Selected Partner</p>
+                  <p className="text-lg font-bold mt-2">
+                    {deliveryPartners.find((partner) =>
+                      String(partner.user_id) === String(selectedDeliveryPartnerId) ||
+                      String(partner.id) === String(selectedDeliveryPartnerId) ||
+                      String(partner.delivery_partner_user_id) === String(selectedDeliveryPartnerId) ||
+                      String(partner.delivery_partner_id) === String(selectedDeliveryPartnerId)
+                    )?.name || "Selected Partner"}
+                  </p>
+                  <p className="text-sm text-slate-500 mt-1">
+                    {deliveryPartners.find((partner) =>
+                      String(partner.user_id) === String(selectedDeliveryPartnerId) ||
+                      String(partner.id) === String(selectedDeliveryPartnerId) ||
+                      String(partner.delivery_partner_user_id) === String(selectedDeliveryPartnerId) ||
+                      String(partner.delivery_partner_id) === String(selectedDeliveryPartnerId)
+                    )?.mobile || ""}
+                  </p>
+                </div>
+              )}
+
+              <div>
+                <label className="font-semibold">Rating</label>
+                <div className="flex gap-3 mt-3">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setDeliveryRating(star)}
+                      className={`w-12 h-12 rounded-full transition ${deliveryRating >= star ? "bg-yellow-400 text-white" : "bg-slate-100 hover:bg-slate-200"}`}
+                    >
+                      ★
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="font-semibold">Comment</label>
+                <textarea
+                  rows={5}
+                  value={deliveryComment}
+                  onChange={(e) => setDeliveryComment(e.target.value)}
+                  placeholder="Tell us about the delivery experience..."
+                  className="mt-3 w-full rounded-2xl border p-4 outline-none focus:border-primary"
+                />
+              </div>
+
+              <div>
+                <label className="font-semibold">Upload Image (Optional)</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setDeliveryImage(e.target.files[0])}
+                  className="mt-3 block w-full"
+                />
+                {deliveryImage && <p className="text-xs text-slate-500 mt-2">Selected file: {deliveryImage.name}</p>}
+              </div>
+            </form>
+
+            <div className="p-8 border-t border-slate-50 bg-slate-50/30 flex items-center justify-end gap-3 sticky bottom-0">
+              <button
+                type="button"
+                onClick={closeDeliveryReviewModal}
+                className="px-6 py-3 text-slate-400 text-xs font-black uppercase tracking-widest hover:text-slate-600 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={submitDeliveryReview}
+                disabled={deliverySubmitting}
+                className="flex items-center gap-2 px-8 py-3 bg-emerald-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-emerald-700 shadow-xl shadow-emerald-600/20 transition-all active:scale-95 disabled:opacity-50"
+              >
+                {deliverySubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                {deliverySubmitting ? "Submitting..." : "Submit Review"}
               </button>
             </div>
           </div>

@@ -2,11 +2,11 @@ import React, { useContext, useEffect, useState } from "react";
 import api from "../../api";
 import ProductCard from "../Products/ProductsCard";
 import PageHeader from "../CommenComponents/PageHeader";
-import { FiFilter, FiX, FiChevronLeft, FiChevronRight, FiSearch } from "react-icons/fi";
+import { FiFilter, FiX, FiChevronLeft, FiChevronRight, FiSearch, FiMapPin, FiCheckCircle, FiRefreshCw, FiNavigation } from "react-icons/fi";
 import { BsGrid3X3Gap, BsGridFill, BsGrid1X2, BsGrid3X2 } from "react-icons/bs";
 import { StoreContext } from "../../PrivateRouter/StoreContext";
 import { AuthContext } from "../../PrivateRouter/AuthContext";
-import { FiMapPin, FiCheckCircle } from "react-icons/fi";
+import useFetchLocation from "../../hooks/useFetchLocation";
 
 const Shop = ({ defaultCategory = "" }) => {
   const { chefFoodsCache, setChefFoodsCache, lastChefFoodsFetchTime, setLastChefFoodsFetchTime } =
@@ -42,6 +42,7 @@ const Shop = ({ defaultCategory = "" }) => {
   const [gridView, setGridView] = useState(5);
 
   const [currentPage, setCurrentPage] = useState(1);
+  const { fetchingLocation, fetchLocation } = useFetchLocation();
   const hasLocation = Boolean(user?.latitude && user?.longitude);
 
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
@@ -380,19 +381,103 @@ const Shop = ({ defaultCategory = "" }) => {
 
   if (!loading && !hasLocation) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-16 text-center">
-        <div className="inline-flex flex-col gap-3 items-center justify-center w-full max-w-2xl mx-auto p-10 rounded-3xl border border-dashed border-slate-200 bg-white shadow-sm">
-          <p className="text-sm text-slate-500">You still haven't fetched your location.</p>
-          <h2 className="text-2xl font-black text-slate-900">Please fetch your location to see nearby home chef products.</h2>
-          <p className="max-w-xl text-sm text-slate-500">Once your location is fetched, only nearby home chef products will appear here.</p>
+      <>
+        <PageHeader title={defaultCategory || "Shop"} />
+        <div className="max-w-7xl mx-auto px-4 py-16 text-center">
+          <div className="inline-flex flex-col gap-5 items-center justify-center w-full max-w-xl mx-auto p-8 sm:p-12 rounded-3xl border border-dashed border-green-200 bg-white shadow-lg shadow-green-50/50">
+            <div className="w-20 h-20 bg-green-100 text-primary rounded-full flex items-center justify-center shadow-inner relative">
+              <FiMapPin size={36} className="text-primary animate-bounce" />
+              <span className="absolute -bottom-1 w-8 h-2 bg-green-200/60 rounded-full blur-[2px]"></span>
+            </div>
+
+            <div className="space-y-2">
+              <span className="inline-block text-xs font-bold uppercase tracking-wider text-primary bg-green-50 px-3 py-1 rounded-full border border-green-100">
+                Location Required
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 leading-tight">
+                Fetch your location to see nearby home chef products
+              </h2>
+              <p className="max-w-md mx-auto text-sm text-slate-500">
+                We use your location to find fresh, delicious home-cooked meals and authentic products available for delivery in your area.
+              </p>
+            </div>
+
+            <div className="w-full pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <button
+                onClick={() => fetchLocation(() => fetchProducts())}
+                disabled={fetchingLocation}
+                className="w-full sm:w-auto px-8 py-3.5 bg-primary hover:bg-green-600 text-white font-bold rounded-2xl shadow-lg shadow-green-200 hover:shadow-green-300 transition-all transform active:scale-95 disabled:opacity-70 flex items-center justify-center gap-2 cursor-pointer text-base"
+              >
+                {fetchingLocation ? (
+                  <>
+                    <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                    <span>Fetching Location...</span>
+                  </>
+                ) : (
+                  <>
+                    <FiNavigation className="w-5 h-5" />
+                    <span>Fetch Current Location</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-400 flex items-center justify-center gap-1.5 mt-2">
+              <span>🔒</span>
+              <span>Allow location access in your browser when prompted</span>
+            </p>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
     <>
-      <PageHeader title="Shop" />
+      <PageHeader title={defaultCategory || "Shop"} />
+
+      {/* Current Location Badge / Bar */}
+      <div className="px-4 md:px-10 mt-6">
+        <div className="bg-white border border-green-100 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-gradient-to-r from-green-50/50 via-white to-transparent">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-green-100 text-primary flex items-center justify-center flex-shrink-0">
+              <FiMapPin size={20} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Delivery Location:</span>
+                {user?.pincode && (
+                  <span className="bg-primary/10 text-primary text-xs font-bold px-2 py-0.5 rounded-md">
+                    {user.pincode}
+                  </span>
+                )}
+              </div>
+              <p className="text-sm font-bold text-gray-800 line-clamp-1">
+                {user?.area || user?.district || user?.location_name || (user?.latitude && user?.longitude ? `${parseFloat(user.latitude).toFixed(4)}, ${parseFloat(user.longitude).toFixed(4)}` : "Current Location")}
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => fetchLocation(() => fetchProducts())}
+            disabled={fetchingLocation}
+            className="flex items-center gap-2 text-xs font-semibold text-primary hover:text-green-700 bg-white hover:bg-green-50 px-3.5 py-2 rounded-xl border border-green-200 transition shadow-sm cursor-pointer active:scale-95 disabled:opacity-60 flex-shrink-0"
+            title="Update your location"
+          >
+            {fetchingLocation ? (
+              <>
+                <span className="w-3.5 h-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin"></span>
+                <span>Updating...</span>
+              </>
+            ) : (
+              <>
+                <FiRefreshCw size={14} />
+                <span>Update Location</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
 
       {/* Current Location */}
       {/* {(user?.pincode || user?.latitude) && (
@@ -456,7 +541,7 @@ const Shop = ({ defaultCategory = "" }) => {
             </div>
           )}
         </div>
-      )} */}
+      )}  */}
 
       {/* {uniqueHomeChefs.length > 0 && (
         <div className="px-4 md:px-10 mt-6 mb-4">
@@ -488,7 +573,7 @@ const Shop = ({ defaultCategory = "" }) => {
             ))}
           </div>
         </div>
-      )} */}
+      )} 
 
 
       {/* ── Toolbar ── */}
@@ -783,7 +868,41 @@ const Shop = ({ defaultCategory = "" }) => {
                 <ProductCard key={product.id} product={product} />
               ))
             ) : (
-              <p>No products found</p>
+              <div className="col-span-full py-16 text-center">
+                <div className="max-w-md mx-auto p-8 rounded-3xl border border-dashed border-gray-200 bg-gray-50/60 shadow-sm">
+                  <div className="w-14 h-14 bg-gray-100 text-gray-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <FiSearch size={24} />
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-800">No products found</h3>
+                  <p className="text-sm text-gray-500 mt-1 mb-5">
+                    {search || selectedCategory || selectedType || offerFilter || selectedSubCategory || selectedColor || selectedSize
+                      ? "No products matched your search or filters. Try clearing your filters."
+                      : `No home chef products currently delivering to your location (${user?.area || user?.pincode || "your area"}).`}
+                  </p>
+                  <div className="flex flex-wrap items-center justify-center gap-3">
+                    {(search || selectedCategory || selectedType || offerFilter || selectedSubCategory || selectedColor || selectedSize) && (
+                      <button
+                        onClick={clearFilters}
+                        className="px-4 py-2 text-xs font-semibold bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl transition cursor-pointer"
+                      >
+                        Clear Filters
+                      </button>
+                    )}
+                    <button
+                      onClick={() => fetchLocation(() => fetchProducts())}
+                      disabled={fetchingLocation}
+                      className="px-4 py-2 text-xs font-semibold bg-primary hover:bg-green-600 text-white rounded-xl transition cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-95 disabled:opacity-60"
+                    >
+                      {fetchingLocation ? (
+                        <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                      ) : (
+                        <FiRefreshCw size={14} />
+                      )}
+                      <span>Re-fetch Location</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
           {totalPages > 1 && (

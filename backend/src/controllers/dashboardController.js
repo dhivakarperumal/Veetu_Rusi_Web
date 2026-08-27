@@ -332,7 +332,16 @@ exports.getDashboardData = async (req, res) => {
           const today = new Date();
           today.setHours(0, 0, 0, 0);
 
-          if (franchise.expiry_date) {
+          const [activePayments] = await pool.execute(
+            `SELECT sp.id FROM subscription_payments sp
+             LEFT JOIN subscription_plans p ON p.id = sp.plan_id
+             WHERE sp.franchise_id = ?
+               AND COALESCE(sp.subscription_expiry_date, DATE_ADD(sp.created_at, INTERVAL COALESCE(sp.duration_days, p.durationDays, 0) DAY)) >= CURDATE()
+             ORDER BY COALESCE(sp.subscription_expiry_date, DATE_ADD(sp.created_at, INTERVAL COALESCE(sp.duration_days, p.durationDays, 0) DAY)) DESC LIMIT 1`,
+            [franchise.id]
+          );
+          const hasActivePayment = activePayments.length > 0;
+          if (hasActivePayment && franchise.expiry_date) {
             const expiry = new Date(franchise.expiry_date);
             expiry.setHours(0, 0, 0, 0);
             subscriptionInfo.isExpired = expiry < today;
@@ -341,7 +350,9 @@ exports.getDashboardData = async (req, res) => {
             }
             console.log('Subscription expiry check:', { isExpired: subscriptionInfo.isExpired, daysRemaining: subscriptionInfo.daysRemaining });
           }
-          subscriptionInfo.status = franchise.status;
+          subscriptionInfo.status = hasActivePayment && franchise.start_date && franchise.expiry_date && franchise.status === 'Active'
+            ? 'Active'
+            : 'Inactive';
           subscriptionInfo.expiryDate = franchise.expiry_date;
           subscriptionInfo.startDate = franchise.start_date;
         } else {

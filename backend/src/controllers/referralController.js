@@ -8,6 +8,24 @@ const normalizeReferralCodeInput = (value) => {
   return String(value).trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
 };
 
+const getReferralType = (user) => {
+  if (['customer', 'home_chef', 'delivery_partner'].includes(user?.referral_type)) return user.referral_type;
+  const role = String(user?.role || '').toLowerCase().replace(/[-\s]/g, '_');
+  if (['chef', 'homechef', 'home_chef'].includes(role)) return 'home_chef';
+  if (['delivery', 'deliveryboy', 'delivery_boy', 'delivery_partner'].includes(role)) return 'delivery_partner';
+  return 'customer';
+};
+
+const getRewardAmounts = (type, settings) => {
+  if (type === 'home_chef') {
+    return { referrer: Number(settings.chef_referrer_reward || settings.referrer_reward_amount || 0), referee: Number(settings.chef_referee_reward || settings.referee_reward_amount || 0) };
+  }
+  if (type === 'delivery_partner') {
+    return { referrer: Number(settings.dp_referrer_reward || settings.referrer_reward_amount || 0), referee: Number(settings.dp_referee_reward || settings.referee_reward_amount || 0) };
+  }
+  return { referrer: Number(settings.referrer_reward_amount || 0), referee: Number(settings.referee_reward_amount || 0) };
+};
+
 const ensureSettings = async () => {
   const [rows] = await pool.execute('SELECT * FROM referral_settings ORDER BY id DESC LIMIT 1');
   if (rows.length > 0) return rows[0];
@@ -23,6 +41,10 @@ const ensureSettings = async () => {
     max_referrals_per_user: 10,
     daily_referral_limit: 5,
     monthly_referral_limit: 20,
+    chef_referrer_reward: 500,
+    chef_referee_reward: 200,
+    dp_referrer_reward: 500,
+    dp_referee_reward: 200,
     updated_by: 'system',
   };
 
@@ -87,7 +109,7 @@ const generateCodeForUser = async (userId) => {
 
 const validateCode = async (code) => {
   const [rows] = await pool.execute(
-    'SELECT id, user_id, full_name, email, referral_code FROM users WHERE referral_code = ? LIMIT 1',
+    'SELECT id, user_id, role, referral_type, full_name, email, referral_code FROM users WHERE referral_code = ? LIMIT 1',
     [code]
   );
   if (!rows.length) {
@@ -244,7 +266,7 @@ const applyCode = async (req, res) => {
     if (!userId) return res.status(400).json({ message: 'User identity not available.' });
     if (!referral_code) return res.status(400).json({ message: 'Referral code is required.' });
 
-    const [userRows] = await pool.execute('SELECT id, user_id, referral_code, referred_by FROM users WHERE user_id = ? LIMIT 1', [userId]);
+    const [userRows] = await pool.execute('SELECT id, user_id, role, referral_type, referral_code, referred_by FROM users WHERE user_id = ? LIMIT 1', [userId]);
     const user = userRows[0];
     if (!user) return res.status(404).json({ message: 'User not found.' });
 
@@ -257,7 +279,11 @@ const applyCode = async (req, res) => {
       return res.status(403).json({ message: 'Referral program is currently disabled.' });
     }
 
-    const referrer = await validateCode(referral_code);
+    const [referrerRows] = await pool.execute('SELECT id, user_id, role, referral_type, full_name, email, referral_code FROM users WHERE referral_code = ? LIMIT 1', [normalizeReferralCodeInput(referral_code)]);
+    if (!referrerRows.length) return res.status(404).json({ message: 'Referral code not found.' });
+    const referrer = referrerRows[0];
+    const referralType = getReferralType(referrer);
+    const rewardAmounts = getRewardAmounts(referralType, settings);
     if (String(referrer.user_id || referrer.id) === String(user.user_id || user.id)) {
       return res.status(400).json({ message: 'You cannot refer yourself.' });
     }
@@ -298,6 +324,7 @@ const applyCode = async (req, res) => {
     const [result] = await pool.execute(
       `INSERT INTO referrals (
         referral_code,
+        referral_type,
         referrer_user_id,
         referee_user_id,
         status,
@@ -308,8 +335,8 @@ const applyCode = async (req, res) => {
         notes,
         created_at,
         updated_at
-      ) VALUES (?, ?, ?, 'pending', NOW(), ?, ?, 'pending', 'Applied through signup', NOW(), NOW())`,
-      [referral_code, referrer.user_id || referrer.id, user.user_id || user.id, Number(settings.referrer_reward_amount || 0), settings.reward_type || 'wallet_credit']
+      ) VALUES (?, ?, ?, ?, 'pending', NOW(), ?, ?, 'pending', 'Applied through signup', NOW(), NOW())`,
+      [normalizeReferralCodeInput(referral_code), referralType, referrer.user_id || referrer.id, user.user_id || user.id, rewardAmounts.referrer, settings.reward_type || 'wallet_credit']
     );
 
     await pool.execute('UPDATE users SET referred_by = ? WHERE user_id = ?', [referral_code, user.user_id || user.id]);
@@ -347,6 +374,10 @@ const adminUpdateSettings = async (req, res) => {
       'max_referrals_per_user',
       'daily_referral_limit',
       'monthly_referral_limit',
+      'chef_referrer_reward',
+      'chef_referee_reward',
+      'dp_referrer_reward',
+      'dp_referee_reward',
       'updated_by',
     ];
 
@@ -411,6 +442,7 @@ const adminGetReferrals = async (req, res) => {
 const adminCreateReferralCode = async (req, res) => {
   try {
     const { user_id, referral_code, notes } = req.body || {};
+    const requestedType = ['customer', 'home_chef', 'delivery_partner'].includes(req.body?.type) ? req.body.type : null;
     if (!user_id) {
       return res.status(400).json({ message: 'User is required.' });
     }
@@ -420,7 +452,7 @@ const adminCreateReferralCode = async (req, res) => {
       return res.status(400).json({ message: 'Referral code is required.' });
     }
 
-    const [userRows] = await pool.execute('SELECT id, user_id, referral_code FROM users WHERE user_id = ? OR id = ? LIMIT 1', [user_id, user_id]);
+    const [userRows] = await pool.execute('SELECT id, user_id, role, referral_code FROM users WHERE user_id = ? OR id = ? LIMIT 1', [user_id, user_id]);
     const user = userRows[0];
     if (!user) {
       return res.status(404).json({ message: 'User not found.' });
@@ -431,10 +463,10 @@ const adminCreateReferralCode = async (req, res) => {
       return res.status(409).json({ message: 'This referral code is already in use.' });
     }
 
-    await pool.execute('UPDATE users SET referral_code = ? WHERE id = ? ', [normalizedCode, user.id]);
-    await pool.execute('UPDATE users SET referred_by = ? WHERE id = ? AND (referred_by IS NULL OR referred_by = \'\')', [normalizedCode, user.id]);
+    const referralType = requestedType || getReferralType(user);
+    await pool.execute('UPDATE users SET referral_code = ?, referral_type = ? WHERE id = ? ', [normalizedCode, referralType, user.id]);
 
-    const [updatedRows] = await pool.execute('SELECT id, user_id, referral_code, referred_by FROM users WHERE id = ? LIMIT 1', [user.id]);
+    const [updatedRows] = await pool.execute('SELECT id, user_id, referral_code, referral_type, referred_by FROM users WHERE id = ? LIMIT 1', [user.id]);
     return res.json({
       message: 'Referral code created successfully.',
       user: updatedRows[0],
@@ -461,7 +493,7 @@ const adminUpdateReferralStatus = async (req, res) => {
     let mappedStatus = 'pending';
     let rewardStatus = 'pending';
     if (action === 'approve') {
-      mappedStatus = 'pending';
+      mappedStatus = 'approved';
       rewardStatus = 'pending';
     } else if (action === 'reject') {
       mappedStatus = 'rejected';
@@ -548,8 +580,8 @@ const processFirstOrderReward = async (targetOrderId) => {
     if (!userId) return { status: 'skipped', reason: 'No customer linked to order.' };
 
     const [pendingRows] = await pool.execute(
-      'SELECT * FROM referrals WHERE referee_user_id = ? AND status = ? AND reward_status = ? LIMIT 1',
-      [userId, 'pending', 'pending']
+      'SELECT * FROM referrals WHERE referee_user_id = ? AND status IN (?, ?) AND reward_status = ? LIMIT 1',
+      [userId, 'pending', 'approved', 'pending']
     );
     const referral = pendingRows[0];
     if (!referral) return { status: 'skipped', reason: 'No pending referral.' };
@@ -564,8 +596,9 @@ const processFirstOrderReward = async (targetOrderId) => {
       return { status: 'skipped', reason: 'First-order-only reward already satisfied.' };
     }
 
-    const referrerAmount = Number(settings.referrer_reward_amount || 0);
-    const refereeAmount = Number(settings.referee_reward_amount || 0);
+    const rewardAmounts = getRewardAmounts(referral.referral_type || 'customer', settings);
+    const referrerAmount = rewardAmounts.referrer;
+    const refereeAmount = rewardAmounts.referee;
     const rewardType = settings.reward_type || 'wallet_credit';
 
     if (rewardType === 'wallet_credit') {
@@ -623,6 +656,9 @@ module.exports = {
   adminCreateReferralCode,
   adminUpdateReferralStatus,
   adminExport,
+  getReferralType,
+  getRewardAmounts,
+  ensureSettings,
   processFirstOrderReward,
   normalizeReferralCodeInput,
 };

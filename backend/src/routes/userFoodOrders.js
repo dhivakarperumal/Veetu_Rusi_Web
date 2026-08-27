@@ -90,7 +90,16 @@ router.get('/', verifyToken, async (req, res) => {
 
 router.get('/delivery-partners/active', verifyToken, async (req, res) => {
   try {
-    const [rows] = await pool.execute('SELECT user_id, name, mobile, vehicle_type FROM delivery_partners WHERE status = "Approved"');
+    const { franchise_user_id, franchise_admin_id } = req.query;
+    let query = 'SELECT user_id, name, mobile, vehicle_type FROM delivery_partners WHERE status = "Approved"';
+    const params = [];
+
+    if (franchise_user_id || franchise_admin_id) {
+      query += ' AND created_by = ?';
+      params.push(franchise_user_id || franchise_admin_id);
+    }
+
+    const [rows] = await pool.execute(query, params);
     res.json(rows);
   } catch (err) {
     console.error('Error fetching delivery partners:', err);

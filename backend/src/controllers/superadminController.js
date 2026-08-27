@@ -949,11 +949,9 @@ exports.approveFranchise = async (req, res) => {
       hashedPw = hashPassword(plainPassword);
     }
 
-    const today = new Date();
-    const defaultStartDate = franchise.start_date || today.toISOString().slice(0, 10);
-    const defaultExpiryDate = franchise.expiry_date
-      ? franchise.expiry_date
-      : new Date(new Date(defaultStartDate).valueOf() + 3 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    // Approval creates the admin login only. A subscription starts only after payment confirmation.
+    const defaultStartDate = franchise.start_date || null;
+    const defaultExpiryDate = franchise.expiry_date || null;
 
     // Check if a user with this email already exists
     const [existing] = await pool.execute('SELECT id, user_id FROM users WHERE email = ?', [franchise.email]);

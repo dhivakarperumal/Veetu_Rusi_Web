@@ -63,29 +63,20 @@ function createToken(user) {
 async function validateFranchiseAdminLogin(user) {
   if (!user || user.role !== 'admin' || !user.email) return null;
   try {
-    const [rows] = await pool.execute(
-      'SELECT id, status, expiry_date FROM franchise_owners WHERE email = ? LIMIT 1',
-      [user.email]
-    );
+    const [rows] = await pool.execute('SELECT id FROM franchise_owners WHERE email = ? LIMIT 1', [user.email]);
     if (!rows.length) return null;
 
-    const franchise = rows[0];
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+    const [payments] = await pool.execute(
+      `SELECT sp.id FROM subscription_payments sp
+       LEFT JOIN subscription_plans p ON p.id = sp.plan_id
+       WHERE sp.franchise_id = ?
+         AND COALESCE(sp.subscription_expiry_date, DATE_ADD(sp.created_at, INTERVAL COALESCE(sp.duration_days, p.durationDays, 0) DAY)) >= CURDATE()
+       ORDER BY COALESCE(sp.subscription_expiry_date, DATE_ADD(sp.created_at, INTERVAL COALESCE(sp.duration_days, p.durationDays, 0) DAY)) DESC LIMIT 1`,
+      [rows[0].id]
+    );
+    if (!payments.length) return 'No active subscription found. Please purchase a plan to continue.';
 
-    if (franchise.expiry_date) {
-    const expiry = new Date(franchise.expiry_date);
-    expiry.setHours(0, 0, 0, 0);
-    if (expiry < today) {
-      return 'Your franchise subscription has expired. Please renew to continue.';
-    }
-  }
-
-  if (franchise.status !== 'Active') {
-    return 'Your franchise status is not active. Please contact support.';
-  }
-
-  return null;
+    return null;
   } catch (err) {
     console.warn('validateFranchiseAdminLogin: failed to query franchise_owners:', err?.message || err);
     // If franchise table/query fails, allow login flow to continue rather than throwing a 500
@@ -125,12 +116,15 @@ exports.register = async (req, res) => {
       try {
         const [existingReferral] = await pool.execute('SELECT id FROM referrals WHERE referee_user_id = ? LIMIT 1', [userId]);
         if (!existingReferral.length) {
-          const [referrerRows] = await pool.execute('SELECT id, user_id FROM users WHERE referral_code = ? LIMIT 1', [referral_code]);
+          const [referrerRows] = await pool.execute('SELECT id, user_id, role FROM users WHERE referral_code = ? LIMIT 1', [referral_code]);
           if (referrerRows.length) {
             const referrer = referrerRows[0];
+            const settings = await referralController.ensureSettings();
+            const referralType = referralController.getReferralType(referrer);
+            const rewardAmounts = referralController.getRewardAmounts(referralType, settings);
             await pool.execute(
-              'INSERT INTO referrals (referral_code, referrer_user_id, referee_user_id, status, registered_at, reward_amount, reward_type, reward_status, notes, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), ?, ?, ?, ?, NOW(), NOW())',
-              [referral_code, referrer.user_id || referrer.id, userId, 'pending', 50, 'wallet_credit', 'pending', 'Applied through signup',]
+              'INSERT INTO referrals (referral_code, referral_type, referrer_user_id, referee_user_id, status, registered_at, reward_amount, reward_type, reward_status, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, NOW(), NOW())',
+              [referral_code, referralType, referrer.user_id || referrer.id, userId, 'pending', rewardAmounts.referrer, settings.reward_type || 'wallet_credit', 'pending', 'Applied through signup']
             );
             await pool.execute('UPDATE users SET referred_by = ? WHERE id = ?', [referral_code, result.insertId]);
           }
@@ -235,9 +229,55 @@ exports.profile = async (req, res) => {
 
     if (role === 'admin') {
       try {
-        const [rows] = await pool.execute('SELECT id, franchise_id, franchise_name, franch_user_id, status FROM franchise_owners WHERE email = ? LIMIT 1', [email]);
+        const [rows] = await pool.execute('SELECT id, franchise_id, franchise_name, franch_user_id, status, start_date, expiry_date FROM franchise_owners WHERE email = ? LIMIT 1', [email]);
         if (rows.length > 0) {
-          response.franchise = rows[0];
+          const franchise = rows[0];
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const expiry = franchise.expiry_date ? new Date(franchise.expiry_date) : null;
+          if (expiry && !Number.isNaN(expiry.getTime())) {
+            expiry.setHours(0, 0, 0, 0);
+          }
+          const [activePayments] = await pool.execute(
+            `SELECT COALESCE(sp.subscription_expiry_date, DATE_ADD(sp.created_at, INTERVAL COALESCE(sp.duration_days, p.durationDays, 0) DAY)) AS payment_expiry_date
+             FROM subscription_payments sp
+             LEFT JOIN subscription_plans p ON p.id = sp.plan_id
+             WHERE sp.franchise_id = ?
+               AND COALESCE(sp.subscription_expiry_date, DATE_ADD(sp.created_at, INTERVAL COALESCE(sp.duration_days, p.durationDays, 0) DAY)) >= CURDATE()
+             ORDER BY payment_expiry_date DESC LIMIT 1`,
+            [franchise.id]
+          );
+          const hasActivePayment = activePayments.length > 0;
+          const activePaymentExpiry = activePayments[0]?.payment_expiry_date;
+          const effectiveExpiry = activePaymentExpiry ? new Date(activePaymentExpiry) : expiry;
+          if (effectiveExpiry && !Number.isNaN(effectiveExpiry.getTime())) effectiveExpiry.setHours(0, 0, 0, 0);
+          response.franchise = {
+            ...franchise,
+            subscriptionStatus: hasActivePayment ? 'Active' : 'Inactive',
+            daysRemaining: hasActivePayment && effectiveExpiry ? Math.ceil((effectiveExpiry - today) / (1000 * 60 * 60 * 24)) : null,
+            isExpired: hasActivePayment && effectiveExpiry ? effectiveExpiry < today : false,
+          };
+
+          try {
+            const [payments] = await pool.execute(
+              `SELECT sp.id, sp.plan_id, sp.amount, sp.currency, sp.payment_id,
+                      sp.razorpay_order_id, sp.created_at,
+                      COALESCE(sp.plan_name, p.name) AS plan_name,
+                      COALESCE(sp.plan_amount, sp.amount, p.amount) AS plan_amount,
+                      COALESCE(sp.duration_days, p.durationDays) AS duration_days,
+                      sp.subscription_start_date, sp.subscription_expiry_date, sp.user_id
+               FROM subscription_payments sp
+               LEFT JOIN subscription_plans p ON p.id = sp.plan_id
+               WHERE sp.franchise_id = ? OR sp.user_id = ?
+               ORDER BY sp.created_at DESC`,
+              [franchise.id, franchise.franch_user_id]
+            );
+            response.subscriptionHistory = payments;
+            response.currentPlan = payments[0] || null;
+          } catch (paymentError) {
+            console.warn('Profile: failed to query subscription history:', paymentError?.message || paymentError);
+            response.subscriptionHistory = [];
+          }
         }
       } catch (err) {
         console.warn('Profile: failed to query franchise_owners:', err?.message || err);

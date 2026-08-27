@@ -1,12 +1,11 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useEffect, useContext } from "react";
 import { AuthContext } from "../../PrivateRouter/AuthContext";
 import { FiMapPin, FiX } from "react-icons/fi";
-import { toast } from "react-toastify";
-import api from "../../api";
+import useFetchLocation from "../../hooks/useFetchLocation";
 
 const LocationPopup = () => {
-  const { user, login, locationPopupOpen, setLocationPopupOpen } = useContext(AuthContext);
-  const [loading, setLoading] = useState(false);
+  const { user, locationPopupOpen, setLocationPopupOpen } = useContext(AuthContext);
+  const { fetchingLocation, fetchLocation } = useFetchLocation();
 
   useEffect(() => {
     // Only show if user is logged in, has role 'user', and doesn't have a pincode
@@ -16,67 +15,9 @@ const LocationPopup = () => {
   }, [user, setLocationPopupOpen]);
 
   const getLocation = () => {
-    if (!navigator.geolocation) {
-      toast.error("Geolocation is not supported by your browser");
-      return;
-    }
-
-    setLoading(true);
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        try {
-          const lat = position.coords.latitude;
-          const lon = position.coords.longitude;
-
-          // Reverse geocoding using Nominatim (OpenStreetMap)
-          const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`
-          );
-          const data = await response.json();
-
-          if (data && data.address) {
-            const pincode = data.address.postcode || "";
-            const location_name = data.display_name || "";
-            const district = data.address.state_district || data.address.county || data.address.city_district || "";
-            const area = data.address.suburb || data.address.neighbourhood || data.address.town || data.address.village || data.address.city || "";
-
-            // Call backend API to update location
-            const apiRes = await api.post("/auth/update-location", {
-              latitude: lat.toString(),
-              longitude: lon.toString(),
-              location_name,
-              pincode,
-              district,
-              area
-            });
-
-            // Update user in context
-            if (apiRes.data && apiRes.data.user) {
-              const token = localStorage.getItem("token"); // Reusing existing token
-              login(apiRes.data.user, token);
-            }
-
-            toast.success(`Location set to ${pincode || "your current area"}`);
-            setLocationPopupOpen(false);
-          } else {
-            toast.error("Could not determine your address details.");
-          }
-        } catch (error) {
-          console.error("Location error:", error);
-          toast.error("Failed to fetch location details.");
-        } finally {
-          setLoading(false);
-        }
-      },
-      (error) => {
-        setLoading(false);
-        if (error.code === error.PERMISSION_DENIED) {
-          toast.error("Location permission denied. Please allow location access.");
-        } else {
-          toast.error("Error fetching location.");
-        }
-      }
-    );
+    fetchLocation(() => {
+      setLocationPopupOpen(false);
+    });
   };
 
   if (!locationPopupOpen) return null;
@@ -104,15 +45,18 @@ const LocationPopup = () => {
 
           <button
             onClick={getLocation}
-            disabled={loading}
-            className="w-full py-3 px-4 bg-primary hover:bg-green-600 text-white font-bold rounded-xl shadow-lg shadow-green-200 transition-all active:scale-95 disabled:opacity-70 flex items-center justify-center gap-2"
+            disabled={fetchingLocation}
+            className="w-full py-3 px-4 bg-primary hover:bg-green-600 text-white font-bold rounded-xl shadow-lg shadow-green-200 transition-all active:scale-95 disabled:opacity-70 flex items-center justify-center gap-2 cursor-pointer"
           >
-            {loading ? (
-              <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+            {fetchingLocation ? (
+              <>
+                <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                <span>Fetching Location...</span>
+              </>
             ) : (
               <>
                 <FiMapPin />
-                Get Current Location
+                <span>Get Current Location</span>
               </>
             )}
           </button>

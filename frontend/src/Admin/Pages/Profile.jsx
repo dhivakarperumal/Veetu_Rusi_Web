@@ -26,6 +26,8 @@ const Profile = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [changingPwd, setChangingPwd] = useState(false);
+    const [franchise, setFranchise] = useState(null);
+    const [subscriptionHistory, setSubscriptionHistory] = useState([]);
 
     const [currentPwd, setCurrentPwd] = useState("");
     const [newPwd, setNewPwd] = useState("");
@@ -52,6 +54,8 @@ const Profile = () => {
             setLoading(true);
             const res = await api.get(`/auth/profile`);
             const profile = res.data.user || res.data;
+            setFranchise(res.data.franchise || null);
+            setSubscriptionHistory(Array.isArray(res.data.subscriptionHistory) ? res.data.subscriptionHistory : []);
             setProfileData({
                 username: profile.username || "",
                 name: profile.name || "",
@@ -186,6 +190,9 @@ const Profile = () => {
         : "";
 
     const profileInitial = (profileData.name || profileData.username || "U").charAt(0).toUpperCase();
+    const formatDate = (value) => value
+        ? new Date(value).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
+        : "Not available";
 
     if (loading) {
         return (
@@ -310,6 +317,61 @@ const Profile = () => {
 
                 </div>
             </div>
+
+            {/* Subscription Summary */}
+            {franchise && (
+                <div className="px-4 md:px-8">
+                    <div className="bg-white rounded-[2.5rem] shadow-xl p-6 md:p-8 border border-gray-100">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <h2 className="text-xl font-black text-slate-800">Subscription</h2>
+                                <p className="text-sm text-gray-400">Current plan and previous purchases</p>
+                            </div>
+                            <span className={`rounded-full px-4 py-2 text-sm font-bold ${franchise.isExpired || franchise.subscriptionStatus !== "Active" ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700"}`}>
+                                {franchise.isExpired ? "Expired" : franchise.subscriptionStatus || "Inactive"}
+                            </span>
+                        </div>
+
+                        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+                            <div className="rounded-2xl bg-gray-50 p-4">
+                                <p className="text-xs font-bold uppercase tracking-wider text-gray-400">Days remaining</p>
+                                <p className={`mt-2 text-2xl font-black ${franchise.daysRemaining !== null && franchise.daysRemaining <= 7 ? "text-red-600" : "text-emerald-600"}`}>
+                                    {franchise.daysRemaining === null ? "-" : Math.max(0, franchise.daysRemaining)}
+                                </p>
+                            </div>
+                            <div className="rounded-2xl bg-gray-50 p-4">
+                                <p className="text-xs font-bold uppercase tracking-wider text-gray-400">Started</p>
+                                <p className="mt-2 font-bold text-slate-700">{formatDate(franchise.start_date)}</p>
+                            </div>
+                            <div className="rounded-2xl bg-gray-50 p-4">
+                                <p className="text-xs font-bold uppercase tracking-wider text-gray-400">Expires</p>
+                                <p className="mt-2 font-bold text-slate-700">{formatDate(franchise.expiry_date)}</p>
+                            </div>
+                        </div>
+
+                        <div className="mt-6 overflow-x-auto">
+                            <h3 className="mb-3 text-sm font-black uppercase tracking-wider text-slate-500">Purchase history</h3>
+                            {subscriptionHistory.length === 0 ? (
+                                <p className="rounded-2xl bg-gray-50 p-4 text-sm text-gray-500">No purchased plans found.</p>
+                            ) : (
+                                <table className="min-w-full text-left text-sm">
+                                    <thead><tr className="border-b border-gray-200 text-xs uppercase tracking-wider text-gray-400"><th className="px-3 py-3">Plan</th><th className="px-3 py-3">Amount</th><th className="px-3 py-3">Duration</th><th className="px-3 py-3">Plan period</th><th className="px-3 py-3">Purchased</th><th className="px-3 py-3">Payment ID</th></tr></thead>
+                                    <tbody>{subscriptionHistory.map((payment) => (
+                                        <tr key={payment.id} className="border-b border-gray-100 text-slate-700">
+                                            <td className="px-3 py-3 font-bold">{payment.plan_name || payment.plan_id || "Plan"}</td>
+                                            <td className="px-3 py-3 font-bold">{payment.currency || "INR"} {Number(payment.plan_amount ?? payment.amount ?? 0).toFixed(2)}</td>
+                                            <td className="px-3 py-3">{payment.duration_days ? `${payment.duration_days} days` : "-"}</td>
+                                            <td className="whitespace-nowrap px-3 py-3">{formatDate(payment.subscription_start_date)} - {formatDate(payment.subscription_expiry_date)}</td>
+                                            <td className="px-3 py-3">{formatDate(payment.created_at)}</td>
+                                            <td className="px-3 py-3 font-mono text-xs">{payment.payment_id || "-"}</td>
+                                        </tr>
+                                    ))}</tbody>
+                                </table>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
 
 
             {/* EDIT PROFILE MODAL */}
