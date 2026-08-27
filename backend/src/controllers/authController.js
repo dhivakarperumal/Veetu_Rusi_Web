@@ -265,12 +265,12 @@ exports.profile = async (req, res) => {
                       COALESCE(sp.plan_name, p.name) AS plan_name,
                       COALESCE(sp.plan_amount, sp.amount, p.amount) AS plan_amount,
                       COALESCE(sp.duration_days, p.durationDays) AS duration_days,
-                      sp.subscription_start_date, sp.subscription_expiry_date
+                      sp.subscription_start_date, sp.subscription_expiry_date, sp.user_id
                FROM subscription_payments sp
                LEFT JOIN subscription_plans p ON p.id = sp.plan_id
-               WHERE sp.franchise_id = ?
+               WHERE sp.franchise_id = ? OR sp.user_id = ?
                ORDER BY sp.created_at DESC`,
-              [franchise.id]
+              [franchise.id, franchise.franch_user_id]
             );
             response.subscriptionHistory = payments;
             response.currentPlan = payments[0] || null;

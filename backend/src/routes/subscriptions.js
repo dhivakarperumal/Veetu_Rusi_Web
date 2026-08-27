@@ -131,7 +131,7 @@ router.post('/confirm', async (req, res) => {
     if (rows.length === 0) return res.status(404).json({ message: 'Plan not found' });
     const plan = rows[0];
 
-    const [franchiseRows] = await pool.execute('SELECT start_date, expiry_date, status FROM franchise_owners WHERE id = ? LIMIT 1', [franchiseId]);
+    const [franchiseRows] = await pool.execute('SELECT start_date, expiry_date, status, franch_user_id FROM franchise_owners WHERE id = ? LIMIT 1', [franchiseId]);
     const franchise = franchiseRows[0] || {};
     const now = new Date();
     let startDate = now;
@@ -160,6 +160,7 @@ router.post('/confirm', async (req, res) => {
         CREATE TABLE IF NOT EXISTS subscription_payments (
           id INT AUTO_INCREMENT PRIMARY KEY,
           franchise_id INT,
+          user_id VARCHAR(255),
           plan_id VARCHAR(100),
           plan_name VARCHAR(255),
           plan_amount DECIMAL(10,2),
@@ -174,6 +175,7 @@ router.post('/confirm', async (req, res) => {
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
       `);
       const paymentColumns = [
+        ['user_id', 'VARCHAR(255)'],
         ['plan_id', 'VARCHAR(100)'],
         ['plan_name', 'VARCHAR(255)'],
         ['plan_amount', 'DECIMAL(10,2)'],
@@ -197,11 +199,11 @@ router.post('/confirm', async (req, res) => {
       const paymentId = razorpay_payment_id || `TEST_${Date.now()}`;
       await pool.execute(
         `INSERT INTO subscription_payments (
-          franchise_id, plan_id, plan_name, plan_amount, duration_days,
+          franchise_id, user_id, plan_id, plan_name, plan_amount, duration_days,
           subscription_start_date, subscription_expiry_date, amount, currency,
           payment_id, razorpay_order_id
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [franchiseId, plan.id, plan.name, plan.amount, plan.durationDays,
+          [franchiseId, franchise.franch_user_id || null, plan.id, plan.name, plan.amount, plan.durationDays,
           startDate.toISOString().slice(0, 10), expiryDate.toISOString().slice(0, 10),
           plan.amount, plan.currency || 'INR', paymentId, razorpay_order_id || null]
       );
