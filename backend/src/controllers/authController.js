@@ -61,20 +61,32 @@ function createToken(user) {
 }
 
 async function validateFranchiseAdminLogin(user) {
-  if (!user || user.role !== 'admin' || !user.email) return null;
+  if (!user || user.role !== 'admin') return null;
   try {
-    const [rows] = await pool.execute('SELECT id FROM franchise_owners WHERE email = ? LIMIT 1', [user.email]);
+    const [rows] = await pool.execute(
+      'SELECT id, franchise_id, franchise_name, owner_name, email, start_date, expiry_date, status FROM franchise_owners WHERE email = ? OR franch_user_id = ? LIMIT 1',
+      [user.email || '', user.user_id || '']
+    );
     if (!rows.length) return null;
 
+    const franchise = rows[0];
     const [payments] = await pool.execute(
       `SELECT sp.id FROM subscription_payments sp
        LEFT JOIN subscription_plans p ON p.id = sp.plan_id
        WHERE sp.franchise_id = ?
          AND COALESCE(sp.subscription_expiry_date, DATE_ADD(sp.created_at, INTERVAL COALESCE(sp.duration_days, p.durationDays, 0) DAY)) >= CURDATE()
        ORDER BY COALESCE(sp.subscription_expiry_date, DATE_ADD(sp.created_at, INTERVAL COALESCE(sp.duration_days, p.durationDays, 0) DAY)) DESC LIMIT 1`,
-      [rows[0].id]
+      [franchise.id]
     );
-    if (!payments.length) return 'No active subscription found. Please purchase a plan to continue.';
+    if (!payments.length) {
+      return {
+        error: 'No active subscription found. Please purchase a plan to continue.',
+        franchise,
+        franchiseId: franchise.id,
+        isExpired: true,
+        daysRemaining: 0,
+      };
+    }
 
     return null;
   } catch (err) {
@@ -182,9 +194,30 @@ exports.login = async (req, res) => {
       return res.status(403).json({ message: 'Your account is deactivated. Please contact support.' });
     }
 
-    const subscriptionError = await validateFranchiseAdminLogin(user);
-    if (subscriptionError) {
-      return res.status(403).json({ message: subscriptionError });
+    const subscriptionCheck = await validateFranchiseAdminLogin(user);
+    if (subscriptionCheck) {
+      const token = createToken(user);
+      const franchiseId = subscriptionCheck.franchiseId || subscriptionCheck.franchise?.id;
+      return res.status(403).json({
+        message: subscriptionCheck.error || 'No active subscription found. Please purchase a plan to continue.',
+        token,
+        user: {
+          ...user,
+          franchiseId,
+          franchise_id: franchiseId,
+        },
+        franchise: subscriptionCheck.franchise,
+        franchiseId,
+        franchise_id: franchiseId,
+        subscriptionInfo: {
+          status: 'Inactive',
+          isExpired: true,
+          daysRemaining: 0,
+          franchiseId,
+          franchise_id: franchiseId,
+          franchise: subscriptionCheck.franchise,
+        }
+      });
     }
 
     const token = createToken(user);
