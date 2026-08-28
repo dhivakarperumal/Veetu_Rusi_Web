@@ -1,5 +1,5 @@
 import React, { useContext, useState, useRef, useEffect } from "react";
-import { NavLink, Link, useNavigate } from "react-router-dom";
+import { NavLink, Link, useNavigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../../PrivateRouter/AuthContext";
 import { StoreContext } from "../../PrivateRouter/StoreContext";
 import {
@@ -18,6 +18,13 @@ import { FiHome, FiShoppingBag, FiGrid, FiFileText, FiPhone, FiChevronDown, FiMa
 import { FiChevronRight, FiTag } from "react-icons/fi";
 
 const Navbar = () => {
+
+  const location = useLocation();
+  const isCategoryActive = location.pathname.startsWith("/category/");
+  const isPagesActive =
+    location.pathname === "/about" ||
+    location.pathname === "/termsandconditions" ||
+    location.pathname === "/contactus";
 
   const { user, logout } = useContext(AuthContext);
   const { setLocationPopupOpen } = useContext(AuthContext);
@@ -140,8 +147,15 @@ const Navbar = () => {
   }, []);
 
   const navClass = ({ isActive }) =>
-    `px-4 py-1.5 rounded-lg text-sm font-medium transition
+    `px-4 py-1.5 rounded-lg text-sm font-medium transition 
   ${isActive
+      ? "bg-gradient-to-r from-primary-light to-secondary text-white shadow"
+      : "text-gray-600 hover:bg-primary-light/10 hover:text-primary"
+    }`;
+
+  const shopNavClass = ({ isActive }) =>
+    `px-4 py-1.5 rounded-lg text-sm font-medium transition 
+  ${isActive || location.pathname.startsWith("/products/")
       ? "bg-gradient-to-r from-primary-light to-secondary text-white shadow"
       : "text-gray-600 hover:bg-primary-light/10 hover:text-primary"
     }`;
@@ -182,7 +196,7 @@ const Navbar = () => {
                 Home
               </NavLink>
 
-              <NavLink to="/shop" className={navClass}>
+              <NavLink to="/shop" className={shopNavClass}>
                 Shop
               </NavLink>
 
@@ -203,7 +217,10 @@ const Navbar = () => {
                 }}
               >
                 <button
-                  className="flex cursor-pointer items-center gap-1 text-gray-600 hover:text-primary transition"
+                  className={`flex cursor-pointer items-center gap-1 transition ${isCategoryActive
+                    ? "bg-gradient-to-r from-primary-light to-secondary text-white shadow px-4 py-1.5 rounded-lg"
+                    : "text-gray-600 hover:text-primary"
+                    }`}
                 >
                   Categories
                   <FiChevronDown
@@ -298,7 +315,10 @@ const Navbar = () => {
                     setPagesMenu(!pagesMenu);
                     setCategoryMenu(false);
                   }}
-                  className="flex items-center cursor-pointer gap-1 text-gray-600 hover:text-primary transition"
+                  className={`flex items-center cursor-pointer gap-1 transition ${isPagesActive
+                      ? "bg-gradient-to-r from-primary-light to-secondary text-white shadow px-4 py-1.5 rounded-lg"
+                      : "text-gray-600 hover:text-primary"
+                    }`}
                 >
                   Pages
                   <FiChevronDown
