@@ -26,6 +26,7 @@ const FoodCheckout = React.lazy(() => import("./Components/Pages/FoodCheckout.js
 const CategoryPage = React.lazy(() => import("./Components/Pages/CategoryPage.jsx"));
 const Account = React.lazy(() => import("./Components/Pages/Account/Account.jsx"));
 const TermsAndConditions = React.lazy(() => import("./Components/CommenComponents/TermsAndCondition.jsx"));
+const PrivacyPolicy = React.lazy(() => import("./Components/CommenComponents/PrivacyPolicy.jsx"));
 const OrdersMain = React.lazy(() => import("./Components/Home/OrdersMain.jsx"));
 const MyFoodOrders = React.lazy(() => import("./Components/Pages/MyFoodOrders.jsx"));
 const Login = React.lazy(() => import("./Components/Auth/Login.jsx"));
@@ -167,6 +168,7 @@ const router = createHashRouter([
       { path: "/ordersmain", element: <OrdersMain /> },
       { path: "/food-orders", element: <MyFoodOrders /> },
       { path: "/termsandconditions", element: <TermsAndConditions /> },
+      { path: "/privacypolicy", element: <PrivacyPolicy /> },
       { path: "/food/:id", element: <FoodDetails /> },
       { path: "/referrals", element: <Referral /> },
     ],
