@@ -685,7 +685,6 @@ exports.getOrders = async (req, res) => {
         params.push(...ownedChefUserIds);
       }
     } else if (role === 'admin') {
-      // Admin sees only orders they created
       const ownerIds = [currentUserId, currentNumericId]
         .filter((id) => id !== null && id !== undefined)
         .map(String);
