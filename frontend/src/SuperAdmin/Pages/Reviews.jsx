@@ -428,19 +428,18 @@ const Reviews = () => {
 
       {/* FILTERS AND SEARCH BAR */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
-        <div className="xl:col-span-5 bg-white p-2 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-1 overflow-x-auto hide-scrollbar">
-          {["All", "Pending", "Published", "Flagged"].map((s) => (
-            <button
-              key={s}
-              onClick={() => setFilter(s)}
-              className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap
-                ${filter === s
-                  ? "bg-slate-900 text-white shadow-lg shadow-slate-900/10"
-                  : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"}`}
-            >
-              {s}
-            </button>
-          ))}
+        <div className="xl:col-span-3 rounded-2xl border border-slate-100 bg-white p-2 shadow-sm">
+          <label htmlFor="review-status-filter" className="sr-only">Review status</label>
+          <select
+            id="review-status-filter"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="w-full rounded-xl border-0 bg-slate-900 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-white outline-none focus:ring-2 focus:ring-blue-500/30"
+          >
+            {["All", "Pending", "Published", "Flagged"].map((status) => (
+              <option key={status} value={status}>{status}</option>
+            ))}
+          </select>
         </div>
 
         <div className="xl:col-span-4 relative group">
@@ -454,25 +453,42 @@ const Reviews = () => {
           />
         </div>
 
-        <div className="xl:col-span-3 bg-white p-2 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-1">
-          {[5, 4, 3, 2, 1].map((r) => (
-            <button
-              key={r}
-              onClick={() => setSelectedRating(selectedRating === r ? null : r)}
-              className={`flex-1 py-2.5 rounded-xl flex items-center justify-center gap-1 transition-all
-                 ${selectedRating === r
-                  ? "bg-amber-500 text-white"
-                  : "text-slate-400 hover:bg-slate-50"}`}
-            >
-              <span className="text-xs font-black">{r}</span>
-              <Star className={`w-3 h-3 ${selectedRating === r ? "fill-white" : ""}`} />
-            </button>
-          ))}
+        <div className="xl:col-span-2 rounded-2xl border border-slate-100 bg-white p-2 shadow-sm">
+          <label htmlFor="review-rating-filter" className="sr-only">Review rating</label>
+          <select
+            id="review-rating-filter"
+            value={selectedRating || ""}
+            onChange={(e) => setSelectedRating(e.target.value ? Number(e.target.value) : null)}
+            className="w-full rounded-xl border-0 bg-slate-900 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-white outline-none focus:ring-2 focus:ring-amber-500/30"
+          >
+            <option value="">All ratings</option>
+            {[5, 4, 3, 2, 1].map((rating) => (
+              <option key={rating} value={rating}>{rating} stars</option>
+            ))}
+          </select>
         </div>
-      </div>
 
-      <div className="flex justify-end">
-        <div className="inline-flex items-center gap-1 rounded-2xl border border-slate-100 bg-white p-1 shadow-sm">
+        <div className="xl:col-span-3 rounded-2xl border border-slate-100 bg-white p-2 shadow-sm">
+          <label htmlFor="review-franchise-filter" className="sr-only">Franchise Admin</label>
+          <select
+            id="review-franchise-filter"
+            value={selectedFranchiseAdmin}
+            onChange={(e) => {
+              setSelectedFranchiseAdmin(e.target.value);
+              setSelectedFranchiseAdminLabel(e.target.selectedOptions[0]?.dataset?.name || "");
+            }}
+            className="w-full rounded-xl border-0 bg-slate-900 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-white outline-none focus:ring-2 focus:ring-blue-500/30"
+          >
+            <option value="" data-name="">All franchise admins</option>
+            {franchiseAdmins.map((admin) => {
+              const label = admin.owner_name || admin.franchise_name || admin.full_name || admin.name || admin.email || `Franchise ${admin.id || ''}`;
+              return <option key={admin.id || admin.franch_user_id} value={admin.franch_user_id || admin.id} data-name={label}>{label}</option>;
+            })}
+          </select>
+        </div>
+
+        <div className="xl:col-span-12 flex justify-end">
+          <div className="inline-flex items-center gap-1 rounded-2xl border border-slate-100 bg-white p-1 shadow-sm">
           <button
             type="button"
             onClick={() => setViewMode("table")}
@@ -489,34 +505,7 @@ const Reviews = () => {
           >
             <LayoutGrid className="h-4 w-4" /> Cards
           </button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
-        <div className="xl:col-span-12 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-          <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Franchise Admin</label>
-          <select
-            value={selectedFranchiseAdmin}
-            onChange={(e) => {
-              setSelectedFranchiseAdmin(e.target.value);
-              setSelectedFranchiseAdminLabel(e.target.selectedOptions[0]?.dataset?.name || "");
-            }}
-            className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-slate-500"
-          >
-            <option value="" data-name="">All franchise admins</option>
-            {franchiseAdmins.map((admin) => {
-              const label = admin.owner_name || admin.franchise_name || admin.full_name || admin.name || admin.email || `Franchise ${admin.id || ''}`;
-              return (
-                <option
-                  key={admin.id || admin.franch_user_id}
-                  value={admin.franch_user_id || admin.id}
-                  data-name={label}
-                >
-                  {label}
-                </option>
-              );
-            })}
-          </select>
+          </div>
         </div>
       </div>
 
