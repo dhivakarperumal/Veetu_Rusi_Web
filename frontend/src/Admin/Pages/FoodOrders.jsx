@@ -490,6 +490,9 @@ const FoodOrders = () => {
     try {
       const params = {};
 
+      // Admin order views must include orders from every customer and chef.
+      params.scope = 'owned';
+
       if (statusFilter !== 'All') {
         params.status = statusFilter;
       }

@@ -68,7 +68,7 @@ initUserFoodOrderTable();
 
 router.get('/', verifyToken, async (req, res) => {
   try {
-    const { status, chef_id, franchise_user_id, franchise_id, ordered_by_user_id, user_id, search } = req.query;
+    const { status, chef_id, franchise_user_id, franchise_id, ordered_by_user_id, user_id, search, scope } = req.query;
     const orders = await controller.getAllOrders({
       role: req.user?.role,
       userId: req.user?.user_id,
@@ -79,6 +79,7 @@ router.get('/', verifyToken, async (req, res) => {
       franchise_id,
       user_id,
       ordered_by_user_id,
+      scope,
       search
     });
     res.json(orders);
