@@ -392,9 +392,10 @@ const updateOrderStatus = async (id, status) => {
 
 const getChefOrderItemsAndTotals = (row, chefId) => {
   const items = parseJson(row.items);
+  const chefIds = Array.isArray(chefId) ? chefId.map(String) : [String(chefId)];
   const filteredItems = items.filter((item) =>
-    String(item.chef_user_id) === String(chefId) ||
-    String(item.chef_id) === String(chefId)
+    chefIds.includes(String(item.chef_user_id)) ||
+    chefIds.includes(String(item.chef_id))
   );
 
   const chefTotalQuantity = filteredItems.reduce(
@@ -416,19 +417,52 @@ const getChefOrderItemsAndTotals = (row, chefId) => {
 };
 
 const getAllOrders = async (filters = {}) => {
-  const { role, userId, numericId, status, chef_id, franchise_user_id, franchise_id, user_id, created_by_user_id, ordered_by_user_id, search } = filters;
+  const { role, userId, numericId, status, chef_id, franchise_user_id, franchise_id, user_id, created_by_user_id, ordered_by_user_id, scope, search } = filters;
+  const normalizedRole = String(role || '').toLowerCase();
+  const adminAllOrders = scope === 'all' && ['admin', 'superadmin'].includes(normalizedRole);
+  const adminOwnedOrders = scope === 'owned' && normalizedRole === 'admin';
 
   let query = 'SELECT * FROM user_food_order_table WHERE 1=1';
   const params = [];
+  let chefFilterIds = chef_id ? [String(chef_id)] : [];
 
   // Role-based filtering
-  if (role === 'chef' && userId) {
+  if (adminAllOrders) {
+    // Explicit admin scope intentionally leaves the order query unrestricted.
+  } else if (adminOwnedOrders) {
+    const adminIds = [...new Set([userId, numericId]
+      .filter((id) => id !== null && id !== undefined)
+      .map(String))];
+    if (!adminIds.length) return [];
+
+    const adminPlaceholders = adminIds.map(() => '?').join(',');
+    const [chefRows] = await pool.execute(
+      `SELECT id, user_id FROM home_chefs WHERE created_by IN (${adminPlaceholders})`,
+      adminIds
+    );
+    const ownedChefIds = [...new Set(chefRows
+      .flatMap((chef) => [chef.id, chef.user_id])
+      .filter((id) => id !== null && id !== undefined)
+      .map(String))];
+    if (!ownedChefIds.length) return [];
+
+    const ownedConditions = ownedChefIds.flatMap(() => ['chef_id = ?', 'chef_user_id = ?']);
+    const ownedParams = ownedChefIds.flatMap((id) => [id, id]);
+    const ownedPatterns = ownedChefIds.flatMap((id) => [
+      `%"chef_user_id":"${id}"%`,
+      `%"chef_user_id":${id}%`,
+      `%"chef_id":"${id}"%`,
+      `%"chef_id":${id}%`
+    ]);
+    query += ` AND (${ownedConditions.join(' OR ')} OR ${ownedPatterns.map(() => 'items LIKE ?').join(' OR ')})`;
+    params.push(...ownedParams, ...ownedPatterns);
+  } else if (normalizedRole === 'chef' && userId) {
     query += ' AND chef_user_id = ?';
     params.push(userId);
-  } else if (role === 'franchise' && userId) {
+  } else if (normalizedRole === 'franchise' && userId) {
     query += ' AND franchise_user_id = ?';
     params.push(userId);
-  } else if (role === 'user' && userId) {
+  } else if (normalizedRole === 'user' && userId) {
     query += ' AND (user_id = ? OR ordered_by_user_id = ?)';
     params.push(userId, userId);
   }
@@ -441,15 +475,23 @@ const getAllOrders = async (filters = {}) => {
 
   // Chef ID filter
   if (chef_id) {
-    const patterns = [
-      `%"chef_user_id":"${chef_id}"%`,
-      `%"chef_user_id":${chef_id}%`,
-      `%"chef_id":"${chef_id}"%`,
-      `%"chef_id":${chef_id}%`
-    ];
+    const [chefRows] = await pool.execute(
+      'SELECT user_id FROM home_chefs WHERE id = ? OR user_id = ? LIMIT 1',
+      [chef_id, chef_id]
+    );
+    if (chefRows[0]?.user_id) chefFilterIds.push(String(chefRows[0].user_id));
 
-    query += ' AND (chef_id = ? OR chef_user_id = ? OR items LIKE ? OR items LIKE ? OR items LIKE ? OR items LIKE ?)';
-    params.push(chef_id, chef_id, ...patterns);
+    const directConditions = chefFilterIds.flatMap(() => ['chef_id = ?', 'chef_user_id = ?']);
+    const directParams = chefFilterIds.flatMap((id) => [id, id]);
+    const itemPatterns = chefFilterIds.flatMap((id) => [
+      `%"chef_user_id":"${id}"%`,
+      `%"chef_user_id":${id}%`,
+      `%"chef_id":"${id}"%`,
+      `%"chef_id":${id}%`
+    ]);
+
+    query += ` AND (${directConditions.join(' OR ')} OR ${itemPatterns.map(() => 'items LIKE ?').join(' OR ')})`;
+    params.push(...directParams, ...itemPatterns);
   }
 
   // Franchise filters
@@ -497,10 +539,10 @@ const getAllOrders = async (filters = {}) => {
       };
 
       if (chef_id) {
-        const chefData = getChefOrderItemsAndTotals(row, chef_id);
+        const chefData = getChefOrderItemsAndTotals(row, chefFilterIds);
         const hasChefRow =
-          String(row.chef_id) === String(chef_id) ||
-          String(row.chef_user_id) === String(chef_id);
+          chefFilterIds.includes(String(row.chef_id)) ||
+          chefFilterIds.includes(String(row.chef_user_id));
 
         return {
           ...enrichedOrder,
@@ -516,8 +558,8 @@ const getAllOrders = async (filters = {}) => {
       if (!chef_id) return true;
       return (
         row.items.length > 0 ||
-        String(row.chef_id) === String(chef_id) ||
-        String(row.chef_user_id) === String(chef_id)
+        chefFilterIds.includes(String(row.chef_id)) ||
+        chefFilterIds.includes(String(row.chef_user_id))
       );
     });
 };

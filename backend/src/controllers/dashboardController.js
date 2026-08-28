@@ -129,7 +129,8 @@ exports.getDashboardData = async (req, res) => {
       const orders = await getAllOrders({
         role: req.user?.role,
         userId: req.user?.user_id,
-        numericId: req.user?.id
+        numericId: req.user?.id,
+        scope: req.user?.role === 'admin' ? 'owned' : 'all'
       });
       
       orders.forEach(order => {

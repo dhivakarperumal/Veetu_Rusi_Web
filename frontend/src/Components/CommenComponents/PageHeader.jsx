@@ -8,7 +8,7 @@ const PageHeader = ({ title, background }) => {
 
   return (
     <div
-      className="relative w-full h-[180px] sm:h-[200px] md:h-[210px] lg:h-[220px] flex items-center justify-center text-white"
+      className="relative w-full h-[180px] sm:h-[200px] md:h-[210px] lg:h-[220px] flex items-center justify-center text-white overflow-hidden"
       style={{
         backgroundImage: `url(${bgImage})`,
         backgroundSize: "cover",
@@ -16,8 +16,8 @@ const PageHeader = ({ title, background }) => {
         // backgroundRepeat: "no-repeat"
       }}
     >
-      {/* Overlay */}
-      <div className="absolute inset-0"></div>
+      {/* Black Blur Overlay */}
+      <div className="absolute inset-0 bg-black/20 backdrop-blur-[2px]"></div>
 
       {/* Content */}
       <div className="relative text-center px-4">

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../api";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { Eye, EyeOff, User, Mail, Phone, Lock, Gift } from "lucide-react";
@@ -40,7 +40,7 @@ function Register() {
     }
 
     try {
-      await axios.post("http://localhost:5000/api/auth/register", {
+      await api.post("/auth/register", {
         username: form.username,
         email: form.email,
         phone: form.phone,
@@ -64,15 +64,15 @@ function Register() {
 
       {/* Main Card - Increased Size */}
       <div className="relative z-10 w-full max-w-[1000px] min-h-[600px] bg-white rounded-3xl shadow-[0_20px_60px_-15px_rgba(20,184,166,0.3)] overflow-hidden flex transform transition-all hover:shadow-[0_25px_60px_-15px_rgba(20,184,166,0.4)]">
-        
+
         {/* Left Image Section */}
-        <div 
+        <div
           className="absolute inset-0 w-full h-full bg-cover bg-center hidden md:block"
           style={{ backgroundImage: "url('https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=1200&q=80')" }}
         >
           {/* Subtle warm overlay to make food pop */}
           <div className="absolute inset-0 bg-gradient-to-t from-teal-900/60 via-teal-800/20 to-transparent"></div>
-          
+
           {/* Decorative text on image */}
           <div className="absolute bottom-12 left-10 right-[55%] text-white">
             <h1 className="text-4xl font-bold mb-3 drop-shadow-lg">Veetu Rusi</h1>
@@ -90,14 +90,14 @@ function Register() {
 
         {/* Right Form Section - Narrower to not overlap wave */}
         <div className="relative z-10 w-full md:w-[45%] md:ml-auto h-full flex flex-col justify-center px-8 md:px-10 py-10">
-          
+
           <div className="mb-8">
             <h2 className="text-4xl font-bold text-gray-800 mb-2 tracking-tight">Create Account</h2>
             <p className="text-gray-500 text-base font-medium">Register to get started</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            
+
             {/* Username Field */}
             <div className="space-y-1.5">
               <label className="block text-sm font-bold text-gray-700 ml-1">Username</label>
@@ -163,7 +163,7 @@ function Register() {
                 </div>
                 <input
                   name="referral_code"
-                  type="text"                    value={form.referral_code}                  placeholder="Enter invite code"
+                  type="text" value={form.referral_code} placeholder="Enter invite code"
                   onChange={handleChange}
                   className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 text-[15px] placeholder-gray-400 focus:outline-none focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-50 transition-all shadow-sm"
                 />

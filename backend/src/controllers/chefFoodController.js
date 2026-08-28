@@ -153,8 +153,8 @@ SELECT
       params.push(chef_user_id);
     }
     if (chef_id) {
-      query += ' AND cf.chef_id = ?';
-      params.push(chef_id);
+      query += ' AND (hc.id = ? OR hc.user_id = ?)';
+      params.push(chef_id, chef_id);
     }
     if (franchise_user_id) {
       query += ' AND cf.franchise_user_id = ?';
