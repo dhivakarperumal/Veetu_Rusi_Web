@@ -12,6 +12,9 @@ import {
   Shirt,
   Gem,
   Utensils,
+  ShieldCheck,
+  FileText,
+  RefreshCcw,
 } from "lucide-react";
 import { FaFacebook, FaInstagram } from "react-icons/fa";
 import PageContainer from "./PageContainer";
@@ -60,7 +63,7 @@ const Footer = () => {
 
       <PageContainer>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 py-12">
 
           {/* Section 1 */}
           <div>
@@ -82,6 +85,34 @@ const Footer = () => {
               Fresh ingredients, home-style recipes, and unforgettable flavors served
               with love.
             </p>
+          </div>
+
+
+          {/* Why Choose Us */}
+          <div>
+            <h2 className="text-xl font-semibold mb-4">Why Choose Us</h2>
+
+            <ul className="space-y-3 text-sm">
+              <li className="flex items-center gap-2">
+                <Sparkles size={16} />
+                Authentic Home-Style Taste
+              </li>
+
+              <li className="flex items-center gap-2">
+                <Utensils size={16} />
+                Fresh & Quality Ingredients
+              </li>
+
+              <li className="flex items-center gap-2">
+                <Gem size={16} />
+                Trusted Home Chefs
+              </li>
+
+              <li className="flex items-center gap-2">
+                <Shirt size={16} />
+                Traditional Recipes
+              </li>
+            </ul>
           </div>
 
           {/* Quick Links */}
@@ -153,6 +184,7 @@ const Footer = () => {
 
             </ul>
           </div>
+
 
           {/* Contact */}
           <div>
