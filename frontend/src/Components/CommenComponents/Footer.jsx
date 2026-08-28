@@ -161,6 +161,16 @@ const Footer = () => {
                 </Link>
               </li>
 
+              <li>
+                <Link
+                  to="/privacypolicy"
+                  className="flex items-center gap-2 hover:translate-x-1 transition"
+                >
+                  <ShieldCheck size={16} />
+                  Privacy Policy
+                </Link>
+              </li>
+
             </ul>
           </div>
 
