@@ -902,6 +902,7 @@ const createDeliveryLiveTrackingTable = async () => {
 
 const cleanupHomeChefs = async () => {
     try {
+<<<<<<< Updated upstream
         // Drop the entire home_chefs table as requested (destructive)
         try {
             await pool.execute(`DROP TABLE IF EXISTS \`home_chefs\``);
@@ -909,6 +910,56 @@ const cleanupHomeChefs = async () => {
         } catch (e) {
             console.error('Could not drop home_chefs table:', e.message || e);
         }
+=======
+        // Drop unwanted verbose audit columns from home_chefs
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN chef_id`); console.log('  Dropped: chef_id'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN chef_unique_code`); console.log('  Dropped: chef_unique_code'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN created_by_id`); console.log('  Dropped: created_by_id'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN created_by_user_id`); console.log('  Dropped: created_by_user_id'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN created_by_name`); console.log('  Dropped: created_by_name'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN created_by_email`); console.log('  Dropped: created_by_email'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN created_by_phone`); console.log('  Dropped: created_by_phone'); } catch (e) {}
+        // Additional legacy / verbose columns to remove (requested cleanup)
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN father_husband_name`); console.log('  Dropped: father_husband_name'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN age`); console.log('  Dropped: age'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN cover_banner`); console.log('  Dropped: cover_banner'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN whatsapp_number`); console.log('  Dropped: whatsapp_number'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN emergency_contact`); console.log('  Dropped: emergency_contact'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN landmark`); console.log('  Dropped: landmark'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN latitude`); console.log('  Dropped: latitude'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN longitude`); console.log('  Dropped: longitude'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN seating_available`); console.log('  Dropped: seating_available'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN dining_available`); console.log('  Dropped: dining_available'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN takeaway_available`); console.log('  Dropped: takeaway_available'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN delivery_available`); console.log('  Dropped: delivery_available'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN specialty_food`); console.log('  Dropped: specialty_food'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN cuisine_type`); console.log('  Dropped: cuisine_type'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN signature_dish`); console.log('  Dropped: signature_dish'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN veg_nonveg`); console.log('  Dropped: veg_nonveg'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN preparation_time`); console.log('  Dropped: preparation_time'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN opening_time`); console.log('  Dropped: opening_time'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN closing_time`); console.log('  Dropped: closing_time'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN holiday_schedule`); console.log('  Dropped: holiday_schedule'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN busy_hours`); console.log('  Dropped: busy_hours'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN instant_order`); console.log('  Dropped: instant_order'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN aadhaar_url`); console.log('  Dropped: aadhaar_url'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN pan_url`); console.log('  Dropped: pan_url'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN otp_verified`); console.log('  Dropped: otp_verified'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN email_verified`); console.log('  Dropped: email_verified'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN verification_status`); console.log('  Dropped: verification_status'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN approved_by_admin`); console.log('  Dropped: approved_by_admin'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN gst_certificate_url`); console.log('  Dropped: gst_certificate_url'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN preorder_available`); console.log('  Dropped: preorder_available'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN cutoff_time`); console.log('  Dropped: cutoff_time'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN kitchen_photo1`); console.log('  Dropped: kitchen_photo1'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN kitchen_photo2`); console.log('  Dropped: kitchen_photo2'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN kitchen_photo3`); console.log('  Dropped: kitchen_photo3'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN cooking_area_photo`); console.log('  Dropped: cooking_area_photo'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN storage_area_photo`); console.log('  Dropped: storage_area_photo'); } catch (e) {}
+        // Ensure legacy verbose created_by columns are removed as well
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN created_by_id`); console.log('  Dropped: created_by_id'); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN created_by_user_id`); console.log('  Dropped: created_by_user_id'); } catch (e) {}
+>>>>>>> Stashed changes
 
         // Also remove any lingering unique/index cleanup that targeted home_chefs
         try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP INDEX IF EXISTS idx_user_id`); } catch (e) {}

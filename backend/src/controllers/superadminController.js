@@ -428,6 +428,480 @@ exports.getDashboardStats = async (req, res) => {
   }
 };
 
+<<<<<<< Updated upstream
+=======
+// ==================== HOME CHEF MANAGEMENT ====================
+exports.getHomeChefs = async (req, res) => {
+  try {
+    // Ensure audit columns exist (safe migration)
+    try { await pool.execute("ALTER TABLE home_chefs ADD COLUMN IF NOT EXISTS created_by VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE home_chefs ADD COLUMN IF NOT EXISTS updated_by VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+
+    const currentUserIdentifier = req.user?.user_id || req.user?.id || null;
+    let rows;
+
+    if (req.user?.role === 'superadmin' || req.user?.role === 'admin') {
+      const [all] = await pool.execute("SELECT * FROM home_chefs ORDER BY created_at DESC");
+      rows = all;
+    } else {
+      if (currentUserIdentifier) {
+        const [filtered] = await pool.execute(
+          "SELECT * FROM home_chefs WHERE created_by = ? ORDER BY created_at DESC",
+          [currentUserIdentifier]
+        );
+        rows = filtered;
+      } else {
+        rows = [];
+      }
+    }
+
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving home chefs.', error: error.message });
+  }
+};
+
+exports.getHomeChefById = async (req, res) => {
+  try {
+    const chefId = req.params.id;
+    const [rows] = await pool.execute('SELECT * FROM home_chefs WHERE id = ?', [chefId]);
+    if (!rows.length) {
+      return res.status(404).json({ message: 'Home chef not found.' });
+    }
+    res.json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving home chef details.', error: error.message });
+  }
+};
+
+exports.createHomeChef = async (req, res) => {
+  try {
+    // Ensure created_by and franchise columns exist (safe migration)
+    try { await pool.execute("ALTER TABLE home_chefs ADD COLUMN IF NOT EXISTS created_by_id INT DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE home_chefs ADD COLUMN IF NOT EXISTS created_by_user_id VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE home_chefs ADD COLUMN IF NOT EXISTS created_by_name VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE home_chefs ADD COLUMN IF NOT EXISTS created_by_email VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE home_chefs ADD COLUMN IF NOT EXISTS created_by_phone VARCHAR(50) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE home_chefs ADD COLUMN IF NOT EXISTS franchise_id VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+    try { await pool.execute("ALTER TABLE home_chefs ADD COLUMN IF NOT EXISTS franchise_user_id VARCHAR(255) DEFAULT NULL"); } catch (_) {}
+
+    const {
+      chef_unique_code, name, father_husband_name, gender, date_of_birth, age,
+      mobile, alt_mobile, whatsapp_number, email, emergency_contact,
+      door_number, street_name, area_name, landmark, city, district, state, pincode,
+      latitude, longitude, map_link, kitchen_name, kitchen_address, kitchen_type,
+      seating_available, dining_available, takeaway_available, delivery_available,
+      specialty_food, cuisine_type, signature_dish, veg_nonveg, experience_years,
+      cooking_style, preparation_time, daily_order_capacity, available_days,
+      opening_time, closing_time, holiday_schedule, busy_hours, instant_order, pre_order,
+      aadhaar_number, pan_number, fssai_number, gst_number, bank_account_number,
+      ifsc_code, account_holder_name, upi_id, username, password, otp_verified,
+      email_verified, login_status, verification_status, approval_status,
+      rejection_reason, block_reason, address,
+      fssai_available, gst_available, instagram_url, facebook_url, youtube_url, website_url,
+      delivery_radius, preorder_available, cutoff_time, about_me, cooking_story, why_choose_me, languages_known
+    } = req.body;
+
+    let createdById = req.user?.id || null;
+    let createdByUserId = req.user?.user_id || null;
+    let createdByName = req.user?.full_name || null;
+    let createdByEmail = req.user?.email || null;
+    let createdByPhone = req.user?.phone || null;
+
+    // Fetch creator details from DB to ensure all fields are populated
+    if (createdById && (!createdByName || !createdByPhone)) {
+      const [uRows] = await pool.execute(
+        'SELECT user_id, full_name, email, mobile_number FROM users WHERE id = ?',
+        [createdById]
+      );
+      if (uRows.length) {
+        createdByUserId = uRows[0].user_id || createdByUserId;
+        createdByName = uRows[0].full_name || createdByName;
+        createdByEmail = uRows[0].email || createdByEmail;
+        createdByPhone = uRows[0].mobile_number || createdByPhone;
+      }
+    }
+
+    // Fallback to a system admin if creator info is still missing
+    if (!createdById) {
+      try {
+        const [adminRows] = await pool.execute("SELECT id, user_id, full_name AS full_name, email, mobile_number FROM users WHERE role = 'admin' ORDER BY id LIMIT 1");
+        if (adminRows.length) {
+          const a = adminRows[0];
+          createdById = a.id;
+          createdByUserId = a.user_id || createdByUserId;
+          createdByName = a.full_name || 'System Admin';
+          createdByEmail = a.email || null;
+          createdByPhone = a.mobile_number || null;
+        }
+      } catch (e) {}
+    }
+
+    let resolvedFranchiseId = null;
+    let resolvedFranchiseUserId = null;
+    if (createdByUserId) {
+      try {
+        const [fRows] = await pool.execute('SELECT franchise_id, franch_user_id, user_id FROM franchise_owners WHERE user_id = ? OR franch_user_id = ? LIMIT 1', [createdByUserId, createdByUserId]);
+        if (fRows.length > 0) {
+          resolvedFranchiseId = fRows[0].franchise_id;
+          resolvedFranchiseUserId = fRows[0].franch_user_id || fRows[0].user_id || createdByUserId;
+        }
+      } catch(err) {
+        console.error('Error fetching franchise owner details:', err);
+      }
+    }
+
+
+    // chef_unique_code is removed as it does not exist in the database schema
+
+    // Auto-calculate age from date_of_birth
+    const calculateAgeFromDOB = (dob) => {
+      if (!dob) return null;
+      const birthDate = new Date(dob);
+      const today = new Date();
+      let calcAge = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        calcAge--;
+      }
+      return calcAge > 0 ? calcAge : null;
+    };
+    const calculatedAge = calculateAgeFromDOB(date_of_birth);
+
+    const profile_photo = (req.files && req.files.profile_photo ? req.files.profile_photo[0].filename : null) || req.body.profile_photo || null;
+    const cover_banner = (req.files && req.files.cover_banner ? req.files.cover_banner[0].filename : null) || req.body.cover_banner || null;
+    const aadhaar_front_url = (req.files && req.files.aadhaar_front_url ? req.files.aadhaar_front_url[0].filename : null) || req.body.aadhaar_front_url || null;
+    const aadhaar_back_url = (req.files && req.files.aadhaar_back_url ? req.files.aadhaar_back_url[0].filename : null) || req.body.aadhaar_back_url || null;
+    const pan_card_url = (req.files && req.files.pan_card_url ? req.files.pan_card_url[0].filename : null) || req.body.pan_card_url || null;
+    const fssai_certificate_url = (req.files && req.files.fssai_certificate_url ? req.files.fssai_certificate_url[0].filename : null) || req.body.fssai_certificate_url || null;
+    const gst_certificate_url = (req.files && req.files.gst_certificate_url ? req.files.gst_certificate_url[0].filename : null) || req.body.gst_certificate_url || null;
+    const signature_url = (req.files && req.files.signature_url ? req.files.signature_url[0].filename : null) || req.body.signature_url || null;
+    const kitchen_photo1 = (req.files && req.files.kitchen_photo1 ? req.files.kitchen_photo1[0].filename : null) || req.body.kitchen_photo1 || null;
+    const kitchen_photo2 = (req.files && req.files.kitchen_photo2 ? req.files.kitchen_photo2[0].filename : null) || req.body.kitchen_photo2 || null;
+    const kitchen_photo3 = (req.files && req.files.kitchen_photo3 ? req.files.kitchen_photo3[0].filename : null) || req.body.kitchen_photo3 || null;
+    const cooking_area_photo = (req.files && req.files.cooking_area_photo ? req.files.cooking_area_photo[0].filename : null) || req.body.cooking_area_photo || null;
+    const storage_area_photo = (req.files && req.files.storage_area_photo ? req.files.storage_area_photo[0].filename : null) || req.body.storage_area_photo || null;
+    const selfie_verification_url = (req.files && req.files.selfie_verification_url ? req.files.selfie_verification_url[0].filename : null) || req.body.selfie_verification_url || null;
+    
+    const kitchen_photos = req.files && req.files.kitchen_photos ? req.files.kitchen_photos.map(f => f.filename).join(',') : (req.body.kitchen_photos ? (Array.isArray(req.body.kitchen_photos) ? JSON.stringify(req.body.kitchen_photos) : req.body.kitchen_photos) : null);
+    const kitchen_videos = req.files && req.files.kitchen_videos ? req.files.kitchen_videos.map(f => f.filename).join(',') : (req.body.kitchen_videos ? (Array.isArray(req.body.kitchen_videos) ? JSON.stringify(req.body.kitchen_videos) : req.body.kitchen_videos) : null);
+
+    const fullAddress = address || [door_number, street_name, area_name, landmark, city, district, state, pincode].filter(Boolean).join(', ') || '';
+    const hashedPw = password ? hashPassword(password) : null;
+
+    const sql = `INSERT INTO home_chefs (
+        name, mobile, email, address, fssai_number, aadhaar_url, pan_url, status,
+        created_by_id, created_by_user_id, created_by_name, created_by_email, created_by_phone,
+        franchise_id, franchise_user_id,
+        father_husband_name, gender, date_of_birth, age,
+        profile_photo, cover_banner, alt_mobile, whatsapp_number, emergency_contact,
+        door_number, street_name, area_name, landmark, city, district, state, pincode,
+        latitude, longitude, map_link, kitchen_name, kitchen_address, kitchen_type,
+        kitchen_photos, kitchen_videos, seating_available, dining_available, takeaway_available, delivery_available,
+        specialty_food, cuisine_type, signature_dish, veg_nonveg, experience_years,
+        cooking_style, preparation_time, daily_order_capacity, available_days,
+        opening_time, closing_time, holiday_schedule, busy_hours, instant_order, pre_order,
+        aadhaar_number, pan_number, gst_number, bank_account_number,
+        ifsc_code, account_holder_name, upi_id, username, password, otp_verified,
+        email_verified, last_login, device_details, login_status, verification_status, approval_status,
+        approved_by_admin, approval_date, rejection_reason, block_reason,
+        aadhaar_front_url, aadhaar_back_url, pan_card_url, fssai_certificate_url, gst_certificate_url, signature_url, kitchen_photo1, kitchen_photo2, kitchen_photo3, cooking_area_photo, storage_area_photo, selfie_verification_url,
+        instagram_url, facebook_url, youtube_url, website_url, fssai_available, gst_available,
+        delivery_radius, preorder_available, cutoff_time, about_me, cooking_story, why_choose_me, languages_known
+      ) VALUES (${Array(104).fill('?').join(', ')})`;
+
+    const params = [
+      name,
+      mobile,
+      email,
+      fullAddress,
+      fssai_number || null,
+      null, // aadhaar_url
+      null, // pan_url
+      approval_status || 'Pending', // status
+      createdById,
+      createdByUserId,
+      createdByName,
+      createdByEmail,
+      createdByPhone,
+      resolvedFranchiseId,
+      resolvedFranchiseUserId,
+      father_husband_name || null,
+      gender || null,
+      date_of_birth || null,
+      calculatedAge !== null ? calculatedAge : (age ? parseInt(age) : null),
+      profile_photo,
+      cover_banner,
+      alt_mobile || null,
+      whatsapp_number || null,
+      emergency_contact || null,
+      door_number || null,
+      street_name || null,
+      area_name || null,
+      landmark || null,
+      city || null,
+      district || null,
+      state || null,
+      pincode || null,
+      latitude || null,
+      longitude || null,
+      map_link || null,
+      kitchen_name || null,
+      kitchen_address || null,
+      kitchen_type || 'Home Kitchen',
+      kitchen_photos,
+      kitchen_videos,
+      seating_available === 'true' || seating_available === true ? 1 : 0,
+      dining_available === 'true' || dining_available === true ? 1 : 0,
+      takeaway_available === 'true' || takeaway_available === true ? 1 : 0,
+      delivery_available === 'true' || delivery_available === true ? 1 : 0,
+      specialty_food || null,
+      cuisine_type || 'South Indian',
+      signature_dish || null,
+      veg_nonveg || 'Veg',
+      experience_years ? parseInt(experience_years) : null,
+      cooking_style || null,
+      preparation_time || null,
+      daily_order_capacity ? parseInt(daily_order_capacity) : null,
+      available_days || null,
+      opening_time || null,
+      closing_time || null,
+      holiday_schedule || null,
+      busy_hours || null,
+      instant_order === 'true' || instant_order === true ? 1 : 0,
+      pre_order === 'true' || pre_order === true ? 1 : 0,
+      aadhaar_number || null,
+      pan_number || null,
+      gst_number || null,
+      bank_account_number || null,
+      ifsc_code || null,
+      account_holder_name || null,
+      upi_id || null,
+      username || null,
+      hashedPw,
+      otp_verified === 'true' || otp_verified === true ? 1 : 0,
+      email_verified === 'true' || email_verified === true ? 1 : 0,
+      null, // last_login
+      null, // device_details
+      login_status || 'Active',
+      verification_status || 'Pending',
+      approval_status || 'Pending',
+      null, // approved_by_admin
+      null, // approval_date
+      rejection_reason || null,
+      block_reason || null,
+      aadhaar_front_url,
+      aadhaar_back_url,
+      pan_card_url,
+      fssai_certificate_url,
+      gst_certificate_url,
+      signature_url,
+      kitchen_photo1,
+      kitchen_photo2,
+      kitchen_photo3,
+      cooking_area_photo,
+      storage_area_photo,
+      selfie_verification_url,
+      instagram_url || null,
+      facebook_url || null,
+      youtube_url || null,
+      website_url || null,
+      fssai_available || 'No',
+      gst_available || 'No',
+      delivery_radius || '5 KM',
+      preorder_available === 'true' || preorder_available === true ? 1 : 0,
+      cutoff_time || null,
+      about_me || null,
+      cooking_story || null,
+      why_choose_me || null,
+      languages_known || null
+    ];
+
+    // Debug checks
+    try {
+      const colsMatch = sql.match(/INSERT INTO\s+home_chefs\s*\(([^)]*)\)\s*VALUES/i);
+      const colsCount = colsMatch ? colsMatch[1].split(',').filter(c => c.trim()).length : null;
+      const placeholders = (sql.match(/\?/g) || []).length;
+      if (colsCount !== placeholders) console.error('home_chefs: columns vs placeholders mismatch', colsCount, placeholders);
+      if (placeholders !== params.length) console.error('home_chefs: placeholders vs params length mismatch', placeholders, params.length);
+      console.log('home_chefs insert debug:', { colsCount, placeholders, paramsLength: params.length });
+    } catch (e) { console.error('Debug check failed', e); }
+
+    const [result] = await pool.execute(sql, params);
+
+    await syncUserForEntity('home_chefs', result.insertId, 'chef');
+    res.status(201).json({ message: 'Home chef application submitted.', id: result.insertId });
+  } catch (error) {
+    res.status(500).json({ message: 'Error creating home chef.', error: error.message });
+  }
+};
+
+exports.updateHomeChef = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      chef_unique_code, name, father_husband_name, gender, date_of_birth, age,
+      mobile, alt_mobile, whatsapp_number, email, emergency_contact,
+      door_number, street_name, area_name, landmark, city, district, state, pincode,
+      latitude, longitude, map_link, kitchen_name, kitchen_address, kitchen_type,
+      seating_available, dining_available, takeaway_available, delivery_available,
+      specialty_food, cuisine_type, signature_dish, veg_nonveg, experience_years,
+      cooking_style, preparation_time, daily_order_capacity, available_days,
+      opening_time, closing_time, holiday_schedule, busy_hours, instant_order, pre_order,
+      aadhaar_number, pan_number, fssai_number, gst_number, bank_account_number,
+      ifsc_code, account_holder_name, upi_id, username, password, otp_verified,
+      email_verified, login_status, verification_status, approval_status,
+      rejection_reason, block_reason, address,
+      fssai_available, gst_available, instagram_url, facebook_url, youtube_url, website_url,
+      delivery_radius, preorder_available, cutoff_time, about_me, cooking_story, why_choose_me, languages_known
+    } = req.body;
+
+    const profile_photo = (req.files && req.files.profile_photo ? req.files.profile_photo[0].filename : null) || req.body.profile_photo || null;
+    const cover_banner = (req.files && req.files.cover_banner ? req.files.cover_banner[0].filename : null) || req.body.cover_banner || null;
+    const aadhaar_front_url = (req.files && req.files.aadhaar_front_url ? req.files.aadhaar_front_url[0].filename : null) || req.body.aadhaar_front_url || null;
+    const aadhaar_back_url = (req.files && req.files.aadhaar_back_url ? req.files.aadhaar_back_url[0].filename : null) || req.body.aadhaar_back_url || null;
+    const pan_card_url = (req.files && req.files.pan_card_url ? req.files.pan_card_url[0].filename : null) || req.body.pan_card_url || null;
+    const fssai_certificate_url = (req.files && req.files.fssai_certificate_url ? req.files.fssai_certificate_url[0].filename : null) || req.body.fssai_certificate_url || null;
+    const gst_certificate_url = (req.files && req.files.gst_certificate_url ? req.files.gst_certificate_url[0].filename : null) || req.body.gst_certificate_url || null;
+    const signature_url = (req.files && req.files.signature_url ? req.files.signature_url[0].filename : null) || req.body.signature_url || null;
+    const kitchen_photo1 = (req.files && req.files.kitchen_photo1 ? req.files.kitchen_photo1[0].filename : null) || req.body.kitchen_photo1 || null;
+    const kitchen_photo2 = (req.files && req.files.kitchen_photo2 ? req.files.kitchen_photo2[0].filename : null) || req.body.kitchen_photo2 || null;
+    const kitchen_photo3 = (req.files && req.files.kitchen_photo3 ? req.files.kitchen_photo3[0].filename : null) || req.body.kitchen_photo3 || null;
+    const cooking_area_photo = (req.files && req.files.cooking_area_photo ? req.files.cooking_area_photo[0].filename : null) || req.body.cooking_area_photo || null;
+    const storage_area_photo = (req.files && req.files.storage_area_photo ? req.files.storage_area_photo[0].filename : null) || req.body.storage_area_photo || null;
+    const selfie_verification_url = (req.files && req.files.selfie_verification_url ? req.files.selfie_verification_url[0].filename : null) || req.body.selfie_verification_url || null;
+    
+    const kitchen_photos = req.files && req.files.kitchen_photos ? req.files.kitchen_photos.map(f => f.filename).join(',') : (req.body.kitchen_photos ? (Array.isArray(req.body.kitchen_photos) ? JSON.stringify(req.body.kitchen_photos) : req.body.kitchen_photos) : null);
+    const kitchen_videos = req.files && req.files.kitchen_videos ? req.files.kitchen_videos.map(f => f.filename).join(',') : (req.body.kitchen_videos ? (Array.isArray(req.body.kitchen_videos) ? JSON.stringify(req.body.kitchen_videos) : req.body.kitchen_videos) : null);
+
+    const fullAddress = address || [door_number, street_name, area_name, landmark, city, district, state, pincode].filter(Boolean).join(', ') || '';
+
+    const calculateAgeFromDOB = (dob) => {
+      if (!dob) return null;
+      const today = new Date();
+      const birthDate = new Date(dob);
+      if (isNaN(birthDate)) return null;
+      let calculatedAge = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        calculatedAge--;
+      }
+      return calculatedAge;
+    };
+    
+    const calculatedAgeForUpdate = calculateAgeFromDOB(date_of_birth);
+
+    let query = `UPDATE home_chefs SET 
+      name = ?, father_husband_name = ?, gender = ?, date_of_birth = ?, age = ?,
+      mobile = ?, alt_mobile = ?, whatsapp_number = ?, email = ?, emergency_contact = ?,
+      door_number = ?, street_name = ?, area_name = ?, landmark = ?, city = ?, district = ?, state = ?, pincode = ?,
+      latitude = ?, longitude = ?, map_link = ?, kitchen_name = ?, kitchen_address = ?, kitchen_type = ?,
+      seating_available = ?, dining_available = ?, takeaway_available = ?, delivery_available = ?,
+      specialty_food = ?, cuisine_type = ?, signature_dish = ?, veg_nonveg = ?, experience_years = ?,
+      cooking_style = ?, preparation_time = ?, daily_order_capacity = ?, available_days = ?,
+      opening_time = ?, closing_time = ?, holiday_schedule = ?, busy_hours = ?, instant_order = ?, pre_order = ?,
+      aadhaar_number = ?, pan_number = ?, fssai_number = ?, gst_number = ?, bank_account_number = ?,
+      ifsc_code = ?, account_holder_name = ?, upi_id = ?, username = ?, otp_verified = ?,
+      email_verified = ?, login_status = ?, verification_status = ?, approval_status = ?, status = ?,
+      rejection_reason = ?, block_reason = ?, address = ?`;
+
+    let params = [
+      name, father_husband_name || null, gender || null, date_of_birth || null, calculatedAgeForUpdate !== null ? calculatedAgeForUpdate : (age ? parseInt(age) : null),
+      mobile, alt_mobile || null, whatsapp_number || null, email, emergency_contact || null,
+      door_number || null, street_name || null, area_name || null, landmark || null, city || null, district || null, state || null, pincode || null,
+      latitude || null, longitude || null, map_link || null, kitchen_name || null, kitchen_address || null, kitchen_type || 'Home Kitchen',
+      seating_available === 'true' || seating_available === true ? 1 : 0,
+      dining_available === 'true' || dining_available === true ? 1 : 0,
+      takeaway_available === 'true' || takeaway_available === true ? 1 : 0,
+      delivery_available === 'true' || delivery_available === true ? 1 : 0,
+      specialty_food || null, cuisine_type || 'South Indian', signature_dish || null, veg_nonveg || 'Veg', experience_years ? parseInt(experience_years) : null,
+      cooking_style || null, preparation_time || null, daily_order_capacity ? parseInt(daily_order_capacity) : null, available_days || null,
+      opening_time || null, closing_time || null, holiday_schedule || null, busy_hours || null,
+      instant_order === 'true' || instant_order === true ? 1 : 0,
+      pre_order === 'true' || pre_order === true ? 1 : 0,
+      aadhaar_number || null, pan_number || null, fssai_number || null, gst_number || null, bank_account_number || null,
+      ifsc_code || null, account_holder_name || null, upi_id || null, username || null,
+      otp_verified === 'true' || otp_verified === true ? 1 : 0,
+      email_verified === 'true' || email_verified === true ? 1 : 0,
+      login_status || 'Active', verification_status || 'Pending', approval_status || 'Pending', approval_status || 'Pending',
+      rejection_reason || null, block_reason || null, fullAddress
+    ];
+
+    if (profile_photo) { query += `, profile_photo = ?`; params.push(profile_photo); }
+    if (cover_banner) { query += `, cover_banner = ?`; params.push(cover_banner); }
+    if (aadhaar_front_url) { query += `, aadhaar_front_url = ?`; params.push(aadhaar_front_url); }
+    if (aadhaar_back_url) { query += `, aadhaar_back_url = ?`; params.push(aadhaar_back_url); }
+    if (pan_card_url) { query += `, pan_card_url = ?`; params.push(pan_card_url); }
+    if (fssai_certificate_url) { query += `, fssai_certificate_url = ?`; params.push(fssai_certificate_url); }
+    if (gst_certificate_url) { query += `, gst_certificate_url = ?`; params.push(gst_certificate_url); }
+    if (signature_url) { query += `, signature_url = ?`; params.push(signature_url); }
+    if (kitchen_photo1) { query += `, kitchen_photo1 = ?`; params.push(kitchen_photo1); }
+    if (kitchen_photo2) { query += `, kitchen_photo2 = ?`; params.push(kitchen_photo2); }
+    if (kitchen_photo3) { query += `, kitchen_photo3 = ?`; params.push(kitchen_photo3); }
+    if (cooking_area_photo) { query += `, cooking_area_photo = ?`; params.push(cooking_area_photo); }
+    if (storage_area_photo) { query += `, storage_area_photo = ?`; params.push(storage_area_photo); }
+    if (selfie_verification_url) { query += `, selfie_verification_url = ?`; params.push(selfie_verification_url); }
+    if (kitchen_photos) { query += `, kitchen_photos = ?`; params.push(kitchen_photos); }
+    if (kitchen_videos) { query += `, kitchen_videos = ?`; params.push(kitchen_videos); }
+
+    // Social Media & Profile Fields
+    if (instagram_url) { query += `, instagram_url = ?`; params.push(instagram_url); }
+    if (facebook_url) { query += `, facebook_url = ?`; params.push(facebook_url); }
+    if (youtube_url) { query += `, youtube_url = ?`; params.push(youtube_url); }
+    if (website_url) { query += `, website_url = ?`; params.push(website_url); }
+
+    // Business Flags & Delivery
+    if (fssai_available) { query += `, fssai_available = ?`; params.push(fssai_available); }
+    if (gst_available) { query += `, gst_available = ?`; params.push(gst_available); }
+    if (delivery_radius) { query += `, delivery_radius = ?`; params.push(delivery_radius); }
+    if (preorder_available !== undefined) { query += `, preorder_available = ?`; params.push(preorder_available === 'true' || preorder_available === true ? 1 : 0); }
+    if (cutoff_time) { query += `, cutoff_time = ?`; params.push(cutoff_time); }
+
+    // Creator Profile
+    if (about_me) { query += `, about_me = ?`; params.push(about_me); }
+    if (cooking_story) { query += `, cooking_story = ?`; params.push(cooking_story); }
+    if (why_choose_me) { query += `, why_choose_me = ?`; params.push(why_choose_me); }
+    if (languages_known) { query += `, languages_known = ?`; params.push(languages_known); }
+
+    if (password) {
+      query += `, password = ?`;
+      params.push(hashPassword(password));
+    }
+
+    query += ` WHERE id = ?`;
+    params.push(id);
+
+    await pool.execute(query, params);
+    await syncUserForEntity('home_chefs', id, 'chef');
+    res.json({ message: 'Home chef updated successfully.' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating home chef.', error: error.message });
+  }
+};
+
+exports.patchHomeChefStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body; // e.g. Approved, Suspended, Rejected
+    await pool.execute("UPDATE home_chefs SET status = ? WHERE id = ?", [status, id]);
+    await syncUserForEntity('home_chefs', id, 'chef');
+    res.json({ message: `Home chef status changed to ${status}.` });
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating home chef status.', error: error.message });
+  }
+};
+
+exports.deleteHomeChef = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.execute("DELETE FROM home_chefs WHERE id = ?", [id]);
+    res.json({ message: 'Home chef profile deleted.' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting home chef.', error: error.message });
+  }
+};
+
+>>>>>>> Stashed changes
 // ==================== RESTAURANT MANAGEMENT ====================
 exports.getRestaurants = async (req, res) => {
   try {

@@ -42,9 +42,13 @@ const emptyForm = {
   street: "",
   area: "",
   city: "",
-  state: "",
-  pincode: "",
   country: "India",
+  state: "Tamil Nadu",
+  pincode: "",
+<<<<<<< Updated upstream
+  country: "India",
+=======
+>>>>>>> Stashed changes
   google_map_location: "",
   latitude: "",
   longitude: "",
@@ -55,7 +59,11 @@ const emptyForm = {
   kitchen_type: "Home Kitchen",
   veg_nonveg: "Veg",
   experience_years: "",
+<<<<<<< Updated upstream
   cuisine_type: [],
+=======
+  cuisine_types: [],
+>>>>>>> Stashed changes
   daily_order_capacity: "",
 
   // Food Availability
@@ -319,16 +327,24 @@ const HomeChefManagement = () => {
       street: "Maple Avenue",
       area: "Shanti Nagar",
       city: "Chennai",
+      country: "India",
       district: "Chennai",
       state: "Tamil Nadu",
       pincode: "600042",
+<<<<<<< Updated upstream
       country: "India",
+=======
+>>>>>>> Stashed changes
       google_map_location: "https://maps.google.com/?q=13.0827,80.2707",
       kitchen_name: "Priya's Home Kitchen",
       kitchen_address: "22B, Maple Avenue, Shanti Nagar, Chennai",
       kitchen_type: "Home Kitchen",
       experience_years: "10",
+<<<<<<< Updated upstream
       cuisine_type: ["South Indian"],
+=======
+      cuisine_types: ["South Indian"],
+>>>>>>> Stashed changes
       daily_order_capacity: "40",
       available_days: [
         "Monday",
@@ -426,10 +442,14 @@ const HomeChefManagement = () => {
       street: chef.street_name || "",
       area: chef.area_name || "",
       city: chef.city || "",
-      district: chef.district || "",
-      state: chef.state || "",
-      pincode: chef.pincode || "",
       country: chef.country || "India",
+      district: chef.district || "",
+      state: chef.state || "Tamil Nadu",
+      pincode: chef.pincode || "",
+<<<<<<< Updated upstream
+      country: chef.country || "India",
+=======
+>>>>>>> Stashed changes
       google_map_location: chef.map_link || "",
       kitchen_name: chef.kitchen_name || "",
       kitchen_address: chef.kitchen_address || "",
@@ -437,7 +457,14 @@ const HomeChefManagement = () => {
       kitchen_photos: chef.kitchen_photos || null,
       kitchen_videos: chef.kitchen_videos || null,
       specialty_food: chef.specialty_food || "",
+<<<<<<< Updated upstream
       cuisine_type: chef.cuisine_type ? (Array.isArray(chef.cuisine_type) ? chef.cuisine_type : chef.cuisine_type.split(",").map((item) => item.trim())) : [],
+=======
+      cuisine_types: chef.cuisine_type
+        ? chef.cuisine_type.split(",").map((item) => item.trim())
+        : [],
+      signature_dish: chef.signature_dish || "",
+>>>>>>> Stashed changes
       veg_nonveg: chef.veg_nonveg || "Veg",
       experience_years: chef.experience_years || "",
       cooking_style: chef.cooking_style || "",
@@ -558,6 +585,7 @@ const HomeChefManagement = () => {
         available_days: Array.isArray(form.available_days)
           ? form.available_days.join(",")
           : form.available_days,
+<<<<<<< Updated upstream
         available_slots: Array.isArray(form.available_slots)
           ? form.available_slots.join(",")
           : form.available_slots,
@@ -579,12 +607,23 @@ const HomeChefManagement = () => {
         console.debug('Unable to build payload preview', err);
       }
 
+=======
+        cuisine_type: Array.isArray(form.cuisine_types)
+          ? form.cuisine_types.join(",")
+          : form.cuisine_types,
+      };
+
+>>>>>>> Stashed changes
       delete payload.house_number;
       delete payload.street;
       delete payload.area;
       delete payload.google_map_location;
       delete payload.confirmPassword;
+<<<<<<< Updated upstream
       delete payload.chef_unique_code; // Not a database field
+=======
+      delete payload.cuisine_types;
+>>>>>>> Stashed changes
 
       if (editingChef && !payload.password) {
         delete payload.password;
@@ -1073,7 +1112,9 @@ const HomeChefManagement = () => {
                           {chef.kitchen_name || "N/A"}
                         </td>
                         <td className="px-5 py-4 text-sm font-semibold text-slate-300">
-                          {chef.cuisine_type || "N/A"}
+                          {chef.cuisine_type 
+                            ? chef.cuisine_type.split(",").map((c) => c.trim()).join(", ")
+                            : "N/A"}
                         </td>
                         <td className="px-5 py-4 text-sm font-semibold text-slate-300">
                           {chef.mobile}
@@ -1204,7 +1245,9 @@ const HomeChefManagement = () => {
                   </p>
                   <p>
                     <strong className="text-slate-300">Cuisine:</strong>{" "}
-                    {chef.cuisine_type || "N/A"}
+                    {chef.cuisine_type 
+                      ? chef.cuisine_type.split(",").map((c) => c.trim()).join(", ")
+                      : "N/A"}
                   </p>
                 </div>
               </div>
@@ -1317,8 +1360,717 @@ const HomeChefManagement = () => {
                               Step {index + 1}
                             </span>
                           </div>
+<<<<<<< Updated upstream
                           <p className={`mt-3 text-sm font-bold tracking-tight ${isActive ? "text-white" : "text-slate-300"}`}>
                             {step.label}
+=======
+                        </div>
+
+                        <div>
+                          <label className={lbl}>Confirm Password *</label>
+
+                          <div className="relative">
+                            <input
+                              type={showConfirmPassword ? "text" : "password"}
+                              value={form.confirmPassword}
+                              onChange={(e) =>
+                                setForm({ ...form, confirmPassword: e.target.value })
+                              }
+                              className={`${inp} pr-12`}
+                            />
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setShowConfirmPassword(!showConfirmPassword)
+                              }
+                              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                            >
+                              {showConfirmPassword ? (
+                                <EyeOff className="w-5 h-5" />
+                              ) : (
+                                <Eye className="w-5 h-5" />
+                              )}
+                            </button>
+                          </div>
+                        </div>
+
+  
+                      </div>
+                    )}
+
+                    {activeFormTab === "address" && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                        <div>
+                          <label className={lbl}>House Number *</label>
+                          <input
+                            type="text"
+                            value={form.house_number}
+                            onChange={(e) =>
+                              setForm({ ...form, house_number: e.target.value })
+                            }
+                            placeholder="House Number"
+                            className={inp}
+                          />
+                        </div>
+
+                        <div>
+                          <label className={lbl}>Street *</label>
+                          <input
+                            type="text"
+                            value={form.street}
+                            onChange={(e) =>
+                              setForm({ ...form, street: e.target.value })
+                            }
+                            placeholder="Street"
+                            className={inp}
+                          />
+                        </div>
+
+                        <div>
+                          <label className={lbl}>Area *</label>
+                          <input
+                            type="text"
+                            value={form.area}
+                            onChange={(e) =>
+                              setForm({ ...form, area: e.target.value })
+                            }
+                            placeholder="Area"
+                            className={inp}
+                          />
+                        </div>
+
+                        <div>
+                          <label className={lbl}>City *</label>
+                          <input
+                            type="text"
+                            value={form.city}
+                            onChange={(e) =>
+                              setForm({ ...form, city: e.target.value })
+                            }
+                            placeholder="City"
+                            className={inp}
+                          />
+                        </div>
+
+                        <div>
+                          <label className={lbl}>Country *</label>
+                          <select
+                            value={form.country}
+                            onChange={(e) =>
+                              setForm({ ...form, country: e.target.value })
+                            }
+                            className={inp}
+                          >
+                            <option value="India">India</option>
+                            <option value="United States">United States</option>
+                            <option value="United Kingdom">United Kingdom</option>
+                            <option value="Australia">Australia</option>
+                            <option value="United Arab Emirates">United Arab Emirates</option>
+                            <option value="Other">Other</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className={lbl}>State *</label>
+                          <select
+                            value={form.state}
+                            onChange={(e) =>
+                              setForm({ ...form, state: e.target.value })
+                            }
+                            className={inp}
+                          >
+                            <option value="Tamil Nadu">Tamil Nadu</option>
+                            <option value="Andhra Pradesh">Andhra Pradesh</option>
+                            <option value="Karnataka">Karnataka</option>
+                            <option value="Kerala">Kerala</option>
+                            <option value="Telangana">Telangana</option>
+                            <option value="Maharashtra">Maharashtra</option>
+                            <option value="Delhi">Delhi</option>
+                            <option value="West Bengal">West Bengal</option>
+                            <option value="Gujarat">Gujarat</option>
+                            <option value="Other">Other</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className={lbl}>Pincode *</label>
+                          <input
+                            type="text"
+                            value={form.pincode}
+                            onChange={(e) =>
+                              setForm({ ...form, pincode: e.target.value })
+                            }
+                            placeholder="Pincode"
+                            className={inp}
+                          />
+                        </div>
+
+                        <div>
+                          <label className={lbl}>Google Map Location *</label>
+                          <input
+                            type="url"
+                            value={form.google_map_location}
+                            onChange={(e) =>
+                              setForm({ ...form, google_map_location: e.target.value })
+                            }
+                            placeholder="https://maps.google.com/..."
+                            className={inp}
+                          />
+                        </div>
+
+                      </div>
+                    )}
+
+                    {activeFormTab === "kitchen" && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                        <div>
+                          <label className={lbl}>Kitchen Name *</label>
+                          <input
+                            type="text"
+                            value={form.kitchen_name}
+                            onChange={(e) =>
+                              setForm({ ...form, kitchen_name: e.target.value })
+                            }
+                            placeholder="Kitchen Name"
+                            className={inp}
+                          />
+                        </div>
+
+                        <div>
+                          <label className={lbl}>Kitchen Type *</label>
+                          <select
+                            value={form.kitchen_type}
+                            onChange={(e) =>
+                              setForm({ ...form, kitchen_type: e.target.value })
+                            }
+                            className={inp}
+                          >
+                            <option value="Home Kitchen">Home Kitchen</option>
+                            <option value="Cloud Kitchen">Cloud Kitchen</option>
+                            <option value="Traditional Kitchen">Traditional Kitchen</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className={lbl}>Years Of Experience *</label>
+                          <input
+                            type="number"
+                            value={form.experience_years}
+                            onChange={(e) =>
+                              setForm({ ...form, experience_years: e.target.value })
+                            }
+                            placeholder="Years Of Experience"
+                            className={inp}
+                          />
+                        </div>
+
+                        <div>
+                          <label className={lbl}>Maximum Orders Per Day *</label>
+                          <input
+                            type="number"
+                            value={form.daily_order_capacity}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                daily_order_capacity: e.target.value,
+                              })
+                            }
+                            placeholder="Maximum Orders Per Day"
+                            className={inp}
+                          />
+                        </div>
+
+                        <div className="md:col-span-2">
+                          <label className={`${lbl} mb-3 block`}>Speciality Cuisine *</label>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            {[
+                              "South Indian",
+                              "North Indian",
+                              "Chinese",
+                              "Andhra",
+                              "Kerala",
+                              "Healthy Foods",
+                              "Millet Foods",
+                              "Desserts",
+                              "Others",
+                            ].map((cuisine) => (
+                              <label
+                                key={cuisine}
+                                className="flex items-center gap-2 cursor-pointer"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={form.cuisine_types.includes(cuisine)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setForm({
+                                        ...form,
+                                        cuisine_types: [...form.cuisine_types, cuisine],
+                                      });
+                                    } else {
+                                      setForm({
+                                        ...form,
+                                        cuisine_types: form.cuisine_types.filter(
+                                          (c) => c !== cuisine
+                                        ),
+                                      });
+                                    }
+                                  }}
+                                />
+                                <span className="text-slate-200 font-medium">
+                                  {cuisine}
+                                </span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+
+                      </div>
+                    )}
+
+                    {activeFormTab === "availability" && (
+                      <div className="space-y-8">
+
+                        {/* Available Days */}
+                        <div>
+                          <label className={`${lbl} mb-3 block`}>
+                            Available Days
+                          </label>
+
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+
+                            {[
+                              "Monday",
+                              "Tuesday",
+                              "Wednesday",
+                              "Thursday",
+                              "Friday",
+                              "Saturday",
+                              "Sunday",
+                            ].map((day) => (
+                              <label
+                                key={day}
+                                className="flex items-center gap-2 cursor-pointer"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={form.available_days.includes(day)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setForm({
+                                        ...form,
+                                        available_days: [...form.available_days, day],
+                                      });
+                                    } else {
+                                      setForm({
+                                        ...form,
+                                        available_days: form.available_days.filter(
+                                          (d) => d !== day
+                                        ),
+                                      });
+                                    }
+                                  }}
+                                />
+
+                                <span className="text-slate-200 font-medium">
+                                  {day}
+                                </span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Available Time Slots */}
+                        <div>
+                          <label className={`${lbl} mb-3 block`}>
+                            Available Time Slots
+                          </label>
+
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+
+                            {[
+                              "Breakfast",
+                              "Lunch",
+                              "Dinner",
+                              "Evening Snacks",
+                            ].map((slot) => (
+                              <label
+                                key={slot}
+                                className="flex items-center gap-2 cursor-pointer"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={form.available_slots.includes(slot)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setForm({
+                                        ...form,
+                                        available_slots: [
+                                          ...form.available_slots,
+                                          slot,
+                                        ],
+                                      });
+                                    } else {
+                                      setForm({
+                                        ...form,
+                                        available_slots:
+                                          form.available_slots.filter(
+                                            (s) => s !== slot
+                                          ),
+                                      });
+                                    }
+                                  }}
+                                />
+
+                                <span className="text-slate-200 font-medium">
+                                  {slot}
+                                </span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+
+                      </div>
+                    )}
+
+                    {activeFormTab === "business" && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                        <div>
+                          <label className={lbl}>FSSAI Available ?</label>
+                          <select
+                            value={form.fssai_available}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                fssai_available: e.target.value,
+                              })
+                            }
+                            className={inp}
+                          >
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className={lbl}>GST Available ?</label>
+                          <select
+                            value={form.gst_available}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                gst_available: e.target.value,
+                              })
+                            }
+                            className={inp}
+                          >
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className={lbl}>PAN Number *</label>
+                          <input
+                            type="text"
+                            value={form.pan_number}
+                            onChange={(e) =>
+                              setForm({ ...form, pan_number: e.target.value })
+                            }
+                            placeholder="PAN Number"
+                            className={inp}
+                          />
+                        </div>
+
+                        <div>
+                          <label className={lbl}>Bank Account Number *</label>
+                          <input
+                            type="text"
+                            value={form.bank_account_number}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                bank_account_number: e.target.value,
+                              })
+                            }
+                            placeholder="Bank Account Number"
+                            className={inp}
+                          />
+                        </div>
+
+                        <div>
+                          <label className={lbl}>IFSC Code *</label>
+                          <input
+                            type="text"
+                            value={form.ifsc_code}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                ifsc_code: e.target.value,
+                              })
+                            }
+                            placeholder="IFSC Code"
+                            className={inp}
+                          />
+                        </div>
+
+                        <div>
+                          <label className={lbl}>UPI ID *</label>
+                          <input
+                            type="text"
+                            value={form.upi_id}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                upi_id: e.target.value,
+                              })
+                            }
+                            placeholder="username@upi"
+                            className={inp}
+                          />
+                        </div>
+
+                      </div>
+                    )}
+
+                    {activeFormTab === "social" && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                        <div>
+                          <label className={lbl}>Instagram URL</label>
+                          <input
+                            type="url"
+                            value={form.instagram_url}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                instagram_url: e.target.value,
+                              })
+                            }
+                            placeholder="https://instagram.com/username"
+                            className={inp}
+                          />
+                        </div>
+
+                        <div>
+                          <label className={lbl}>Facebook URL</label>
+                          <input
+                            type="url"
+                            value={form.facebook_url}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                facebook_url: e.target.value,
+                              })
+                            }
+                            placeholder="https://facebook.com/page"
+                            className={inp}
+                          />
+                        </div>
+
+                        <div>
+                          <label className={lbl}>YouTube Channel URL</label>
+                          <input
+                            type="url"
+                            value={form.youtube_url}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                youtube_url: e.target.value,
+                              })
+                            }
+                            placeholder="https://youtube.com/@channel"
+                            className={inp}
+                          />
+                        </div>
+
+                        <div>
+                          <label className={lbl}>Website URL</label>
+                          <input
+                            type="url"
+                            value={form.website_url}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                website_url: e.target.value,
+                              })
+                            }
+                            placeholder="https://yourwebsite.com"
+                            className={inp}
+                          />
+                        </div>
+
+                      </div>
+                    )}
+
+                    {activeFormTab === "creator" && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                        <div className="md:col-span-2">
+                          <label className={lbl}>About Me *</label>
+                          <textarea
+                            rows="4"
+                            value={form.about_me}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                about_me: e.target.value,
+                              })
+                            }
+                            placeholder="Tell customers about yourself..."
+                            className="w-full px-4 py-3 rounded-[1.75rem] bg-slate-950/85 border border-white/10 text-slate-100 outline-none placeholder:text-slate-500 text-sm font-medium resize-none transition focus:border-emerald-400 focus:bg-slate-900"
+                          />
+                        </div>
+
+                        <div className="md:col-span-2">
+                          <label className={lbl}>Cooking Story *</label>
+                          <textarea
+                            rows="4"
+                            value={form.cooking_story}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                cooking_story: e.target.value,
+                              })
+                            }
+                            placeholder="Share your cooking journey..."
+                            className="w-full px-4 py-3 rounded-[1.75rem] bg-slate-950/85 border border-white/10 text-slate-100 outline-none placeholder:text-slate-500 text-sm font-medium resize-none transition focus:border-emerald-400 focus:bg-slate-900"
+                          />
+                        </div>
+
+                        <div className="md:col-span-2">
+                          <label className={lbl}>
+                            Why Customers Should Order From Me *
+                          </label>
+                          <textarea
+                            rows="4"
+                            value={form.why_choose_me}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                why_choose_me: e.target.value,
+                              })
+                            }
+                            placeholder="Tell customers why they should choose you..."
+                            className="w-full px-4 py-3 rounded-[1.75rem] bg-slate-950/85 border border-white/10 text-slate-100 outline-none placeholder:text-slate-500 text-sm font-medium resize-none transition focus:border-emerald-400 focus:bg-slate-900"
+                          />
+                        </div>
+
+                        <div>
+                          <label className={lbl}>Languages Known *</label>
+                          <input
+                            type="text"
+                            value={form.languages_known}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                languages_known: e.target.value,
+                              })
+                            }
+                            placeholder="Tamil, English, Telugu..."
+                            className={inp}
+                          />
+                        </div>
+
+                        <div>
+                          {renderFileField(
+                            "introduction_video",
+                            "Upload Introduction Video *",
+                            form.introduction_video
+                          )}
+                        </div>
+
+                      </div>
+                    )}
+
+                    {activeFormTab === "verification" && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                        {renderFileField(
+                          "aadhaar_front_url",
+                          "Aadhaar Front *",
+                          form.aadhaar_front_url
+                        )}
+
+                        {renderFileField(
+                          "aadhaar_back_url",
+                          "Aadhaar Back *",
+                          form.aadhaar_back_url
+                        )}
+
+                        {renderFileField(
+                          "pan_card_url",
+                          "PAN Card *",
+                          form.pan_card_url
+                        )}
+
+                        {renderFileField(
+                          "kitchen_photo1",
+                          "Kitchen Photo 1 *",
+                          form.kitchen_photo1
+                        )}
+
+                        {renderFileField(
+                          "kitchen_photo2",
+                          "Kitchen Photo 2 *",
+                          form.kitchen_photo2
+                        )}
+
+                        {renderFileField(
+                          "kitchen_photo3",
+                          "Kitchen Photo 3 *",
+                          form.kitchen_photo3
+                        )}
+
+                        {renderFileField(
+                          "cooking_area_photo",
+                          "Cooking Area Photo *",
+                          form.cooking_area_photo
+                        )}
+
+                        {renderFileField(
+                          "storage_area_photo",
+                          "Storage Area Photo *",
+                          form.storage_area_photo
+                        )}
+
+                        {renderFileField(
+                          "selfie_verification_url",
+                          "Selfie With Aadhaar *",
+                          form.selfie_verification_url
+                        )}
+
+                      </div>
+                    )}
+
+                    {activeFormTab === "delivery" && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                        <div>
+                          <label className={lbl}>Maximum Delivery Radius *</label>
+
+                          <select
+                            value={form.delivery_radius}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                delivery_radius: e.target.value,
+                              })
+                            }
+                            className={inp}
+                          >
+                            <option value="2 KM">2 KM</option>
+                            <option value="3 KM">3 KM</option>
+                            <option value="5 KM">5 KM</option>
+                          </select>
+
+                          <p className="text-xs text-gray-500 mt-2">
+                            Default: 5 KM
+>>>>>>> Stashed changes
                           </p>
                         </button>
                       );
