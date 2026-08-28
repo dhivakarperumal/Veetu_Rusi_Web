@@ -20,6 +20,11 @@ import { FiChevronRight, FiTag } from "react-icons/fi";
 const Navbar = () => {
 
   const location = useLocation();
+  const isCategoryActive = location.pathname.startsWith("/category/");
+  const isPagesActive =
+    location.pathname === "/about" ||
+    location.pathname === "/termsandconditions" ||
+    location.pathname === "/contactus";
 
   const { user, logout } = useContext(AuthContext);
   const { setLocationPopupOpen } = useContext(AuthContext);
@@ -212,7 +217,10 @@ const Navbar = () => {
                 }}
               >
                 <button
-                  className="flex cursor-pointer items-center gap-1 text-gray-600 hover:text-primary transition"
+                  className={`flex cursor-pointer items-center gap-1 transition ${isCategoryActive
+                    ? "bg-gradient-to-r from-primary-light to-secondary text-white shadow px-4 py-1.5 rounded-lg"
+                    : "text-gray-600 hover:text-primary"
+                    }`}
                 >
                   Categories
                   <FiChevronDown
@@ -307,7 +315,10 @@ const Navbar = () => {
                     setPagesMenu(!pagesMenu);
                     setCategoryMenu(false);
                   }}
-                  className="flex items-center cursor-pointer gap-1 text-gray-600 hover:text-primary transition"
+                  className={`flex items-center cursor-pointer gap-1 transition ${isPagesActive
+                      ? "bg-gradient-to-r from-primary-light to-secondary text-white shadow px-4 py-1.5 rounded-lg"
+                      : "text-gray-600 hover:text-primary"
+                    }`}
                 >
                   Pages
                   <FiChevronDown
