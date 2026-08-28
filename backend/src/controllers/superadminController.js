@@ -664,8 +664,26 @@ exports.getOrders = async (req, res) => {
     // - user → see only their own orders by user_id
     // - chef → filter in JS below by product ownership
     if (franchise_user_id) {
-      query += " AND created_by = ?";
+      const [ownedProducts] = await pool.execute(
+        `SELECT id FROM chef_products WHERE franchise_user_id = ?`,
+        [franchise_user_id]
+      );
+      ownedProductIds = new Set(ownedProducts.map((product) => String(product.id)));
+
+      const [ownedChefs] = await pool.execute(
+        `SELECT user_id FROM home_chefs WHERE created_by = ? OR franchise_user_id = ?`,
+        [franchise_user_id, franchise_user_id]
+      );
+      const ownedChefUserIds = ownedChefs.map(chef => String(chef.user_id)).filter(Boolean);
+      req.ownedChefUserIds = ownedChefUserIds; // Store for JS filter
+
+      const chefPlaceholders = ownedChefUserIds.length > 0 ? ownedChefUserIds.map(() => '?').join(',') : "''";
+      
+      query += ` AND (created_by = ? OR items IS NOT NULL OR user_id IN (${chefPlaceholders}))`;
       params.push(franchise_user_id);
+      if (ownedChefUserIds.length > 0) {
+        params.push(...ownedChefUserIds);
+      }
     } else if (role === 'admin') {
       // Admin sees only orders they created
       const ownerIds = [currentUserId, currentNumericId]
@@ -688,8 +706,20 @@ exports.getOrders = async (req, res) => {
       );
       ownedProductIds = new Set(ownedProducts.map((product) => String(product.id)));
 
-      query += ` AND (created_by IN (${ownerPlaceholders}) OR items IS NOT NULL)`;
+      const [ownedChefs] = await pool.execute(
+        `SELECT user_id FROM home_chefs WHERE created_by IN (${ownerPlaceholders}) OR franchise_user_id IN (${ownerPlaceholders})`,
+        [...ownerIds, ...ownerIds]
+      );
+      const ownedChefUserIds = ownedChefs.map(chef => String(chef.user_id)).filter(Boolean);
+      req.ownedChefUserIds = ownedChefUserIds;
+
+      const chefPlaceholders = ownedChefUserIds.length > 0 ? ownedChefUserIds.map(() => '?').join(',') : "''";
+
+      query += ` AND (created_by IN (${ownerPlaceholders}) OR items IS NOT NULL OR user_id IN (${chefPlaceholders}))`;
       params.push(...ownerIds);
+      if (ownedChefUserIds.length > 0) {
+        params.push(...ownedChefUserIds);
+      }
     } else if (role === 'user') {
       query += " AND user_id = ?";
       params.push(currentUserId);
@@ -717,6 +747,14 @@ exports.getOrders = async (req, res) => {
       }
       return { ...row, items };
     }).filter(row => {
+      if (franchise_user_id) {
+        const createdByOwner = String(row.created_by) === franchise_user_id;
+        const productOwner = Array.isArray(row.items) && row.items.some((item) =>
+          ownedProductIds.has(String(item.product_id || item.id))
+        );
+        const isOwnedChefOrder = req.ownedChefUserIds && req.ownedChefUserIds.includes(String(row.user_id));
+        return createdByOwner || productOwner || isOwnedChefOrder;
+      }
       if (role === 'franchise') {
         const ownerIds = [currentUserId, currentNumericId]
           .filter((id) => id !== null && id !== undefined)
@@ -725,7 +763,8 @@ exports.getOrders = async (req, res) => {
         const productOwner = Array.isArray(row.items) && row.items.some((item) =>
           ownedProductIds.has(String(item.product_id || item.id))
         );
-        return createdByOwner || productOwner;
+        const isOwnedChefOrder = req.ownedChefUserIds && req.ownedChefUserIds.includes(String(row.user_id));
+        return createdByOwner || productOwner || isOwnedChefOrder;
       }
       if (role === 'chef') {
         if (!row.items || row.items.length === 0) return false;
