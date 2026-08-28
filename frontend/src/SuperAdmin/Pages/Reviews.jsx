@@ -1,4 +1,5 @@
 import { useState, useEffect, useContext } from "react";
+import { createPortal } from "react-dom";
 import { useAdmin } from "../../PrivateRouter/AdminContext";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import {
@@ -23,6 +24,8 @@ import {
   Plus,
   Camera,
   Upload
+  ,LayoutGrid
+  ,List
 } from "lucide-react";
 import api from "../../api";
 import toast from "react-hot-toast";
@@ -47,6 +50,7 @@ const Reviews = () => {
   const [loading, setLoading] = useState(!cachedData);
   const [replyText, setReplyText] = useState("");
   const [activeReplyId, setActiveReplyId] = useState(null);
+  const [viewMode, setViewMode] = useState("card");
 
   // Add Review State
   const [showAddModal, setShowAddModal] = useState(false);
@@ -385,10 +389,10 @@ const Reviews = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex w-full flex-wrap items-center justify-start gap-3 lg:w-auto lg:justify-end">
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-blue-600 shadow-xl shadow-slate-900/10 transition-all active:scale-95"
+            className="flex min-h-12 items-center gap-2 rounded-2xl bg-slate-900 px-5 py-3 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-slate-900/10 transition-all hover:bg-blue-600 active:scale-95 whitespace-nowrap"
           >
             <Plus className="w-4 h-6" /> Add Review
           </button>
@@ -398,7 +402,7 @@ const Reviews = () => {
               setShowDeliveryReviewModal(true);
               if (!deliveryPartners.length) fetchDeliveryPartners();
             }}
-            className="flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-emerald-700 shadow-xl shadow-emerald-600/20 transition-all active:scale-95"
+            className="flex min-h-12 items-center gap-2 rounded-2xl bg-emerald-600 px-5 py-3 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-emerald-600/20 transition-all hover:bg-emerald-700 active:scale-95 whitespace-nowrap"
           >
             <Plus className="w-4 h-6" /> Add Delivery Partner Review
           </button>
@@ -467,6 +471,27 @@ const Reviews = () => {
         </div>
       </div>
 
+      <div className="flex justify-end">
+        <div className="inline-flex items-center gap-1 rounded-2xl border border-slate-100 bg-white p-1 shadow-sm">
+          <button
+            type="button"
+            onClick={() => setViewMode("table")}
+            title="Table view"
+            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-black uppercase tracking-widest transition ${viewMode === "table" ? "bg-slate-900 text-white" : "text-slate-400 hover:bg-slate-50"}`}
+          >
+            <List className="h-4 w-4" /> Table
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("card")}
+            title="Card view"
+            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-black uppercase tracking-widest transition ${viewMode === "card" ? "bg-slate-900 text-white" : "text-slate-400 hover:bg-slate-50"}`}
+          >
+            <LayoutGrid className="h-4 w-4" /> Cards
+          </button>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
         <div className="xl:col-span-12 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
           <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Franchise Admin</label>
@@ -518,6 +543,60 @@ const Reviews = () => {
           </button>
         </div>
       ) : (
+        viewMode === "table" ? (
+          <div className="overflow-x-auto rounded-[2rem] border border-slate-100 bg-white shadow-sm">
+            <table className="w-full min-w-[850px] text-left text-sm text-slate-600">
+              <thead className="bg-slate-900 text-[10px] uppercase tracking-[0.2em] text-slate-300">
+                <tr>
+                  <th className="px-6 py-4">S. No.</th>
+                  <th className="px-6 py-4">Reviewer</th>
+                  <th className="px-6 py-4">{deliveryTab ? "Delivery Partner" : "Product"}</th>
+                  <th className="px-6 py-4">Rating</th>
+                  <th className="px-6 py-4">Review</th>
+                  <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4">Date</th>
+                  <th className="px-6 py-4">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {paginatedReviews.map((item, index) => (
+                  <tr key={`${deliveryTab ? "dp" : "food"}-${item.id}`} className="align-top transition hover:bg-slate-50">
+                    <td className="px-6 py-5 font-black text-slate-400">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                    <td className="px-6 py-5">
+                      <p className="font-bold text-slate-800">{item.user_name || item.user_email || "Anonymous"}</p>
+                      <p className="mt-1 text-xs text-slate-400">{item.user_email || "No email"}</p>
+                    </td>
+                    <td className="px-6 py-5 font-semibold text-slate-700">
+                      {deliveryTab ? (item.delivery_partner_name || item.delivery_partner_id || "Delivery Partner") : (item.product_name || "Product Deleted")}
+                    </td>
+                    <td className="px-6 py-5">
+                      <span className="inline-flex items-center gap-1 font-black text-amber-500">{item.rating || 0}<Star className="h-3.5 w-3.5 fill-amber-400" /></span>
+                    </td>
+                    <td className="max-w-[280px] px-6 py-5">
+                      <p className="line-clamp-2 text-slate-600">{item.comment || "No comment provided."}</p>
+                      {activeReplyId === item.id && (
+                        <div className="mt-3 space-y-2">
+                          <textarea value={replyText} onChange={(e) => setReplyText(e.target.value)} placeholder="Type response..." className="w-full rounded-xl border border-slate-200 p-2 text-xs outline-none focus:border-blue-500" rows="2" />
+                          <button type="button" onClick={() => handleReply(item.id, deliveryTab)} disabled={!replyText.trim()} className="rounded-lg bg-blue-600 px-3 py-2 text-[10px] font-black uppercase text-white disabled:opacity-50">Send Reply</button>
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-6 py-5"><span className={`inline-flex rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest ${getStatusColor(item.status)}`}>{item.status || "Pending"}</span></td>
+                    <td className="whitespace-nowrap px-6 py-5 text-xs text-slate-400">{item.created_at ? new Date(item.created_at).toLocaleDateString() : "Unknown"}</td>
+                    <td className="px-6 py-5">
+                      <div className="flex items-center gap-2">
+                        {!deliveryTab && item.status !== "Published" && <button type="button" onClick={() => handleStatusUpdate(item.id, "Published")} title="Approve" className="rounded-lg p-2 text-emerald-500 hover:bg-emerald-50"><CheckCircle className="h-4 w-4" /></button>}
+                        {!deliveryTab && item.status !== "Flagged" && <button type="button" onClick={() => handleStatusUpdate(item.id, "Flagged")} title="Flag" className="rounded-lg p-2 text-red-500 hover:bg-red-50"><AlertCircle className="h-4 w-4" /></button>}
+                        <button type="button" onClick={() => setActiveReplyId(activeReplyId === item.id ? null : item.id)} title="Reply" className="rounded-lg p-2 text-blue-600 hover:bg-blue-50"><Reply className="h-4 w-4" /></button>
+                        <button type="button" onClick={() => handleDelete(item.id)} title="Delete" className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-500"><Trash2 className="h-4 w-4" /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {paginatedReviews.map((item) => {
             if (deliveryTab) {
@@ -791,6 +870,7 @@ const Reviews = () => {
             );
           })}
         </div>
+        )
       )}
 
       {totalPages > 1 && (
@@ -822,7 +902,8 @@ const Reviews = () => {
       )}
 
       {/* ADD REVIEW MODAL */}
-      {showAddModal && (
+      {showAddModal && createPortal(
+        (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 italic">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setShowAddModal(false)}></div>
 
@@ -971,9 +1052,12 @@ const Reviews = () => {
             </div>
           </div>
         </div>
+        ),
+        document.body
       )}
 
-      {showDeliveryReviewModal && (
+      {showDeliveryReviewModal && createPortal(
+        (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 sm:p-6">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={closeDeliveryReviewModal}></div>
           <div className="relative w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
@@ -1091,6 +1175,8 @@ const Reviews = () => {
             </div>
           </div>
         </div>
+        ),
+        document.body
       )}
     </div>
   );
