@@ -91,8 +91,8 @@ exports.getAllProducts = async (req, res) => {
             `;
             const chefLookup = chef_user_id || chef_id;
             if (chefLookup) {
-                query += ' AND t.created_by = ?';
-                params.push(chefLookup);
+                query += ' AND (hc.id = ? OR hc.user_id = ?)';
+                params.push(chefLookup, chefLookup);
             }
             if (franchise_user_id) {
                 query += ' AND t.franchise_user_id = ?';

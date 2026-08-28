@@ -343,19 +343,45 @@ const HomeChefDetail = () => {
                     {products.length === 0 ? (
                       <div className="p-16 text-center text-slate-400">No products currently linked to this chef.</div>
                     ) : (
-                      <div className="grid gap-4 md:grid-cols-2">
-                        {products.map((product) => (
-                          <div key={product.id || product.product_id || product._id} className="rounded-3xl border border-slate-800 bg-slate-950 p-5">
-                            <div className="flex items-center justify-between gap-3">
-                              <div>
-                                <h3 className="font-black text-white">{product.name || product.title || 'Unnamed'}</h3>
-                                <p className="text-sm text-slate-500">{product.category || 'Uncategorized'}</p>
-                              </div>
-                              <p className="font-black text-emerald-400">{formatAmount(product.price || product.final_price || product.mrp)}</p>
-                            </div>
-                            <p className="mt-3 text-sm text-slate-400">{product.description || 'No description available.'}</p>
-                          </div>
-                        ))}
+                      <div className="overflow-x-auto">
+                        <table className="w-full min-w-[720px] text-left text-sm text-slate-300">
+                          <thead className="bg-slate-950/90 text-[11px] uppercase tracking-[0.2em] text-slate-500">
+                            <tr>
+                              <th className="px-6 py-4">Product</th>
+                              <th className="px-6 py-4">Category</th>
+                              <th className="px-6 py-4">Price</th>
+                              <th className="px-6 py-4">Stock</th>
+                              <th className="px-6 py-4">Status</th>
+                              <th className="px-6 py-4">Created</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-800">
+                            {products.map((product) => (
+                              <tr key={product.id || product.product_id || product._id} className="transition-colors hover:bg-slate-950/80">
+                                <td className="px-6 py-4">
+                                  <div className="flex items-center gap-3">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-sky-500/10 font-black text-sky-300">
+                                      {String(product.name || product.title || 'P').charAt(0)}
+                                    </div>
+                                    <div>
+                                      <p className="font-semibold text-white">{product.name || product.title || 'Unnamed'}</p>
+                                      <p className="text-xs text-slate-500">{product.product_code || product.sku || 'No code'}</p>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4 text-slate-400">{product.category || 'Uncategorized'}</td>
+                                <td className="px-6 py-4 font-black text-emerald-400">{formatAmount(product.price || product.final_price || product.mrp)}</td>
+                                <td className="px-6 py-4 text-slate-400">{product.total_stock ?? product.stock ?? 0}</td>
+                                <td className="px-6 py-4">
+                                  <span className={`inline-flex rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] ${product.status === 'Active' || product.status === 'Approved' ? 'bg-emerald-500/10 text-emerald-300' : 'bg-slate-800 text-slate-400'}`}>
+                                    {product.status || 'Unknown'}
+                                  </span>
+                                </td>
+                                <td className="px-6 py-4 text-slate-400">{formatDate(product.created_at)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
                     )}
                   </div>
