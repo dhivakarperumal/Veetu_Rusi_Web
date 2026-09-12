@@ -80,6 +80,7 @@ try {
 }
 const userFoodRouter = require('./src/routes/userFood');
 const userFoodOrdersRouter = require('./src/routes/userFoodOrders');
+const addressesRouter = require('./src/routes/addresses');
 const deliveryRouter = require('./src/routes/delivery');
 
 const app = express();
@@ -149,6 +150,7 @@ app.use('/api/delivery-partner-review', deliveryPartnerReviewRouter);
 app.use('/api/dealers', dealersRouter);
 app.use('/api/user-food', userFoodRouter);
 app.use('/api/user-food-orders', userFoodOrdersRouter);
+app.use('/api/addresses', addressesRouter);
 app.use('/api/userFoodOrders', userFoodOrdersRouter);
 app.use('/api/delivery', deliveryRouter);
 
