@@ -45,10 +45,7 @@ const emptyForm = {
   country: "India",
   state: "Tamil Nadu",
   pincode: "",
-<<<<<<< Updated upstream
   country: "India",
-=======
->>>>>>> Stashed changes
   google_map_location: "",
   latitude: "",
   longitude: "",
@@ -59,11 +56,7 @@ const emptyForm = {
   kitchen_type: "Home Kitchen",
   veg_nonveg: "Veg",
   experience_years: "",
-<<<<<<< Updated upstream
   cuisine_type: [],
-=======
-  cuisine_types: [],
->>>>>>> Stashed changes
   daily_order_capacity: "",
 
   // Food Availability
@@ -331,20 +324,13 @@ const HomeChefManagement = () => {
       district: "Chennai",
       state: "Tamil Nadu",
       pincode: "600042",
-<<<<<<< Updated upstream
       country: "India",
-=======
->>>>>>> Stashed changes
       google_map_location: "https://maps.google.com/?q=13.0827,80.2707",
       kitchen_name: "Priya's Home Kitchen",
       kitchen_address: "22B, Maple Avenue, Shanti Nagar, Chennai",
       kitchen_type: "Home Kitchen",
       experience_years: "10",
-<<<<<<< Updated upstream
       cuisine_type: ["South Indian"],
-=======
-      cuisine_types: ["South Indian"],
->>>>>>> Stashed changes
       daily_order_capacity: "40",
       available_days: [
         "Monday",
@@ -446,10 +432,7 @@ const HomeChefManagement = () => {
       district: chef.district || "",
       state: chef.state || "Tamil Nadu",
       pincode: chef.pincode || "",
-<<<<<<< Updated upstream
       country: chef.country || "India",
-=======
->>>>>>> Stashed changes
       google_map_location: chef.map_link || "",
       kitchen_name: chef.kitchen_name || "",
       kitchen_address: chef.kitchen_address || "",
@@ -457,14 +440,8 @@ const HomeChefManagement = () => {
       kitchen_photos: chef.kitchen_photos || null,
       kitchen_videos: chef.kitchen_videos || null,
       specialty_food: chef.specialty_food || "",
-<<<<<<< Updated upstream
       cuisine_type: chef.cuisine_type ? (Array.isArray(chef.cuisine_type) ? chef.cuisine_type : chef.cuisine_type.split(",").map((item) => item.trim())) : [],
-=======
-      cuisine_types: chef.cuisine_type
-        ? chef.cuisine_type.split(",").map((item) => item.trim())
-        : [],
       signature_dish: chef.signature_dish || "",
->>>>>>> Stashed changes
       veg_nonveg: chef.veg_nonveg || "Veg",
       experience_years: chef.experience_years || "",
       cooking_style: chef.cooking_style || "",
@@ -585,7 +562,6 @@ const HomeChefManagement = () => {
         available_days: Array.isArray(form.available_days)
           ? form.available_days.join(",")
           : form.available_days,
-<<<<<<< Updated upstream
         available_slots: Array.isArray(form.available_slots)
           ? form.available_slots.join(",")
           : form.available_slots,
@@ -607,23 +583,12 @@ const HomeChefManagement = () => {
         console.debug('Unable to build payload preview', err);
       }
 
-=======
-        cuisine_type: Array.isArray(form.cuisine_types)
-          ? form.cuisine_types.join(",")
-          : form.cuisine_types,
-      };
-
->>>>>>> Stashed changes
       delete payload.house_number;
       delete payload.street;
       delete payload.area;
       delete payload.google_map_location;
       delete payload.confirmPassword;
-<<<<<<< Updated upstream
       delete payload.chef_unique_code; // Not a database field
-=======
-      delete payload.cuisine_types;
->>>>>>> Stashed changes
 
       if (editingChef && !payload.password) {
         delete payload.password;
@@ -1360,10 +1325,9 @@ const HomeChefManagement = () => {
                               Step {index + 1}
                             </span>
                           </div>
-<<<<<<< Updated upstream
                           <p className={`mt-3 text-sm font-bold tracking-tight ${isActive ? "text-white" : "text-slate-300"}`}>
                             {step.label}
-=======
+                          {/*
                         </div>
 
                         <div>
@@ -1634,7 +1598,6 @@ const HomeChefManagement = () => {
                     {activeFormTab === "availability" && (
                       <div className="space-y-8">
 
-                        {/* Available Days */}
                         <div>
                           <label className={`${lbl} mb-3 block`}>
                             Available Days
@@ -1683,7 +1646,6 @@ const HomeChefManagement = () => {
                           </div>
                         </div>
 
-                        {/* Available Time Slots */}
                         <div>
                           <label className={`${lbl} mb-3 block`}>
                             Available Time Slots
@@ -2070,7 +2032,7 @@ const HomeChefManagement = () => {
 
                           <p className="text-xs text-gray-500 mt-2">
                             Default: 5 KM
->>>>>>> Stashed changes
+                          */}
                           </p>
                         </button>
                       );
