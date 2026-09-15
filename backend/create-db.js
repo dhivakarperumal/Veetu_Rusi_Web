@@ -73,6 +73,10 @@ async function createDatabaseAndTables() {
     await connection.execute("ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `longitude` VARCHAR(50) DEFAULT NULL");
     await connection.execute("ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `location_name` VARCHAR(255) DEFAULT NULL");
     await connection.execute("ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `pincode` VARCHAR(20) DEFAULT NULL");
+    await connection.execute("ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `district` VARCHAR(150) DEFAULT NULL");
+    await connection.execute("ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `area` VARCHAR(255) DEFAULT NULL");
+    await connection.execute("ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `referral_code` VARCHAR(20) UNIQUE DEFAULT NULL");
+    await connection.execute("ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `referred_by` VARCHAR(20) DEFAULT NULL");
     await connection.execute("ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `franchise_user_id` VARCHAR(255) DEFAULT NULL");
     await connection.execute("ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `created_by` VARCHAR(255) DEFAULT NULL");
     // Rename existing columns if they exist (ignoring errors if they don't or already renamed)
