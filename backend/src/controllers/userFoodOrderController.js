@@ -1,6 +1,7 @@
 const pool = require('../config/db');
 const { getIo } = require('../utils/socket');
 const referralController = require('./referralController');
+const { saveUserAddress } = require('./addressController');
 
 const parseJson = (value) => {
   if (!value) return [];
@@ -50,6 +51,18 @@ const addUserFoodOrder = async (payload) => {
     discount_amount,
     final_total
   } = payload;
+
+  await saveUserAddress(user_id, {
+    customer_name,
+    customer_email,
+    customer_phone,
+    street_address,
+    city,
+    district,
+    state,
+    country,
+    zip_code
+  });
 
   const [[{ orderCount }]] = await pool.execute('SELECT COUNT(*) AS orderCount FROM user_food_order_table');
   const order_id = `UFO_${String(orderCount + 1).padStart(3, '0')}`;

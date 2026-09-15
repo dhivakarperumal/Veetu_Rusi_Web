@@ -6,10 +6,7 @@ import { useAuth } from "../../PrivateRouter/AuthContext";
 import { StoreContext } from "../../PrivateRouter/StoreContext";
 import { toast } from "react-hot-toast";
 import { useLocation } from "react-router-dom";
-import {
-  upsertUserAddress,
-  readUserAddresses,
-} from "../../utils/addressStorage";
+import api from "../../api";
 
 const getTomorrowDate = () => {
   const date = new Date();
@@ -109,11 +106,13 @@ export default function FoodCheckout() {
   }, []);
 
   useEffect(() => {
-    if (user) {
+    if (user?.user_id) {
       setName(user.name || user.username || "");
       setEmail(user.email || "");
       setPhone(user.phone || user.mobile || "");
-      setSavedAddresses(readUserAddresses(user.user_id));
+      api.get("/addresses")
+        .then((res) => setSavedAddresses(res.data || []))
+        .catch((error) => console.error("Failed to load saved addresses", error));
     }
   }, [user]);
 
@@ -295,22 +294,6 @@ export default function FoodCheckout() {
         isBuyNow: Boolean(buyNowItem?.product),
         items: checkoutItems,
       });
-
-      if (user?.user_id) {
-        const nextAddresses = upsertUserAddress(user.user_id, {
-          user_id: user.user_id,
-          customer_name: name,
-          customer_email: email,
-          customer_phone: phone,
-          street_address: streetAddress,
-          city,
-          district,
-          state: stateValue,
-          country,
-          zip_code: zipCode,
-        });
-        setSavedAddresses(nextAddresses);
-      }
 
       toast.success("Order placed successfully.");
       const newOrderId = res?.id || res?.insertId || null;

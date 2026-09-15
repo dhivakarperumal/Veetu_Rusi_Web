@@ -174,7 +174,7 @@ router.post('/', verifyToken, async (req, res) => {
   try {
     const payload = {
       ...req.body,
-      user_id: req.body.user_id || req.user?.user_id || req.user?.id || null
+      user_id: req.user?.user_id || req.user?.id || null
     };
 
     if (!payload.items || !payload.items.length) {
