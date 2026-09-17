@@ -4,7 +4,7 @@ import { StoreContext } from "../../PrivateRouter/StoreContext";
 import { AuthContext } from "../../PrivateRouter/AuthContext";
 import { Link } from "react-router-dom";
 import {
-    FiSearch, FiHeart, FiShoppingCart, FiStar, FiFilter, FiX, FiSliders
+    FiSearch, FiHeart, FiShoppingCart, FiStar, FiFilter, FiX, FiSliders, FiBox, FiLayers, FiCheckCircle
 } from "react-icons/fi";
 import { BsQrCode } from "react-icons/bs";
 import { QRCodeCanvas } from "qrcode.react";
@@ -136,13 +136,78 @@ const Materials = () => {
     const activeFiltersCount = [selectedCategory !== "All", selectedAge !== "All"].filter(Boolean).length;
 
     return (
-        <div className="max-w-7xl mx-auto px-4 py-10 space-y-8">
-            {/* Hero Header */}
-            <div className="text-center py-8">
-                <h1 className="text-4xl md:text-5xl font-black text-slate-800 tracking-tight">Our Collection</h1>
-                <p className="text-gray-400 font-medium mt-3 max-w-lg mx-auto text-sm">
-                    Handpicked sarees for every occasion. Each piece is a work of art.
-                </p>
+        <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h2 className="text-3xl font-black text-white tracking-tight uppercase">Chef Materials</h2>
+                    <p className="text-xs text-slate-300 font-bold uppercase tracking-widest mt-2">
+                        Cooking supplies, raw materials & packaging inventory
+                    </p>
+                </div>
+            </div>
+
+            {/* Top Cards matching ChefFoodAll style */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                {/* Card 1: Total Materials */}
+                <div className="relative overflow-hidden group rounded-2xl p-px bg-gradient-to-br from-blue-500/40 via-cyan-500/20 to-transparent hover:-translate-y-1 transition-all duration-300">
+                    <div className="relative bg-[#13161b] rounded-2xl p-6 flex items-center gap-4 h-full">
+                        <div className="absolute -top-6 -right-6 w-28 h-28 bg-blue-600/15 rounded-full blur-2xl pointer-events-none" />
+                        <div className="relative shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-700 flex items-center justify-center shadow-lg shadow-blue-700/40">
+                            <FiBox className="w-6 h-6 text-white" />
+                        </div>
+                        <div>
+                            <p className="text-[10px] text-blue-300/70 font-black uppercase tracking-[0.2em]">Total Materials</p>
+                            <h4 className="text-4xl font-black text-white mt-1 tracking-tight leading-none">{products.length}</h4>
+                            <p className="text-[10px] text-white/25 font-semibold mt-1">Available supplies</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Card 2: Categories */}
+                <div className="relative overflow-hidden group rounded-2xl p-px bg-gradient-to-br from-emerald-500/40 via-teal-500/20 to-transparent hover:-translate-y-1 transition-all duration-300">
+                    <div className="relative bg-gradient-to-br from-[#071a10] to-[#0a0e1a] rounded-2xl p-6 flex items-center gap-4 h-full">
+                        <div className="absolute -top-6 -right-6 w-28 h-28 bg-emerald-500/20 rounded-full blur-2xl pointer-events-none" />
+                        <div className="relative shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-600/40">
+                            <FiLayers className="w-6 h-6 text-white" />
+                        </div>
+                        <div>
+                            <p className="text-[10px] text-emerald-300/70 font-black uppercase tracking-[0.2em]">Categories</p>
+                            <h4 className="text-4xl font-black text-white mt-1 tracking-tight leading-none">{categories.filter(c => c !== "All").length}</h4>
+                            <p className="text-[10px] text-white/25 font-semibold mt-1">Supply types</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Card 3: In Stock */}
+                <div className="relative overflow-hidden group rounded-2xl p-px bg-gradient-to-br from-amber-500/40 via-orange-500/20 to-transparent hover:-translate-y-1 transition-all duration-300">
+                    <div className="relative bg-gradient-to-br from-[#1a1004] to-[#0a0e1a] rounded-2xl p-6 flex items-center gap-4 h-full">
+                        <div className="absolute -top-6 -right-6 w-28 h-28 bg-amber-500/20 rounded-full blur-2xl pointer-events-none" />
+                        <div className="relative shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-600/40">
+                            <FiCheckCircle className="w-6 h-6 text-white" />
+                        </div>
+                        <div>
+                            <p className="text-[10px] text-amber-300/70 font-black uppercase tracking-[0.2em]">In Stock</p>
+                            <h4 className="text-4xl font-black text-white mt-1 tracking-tight leading-none">{products.filter(p => parseInt(p.total_stock ?? p.stock ?? 1) > 0).length}</h4>
+                            <p className="text-[10px] text-white/25 font-semibold mt-1">Ready for order</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Card 4: Wishlist */}
+                <div className="relative overflow-hidden group rounded-2xl p-px bg-gradient-to-br from-rose-500/40 via-red-500/20 to-transparent hover:-translate-y-1 transition-all duration-300">
+                    <div className="relative bg-gradient-to-br from-[#1a0a0a] to-[#0a0e1a] rounded-2xl p-6 flex items-center gap-4 h-full">
+                        <div className="absolute -top-6 -right-6 w-28 h-28 bg-rose-500/20 rounded-full blur-2xl pointer-events-none" />
+                        <div className="relative shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-500 to-red-600 flex items-center justify-center shadow-lg shadow-rose-600/40">
+                            <FiHeart className="w-6 h-6 text-white" />
+                        </div>
+                        <div>
+                            <p className="text-[10px] text-rose-300/70 font-black uppercase tracking-[0.2em]">Wishlist</p>
+                            <h4 className="text-4xl font-black text-white mt-1 tracking-tight leading-none">{wishlist.length}</h4>
+                            <p className="text-[10px] text-white/25 font-semibold mt-1">Saved items</p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {/* Search + Filter Bar */}

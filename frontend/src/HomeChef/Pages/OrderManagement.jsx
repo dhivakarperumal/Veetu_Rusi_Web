@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import api from "../../api";
 import { toast } from "react-hot-toast";
-import { Search, Filter, Edit, Check, Eye, ChevronLeft, ChevronRight, XCircle } from "lucide-react";
+import { Search, Filter, Edit, Check, Eye, ChevronLeft, ChevronRight, XCircle, ShoppingBag, Clock, CheckCircle, Truck } from "lucide-react";
 import OrderCancellationModal from "../../Components/CommenComponents/OrderCancellationModal";
 
 const OrderManagement = () => {
@@ -176,6 +176,20 @@ const OrderManagement = () => {
   const pendingAliases = ["Pending", "Order Placed", "New", "New Order"];
   const isPendingFilter = pendingAliases.some(a => a.toLowerCase() === statusFilter.toLowerCase());
 
+  const totalOrdersCount = orders.length;
+  const pendingOrdersCount = orders.filter((o) => {
+    const s = (o.status || "").toLowerCase().trim();
+    return ["pending", "order placed", "new", "new order"].includes(s);
+  }).length;
+  const inProgressCount = orders.filter((o) => {
+    const s = (o.status || "").toLowerCase().trim();
+    return ["accepted", "preparing", "food ready", "packing", "searching delivery partner", "delivery partner assigned", "out for delivery"].includes(s);
+  }).length;
+  const deliveredCount = orders.filter((o) => {
+    const s = (o.status || "").toLowerCase().trim();
+    return ["delivered", "completed"].includes(s);
+  }).length;
+
   return (
     <>
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -192,6 +206,81 @@ const OrderManagement = () => {
         >
           🔄 Refresh
         </button>
+      </div>
+
+      {/* Top Stat Cards matching ChefFoodAll style */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {/* Card 1: Total Orders */}
+        <div 
+          onClick={() => { setStatusFilter("All"); navigate("?status=All"); }}
+          className="relative overflow-hidden group rounded-2xl p-px bg-gradient-to-br from-blue-500/40 via-cyan-500/20 to-transparent hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+        >
+          <div className="relative bg-gradient-to-br from-[#081526] to-[#0a0e1a] rounded-2xl p-6 flex items-center gap-4 h-full">
+            <div className="absolute -top-6 -right-6 w-28 h-28 bg-blue-600/15 rounded-full blur-2xl pointer-events-none" />
+            <div className="relative shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-700 flex items-center justify-center shadow-lg shadow-blue-700/40">
+              <ShoppingBag className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <p className="text-[10px] text-blue-300/70 font-black uppercase tracking-[0.2em]">Total Orders</p>
+              <h4 className="text-4xl font-black text-white mt-1 tracking-tight leading-none">{totalOrdersCount}</h4>
+              <p className="text-[10px] text-white/25 font-semibold mt-1">All-time received</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 2: New Orders */}
+        <div 
+          onClick={() => { setStatusFilter("Pending"); navigate("?status=Pending"); }}
+          className="relative overflow-hidden group rounded-2xl p-px bg-gradient-to-br from-amber-500/40 via-orange-500/20 to-transparent hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+        >
+          <div className="relative bg-gradient-to-br from-[#1a1004] to-[#0a0e1a] rounded-2xl p-6 flex items-center gap-4 h-full">
+            <div className="absolute -top-6 -right-6 w-28 h-28 bg-amber-500/20 rounded-full blur-2xl pointer-events-none" />
+            <div className="relative shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-600/40">
+              <Clock className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <p className="text-[10px] text-amber-300/70 font-black uppercase tracking-[0.2em]">New Orders</p>
+              <h4 className="text-4xl font-black text-white mt-1 tracking-tight leading-none">{pendingOrdersCount}</h4>
+              <p className="text-[10px] text-white/25 font-semibold mt-1">Awaiting action</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 3: In Progress */}
+        <div 
+          onClick={() => { setStatusFilter("Accepted"); navigate("?status=Accepted"); }}
+          className="relative overflow-hidden group rounded-2xl p-px bg-gradient-to-br from-purple-500/40 via-indigo-500/20 to-transparent hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+        >
+          <div className="relative bg-gradient-to-br from-[#130924] to-[#0a0e1a] rounded-2xl p-6 flex items-center gap-4 h-full">
+            <div className="absolute -top-6 -right-6 w-28 h-28 bg-purple-500/20 rounded-full blur-2xl pointer-events-none" />
+            <div className="relative shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-purple-600/40">
+              <Truck className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <p className="text-[10px] text-purple-300/70 font-black uppercase tracking-[0.2em]">In Progress</p>
+              <h4 className="text-4xl font-black text-white mt-1 tracking-tight leading-none">{inProgressCount}</h4>
+              <p className="text-[10px] text-white/25 font-semibold mt-1">Preparing & dispatch</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 4: Delivered */}
+        <div 
+          onClick={() => { setStatusFilter("Delivered"); navigate("?status=Delivered"); }}
+          className="relative overflow-hidden group rounded-2xl p-px bg-gradient-to-br from-emerald-500/40 via-teal-500/20 to-transparent hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+        >
+          <div className="relative bg-gradient-to-br from-[#071a10] to-[#0a0e1a] rounded-2xl p-6 flex items-center gap-4 h-full">
+            <div className="absolute -top-6 -right-6 w-28 h-28 bg-emerald-500/20 rounded-full blur-2xl pointer-events-none" />
+            <div className="relative shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-600/40">
+              <CheckCircle className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <p className="text-[10px] text-emerald-300/70 font-black uppercase tracking-[0.2em]">Delivered</p>
+              <h4 className="text-4xl font-black text-white mt-1 tracking-tight leading-none">{deliveredCount}</h4>
+              <p className="text-[10px] text-white/25 font-semibold mt-1">Successfully fulfilled</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Today's New Orders Banner */}
