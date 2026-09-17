@@ -428,8 +428,6 @@ exports.getDashboardStats = async (req, res) => {
   }
 };
 
-<<<<<<< Updated upstream
-=======
 // ==================== HOME CHEF MANAGEMENT ====================
 exports.getHomeChefs = async (req, res) => {
   try {
@@ -901,7 +899,6 @@ exports.deleteHomeChef = async (req, res) => {
   }
 };
 
->>>>>>> Stashed changes
 // ==================== RESTAURANT MANAGEMENT ====================
 exports.getRestaurants = async (req, res) => {
   try {
