@@ -355,38 +355,7 @@ const Reviews = () => {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-10">
 
       {/* HEADER SECTION */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-        <div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
-            <SuperAdminStatCard
-              label="Total Reviews"
-              value={stats?.total_reviews || 0}
-              icon={MessageSquare}
-              trend="All"
-              gradient="linear-gradient(135deg,#08172a 0%,#0B1120 100%)"
-              iconBg="#3B82F6"
-            />
-            <SuperAdminStatCard
-              label="Average Rating"
-              value={stats?.average_rating || 0}
-              icon={Star}
-              trend="Score"
-              gradient="linear-gradient(135deg,#211706 0%,#0B1120 100%)"
-              iconBg="#F59E0B"
-            />
-            <SuperAdminStatCard
-              label="Pending Reviews"
-              value={stats?.pending_count || 0}
-              icon={ShieldAlert}
-              trend="Review"
-              positive={false}
-              gradient="linear-gradient(135deg,#2e0d05 0%,#0B1120 100%)"
-              iconBg="#EF4444"
-            />
-          </div>
-        </div>
-
-        <div className="flex w-full flex-wrap items-center justify-start gap-3 lg:w-auto lg:justify-end">
+      <div className="flex w-full flex-wrap items-center justify-start gap-3 lg:justify-end">
           <button
             onClick={() => setShowAddModal(true)}
             className="flex min-h-12 items-center gap-2 rounded-2xl bg-slate-900 px-5 py-3 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-slate-900/10 transition-all hover:bg-blue-600 active:scale-95 whitespace-nowrap"
@@ -403,10 +372,34 @@ const Reviews = () => {
           >
             <Plus className="w-4 h-6" /> Add Delivery Partner Review
           </button>
+      </div>
 
-          {/* STATS MINI CARDS */}
-
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
+        <SuperAdminStatCard
+          label="Total Reviews"
+          value={stats?.total_reviews || 0}
+          icon={MessageSquare}
+          trend="All"
+          gradient="linear-gradient(135deg,#08172a 0%,#0B1120 100%)"
+          iconBg="#3B82F6"
+        />
+        <SuperAdminStatCard
+          label="Average Rating"
+          value={stats?.average_rating || 0}
+          icon={Star}
+          trend="Score"
+          gradient="linear-gradient(135deg,#211706 0%,#0B1120 100%)"
+          iconBg="#F59E0B"
+        />
+        <SuperAdminStatCard
+          label="Pending Reviews"
+          value={stats?.pending_count || 0}
+          icon={ShieldAlert}
+          trend="Review"
+          positive={false}
+          gradient="linear-gradient(135deg,#2e0d05 0%,#0B1120 100%)"
+          iconBg="#EF4444"
+        />
       </div>
 
       {/* Tabs: Food vs Delivery Partner */}
