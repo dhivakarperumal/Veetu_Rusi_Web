@@ -417,48 +417,49 @@ const Reviews = () => {
       </div>
 
       {/* FILTERS AND SEARCH BAR */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
-        <div className="xl:col-span-3 rounded-2xl border border-slate-100 bg-white p-2 shadow-sm">
-          <label htmlFor="review-status-filter" className="sr-only">Review status</label>
-          <select
-            id="review-status-filter"
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            className="w-full rounded-xl border-0 bg-slate-900 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-white outline-none focus:ring-2 focus:ring-blue-500/30"
-          >
-            {["All", "Pending", "Published", "Flagged"].map((status) => (
-              <option key={status} value={status}>{status}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="xl:col-span-4 relative group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-slate-900/95 border border-slate-800 p-5 rounded-[1.75rem] shadow-2xl shadow-slate-950/30">
+        <div className="relative flex-1 max-w-xl w-full group">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-emerald-400 transition-colors" />
           <input
             type="text"
             placeholder="Search reviews, products or users..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-full min-h-[56px] bg-white border border-slate-100 rounded-2xl pl-11 pr-4 text-sm font-semibold text-slate-700 focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500/30 transition-all placeholder:text-slate-300"
+            className="w-full pl-11 pr-4 py-3 bg-slate-950 border border-slate-800 rounded-2xl outline-none font-medium text-slate-100 text-sm focus:bg-slate-900 focus:border-emerald-500/70 transition-all placeholder:text-slate-500"
           />
         </div>
 
-        <div className="xl:col-span-2 rounded-2xl border border-slate-100 bg-white p-2 shadow-sm">
+        <div className="flex flex-wrap items-center gap-3 self-end xl:self-auto">
+          <div className="rounded-2xl border border-slate-800 bg-slate-950 p-1">
+          <label htmlFor="review-status-filter" className="sr-only">Review status</label>
+          <select
+            id="review-status-filter"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="rounded-xl border-0 bg-slate-950 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-slate-200 outline-none focus:ring-2 focus:ring-emerald-500/30"
+          >
+            {["All", "Pending", "Published", "Flagged"].map((status) => (
+              <option key={status} value={status}>{status}</option>
+            ))}
+          </select>
+          </div>
+
+        <div className="rounded-2xl border border-slate-800 bg-slate-950 p-1">
           <label htmlFor="review-rating-filter" className="sr-only">Review rating</label>
           <select
             id="review-rating-filter"
             value={selectedRating || ""}
             onChange={(e) => setSelectedRating(e.target.value ? Number(e.target.value) : null)}
-            className="w-full rounded-xl border-0 bg-slate-900 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-white outline-none focus:ring-2 focus:ring-amber-500/30"
+            className="rounded-xl border-0 bg-slate-950 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-slate-200 outline-none focus:ring-2 focus:ring-amber-500/30"
           >
             <option value="">All ratings</option>
             {[5, 4, 3, 2, 1].map((rating) => (
               <option key={rating} value={rating}>{rating} stars</option>
             ))}
           </select>
-        </div>
+          </div>
 
-        <div className="xl:col-span-3 rounded-2xl border border-slate-100 bg-white p-2 shadow-sm">
+        <div className="rounded-2xl border border-slate-800 bg-slate-950 p-1">
           <label htmlFor="review-franchise-filter" className="sr-only">Franchise Admin</label>
           <select
             id="review-franchise-filter"
@@ -467,7 +468,7 @@ const Reviews = () => {
               setSelectedFranchiseAdmin(e.target.value);
               setSelectedFranchiseAdminLabel(e.target.selectedOptions[0]?.dataset?.name || "");
             }}
-            className="w-full rounded-xl border-0 bg-slate-900 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-white outline-none focus:ring-2 focus:ring-blue-500/30"
+            className="rounded-xl border-0 bg-slate-950 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-slate-200 outline-none focus:ring-2 focus:ring-emerald-500/30"
           >
             <option value="" data-name="">All franchise admins</option>
             {franchiseAdmins.map((admin) => {
@@ -475,25 +476,24 @@ const Reviews = () => {
               return <option key={admin.id || admin.franch_user_id} value={admin.franch_user_id || admin.id} data-name={label}>{label}</option>;
             })}
           </select>
-        </div>
+          </div>
 
-        <div className="xl:col-span-12 flex justify-end">
-          <div className="inline-flex items-center gap-1 rounded-2xl border border-slate-100 bg-white p-1 shadow-sm">
+          <div className="flex bg-slate-950 border border-slate-800 p-1 rounded-2xl">
           <button
             type="button"
             onClick={() => setViewMode("table")}
             title="Table view"
-            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-black uppercase tracking-widest transition ${viewMode === "table" ? "bg-slate-900 text-white" : "text-slate-400 hover:bg-slate-50"}`}
+            className={`p-3 rounded-xl transition ${viewMode === "table" ? "bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20" : "text-slate-400 hover:text-slate-100"}`}
           >
-            <List className="h-4 w-4" /> Table
+            <List className="h-4 w-4" />
           </button>
           <button
             type="button"
             onClick={() => setViewMode("card")}
             title="Card view"
-            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-black uppercase tracking-widest transition ${viewMode === "card" ? "bg-slate-900 text-white" : "text-slate-400 hover:bg-slate-50"}`}
+            className={`p-3 rounded-xl transition ${viewMode === "card" ? "bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20" : "text-slate-400 hover:text-slate-100"}`}
           >
-            <LayoutGrid className="h-4 w-4" /> Cards
+            <LayoutGrid className="h-4 w-4" />
           </button>
           </div>
         </div>

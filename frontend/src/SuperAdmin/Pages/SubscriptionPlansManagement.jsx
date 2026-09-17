@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import { CreditCard, Plus, Edit2, Trash2, CheckCircle, X, Search, Clock, Activity, IndianRupee } from 'lucide-react';
+import { CreditCard, Plus, Edit2, Trash2, CheckCircle, X, Search, Clock, Activity, IndianRupee, List, LayoutGrid } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import SuperAdminStatCard from "../Components/SuperAdminStatCard";
 
@@ -216,41 +216,43 @@ const SubscriptionPlansManagement = () => {
       </div>
 
       {/* Search and Filters Bar */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-3 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
-        <div className="relative flex-1 w-full max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-slate-900/95 border border-slate-800 p-5 rounded-[1.75rem] shadow-2xl shadow-slate-950/30">
+        <div className="relative flex-1 max-w-xl w-full">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
             type="text"
             placeholder="Search by plan name or ID..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-100 rounded-xl pl-9 pr-4 py-2.5 text-sm font-medium outline-none focus:bg-white focus:border-slate-300 transition-colors"
+            className="w-full pl-11 pr-4 py-3 bg-slate-950 border border-slate-800 rounded-2xl outline-none font-medium text-slate-100 text-sm focus:bg-slate-900 focus:border-emerald-500/70 transition-all placeholder:text-slate-500"
           />
         </div>
 
-        <div className="flex items-center gap-3 w-full md:w-auto">
+        <div className="flex flex-wrap items-center gap-3 self-end xl:self-auto">
           <select
             value={statusFilter}
             onChange={e => setStatusFilter(e.target.value)}
-            className="bg-slate-50 border border-slate-100 rounded-xl px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-slate-600 outline-none focus:bg-white focus:border-slate-300 transition-colors cursor-pointer"
+            className="px-4 py-3 bg-slate-950 border border-slate-800 rounded-2xl outline-none font-bold text-xs uppercase tracking-widest text-slate-200 focus:bg-slate-900 focus:border-emerald-500/70 transition-all cursor-pointer"
           >
             <option value="ALL">All Statuses</option>
             <option value="ACTIVE">Active</option>
             <option value="INACTIVE">Inactive</option>
           </select>
 
-          <div className="flex items-center bg-slate-50 border border-slate-100 rounded-xl p-1">
+          <div className="flex bg-slate-950 border border-slate-800 p-1 rounded-2xl">
             <button
               onClick={() => setViewMode('table')}
-              className={`p-1.5 rounded-lg transition-colors ${viewMode === 'table' ? 'bg-white shadow-sm text-[#1B4D22]' : 'text-slate-400 hover:text-slate-600'}`}
+              className={`p-3 rounded-xl transition ${viewMode === 'table' ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20' : 'text-slate-400 hover:text-slate-100'}`}
+              title="Table View"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+              <List className="w-4 h-4" />
             </button>
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-white shadow-sm text-[#1B4D22]' : 'text-slate-400 hover:text-slate-600'}`}
+              className={`p-3 rounded-xl transition ${viewMode === 'grid' ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20' : 'text-slate-400 hover:text-slate-100'}`}
+              title="Card View"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+              <LayoutGrid className="w-4 h-4" />
             </button>
           </div>
         </div>
