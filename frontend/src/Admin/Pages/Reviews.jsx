@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import api from "../../api";
 import toast from "react-hot-toast";
+import AdminStatCard from "../Components/AdminStatCard";
 
 const Reviews = () => {
   const { reviewsCache, setReviewsCache } = useAdmin();
@@ -314,42 +315,8 @@ const Reviews = () => {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-10">
 
       {/* HEADER SECTION */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-        <div>
-          <div className="hidden sm:flex items-center gap-3">
-            <div className="superadmin-card px-5 py-3 rounded-2xl flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
-                <MessageSquare className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total</p>
-                <p className="text-lg font-black text-slate-800 leading-tight">{stats?.total_reviews || 0}</p>
-              </div>
-            </div>
-
-            <div className="superadmin-card px-5 py-3 rounded-2xl flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-500">
-                <Star className="w-5 h-5 fill-amber-500" />
-              </div>
-              <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Avg Rating</p>
-                <p className="text-lg font-black text-slate-800 leading-tight">{stats?.average_rating || 0}</p>
-              </div>
-            </div>
-
-            <div className="superadmin-card px-5 py-3 rounded-2xl flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-red-600">
-                <ShieldAlert className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pending</p>
-                <p className="text-lg font-black text-slate-800 leading-tight">{stats?.pending_count || 0}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col gap-5">
+        <div className="flex items-center justify-end gap-4">
           <button
             onClick={() => setShowAddModal(true)}
             className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-blue-600 shadow-xl shadow-slate-900/10 transition-all active:scale-95"
@@ -367,8 +334,12 @@ const Reviews = () => {
             <Plus className="w-4 h-6" /> Add Delivery Partner Review
           </button>
 
-          {/* STATS MINI CARDS */}
+        </div>
 
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          <AdminStatCard label="Total Reviews" value={stats?.total_reviews || 0} description="All customer reviews" icon={MessageSquare} iconGradient="linear-gradient(135deg,#3B82F6 0%,#2563EB 100%)" glow="rgba(59,130,246,0.22)" gradient="linear-gradient(135deg,#08172a 0%,#0a0e1a 100%)" />
+          <AdminStatCard label="Average Rating" value={stats?.average_rating || 0} description="Customer satisfaction score" icon={Star} iconGradient="linear-gradient(135deg,#F59E0B 0%,#EA580C 100%)" glow="rgba(245,158,11,0.22)" gradient="linear-gradient(135deg,#1a1004 0%,#0a0e1a 100%)" />
+          <AdminStatCard label="Pending Reviews" value={stats?.pending_count || 0} description="Awaiting moderation" icon={ShieldAlert} iconGradient="linear-gradient(135deg,#F43F5E 0%,#DC2626 100%)" glow="rgba(244,63,94,0.22)" gradient="linear-gradient(135deg,#26100f 0%,#0a0e1a 100%)" />
         </div>
       </div>
 

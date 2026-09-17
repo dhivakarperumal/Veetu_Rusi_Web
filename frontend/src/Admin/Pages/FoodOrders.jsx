@@ -29,6 +29,7 @@ import {
   LayoutGrid,
   List
 } from 'lucide-react';
+import AdminStatCard from '../Components/AdminStatCard';
 
 const STATUS_OPTIONS = [
   'All',
@@ -155,17 +156,7 @@ const InfoRow = ({ icon, label, value }) => (
 /* ───────────────────────────────────────────── */
 
 const StatCard = ({ label, value, color, icon }) => (
-  <div className={`rounded-2xl p-5 text-white shadow-lg ${color}`}>
-    <div className="flex items-center justify-between">
-      <p className="text-xs uppercase tracking-[0.2em] text-white/70">
-        {label}
-      </p>
-
-      <div className="opacity-80">{icon}</div>
-    </div>
-
-    <p className="mt-4 text-4xl font-black">{value}</p>
-  </div>
+  <AdminStatCard label={label} value={value} description="Food order activity" icon={icon} gradient={color} />
 );
 
 /* ───────────────────────────────────────────── */

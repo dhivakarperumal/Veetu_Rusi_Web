@@ -5,6 +5,7 @@ import { toast } from "react-hot-toast";
 import Select from "react-select";
 import api from "../../api";
 import Loader from "../../Components/CommenComponents/Loader";
+import AdminStatCard from "../Components/AdminStatCard";
 
 const Coupons = () => {
   const [coupons, setCoupons] = useState([]);
@@ -209,35 +210,9 @@ const Coupons = () => {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-        <div className="bg-white border border-slate-100 border-l-4 border-l-blue-500 p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 border border-blue-100/50 flex-shrink-0">
-            <FiTag className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-[10px] text-blue-600 font-bold uppercase tracking-widest">Total Coupons</p>
-            <h4 className="text-2xl font-black text-slate-800 mt-1 tracking-tight">{totalCount}</h4>
-          </div>
-        </div>
-
-        <div className="bg-white border border-slate-100 border-l-4 border-l-emerald-500 p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 border border-emerald-100/50 flex-shrink-0">
-            <FiCheckCircle className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest">Active Coupons</p>
-            <h4 className="text-2xl font-black text-slate-800 mt-1 tracking-tight">{activeCount}</h4>
-          </div>
-        </div>
-
-        <div className="bg-white border border-slate-100 border-l-4 border-l-rose-500 p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600 border border-rose-100/50 flex-shrink-0">
-            <FiXCircle className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-[10px] text-rose-600 font-bold uppercase tracking-widest">Inactive Coupons</p>
-            <h4 className="text-2xl font-black text-slate-800 mt-1 tracking-tight">{inactiveCount}</h4>
-          </div>
-        </div>
+        <AdminStatCard label="Total Coupons" value={totalCount} description="All discount codes" icon={FiTag} iconGradient="linear-gradient(135deg,#3B82F6 0%,#2563EB 100%)" glow="rgba(59,130,246,0.22)" gradient="linear-gradient(135deg,#08172a 0%,#0a0e1a 100%)" />
+        <AdminStatCard label="Active Coupons" value={activeCount} description="Currently available offers" icon={FiCheckCircle} iconGradient="linear-gradient(135deg,#10B981 0%,#0D9488 100%)" glow="rgba(16,185,129,0.22)" gradient="linear-gradient(135deg,#071a10 0%,#0a0e1a 100%)" />
+        <AdminStatCard label="Inactive Coupons" value={inactiveCount} description="Expired or disabled offers" icon={FiXCircle} iconGradient="linear-gradient(135deg,#F43F5E 0%,#DC2626 100%)" glow="rgba(244,63,94,0.22)" gradient="linear-gradient(135deg,#26100f 0%,#0a0e1a 100%)" />
       </div>
 
       {/* Toolbar: Search and Refresh */}

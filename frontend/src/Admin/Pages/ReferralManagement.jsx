@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo, Fragment } from 'react';
 import { toast } from 'react-hot-toast';
+import AdminStatCard from '../Components/AdminStatCard';
 import {
   Download, RefreshCw, ShieldCheck, Users, Wallet, Ticket, Clock3, Plus, X,
   Settings2, UtensilsCrossed, Bike, UserCheck, AlertTriangle, TrendingUp,
@@ -421,13 +422,7 @@ const ReferralManagement = () => {
 
   /* ── STAT CARD ── */
   const StatCard = ({ label, value, icon, color = 'text-emerald-400', sub }) => (
-    <div className="rounded-3xl border border-white/10 bg-[#0b1512] p-5">
-      <div className={`flex items-center gap-2 text-sm font-semibold text-slate-400`}>
-        <span className={color}>{icon}</span>{label}
-      </div>
-      <div className="mt-3 text-2xl font-black text-white">{value}</div>
-      {sub && <div className="mt-1 text-xs text-slate-500">{sub}</div>}
-    </div>
+    <AdminStatCard label={label} value={value} description={sub || 'Referral program metric'} icon={icon} />
   );
 
   /* ══════════════════════════════════════════════════════════════ */

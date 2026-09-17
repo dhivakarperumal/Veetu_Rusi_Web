@@ -14,6 +14,7 @@ import {
   FaImage,
   FaFileAlt
 } from "react-icons/fa";
+import AdminStatCard from "../Components/AdminStatCard";
 
 const HomeChefCategories = () => {
   const [category, setCategory] = useState({
@@ -237,6 +238,9 @@ const HomeChefCategories = () => {
     currentPage * itemsPerPage
   );
 
+  const categoriesWithImages = categories.filter((item) => item.image?.length > 0).length;
+  const categoriesWithSubcategories = categories.filter((item) => item.subcategory?.length > 0).length;
+
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm]);
@@ -281,6 +285,12 @@ const HomeChefCategories = () => {
               <FaPlus /> Add New Category
             </button>
           </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
+          <AdminStatCard label="Total Categories" value={categories.length} description="All home chef categories" icon={FaFileAlt} iconGradient="linear-gradient(135deg,#7C3AED 0%,#4338CA 100%)" glow="rgba(124,58,237,0.22)" />
+          <AdminStatCard label="With Images" value={categoriesWithImages} description="Categories ready for display" icon={FaImage} iconGradient="linear-gradient(135deg,#10B981 0%,#0D9488 100%)" glow="rgba(16,185,129,0.22)" gradient="linear-gradient(135deg,#071a10 0%,#0a0e1a 100%)" />
+          <AdminStatCard label="With Subcategories" value={categoriesWithSubcategories} description="Categories with organized items" icon={FaList} iconGradient="linear-gradient(135deg,#F59E0B 0%,#EA580C 100%)" glow="rgba(245,158,11,0.22)" gradient="linear-gradient(135deg,#1a1004 0%,#0a0e1a 100%)" />
         </div>
 
         {/* Content Section */}

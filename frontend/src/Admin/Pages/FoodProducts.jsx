@@ -5,6 +5,7 @@ import api from '../../api';
 import { toast } from 'react-hot-toast';
 import { Eye, Edit2, Trash2, LayoutGrid, List, Search } from 'lucide-react';
 import { useAuth } from '../../PrivateRouter/AuthContext';
+import AdminStatCard from '../Components/AdminStatCard';
 
 const FoodProducts = () => {
   const location = useLocation();
@@ -272,36 +273,9 @@ const FoodProducts = () => {
   return (
     <div className="space-y-6 p-6 min-h-screen">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <div onClick={() => handleStatusChange('All')} className={`cursor-pointer rounded-3xl px-6 py-6 text-white shadow-xl shadow-slate-950/10 ring-1 ring-white/5 transition-colors ${statusFilter === 'All' ? 'bg-slate-900 border-2 border-violet-500' : 'bg-slate-950 hover:bg-slate-900'}`}>
-          <div className="flex items-center justify-between gap-4">
-            <div className="rounded-3xl bg-violet-600/20 p-3 text-violet-300">
-              <div className="w-10 h-10 rounded-3xl bg-violet-500/10 flex items-center justify-center">🥘</div>
-            </div>
-            <span className="text-[11px] uppercase tracking-[0.32em] text-slate-400">Total Foods</span>
-          </div>
-          <p className="mt-6 text-5xl font-black tracking-tight">{summary.total}</p>
-          <p className="mt-2 text-sm text-slate-400">All chef food items currently loaded.</p>
-        </div>
-        <div onClick={() => handleStatusChange('Approved')} className={`cursor-pointer rounded-3xl px-6 py-6 text-white shadow-xl shadow-slate-950/10 ring-1 ring-white/5 transition-colors ${statusFilter === 'Approved' ? 'bg-slate-900 border-2 border-emerald-500' : 'bg-slate-950 hover:bg-slate-900'}`}>
-          <div className="flex items-center justify-between gap-4">
-            <div className="rounded-3xl bg-emerald-600/20 p-3 text-emerald-200">
-              <div className="w-10 h-10 rounded-3xl bg-emerald-500/10 flex items-center justify-center">✅</div>
-            </div>
-            <span className="text-[11px] uppercase tracking-[0.32em] text-slate-400">Active Foods</span>
-          </div>
-          <p className="mt-6 text-5xl font-black tracking-tight">{summary.active}</p>
-          <p className="mt-2 text-sm text-slate-400">Active food items ready for sale.</p>
-        </div>
-        <div onClick={() => handleStatusChange('Not Approved')} className={`cursor-pointer rounded-3xl px-6 py-6 text-white shadow-xl shadow-slate-950/10 ring-1 ring-white/5 transition-colors ${statusFilter === 'Not Approved' ? 'bg-slate-900 border-2 border-rose-500' : 'bg-slate-950 hover:bg-slate-900'}`}>
-          <div className="flex items-center justify-between gap-4">
-            <div className="rounded-3xl bg-rose-600/20 p-3 text-rose-200">
-              <div className="w-10 h-10 rounded-3xl bg-rose-500/10 flex items-center justify-center">⛔</div>
-            </div>
-            <span className="text-[11px] uppercase tracking-[0.32em] text-slate-400">Inactive / Suspended</span>
-          </div>
-          <p className="mt-6 text-5xl font-black tracking-tight">{summary.inactive}</p>
-          <p className="mt-2 text-sm text-slate-400">Food items currently inactive or blocked.</p>
-        </div>
+        <AdminStatCard label="Total Foods" value={summary.total} description="All chef food items currently loaded" icon={ShoppingBag} onClick={() => handleStatusChange('All')} />
+        <AdminStatCard label="Active Foods" value={summary.active} description="Active food items ready for sale" icon={CheckCircle} onClick={() => handleStatusChange('Approved')} gradient="linear-gradient(135deg,#071a10 0%,#0a0e1a 100%)" iconGradient="linear-gradient(135deg,#10B981 0%,#0D9488 100%)" glow="rgba(16,185,129,0.22)" />
+        <AdminStatCard label="Inactive / Suspended" value={summary.inactive} description="Food items currently inactive or blocked" icon={XCircle} onClick={() => handleStatusChange('Not Approved')} gradient="linear-gradient(135deg,#26100f 0%,#0a0e1a 100%)" iconGradient="linear-gradient(135deg,#F43F5E 0%,#DC2626 100%)" glow="rgba(244,63,94,0.22)" />
       </div>
 
       {/* Toolbar */}

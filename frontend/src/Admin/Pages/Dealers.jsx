@@ -16,6 +16,7 @@ import {
 } from "react-icons/fi";
 import { toast, Toaster } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import AdminStatCard from "../Components/AdminStatCard";
 
 const Dealers = () => {
     const navigate = useNavigate();
@@ -54,6 +55,9 @@ const Dealers = () => {
         dealer.contact?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         dealer.location?.toLowerCase().includes(searchTerm.toLowerCase()))
     );
+
+    const verifiedDealers = dealers.filter((dealer) => dealer.status === "Verified").length;
+    const pendingDealers = dealers.filter((dealer) => dealer.status === "Pending").length;
 
     const handleContact = (dealer) => {
         toast.promise(
@@ -129,6 +133,12 @@ const Dealers = () => {
                         <FiPlus /> New Partnership
                     </button>
                 </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                <AdminStatCard label="Total Dealers" value={dealers.length} description="All registered dealer partners" icon={FiTruck} iconGradient="linear-gradient(135deg,#3B82F6 0%,#2563EB 100%)" glow="rgba(59,130,246,0.22)" gradient="linear-gradient(135deg,#08172a 0%,#0a0e1a 100%)" />
+                <AdminStatCard label="Verified Dealers" value={verifiedDealers} description="Approved and active partners" icon={FiCheck} iconGradient="linear-gradient(135deg,#10B981 0%,#0D9488 100%)" glow="rgba(16,185,129,0.22)" gradient="linear-gradient(135deg,#071a10 0%,#0a0e1a 100%)" />
+                <AdminStatCard label="Pending Dealers" value={pendingDealers} description="Partners awaiting verification" icon={FiPackage} iconGradient="linear-gradient(135deg,#F59E0B 0%,#EA580C 100%)" glow="rgba(245,158,11,0.22)" gradient="linear-gradient(135deg,#1a1004 0%,#0a0e1a 100%)" />
             </div>
 
             {/* Dealers Grid */}

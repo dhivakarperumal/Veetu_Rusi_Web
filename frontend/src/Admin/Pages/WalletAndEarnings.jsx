@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { CreditCard, Download, Eye, EyeOff, TrendingUp } from "lucide-react";
 import toast from "react-hot-toast";
+import AdminStatCard from "../Components/AdminStatCard";
 
 const AdminWalletAndEarnings = () => {
   const [showBalance, setShowBalance] = useState(true);
@@ -83,50 +84,9 @@ const AdminWalletAndEarnings = () => {
       </section>
 
       <div className="grid gap-5 xl:grid-cols-3">
-        <div className="rounded-[2rem] border border-white/10 bg-slate-950/85 p-6 shadow-xl shadow-slate-950/30">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-400">Wallet Balance</p>
-              <p className="mt-3 text-3xl font-black text-white">
-                {showBalance ? `₹${walletBalance.toLocaleString()}` : "••••••"}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowBalance((state) => !state)}
-              className="inline-flex h-11 w-11 items-center justify-center rounded-3xl border border-white/10 bg-slate-900/90 text-slate-200 transition hover:border-emerald-400/30 hover:text-white"
-            >
-              {showBalance ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
-            </button>
-          </div>
-          <p className="mt-6 text-sm text-slate-400">Available for withdrawal</p>
-        </div>
-
-        <div className="rounded-[2rem] border border-white/10 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 p-6 shadow-xl shadow-slate-950/30">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-400">Total Earnings</p>
-              <p className="mt-3 text-3xl font-black text-white">₹{totalEarnings.toLocaleString()}</p>
-            </div>
-            <div className="inline-flex h-11 w-11 items-center justify-center rounded-3xl bg-emerald-500/10 text-emerald-300">
-              <TrendingUp className="h-5 w-5" />
-            </div>
-          </div>
-          <p className="mt-6 text-sm text-slate-400">All-time earnings overview</p>
-        </div>
-
-        <div className="rounded-[2rem] border border-white/10 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 p-6 shadow-xl shadow-slate-950/30">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-400">This Month</p>
-              <p className="mt-3 text-3xl font-black text-white">₹{monthlyEarnings.toLocaleString()}</p>
-            </div>
-            <div className="inline-flex h-11 w-11 items-center justify-center rounded-3xl bg-violet-500/10 text-violet-300">
-              <CreditCard className="h-5 w-5" />
-            </div>
-          </div>
-          <p className="mt-6 text-sm text-slate-400">May 2024 earnings</p>
-        </div>
+        <AdminStatCard label="Wallet Balance" value={showBalance ? `₹${walletBalance.toLocaleString()}` : "••••••"} description="Available for withdrawal" icon={showBalance ? Eye : EyeOff} onClick={() => setShowBalance((state) => !state)} />
+        <AdminStatCard label="Total Earnings" value={`₹${totalEarnings.toLocaleString()}`} description="All-time earnings overview" icon={TrendingUp} gradient="linear-gradient(135deg,#071a10 0%,#0a0e1a 100%)" iconGradient="linear-gradient(135deg,#10B981 0%,#0D9488 100%)" glow="rgba(16,185,129,0.22)" />
+        <AdminStatCard label="This Month" value={`₹${monthlyEarnings.toLocaleString()}`} description="May 2024 earnings" icon={CreditCard} gradient="linear-gradient(135deg,#1a1004 0%,#0a0e1a 100%)" iconGradient="linear-gradient(135deg,#F59E0B 0%,#EA580C 100%)" glow="rgba(245,158,11,0.22)" />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">

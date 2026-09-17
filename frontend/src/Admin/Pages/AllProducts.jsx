@@ -20,6 +20,7 @@ import {
     FiLayout,
     FiDatabase
 } from "react-icons/fi";
+import AdminStatCard from "../Components/AdminStatCard";
 
 const AllProducts = () => {
     const navigate = useNavigate();
@@ -400,22 +401,10 @@ const AllProducts = () => {
                 <>
                     {/* Quick Stats */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {[
-                            { label: "Products", value: stats.total, icon: <FiBox />, color: "text-blue-600", bg: "bg-blue-50" },
-                            { label: "Active", value: stats.active, icon: <FiCheckCircle />, color: "text-emerald-600", bg: "bg-emerald-50" },
-                            { label: "Low Stock", value: stats.lowStock, icon: <FiAlertCircle />, color: "text-amber-600", bg: "bg-amber-50" },
-                            { label: "Out of Stock", value: stats.outOfStock, icon: <FiXCircle />, color: "text-rose-600", bg: "bg-rose-50" },
-                        ].map((stat, i) => (
-                            <div key={i} className="bg-white px-4 py-5 md:p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row items-start md:items-center gap-4 transition-all hover:shadow-md">
-                                <div className={`w-10 h-10 md:w-12 md:h-12 ${stat.bg} ${stat.color} rounded-xl flex items-center justify-center text-lg shadow-inner`}>
-                                    {stat.icon}
-                                </div>
-                                <div>
-                                    <p className="text-[9px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest">{stat.label}</p>
-                                    <p className="text-xl md:text-2xl font-black text-slate-800 leading-none mt-1">{stat.value}</p>
-                                </div>
-                            </div>
-                        ))}
+                        <AdminStatCard label="Products" value={stats.total} description="All inventory products" icon={FiBox} iconGradient="linear-gradient(135deg,#3B82F6 0%,#2563EB 100%)" glow="rgba(59,130,246,0.22)" gradient="linear-gradient(135deg,#08172a 0%,#0a0e1a 100%)" />
+                        <AdminStatCard label="Active" value={stats.active} description="Products ready for sale" icon={FiCheckCircle} iconGradient="linear-gradient(135deg,#10B981 0%,#0D9488 100%)" glow="rgba(16,185,129,0.22)" gradient="linear-gradient(135deg,#071a10 0%,#0a0e1a 100%)" />
+                        <AdminStatCard label="Low Stock" value={stats.lowStock} description="Products needing attention" icon={FiAlertCircle} iconGradient="linear-gradient(135deg,#F59E0B 0%,#EA580C 100%)" glow="rgba(245,158,11,0.22)" gradient="linear-gradient(135deg,#1a1004 0%,#0a0e1a 100%)" />
+                        <AdminStatCard label="Out of Stock" value={stats.outOfStock} description="Products unavailable" icon={FiXCircle} iconGradient="linear-gradient(135deg,#F43F5E 0%,#DC2626 100%)" glow="rgba(244,63,94,0.22)" gradient="linear-gradient(135deg,#26100f 0%,#0a0e1a 100%)" />
                     </div>
 
                     {/* Controls */}

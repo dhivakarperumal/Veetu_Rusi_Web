@@ -13,6 +13,7 @@ import {
   FaImage,
   FaFileAlt
 } from "react-icons/fa";
+import AdminStatCard from "../Components/AdminStatCard";
 
 const Category = () => {
   const [category, setCategory] = useState({
@@ -229,6 +230,9 @@ const Category = () => {
     currentPage * itemsPerPage
   );
 
+  const categoriesWithImages = categories.filter((item) => item.images?.length > 0 || item.cimgs?.length > 0).length;
+  const categoriesInView = filteredCategories.length;
+
   // Reset to page 1 on search
   useEffect(() => {
     setCurrentPage(1);
@@ -274,6 +278,12 @@ const Category = () => {
               <FaPlus /> Add New Category
             </button>
           </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
+          <AdminStatCard label="Total Categories" value={categories.length} description="All product categories" icon={FaFileAlt} iconGradient="linear-gradient(135deg,#7C3AED 0%,#4338CA 100%)" glow="rgba(124,58,237,0.22)" />
+          <AdminStatCard label="With Images" value={categoriesWithImages} description="Categories ready for display" icon={FaImage} iconGradient="linear-gradient(135deg,#10B981 0%,#0D9488 100%)" glow="rgba(16,185,129,0.22)" gradient="linear-gradient(135deg,#071a10 0%,#0a0e1a 100%)" />
+          <AdminStatCard label="Search Results" value={categoriesInView} description="Categories matching the current search" icon={FaSearch} iconGradient="linear-gradient(135deg,#F59E0B 0%,#EA580C 100%)" glow="rgba(245,158,11,0.22)" gradient="linear-gradient(135deg,#1a1004 0%,#0a0e1a 100%)" />
         </div>
 
         {/* Search Bar */}

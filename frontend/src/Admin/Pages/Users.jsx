@@ -13,6 +13,7 @@ import {
     FiEdit2
 } from "react-icons/fi";
 import { toast, Toaster } from "react-hot-toast";
+import AdminStatCard from "../Components/AdminStatCard";
 
 
 const Users = ({ initialTab = "All" }) => {
@@ -295,21 +296,9 @@ const Users = ({ initialTab = "All" }) => {
 
                 <div className="p-6 space-y-6">
                     <div className="grid gap-4 md:grid-cols-3">
-                        <div className="rounded-3xl border border-white/10 bg-slate-900/90 p-5 shadow-xl shadow-black/20">
-                            <p className="text-xs uppercase tracking-[0.36em] text-slate-500">Total Users</p>
-                            <p className="mt-3 text-3xl font-black text-white">{users.length}</p>
-                            <p className="mt-2 text-sm text-slate-400">All registered users in the system.</p>
-                        </div>
-                        <div className="rounded-3xl border border-white/10 bg-slate-900/90 p-5 shadow-xl shadow-black/20">
-                            <p className="text-xs uppercase tracking-[0.36em] text-slate-500">New Today</p>
-                            <p className="mt-3 text-3xl font-black text-white">{newUsersCount}</p>
-                            <p className="mt-2 text-sm text-slate-400">Users registered in the last 24 hours.</p>
-                        </div>
-                        <div className="rounded-3xl border border-white/10 bg-slate-900/90 p-5 shadow-xl shadow-black/20">
-                            <p className="text-xs uppercase tracking-[0.36em] text-slate-500">Current Filter</p>
-                            <p className="mt-3 text-lg font-black text-white">{selectedTab} / {formatRoleLabel(selectedRole)}</p>
-                            <p className="mt-2 text-sm text-slate-400">Use search and role filter to narrow results.</p>
-                        </div>
+                        <AdminStatCard label="Total Users" value={users.length} description="All registered users in the system" icon={FiUserPlus} iconGradient="linear-gradient(135deg,#3B82F6 0%,#2563EB 100%)" glow="rgba(59,130,246,0.22)" gradient="linear-gradient(135deg,#08172a 0%,#0a0e1a 100%)" />
+                        <AdminStatCard label="New Today" value={newUsersCount} description="Users registered in the last 24 hours" icon={FiUserPlus} iconGradient="linear-gradient(135deg,#10B981 0%,#0D9488 100%)" glow="rgba(16,185,129,0.22)" gradient="linear-gradient(135deg,#071a10 0%,#0a0e1a 100%)" />
+                        <AdminStatCard label="Current Filter" value={`${selectedTab} / ${formatRoleLabel(selectedRole)}`} description="Use search and role filter to narrow results" icon={FiFilter} iconGradient="linear-gradient(135deg,#F59E0B 0%,#EA580C 100%)" glow="rgba(245,158,11,0.22)" gradient="linear-gradient(135deg,#1a1004 0%,#0a0e1a 100%)" />
                     </div>
 
                     {loading ? (

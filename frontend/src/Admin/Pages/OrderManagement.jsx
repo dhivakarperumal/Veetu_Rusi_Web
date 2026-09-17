@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import api from "../../api";
 import { toast, Toaster } from "react-hot-toast";
 import { Search, Filter, Edit, Eye, Check, Package, Clock, Truck, List, Grid, CheckCircle, XCircle } from "lucide-react";
+import AdminStatCard from "../Components/AdminStatCard";
 
 const OrderManagement = () => {
   const [orders, setOrders] = useState([]);
@@ -116,56 +117,9 @@ const OrderManagement = () => {
 
       {/* Dark Premium Stat Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div
-          onClick={() => setStatusFilter('All')}
-          className="group relative overflow-hidden rounded-2xl bg-[#131127] p-6 shadow-xl cursor-pointer transition-transform hover:-translate-y-1 border border-[#2a264a]"
-        >
-          <div className="absolute right-0 top-0 -mr-6 -mt-6 h-32 w-32 rounded-full bg-indigo-500/20 blur-2xl transition-transform duration-500 group-hover:scale-150"></div>
-          <div className="relative z-10 flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-violet-600 shadow-lg text-white">
-              <List className="h-7 w-7" />
-            </div>
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-indigo-300">Total Orders</p>
-              <h3 className="mt-1 text-3xl font-black text-white">{loading ? '-' : orders.length}</h3>
-              <p className="text-[10px] text-indigo-400 mt-1">All registered orders</p>
-            </div>
-          </div>
-        </div>
-
-        <div
-          onClick={() => setStatusFilter('Delivered')}
-          className="group relative overflow-hidden rounded-2xl bg-[#0a1e17] p-6 shadow-xl cursor-pointer transition-transform hover:-translate-y-1 border border-[#143d2f]"
-        >
-          <div className="absolute right-0 top-0 -mr-6 -mt-6 h-32 w-32 rounded-full bg-emerald-500/20 blur-2xl transition-transform duration-500 group-hover:scale-150"></div>
-          <div className="relative z-10 flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-emerald-500 shadow-lg text-white">
-              <CheckCircle className="h-7 w-7" />
-            </div>
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-emerald-300">Delivered Orders</p>
-              <h3 className="mt-1 text-3xl font-black text-white">{loading ? '-' : orders.filter(o => o.status === 'Delivered').length}</h3>
-              <p className="text-[10px] text-emerald-400 mt-1">Successfully delivered</p>
-            </div>
-          </div>
-        </div>
-
-        <div
-          onClick={() => setStatusFilter('Pending')}
-          className="group relative overflow-hidden rounded-2xl bg-[#26150c] p-6 shadow-xl cursor-pointer transition-transform hover:-translate-y-1 border border-[#4d2a18]"
-        >
-          <div className="absolute right-0 top-0 -mr-6 -mt-6 h-32 w-32 rounded-full bg-amber-500/20 blur-2xl transition-transform duration-500 group-hover:scale-150"></div>
-          <div className="relative z-10 flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-[#ff7300] shadow-lg text-white">
-              <Clock className="h-7 w-7" />
-            </div>
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-amber-300">Pending Orders</p>
-              <h3 className="mt-1 text-3xl font-black text-white">{loading ? '-' : orders.filter(o => o.status === 'Pending').length}</h3>
-              <p className="text-[10px] text-amber-400 mt-1">Awaiting review or action</p>
-            </div>
-          </div>
-        </div>
+        <AdminStatCard label="Total Orders" value={loading ? '-' : orders.length} description="All registered orders" icon={List} onClick={() => setStatusFilter('All')} />
+        <AdminStatCard label="Delivered Orders" value={loading ? '-' : orders.filter(o => o.status === 'Delivered').length} description="Successfully delivered" icon={CheckCircle} onClick={() => setStatusFilter('Delivered')} gradient="linear-gradient(135deg,#071a10 0%,#0a0e1a 100%)" iconGradient="linear-gradient(135deg,#10B981 0%,#0D9488 100%)" glow="rgba(16,185,129,0.22)" />
+        <AdminStatCard label="Pending Orders" value={loading ? '-' : orders.filter(o => o.status === 'Pending').length} description="Awaiting review or action" icon={Clock} onClick={() => setStatusFilter('Pending')} gradient="linear-gradient(135deg,#1a1004 0%,#0a0e1a 100%)" iconGradient="linear-gradient(135deg,#F59E0B 0%,#EA580C 100%)" glow="rgba(245,158,11,0.22)" />
       </div>
 
       {/* Filter & Search Bar Area */}

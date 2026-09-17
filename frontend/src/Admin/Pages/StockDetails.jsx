@@ -14,6 +14,7 @@ import {
     FiX
 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
+import AdminStatCard from "../Components/AdminStatCard";
 
 const StockDetails = () => {
     const navigate = useNavigate();
@@ -232,33 +233,9 @@ const StockDetails = () => {
 
             {/* Stock Alerts Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div className="bg-white p-6 rounded-[2rem] border-2 border-amber-100 shadow-sm flex items-center gap-4">
-                    <div className="w-12 h-12 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center text-xl shadow-sm">
-                        <FiAlertCircle />
-                    </div>
-                    <div>
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Low Stock Alerts</p>
-                        <p className="text-2xl font-black text-slate-800">{lowStockCount} items</p>
-                    </div>
-                </div>
-                <div className="bg-white p-6 rounded-[2rem] border-2 border-red-100 shadow-sm flex items-center gap-4">
-                    <div className="w-12 h-12 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center text-xl shadow-sm">
-                        <FiTrendingDown />
-                    </div>
-                    <div>
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Out of Stock</p>
-                        <p className="text-2xl font-black text-slate-800">{outOfStockCount} items</p>
-                    </div>
-                </div>
-                <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center gap-4">
-                    <div className="w-12 h-12 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center text-xl shadow-sm">
-                        <FiPackage />
-                    </div>
-                    <div>
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Inventory Value</p>
-                        <p className="text-2xl font-black text-slate-800">₹{totalInventoryValue.toLocaleString()}</p>
-                    </div>
-                </div>
+                <AdminStatCard label="Low Stock Alerts" value={`${lowStockCount} items`} description="Products that need replenishment" icon={FiAlertCircle} iconGradient="linear-gradient(135deg,#F59E0B 0%,#EA580C 100%)" glow="rgba(245,158,11,0.22)" gradient="linear-gradient(135deg,#1a1004 0%,#0a0e1a 100%)" />
+                <AdminStatCard label="Out of Stock" value={`${outOfStockCount} items`} description="Products unavailable for sale" icon={FiTrendingDown} iconGradient="linear-gradient(135deg,#F43F5E 0%,#DC2626 100%)" glow="rgba(244,63,94,0.22)" gradient="linear-gradient(135deg,#26100f 0%,#0a0e1a 100%)" />
+                <AdminStatCard label="Inventory Value" value={`₹${totalInventoryValue.toLocaleString()}`} description="Current stock valuation" icon={FiPackage} iconGradient="linear-gradient(135deg,#3B82F6 0%,#2563EB 100%)" glow="rgba(59,130,246,0.22)" gradient="linear-gradient(135deg,#08172a 0%,#0a0e1a 100%)" />
             </div>
 
             {/* Inventory Table */}
