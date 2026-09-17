@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { MessageSquare, Star, Search, Loader2 } from "lucide-react";
+import { MessageSquare, Star, Search, Loader2, CheckCircle, Award } from "lucide-react";
 import api from "../../api";
 import toast from "react-hot-toast";
 import { useAuth } from "../../PrivateRouter/AuthContext";
@@ -172,23 +172,19 @@ const ChefReviews = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full sm:w-auto">
-          <div className="rounded-3xl border border-slate-800 bg-[#0f1216] p-5 shadow-sm text-slate-200">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Total reviews</p>
-            <p className="mt-3 text-3xl font-black text-white">{reviewStats.total_reviews}</p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {[
+          { label: "Total Reviews", value: reviewStats.total_reviews, note: "Customer feedback", icon: MessageSquare, border: "from-blue-500/40 via-cyan-500/20", glow: "bg-blue-600/15", iconBg: "from-blue-600 to-cyan-700", shadow: "shadow-blue-700/40", labelColor: "text-blue-300/70", panel: "bg-[#13161b]" },
+          { label: "Average Rating", value: reviewStats.average_rating, note: "Out of 5 stars", icon: Star, border: "from-emerald-500/40 via-teal-500/20", glow: "bg-emerald-500/20", iconBg: "from-emerald-500 to-teal-600", shadow: "shadow-emerald-600/40", labelColor: "text-emerald-300/70", panel: "bg-gradient-to-br from-[#071a10] to-[#0a0e1a]" },
+          { label: "5-Star Reviews", value: reviewStats.five_star, note: "Top-rated feedback", icon: Award, border: "from-amber-500/40 via-orange-500/20", glow: "bg-amber-500/20", iconBg: "from-amber-500 to-orange-600", shadow: "shadow-amber-600/40", labelColor: "text-amber-300/70", panel: "bg-gradient-to-br from-[#1a1004] to-[#0a0e1a]" },
+          { label: "Reviewed Products", value: products.length, note: "Items receiving feedback", icon: CheckCircle, border: "from-rose-500/40 via-red-500/20", glow: "bg-rose-500/20", iconBg: "from-rose-500 to-red-600", shadow: "shadow-rose-600/40", labelColor: "text-rose-300/70", panel: "bg-gradient-to-br from-[#1a0a0a] to-[#0a0e1a]" },
+        ].map(({ label, value, note, icon: Icon, border, glow, iconBg, shadow, labelColor, panel }) => (
+          <div key={label} className={`relative overflow-hidden group rounded-2xl p-px bg-gradient-to-br ${border} to-transparent hover:-translate-y-1 transition-all duration-300`}>
+            <div className={`relative ${panel} rounded-2xl p-6 flex items-center gap-4 h-full`}><div className={`absolute -top-6 -right-6 w-28 h-28 ${glow} rounded-full blur-2xl pointer-events-none`} /><div className={`relative shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br ${iconBg} flex items-center justify-center shadow-lg ${shadow}`}><Icon className="w-6 h-6 text-white" /></div><div><p className={`text-[10px] ${labelColor} font-black uppercase tracking-[0.2em]`}>{label}</p><h4 className="text-4xl font-black text-white mt-1 tracking-tight leading-none">{value}</h4><p className="text-[10px] text-white/25 font-semibold mt-1">{note}</p></div></div>
           </div>
-          <div className="rounded-3xl border border-slate-800 bg-[#0f1216] p-5 shadow-sm text-slate-200">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Average rating</p>
-            <p className="mt-3 text-3xl font-black text-white flex items-center gap-2">
-              {reviewStats.average_rating}
-              <Star className="w-5 h-5 text-amber-500" />
-            </p>
-          </div>
-          <div className="rounded-3xl border border-slate-800 bg-[#0f1216] p-5 shadow-sm text-slate-200">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Products</p>
-            <p className="mt-3 text-3xl font-black text-white">{products.length}</p>
-          </div>
-        </div>
+        ))}
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[360px_1fr]">

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Users, Search, Grid, List, Phone, ShoppingBag, Calendar } from "lucide-react";
+import { Users, Search, Grid, List, Phone, ShoppingBag, Calendar, DollarSign, TrendingUp } from "lucide-react";
 import api from "../../api";
 import { toast } from "react-hot-toast";
 
@@ -62,6 +62,9 @@ const Customers = () => {
     c.name.toLowerCase().includes(search.toLowerCase()) || 
     c.phone.toLowerCase().includes(search.toLowerCase())
   );
+  const totalOrders = customers.reduce((sum, customer) => sum + customer.totalOrders, 0);
+  const totalSpent = customers.reduce((sum, customer) => sum + customer.totalSpent, 0);
+  const repeatCustomers = customers.filter((customer) => customer.totalOrders > 1).length;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300 pb-20 p-4 md:p-8 bg-gradient-to-br from-[#0c1116] to-[#171a20] min-h-screen text-white">
@@ -72,6 +75,19 @@ const Customers = () => {
             People who bought your food and products
           </p>
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {[
+          { label: "Total Customers", value: customers.length, note: "Unique buyers", icon: Users, border: "from-blue-500/40 via-cyan-500/20", glow: "bg-blue-600/15", iconBg: "from-blue-600 to-cyan-700", shadow: "shadow-blue-700/40", labelColor: "text-blue-300/70", panel: "bg-[#13161b]" },
+          { label: "Total Orders", value: totalOrders, note: "Orders from your menu", icon: ShoppingBag, border: "from-emerald-500/40 via-teal-500/20", glow: "bg-emerald-500/20", iconBg: "from-emerald-500 to-teal-600", shadow: "shadow-emerald-600/40", labelColor: "text-emerald-300/70", panel: "bg-gradient-to-br from-[#071a10] to-[#0a0e1a]" },
+          { label: "Total Revenue", value: `₹${totalSpent.toLocaleString()}`, note: "Customer spend", icon: DollarSign, border: "from-amber-500/40 via-orange-500/20", glow: "bg-amber-500/20", iconBg: "from-amber-500 to-orange-600", shadow: "shadow-amber-600/40", labelColor: "text-amber-300/70", panel: "bg-gradient-to-br from-[#1a1004] to-[#0a0e1a]" },
+          { label: "Repeat Customers", value: repeatCustomers, note: "More than one order", icon: TrendingUp, border: "from-rose-500/40 via-red-500/20", glow: "bg-rose-500/20", iconBg: "from-rose-500 to-red-600", shadow: "shadow-rose-600/40", labelColor: "text-rose-300/70", panel: "bg-gradient-to-br from-[#1a0a0a] to-[#0a0e1a]" },
+        ].map(({ label, value, note, icon: Icon, border, glow, iconBg, shadow, labelColor, panel }) => (
+          <div key={label} className={`relative overflow-hidden group rounded-2xl p-px bg-gradient-to-br ${border} to-transparent hover:-translate-y-1 transition-all duration-300`}>
+            <div className={`relative ${panel} rounded-2xl p-6 flex items-center gap-4 h-full`}><div className={`absolute -top-6 -right-6 w-28 h-28 ${glow} rounded-full blur-2xl pointer-events-none`} /><div className={`relative shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br ${iconBg} flex items-center justify-center shadow-lg ${shadow}`}><Icon className="w-6 h-6 text-white" /></div><div><p className={`text-[10px] ${labelColor} font-black uppercase tracking-[0.2em]`}>{label}</p><h4 className="text-4xl font-black text-white mt-1 tracking-tight leading-none">{value}</h4><p className="text-[10px] text-white/25 font-semibold mt-1">{note}</p></div></div>
+          </div>
+        ))}
       </div>
 
       {/* Filter and Search Bar */}
