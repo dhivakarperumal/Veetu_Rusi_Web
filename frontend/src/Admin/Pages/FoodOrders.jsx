@@ -156,9 +156,42 @@ const InfoRow = ({ icon, label, value }) => (
 /* ───────────────────────────────────────────── */
 
 const StatCard = ({ label, value, color, icon }) => (
-  <AdminStatCard label={label} value={value} description="Food order activity" icon={icon} gradient={color} />
+  <AdminStatCard
+    label={label}
+    value={value}
+    description="Food order activity"
+    icon={icon}
+    {...STAT_CARD_STYLES[label]}
+  />
 );
 
+const STAT_CARD_STYLES = {
+  "Total Orders": {
+    gradient: "linear-gradient(135deg,#0f1628 0%,#0a0e1a 100%)",
+    iconGradient: "linear-gradient(135deg,#7C3AED 0%,#4338CA 100%)",
+    glow: "rgba(124,58,237,0.22)"
+  },
+  Pending: {
+    gradient: "linear-gradient(135deg,#1a1004 0%,#0a0e1a 100%)",
+    iconGradient: "linear-gradient(135deg,#F59E0B 0%,#EA580C 100%)",
+    glow: "rgba(245,158,11,0.22)"
+  },
+  "In Progress": {
+    gradient: "linear-gradient(135deg,#17102a 0%,#0a0e1a 100%)",
+    iconGradient: "linear-gradient(135deg,#8B5CF6 0%,#6D28D9 100%)",
+    glow: "rgba(139,92,246,0.22)"
+  },
+  Delivered: {
+    gradient: "linear-gradient(135deg,#071a10 0%,#0a0e1a 100%)",
+    iconGradient: "linear-gradient(135deg,#10B981 0%,#0D9488 100%)",
+    glow: "rgba(16,185,129,0.22)"
+  },
+  Cancelled: {
+    gradient: "linear-gradient(135deg,#26100f 0%,#0a0e1a 100%)",
+    iconGradient: "linear-gradient(135deg,#F43F5E 0%,#DC2626 100%)",
+    glow: "rgba(244,63,94,0.22)"
+  }
+};
 /* ───────────────────────────────────────────── */
 /* ORDER MODAL */
 /* ───────────────────────────────────────────── */
@@ -596,35 +629,35 @@ const FoodOrders = () => {
         <StatCard
           label="Total Orders"
           value={stats.total}
-          color="bg-gradient-to-br from-slate-800 to-slate-900"
+          color={STAT_CARD_STYLES["Total Orders"].gradient}
           icon={<ShoppingBag className="w-6 h-6" />}
         />
 
         <StatCard
           label="Pending"
           value={stats.pending}
-          color="bg-gradient-to-br from-amber-500 to-orange-500"
+          color={STAT_CARD_STYLES["Pending"].gradient}
           icon={<Clock className="w-6 h-6" />}
         />
 
         <StatCard
           label="In Progress"
           value={stats.preparing}
-          color="bg-gradient-to-br from-violet-500 to-purple-600"
+          color={STAT_CARD_STYLES["In Progress"].gradient}
           icon={<ChefHat className="w-6 h-6" />}
         />
 
         <StatCard
           label="Delivered"
           value={stats.delivered}
-          color="bg-gradient-to-br from-emerald-500 to-teal-600"
+          color={STAT_CARD_STYLES["Delivered"].gradient}
           icon={<CheckCircle className="w-6 h-6" />}
         />
 
         <StatCard
           label="Cancelled"
           value={stats.cancelled}
-          color="bg-gradient-to-br from-rose-500 to-red-600"
+          color={STAT_CARD_STYLES["Cancelled"].gradient}
           icon={<XCircle className="w-6 h-6" />}
         />
       </div>
