@@ -123,10 +123,10 @@ const WalletAndEarnings = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          <div className="relative overflow-hidden group rounded-2xl p-px bg-gradient-to-br from-blue-500/40 via-cyan-500/20 to-transparent hover:-translate-y-1 transition-all duration-300">
-            <div className="relative bg-gradient-to-br from-[#081526] to-[#0a0e1a] rounded-2xl p-6 flex items-center gap-4 h-full">
+          <div className="relative overflow-hidden group rounded-2xl p-px bg-linear-to-br from-blue-500/40 via-cyan-500/20 to-transparent hover:-translate-y-1 transition-all duration-300">
+            <div className="relative bg-linear-to-br from-[#081526] to-[#0a0e1a] rounded-2xl p-6 flex items-center gap-4 h-full">
             <div className="absolute -top-6 -right-6 w-28 h-28 bg-blue-600/15 rounded-full blur-2xl pointer-events-none" />
-            <div className="relative shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-700 flex items-center justify-center shadow-lg shadow-blue-700/40"><CreditCard className="w-6 h-6 text-white" /></div>
+            <div className="relative shrink-0 w-14 h-14 rounded-2xl bg-linear-to-br from-blue-600 to-cyan-700 flex items-center justify-center shadow-lg shadow-blue-700/40"><CreditCard className="w-6 h-6 text-white" /></div>
             <div>
               <p className="text-[10px] text-blue-300/70 font-black uppercase tracking-[0.2em]">Wallet Balance</p>
               <p className="mt-1 text-3xl font-black tracking-tight">{showBalance ? `₹${walletBalance.toLocaleString()}` : "••••••"}</p>
@@ -141,26 +141,26 @@ const WalletAndEarnings = () => {
             </div>
           </div>
 
-          <div className="relative overflow-hidden group rounded-2xl p-px bg-gradient-to-br from-emerald-500/40 via-teal-500/20 to-transparent hover:-translate-y-1 transition-all duration-300">
-            <div className="relative bg-gradient-to-br from-[#071a10] to-[#0a0e1a] rounded-2xl p-6 flex items-center gap-4 h-full">
+          <div className="relative overflow-hidden group rounded-2xl p-px bg-linear-to-br from-emerald-500/40 via-teal-500/20 to-transparent hover:-translate-y-1 transition-all duration-300">
+            <div className="relative bg-linear-to-br from-[#071a10] to-[#0a0e1a] rounded-2xl p-6 flex items-center gap-4 h-full">
             <div className="absolute -top-6 -right-6 w-28 h-28 bg-emerald-500/20 rounded-full blur-2xl pointer-events-none" />
-            <div className="relative shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-600/40"><TrendingUp className="w-6 h-6 text-white" /></div>
+            <div className="relative shrink-0 w-14 h-14 rounded-2xl bg-linear-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-600/40"><TrendingUp className="w-6 h-6 text-white" /></div>
             <div><p className="text-[10px] text-emerald-300/70 font-black uppercase tracking-[0.2em]">Total Earnings</p><h4 className="text-3xl font-black text-white mt-1 tracking-tight leading-none">₹{totalEarnings.toLocaleString()}</h4><p className="text-[10px] text-white/25 font-semibold mt-1">All-time sales</p></div>
             </div>
           </div>
 
-          <div className="relative overflow-hidden group rounded-2xl p-px bg-gradient-to-br from-amber-500/40 via-orange-500/20 to-transparent hover:-translate-y-1 transition-all duration-300">
-            <div className="relative bg-gradient-to-br from-[#1a1004] to-[#0a0e1a] rounded-2xl p-6 flex items-center gap-4 h-full">
+          <div className="relative overflow-hidden group rounded-2xl p-px bg-linear-to-br from-amber-500/40 via-orange-500/20 to-transparent hover:-translate-y-1 transition-all duration-300">
+            <div className="relative bg-linear-to-br from-[#1a1004] to-[#0a0e1a] rounded-2xl p-6 flex items-center gap-4 h-full">
             <div className="absolute -top-6 -right-6 w-28 h-28 bg-amber-500/20 rounded-full blur-2xl pointer-events-none" />
-            <div className="relative shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-600/40"><CreditCard className="w-6 h-6 text-white" /></div>
+            <div className="relative shrink-0 w-14 h-14 rounded-2xl bg-linear-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-600/40"><CreditCard className="w-6 h-6 text-white" /></div>
             <div><p className="text-[10px] text-amber-300/70 font-black uppercase tracking-[0.2em]">Monthly Revenue</p><h4 className="text-3xl font-black text-white mt-1 tracking-tight leading-none">₹{monthlyEarnings.toLocaleString()}</h4><p className="text-[10px] text-white/25 font-semibold mt-1">Current period</p></div>
             </div>
           </div>
 
-          <div className="relative overflow-hidden group rounded-2xl p-px bg-gradient-to-br from-rose-500/40 via-red-500/20 to-transparent hover:-translate-y-1 transition-all duration-300">
-            <div className="relative bg-gradient-to-br from-[#1a0a0a] to-[#0a0e1a] rounded-2xl p-6 flex items-center gap-4 h-full">
+          <div className="relative overflow-hidden group rounded-2xl p-px bg-linear-to-br from-rose-500/40 via-red-500/20 to-transparent hover:-translate-y-1 transition-all duration-300">
+            <div className="relative bg-linear-to-br from-[#1a0a0a] to-[#0a0e1a] rounded-2xl p-6 flex items-center gap-4 h-full">
             <div className="absolute -top-6 -right-6 w-28 h-28 bg-rose-500/20 rounded-full blur-2xl pointer-events-none" />
-            <div className="relative shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-500 to-red-600 flex items-center justify-center shadow-lg shadow-rose-600/40"><Download className="w-6 h-6 text-white" /></div>
+            <div className="relative shrink-0 w-14 h-14 rounded-2xl bg-linear-to-br from-rose-500 to-red-600 flex items-center justify-center shadow-lg shadow-rose-600/40"><Download className="w-6 h-6 text-white" /></div>
             <div><p className="text-[10px] text-rose-300/70 font-black uppercase tracking-[0.2em]">Pending Withdrawals</p><h4 className="text-4xl font-black text-white mt-1 tracking-tight leading-none">{pendingWithdrawals}</h4><p className="text-[10px] text-white/25 font-semibold mt-1">Awaiting processing</p></div>
             </div>
           </div>
