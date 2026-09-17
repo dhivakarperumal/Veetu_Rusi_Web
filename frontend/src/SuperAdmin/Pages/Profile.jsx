@@ -15,7 +15,9 @@ import {
     FiEdit2,
     FiUser,
     FiCalendar,
-    FiLoader
+    FiLoader,
+    FiEye,
+    FiEyeOff
 } from "react-icons/fi";
 
 const Profile = () => {
@@ -30,6 +32,9 @@ const Profile = () => {
     const [currentPwd, setCurrentPwd] = useState("");
     const [newPwd, setNewPwd] = useState("");
     const [confirmPwd, setConfirmPwd] = useState("");
+    const [showCurrentPwd, setShowCurrentPwd] = useState(false);
+    const [showNewPwd, setShowNewPwd] = useState(false);
+    const [showConfirmPwd, setShowConfirmPwd] = useState(false);
 
     const [profileData, setProfileData] = useState({
         username: "",
@@ -100,6 +105,9 @@ const Profile = () => {
         setCurrentPwd("");
         setNewPwd("");
         setConfirmPwd("");
+        setShowCurrentPwd(false);
+        setShowNewPwd(false);
+        setShowConfirmPwd(false);
     };
 
     const closeEditModal = () => {
@@ -515,35 +523,65 @@ const Profile = () => {
 
                             <div>
                                 <label className="text-xs font-bold text-gray-500 mb-1 block">Current Password</label>
-                                <input
-                                    type="password"
-                                    placeholder="Enter current password"
-                                    value={currentPwd}
-                                    onChange={(e) => setCurrentPwd(e.target.value)}
-                                    className="w-full border border-gray-200 px-4 py-2.5 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                                />
+                                <div className="relative">
+                                    <input
+                                        type={showCurrentPwd ? "text" : "password"}
+                                        placeholder="Enter current password"
+                                        value={currentPwd}
+                                        onChange={(e) => setCurrentPwd(e.target.value)}
+                                        className="w-full border border-gray-200 px-4 py-2.5 pr-12 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowCurrentPwd((visible) => !visible)}
+                                        aria-label={showCurrentPwd ? "Hide current password" : "Show current password"}
+                                        className="absolute inset-y-0 right-0 flex items-center px-4 text-gray-400 hover:text-blue-600 transition-colors"
+                                    >
+                                        {showCurrentPwd ? <FiEyeOff /> : <FiEye />}
+                                    </button>
+                                </div>
                             </div>
 
                             <div>
                                 <label className="text-xs font-bold text-gray-500 mb-1 block">New Password</label>
-                                <input
-                                    type="password"
-                                    placeholder="Minimum 6 characters"
-                                    value={newPwd}
-                                    onChange={(e) => setNewPwd(e.target.value)}
-                                    className="w-full border border-gray-200 px-4 py-2.5 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                                />
+                                <div className="relative">
+                                    <input
+                                        type={showNewPwd ? "text" : "password"}
+                                        placeholder="Minimum 6 characters"
+                                        value={newPwd}
+                                        onChange={(e) => setNewPwd(e.target.value)}
+                                        className="w-full border border-gray-200 px-4 py-2.5 pr-12 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowNewPwd((visible) => !visible)}
+                                        aria-label={showNewPwd ? "Hide new password" : "Show new password"}
+                                        className="absolute inset-y-0 right-0 flex items-center px-4 text-gray-400 hover:text-blue-600 transition-colors"
+                                    >
+                                        {showNewPwd ? <FiEyeOff /> : <FiEye />}
+                                    </button>
+                                </div>
                             </div>
 
                             <div>
                                 <label className="text-xs font-bold text-gray-500 mb-1 block">Confirm Password</label>
-                                <input
-                                    type="password"
-                                    placeholder="Re-enter new password"
-                                    value={confirmPwd}
-                                    onChange={(e) => setConfirmPwd(e.target.value)}
-                                    className="w-full border border-gray-200 px-4 py-2.5 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                                />
+                                <div className="relative">
+                                    <input
+                                        type={showConfirmPwd ? "text" : "password"}
+                                        placeholder="Re-enter new password"
+                                        value={confirmPwd}
+                                        onChange={(e) => setConfirmPwd(e.target.value)}
+                                        className="w-full border border-gray-200 px-4 py-2.5 pr-12 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowConfirmPwd((visible) => !visible)}
+                                        aria-label={showConfirmPwd ? "Hide confirm password" : "Show confirm password"}
+                                        className="absolute inset-y-0 right-0 flex items-center px-4 text-gray-400 hover:text-blue-600 transition-colors"
+                                    >
+                                        {showConfirmPwd ? <FiEyeOff /> : <FiEye />}
+                                    </button>
+                                </div>
                             </div>
 
                             <button
