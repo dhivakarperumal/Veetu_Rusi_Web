@@ -146,6 +146,12 @@ const MyProducts = () => {
             Manage your listed products and inventory
           </p>
         </div>
+        <button
+          onClick={() => navigate('/chef/add-products')}
+          className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-emerald-900/20 transition active:scale-95 self-start sm:self-auto"
+        >
+          <FiPlus className="w-4 h-4" /> Add Product
+        </button>
       </div>
 
       {/* Summary Cards */}
