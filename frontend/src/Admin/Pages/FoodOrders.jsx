@@ -169,27 +169,37 @@ const STAT_CARD_STYLES = {
   "Total Orders": {
     gradient: "linear-gradient(135deg,#0f1628 0%,#0a0e1a 100%)",
     iconGradient: "linear-gradient(135deg,#7C3AED 0%,#4338CA 100%)",
-    glow: "rgba(124,58,237,0.22)"
+    glow: "rgba(124,58,237,0.22)",
+    borderGradient: "linear-gradient(135deg,rgba(139,92,246,0.3),rgba(99,102,241,0.2),transparent)",
+    labelColor: "rgba(196,181,253,0.7)"
   },
   Pending: {
     gradient: "linear-gradient(135deg,#1a1004 0%,#0a0e1a 100%)",
     iconGradient: "linear-gradient(135deg,#F59E0B 0%,#EA580C 100%)",
-    glow: "rgba(245,158,11,0.22)"
+    glow: "rgba(245,158,11,0.22)",
+    borderGradient: "linear-gradient(135deg,rgba(245,158,11,0.4),rgba(249,115,22,0.2),transparent)",
+    labelColor: "rgba(253,230,138,0.7)"
   },
   "In Progress": {
     gradient: "linear-gradient(135deg,#17102a 0%,#0a0e1a 100%)",
     iconGradient: "linear-gradient(135deg,#8B5CF6 0%,#6D28D9 100%)",
-    glow: "rgba(139,92,246,0.22)"
+    glow: "rgba(139,92,246,0.22)",
+    borderGradient: "linear-gradient(135deg,rgba(139,92,246,0.4),rgba(124,58,237,0.2),transparent)",
+    labelColor: "rgba(221,214,254,0.7)"
   },
   Delivered: {
     gradient: "linear-gradient(135deg,#071a10 0%,#0a0e1a 100%)",
     iconGradient: "linear-gradient(135deg,#10B981 0%,#0D9488 100%)",
-    glow: "rgba(16,185,129,0.22)"
+    glow: "rgba(16,185,129,0.22)",
+    borderGradient: "linear-gradient(135deg,rgba(16,185,129,0.4),rgba(20,184,166,0.2),transparent)",
+    labelColor: "rgba(110,231,183,0.7)"
   },
   Cancelled: {
     gradient: "linear-gradient(135deg,#26100f 0%,#0a0e1a 100%)",
     iconGradient: "linear-gradient(135deg,#F43F5E 0%,#DC2626 100%)",
-    glow: "rgba(244,63,94,0.22)"
+    glow: "rgba(244,63,94,0.22)",
+    borderGradient: "linear-gradient(135deg,rgba(244,63,94,0.4),rgba(220,38,38,0.2),transparent)",
+    labelColor: "rgba(253,164,175,0.7)"
   }
 };
 /* ───────────────────────────────────────────── */
