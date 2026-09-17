@@ -8,6 +8,7 @@ const AdminStatCard = ({
   gradient = "linear-gradient(135deg,#0f1628 0%,#0a0e1a 100%)",
   iconGradient = "linear-gradient(135deg,#7C3AED 0%,#4338CA 100%)",
   glow = "rgba(124,58,237,0.22)",
+  borderGradient = iconGradient,
   onClick
 }) => {
   const iconContent = React.isValidElement(Icon) ? Icon : <Icon className="w-6 h-6 text-white" />;
@@ -30,9 +31,10 @@ const AdminStatCard = ({
   return (
     <div
       onClick={onClick}
-      className={`relative overflow-hidden group rounded-2xl p-[1px] bg-gradient-to-br from-white/20 via-white/10 to-transparent hover:-translate-y-1 transition-all duration-300 ${onClick ? "cursor-pointer" : ""}`}
+      className={`relative overflow-hidden group rounded-2xl p-[1px] hover:-translate-y-1 transition-all duration-300 ${onClick ? "cursor-pointer" : ""}`}
+      style={{ background: borderGradient }}
     >
-      <div className="relative rounded-2xl p-6 h-full" style={{ background: gradient }}>
+      <div className="relative rounded-2xl p-6 flex items-center gap-5 h-full" style={{ background: gradient }}>
         {content}
       </div>
     </div>
