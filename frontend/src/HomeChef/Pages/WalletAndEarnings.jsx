@@ -122,60 +122,51 @@ const WalletAndEarnings = () => {
         </button>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[1.2fr,0.8fr]">
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-700 p-6 text-white shadow-xl">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm uppercase tracking-[0.2em] text-slate-300">
-                  Wallet balance
-                </p>
-                <p className="mt-3 text-4xl font-black tracking-tight">
-                  {showBalance ? `₹${walletBalance.toLocaleString()}` : "••••••"}
-                </p>
-              </div>
-              <button
-                onClick={() => setShowBalance(!showBalance)}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-white transition hover:bg-white/20"
-              >
-                {showBalance ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
-              </button>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="relative overflow-hidden group rounded-2xl p-px bg-gradient-to-br from-blue-500/40 via-cyan-500/20 to-transparent hover:-translate-y-1 transition-all duration-300">
+            <div className="relative bg-gradient-to-br from-[#081526] to-[#0a0e1a] rounded-2xl p-6 flex items-center gap-4 h-full">
+            <div className="absolute -top-6 -right-6 w-28 h-28 bg-blue-600/15 rounded-full blur-2xl pointer-events-none" />
+            <div className="relative shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-700 flex items-center justify-center shadow-lg shadow-blue-700/40"><CreditCard className="w-6 h-6 text-white" /></div>
+            <div>
+              <p className="text-[10px] text-blue-300/70 font-black uppercase tracking-[0.2em]">Wallet Balance</p>
+              <p className="mt-1 text-3xl font-black tracking-tight">{showBalance ? `₹${walletBalance.toLocaleString()}` : "••••••"}</p>
             </div>
-            <p className="mt-4 text-sm text-slate-400">Available to withdraw immediately.</p>
+            <button
+              onClick={() => setShowBalance(!showBalance)}
+              className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-white transition hover:bg-white/20"
+              title={showBalance ? "Hide balance" : "Show balance"}
+            >
+              {showBalance ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+            </button>
+            </div>
           </div>
 
-          <div className="rounded-3xl bg-gradient-to-br from-emerald-600 to-teal-500 p-6 text-white shadow-xl">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm uppercase tracking-[0.2em] text-emerald-100">
-                  Total earnings
-                </p>
-                <p className="mt-3 text-4xl font-black tracking-tight">
-                  ₹{totalEarnings.toLocaleString()}
-                </p>
-              </div>
-              <TrendingUp className="h-6 w-6 text-white/90" />
+          <div className="relative overflow-hidden group rounded-2xl p-px bg-gradient-to-br from-emerald-500/40 via-teal-500/20 to-transparent hover:-translate-y-1 transition-all duration-300">
+            <div className="relative bg-gradient-to-br from-[#071a10] to-[#0a0e1a] rounded-2xl p-6 flex items-center gap-4 h-full">
+            <div className="absolute -top-6 -right-6 w-28 h-28 bg-emerald-500/20 rounded-full blur-2xl pointer-events-none" />
+            <div className="relative shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-600/40"><TrendingUp className="w-6 h-6 text-white" /></div>
+            <div><p className="text-[10px] text-emerald-300/70 font-black uppercase tracking-[0.2em]">Total Earnings</p><h4 className="text-3xl font-black text-white mt-1 tracking-tight leading-none">₹{totalEarnings.toLocaleString()}</h4><p className="text-[10px] text-white/25 font-semibold mt-1">All-time sales</p></div>
             </div>
-            <p className="mt-4 text-sm text-emerald-100/90">All-time earnings across every sale.</p>
           </div>
 
-          <div className="rounded-3xl bg-gradient-to-br from-violet-600 to-fuchsia-500 p-6 text-white shadow-xl">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm uppercase tracking-[0.2em] text-violet-100">
-                  Monthly revenue
-                </p>
-                <p className="mt-3 text-4xl font-black tracking-tight">
-                  ₹{monthlyEarnings.toLocaleString()}
-                </p>
-              </div>
-              <CreditCard className="h-6 w-6 text-white/90" />
+          <div className="relative overflow-hidden group rounded-2xl p-px bg-gradient-to-br from-amber-500/40 via-orange-500/20 to-transparent hover:-translate-y-1 transition-all duration-300">
+            <div className="relative bg-gradient-to-br from-[#1a1004] to-[#0a0e1a] rounded-2xl p-6 flex items-center gap-4 h-full">
+            <div className="absolute -top-6 -right-6 w-28 h-28 bg-amber-500/20 rounded-full blur-2xl pointer-events-none" />
+            <div className="relative shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-600/40"><CreditCard className="w-6 h-6 text-white" /></div>
+            <div><p className="text-[10px] text-amber-300/70 font-black uppercase tracking-[0.2em]">Monthly Revenue</p><h4 className="text-3xl font-black text-white mt-1 tracking-tight leading-none">₹{monthlyEarnings.toLocaleString()}</h4><p className="text-[10px] text-white/25 font-semibold mt-1">Current period</p></div>
             </div>
-            <p className="mt-4 text-sm text-violet-100/90">May 2024 performance snapshot.</p>
           </div>
-        </div>
 
-        <div className="rounded-3xl bg-slate-950/95 p-6 shadow-xl ring-1 ring-white/10 text-white">
+          <div className="relative overflow-hidden group rounded-2xl p-px bg-gradient-to-br from-rose-500/40 via-red-500/20 to-transparent hover:-translate-y-1 transition-all duration-300">
+            <div className="relative bg-gradient-to-br from-[#1a0a0a] to-[#0a0e1a] rounded-2xl p-6 flex items-center gap-4 h-full">
+            <div className="absolute -top-6 -right-6 w-28 h-28 bg-rose-500/20 rounded-full blur-2xl pointer-events-none" />
+            <div className="relative shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-500 to-red-600 flex items-center justify-center shadow-lg shadow-rose-600/40"><Download className="w-6 h-6 text-white" /></div>
+            <div><p className="text-[10px] text-rose-300/70 font-black uppercase tracking-[0.2em]">Pending Withdrawals</p><h4 className="text-4xl font-black text-white mt-1 tracking-tight leading-none">{pendingWithdrawals}</h4><p className="text-[10px] text-white/25 font-semibold mt-1">Awaiting processing</p></div>
+            </div>
+          </div>
+      </div>
+
+      <div className="rounded-3xl bg-slate-950/95 p-6 shadow-xl ring-1 ring-white/10 text-white">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-sm uppercase tracking-[0.2em] text-slate-400">Performance insights</p>
@@ -218,7 +209,6 @@ const WalletAndEarnings = () => {
             ))}
           </div>
         </div>
-      </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.05fr,0.95fr]">
         <div className="rounded-3xl bg-white p-8 shadow-xl ring-1 ring-slate-200/80">
