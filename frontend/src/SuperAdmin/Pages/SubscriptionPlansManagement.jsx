@@ -148,9 +148,10 @@ const SubscriptionPlansManagement = () => {
   };
 
   const filteredPlans = plans.filter((p) => {
+    const searchTerm = search.toLowerCase();
     const matchesSearch =
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.id.toLowerCase().includes(search.toLowerCase());
+      String(p.name || '').toLowerCase().includes(searchTerm) ||
+      String(p.id || '').toLowerCase().includes(searchTerm);
 
     const matchesStatus =
       statusFilter === "ALL" ||
