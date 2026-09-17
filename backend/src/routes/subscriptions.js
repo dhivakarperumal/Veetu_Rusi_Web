@@ -152,8 +152,19 @@ router.post('/confirm', async (req, res) => {
     if (rows.length === 0) return res.status(404).json({ message: 'Plan not found' });
     const plan = rows[0];
 
-    const [franchiseRows] = await pool.execute('SELECT start_date, expiry_date, status, franch_user_id FROM franchise_owners WHERE id = ? LIMIT 1', [franchiseId]);
+    const [franchiseRows] = await pool.execute(
+      'SELECT start_date, expiry_date, status, franch_user_id, email, created_by FROM franchise_owners WHERE id = ? LIMIT 1',
+      [franchiseId]
+    );
     const franchise = franchiseRows[0] || {};
+    let paymentUserId = franchise.franch_user_id || franchise.created_by || null;
+    if (!paymentUserId && franchise.email) {
+      const [userRows] = await pool.execute('SELECT user_id FROM users WHERE email = ? LIMIT 1', [franchise.email]);
+      paymentUserId = userRows[0]?.user_id || franchise.email;
+    }
+    if (!paymentUserId) {
+      return res.status(400).json({ message: 'Franchise owner identity is missing; payment was not recorded.' });
+    }
     const now = new Date();
     let startDate = now;
     let expiryDate = new Date(now.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
@@ -224,7 +235,7 @@ router.post('/confirm', async (req, res) => {
           subscription_start_date, subscription_expiry_date, amount, currency,
           payment_id, razorpay_order_id
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [franchiseId, franchise.franch_user_id || null, plan.id, plan.name, plan.amount, plan.durationDays,
+            [franchiseId, paymentUserId, plan.id, plan.name, plan.amount, plan.durationDays,
           startDate.toISOString().slice(0, 10), expiryDate.toISOString().slice(0, 10),
           plan.amount, plan.currency || 'INR', paymentId, razorpay_order_id || null]
       );
