@@ -2,7 +2,7 @@ const mysql = require('mysql2/promise');
 const crypto = require('crypto');
 const fs = require('fs').promises;
 const path = require('path');
-require('dotenv').config();
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const DB_HOST = process.env.DB_HOST || 'localhost';
 const DB_USER = process.env.DB_USER || 'root';
@@ -607,10 +607,94 @@ async function createDatabaseAndTables() {
   `);
   console.log('Notifications table created or already exists');
 
-  // Skipping creation of `home_chefs` table per requested removal.
-  // The table is intentionally not created to ensure it remains removed by migrations.
-  // If other tables rely on `home_chefs`, ensure foreign keys are handled separately.
-  // (Previously: CREATE TABLE IF NOT EXISTS `home_chefs` ... )
+  await connection.execute(`
+    CREATE TABLE IF NOT EXISTS \`home_chefs\` (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id VARCHAR(255) DEFAULT NULL,
+      name VARCHAR(255) NOT NULL,
+      mobile VARCHAR(50) NOT NULL,
+      email VARCHAR(255) NOT NULL UNIQUE,
+      password VARCHAR(255) DEFAULT NULL,
+      username VARCHAR(255) DEFAULT NULL,
+      address TEXT DEFAULT NULL,
+      fssai_number VARCHAR(100) DEFAULT NULL,
+      aadhaar_url VARCHAR(255) DEFAULT NULL,
+      pan_url VARCHAR(255) DEFAULT NULL,
+      status VARCHAR(50) NOT NULL DEFAULT 'Pending',
+      franchise_id VARCHAR(255) DEFAULT NULL,
+      franchise_user_id VARCHAR(255) DEFAULT NULL,
+      created_by VARCHAR(255) DEFAULT NULL,
+      updated_by VARCHAR(255) DEFAULT NULL,
+      gender VARCHAR(20) DEFAULT NULL,
+      date_of_birth DATE DEFAULT NULL,
+      age INT DEFAULT NULL,
+      country VARCHAR(100) DEFAULT NULL,
+      profile_photo VARCHAR(255) DEFAULT NULL,
+      alt_mobile VARCHAR(50) DEFAULT NULL,
+      door_number VARCHAR(50) DEFAULT NULL,
+      street_name VARCHAR(255) DEFAULT NULL,
+      area_name VARCHAR(255) DEFAULT NULL,
+      city VARCHAR(150) DEFAULT NULL,
+      district VARCHAR(150) DEFAULT NULL,
+      state VARCHAR(150) DEFAULT NULL,
+      pincode VARCHAR(20) DEFAULT NULL,
+      latitude VARCHAR(50) DEFAULT NULL,
+      longitude VARCHAR(50) DEFAULT NULL,
+      map_link TEXT DEFAULT NULL,
+      kitchen_name VARCHAR(255) DEFAULT NULL,
+      kitchen_address TEXT DEFAULT NULL,
+      kitchen_type VARCHAR(100) DEFAULT NULL,
+      kitchen_photos TEXT DEFAULT NULL,
+      kitchen_videos TEXT DEFAULT NULL,
+      cooking_area_photo VARCHAR(255) DEFAULT NULL,
+      veg_nonveg VARCHAR(50) DEFAULT NULL,
+      experience_years INT DEFAULT NULL,
+      cuisine_type VARCHAR(255) DEFAULT NULL,
+      daily_order_capacity INT DEFAULT NULL,
+      available_days VARCHAR(255) DEFAULT NULL,
+      available_slots VARCHAR(255) DEFAULT NULL,
+      fssai_available VARCHAR(50) DEFAULT NULL,
+      gst_available VARCHAR(50) DEFAULT NULL,
+      aadhaar_number VARCHAR(100) DEFAULT NULL,
+      pan_number VARCHAR(100) DEFAULT NULL,
+      gst_number VARCHAR(100) DEFAULT NULL,
+      bank_account_number VARCHAR(100) DEFAULT NULL,
+      ifsc_code VARCHAR(100) DEFAULT NULL,
+      account_holder_name VARCHAR(255) DEFAULT NULL,
+      bank_branch VARCHAR(255) DEFAULT NULL,
+      upi_id VARCHAR(255) DEFAULT NULL,
+      passbook_image VARCHAR(255) DEFAULT NULL,
+      aadhaar_front_url VARCHAR(255) DEFAULT NULL,
+      aadhaar_back_url VARCHAR(255) DEFAULT NULL,
+      pan_card_url VARCHAR(255) DEFAULT NULL,
+      selfie_verification_url VARCHAR(255) DEFAULT NULL,
+      introduction_video VARCHAR(255) DEFAULT NULL,
+      instagram_url VARCHAR(255) DEFAULT NULL,
+      facebook_url VARCHAR(255) DEFAULT NULL,
+      youtube_url VARCHAR(255) DEFAULT NULL,
+      website_url VARCHAR(255) DEFAULT NULL,
+      about_me TEXT DEFAULT NULL,
+      cooking_story TEXT DEFAULT NULL,
+      why_choose_me TEXT DEFAULT NULL,
+      languages_known VARCHAR(255) DEFAULT NULL,
+      delivery_radius VARCHAR(50) DEFAULT NULL,
+      preorder_available TINYINT(1) DEFAULT 0,
+      cutoff_time VARCHAR(50) DEFAULT NULL,
+      fssai_certificate_url VARCHAR(255) DEFAULT NULL,
+      gst_certificate_url VARCHAR(255) DEFAULT NULL,
+      signature_url VARCHAR(255) DEFAULT NULL,
+      storage_area_photo VARCHAR(255) DEFAULT NULL,
+      verification_status VARCHAR(50) DEFAULT 'Pending',
+      approval_status VARCHAR(50) DEFAULT 'Pending',
+      rejection_reason TEXT DEFAULT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      KEY idx_user_id (user_id),
+      KEY idx_mobile (mobile),
+      KEY idx_franchise_id (franchise_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
+  `);
+  console.log('Home chefs table created or already exists');
 
   // Add missing columns to home_chefs if they don't exist
   const missingHomechefColumns = [
@@ -620,6 +704,8 @@ async function createDatabaseAndTables() {
     { name: 'date_of_birth', type: 'DATE' },
     { name: 'age', type: 'INT' },
     { name: 'country', type: 'VARCHAR(100)' },
+    { name: 'latitude', type: 'VARCHAR(50)' },
+    { name: 'longitude', type: 'VARCHAR(50)' },
     { name: 'kitchen_videos', type: 'TEXT' },
     { name: 'daily_order_capacity', type: 'INT' },
     { name: 'available_days', type: 'VARCHAR(255)' },

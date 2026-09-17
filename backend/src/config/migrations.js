@@ -902,15 +902,6 @@ const createDeliveryLiveTrackingTable = async () => {
 
 const cleanupHomeChefs = async () => {
     try {
-<<<<<<< Updated upstream
-        // Drop the entire home_chefs table as requested (destructive)
-        try {
-            await pool.execute(`DROP TABLE IF EXISTS \`home_chefs\``);
-            console.log('✓ Dropped table: home_chefs');
-        } catch (e) {
-            console.error('Could not drop home_chefs table:', e.message || e);
-        }
-=======
         // Drop unwanted verbose audit columns from home_chefs
         try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN chef_id`); console.log('  Dropped: chef_id'); } catch (e) {}
         try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN chef_unique_code`); console.log('  Dropped: chef_unique_code'); } catch (e) {}
@@ -959,7 +950,6 @@ const cleanupHomeChefs = async () => {
         // Ensure legacy verbose created_by columns are removed as well
         try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN created_by_id`); console.log('  Dropped: created_by_id'); } catch (e) {}
         try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN created_by_user_id`); console.log('  Dropped: created_by_user_id'); } catch (e) {}
->>>>>>> Stashed changes
 
         // Also remove any lingering unique/index cleanup that targeted home_chefs
         try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP INDEX IF EXISTS idx_user_id`); } catch (e) {}
