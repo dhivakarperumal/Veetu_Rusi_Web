@@ -915,11 +915,28 @@ const cleanupHomeChefs = async () => {
         try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN age`); console.log('  Dropped: age'); } catch (e) {}
         try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN cover_banner`); console.log('  Dropped: cover_banner'); } catch (e) {}
         try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN whatsapp_number`); console.log('  Dropped: whatsapp_number'); } catch (e) {}
-        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN emergency_contact`); console.log('  Dropped: emergency_contact'); } catch (e) {}
-        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN landmark`); console.log('  Dropped: landmark'); } catch (e) {}
-        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN latitude`); console.log('  Dropped: latitude'); } catch (e) {}
-        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN longitude`); console.log('  Dropped: longitude'); } catch (e) {}
-        try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN seating_available`); console.log('  Dropped: seating_available'); } catch (e) {}
+        // Ensure URL columns are TEXT to prevent Row size too large (8126 bytes limit)
+        try {
+            await pool.execute(`ALTER TABLE \`home_chefs\`
+                MODIFY aadhaar_front_url TEXT,
+                MODIFY aadhaar_back_url TEXT,
+                MODIFY pan_card_url TEXT,
+                MODIFY fssai_certificate_url TEXT,
+                MODIFY signature_url TEXT,
+                MODIFY selfie_verification_url TEXT,
+                MODIFY instagram_url TEXT,
+                MODIFY facebook_url TEXT,
+                MODIFY youtube_url TEXT,
+                MODIFY website_url TEXT,
+                MODIFY passbook_image TEXT,
+                MODIFY introduction_video TEXT,
+                MODIFY profile_photo TEXT
+            `);
+        } catch (e) {}
+
+        // Ensure location columns exist for distance/tracking calculations
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` ADD COLUMN \`latitude\` VARCHAR(50) DEFAULT NULL`); } catch (e) {}
+        try { await pool.execute(`ALTER TABLE \`home_chefs\` ADD COLUMN \`longitude\` VARCHAR(50) DEFAULT NULL`); } catch (e) {}
         try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN dining_available`); console.log('  Dropped: dining_available'); } catch (e) {}
         try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN takeaway_available`); console.log('  Dropped: takeaway_available'); } catch (e) {}
         try { await pool.execute(`ALTER TABLE \`home_chefs\` DROP COLUMN delivery_available`); console.log('  Dropped: delivery_available'); } catch (e) {}

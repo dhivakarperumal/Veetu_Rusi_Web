@@ -221,8 +221,8 @@ const getChefOrders = async (chefUserId) => {
             COALESCE(hc.longitude, chef_u.longitude) AS chef_lng
      FROM user_food_order_table ufo
      LEFT JOIN users cust_u ON cust_u.user_id = ufo.user_id
-     LEFT JOIN users chef_u ON chef_u.user_id = ufo.chef_user_id
      LEFT JOIN home_chefs hc ON (hc.user_id = ufo.chef_user_id OR hc.id = ufo.chef_id)
+     LEFT JOIN users chef_u ON (chef_u.user_id = ufo.chef_user_id OR (hc.user_id IS NOT NULL AND chef_u.user_id = hc.user_id))
      WHERE ufo.chef_user_id = ?
         OR ufo.chef_id = ?
         OR ufo.items LIKE ?
