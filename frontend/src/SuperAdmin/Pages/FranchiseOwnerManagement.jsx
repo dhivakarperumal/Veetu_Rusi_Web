@@ -8,6 +8,7 @@ import {
   CheckCircle, Copy, Eye, EyeOff, UserCheck, KeyRound, X,
   Clock, List, LayoutGrid, CreditCard
 } from "lucide-react";
+import SuperAdminStatCard from "../Components/SuperAdminStatCard";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -1161,39 +1162,32 @@ const FranchiseOwnerManagement = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-        {/* Total Card */}
-        <div className="bg-white border border-slate-100 border-l-4 border-l-slate-400 p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 border border-slate-100 flex-shrink-0">
-            <Landmark className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Total Franchises</p>
-            <h4 className="text-2xl font-black text-slate-800 mt-1 tracking-tight">{totalCount}</h4>
-          </div>
-        </div>
-
-        {/* Active Card */}
-        <div className="bg-white border border-slate-100 border-l-4 border-l-emerald-500 p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 border border-emerald-100/50 flex-shrink-0">
-            <CheckCircle className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest">Active Owners</p>
-            <h4 className="text-2xl font-black text-slate-800 mt-1 tracking-tight">{activeCount}</h4>
-          </div>
-        </div>
-
-        {/* Inactive Card */}
-        <div className="bg-white border border-slate-100 border-l-4 border-l-amber-500 p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 border border-amber-100/50 flex-shrink-0">
-            <X className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-[10px] text-amber-600 font-bold uppercase tracking-widest">Pending & Inactive</p>
-            <h4 className="text-2xl font-black text-slate-800 mt-1 tracking-tight">{pendingCount + inactiveCount}</h4>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <SuperAdminStatCard
+          label="Total Franchises"
+          value={totalCount}
+          icon={Landmark}
+          trend="All"
+          gradient="linear-gradient(135deg,#08172a 0%,#0B1120 100%)"
+          iconBg="#60A5FA"
+        />
+        <SuperAdminStatCard
+          label="Active Owners"
+          value={activeCount}
+          icon={CheckCircle}
+          trend="Active"
+          gradient="linear-gradient(135deg,#052e16 0%,#0B1120 100%)"
+          iconBg="#10B981"
+        />
+        <SuperAdminStatCard
+          label="Pending & Inactive"
+          value={pendingCount + inactiveCount}
+          icon={X}
+          trend="Review"
+          positive={false}
+          gradient="linear-gradient(135deg,#2e0d05 0%,#0B1120 100%)"
+          iconBg="#F59E0B"
+        />
       </div>
 
       {/* Toolbar: Search on Left, View Mode Switcher on Right */}

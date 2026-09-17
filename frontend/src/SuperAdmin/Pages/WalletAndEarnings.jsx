@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import api from "../../api";
 import { toast } from "react-hot-toast";
 import { CreditCard, DollarSign, Landmark, Clock, TrendingUp, ShieldCheck } from "lucide-react";
+import SuperAdminStatCard from "../Components/SuperAdminStatCard";
 
 const SuperAdminWalletAndEarnings = () => {
   const [stats, setStats] = useState(null);
@@ -193,26 +194,24 @@ const SuperAdminWalletAndEarnings = () => {
             description: "Subscriptions expiring within 7 days"
           }
         ]).map((card, idx) => (
-          <div 
-            key={idx} 
-            className={`group rounded-3xl border border-slate-200/10 shadow-[0_8px_32px_rgba(0,0,0,0.1)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.15)] p-6 bg-gradient-to-br ${card.accent || 'from-slate-900 to-slate-950'} text-white transition-all duration-300 hover:translate-y-[-4px]`}
-          >
-            <div className="flex items-center justify-between gap-4 mb-6">
-              <div className="flex-1">
-                <p className="text-xs font-bold uppercase tracking-[0.35em] text-white/60 group-hover:text-white/80 transition-colors">{card.label}</p>
-                <p className="mt-4 text-4xl sm:text-5xl font-black tracking-tight leading-none">
-                  {loading ? <span className="h-12 w-32 rounded-2xl bg-white/10 animate-pulse block" /> : card.value}
-                </p>
-              </div>
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 shadow-lg group-hover:bg-white/25 transition-all duration-300 backdrop-blur-sm">
-                <card.icon className="w-8 h-8 text-white/90" strokeWidth={1.5} />
-              </div>
-            </div>
-            <div className="h-px bg-gradient-to-r from-white/20 via-white/5 to-transparent mb-4"></div>
-            <p className="text-sm text-white/70 group-hover:text-white/80 transition-colors font-medium">
-              {loading ? <span className="h-4 w-40 rounded-lg bg-white/10 animate-pulse block" /> : card.description}
-            </p>
-          </div>
+          <SuperAdminStatCard
+            key={idx}
+            label={card.label}
+            value={card.value}
+            icon={card.icon}
+            description={card.description}
+            loading={loading}
+            trend={loading ? null : idx === 0 ? "+12.4%" : idx === 1 ? "Active" : idx === 3 ? "Review" : "Registered"}
+            positive={idx !== 3}
+            gradient={idx === 0
+              ? "linear-gradient(135deg,#052e16 0%,#0B1120 100%)"
+              : idx === 1
+                ? "linear-gradient(135deg,#01140f 0%,#0B1120 100%)"
+                : idx === 2
+                  ? "linear-gradient(135deg,#08172a 0%,#0B1120 100%)"
+                  : "linear-gradient(135deg,#2e0d05 0%,#0B1120 100%)"}
+            iconBg={idx === 0 ? "#10B981" : idx === 1 ? "#14B8A6" : idx === 2 ? "#3B82F6" : "#EF4444"}
+          />
         ))}
       </div>
 

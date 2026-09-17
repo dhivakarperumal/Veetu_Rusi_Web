@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import api from "../../api";
 import toast from "react-hot-toast";
+import SuperAdminStatCard from "../Components/SuperAdminStatCard";
 
 const Reviews = () => {
   const { reviewsCache, setReviewsCache } = useAdmin();
@@ -356,36 +357,32 @@ const Reviews = () => {
       {/* HEADER SECTION */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
-          <div className="hidden sm:flex items-center gap-3">
-            <div className="bg-white px-5 py-3 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
-                <MessageSquare className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total</p>
-                <p className="text-lg font-black text-slate-800 leading-tight">{stats?.total_reviews || 0}</p>
-              </div>
-            </div>
-
-            <div className="bg-white px-5 py-3 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-500">
-                <Star className="w-5 h-5 fill-amber-500" />
-              </div>
-              <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Avg Rating</p>
-                <p className="text-lg font-black text-slate-800 leading-tight">{stats?.average_rating || 0}</p>
-              </div>
-            </div>
-
-            <div className="bg-white px-5 py-3 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-red-600">
-                <ShieldAlert className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pending</p>
-                <p className="text-lg font-black text-slate-800 leading-tight">{stats?.pending_count || 0}</p>
-              </div>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
+            <SuperAdminStatCard
+              label="Total Reviews"
+              value={stats?.total_reviews || 0}
+              icon={MessageSquare}
+              trend="All"
+              gradient="linear-gradient(135deg,#08172a 0%,#0B1120 100%)"
+              iconBg="#3B82F6"
+            />
+            <SuperAdminStatCard
+              label="Average Rating"
+              value={stats?.average_rating || 0}
+              icon={Star}
+              trend="Score"
+              gradient="linear-gradient(135deg,#211706 0%,#0B1120 100%)"
+              iconBg="#F59E0B"
+            />
+            <SuperAdminStatCard
+              label="Pending Reviews"
+              value={stats?.pending_count || 0}
+              icon={ShieldAlert}
+              trend="Review"
+              positive={false}
+              gradient="linear-gradient(135deg,#2e0d05 0%,#0B1120 100%)"
+              iconBg="#EF4444"
+            />
           </div>
         </div>
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { CreditCard, Plus, Edit2, Trash2, CheckCircle, X, Search, Clock, Activity, IndianRupee } from 'lucide-react';
 import { createPortal } from 'react-dom';
+import SuperAdminStatCard from "../Components/SuperAdminStatCard";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -185,34 +186,32 @@ const SubscriptionPlansManagement = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-        <div className="bg-white border border-slate-200 border-l-4 border-l-slate-400 p-6 rounded-2xl shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 shrink-0">
-            <CreditCard className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Total Plans</p>
-            <h4 className="text-2xl font-black text-slate-800 mt-1">{plans.length}</h4>
-          </div>
-        </div>
-        <div className="bg-white border border-slate-200 border-l-4 border-l-emerald-500 p-6 rounded-2xl shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
-            <CheckCircle className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest">Active Plans</p>
-            <h4 className="text-2xl font-black text-slate-800 mt-1">{activePlans}</h4>
-          </div>
-        </div>
-        <div className="bg-white border border-slate-200 border-l-4 border-l-orange-400 p-6 rounded-2xl shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center text-orange-500 shrink-0">
-            <X className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-[10px] text-orange-500 font-bold uppercase tracking-widest">Pending & Inactive</p>
-            <h4 className="text-2xl font-black text-slate-800 mt-1">{plans.length - activePlans}</h4>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <SuperAdminStatCard
+          label="Total Plans"
+          value={plans.length}
+          icon={CreditCard}
+          trend="All"
+          gradient="linear-gradient(135deg,#08172a 0%,#0B1120 100%)"
+          iconBg="#60A5FA"
+        />
+        <SuperAdminStatCard
+          label="Active Plans"
+          value={activePlans}
+          icon={CheckCircle}
+          trend="Active"
+          gradient="linear-gradient(135deg,#052e16 0%,#0B1120 100%)"
+          iconBg="#10B981"
+        />
+        <SuperAdminStatCard
+          label="Pending & Inactive"
+          value={plans.length - activePlans}
+          icon={X}
+          trend="Review"
+          positive={false}
+          gradient="linear-gradient(135deg,#2e0d05 0%,#0B1120 100%)"
+          iconBg="#F59E0B"
+        />
       </div>
 
       {/* Search and Filters Bar */}
