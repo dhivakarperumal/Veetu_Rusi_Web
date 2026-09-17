@@ -33,6 +33,7 @@ const HomeChefCategories = () => {
   const [showModal, setShowModal] = useState(false);
   const [viewMode, setViewMode] = useState("table");
   const [searchTerm, setSearchTerm] = useState("");
+  const [categoryTypeFilter, setCategoryTypeFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
   const [subcatInput, setSubcatInput] = useState("");
   const itemsPerPage = 10;
@@ -229,7 +230,9 @@ const HomeChefCategories = () => {
     const name = (cat.c_name || "").toLowerCase();
     const id = (cat.CatId || "").toLowerCase();
     const term = searchTerm.toLowerCase();
-    return name.includes(term) || id.includes(term);
+    const matchesSearch = name.includes(term) || id.includes(term);
+    const matchesType = categoryTypeFilter === "All" || (cat.category_type || "Food") === categoryTypeFilter;
+    return matchesSearch && matchesType;
   });
 
   const totalPages = Math.ceil(filteredCategories.length / itemsPerPage);
@@ -243,26 +246,53 @@ const HomeChefCategories = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm]);
+  }, [searchTerm, categoryTypeFilter]);
+
+  const categoryTypes = [...new Set(categories.map((item) => item.category_type || "Food"))];
 
   return (
     <div className="min-h-screen p-4 md:p-8 animate-in fade-in duration-700">
       <div className="max-w-7xl mx-auto mt-0">
 
         {/* Header Section */}
-        <div className="admin-reference-toolbar flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
-          <div className="relative mb-8 max-w-md">
+        <div className="flex justify-end mb-5">
+          <button
+            onClick={openAddModal}
+            className="flex items-center gap-2 px-6 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-2xl font-black text-sm transition-all shadow-xl shadow-emerald-500/20 uppercase tracking-widest"
+          >
+            <FaPlus /> Add New Category
+          </button>
+        </div>
+
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
+          <AdminStatCard label="Total Categories" value={categories.length} description="All home chef categories" icon={FaFileAlt} iconGradient="linear-gradient(135deg,#7C3AED 0%,#4338CA 100%)" glow="rgba(124,58,237,0.22)" />
+          <AdminStatCard label="With Images" value={categoriesWithImages} description="Categories ready for display" icon={FaImage} iconGradient="linear-gradient(135deg,#10B981 0%,#0D9488 100%)" glow="rgba(16,185,129,0.22)" gradient="linear-gradient(135deg,#071a10 0%,#0a0e1a 100%)" />
+          <AdminStatCard label="With Subcategories" value={categoriesWithSubcategories} description="Categories with organized items" icon={FaList} iconGradient="linear-gradient(135deg,#F59E0B 0%,#EA580C 100%)" glow="rgba(245,158,11,0.22)" gradient="linear-gradient(135deg,#1a1004 0%,#0a0e1a 100%)" />
+        </div>
+
+        <div className="admin-reference-toolbar flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
+          <div className="relative flex-1 max-w-xl w-full">
             <FaSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
               placeholder="Search by ID or Name..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-14 pr-6 py-4 bg-white border border-gray-100 rounded-[1.5rem] shadow-sm outline-none focus:ring-4 focus:ring-emerald-500/5 focus:border-emerald-500/20 transition-all font-bold text-sm text-black"
+              className="w-full pl-11 pr-4 py-3 bg-slate-950 border border-slate-800 rounded-2xl outline-none font-medium text-slate-100 text-sm focus:bg-slate-900 focus:border-emerald-500/70 transition-all placeholder:text-slate-500"
             />
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3 self-end md:self-auto">
+            <select
+              value={categoryTypeFilter}
+              onChange={(e) => setCategoryTypeFilter(e.target.value)}
+              className="px-4 py-3 bg-slate-950 border border-slate-800 rounded-2xl outline-none font-bold text-xs uppercase tracking-widest text-slate-200 focus:bg-slate-900 focus:border-emerald-500/70 transition-all cursor-pointer"
+            >
+              <option value="All">All Types</option>
+              {categoryTypes.map((type) => <option key={type} value={type}>{type}</option>)}
+            </select>
+
             <div data-admin-view-toggle className="admin-view-toggle flex bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100">
               <button
                 onClick={() => setViewMode("card")}
@@ -278,20 +308,9 @@ const HomeChefCategories = () => {
               </button>
             </div>
 
-            <button
-              onClick={openAddModal}
-              className="flex items-center gap-2 px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-sm transition-all shadow-xl shadow-emerald-100 uppercase tracking-widest"
-            >
-              <FaPlus /> Add New Category
-            </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
-          <AdminStatCard label="Total Categories" value={categories.length} description="All home chef categories" icon={FaFileAlt} iconGradient="linear-gradient(135deg,#7C3AED 0%,#4338CA 100%)" glow="rgba(124,58,237,0.22)" />
-          <AdminStatCard label="With Images" value={categoriesWithImages} description="Categories ready for display" icon={FaImage} iconGradient="linear-gradient(135deg,#10B981 0%,#0D9488 100%)" glow="rgba(16,185,129,0.22)" gradient="linear-gradient(135deg,#071a10 0%,#0a0e1a 100%)" />
-          <AdminStatCard label="With Subcategories" value={categoriesWithSubcategories} description="Categories with organized items" icon={FaList} iconGradient="linear-gradient(135deg,#F59E0B 0%,#EA580C 100%)" glow="rgba(245,158,11,0.22)" gradient="linear-gradient(135deg,#1a1004 0%,#0a0e1a 100%)" />
-        </div>
 
         {/* Content Section */}
         {viewMode === "card" ? (
