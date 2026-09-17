@@ -421,8 +421,57 @@ const ReferralManagement = () => {
   );
 
   /* ── STAT CARD ── */
+  const referralCardStyles = {
+    "Total Referrals": {
+      gradient: "linear-gradient(135deg,#08172a 0%,#0a0e1a 100%)",
+      iconGradient: "linear-gradient(135deg,#3B82F6 0%,#2563EB 100%)",
+      glow: "rgba(59,130,246,0.22)"
+    },
+    Successful: {
+      gradient: "linear-gradient(135deg,#071a10 0%,#0a0e1a 100%)",
+      iconGradient: "linear-gradient(135deg,#10B981 0%,#0D9488 100%)",
+      glow: "rgba(16,185,129,0.22)"
+    },
+    Pending: {
+      gradient: "linear-gradient(135deg,#1a1004 0%,#0a0e1a 100%)",
+      iconGradient: "linear-gradient(135deg,#F59E0B 0%,#EA580C 100%)",
+      glow: "rgba(245,158,11,0.22)"
+    },
+    Rejected: {
+      gradient: "linear-gradient(135deg,#26100f 0%,#0a0e1a 100%)",
+      iconGradient: "linear-gradient(135deg,#F43F5E 0%,#DC2626 100%)",
+      glow: "rgba(244,63,94,0.22)"
+    },
+    "Rewards Paid (₹)": {
+      gradient: "linear-gradient(135deg,#17102a 0%,#0a0e1a 100%)",
+      iconGradient: "linear-gradient(135deg,#8B5CF6 0%,#6D28D9 100%)",
+      glow: "rgba(139,92,246,0.22)"
+    },
+    "Rewards Credited": {
+      gradient: "linear-gradient(135deg,#071a10 0%,#0a0e1a 100%)",
+      iconGradient: "linear-gradient(135deg,#10B981 0%,#0D9488 100%)",
+      glow: "rgba(16,185,129,0.22)"
+    },
+    "Pending Rewards": {
+      gradient: "linear-gradient(135deg,#1a1004 0%,#0a0e1a 100%)",
+      iconGradient: "linear-gradient(135deg,#F59E0B 0%,#EA580C 100%)",
+      glow: "rgba(245,158,11,0.22)"
+    },
+    "Conversion Rate": {
+      gradient: "linear-gradient(135deg,#071a10 0%,#0a0e1a 100%)",
+      iconGradient: "linear-gradient(135deg,#10B981 0%,#0D9488 100%)",
+      glow: "rgba(16,185,129,0.22)"
+    }
+  };
+
   const StatCard = ({ label, value, icon, color = 'text-emerald-400', sub }) => (
-    <AdminStatCard label={label} value={value} description={sub || 'Referral program metric'} icon={icon} />
+    <AdminStatCard
+      label={label}
+      value={value}
+      description={sub || 'Referral program metric'}
+      icon={icon}
+      {...(referralCardStyles[label] || {})}
+    />
   );
 
   /* ══════════════════════════════════════════════════════════════ */
