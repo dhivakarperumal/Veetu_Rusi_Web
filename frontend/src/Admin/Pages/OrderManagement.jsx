@@ -123,7 +123,7 @@ const OrderManagement = () => {
       </div>
 
       {/* Filter & Search Bar Area */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-white p-4 rounded-[1.5rem] border border-slate-200 shadow-sm mt-8">
+      <div className="admin-reference-toolbar flex flex-col md:flex-row items-center justify-between gap-4 bg-white p-4 rounded-[1.5rem] border border-slate-200 shadow-sm mt-8">
         <div className="relative w-full md:w-[400px]">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
           <input
@@ -152,7 +152,7 @@ const OrderManagement = () => {
             <Filter className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none w-4 h-4" />
           </div>
 
-          <div className="flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200">
+          <div data-admin-view-toggle className="admin-view-toggle flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200">
             <button className="p-2.5 bg-white text-slate-700 rounded-lg shadow-sm border border-slate-200">
               <List className="h-4 w-4" />
             </button>

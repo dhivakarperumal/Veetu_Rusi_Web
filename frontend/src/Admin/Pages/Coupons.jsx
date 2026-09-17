@@ -216,7 +216,7 @@ const Coupons = () => {
       </div>
 
       {/* Toolbar: Search and Refresh */}
-      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-slate-900/95 border border-slate-800 p-5 rounded-[1.75rem] shadow-2xl shadow-slate-950/30">
+      <div className="admin-reference-toolbar flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-slate-900/95 border border-slate-800 p-5 rounded-[1.75rem] shadow-2xl shadow-slate-950/30">
         <div className="relative flex-1 max-w-xl w-full">
           <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
@@ -229,7 +229,7 @@ const Coupons = () => {
         </div>
 
         <div className="flex items-center gap-3 self-end xl:self-auto">
-          <div className="flex bg-slate-950 border border-slate-800 p-1 rounded-2xl">
+          <div data-admin-view-toggle className="admin-view-toggle flex bg-slate-950 border border-slate-800 p-1 rounded-2xl">
             <button
               onClick={() => setViewMode("table")}
               className={`p-3 rounded-xl transition ${viewMode === "table" ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20" : "text-slate-400 hover:text-slate-100"}`}
