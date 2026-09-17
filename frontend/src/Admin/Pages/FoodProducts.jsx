@@ -279,7 +279,7 @@ const FoodProducts = () => {
       </div>
 
       {/* Toolbar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 superadmin-panel p-4 rounded-xl">
+      <div className="admin-reference-toolbar flex flex-col md:flex-row md:items-center justify-between gap-4 superadmin-panel p-4 rounded-xl">
         <div className="relative flex-1 max-w-md w-full">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
@@ -316,7 +316,7 @@ const FoodProducts = () => {
               </option>
             ))}
           </select>
-          <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200/50">
+          <div data-admin-view-toggle className="admin-view-toggle flex bg-slate-100 p-1 rounded-xl border border-slate-200/50">
             <button onClick={() => setViewMode("table")} className={`p-2 rounded-lg transition ${viewMode === "table" ? "bg-white text-emerald-700 shadow-sm" : "text-slate-500 hover:text-emerald-700"}`} title="Table View">
               <List className="w-4 h-4" />
             </button>

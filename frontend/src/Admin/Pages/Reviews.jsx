@@ -372,7 +372,7 @@ const Reviews = () => {
       )}
 
       {/* FILTERS AND SEARCH BAR */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
+      <div className="admin-reference-toolbar grid grid-cols-1 xl:grid-cols-12 gap-4">
         <div className="xl:col-span-5 p-2 rounded-2xl superadmin-panel flex items-center gap-1 overflow-x-auto hide-scrollbar">
           {["All", "Pending", "Published", "Flagged"].map((s) => (
             <button

@@ -58,6 +58,60 @@ body {
 }
 
 @layer utilities {
+  .admin-reference-toolbar {
+    background: rgba(15, 23, 42, 0.95) !important;
+    border: 1px solid rgba(30, 41, 59, 1) !important;
+    border-radius: 1.75rem !important;
+    padding: 1.25rem !important;
+    box-shadow: 0 25px 50px -12px rgba(2, 6, 23, 0.3) !important;
+  }
+
+  .admin-reference-toolbar input[type="text"],
+  .admin-reference-toolbar input[type="search"],
+  .admin-reference-toolbar select {
+    background: rgb(2, 6, 23) !important;
+    border: 1px solid rgb(30, 41, 59) !important;
+    border-radius: 1rem !important;
+    color: rgb(226, 232, 240) !important;
+    outline: none !important;
+  }
+
+  .admin-reference-toolbar input[type="text"]:focus,
+  .admin-reference-toolbar input[type="search"]:focus,
+  .admin-reference-toolbar select:focus {
+    background: rgb(15, 23, 42) !important;
+    border-color: rgba(16, 185, 129, 0.7) !important;
+    box-shadow: none !important;
+  }
+
+  .admin-reference-toolbar input::placeholder {
+    color: rgb(100, 116, 139) !important;
+  }
+
+  .admin-reference-toolbar .admin-view-toggle,
+  .admin-reference-toolbar [data-admin-view-toggle] {
+    background: rgb(2, 6, 23) !important;
+    border: 1px solid rgb(30, 41, 59) !important;
+    border-radius: 1rem !important;
+    padding: 0.25rem !important;
+  }
+
+  .admin-reference-toolbar .admin-view-toggle button,
+  .admin-reference-toolbar [data-admin-view-toggle] button {
+    border-radius: 0.75rem !important;
+    padding: 0.75rem !important;
+  }
+
+  .admin-reference-toolbar .admin-view-toggle button[class*="bg-white"],
+  .admin-reference-toolbar .admin-view-toggle button[class*="bg-blue"],
+  .admin-reference-toolbar .admin-view-toggle button[class*="bg-emerald"],
+  .admin-reference-toolbar [data-admin-view-toggle] button[class*="bg-white"],
+  .admin-reference-toolbar [data-admin-view-toggle] button[class*="bg-blue"],
+  .admin-reference-toolbar [data-admin-view-toggle] button[class*="bg-emerald"] {
+    background: rgb(16, 185, 129) !important;
+    color: rgb(2, 6, 23) !important;
+  }
+
   .animate-in {
     animation-duration: 500ms;
     animation-fill-mode: both;

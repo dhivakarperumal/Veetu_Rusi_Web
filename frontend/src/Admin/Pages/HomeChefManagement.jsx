@@ -958,7 +958,7 @@ const HomeChefManagement = () => {
       </div>
 
       {/* Toolbar: Search on Left, View Mode Switcher on Right */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 superadmin-panel p-4 rounded-xl">
+      <div className="admin-reference-toolbar flex flex-col md:flex-row md:items-center justify-between gap-4 superadmin-panel p-4 rounded-xl">
         {/* Left: Search input */}
         <div className="relative flex-1 max-w-md w-full">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -985,7 +985,7 @@ const HomeChefManagement = () => {
             <option value="Rejected">Rejected</option>
           </select>
 
-          <div className="flex bg-slate-950/80 p-1 rounded-xl border border-white/10">
+          <div data-admin-view-toggle className="admin-view-toggle flex bg-slate-950/80 p-1 rounded-xl border border-white/10">
             <button
               onClick={() => setViewMode("table")}
               className={`p-2 rounded-lg transition ${viewMode === "table"

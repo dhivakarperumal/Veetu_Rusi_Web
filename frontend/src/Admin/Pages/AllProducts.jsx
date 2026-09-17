@@ -368,8 +368,8 @@ const AllProducts = () => {
                 <div>
 
                 </div>
-                <div className="flex items-center gap-3">
-                    <div className="flex bg-gray-100 p-1 rounded-xl border border-gray-200 shadow-inner">
+                    <div className="admin-reference-toolbar flex items-center gap-3">
+                    <div data-admin-view-toggle className="admin-view-toggle flex bg-gray-100 p-1 rounded-xl border border-gray-200 shadow-inner">
                         <button
                             onClick={() => setViewMode("table")}
                             className={`p-2 rounded-lg transition-all ${viewMode === "table" ? "bg-white text-blue-600 shadow-sm" : "text-gray-400 hover:text-slate-600"}`}
@@ -408,7 +408,7 @@ const AllProducts = () => {
                     </div>
 
                     {/* Controls */}
-                    <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-4 md:p-6 flex flex-col md:flex-row gap-4 items-center">
+                    <div className="admin-reference-toolbar bg-white rounded-[2rem] border border-gray-100 shadow-sm p-4 md:p-6 flex flex-col md:flex-row gap-4 items-center">
                         <div className="relative flex-1 w-full md:max-w-md group">
                             <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-blue-500 transition-colors" />
                             <input

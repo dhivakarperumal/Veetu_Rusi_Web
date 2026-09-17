@@ -250,7 +250,7 @@ const HomeChefCategories = () => {
       <div className="max-w-7xl mx-auto mt-0">
 
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+        <div className="admin-reference-toolbar flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
           <div className="relative mb-8 max-w-md">
             <FaSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
@@ -263,7 +263,7 @@ const HomeChefCategories = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100">
+            <div data-admin-view-toggle className="admin-view-toggle flex bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100">
               <button
                 onClick={() => setViewMode("card")}
                 className={`p-2.5 rounded-xl transition-all ${viewMode === 'card' ? 'bg-emerald-500 text-white shadow-lg' : 'text-gray-400 hover:text-emerald-600'}`}

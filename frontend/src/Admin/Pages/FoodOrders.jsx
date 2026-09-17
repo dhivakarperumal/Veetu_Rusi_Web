@@ -673,7 +673,7 @@ const FoodOrders = () => {
       </div>
 
       {/* FILTER */}
-      <div className="space-y-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+      <div className="admin-reference-toolbar space-y-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
         {/* <div className="flex flex-wrap items-center gap-3">
           {ORDER_CATEGORIES.map((category) => (
             <button
@@ -743,7 +743,7 @@ const FoodOrders = () => {
               <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             </div>
 
-            <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
+            <div data-admin-view-toggle className="admin-view-toggle flex bg-slate-100 p-1 rounded-xl border border-slate-200">
               <button
                 onClick={() => setViewMode("table")}
                 className={`p-2 rounded-lg transition ${viewMode === "table"

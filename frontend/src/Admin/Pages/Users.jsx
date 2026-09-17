@@ -265,7 +265,7 @@ const Users = ({ initialTab = "All" }) => {
 
             {/* Table Container */}
             <div className="superadmin-card rounded-3xl overflow-hidden bg-slate-950/95 border border-white/10 shadow-2xl">
-                <div className="p-6 border-b border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-950/95">
+                <div className="admin-reference-toolbar p-6 border-b border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-950/95">
                     <div className="relative flex-1 max-w-md">
                         <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
                         <input
@@ -294,7 +294,7 @@ const Users = ({ initialTab = "All" }) => {
                     </div>
                 </div>
 
-                <div className="p-6 space-y-6">
+                    <div className="p-6 space-y-6">
                     <div className="grid gap-4 md:grid-cols-3">
                         <AdminStatCard label="Total Users" value={users.length} description="All registered users in the system" icon={FiUserPlus} iconGradient="linear-gradient(135deg,#3B82F6 0%,#2563EB 100%)" glow="rgba(59,130,246,0.22)" gradient="linear-gradient(135deg,#08172a 0%,#0a0e1a 100%)" />
                         <AdminStatCard label="New Today" value={newUsersCount} description="Users registered in the last 24 hours" icon={FiUserPlus} iconGradient="linear-gradient(135deg,#10B981 0%,#0D9488 100%)" glow="rgba(16,185,129,0.22)" gradient="linear-gradient(135deg,#071a10 0%,#0a0e1a 100%)" />

@@ -391,7 +391,7 @@ const ReferralManagement = () => {
 
   /* ── FILTER BAR ── */
   const FilterBar = () => (
-    <div className="flex flex-col md:flex-row gap-4 mb-6 items-center justify-between">
+    <div className="admin-reference-toolbar flex flex-col md:flex-row gap-4 mb-6 items-center justify-between">
       <div className="relative w-full md:max-w-md">
         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
         <input value={search} onChange={e => setSearch(e.target.value)}
@@ -408,7 +408,7 @@ const ReferralManagement = () => {
           <option value="rejected">Rejected</option>
           <option value="cancelled">Cancelled</option>
         </select>
-        <div className="flex items-center rounded-2xl border border-white/10 bg-[#08120f] p-1 h-[42px]">
+        <div data-admin-view-toggle className="admin-view-toggle flex items-center rounded-2xl border border-white/10 bg-[#08120f] p-1 h-[42px]">
           <button onClick={() => setViewMode('table')} className={`p-1.5 rounded-xl transition flex items-center justify-center ${viewMode === 'table' ? 'bg-white/10 text-emerald-400' : 'text-slate-400 hover:text-slate-200'}`} title="Table View">
             <List size={18} />
           </button>
