@@ -99,7 +99,16 @@ const ChefSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
     if (item.children) {
       return item.children.some(child => {
         const childPath = getDynamicPath(child.path).split("?")[0];
-        return currentPath === childPath || currentPath.startsWith(childPath + "/");
+        const activePaths = [childPath];
+
+        if (childPath === "/chef/food/all") {
+          activePaths.push("/chef/food/add");
+        }
+        if (childPath === "/chef/products") {
+          activePaths.push("/chef/add-products");
+        }
+
+        return activePaths.some(path => currentPath === path || currentPath.startsWith(path + "/"));
       });
     }
 
@@ -211,7 +220,22 @@ const ChefSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                         const currentQuery = location.search.replace("?", "");
                         
                         let isActive = false;
-                        if (location.pathname === basePath) {
+                        const isFoodForm = basePath === "/chef/food/all" && (
+                          location.pathname === "/chef/food/add" ||
+                          location.pathname.startsWith("/chef/food/edit/")
+                        );
+                        const isProductForm = basePath === "/chef/products" && (
+                          location.pathname === "/chef/add-products" ||
+                          location.pathname.startsWith("/chef/add-products/")
+                        );
+                        const isProductStock = basePath === "/chef/products" && (
+                          location.pathname === "/chef/products/stock" ||
+                          location.pathname.startsWith("/chef/products/stock/")
+                        );
+
+                        if (isFoodForm || isProductForm) {
+                          isActive = true;
+                        } else if (!isProductStock && location.pathname === basePath) {
                           if (targetQuery) {
                             isActive = currentQuery === targetQuery || (!currentQuery && targetQuery === "status=All");
                           } else {
