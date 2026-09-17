@@ -143,6 +143,32 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
     return false;
   };
 
+  const isSubActive = (sub, allChildren) => {
+    const currentPath = location.pathname;
+    const subPath = getDynamicPath(sub.path);
+
+    // 1. Strict exact match
+    if (currentPath === subPath) {
+      return true;
+    }
+
+    // 2. Sub-route match (e.g. /admin/homechefs/34 matches /admin/homechefs)
+    if (currentPath.startsWith(subPath + "/")) {
+      // If another child in this submenu has a more specific (longer) match, defer to it
+      const hasBetterMatch = allChildren?.some((other) => {
+        if (other.path === sub.path) return false;
+        const otherPath = getDynamicPath(other.path);
+        const matchesOther =
+          currentPath === otherPath || currentPath.startsWith(otherPath + "/");
+        return matchesOther && otherPath.length > subPath.length;
+      });
+
+      return !hasBetterMatch;
+    }
+
+    return false;
+  };
+
   /* Dropdown logic - only one open at a time */
   const toggleMenu = (label) => {
     setOpenMenu(prev => prev === label ? null : label);
@@ -207,14 +233,16 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
             /* ===== DROPDOWN ITEM ===== */
             if (item.children) {
               const isMenuOpen = openMenu === item.label;
+              const isParentActive = isActiveRoute(item);
+              const isParentHighlighted = isMenuOpen || isParentActive;
 
               return (
                 <div key={item.label} className="space-y-1">
                   <button
                     onClick={() => toggleMenu(item.label)}
-                    className={`group relative w-full flex items-center gap-3 rounded-[1.75rem] px-4 py-3 transition-all duration-200 ${isMenuOpen ? "bg-emerald-500/15 text-emerald-300 shadow-[0_16px_50px_rgba(16,185,129,0.18)] ring-1 ring-emerald-400/20" : "text-slate-300 hover:bg-white/5 hover:text-white"}`}
+                    className={`group relative w-full flex items-center gap-3 rounded-[1.75rem] px-4 py-3 transition-all duration-200 ${isParentHighlighted ? "bg-emerald-500/15 text-emerald-300 shadow-[0_16px_50px_rgba(16,185,129,0.18)] ring-1 ring-emerald-400/20" : "text-slate-300 hover:bg-white/5 hover:text-white"}`}
                   >
-                    <span className={`absolute left-0 top-1/2 h-10 w-1 rounded-full transition-all ${isMenuOpen ? "opacity-100 -translate-x-0 bg-emerald-400/80" : "opacity-0 -translate-x-3 group-hover:opacity-100 group-hover:-translate-x-0 bg-emerald-400/80"}`} />
+                    <span className={`absolute left-0 top-1/2 h-10 w-1 rounded-full transition-all ${isParentHighlighted ? "opacity-100 -translate-x-0 bg-emerald-400/80" : "opacity-0 -translate-x-3 group-hover:opacity-100 group-hover:-translate-x-0 bg-emerald-400/80"}`} />
                     <Icon className="w-5 h-5 shrink-0" />
 
                     {!collapsed && (
@@ -236,7 +264,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                       {item.children.map((sub) => {
                         const SubIcon = sub.icon;
                         const subPath = getDynamicPath(sub.path);
-                        const isActive = location.pathname === subPath;
+                        const isActive = isSubActive(sub, item.children);
 
                         return (
                           <NavLink
