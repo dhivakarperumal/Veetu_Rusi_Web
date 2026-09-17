@@ -6,6 +6,7 @@ import {
   FiSearch, FiMapPin, FiPhone, FiRefreshCw,
   FiPackage, FiEye, FiCheck, FiX, FiGrid, FiList, FiNavigation
 } from "react-icons/fi";
+import { Package, Clock, CheckCircle } from "lucide-react";
 
 const fmt = (n) =>
   `₹${parseFloat(n || 0).toLocaleString("en-IN", {
@@ -195,9 +196,6 @@ const NewOrders = () => {
       .filter(Boolean).some((v) => v.toLowerCase().includes(q));
   });
 
-  const metrics = [
-    { label: "Total Available",  value: orders.length, color: "blue" },
-  ];
 
   /* ── Empty / Loading ── */
   const EmptyState = () => (
@@ -394,17 +392,8 @@ const NewOrders = () => {
       <header className="rounded-[2rem] border border-white/10 bg-slate-950/95 p-8 shadow-2xl relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.14),transparent_40%)]" />
         <div className="relative">
-          {/* Header Title Area */}
-          <div className="mb-6">
-            <p className="text-[10px] font-black uppercase tracking-[0.35em] text-blue-400">
-              Delivery Partner · Opportunities
-            </p>
-            <h1 className="mt-3 text-4xl font-black text-white tracking-tight">New Orders</h1>
-            <p className="mt-2 text-sm text-slate-400">Available pending delivery orders waiting for assignment.</p>
-          </div>
-
           {/* Header Controls Area */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t border-white/5 pt-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             {/* Search (Left Side) */}
             <div className="relative w-full sm:w-auto">
               <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
@@ -448,14 +437,28 @@ const NewOrders = () => {
       </header>
 
       {/* ── Metric Cards ───────────────────────────────────────── */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-        {metrics.map((m, i) => (
-          <div key={i} className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950/95 p-6 shadow-xl">
-            <span className={`absolute -right-5 -top-5 h-20 w-20 rounded-full opacity-20 blur-3xl bg-${m.color}-500`} />
-            <p className="text-[10px] font-black uppercase tracking-[0.28em] text-slate-500 mb-2">{m.label}</p>
-            <p className={`text-3xl font-black text-${m.color}-400`}>{loading ? "—" : m.value}</p>
-          </div>
-        ))}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {[
+          { label: "Total Available",     value: orders.length,   icon: Package,       gradient: "linear-gradient(135deg,#0c1a3a 0%,#0B1120 100%)", iconBg: "#3B82F6" },
+          { label: "Showing",             value: filtered.length, icon: Clock,         gradient: "linear-gradient(135deg,#052e16 0%,#0B1120 100%)", iconBg: "#10B981" },
+          { label: "Pending Assignment",  value: orders.length,   icon: CheckCircle,   gradient: "linear-gradient(135deg,#2e1a05 0%,#0B1120 100%)", iconBg: "#F59E0B" },
+        ].map((card, i) => {
+          const Icon = card.icon;
+          return (
+            <div key={i}
+              className="relative overflow-hidden rounded-3xl p-6 border border-white/5 shadow-xl hover:-translate-y-1 transition-all duration-300"
+              style={{ background: card.gradient }}>
+              <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full opacity-20 blur-2xl" style={{ background: card.iconBg }} />
+              <div className="relative z-10 flex items-center justify-between mb-3">
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg" style={{ background: card.iconBg }}>
+                  <Icon className="w-5 h-5 text-white" strokeWidth={2.5} />
+                </div>
+              </div>
+              <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.18em] mb-2 relative z-10">{card.label}</p>
+              <h3 className="text-2xl font-black text-white tracking-tight relative z-10">{loading ? "—" : card.value}</h3>
+            </div>
+          );
+        })}
       </div>
 
       {/* ── Content ────────────────────────────────────────────── */}
