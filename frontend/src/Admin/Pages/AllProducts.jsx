@@ -364,32 +364,14 @@ const AllProducts = () => {
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 min-h-screen pb-20">
             {/* Header Section */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                <div>
-
-                </div>
-                    <div className="admin-reference-toolbar flex items-center gap-3">
-                    <div data-admin-view-toggle className="admin-view-toggle flex bg-gray-100 p-1 rounded-xl border border-gray-200 shadow-inner">
-                        <button
-                            onClick={() => setViewMode("table")}
-                            className={`p-2 rounded-lg transition-all ${viewMode === "table" ? "bg-white text-blue-600 shadow-sm" : "text-gray-400 hover:text-slate-600"}`}
-                        >
-                            <FiList size={18} />
-                        </button>
-                        <button
-                            onClick={() => setViewMode("grid")}
-                            className={`p-2 rounded-lg transition-all ${viewMode === "grid" ? "bg-white text-blue-600 shadow-sm" : "text-gray-400 hover:text-slate-600"}`}
-                        >
-                            <FiGrid size={18} />
-                        </button>
-                    </div>
-                    <button
-                        onClick={() => navigate("/admin/products/add")}
-                        className="flex items-center justify-center gap-2 bg-slate-900 hover:bg-black text-white px-6 py-4 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-xl active:scale-95 whitespace-nowrap"
-                    >
-                        <FiPlus /> New Product
-                    </button>
-                </div>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div></div>
+                <button
+                    onClick={() => navigate("/admin/products/add")}
+                    className="flex items-center justify-center gap-2 bg-[#1B4D22] hover:bg-[#153b1a] text-white px-6 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-md hover:shadow-lg transition active:scale-95 self-start sm:self-auto"
+                >
+                    <FiPlus /> New Product
+                </button>
             </div>
 
             {loading ? (
@@ -407,31 +389,51 @@ const AllProducts = () => {
                         <AdminStatCard label="Out of Stock" value={stats.outOfStock} description="Products unavailable" icon={FiXCircle} iconGradient="linear-gradient(135deg,#F43F5E 0%,#DC2626 100%)" glow="rgba(244,63,94,0.22)" gradient="linear-gradient(135deg,#26100f 0%,#0a0e1a 100%)" />
                     </div>
 
-                    {/* Controls */}
-                    <div className="admin-reference-toolbar bg-white rounded-[2rem] border border-gray-100 shadow-sm p-4 md:p-6 flex flex-col md:flex-row gap-4 items-center">
-                        <div className="relative flex-1 w-full md:max-w-md group">
-                            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-blue-500 transition-colors" />
+                    {/* Controls below cards */}
+                    <div className="admin-reference-toolbar flex flex-col md:flex-row md:items-center justify-between gap-4 superadmin-panel p-4 rounded-xl">
+                        {/* Left: Search input */}
+                        <div className="relative flex-1 max-w-md w-full">
+                            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                             <input
                                 type="text"
                                 placeholder="Search by name or code..."
-                                className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:bg-white focus:border-blue-500 transition-all text-xs font-bold"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full pl-11 pr-4 py-3 bg-slate-950/80 border border-white/10 rounded-xl outline-none font-medium text-slate-100 text-sm focus:bg-slate-900 focus:border-emerald-600/40 transition-all placeholder:text-slate-500"
                             />
                         </div>
-                        <div className="flex items-center gap-3 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 hide-scrollbar">
+
+                        {/* Right: Filters & View toggle mode */}
+                        <div className="flex flex-wrap items-center gap-3 self-end md:self-auto">
                             <button
                                 onClick={() => setShowLowStockOnly(!showLowStockOnly)}
-                                className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border ${showLowStockOnly ? 'bg-rose-50 border-rose-100 text-rose-600' : 'bg-gray-50 border-gray-100 text-gray-400 hover:text-slate-800 hover:bg-white'}`}
+                                className={`px-3.5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all cursor-pointer border ${showLowStockOnly ? 'bg-rose-500/20 border-rose-500/40 text-rose-300' : 'bg-slate-950/80 border-white/10 text-slate-100 hover:bg-slate-900'}`}
                             >
-                                <FiFilter /> {showLowStockOnly ? "Showing Low Stock" : "All Inventory"}
+                                <span className="flex items-center gap-1.5"><FiFilter className="w-3.5 h-3.5" /> {showLowStockOnly ? "Showing Low Stock" : "All Stock"}</span>
                             </button>
-                            <select className="px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-gray-400 outline-none hover:bg-white transition-all cursor-pointer whitespace-nowrap">
-                                <option>Sort: Newest First</option>
-                                <option>Price: Low to High</option>
-                                <option>Price: High to Low</option>
-                                <option>Stock: Low to High</option>
-                            </select>
+
+                            <div data-admin-view-toggle className="admin-view-toggle flex bg-slate-950/80 p-1 rounded-xl border border-white/10">
+                                <button
+                                    onClick={() => setViewMode("table")}
+                                    className={`p-2 rounded-lg transition ${viewMode === "table"
+                                        ? "bg-white text-emerald-700 shadow-sm"
+                                        : "text-slate-500 hover:text-emerald-700"
+                                        }`}
+                                    title="Table View"
+                                >
+                                    <FiList className="w-4 h-4" />
+                                </button>
+                                <button
+                                    onClick={() => setViewMode("grid")}
+                                    className={`p-2 rounded-lg transition ${viewMode === "grid"
+                                        ? "bg-white text-emerald-700 shadow-sm"
+                                        : "text-slate-500 hover:text-emerald-700"
+                                        }`}
+                                    title="Grid View"
+                                >
+                                    <FiGrid className="w-4 h-4" />
+                                </button>
+                            </div>
                         </div>
                     </div>
 

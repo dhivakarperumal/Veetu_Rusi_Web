@@ -29,6 +29,7 @@ const Orders = ({ statusFilter = "All" }) => {
 
     // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
+    const [viewMode, setViewMode] = useState("table");
     const itemsPerPage = 10;
 
     // Modal State
@@ -159,10 +160,11 @@ const Orders = ({ statusFilter = "All" }) => {
             <Toaster position="top-right" />
             
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-end gap-4 mb-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
+                <div></div>
                 <Link
                     to="/admin/orders/create"
-                    className="flex items-center gap-2 px-6 py-3.5 bg-[#0f172a] hover:bg-slate-800 text-white rounded-xl text-xs font-bold uppercase tracking-widest transition-all shadow-lg active:scale-95"
+                    className="flex items-center justify-center gap-2 bg-[#1B4D22] hover:bg-[#153b1a] text-white px-6 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-md hover:shadow-lg transition active:scale-95 self-start sm:self-auto"
                 >
                     <FiPlus className="text-lg" /> Add New Order
                 </Link>
@@ -239,43 +241,56 @@ const Orders = ({ statusFilter = "All" }) => {
                 </div>
             </div>
 
-            {/* Filter & Search Bar Area */}
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-white p-4 rounded-[1.5rem] border border-slate-100 shadow-sm mt-8">
-                <div className="relative w-full md:w-[400px]">
-                    <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
+            {/* Toolbar: Search on Left, View Mode Switcher on Right */}
+            <div className="admin-reference-toolbar flex flex-col md:flex-row md:items-center justify-between gap-4 superadmin-panel p-4 rounded-xl">
+                {/* Left: Search input */}
+                <div className="relative flex-1 max-w-md w-full">
+                    <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                         type="text"
                         placeholder="Search by name, email, mobile or order..."
-                        className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-50 transition-all text-sm font-medium text-slate-700"
+                        className="w-full pl-11 pr-4 py-3 bg-slate-950/80 border border-white/10 rounded-xl outline-none font-medium text-slate-100 text-sm focus:bg-slate-900 focus:border-emerald-600/40 transition-all placeholder:text-slate-500"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
                 
-                <div className="flex items-center gap-3 w-full md:w-auto">
-                    <div className="relative flex-1 md:w-48">
-                        <select 
-                            value={activeStatus}
-                            onChange={(e) => setActiveStatus(e.target.value)}
-                            className="w-full appearance-none bg-slate-50 border border-slate-200 text-slate-600 text-xs font-bold uppercase tracking-widest rounded-xl px-5 py-3 pr-10 outline-none cursor-pointer focus:border-blue-400 transition-colors"
+                {/* Right: Filters & View toggle mode */}
+                <div className="flex flex-wrap items-center gap-3 self-end md:self-auto">
+                    <select 
+                        value={activeStatus}
+                        onChange={(e) => setActiveStatus(e.target.value)}
+                        className="px-3.5 py-2.5 bg-slate-950/80 border border-white/10 rounded-xl outline-none font-bold text-xs uppercase tracking-widest text-slate-100 focus:bg-slate-900 focus:border-emerald-600/40 transition-all cursor-pointer"
+                    >
+                        <option value="All">All Statuses</option>
+                        <option value="Order Placed">Order Placed</option>
+                        <option value="Packing">Packing</option>
+                        <option value="Shipping">Shipping</option>
+                        <option value="Out for Delivery">Out for Delivery</option>
+                        <option value="Delivered">Delivered</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
+
+                    <div data-admin-view-toggle className="admin-view-toggle flex bg-slate-950/80 p-1 rounded-xl border border-white/10">
+                        <button
+                            onClick={() => setViewMode("table")}
+                            className={`p-2 rounded-lg transition ${viewMode === "table"
+                                ? "bg-white text-emerald-700 shadow-sm"
+                                : "text-slate-500 hover:text-emerald-700"
+                                }`}
+                            title="Table View"
                         >
-                            <option value="All">All Statuses</option>
-                            <option value="Order Placed">Order Placed</option>
-                            <option value="Packing">Packing</option>
-                            <option value="Shipping">Shipping</option>
-                            <option value="Out for Delivery">Out for Delivery</option>
-                            <option value="Delivered">Delivered</option>
-                            <option value="Cancelled">Cancelled</option>
-                        </select>
-                        <FiFilter className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                    </div>
-                    
-                    <div className="flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200">
-                        <button className="p-2 bg-white text-slate-700 rounded-lg shadow-sm border border-slate-200">
-                            <FiList className="h-4 w-4" />
+                            <FiList className="w-4 h-4" />
                         </button>
-                        <button className="p-2 text-slate-400 hover:text-slate-600">
-                            <FiGrid className="h-4 w-4" />
+                        <button
+                            onClick={() => setViewMode("card")}
+                            className={`p-2 rounded-lg transition ${viewMode === "card"
+                                ? "bg-white text-emerald-700 shadow-sm"
+                                : "text-slate-500 hover:text-emerald-700"
+                                }`}
+                            title="Card View"
+                        >
+                            <FiGrid className="w-4 h-4" />
                         </button>
                     </div>
                 </div>
@@ -288,6 +303,82 @@ const Orders = ({ statusFilter = "All" }) => {
                         <div className="flex flex-col items-center justify-center py-24 gap-4">
                             <div className="w-10 h-10 border-4 border-slate-200 border-t-[#0f172a] rounded-full animate-spin"></div>
                             <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Loading Orders...</p>
+                        </div>
+                    ) : viewMode === "card" ? (
+                        <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                            {currentItems.length > 0 ? (
+                                currentItems.map((order) => (
+                                    <div key={order.id} className="border border-slate-100 rounded-2xl p-5 hover:shadow-md transition-all bg-slate-50/50 hover:bg-white flex flex-col justify-between">
+                                        <div>
+                                            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+                                                <div>
+                                                    <span className="text-xs font-black text-slate-800">#ORD-0{order.id}</span>
+                                                    <span className="text-[10px] text-slate-400 font-medium block">
+                                                        {order.created_at ? new Date(order.created_at).toLocaleDateString('en-IN', {day: 'numeric', month: 'short', year: 'numeric'}) : 'Unknown Date'}
+                                                    </span>
+                                                </div>
+                                                <select
+                                                    value={order.status}
+                                                    onChange={(e) => handleQuickStatusUpdate(order.id, e.target.value)}
+                                                    className={`appearance-none cursor-pointer text-center px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-widest border outline-none transition-all ${getStatusStyle(order.status)}`}
+                                                >
+                                                    {(() => {
+                                                        const flow = ["Order Placed", "Packing", "Shipping", "Out for Delivery", "Delivered"];
+                                                        const currentIndex = flow.indexOf(order.status);
+                                                        const options = currentIndex === -1 
+                                                            ? [...flow, "Cancelled", order.status] 
+                                                            : [...flow.slice(currentIndex), ...(currentIndex < 2 ? ["Cancelled"] : [])];
+                                                        
+                                                        return Array.from(new Set(options)).map(status => (
+                                                            <option key={status} value={status}>{status}</option>
+                                                        ));
+                                                    })()}
+                                                </select>
+                                            </div>
+                                            <div className="space-y-2 mb-4">
+                                                <div>
+                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Customer</p>
+                                                    <p className="text-sm font-bold text-slate-800">{order.customer_name || 'Guest'}</p>
+                                                    <p className="text-xs text-slate-400 font-medium">{order.customer_email || order.customer_phone || 'No contact info'}</p>
+                                                </div>
+                                                <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                                                    <div>
+                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Amount</p>
+                                                        <p className="text-base font-black text-slate-800">₹{parseFloat(order.total_amount || 0).toLocaleString()}</p>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Payment</p>
+                                                        <p className="text-xs font-bold text-slate-600 uppercase">{order.payment_method || 'N/A'}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                                            <Link
+                                                to={`/admin/orders/${order.id}`}
+                                                className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-200 font-bold text-xs flex items-center gap-1.5 transition-colors"
+                                            >
+                                                <FiEye size={14} /> View
+                                            </Link>
+                                            <Link
+                                                to={`/admin/orders/${order.id}`}
+                                                state={{ autoPrint: true }}
+                                                className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:text-emerald-600 hover:border-emerald-200 font-bold text-xs flex items-center gap-1.5 transition-colors"
+                                            >
+                                                <FiPrinter size={14} /> Print
+                                            </Link>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="col-span-full py-16 text-center">
+                                    <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
+                                        <FiPackage size={28} />
+                                    </div>
+                                    <h3 className="text-sm font-bold text-slate-700">No Orders Found</h3>
+                                    <p className="text-[11px] text-slate-400 mt-1">Try adjusting your search or filters.</p>
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <table className="w-full text-left border-collapse">

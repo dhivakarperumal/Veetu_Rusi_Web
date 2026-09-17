@@ -243,47 +243,61 @@ const Category = () => {
       <div className="max-w-7xl mx-auto mt-0">
 
         {/* Header Section */}
-        <div className="admin-reference-toolbar flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
-          <div className="relative mb-8 max-w-md">
-            <FaSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search by ID or Name..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-14 pr-6 py-4 bg-white border border-gray-100 rounded-[1.5rem] shadow-sm outline-none focus:ring-4 focus:ring-emerald-500/5 focus:border-emerald-500/20 transition-all font-bold text-sm"
-            />
-          </div>
-
-          <div className="flex items-center gap-3">
-            <div data-admin-view-toggle className="admin-view-toggle flex bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100">
-              <button
-                onClick={() => setViewMode("card")}
-                className={`p-2.5 rounded-xl transition-all ${viewMode === 'card' ? 'bg-emerald-500 text-white shadow-lg' : 'text-gray-400 hover:text-emerald-600'}`}
-              >
-                <FaThLarge size={18} />
-              </button>
-              <button
-                onClick={() => setViewMode("table")}
-                className={`p-2.5 rounded-xl transition-all ${viewMode === 'table' ? 'bg-emerald-500 text-white shadow-lg' : 'text-gray-400 hover:text-emerald-600'}`}
-              >
-                <FaList size={18} />
-              </button>
-            </div>
-
-            <button
-              onClick={openAddModal}
-              className="flex items-center gap-2 px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-sm transition-all shadow-xl shadow-emerald-100 uppercase tracking-widest"
-            >
-              <FaPlus /> Add New Category
-            </button>
-          </div>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div></div>
+          <button
+            onClick={openAddModal}
+            className="flex items-center justify-center gap-2 bg-[#1B4D22] hover:bg-[#153b1a] text-white px-6 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-md hover:shadow-lg transition active:scale-95 self-start sm:self-auto"
+          >
+            <FaPlus /> Add New Category
+          </button>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
           <AdminStatCard label="Total Categories" value={categories.length} description="All product categories" icon={FaFileAlt} iconGradient="linear-gradient(135deg,#7C3AED 0%,#4338CA 100%)" glow="rgba(124,58,237,0.22)" />
           <AdminStatCard label="With Images" value={categoriesWithImages} description="Categories ready for display" icon={FaImage} iconGradient="linear-gradient(135deg,#10B981 0%,#0D9488 100%)" glow="rgba(16,185,129,0.22)" gradient="linear-gradient(135deg,#071a10 0%,#0a0e1a 100%)" />
           <AdminStatCard label="Search Results" value={categoriesInView} description="Categories matching the current search" icon={FaSearch} iconGradient="linear-gradient(135deg,#F59E0B 0%,#EA580C 100%)" glow="rgba(245,158,11,0.22)" gradient="linear-gradient(135deg,#1a1004 0%,#0a0e1a 100%)" />
+        </div>
+
+        {/* Search Section Below Cards */}
+        <div className="admin-reference-toolbar flex flex-col md:flex-row md:items-center justify-between gap-4 superadmin-panel p-4 rounded-xl mb-8">
+          {/* Left: Search input */}
+          <div className="relative flex-1 max-w-md w-full">
+            <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search by ID or Name..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-11 pr-4 py-3 bg-slate-950/80 border border-white/10 rounded-xl outline-none font-medium text-slate-100 text-sm focus:bg-slate-900 focus:border-emerald-600/40 transition-all placeholder:text-slate-500"
+            />
+          </div>
+
+          {/* Right: View toggle mode */}
+          <div className="flex items-center gap-3 self-end md:self-auto">
+            <div data-admin-view-toggle className="admin-view-toggle flex bg-slate-950/80 p-1 rounded-xl border border-white/10">
+              <button
+                onClick={() => setViewMode("table")}
+                className={`p-2 rounded-lg transition ${viewMode === "table"
+                  ? "bg-white text-emerald-700 shadow-sm"
+                  : "text-slate-500 hover:text-emerald-700"
+                  }`}
+                title="Table View"
+              >
+                <FaList className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode("card")}
+                className={`p-2 rounded-lg transition ${viewMode === "card"
+                  ? "bg-white text-emerald-700 shadow-sm"
+                  : "text-slate-500 hover:text-emerald-700"
+                  }`}
+                title="Card View"
+              >
+                <FaThLarge className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Search Bar */}
