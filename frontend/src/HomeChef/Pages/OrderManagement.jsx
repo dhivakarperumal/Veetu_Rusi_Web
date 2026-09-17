@@ -4,6 +4,7 @@ import api from "../../api";
 import { toast } from "react-hot-toast";
 import { Search, Filter, Edit, Check, Eye, ChevronLeft, ChevronRight, XCircle, ShoppingBag, Clock, CheckCircle, Truck } from "lucide-react";
 import OrderCancellationModal from "../../Components/CommenComponents/OrderCancellationModal";
+import ChefDataToolbar from "../Components/ChefDataToolbar";
 
 const OrderManagement = () => {
   const location = useLocation();
@@ -14,6 +15,7 @@ const OrderManagement = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [viewMode, setViewMode] = useState("table");
   const [editingOrder, setEditingOrder] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [statusImage, setStatusImage] = useState(null);
@@ -295,28 +297,13 @@ const OrderManagement = () => {
         </div>
       )}
 
-      {/* Filter and Search Bar */}
-      <div className="flex flex-col md:flex-row gap-4 bg-[#0B1120]/40 backdrop-blur-md border border-white/5 p-4 rounded-3xl">
-        <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-          <input
-            type="text"
-            placeholder="Search by order ID, customer or merchant..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 bg-[#070b13]/60 border border-white/5 rounded-2xl outline-none font-medium text-white text-sm focus:border-emerald-500/30 transition-all"
-          />
-        </div>
-        <div className="flex gap-3">
-          <div className="relative">
-            <select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
-                navigate(`?status=${e.target.value}`);
-              }}
-              className="appearance-none pl-4 pr-10 py-3 bg-[#070b13]/60 border border-white/5 rounded-2xl outline-none font-medium text-white text-sm focus:border-emerald-500/30 transition-all cursor-pointer"
-            >
+      <ChefDataToolbar
+        search={search}
+        onSearch={setSearch}
+        placeholder="Search by order ID, customer or merchant..."
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        filters={<select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); navigate(`?status=${e.target.value}`); }} className="px-4 py-3 bg-slate-950 border border-slate-800 rounded-2xl outline-none font-bold text-xs uppercase tracking-widest text-slate-200 focus:border-emerald-500/70 cursor-pointer">
               <option value="All">All Orders</option>
               <option value="Pending">New Order</option>
               <option value="Accepted">Accepted</option>
@@ -328,11 +315,8 @@ const OrderManagement = () => {
               <option value="Out for Delivery">Out for Delivery</option>
               <option value="Delivered">Delivered</option>
               <option value="Cancelled">Cancelled Order</option>
-            </select>
-            <Filter className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 pointer-events-none" />
-          </div>
-        </div>
-      </div>
+            </select>}
+      />
 
       {/* Data Table */}
       {loading ? (
@@ -341,7 +325,7 @@ const OrderManagement = () => {
             <div key={i} className="h-16 bg-white/5 rounded-2xl animate-pulse"></div>
           ))}
         </div>
-      ) : (
+      ) : viewMode === "table" ? (
         <div className="bg-[#0B1120]/40 backdrop-blur-md border border-white/5 rounded-[2.5rem] overflow-hidden shadow-xl">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-slate-200">
@@ -515,7 +499,19 @@ const OrderManagement = () => {
             </div>
           )}
         </div>
-      )}
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+          {paginatedOrders.map((order) => {
+            const amount = parseFloat((order.chef_total_amount ?? order.total_amount) || 0);
+            return <div key={order.id} className="bg-slate-950/95 border border-slate-800 rounded-2xl p-5 shadow-xl text-slate-200">
+              <div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Order ID</p><h3 className="mt-1 text-lg font-black text-white">{order.order_id}</h3></div><span className="rounded-lg bg-amber-500/10 px-2.5 py-1 text-[10px] font-black uppercase text-amber-300">{order.status}</span></div>
+              <div className="mt-5 space-y-3 border-t border-slate-800 pt-4 text-sm"><div className="flex justify-between gap-3"><span className="text-slate-500">Customer</span><span className="font-bold text-white">{order.customer_name || "-"}</span></div><div className="flex justify-between gap-3"><span className="text-slate-500">Amount</span><span className="font-black text-emerald-400">₹{amount.toLocaleString()}</span></div><div className="flex justify-between gap-3"><span className="text-slate-500">Ordered</span><span className="text-right text-slate-300">{order.ordered_at || order.created_at ? new Date(order.ordered_at || order.created_at).toLocaleDateString() : "-"}</span></div></div>
+              <div className="mt-5 flex justify-end gap-2"><button onClick={() => navigate(`/chef/orders/${order.id}`)} className="rounded-xl border border-slate-700 p-2 text-slate-300 hover:bg-slate-800" title="View Details"><Eye className="w-4 h-4" /></button><button onClick={() => { setEditingOrder(order); setStatusImage(null); setIsModalOpen(true); }} className="rounded-xl border border-slate-700 p-2 text-slate-300 hover:bg-slate-800" title="Edit Order"><Edit className="w-4 h-4" /></button></div>
+            </div>;
+          })}
+        </div>
+      )
+      }
 
       {/* Edit / Assign Modal */}
       {isModalOpen && editingOrder && (

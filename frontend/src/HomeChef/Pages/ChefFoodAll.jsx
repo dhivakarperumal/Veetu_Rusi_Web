@@ -18,12 +18,14 @@ import { useNavigate } from "react-router-dom";
 import api from "../../api";
 import toast from "react-hot-toast";
 import QuickViewModal from "../../Components/Products/QuickModel";
+import ChefDataToolbar from "../Components/ChefDataToolbar";
 
 const ChefFoodAll = () => {
   const [profile, setProfile] = useState(null);
   const [foods, setFoods] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
   const [viewMode, setViewMode] = useState("table");
   const [deleting, setDeleting] = useState(false);
   const [quickViewProduct, setQuickViewProduct] = useState(null);
@@ -138,6 +140,7 @@ const ChefFoodAll = () => {
 
   const filteredFoods = foods.filter((item) => {
     const lowerSearch = search.trim().toLowerCase();
+    if (statusFilter !== "All" && (item.status || "Active") !== statusFilter) return false;
     if (!lowerSearch) return true;
     return [item.name, item.category, item.description, item.dietary_tag]
       .filter(Boolean)
@@ -231,43 +234,14 @@ const ChefFoodAll = () => {
           </div>
         </div>
 
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#111318] border border-slate-800 p-4 rounded-xl shadow-sm">
-          <div className="relative flex-1 max-w-md w-full">
-            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search by name, category or tag..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-11 pr-4 py-3 bg-[#0b0d10] border border-slate-800 rounded-xl outline-none font-medium text-white text-sm focus:bg-[#0f1216] focus:border-emerald-600/40 transition-all placeholder:text-slate-500"
-            />
-          </div>
-
-          <div className="flex items-center gap-3 self-end md:self-auto">
-            <div className="flex bg-[#0f1216] p-1 rounded-lg border border-slate-800 shadow-inner">
-              <button
-                onClick={() => setViewMode("table")}
-                className={`p-2 rounded-md transition-all ${viewMode === "table"
-                  ? "bg-[#0b0d10] text-white shadow-sm"
-                  : "text-slate-400 hover:text-slate-600"
-                  }`}
-                title="Table View"
-              >
-                <FiList size={16} />
-              </button>
-              <button
-                onClick={() => setViewMode("grid")}
-                className={`p-2 rounded-md transition-all ${viewMode === "grid"
-                  ? "bg-[#0b0d10] text-white shadow-sm"
-                  : "text-slate-400 hover:text-slate-600"
-                  }`}
-                title="Grid View"
-              >
-                <FiGrid size={16} />
-              </button>
-            </div>
-          </div>
-        </div>
+        <ChefDataToolbar
+          search={search}
+          onSearch={setSearch}
+          placeholder="Search by food name, category or tag..."
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          filters={<select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-4 py-3 bg-slate-950 border border-slate-800 rounded-2xl outline-none font-bold text-xs uppercase tracking-widest text-slate-200 focus:border-emerald-500/70 cursor-pointer"><option value="All">All Statuses</option><option value="Active">Active</option><option value="Low Stock">Low Stock</option><option value="Out of Stock">Out of Stock</option></select>}
+        />
 
         {viewMode === "table" ? (
           filteredFoods.length > 0 ? (

@@ -4,7 +4,7 @@ import { StoreContext } from "../../PrivateRouter/StoreContext";
 import { AuthContext } from "../../PrivateRouter/AuthContext";
 import { Link } from "react-router-dom";
 import {
-    FiSearch, FiHeart, FiShoppingCart, FiStar, FiFilter, FiX, FiSliders, FiBox, FiLayers, FiCheckCircle
+    FiSearch, FiHeart, FiShoppingCart, FiStar, FiFilter, FiX, FiSliders, FiBox, FiLayers, FiCheckCircle, FiList, FiGrid
 } from "react-icons/fi";
 import { BsQrCode } from "react-icons/bs";
 import { QRCodeCanvas } from "qrcode.react";
@@ -28,6 +28,7 @@ const Materials = () => {
     const [categories, setCategories] = useState(["All"]);
     const [showQR, setShowQR] = useState(null);
     const [showFilters, setShowFilters] = useState(false);
+    const [viewMode, setViewMode] = useState("card");
 
     const currentUser = user;
     const [homeChef, setHomeChef] = useState(null);
@@ -248,6 +249,10 @@ const Materials = () => {
                 >
                     {SORT_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                 </select>
+                <div className="flex bg-slate-950 border border-slate-800 p-1 rounded-2xl">
+                    <button onClick={() => setViewMode("table")} className={`p-3 rounded-xl transition ${viewMode === "table" ? "bg-emerald-500 text-slate-950" : "text-slate-400 hover:text-slate-100"}`} title="Table View"><FiList size={16} /></button>
+                    <button onClick={() => setViewMode("card")} className={`p-3 rounded-xl transition ${viewMode === "card" ? "bg-emerald-500 text-slate-950" : "text-slate-400 hover:text-slate-100"}`} title="Card View"><FiGrid size={16} /></button>
+                </div>
             </div>
 
             {/* Expanded Filters */}
@@ -339,6 +344,12 @@ const Materials = () => {
                     >
                         Clear All & Show All
                     </button>
+                </div>
+            ) : viewMode === "table" ? (
+                <div className="overflow-hidden rounded-[1.75rem] border border-slate-800 bg-slate-950/95 shadow-xl">
+                    <div className="overflow-x-auto"><table className="w-full text-left text-sm text-slate-200"><thead className="bg-slate-900"><tr><th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-slate-400">Material</th><th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-slate-400">Category</th><th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-slate-400">Price</th><th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-slate-400">Action</th></tr></thead><tbody className="divide-y divide-slate-800">
+                        {filtered.map((product) => <tr key={product.id} className="hover:bg-slate-900/70"><td className="px-6 py-4 font-bold text-white">{product.name}</td><td className="px-6 py-4 text-slate-400">{product.category || "-"}</td><td className="px-6 py-4 font-black text-emerald-400">₹{Number(product.offer_price || product.price || 0).toLocaleString("en-IN")}</td><td className="px-6 py-4"><button onClick={() => addToCart(product)} className="rounded-xl bg-emerald-500 p-2 text-slate-950 hover:bg-emerald-400" title="Add to cart"><FiShoppingCart size={16} /></button></td></tr>)}
+                    </tbody></table></div>
                 </div>
             ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">

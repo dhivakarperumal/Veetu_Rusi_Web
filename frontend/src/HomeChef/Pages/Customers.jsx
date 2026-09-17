@@ -2,11 +2,13 @@ import React, { useEffect, useState } from "react";
 import { Users, Search, Grid, List, Phone, ShoppingBag, Calendar, DollarSign, TrendingUp } from "lucide-react";
 import api from "../../api";
 import { toast } from "react-hot-toast";
+import ChefDataToolbar from "../Components/ChefDataToolbar";
 
 const Customers = () => {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [customerFilter, setCustomerFilter] = useState("All");
   const [viewMode, setViewMode] = useState("table");
 
   useEffect(() => {
@@ -59,8 +61,8 @@ const Customers = () => {
   };
 
   const filteredCustomers = customers.filter(c => 
-    c.name.toLowerCase().includes(search.toLowerCase()) || 
-    c.phone.toLowerCase().includes(search.toLowerCase())
+    (c.name.toLowerCase().includes(search.toLowerCase()) || c.phone.toLowerCase().includes(search.toLowerCase())) &&
+    (customerFilter === "All" || (customerFilter === "Repeat" && c.totalOrders > 1) || (customerFilter === "New" && c.totalOrders === 1))
   );
   const totalOrders = customers.reduce((sum, customer) => sum + customer.totalOrders, 0);
   const totalSpent = customers.reduce((sum, customer) => sum + customer.totalSpent, 0);
@@ -90,43 +92,14 @@ const Customers = () => {
         ))}
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="flex flex-col md:flex-row items-center gap-4 bg-[#0B1120]/40 backdrop-blur-md border border-white/5 p-4 rounded-3xl">
-        <div className="relative flex-1 w-full">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-          <input
-            type="text"
-            placeholder="Search by customer name or phone..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-1/2 pl-11 pr-4 py-3 bg-[#070b13]/60 border border-white/5 rounded-2xl outline-none font-medium text-white text-sm focus:border-emerald-500/30 transition-all"
-          />
-        </div>
-        <div className="flex bg-[#070b13]/60 p-1 rounded-xl border border-white/5 self-end md:self-auto w-full md:w-auto">
-          <button
-            onClick={() => setViewMode('table')}
-            className={`flex-1 md:flex-none p-2.5 rounded-lg transition-all flex items-center justify-center ${
-              viewMode === 'table'
-                ? 'bg-emerald-500/20 text-emerald-400 shadow-sm'
-                : 'text-white/40 hover:text-white hover:bg-white/5'
-            }`}
-            title="Table View"
-          >
-            <List className="w-5 h-5" />
-          </button>
-          <button
-            onClick={() => setViewMode('grid')}
-            className={`flex-1 md:flex-none p-2.5 rounded-lg transition-all flex items-center justify-center ${
-              viewMode === 'grid'
-                ? 'bg-emerald-500/20 text-emerald-400 shadow-sm'
-                : 'text-white/40 hover:text-white hover:bg-white/5'
-            }`}
-            title="Grid View"
-          >
-            <Grid className="w-5 h-5" />
-          </button>
-        </div>
-      </div>
+      <ChefDataToolbar
+        search={search}
+        onSearch={setSearch}
+        placeholder="Search by customer name or phone..."
+        viewMode={viewMode}
+        onViewModeChange={(mode) => setViewMode(mode)}
+        filters={<select value={customerFilter} onChange={(e) => setCustomerFilter(e.target.value)} className="px-4 py-3 bg-slate-950 border border-slate-800 rounded-2xl outline-none font-bold text-xs uppercase tracking-widest text-slate-200 focus:border-emerald-500/70 cursor-pointer"><option value="All">All Customers</option><option value="Repeat">Repeat Buyers</option><option value="New">First Order</option></select>}
+      />
 
       {/* Data View */}
       {loading ? (

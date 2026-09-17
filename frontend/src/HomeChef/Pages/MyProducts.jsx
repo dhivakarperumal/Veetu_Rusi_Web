@@ -3,6 +3,7 @@ import { useAuth } from '../../PrivateRouter/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
 import { toast } from 'react-hot-toast';
+import ChefDataToolbar from '../Components/ChefDataToolbar';
 import { 
   FiPlus, 
   FiSearch, 
@@ -22,6 +23,7 @@ const MyProducts = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
   const [viewMode, setViewMode] = useState('table');
   const [currentProduct, setCurrentProduct] = useState(null);
   const [newStock, setNewStock] = useState('');
@@ -71,11 +73,11 @@ const MyProducts = () => {
     fetchProducts();
   }, [user]);
 
-  const filteredProducts = products.filter(p =>
-    p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.product_code?.includes(searchTerm) ||
-    p.category?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredProducts = products.filter(p => {
+    const query = searchTerm.toLowerCase();
+    const matchesSearch = p.name?.toLowerCase().includes(query) || p.product_code?.includes(searchTerm) || p.category?.toLowerCase().includes(query);
+    return matchesSearch && (statusFilter === 'All' || p.status === statusFilter);
+  });
 
   const activeCount = products.filter(p => p.status === 'Active').length;
   const lowStockCount = products.filter(p => p.status === 'Low Stock').length;
@@ -210,6 +212,16 @@ const MyProducts = () => {
       </div>
 
       {/* Toolbar */}
+      <ChefDataToolbar
+        search={searchTerm}
+        onSearch={setSearchTerm}
+        placeholder="Search by product name, code or category..."
+        viewMode={viewMode}
+        onViewModeChange={(mode) => setViewMode(mode === 'card' ? 'grid' : mode)}
+        filters={<select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-4 py-3 bg-slate-950 border border-slate-800 rounded-2xl outline-none font-bold text-xs uppercase tracking-widest text-slate-200 focus:border-emerald-500/70 cursor-pointer"><option value="All">All Statuses</option><option value="Active">Active</option><option value="Low Stock">Low Stock</option><option value="Out of Stock">Out of Stock</option></select>}
+      />
+      {/* Legacy toolbar replaced by shared control */}
+      {/*
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border border-slate-100 p-4 rounded-xl shadow-sm">
         <div className="relative flex-1 max-w-md w-full">
           <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -248,7 +260,7 @@ const MyProducts = () => {
             </button>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Table View */}
       {viewMode === 'table' ? (
