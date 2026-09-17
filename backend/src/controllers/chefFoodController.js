@@ -117,17 +117,17 @@ SELECT
     cf.*,
     u.full_name AS chef_name,
 
-    hc.delivery_radius,
-    hc.latitude,
-    hc.longitude,
-    hc.area_name,
-    hc.city,
-    hc.district,
-    hc.state,
-    hc.pincode
+    NULL AS delivery_radius,
+    u.latitude,
+    u.longitude,
+    u.area AS area_name,
+    u.location_name AS city,
+    u.district,
+    NULL AS state,
+    u.pincode
 `;
     if (!isNaN(lat) && !isNaN(lon)) {
-      query += `, ( 6371 * acos( cos( radians(${lat}) ) * cos( radians( hc.latitude ) ) * cos( radians( hc.longitude ) - radians(${lon}) ) + sin( radians(${lat}) ) * sin( radians( hc.latitude ) ) ) ) AS distance`;
+      query += `, ( 6371 * acos( cos( radians(${lat}) ) * cos( radians( u.latitude ) ) * cos( radians( u.longitude ) - radians(${lon}) ) + sin( radians(${lat}) ) * sin( radians( u.latitude ) ) ) ) AS distance`;
     } else {
       query += `, NULL as distance`;
     }
@@ -181,15 +181,15 @@ SELECT
     }
 
     if (area) {
-      query += ' AND hc.area_name = ?';
+      query += ' AND u.area = ?';
       params.push(area);
     }
     if (district) {
-      query += ' AND hc.district = ?';
+      query += ' AND u.district = ?';
       params.push(district);
     }
     if (pincode) {
-      query += ' AND hc.pincode = ?';
+      query += ' AND u.pincode = ?';
       params.push(pincode);
     }
 

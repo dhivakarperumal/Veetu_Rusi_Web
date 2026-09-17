@@ -76,14 +76,14 @@ exports.getAllProducts = async (req, res) => {
                 SELECT 
                     t.*, 
                     u.full_name AS chef_name, 
-                    hc.delivery_radius, 
-                    hc.latitude, 
-                    hc.longitude, 
-                    hc.area_name, 
-                    hc.city, 
-                    hc.district, 
-                    hc.state, 
-                    hc.pincode 
+                    NULL AS delivery_radius,
+                    u.latitude,
+                    u.longitude,
+                    u.area AS area_name,
+                    u.location_name AS city,
+                    u.district,
+                    NULL AS state,
+                    u.pincode
                 FROM chef_products t 
                 LEFT JOIN users u ON t.created_by = u.user_id 
                 LEFT JOIN home_chefs hc ON t.created_by = hc.user_id 
