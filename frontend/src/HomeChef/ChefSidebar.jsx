@@ -38,7 +38,7 @@ const navItems = [
       // { path: "/chef/food/add", label: "Add Food", icon: PlusCircle },
       { path: "/chef/food/all", label: "All Food", icon: UtensilsCrossed },
       { path: "/chef/products", label: "All Products", icon: List },
-      { path: "/chef/add-products", label: "Add Product", icon: PlusSquare },
+      // { path: "/chef/add-products", label: "Add Product", icon: PlusSquare },
       { path: "/chef/products/stock", label: "Stock Details", icon: Archive }
     ]
   },
