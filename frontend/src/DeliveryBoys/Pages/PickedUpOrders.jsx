@@ -165,6 +165,7 @@ const PickedUpOrders = () => {
   const [editingOrder, setEditingOrder] = useState(null);
   const [trackingOrder, setTrackingOrder] = useState(null);
   const [viewMode, setViewMode]         = useState("table"); // "card" | "table"
+  const [statusFilter, setStatusFilter] = useState("All");
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -184,6 +185,7 @@ const PickedUpOrders = () => {
 
   const filtered = orders.filter((o) => {
     const q = searchTerm.trim().toLowerCase();
+    if (statusFilter !== "All" && o.status !== statusFilter) return false;
     if (!q) return true;
     return [o.order_id, o.customer_name, o.customer_phone, String(o.id)]
       .filter(Boolean).some((v) => v.toLowerCase().includes(q));
@@ -450,33 +452,42 @@ const PickedUpOrders = () => {
           {/* Header Controls Area */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t border-white/5 pt-6">
             {/* Search (Left Side) */}
-            <div className="relative w-full sm:w-auto">
-              <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
+            <div className="relative w-full sm:flex-1 sm:max-w-xl">
+              <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <input type="text" value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search orders..."
-                className="w-full sm:w-72 rounded-full border border-white/10 bg-slate-900 pl-10 pr-4 py-3 text-xs font-semibold text-slate-200 placeholder:text-slate-600 focus:border-sky-500 outline-none" />
+                placeholder="Search by franchise name, owner or city..."
+                className="w-full rounded-2xl border border-slate-800 bg-slate-950 pl-14 pr-5 py-4 text-sm font-medium text-slate-200 placeholder:text-slate-500 focus:border-emerald-500/70 outline-none transition-all" />
             </div>
 
             {/* Other Actions (Right Side) */}
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="h-[52px] px-5 rounded-2xl border border-slate-800 bg-slate-950 text-xs font-black uppercase tracking-widest text-slate-200 outline-none focus:border-emerald-500/70 transition-all cursor-pointer"
+              >
+                <option value="All">All Statuses</option>
+                {Array.from(new Set(orders.map((order) => order.status).filter(Boolean))).map((status) => (
+                  <option key={status} value={status}>{status}</option>
+                ))}
+              </select>
+
               {/* View toggle */}
-              <div className="flex items-center rounded-full border border-white/10 bg-slate-900 p-1">
-                <button
-                  onClick={() => setViewMode("card")}
-                  className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider transition
-                    ${viewMode === "card" ? "bg-emerald-500 text-slate-950 shadow-lg" : "text-slate-400 hover:text-white"}`}
-                  title="Card View"
-                >
-                  <FiGrid size={13} /> Card
-                </button>
+              <div className="flex items-center rounded-2xl border border-slate-800 bg-slate-950 p-1">
                 <button
                   onClick={() => setViewMode("table")}
-                  className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider transition
-                    ${viewMode === "table" ? "bg-emerald-500 text-slate-950 shadow-lg" : "text-slate-400 hover:text-white"}`}
+                  className={`p-3 rounded-xl transition ${viewMode === "table" ? "bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20" : "text-slate-400 hover:text-slate-100"}`}
                   title="Table View"
                 >
-                  <FiList size={13} /> Table
+                  <FiList size={18} />
+                </button>
+                <button
+                  onClick={() => setViewMode("card")}
+                  className={`p-3 rounded-xl transition ${viewMode === "card" ? "bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20" : "text-slate-400 hover:text-slate-100"}`}
+                  title="Card View"
+                >
+                  <FiGrid size={18} />
                 </button>
               </div>
 

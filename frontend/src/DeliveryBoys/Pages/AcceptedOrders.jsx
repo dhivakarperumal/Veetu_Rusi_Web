@@ -191,12 +191,6 @@ const AcceptedOrders = () => {
       .filter(Boolean).some((v) => v.toLowerCase().includes(q));
   });
 
-  const metrics = [
-    { label: "Total Assigned",   value: orders.length,                                                          color: "cyan"    },
-    { label: "Pending Pickup",   value: orders.filter(o => o.status === "Delivery Partner Assigned").length,    color: "amber"   },
-    { label: "Picked Up",        value: orders.filter(o => o.status === "Picked Up").length,                    color: "sky"     },
-    { label: "Out for Delivery", value: orders.filter(o => o.status === "Out for Delivery").length,             color: "emerald" },
-  ];
 
   /* ── Empty / Loading ── */
   const EmptyState = () => (
@@ -431,17 +425,8 @@ const AcceptedOrders = () => {
       <header className="rounded-[2rem] border border-white/10 bg-slate-950/95 p-8 shadow-2xl relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(6,182,212,0.14),transparent_40%)]" />
         <div className="relative">
-          {/* Header Title Area */}
-          <div className="mb-6">
-            <p className="text-[10px] font-black uppercase tracking-[0.35em] text-cyan-400">
-              Delivery Partner · Active Assignments
-            </p>
-            <h1 className="mt-3 text-4xl font-black text-white tracking-tight">Accepted Orders</h1>
-            <p className="mt-2 text-sm text-slate-400">Orders assigned to you — pick them up and deliver.</p>
-          </div>
-
           {/* Header Controls Area */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t border-white/5 pt-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             {/* Search (Left Side) */}
             <div className="relative w-full sm:w-auto">
               <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
@@ -485,12 +470,24 @@ const AcceptedOrders = () => {
       </header>
 
       {/* ── Metric Cards ───────────────────────────────────────── */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-        {metrics.map((m, i) => (
-          <div key={i} className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950/95 p-6 shadow-xl">
-            <span className={`absolute -right-5 -top-5 h-20 w-20 rounded-full opacity-20 blur-3xl bg-${m.color}-500`} />
-            <p className="text-[10px] font-black uppercase tracking-[0.28em] text-slate-500 mb-2">{m.label}</p>
-            <p className={`text-3xl font-black text-${m.color}-400`}>{loading ? "—" : m.value}</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        {[
+          { label: "Total Assigned",   value: orders.length,                                                       icon: "📦", gradient: "linear-gradient(135deg,#0c2a3a 0%,#0B1120 100%)", iconBg: "#06B6D4" },
+          { label: "Pending Pickup",   value: orders.filter(o => o.status === "Delivery Partner Assigned").length, icon: "⏳", gradient: "linear-gradient(135deg,#2e1a05 0%,#0B1120 100%)", iconBg: "#F59E0B" },
+          { label: "Picked Up",        value: orders.filter(o => o.status === "Picked Up").length,                 icon: "🛵", gradient: "linear-gradient(135deg,#0c1a3a 0%,#0B1120 100%)", iconBg: "#3B82F6" },
+          { label: "Out for Delivery", value: orders.filter(o => o.status === "Out for Delivery").length,          icon: "🚀", gradient: "linear-gradient(135deg,#052e16 0%,#0B1120 100%)", iconBg: "#10B981" },
+        ].map((card, i) => (
+          <div key={i}
+            className="relative overflow-hidden rounded-3xl p-6 border border-white/5 shadow-xl hover:-translate-y-1 transition-all duration-300"
+            style={{ background: card.gradient }}>
+            <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full opacity-20 blur-2xl" style={{ background: card.iconBg }} />
+            <div className="relative z-10 flex items-center justify-between mb-3">
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg text-2xl" style={{ background: card.iconBg }}>
+                {card.icon}
+              </div>
+            </div>
+            <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.18em] mb-2 relative z-10">{card.label}</p>
+            <h3 className="text-2xl font-black text-white tracking-tight relative z-10">{loading ? "—" : card.value}</h3>
           </div>
         ))}
       </div>
