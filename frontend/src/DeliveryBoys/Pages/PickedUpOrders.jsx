@@ -8,6 +8,7 @@ import {
 } from "react-icons/fi";
 import LiveTrackingMap from "../Components/LiveTrackingMap";
 import DeliverySummaryCards from "../Components/DeliverySummaryCards";
+import DeliveryOrderToolbar from "../Components/DeliveryOrderToolbar";
 import { Package, Clock, Truck, CheckCircle } from "lucide-react";
 
 /* ─── Constants ─────────────────────────────────────────────────────── */
@@ -451,55 +452,18 @@ const PickedUpOrders = () => {
             <p className="mt-2 text-sm text-slate-400">Orders you have picked up and are on the way to customers.</p>
           </div>
 
-          {/* Header Controls Area */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t border-white/5 pt-6">
-            {/* Search (Left Side) */}
-            <div className="relative w-full sm:flex-1 sm:max-w-xl">
-              <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-              <input type="text" value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search by franchise name, owner or city..."
-                className="w-full rounded-2xl border border-slate-800 bg-slate-950 pl-14 pr-5 py-4 text-sm font-medium text-slate-200 placeholder:text-slate-500 focus:border-emerald-500/70 outline-none transition-all" />
-            </div>
-
-            {/* Other Actions (Right Side) */}
-            <div className="flex flex-wrap items-center gap-3">
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="h-[52px] px-5 rounded-2xl border border-slate-800 bg-slate-950 text-xs font-black uppercase tracking-widest text-slate-200 outline-none focus:border-emerald-500/70 transition-all cursor-pointer"
-              >
-                <option value="All">All Statuses</option>
-                {Array.from(new Set(orders.map((order) => order.status).filter(Boolean))).map((status) => (
-                  <option key={status} value={status}>{status}</option>
-                ))}
-              </select>
-
-              {/* View toggle */}
-              <div className="flex items-center rounded-2xl border border-slate-800 bg-slate-950 p-1">
-                <button
-                  onClick={() => setViewMode("table")}
-                  className={`p-3 rounded-xl transition ${viewMode === "table" ? "bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20" : "text-slate-400 hover:text-slate-100"}`}
-                  title="Table View"
-                >
-                  <FiList size={18} />
-                </button>
-                <button
-                  onClick={() => setViewMode("card")}
-                  className={`p-3 rounded-xl transition ${viewMode === "card" ? "bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20" : "text-slate-400 hover:text-slate-100"}`}
-                  title="Card View"
-                >
-                  <FiGrid size={18} />
-                </button>
-              </div>
-
-              {/* Refresh */}
-              <button onClick={fetchOrders} disabled={loading}
-                className="flex items-center gap-2 rounded-full bg-emerald-500 px-5 py-2.5 text-[11px] font-black uppercase tracking-widest text-slate-950 hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20 disabled:opacity-50 h-[42px]">
-                <FiRefreshCw size={14} className={loading ? "animate-spin" : ""} />
-                Refresh
-              </button>
-            </div>
+          <div className="border-t border-white/5 pt-6">
+            <DeliveryOrderToolbar
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              statusFilter={statusFilter}
+              onStatusChange={setStatusFilter}
+              statuses={["All", ...Array.from(new Set(orders.map((order) => order.status).filter(Boolean)))]}
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
+              onRefresh={fetchOrders}
+              loading={loading}
+            />
           </div>
         </div>
       </header>

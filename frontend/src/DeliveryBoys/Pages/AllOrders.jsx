@@ -10,6 +10,7 @@ import api from "../../api";
 import { toast, Toaster } from "react-hot-toast";
 import { Package, Truck, CheckCircle, Clock } from "lucide-react";
 import DeliverySummaryCards from "../Components/DeliverySummaryCards";
+import DeliveryOrderToolbar from "../Components/DeliveryOrderToolbar";
 
 /* ─── Status colours ──────────────────────────────────────────────────── */
 const STATUS_STYLE = {
@@ -342,49 +343,18 @@ const Orders = ({ statusFilter = "All" }) => {
                         <p className="mt-2 text-sm text-slate-400">Manage your delivery pipeline and update order statuses.</p>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t border-white/5 pt-6">
-                        {/* Search (Left Side) */}
-                        <div className="relative w-full sm:w-auto">
-                            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
-                            <input
-                                type="text"
-                                value={searchTerm}
-                                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                                placeholder="Search orders..."
-                                className="w-full sm:w-72 rounded-full border border-white/10 bg-slate-900 pl-10 pr-4 py-3 text-xs font-semibold text-slate-200 placeholder:text-slate-600 focus:border-emerald-500 outline-none"
-                            />
-                        </div>
-
-                        {/* Other Actions (Right Side) */}
-                        <div className="flex items-center gap-3">
-                            {/* View toggle */}
-                            <div className="flex items-center rounded-full border border-white/10 bg-slate-900 p-1">
-                                <button
-                                    onClick={() => setViewMode("card")}
-                                    className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider transition
-                                        ${viewMode === "card" ? "bg-emerald-500 text-slate-950 shadow-lg" : "text-slate-400 hover:text-white"}`}
-                                    title="Card View"
-                                >
-                                    <FiGrid size={13} /> Card
-                                </button>
-                                <button
-                                    onClick={() => setViewMode("table")}
-                                    className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider transition
-                                        ${viewMode === "table" ? "bg-emerald-500 text-slate-950 shadow-lg" : "text-slate-400 hover:text-white"}`}
-                                    title="Table View"
-                                >
-                                    <FiList size={13} /> Table
-                                </button>
-                            </div>
-
-                            {/* Refresh */}
-                            <button onClick={fetchOrders} disabled={loading}
-                                className="flex items-center gap-2 rounded-full bg-emerald-500 px-5 py-2.5 text-[11px] font-black uppercase tracking-widest text-slate-950 hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20 disabled:opacity-50 h-[42px]"
-                            >
-                                <FiRefreshCcw size={14} className={loading ? "animate-spin" : ""} />
-                                Refresh
-                            </button>
-                        </div>
+                    <div className="border-t border-white/5 pt-6">
+                        <DeliveryOrderToolbar
+                            searchTerm={searchTerm}
+                            onSearchChange={(value) => { setSearchTerm(value); setCurrentPage(1); }}
+                            statusFilter={activeStatus}
+                            onStatusChange={(value) => { setActiveStatus(value); setCurrentPage(1); }}
+                            statuses={statusTabs}
+                            viewMode={viewMode}
+                            onViewModeChange={setViewMode}
+                            onRefresh={fetchOrders}
+                            loading={loading}
+                        />
                     </div>
                 </div>
             </header>
@@ -396,22 +366,6 @@ const Orders = ({ statusFilter = "All" }) => {
                 { label: "In Transit", value: orders.filter((o) => ["Picked Up", "Out for Delivery"].includes(o.status)).length, icon: Clock, iconColor: "#F59E0B", surfaceColor: "#2e1a05" },
                 { label: "Delivered", value: orders.filter((o) => o.status === "Delivered").length, icon: CheckCircle, iconColor: "#22C55E", surfaceColor: "#071a10" },
             ]} />
-
-            {/* ── Status Tabs Toolbar ─────────────────────────────── */}
-            <div className="flex flex-wrap items-center gap-2 px-2">
-                {statusTabs.map((s) => (
-                    <button
-                        key={s}
-                        onClick={() => { setActiveStatus(s); setCurrentPage(1); }}
-                        className={`rounded-full px-4 py-2 text-[10px] font-black uppercase tracking-widest transition
-                            ${activeStatus === s
-                                ? "bg-emerald-500 text-slate-950 shadow-emerald-500/30 shadow-lg"
-                                : "bg-slate-900/80 text-slate-400 hover:bg-slate-900 hover:text-white border border-white/10"}`}
-                    >
-                        {s}
-                    </button>
-                ))}
-            </div>
 
             {/* ── Content Area ─────────────────────────────────────── */}
             {loading ? (

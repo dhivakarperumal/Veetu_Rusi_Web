@@ -8,6 +8,7 @@ import {
 } from "react-icons/fi";
 import { Package, Clock, CheckCircle } from "lucide-react";
 import DeliverySummaryCards from "../Components/DeliverySummaryCards";
+import DeliveryOrderToolbar from "../Components/DeliveryOrderToolbar";
 
 const fmt = (n) =>
   `₹${parseFloat(n || 0).toLocaleString("en-IN", {
@@ -165,6 +166,7 @@ const NewOrders = () => {
   const [orders, setOrders]             = useState([]);
   const [loading, setLoading]           = useState(true);
   const [searchTerm, setSearchTerm]     = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
   const [viewMode, setViewMode]         = useState("table"); // "card" | "table"
   const [acceptingOrder, setAcceptingOrder] = useState(null);
 
@@ -190,6 +192,7 @@ const NewOrders = () => {
     if (["New Order", "Order Placed", "Delivery Partner Assigned", "Picked Up", "Out for Delivery", "Delivered", "Cancelled"].includes(o.status)) {
         return false;
     }
+    if (statusFilter !== "All" && o.status !== statusFilter) return false;
 
     const q = searchTerm.trim().toLowerCase();
     if (!q) return true;
@@ -393,47 +396,18 @@ const NewOrders = () => {
       <header className="rounded-[2rem] border border-white/10 bg-slate-950/95 p-8 shadow-2xl relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.14),transparent_40%)]" />
         <div className="relative">
-          {/* Header Controls Area */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            {/* Search (Left Side) */}
-            <div className="relative w-full sm:w-auto">
-              <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
-              <input type="text" value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search orders..."
-                className="w-full sm:w-72 rounded-full border border-white/10 bg-slate-900 pl-10 pr-4 py-3 text-xs font-semibold text-slate-200 placeholder:text-slate-600 focus:border-blue-500 outline-none" />
-            </div>
-
-            {/* Other Actions (Right Side) */}
-            <div className="flex items-center gap-3">
-              {/* View toggle */}
-              <div className="flex items-center rounded-full border border-white/10 bg-slate-900 p-1">
-                <button
-                  onClick={() => setViewMode("card")}
-                  className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider transition
-                    ${viewMode === "card" ? "bg-emerald-500 text-slate-950 shadow-lg" : "text-slate-400 hover:text-white"}`}
-                  title="Card View"
-                >
-                  <FiGrid size={13} /> Card
-                </button>
-                <button
-                  onClick={() => setViewMode("table")}
-                  className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider transition
-                    ${viewMode === "table" ? "bg-emerald-500 text-slate-950 shadow-lg" : "text-slate-400 hover:text-white"}`}
-                  title="Table View"
-                >
-                  <FiList size={13} /> Table
-                </button>
-              </div>
-
-              {/* Refresh */}
-              <button onClick={fetchOrders} disabled={loading}
-                className="flex items-center gap-2 rounded-full bg-emerald-500 px-5 py-2.5 text-[11px] font-black uppercase tracking-widest text-slate-950 hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20 disabled:opacity-50 h-[42px]">
-                <FiRefreshCw size={14} className={loading ? "animate-spin" : ""} />
-                Refresh
-              </button>
-            </div>
-          </div>
+          <DeliveryOrderToolbar
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            statusFilter={statusFilter}
+            onStatusChange={setStatusFilter}
+            statuses={["All", ...Array.from(new Set(orders.map((order) => order.status).filter(Boolean)))]}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            onRefresh={fetchOrders}
+            loading={loading}
+            accent="blue"
+          />
         </div>
       </header>
 
