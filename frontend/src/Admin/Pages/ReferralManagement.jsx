@@ -780,7 +780,7 @@ const ReferralManagement = () => {
 
       {/* ══ PROGRAM SETTINGS MODAL ══ */}
       {showSettingsModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/60 backdrop-blur-sm" onClick={() => setShowSettingsModal(false)}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-end bg-black/60 backdrop-blur-sm" onClick={() => setShowSettingsModal(false)}>
           <div className="relative h-full w-full max-w-xl overflow-y-auto bg-[#08120f] border-l border-white/10 shadow-[0_0_80px_rgba(0,0,0,0.6)] p-8 flex flex-col gap-6" onClick={e => e.stopPropagation()}>
             {/* Header */}
             <div className="flex items-start justify-between">
