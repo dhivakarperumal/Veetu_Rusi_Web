@@ -51,7 +51,7 @@ const Reviews = () => {
   const [loading, setLoading] = useState(!cachedData);
   const [replyText, setReplyText] = useState("");
   const [activeReplyId, setActiveReplyId] = useState(null);
-  const [viewMode, setViewMode] = useState("card");
+  const [viewMode, setViewMode] = useState("table");
 
   // Add Review State
   const [showAddModal, setShowAddModal] = useState(false);
