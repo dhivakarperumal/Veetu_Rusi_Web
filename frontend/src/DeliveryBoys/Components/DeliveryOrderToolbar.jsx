@@ -43,11 +43,11 @@ const DeliveryOrderToolbar = ({
       )}
 
       {onViewModeChange && (
-        <div className="flex items-center rounded-xl border border-white/10 bg-slate-900/80 p-1">
+        <div className="flex items-center rounded-xl border border-white/10 bg-slate-950/80 p-1">
           <button
             type="button"
             onClick={() => onViewModeChange("table")}
-            className={`rounded-lg p-2 transition ${viewMode === "table" ? "bg-white text-emerald-700 shadow-sm" : "text-slate-400 hover:text-white"}`}
+            className={`rounded-xl p-3 transition ${viewMode === "table" ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-slate-400 hover:bg-slate-900 hover:text-white"}`}
             title="Table View"
           >
             <FiList className="h-4 w-4" />
@@ -55,7 +55,7 @@ const DeliveryOrderToolbar = ({
           <button
             type="button"
             onClick={() => onViewModeChange("card")}
-            className={`rounded-lg p-2 transition ${viewMode === "card" ? "bg-white text-emerald-700 shadow-sm" : "text-slate-400 hover:text-white"}`}
+            className={`rounded-xl p-3 transition ${viewMode === "card" ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-slate-400 hover:bg-slate-900 hover:text-white"}`}
             title="Card View"
           >
             <FiGrid className="h-4 w-4" />
