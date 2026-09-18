@@ -1,4 +1,5 @@
 import { useState, useEffect, useContext } from "react";
+import { createPortal } from "react-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import { useAdmin } from "../../PrivateRouter/AdminContext";
 import {
@@ -746,7 +747,7 @@ const Reviews = () => {
       )}
 
       {/* ADD REVIEW MODAL */}
-      {showAddModal && (
+      {showAddModal && createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 italic">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setShowAddModal(false)}></div>
 
@@ -894,10 +895,11 @@ const Reviews = () => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {showDeliveryReviewModal && (
+      {showDeliveryReviewModal && createPortal(
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 sm:p-6">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowDeliveryReviewModal(false)}></div>
           <div className="relative w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
@@ -1013,7 +1015,8 @@ const Reviews = () => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
       {/* Pagination Controls */}
       {totalPages > 1 && (
