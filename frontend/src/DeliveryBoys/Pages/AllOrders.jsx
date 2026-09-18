@@ -390,14 +390,12 @@ const Orders = ({ statusFilter = "All" }) => {
             </header>
 
             {/* ── Metric Cards ─────────────────────────────────────── */}
-            <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-                <DeliverySummaryCards loading={loading} cards={[
-                    { label: "Total Orders", value: filteredOrders.length, icon: Package, iconColor: "#10B981", surfaceColor: "#052e16" },
-                    { label: "Assigned", value: orders.filter((o) => o.status === "Delivery Partner Assigned").length, icon: Truck, iconColor: "#06B6D4", surfaceColor: "#0c2a3a" },
-                    { label: "In Transit", value: orders.filter((o) => ["Picked Up", "Out for Delivery"].includes(o.status)).length, icon: Clock, iconColor: "#F59E0B", surfaceColor: "#2e1a05" },
-                    { label: "Delivered", value: orders.filter((o) => o.status === "Delivered").length, icon: CheckCircle, iconColor: "#22C55E", surfaceColor: "#071a10" },
-                ]} />
-            </div>
+            <DeliverySummaryCards loading={loading} cards={[
+                { label: "Total Orders", value: filteredOrders.length, icon: Package, iconColor: "#10B981", surfaceColor: "#052e16" },
+                { label: "Assigned", value: orders.filter((o) => o.status === "Delivery Partner Assigned").length, icon: Truck, iconColor: "#06B6D4", surfaceColor: "#0c2a3a" },
+                { label: "In Transit", value: orders.filter((o) => ["Picked Up", "Out for Delivery"].includes(o.status)).length, icon: Clock, iconColor: "#F59E0B", surfaceColor: "#2e1a05" },
+                { label: "Delivered", value: orders.filter((o) => o.status === "Delivered").length, icon: CheckCircle, iconColor: "#22C55E", surfaceColor: "#071a10" },
+            ]} />
 
             {/* ── Status Tabs Toolbar ─────────────────────────────── */}
             <div className="flex flex-wrap items-center gap-2 px-2">
