@@ -3,6 +3,7 @@ import { useAuth } from "../../PrivateRouter/AuthContext";
 import api from "../../api";
 import { toast } from "react-hot-toast";
 import { FiStar, FiUser, FiCalendar, FiMessageSquare, FiSend } from "react-icons/fi";
+import DeliverySummaryCards from "../Components/DeliverySummaryCards";
 
 const formatDateTime = (value) => {
   if (!value) return "-";
@@ -170,28 +171,12 @@ const Ratings = () => {
         )}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
-        <div className="table-card rounded-3xl p-6">
-          <p className="text-[11px] uppercase tracking-[0.28em] text-slate-400">Average Rating</p>
-          <div className="mt-5 flex items-center gap-3">
-            <span className="text-4xl font-black text-white">{stats.average_rating.toFixed(1)}</span>
-            <FiStar className="h-7 w-7 text-amber-400" />
-          </div>
-          <p className="mt-2 text-sm text-slate-400">Based on {stats.total_reviews} reviews</p>
-        </div>
-        <div className="table-card rounded-3xl p-6">
-          <p className="text-[11px] uppercase tracking-[0.28em] text-slate-400">5-Star</p>
-          <p className="mt-5 text-4xl font-black text-white">{stats.five_star}</p>
-        </div>
-        <div className="table-card rounded-3xl p-6">
-          <p className="text-[11px] uppercase tracking-[0.28em] text-slate-400">4-Star</p>
-          <p className="mt-5 text-4xl font-black text-white">{stats.four_star}</p>
-        </div>
-        <div className="table-card rounded-3xl p-6">
-          <p className="text-[11px] uppercase tracking-[0.28em] text-slate-400">3-Star & below</p>
-          <p className="mt-5 text-4xl font-black text-white">{stats.three_star + stats.two_star + stats.one_star}</p>
-        </div>
-      </div>
+      <DeliverySummaryCards cards={[
+        { label: "Average Rating", value: stats.average_rating.toFixed(1), description: `Based on ${stats.total_reviews} reviews`, icon: FiStar, iconColor: "#F59E0B", surfaceColor: "#2e1a05" },
+        { label: "5-Star", value: stats.five_star, icon: FiStar, iconColor: "#10B981", surfaceColor: "#052e16" },
+        { label: "4-Star", value: stats.four_star, icon: FiStar, iconColor: "#38BDF8", surfaceColor: "#0c2a3a" },
+        { label: "3-Star & Below", value: stats.three_star + stats.two_star + stats.one_star, icon: FiStar, iconColor: "#F97316", surfaceColor: "#2e1605" },
+      ]} />
 
       <div className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
         <div className="table-card rounded-4xl p-6">

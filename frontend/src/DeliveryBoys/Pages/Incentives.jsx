@@ -9,6 +9,7 @@ import {
   Lock,
   Star,
 } from "lucide-react";
+import DeliverySummaryCards from "../Components/DeliverySummaryCards";
 
 const iconMap = {
   Gift,
@@ -132,25 +133,13 @@ const Incentives = () => {
         </div>
       </section>
 
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {stats.map((stat, index) => {
-          const Icon = stat.icon;
-          return (
-            <article key={index} className="relative overflow-hidden rounded-3xl border border-white/10 bg-slate-950/90 p-6 shadow-xl transition hover:-translate-y-1 duration-300">
-              <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full opacity-20 blur-3xl" style={{ background: stat.accent }} />
-              <div className="relative z-10 flex items-center justify-between gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl" style={{ background: stat.accent }}>
-                  <Icon className="h-5 w-5 text-white" strokeWidth={2.5} />
-                </div>
-                <div className="text-right">
-                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">{stat.label}</p>
-                  <p className="text-2xl font-black text-white mt-2">{stat.value}</p>
-                </div>
-              </div>
-            </article>
-          );
-        })}
-      </section>
+      <DeliverySummaryCards cards={stats.map((stat) => ({
+        label: stat.label,
+        value: stat.value,
+        icon: stat.icon,
+        iconColor: stat.accent,
+        surfaceColor: "#0f1628",
+      }))} />
 
       <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {incentives.map((incentive) => {

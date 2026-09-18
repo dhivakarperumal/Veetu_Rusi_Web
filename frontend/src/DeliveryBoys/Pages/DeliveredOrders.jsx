@@ -6,6 +6,8 @@ import {
   FiSearch, FiMapPin, FiPhone, FiRefreshCw,
   FiPackage, FiEye, FiGrid, FiList, FiCheckCircle
 } from "react-icons/fi";
+import { CheckCircle } from "lucide-react";
+import DeliverySummaryCards from "../Components/DeliverySummaryCards";
 
 const fmt = (n) =>
   `₹${parseFloat(n || 0).toLocaleString("en-IN", {
@@ -45,7 +47,7 @@ const DeliveredOrders = () => {
   });
 
   const metrics = [
-    { label: "Total Delivered",  value: orders.length, color: "emerald" },
+    { label: "Total Delivered", value: orders.length, icon: CheckCircle, iconColor: "#10B981", surfaceColor: "#052e16" },
   ];
 
   /* ── Empty / Loading ── */
@@ -290,15 +292,7 @@ const DeliveredOrders = () => {
       </header>
 
       {/* ── Metric Cards ───────────────────────────────────────── */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-        {metrics.map((m, i) => (
-          <div key={i} className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950/95 p-6 shadow-xl">
-            <span className={`absolute -right-5 -top-5 h-20 w-20 rounded-full opacity-20 blur-3xl bg-${m.color}-500`} />
-            <p className="text-[10px] font-black uppercase tracking-[0.28em] text-slate-500 mb-2">{m.label}</p>
-            <p className={`text-3xl font-black text-${m.color}-400`}>{loading ? "—" : m.value}</p>
-          </div>
-        ))}
-      </div>
+      <DeliverySummaryCards loading={loading} cards={metrics} />
 
       {/* ── Content ────────────────────────────────────────────── */}
       {loading ? (

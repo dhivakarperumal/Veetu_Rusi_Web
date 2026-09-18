@@ -9,6 +9,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from "recharts";
 import ChartCard from "../ChartCard";
+import DeliverySummaryCards from "../Components/DeliverySummaryCards";
 
 const Earnings = () => {
   const [loading, setLoading] = useState(true);
@@ -85,28 +86,11 @@ const Earnings = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {[
-          { label: "Total Earnings", value: `₹${Number(totalEarnings).toLocaleString()}`, icon: DollarSign, color: "text-emerald-500", bg: "bg-emerald-50", gradient: "linear-gradient(135deg,#052e16 0%,#0B1120 100%)", iconBg: "#10B981" },
-          { label: "This Week", value: `₹${Number(weeklyEarnings).toLocaleString()}`, icon: TrendingUp, color: "text-blue-500", bg: "bg-blue-50", gradient: "linear-gradient(135deg,#052e16 0%,#0B1120 100%)", iconBg: "#3B82F6" },
-          { label: "Today", value: `₹${Number(todayEarnings).toLocaleString()}`, icon: Calendar, color: "text-amber-500", bg: "bg-amber-50", gradient: "linear-gradient(135deg,#2e1a05 0%,#0B1120 100%)", iconBg: "#F59E0B" }
-        ].map((card, i) => {
-          const Icon = card.icon;
-          return (
-            <div key={i} className="relative overflow-hidden rounded-3xl p-6 border border-white/5 shadow-xl hover:-translate-y-1 transition-all duration-300 group"
-              style={{ background: card.gradient }}>
-              <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full opacity-20 blur-2xl" style={{ background: card.iconBg }} />
-              <div className="relative z-10 flex items-center justify-between mb-3">
-                <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg" style={{ background: card.iconBg }}>
-                  <Icon className="w-5 h-5 text-white" strokeWidth={2.5} />
-                </div>
-              </div>
-              <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.18em] mb-2 relative z-10">{card.label}</p>
-              <h3 className="text-2xl font-black text-white tracking-tight relative z-10">{card.value}</h3>
-            </div>
-          );
-        })}
-      </div>
+      <DeliverySummaryCards cards={[
+        { label: "Total Earnings", value: `₹${Number(totalEarnings).toLocaleString()}`, icon: DollarSign, iconColor: "#10B981", surfaceColor: "#052e16" },
+        { label: "This Week", value: `₹${Number(weeklyEarnings).toLocaleString()}`, icon: TrendingUp, iconColor: "#3B82F6", surfaceColor: "#0c1a3a" },
+        { label: "Today", value: `₹${Number(todayEarnings).toLocaleString()}`, icon: Calendar, iconColor: "#F59E0B", surfaceColor: "#2e1a05" },
+      ]} />
 
       {/* Chart */}
       <ChartCard title="Daily Earnings Trend" subtitle="Last 14 days" icon={TrendingUp} iconColor="text-emerald-500">

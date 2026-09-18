@@ -7,6 +7,8 @@ import {
   FiPackage, FiEye, FiTruck, FiSave, FiX, FiGrid, FiList, FiXCircle
 } from "react-icons/fi";
 import OrderCancellationModal from "../../Components/CommenComponents/OrderCancellationModal";
+import { Package, Clock, Truck } from "lucide-react";
+import DeliverySummaryCards from "../Components/DeliverySummaryCards";
 
 const DP_CANCEL_STATUSES = ['assigned', 'delivery partner assigned', 'searching delivery partner', 'on the way to pickup'];
 
@@ -190,6 +192,12 @@ const AcceptedOrders = () => {
     return [o.order_id, o.customer_name, o.customer_phone, String(o.id)]
       .filter(Boolean).some((v) => v.toLowerCase().includes(q));
   });
+
+  const metrics = [
+    { label: "Total Assigned", value: orders.length, icon: Package, iconColor: "#06B6D4", surfaceColor: "#0c2a3a" },
+    { label: "Showing", value: filtered.length, icon: Clock, iconColor: "#3B82F6", surfaceColor: "#0c1a3a" },
+    { label: "Ready To Pickup", value: orders.filter((o) => o.status === "Delivery Partner Assigned").length, icon: Truck, iconColor: "#10B981", surfaceColor: "#052e16" },
+  ];
 
 
   /* ── Empty / Loading ── */
@@ -469,28 +477,7 @@ const AcceptedOrders = () => {
         </div>
       </header>
 
-      {/* ── Metric Cards ───────────────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        {[
-          { label: "Total Assigned",   value: orders.length,                                                       icon: "📦", gradient: "linear-gradient(135deg,#0c2a3a 0%,#0B1120 100%)", iconBg: "#06B6D4" },
-          { label: "Pending Pickup",   value: orders.filter(o => o.status === "Delivery Partner Assigned").length, icon: "⏳", gradient: "linear-gradient(135deg,#2e1a05 0%,#0B1120 100%)", iconBg: "#F59E0B" },
-          { label: "Picked Up",        value: orders.filter(o => o.status === "Picked Up").length,                 icon: "🛵", gradient: "linear-gradient(135deg,#0c1a3a 0%,#0B1120 100%)", iconBg: "#3B82F6" },
-          { label: "Out for Delivery", value: orders.filter(o => o.status === "Out for Delivery").length,          icon: "🚀", gradient: "linear-gradient(135deg,#052e16 0%,#0B1120 100%)", iconBg: "#10B981" },
-        ].map((card, i) => (
-          <div key={i}
-            className="relative overflow-hidden rounded-3xl p-6 border border-white/5 shadow-xl hover:-translate-y-1 transition-all duration-300"
-            style={{ background: card.gradient }}>
-            <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full opacity-20 blur-2xl" style={{ background: card.iconBg }} />
-            <div className="relative z-10 flex items-center justify-between mb-3">
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg text-2xl" style={{ background: card.iconBg }}>
-                {card.icon}
-              </div>
-            </div>
-            <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.18em] mb-2 relative z-10">{card.label}</p>
-            <h3 className="text-2xl font-black text-white tracking-tight relative z-10">{loading ? "—" : card.value}</h3>
-          </div>
-        ))}
-      </div>
+      <DeliverySummaryCards loading={loading} cards={metrics} />
 
       {/* ── Content ────────────────────────────────────────────── */}
       {loading ? (

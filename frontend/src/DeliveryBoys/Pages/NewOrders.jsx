@@ -7,6 +7,7 @@ import {
   FiPackage, FiEye, FiCheck, FiX, FiGrid, FiList, FiNavigation
 } from "react-icons/fi";
 import { Package, Clock, CheckCircle } from "lucide-react";
+import DeliverySummaryCards from "../Components/DeliverySummaryCards";
 
 const fmt = (n) =>
   `₹${parseFloat(n || 0).toLocaleString("en-IN", {
@@ -437,29 +438,11 @@ const NewOrders = () => {
       </header>
 
       {/* ── Metric Cards ───────────────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {[
-          { label: "Total Available",     value: orders.length,   icon: Package,       gradient: "linear-gradient(135deg,#0c1a3a 0%,#0B1120 100%)", iconBg: "#3B82F6" },
-          { label: "Showing",             value: filtered.length, icon: Clock,         gradient: "linear-gradient(135deg,#052e16 0%,#0B1120 100%)", iconBg: "#10B981" },
-          { label: "Pending Assignment",  value: orders.length,   icon: CheckCircle,   gradient: "linear-gradient(135deg,#2e1a05 0%,#0B1120 100%)", iconBg: "#F59E0B" },
-        ].map((card, i) => {
-          const Icon = card.icon;
-          return (
-            <div key={i}
-              className="relative overflow-hidden rounded-3xl p-6 border border-white/5 shadow-xl hover:-translate-y-1 transition-all duration-300"
-              style={{ background: card.gradient }}>
-              <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full opacity-20 blur-2xl" style={{ background: card.iconBg }} />
-              <div className="relative z-10 flex items-center justify-between mb-3">
-                <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg" style={{ background: card.iconBg }}>
-                  <Icon className="w-5 h-5 text-white" strokeWidth={2.5} />
-                </div>
-              </div>
-              <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.18em] mb-2 relative z-10">{card.label}</p>
-              <h3 className="text-2xl font-black text-white tracking-tight relative z-10">{loading ? "—" : card.value}</h3>
-            </div>
-          );
-        })}
-      </div>
+      <DeliverySummaryCards loading={loading} cards={[
+        { label: "Total Available", value: orders.length, icon: Package, iconColor: "#3B82F6", surfaceColor: "#0c1a3a" },
+        { label: "Showing", value: filtered.length, icon: Clock, iconColor: "#10B981", surfaceColor: "#052e16" },
+        { label: "Pending Assignment", value: orders.length, icon: CheckCircle, iconColor: "#F59E0B", surfaceColor: "#2e1a05" },
+      ]} />
 
       {/* ── Content ────────────────────────────────────────────── */}
       {loading ? (

@@ -7,6 +7,8 @@ import {
   FiPackage, FiEye, FiTruck, FiSave, FiX, FiGrid, FiList, FiMap
 } from "react-icons/fi";
 import LiveTrackingMap from "../Components/LiveTrackingMap";
+import DeliverySummaryCards from "../Components/DeliverySummaryCards";
+import { Package, Clock, Truck, CheckCircle } from "lucide-react";
 
 /* ─── Constants ─────────────────────────────────────────────────────── */
 const STATUS_STYLE = {
@@ -192,10 +194,10 @@ const PickedUpOrders = () => {
   });
 
   const metrics = [
-    { label: "Total Displayed",  value: orders.length,                                                          color: "sky"     },
-    { label: "Pending Pickup",   value: orders.filter(o => o.status === "Delivery Partner Assigned").length,    color: "amber"   },
-    { label: "Picked Up",        value: orders.filter(o => o.status === "Picked Up").length,                    color: "sky"     },
-    { label: "Out for Delivery", value: orders.filter(o => o.status === "Out for Delivery").length,             color: "emerald" },
+    { label: "Total Displayed", value: orders.length, icon: Package, iconColor: "#38BDF8", surfaceColor: "#0c2a3a" },
+    { label: "Pending Pickup", value: orders.filter(o => o.status === "Delivery Partner Assigned").length, icon: Clock, iconColor: "#F59E0B", surfaceColor: "#2e1a05" },
+    { label: "Picked Up", value: orders.filter(o => o.status === "Picked Up").length, icon: Truck, iconColor: "#3B82F6", surfaceColor: "#0c1a3a" },
+    { label: "Out for Delivery", value: orders.filter(o => o.status === "Out for Delivery").length, icon: CheckCircle, iconColor: "#10B981", surfaceColor: "#052e16" },
   ];
 
   /* ── Empty / Loading ── */
@@ -503,15 +505,7 @@ const PickedUpOrders = () => {
       </header>
 
       {/* ── Metric Cards ───────────────────────────────────────── */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-        {metrics.map((m, i) => (
-          <div key={i} className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950/95 p-6 shadow-xl">
-            <span className={`absolute -right-5 -top-5 h-20 w-20 rounded-full opacity-20 blur-3xl bg-${m.color}-500`} />
-            <p className="text-[10px] font-black uppercase tracking-[0.28em] text-slate-500 mb-2">{m.label}</p>
-            <p className={`text-3xl font-black text-${m.color}-400`}>{loading ? "—" : m.value}</p>
-          </div>
-        ))}
-      </div>
+      <DeliverySummaryCards loading={loading} cards={metrics} />
 
       {/* ── Content ────────────────────────────────────────────── */}
       {loading ? (
