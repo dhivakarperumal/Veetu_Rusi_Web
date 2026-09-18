@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo, Fragment } from 'react';
+import { createPortal } from 'react-dom';
 import { toast } from 'react-hot-toast';
 import AdminStatCard from '../Components/AdminStatCard';
 import {
@@ -779,7 +780,7 @@ const ReferralManagement = () => {
       )}
 
       {/* ══ PROGRAM SETTINGS MODAL ══ */}
-      {showSettingsModal && (
+      {showSettingsModal && createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-end bg-black/60 backdrop-blur-sm" onClick={() => setShowSettingsModal(false)}>
           <div className="relative h-full w-full max-w-xl overflow-y-auto bg-[#08120f] border-l border-white/10 shadow-[0_0_80px_rgba(0,0,0,0.6)] p-8 flex flex-col gap-6" onClick={e => e.stopPropagation()}>
             {/* Header */}
@@ -906,7 +907,8 @@ const ReferralManagement = () => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
     </div>
