@@ -6,7 +6,7 @@ import {
   FiSearch, FiMapPin, FiPhone, FiRefreshCw,
   FiPackage, FiEye, FiGrid, FiList, FiCheckCircle
 } from "react-icons/fi";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, Search, WalletCards, TrendingUp } from "lucide-react";
 import DeliverySummaryCards from "../Components/DeliverySummaryCards";
 
 const fmt = (n) =>
@@ -46,8 +46,14 @@ const DeliveredOrders = () => {
       .filter(Boolean).some((v) => v.toLowerCase().includes(q));
   });
 
+  const deliveredValue = orders.reduce((total, order) => total + Number(order.total_amount || 0), 0);
+  const averageOrderValue = orders.length ? deliveredValue / orders.length : 0;
+
   const metrics = [
     { label: "Total Delivered", value: orders.length, icon: CheckCircle, iconColor: "#10B981", surfaceColor: "#052e16" },
+    { label: "Showing", value: filtered.length, icon: Search, iconColor: "#38BDF8", surfaceColor: "#0c2a3a" },
+    { label: "Delivered Value", value: `₹${deliveredValue.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`, icon: WalletCards, iconColor: "#8B5CF6", surfaceColor: "#1b1235" },
+    { label: "Average Order", value: `₹${averageOrderValue.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`, icon: TrendingUp, iconColor: "#F59E0B", surfaceColor: "#2e1a05" },
   ];
 
   /* ── Empty / Loading ── */
