@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
     Settings as SettingsIcon,
     Globe,
@@ -296,7 +297,7 @@ const Settings = () => {
             )}
 
             {/* Modal Popup */}
-            {activeModal && (
+            {activeModal && createPortal(
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
                     <div className="w-full max-w-2xl rounded-[2rem] border border-white/10 bg-[#0a1612] shadow-2xl flex flex-col max-h-[90vh]">
                         
@@ -331,7 +332,8 @@ const Settings = () => {
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );
