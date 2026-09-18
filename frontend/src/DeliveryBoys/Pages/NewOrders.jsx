@@ -392,31 +392,25 @@ const NewOrders = () => {
         />
       )}
 
-      {/* ── Header ─────────────────────────────────────────────── */}
-      <header className="rounded-[2rem] border border-white/10 bg-slate-950/95 p-8 shadow-2xl relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.14),transparent_40%)]" />
-        <div className="relative">
-          <DeliveryOrderToolbar
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            statusFilter={statusFilter}
-            onStatusChange={setStatusFilter}
-            statuses={["All", ...Array.from(new Set(orders.map((order) => order.status).filter(Boolean)))]}
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
-            onRefresh={fetchOrders}
-            loading={loading}
-            accent="blue"
-          />
-        </div>
-      </header>
-
       {/* ── Metric Cards ───────────────────────────────────────── */}
       <DeliverySummaryCards loading={loading} cards={[
         { label: "Total Available", value: orders.length, icon: Package, iconColor: "#3B82F6", surfaceColor: "#0c1a3a" },
         { label: "Showing", value: filtered.length, icon: Clock, iconColor: "#10B981", surfaceColor: "#052e16" },
         { label: "Pending Assignment", value: orders.length, icon: CheckCircle, iconColor: "#F59E0B", surfaceColor: "#2e1a05" },
       ]} />
+
+      <DeliveryOrderToolbar
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        statusFilter={statusFilter}
+        onStatusChange={setStatusFilter}
+        statuses={["All", ...Array.from(new Set(orders.map((order) => order.status).filter(Boolean)))]}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        onRefresh={fetchOrders}
+        loading={loading}
+        accent="blue"
+      />
 
       {/* ── Content ────────────────────────────────────────────── */}
       {loading ? (

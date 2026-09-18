@@ -452,24 +452,23 @@ const PickedUpOrders = () => {
             <p className="mt-2 text-sm text-slate-400">Orders you have picked up and are on the way to customers.</p>
           </div>
 
-          <div className="border-t border-white/5 pt-6">
-            <DeliveryOrderToolbar
-              searchTerm={searchTerm}
-              onSearchChange={setSearchTerm}
-              statusFilter={statusFilter}
-              onStatusChange={setStatusFilter}
-              statuses={["All", ...Array.from(new Set(orders.map((order) => order.status).filter(Boolean)))]}
-              viewMode={viewMode}
-              onViewModeChange={setViewMode}
-              onRefresh={fetchOrders}
-              loading={loading}
-            />
-          </div>
         </div>
       </header>
 
       {/* ── Metric Cards ───────────────────────────────────────── */}
       <DeliverySummaryCards loading={loading} cards={metrics} />
+
+      <DeliveryOrderToolbar
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        statusFilter={statusFilter}
+        onStatusChange={setStatusFilter}
+        statuses={["All", ...Array.from(new Set(orders.map((order) => order.status).filter(Boolean)))]}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        onRefresh={fetchOrders}
+        loading={loading}
+      />
 
       {/* ── Content ────────────────────────────────────────────── */}
       {loading ? (

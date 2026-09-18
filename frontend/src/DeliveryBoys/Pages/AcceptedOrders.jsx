@@ -432,26 +432,20 @@ const AcceptedOrders = () => {
         />
       )}
 
-      {/* ── Header ─────────────────────────────────────────────── */}
-      <header className="rounded-[2rem] border border-white/10 bg-slate-950/95 p-8 shadow-2xl relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(6,182,212,0.14),transparent_40%)]" />
-        <div className="relative">
-          <DeliveryOrderToolbar
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            statusFilter={statusFilter}
-            onStatusChange={setStatusFilter}
-            statuses={["All", "Delivery Partner Assigned"]}
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
-            onRefresh={fetchOrders}
-            loading={loading}
-            accent="cyan"
-          />
-        </div>
-      </header>
-
       <DeliverySummaryCards loading={loading} cards={metrics} />
+
+      <DeliveryOrderToolbar
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        statusFilter={statusFilter}
+        onStatusChange={setStatusFilter}
+        statuses={["All", "Delivery Partner Assigned"]}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        onRefresh={fetchOrders}
+        loading={loading}
+        accent="cyan"
+      />
 
       {/* ── Content ────────────────────────────────────────────── */}
       {loading ? (

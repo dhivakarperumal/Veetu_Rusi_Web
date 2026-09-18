@@ -343,19 +343,6 @@ const Orders = ({ statusFilter = "All" }) => {
                         <p className="mt-2 text-sm text-slate-400">Manage your delivery pipeline and update order statuses.</p>
                     </div>
 
-                    <div className="border-t border-white/5 pt-6">
-                        <DeliveryOrderToolbar
-                            searchTerm={searchTerm}
-                            onSearchChange={(value) => { setSearchTerm(value); setCurrentPage(1); }}
-                            statusFilter={activeStatus}
-                            onStatusChange={(value) => { setActiveStatus(value); setCurrentPage(1); }}
-                            statuses={statusTabs}
-                            viewMode={viewMode}
-                            onViewModeChange={setViewMode}
-                            onRefresh={fetchOrders}
-                            loading={loading}
-                        />
-                    </div>
                 </div>
             </header>
 
@@ -366,6 +353,18 @@ const Orders = ({ statusFilter = "All" }) => {
                 { label: "In Transit", value: orders.filter((o) => ["Picked Up", "Out for Delivery"].includes(o.status)).length, icon: Clock, iconColor: "#F59E0B", surfaceColor: "#2e1a05" },
                 { label: "Delivered", value: orders.filter((o) => o.status === "Delivered").length, icon: CheckCircle, iconColor: "#22C55E", surfaceColor: "#071a10" },
             ]} />
+
+            <DeliveryOrderToolbar
+                searchTerm={searchTerm}
+                onSearchChange={(value) => { setSearchTerm(value); setCurrentPage(1); }}
+                statusFilter={activeStatus}
+                onStatusChange={(value) => { setActiveStatus(value); setCurrentPage(1); }}
+                statuses={statusTabs}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+                onRefresh={fetchOrders}
+                loading={loading}
+            />
 
             {/* ── Content Area ─────────────────────────────────────── */}
             {loading ? (
