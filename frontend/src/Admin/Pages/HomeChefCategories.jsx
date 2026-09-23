@@ -181,8 +181,10 @@ const HomeChefCategories = () => {
       payload.append("existing_images", JSON.stringify(existingImages));
     }
     category.image
-      .filter(image => image instanceof File)
-      .forEach(image => payload.append("image", image));
+      .filter(image => image instanceof Blob)
+      .forEach((image, index) => {
+        payload.append("image", image, image.name || `category-image-${index}.jpg`);
+      });
 
     setLoading(true);
     try {
