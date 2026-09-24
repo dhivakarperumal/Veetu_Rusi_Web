@@ -26,7 +26,10 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const requestUrl = error.config?.url || "";
+    const isAuthenticationRequest = requestUrl.includes("/auth/login") || requestUrl.includes("/auth/google-login");
+
+    if (error.response?.status === 401 && !isAuthenticationRequest) {
       const storedToken = localStorage.getItem('token') || sessionStorage.getItem('token');
       const hasToken = typeof storedToken === 'string' && storedToken.trim() !== '';
 
