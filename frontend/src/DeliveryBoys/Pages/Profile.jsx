@@ -235,23 +235,23 @@ const Profile = () => {
     }
 
     return (
-        <div className="max-w-4xl mx-auto space-y-8">
+        <div className="w-full max-w-7xl mx-auto space-y-10 px-2 sm:px-4 lg:px-8">
 
             {/* Profile Card */}
-            <div className="px-4 md:px-8">
-                <div className="table-card rounded-[2.5rem] shadow-2xl p-6 md:p-8 border border-white/10">
+            <div className="w-full">
+                <div className="table-card rounded-[2.5rem] shadow-2xl p-7 sm:p-9 lg:p-12 border border-white/10">
 
-                    <div className="flex flex-col md:flex-row items-center gap-8 border-b border-white/10 pb-8">
+                    <div className="flex flex-col gap-8 border-b border-white/10 pb-8">
 
                         {/* Avatar */}
-                        <div className="relative group">
+                        <div className="relative group self-center">
                             <div className="w-32 h-32 rounded-[2rem] bg-slate-900 ring-8 ring-white/20 shadow-2xl overflow-hidden flex items-center justify-center text-white text-7xl font-black">
                                 {profileInitial}
                             </div>
                         </div>
 
                         {/* User Info */}
-                        <div className="text-center md:text-left space-y-2 flex-1">
+                        <div className="text-center md:text-left space-y-2 w-full">
 
                             <div className="flex items-center gap-3 justify-center md:justify-start">
                                 <h1 className="text-3xl font-black text-slate-800">
@@ -290,13 +290,22 @@ const Profile = () => {
                             </div>
 
                         {partnerData && (
-                            <div className="mt-8 space-y-6 border-t border-white/10 pt-8">
+                            <div className="mt-8 w-full space-y-6 border-t border-white/10 pt-8">
                                 <div className="flex items-center gap-4">
                                     {partner.profile_photo ? (
-                                        <img src={imageUrl(partner.profile_photo)} alt={partnerName || "Profile"} className="h-20 w-20 rounded-2xl object-cover" />
+                                        <img
+                                            src={imageUrl(partner.profile_photo)}
+                                            alt={partnerName || "Profile"}
+                                            className="h-20 w-20 rounded-2xl object-cover"
+                                            onError={(event) => {
+                                                event.currentTarget.style.display = "none";
+                                                event.currentTarget.nextElementSibling.style.display = "flex";
+                                            }}
+                                        />
                                     ) : (
                                         <div className="h-20 w-20 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-3xl font-black text-emerald-400">{(partnerName || profileInitial).charAt(0).toUpperCase()}</div>
                                     )}
+                                    {partner.profile_photo && <div className="hidden h-20 w-20 rounded-2xl bg-emerald-500/10 items-center justify-center text-3xl font-black text-emerald-400">{(partnerName || profileInitial).charAt(0).toUpperCase()}</div>}
                                     <div>
                                         <h2 className="text-xl font-black text-white">Delivery Partner Information</h2>
                                         <p className="text-sm text-slate-400">Status: <span className="font-bold text-emerald-400">{displayValue(partner.status)}</span></p>
@@ -313,7 +322,7 @@ const Profile = () => {
                                         ["Live Location", partner.live_location], ["Emergency Contact", [partner.emergency_contact_name, partner.emergency_contact_mobile].filter(Boolean).join(" - ")],
                                         ["Relationship", partner.emergency_contact_relationship],
                                     ].map(([label, value]) => (
-                                        <div key={label} className="rounded-2xl border border-white/10 bg-slate-950/70 p-4"><p className="text-xs text-slate-400">{label}</p><p className="mt-1 break-words font-bold text-white">{displayValue(value)}</p></div>
+                                        <div key={label} className={`rounded-2xl border border-white/10 bg-slate-950/70 p-4 ${label === "Partner ID" ? "lg:col-span-2" : ""}`}><p className="text-xs text-slate-400">{label}</p><p className="mt-1 break-all font-bold text-white">{displayValue(value)}</p></div>
                                     ))}
                                 </div>
 
@@ -342,7 +351,7 @@ const Profile = () => {
                         {/* Change Password */}
                         <button
                             onClick={openPwdModal}
-                            className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-6 py-3 rounded-xl font-bold transition-colors"
+                            className="self-center flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-6 py-3 rounded-xl font-bold transition-colors"
                         >
                             Change Password
                         </button>
