@@ -6,28 +6,6 @@ const { verifyToken, requireRole } = require('../middleware/authMiddleware');
 router.use(verifyToken);
 router.use(requireRole(['delivery_partner']));
 
-router.get('/profile', async (req, res) => {
-  try {
-    const userId = req.user?.user_id || req.user?.id;
-    const email = req.user?.email || '';
-    const [rows] = await pool.execute(
-      `SELECT * FROM delivery_partners
-       WHERE user_id = ? OR delivery_partner_user_id = ? OR email = ?
-       ORDER BY id DESC LIMIT 1`,
-      [userId, userId, email]
-    );
-
-    if (!rows.length) {
-      return res.status(404).json({ message: 'Delivery partner profile not found.' });
-    }
-
-    res.json(rows[0]);
-  } catch (error) {
-    console.error('Delivery partner profile error:', error);
-    res.status(500).json({ message: 'Unable to load delivery partner profile.' });
-  }
-});
-
 // Get dashboard stats
 router.get('/dashboard-stats', async (req, res) => {
   try {

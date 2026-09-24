@@ -64,7 +64,7 @@ const resolveProductMetadata = async (req, body) => {
 // Otherwise fall back to franchise/admin `franchise_products` if desired by callers.
 exports.getAllProducts = async (req, res) => {
     try {
-        const { category, status, franchise_id, franchise_user_id, chef_user_id, chef_id, chef_ids, source, search } = req.query;
+        const { category, status, franchise_id, franchise_user_id, chef_user_id, chef_id, source, search } = req.query;
         const params = [];
         let query = '';
         let table = '';
@@ -76,8 +76,6 @@ exports.getAllProducts = async (req, res) => {
                 SELECT 
                     t.*, 
                     u.full_name AS chef_name, 
-                    hc.id AS chef_id,
-                    hc.user_id AS chef_user_id,
                     NULL AS delivery_radius,
                     u.latitude,
                     u.longitude,
@@ -87,10 +85,8 @@ exports.getAllProducts = async (req, res) => {
                     NULL AS state,
                     u.pincode
                 FROM chef_products t 
-                LEFT JOIN users u ON CAST(t.created_by AS CHAR) = CAST(u.user_id AS CHAR)
-                    OR CAST(t.created_by AS CHAR) = CAST(u.id AS CHAR)
-                LEFT JOIN home_chefs hc ON CAST(t.created_by AS CHAR) = CAST(hc.user_id AS CHAR)
-                    OR CAST(t.created_by AS CHAR) = CAST(hc.id AS CHAR)
+                LEFT JOIN users u ON t.created_by = u.user_id 
+                LEFT JOIN home_chefs hc ON t.created_by = hc.user_id 
                 WHERE 1=1
             `;
             const chefLookup = chef_user_id || chef_id;
@@ -98,17 +94,9 @@ exports.getAllProducts = async (req, res) => {
                 query += ' AND (hc.id = ? OR hc.user_id = ?)';
                 params.push(chefLookup, chefLookup);
             }
-            if (chef_ids) {
-                const chefIds = String(chef_ids).split(',').map((id) => id.trim()).filter(Boolean);
-                if (chefIds.length > 0) {
-                    const placeholders = chefIds.map(() => '?').join(', ');
-                    query += ` AND (hc.id IN (${placeholders}) OR hc.user_id IN (${placeholders}))`;
-                    params.push(...chefIds, ...chefIds);
-                }
-            }
             if (franchise_user_id) {
-                query += ' AND (t.franchise_user_id = ? OR hc.created_by = ?)';
-                params.push(franchise_user_id, franchise_user_id);
+                query += ' AND t.franchise_user_id = ?';
+                params.push(franchise_user_id);
             }
         } else {
             // Default to franchise_products for admin/franchise listings

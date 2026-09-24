@@ -28,7 +28,7 @@ exports.create = async (req, res) => {
 
     // Convert subcategory array to JSON string
     const subcategoryStr = Array.isArray(subcategory) ? JSON.stringify(subcategory) : subcategory;
-    const uploadedImages = (req.files || []).map(file => `/uploads/${file.filename}`);
+    const uploadedImages = (req.files || []).map(file => `/uploads/homechefCategories/${file.filename}`);
     const imageValues = uploadedImages.length ? uploadedImages : (Array.isArray(image) ? image : image ? [image] : []);
     const imageStr = JSON.stringify(imageValues);
 
@@ -52,7 +52,7 @@ exports.update = async (req, res) => {
     const updated_by = req.user ? req.user.id : null;
 
     const subcategoryStr = Array.isArray(subcategory) ? JSON.stringify(subcategory) : subcategory;
-    const uploadedImages = (req.files || []).map(file => `/uploads/${file.filename}`);
+    const uploadedImages = (req.files || []).map(file => `/uploads/homechefCategories/${file.filename}`);
     const existingImages = req.body.existing_images ? JSON.parse(req.body.existing_images) : (Array.isArray(image) ? image : image ? [image] : []);
     const imageStr = JSON.stringify([...existingImages, ...uploadedImages]);
 

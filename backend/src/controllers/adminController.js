@@ -153,15 +153,13 @@ function getDuplicateError(duplicateFields) {
 // ==================== HOME CHEF MANAGEMENT ====================
 exports.getHomeChefs = async (req, res) => {
   try {
-    const currentUserUserId = req.user?.user_id || null;
-    const currentUserId = req.user?.id || null;
+    const currentUserId = req.user?.user_id || req.user?.id || null;
     let query = "SELECT * FROM home_chefs";
     const params = [];
 
-    if (currentUserUserId || currentUserId) {
-      const ownerIds = [currentUserUserId, currentUserId].filter(Boolean);
-      query += ` WHERE created_by IN (${ownerIds.map(() => '?').join(', ')})`;
-      params.push(...ownerIds);
+    if (currentUserId) {
+      query += " WHERE created_by = ?";
+      params.push(currentUserId);
     }
 
     query += " ORDER BY created_at DESC";
