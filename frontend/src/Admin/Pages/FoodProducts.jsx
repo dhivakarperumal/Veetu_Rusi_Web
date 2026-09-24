@@ -15,6 +15,7 @@ const FoodProducts = () => {
   const { user } = useAuth();
   const [foods, setFoods] = useState([]);
   const [chefs, setChefs] = useState([]);
+  const [chefsLoaded, setChefsLoaded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -31,6 +32,8 @@ const FoodProducts = () => {
         setChefs(Array.isArray(res.data) ? res.data : []);
       } catch (err) {
         console.error('Failed to load chefs for filter', err);
+      } finally {
+        setChefsLoaded(true);
       }
     };
     fetchChefs();
@@ -88,6 +91,14 @@ const FoodProducts = () => {
     navigate(`${location.pathname}?${params.toString()}`);
   };
 
+  const allowedChefIds = useMemo(() => {
+    const ids = new Set();
+    chefs.forEach((chef) => {
+      [chef.id, chef.chef_id, chef.user_id].filter(Boolean).forEach((id) => ids.add(String(id)));
+    });
+    return ids;
+  }, [chefs]);
+
   const fetchFoods = useCallback(async () => {
     try {
       setLoading(true);
@@ -105,6 +116,9 @@ const FoodProducts = () => {
       const endpoint = activeTab === 'food' ? '/chef-foods' : '/products';
       if (activeTab === 'foodProducts') {
         query.source = 'chef_products';
+        if (chefsLoaded && allowedChefIds.size > 0) {
+          query.chef_ids = Array.from(allowedChefIds).join(',');
+        }
       }
 
       // If the logged-in user is a home chef, restrict to their products only
@@ -112,8 +126,8 @@ const FoodProducts = () => {
         query.chef_user_id = user.user_id || user.id;
       }
 
-      // If the logged-in user is a franchise/admin, restrict to products in their franchise
-      if (user?.role === 'admin' || user?.role === 'franchise') {
+      // Franchise admins only see products in their franchise.
+      if (user?.role === 'franchise' || user?.role === 'admin') {
         query.franchise_user_id = user.user_id || user.id;
       }
 
@@ -126,7 +140,7 @@ const FoodProducts = () => {
     } finally {
       setLoading(false);
     }
-  }, [location.search, activeTab, user, search]);
+  }, [allowedChefIds, chefsLoaded, location.search, activeTab, user, search]);
 
   useEffect(() => {
     const loadFoods = async () => {
@@ -139,6 +153,11 @@ const FoodProducts = () => {
 
   const filteredFoods = useMemo(() => {
     return foods.filter((item) => {
+      const itemChefIds = [item.chef_id, item.chef_user_id, item.created_by]
+        .filter(Boolean)
+        .map((id) => String(id));
+      const matchesAllowedChef = activeTab !== 'foodProducts'
+        || (chefsLoaded && itemChefIds.some((id) => allowedChefIds.has(id)));
       const matchesSearch = search
         ? [item.name, item.product_code, item.category, item.cuisine, item.product_type, item.chef_name, item.chef_phone, item.created_by, item.franchise_name]
             .filter(Boolean)
@@ -153,9 +172,9 @@ const FoodProducts = () => {
         matchesStatus = item.status === statusFilter;
       }
 
-      return matchesSearch && matchesStatus;
+      return matchesAllowedChef && matchesSearch && matchesStatus;
     });
-  }, [foods, search, statusFilter]);
+  }, [activeTab, allowedChefIds, chefsLoaded, foods, search, statusFilter]);
 
   useEffect(() => {
     setCurrentPage(1);

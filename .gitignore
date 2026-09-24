@@ -17,6 +17,9 @@ lerna-debug.log*
 .env
 .env.*
 
+# Local Vite configuration
+vite.config.*
+
 # Zip files and archives
 *.zip
 *.rar
