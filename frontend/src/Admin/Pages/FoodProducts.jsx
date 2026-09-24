@@ -91,6 +91,14 @@ const FoodProducts = () => {
     navigate(`${location.pathname}?${params.toString()}`);
   };
 
+  const allowedChefIds = useMemo(() => {
+    const ids = new Set();
+    chefs.forEach((chef) => {
+      [chef.id, chef.chef_id, chef.user_id].filter(Boolean).forEach((id) => ids.add(String(id)));
+    });
+    return ids;
+  }, [chefs]);
+
   const fetchFoods = useCallback(async () => {
     try {
       setLoading(true);
@@ -108,6 +116,9 @@ const FoodProducts = () => {
       const endpoint = activeTab === 'food' ? '/chef-foods' : '/products';
       if (activeTab === 'foodProducts') {
         query.source = 'chef_products';
+        if (chefsLoaded && allowedChefIds.size > 0) {
+          query.chef_ids = Array.from(allowedChefIds).join(',');
+        }
       }
 
       // If the logged-in user is a home chef, restrict to their products only
@@ -129,7 +140,7 @@ const FoodProducts = () => {
     } finally {
       setLoading(false);
     }
-  }, [location.search, activeTab, user, search]);
+  }, [allowedChefIds, chefsLoaded, location.search, activeTab, user, search]);
 
   useEffect(() => {
     const loadFoods = async () => {
@@ -139,14 +150,6 @@ const FoodProducts = () => {
 
     loadFoods();
   }, [fetchFoods, user]);
-
-  const allowedChefIds = useMemo(() => {
-    const ids = new Set();
-    chefs.forEach((chef) => {
-      [chef.id, chef.chef_id, chef.user_id].filter(Boolean).forEach((id) => ids.add(String(id)));
-    });
-    return ids;
-  }, [chefs]);
 
   const filteredFoods = useMemo(() => {
     return foods.filter((item) => {

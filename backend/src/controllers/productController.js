@@ -64,7 +64,7 @@ const resolveProductMetadata = async (req, body) => {
 // Otherwise fall back to franchise/admin `franchise_products` if desired by callers.
 exports.getAllProducts = async (req, res) => {
     try {
-        const { category, status, franchise_id, franchise_user_id, chef_user_id, chef_id, source, search } = req.query;
+        const { category, status, franchise_id, franchise_user_id, chef_user_id, chef_id, chef_ids, source, search } = req.query;
         const params = [];
         let query = '';
         let table = '';
@@ -97,6 +97,14 @@ exports.getAllProducts = async (req, res) => {
             if (chefLookup) {
                 query += ' AND (hc.id = ? OR hc.user_id = ?)';
                 params.push(chefLookup, chefLookup);
+            }
+            if (chef_ids) {
+                const chefIds = String(chef_ids).split(',').map((id) => id.trim()).filter(Boolean);
+                if (chefIds.length > 0) {
+                    const placeholders = chefIds.map(() => '?').join(', ');
+                    query += ` AND (hc.id IN (${placeholders}) OR hc.user_id IN (${placeholders}))`;
+                    params.push(...chefIds, ...chefIds);
+                }
             }
             if (franchise_user_id) {
                 query += ' AND (t.franchise_user_id = ? OR hc.created_by = ?)';
