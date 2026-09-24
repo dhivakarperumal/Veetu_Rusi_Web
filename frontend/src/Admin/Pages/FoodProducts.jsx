@@ -112,8 +112,8 @@ const FoodProducts = () => {
         query.chef_user_id = user.user_id || user.id;
       }
 
-      // If the logged-in user is a franchise/admin, restrict to products in their franchise
-      if (user?.role === 'admin' || user?.role === 'franchise') {
+      // Franchise users only see products in their franchise. Admins can review all products.
+      if (user?.role === 'franchise') {
         query.franchise_user_id = user.user_id || user.id;
       }
 
