@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../../api';
 import { toast } from 'react-hot-toast';
-import { Eye, Edit2, Trash2, LayoutGrid, List, Search, ShoppingBag , CheckCircle , XCircle  } from 'lucide-react';
+import { Eye, Edit2, Trash2, LayoutGrid, List, Search, ShoppingBag , CheckCircle , XCircle, PlusCircle  } from 'lucide-react';
 import { useAuth } from '../../PrivateRouter/AuthContext';
 import AdminStatCard from '../Components/AdminStatCard';
 
@@ -344,11 +344,23 @@ const FoodProducts = () => {
             Food Products
           </button>
         </div>
-        <p className="text-sm text-slate-500">
-          {activeTab === 'food'
-            ? 'Showing chef food items from chef_food_table.'
-            : 'Showing chef products from chef_products table.'}
-        </p>
+        <div className="flex items-center gap-3">
+          {activeTab === 'foodProducts' && (
+            <button
+              type="button"
+              onClick={() => navigate('/admin/food-products/add?source=chef_products')}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-700 px-4 py-2.5 text-sm font-black uppercase tracking-[0.2em] text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-600 transition"
+            >
+              <PlusCircle className="w-4 h-4" />
+              Add Food Product
+            </button>
+          )}
+          <p className="text-sm text-slate-500">
+            {activeTab === 'food'
+              ? 'Showing chef food items from chef_food_table.'
+              : 'Showing chef products from chef_products table.'}
+          </p>
+        </div>
       </div>
 
       {viewMode === 'table' ? (

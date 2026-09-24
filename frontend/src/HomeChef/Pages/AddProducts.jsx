@@ -3,7 +3,7 @@ import {
     FiArrowLeft,
     FiUploadCloud
 } from "react-icons/fi";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import api from "../../api";
 import { toast } from "react-hot-toast";
 
@@ -14,6 +14,12 @@ const AddProducts = () => {
     const { id } = useParams();
     const isEdit = !!id;
     const navigate = useNavigate();
+    const location = useLocation();
+    const redirectPath = location.pathname.startsWith('/admin/food-products')
+        ? '/admin/food-products?source=chef_products'
+        : location.pathname.startsWith('/admin/')
+            ? '/admin/products/all'
+            : '/chef/products';
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(isEdit);
@@ -453,7 +459,7 @@ const AddProducts = () => {
             }
 
             setLoading(false);
-            setTimeout(() => navigate("/chef/products"), 1500);
+            setTimeout(() => navigate(redirectPath), 1500);
         } catch (error) {
             console.error("Submit error:", error);
             const msg = error?.response?.data?.message || error?.response?.data?.error || error.message || 'Operation failed.';

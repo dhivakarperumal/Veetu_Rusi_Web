@@ -54,7 +54,7 @@ exports.update = async (req, res) => {
     const subcategoryStr = Array.isArray(subcategory) ? JSON.stringify(subcategory) : subcategory;
     const uploadedImages = (req.files || []).map(file => `/uploads/homechefCategories/${file.filename}`);
     const existingImages = req.body.existing_images ? JSON.parse(req.body.existing_images) : (Array.isArray(image) ? image : image ? [image] : []);
-    const imageStr = JSON.stringify(uploadedImages.length ? uploadedImages : existingImages);
+    const imageStr = JSON.stringify([...existingImages, ...uploadedImages]);
 
     const [result] = await pool.execute(
       `UPDATE home_chef_categorys 

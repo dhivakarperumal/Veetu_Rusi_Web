@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Edit2 } from 'lucide-react';
 import api from '../../api';
 import { toast } from 'react-hot-toast';
+import AddProducts from '../../HomeChef/Pages/AddProducts';
 
 const FoodProductDetails = () => {
   const navigate = useNavigate();
@@ -65,6 +66,8 @@ const FoodProductDetails = () => {
     ? 'Edit Food Product'
     : 'Food Product Details';
 
+  if (isAddPage) return <AddProducts />;
+
   return (
     <div className="space-y-6 p-6 min-h-screen">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -90,7 +93,7 @@ const FoodProductDetails = () => {
         {isDetailsPage && food && (
           <button
             type="button"
-            onClick={() => navigate(`/admin/food-products/edit/${id}`)}
+            onClick={() => navigate(`/admin/food-products/edit/${id}${sourceParam === 'chef_products' ? '?source=chef_products' : ''}`)}
             className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-800 px-6 py-3 text-sm font-black uppercase tracking-[0.24em] text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition"
           >
             <Edit2 className="w-4 h-4" /> Edit Food
@@ -98,13 +101,7 @@ const FoodProductDetails = () => {
         )}
       </div>
 
-      {isAddPage ? (
-        <div className="rounded-3xl bg-white border border-slate-200 p-8 shadow-sm">
-          <p className="text-slate-600">
-            Admin creation of chef food products is currently unavailable in this panel. Please use the Home Chef portal to add and manage food product listings.
-          </p>
-        </div>
-      ) : loading ? (
+      {loading ? (
         <div className="rounded-3xl bg-white border border-slate-200 p-8 shadow-sm">
           <p className="text-slate-500">Loading food product details...</p>
         </div>

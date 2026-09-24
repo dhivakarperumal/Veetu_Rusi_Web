@@ -26,6 +26,16 @@ const CategoryIcon = () => {
     } catch { return []; }
   };
 
+  const getImageUrl = (image) => {
+    if (!image || typeof image !== "string") return image;
+    if (image.startsWith("data:") || image.startsWith("blob:") || image.startsWith("http")) {
+      return image;
+    }
+
+    const backendUrl = (import.meta.env.VITE_BACKEND_URL || "http://localhost:5000").replace(/\/$/, "");
+    return `${backendUrl}${image.startsWith("/") ? "" : "/"}${image}`;
+  };
+
   const fetchCategories = async () => {
     try {
       if (categoriesCache && categoriesCache.length > 0) {
@@ -117,7 +127,7 @@ const CategoryIcon = () => {
                       <div className="w-full h-full bg-white rounded-full p-1 relative overflow-hidden">
                         <img
                           src={
-                            cat.images?.[0] ||
+                            getImageUrl(cat.images?.[0]) ||
                             "https://images.unsplash.com/photo-1610030469983-98e550d6193c"
                           }
                           alt={cat.name}

@@ -50,6 +50,16 @@ const HomeChefCategories = () => {
     }
   };
 
+  const getImageUrl = (image) => {
+    if (!image || typeof image !== "string") return image;
+    if (image.startsWith("data:") || image.startsWith("blob:") || image.startsWith("http")) {
+      return image;
+    }
+
+    const backendUrl = (import.meta.env.VITE_BACKEND_URL || "http://localhost:5000").replace(/\/$/, "");
+    return `${backendUrl}${image.startsWith("/") ? "" : "/"}${image}`;
+  };
+
   const fetchCategories = async () => {
     try {
       const response = await api.get("/home-chef-categories");
@@ -181,8 +191,11 @@ const HomeChefCategories = () => {
       payload.append("existing_images", JSON.stringify(existingImages));
     }
     category.image
-      .filter(image => image instanceof File)
-      .forEach(image => payload.append("image", image));
+      .filter(image => typeof image !== "string" && image instanceof Blob)
+      .forEach((image, index) => {
+        const filename = image.name || `home-chef-category-${Date.now()}-${index}.jpg`;
+        payload.append("image", image, filename);
+      });
 
     setLoading(true);
     try {
@@ -319,7 +332,7 @@ const HomeChefCategories = () => {
               <div key={cat.id} className="group bg-white rounded-[2.5rem] p-5 shadow-sm border border-gray-100/50 hover:shadow-2xl hover:shadow-emerald-950/5 transition-all duration-500 flex flex-col relative overflow-hidden">
                 <div className="relative h-48 mb-5 overflow-hidden rounded-[2rem] bg-gray-50 flex items-center justify-center">
                   {cat.image?.[0] ? (
-                    <img src={cat.image[0]} alt={cat.c_name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                    <img src={getImageUrl(cat.image[0])} alt={cat.c_name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                   ) : (
                     <FaImage size={40} className="text-gray-200" />
                   )}
@@ -353,7 +366,7 @@ const HomeChefCategories = () => {
                   <div className="flex items-center justify-between border-t border-gray-50 pt-4">
                     <div className="flex -space-x-3 overflow-hidden">
                       {(cat.image || []).slice(0, 3).map((img, i) => (
-                        <img key={i} src={img} className="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover" alt="" />
+                        <img key={i} src={getImageUrl(img)} className="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover" alt="" />
                       ))}
                     </div>
 
@@ -401,7 +414,7 @@ const HomeChefCategories = () => {
                     <td className="px-8 py-6 text-center">
                       <div className="flex items-center justify-center -space-x-2">
                         {(cat.image || []).map((img, i) => (
-                          <img key={i} src={img} className="w-8 h-8 rounded-full ring-2 ring-white shadow-sm object-cover" alt="" />
+                          <img key={i} src={getImageUrl(img)} className="w-8 h-8 rounded-full ring-2 ring-white shadow-sm object-cover" alt="" />
                         ))}
                       </div>
                     </td>
@@ -566,7 +579,7 @@ const HomeChefCategories = () => {
                     <div className="grid grid-cols-4 sm:grid-cols-6 gap-3 pt-2">
                       {previewImgs.map((img, index) => (
                         <div key={index} className="relative aspect-square rounded-xl overflow-hidden border border-emerald-100 shadow-sm animate-in zoom-in-75">
-                          <img src={img} className="w-full h-full object-cover" alt="" />
+                          <img src={getImageUrl(img)} className="w-full h-full object-cover" alt="" />
                         </div>
                       ))}
                     </div>
