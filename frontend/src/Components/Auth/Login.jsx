@@ -48,7 +48,7 @@ function Login() {
     } catch (error) {
       console.error("Login Error:", error);
 
-      let errorMessage = error.response?.data?.message || "Login failed";
+      let errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || "Login failed";
 
       // If the user is inactive or deactivated (usually 403)
       if (error.response?.status === 403) {
