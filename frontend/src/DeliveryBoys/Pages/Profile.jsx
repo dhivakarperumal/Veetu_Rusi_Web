@@ -30,6 +30,7 @@ const Profile = () => {
     const [changingPwd, setChangingPwd] = useState(false);
     const [referralCode, setReferralCode] = useState('');
     const [codeCopied, setCodeCopied] = useState(false);
+    const [partnerData, setPartnerData] = useState(null);
 
     const [currentPwd, setCurrentPwd] = useState("");
     const [newPwd, setNewPwd] = useState("");
@@ -54,11 +55,13 @@ const Profile = () => {
     const fetchProfile = async () => {
         try {
             setLoading(true);
-            const [profileRes, referralRes] = await Promise.all([
+            const [profileRes, referralRes, partnerRes] = await Promise.all([
                 api.get(`/auth/profile`),
                 api.get(`/referrals/dashboard`).catch(() => ({ data: {} })),
+                api.get(`/delivery/profile`).catch(() => ({ data: null })),
             ]);
             const profile = profileRes.data.user || profileRes.data;
+            setPartnerData(partnerRes.data || null);
             setProfileData({
                 username: profile.username || "",
                 name: profile.name || "",
@@ -213,6 +216,15 @@ const Profile = () => {
         : "";
 
     const profileInitial = (profileData.name || profileData.username || "U").charAt(0).toUpperCase();
+    const partner = partnerData || {};
+    const partnerName = partner.name || [partner.first_name, partner.last_name].filter(Boolean).join(" ");
+    const imageUrl = (value) => {
+        if (!value) return "";
+        if (value.startsWith("http") || value.startsWith("data:")) return value;
+        return `${import.meta.env.VITE_BACKEND_URL || ""}/uploads/deliverypartners/${value}`;
+    };
+    const displayValue = (value) => value || "Not provided";
+    const formatDate = (value) => value ? new Date(value).toLocaleDateString("en-IN") : "Not provided";
 
     if (loading) {
         return (
@@ -276,6 +288,54 @@ const Profile = () => {
                                     </span>
                                 )}
                             </div>
+
+                        {partnerData && (
+                            <div className="mt-8 space-y-6 border-t border-white/10 pt-8">
+                                <div className="flex items-center gap-4">
+                                    {partner.profile_photo ? (
+                                        <img src={imageUrl(partner.profile_photo)} alt={partnerName || "Profile"} className="h-20 w-20 rounded-2xl object-cover" />
+                                    ) : (
+                                        <div className="h-20 w-20 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-3xl font-black text-emerald-400">{(partnerName || profileInitial).charAt(0).toUpperCase()}</div>
+                                    )}
+                                    <div>
+                                        <h2 className="text-xl font-black text-white">Delivery Partner Information</h2>
+                                        <p className="text-sm text-slate-400">Status: <span className="font-bold text-emerald-400">{displayValue(partner.status)}</span></p>
+                                    </div>
+                                </div>
+
+                                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                    {[
+                                        ["Partner ID", partner.delivery_partner_user_id || partner.user_id], ["Gender", partner.gender],
+                                        ["Date of Birth", formatDate(partner.date_of_birth)], ["Age", partner.age],
+                                        ["Blood Group", partner.blood_group], ["Alternate Mobile", partner.alt_mobile],
+                                        ["Current Address", partner.current_address], ["Permanent Address", partner.permanent_address],
+                                        ["City / State", [partner.city, partner.state].filter(Boolean).join(", ")], ["Pincode", partner.pincode],
+                                        ["Live Location", partner.live_location], ["Emergency Contact", [partner.emergency_contact_name, partner.emergency_contact_mobile].filter(Boolean).join(" - ")],
+                                        ["Relationship", partner.emergency_contact_relationship],
+                                    ].map(([label, value]) => (
+                                        <div key={label} className="rounded-2xl border border-white/10 bg-slate-950/70 p-4"><p className="text-xs text-slate-400">{label}</p><p className="mt-1 break-words font-bold text-white">{displayValue(value)}</p></div>
+                                    ))}
+                                </div>
+
+                                <div className="grid gap-6 lg:grid-cols-2">
+                                    <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-5"><h3 className="mb-4 font-black text-white">Vehicle & Driving</h3><div className="grid grid-cols-2 gap-4 text-sm">
+                                        {[["Type", partner.vehicle_type], ["Brand", partner.vehicle_brand], ["Model", partner.vehicle_model], ["Number", partner.vehicle_number], ["Color", partner.vehicle_color], ["License Number", partner.license_number], ["License Holder", partner.license_holder_name], ["Experience", partner.driving_experience], ["License Issued", formatDate(partner.license_issue_date)], ["License Expires", formatDate(partner.license_expiry_date)]].map(([label, value]) => <div key={label}><span className="text-slate-400">{label}</span><p className="font-bold text-white">{displayValue(value)}</p></div>)}
+                                    </div></div>
+                                    <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-5"><h3 className="mb-4 font-black text-white">Bank Information</h3><div className="grid grid-cols-2 gap-4 text-sm">
+                                        {[["Account Holder", partner.account_holder_name], ["Bank", partner.bank_name], ["Account Number", partner.bank_account_number], ["IFSC", partner.ifsc_code], ["Branch", partner.branch_name], ["UPI ID", partner.upi_id]].map(([label, value]) => <div key={label}><span className="text-slate-400">{label}</span><p className="break-words font-bold text-white">{displayValue(value)}</p></div>)}
+                                    </div></div>
+                                </div>
+
+                                <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-5"><h3 className="mb-4 font-black text-white">Work Preferences</h3><div className="grid gap-4 text-sm md:grid-cols-3">
+                                    <div><span className="text-slate-400">Available Areas</span><p className="font-bold text-white">{displayValue(partner.available_areas)}</p></div><div><span className="text-slate-400">Preferred Distance</span><p className="font-bold text-white">{displayValue(partner.preferred_distance)}</p></div><div><span className="text-slate-400">Delivery Radius</span><p className="font-bold text-white">{displayValue(partner.delivery_radius)}</p></div>
+                                    <div className="md:col-span-3"><span className="text-slate-400">Available Shifts</span><p className="font-bold text-white">{[partner.available_time_morning && "Morning", partner.available_time_afternoon && "Afternoon", partner.available_time_evening && "Evening", partner.available_time_night && "Night"].filter(Boolean).join(", ") || "Not provided"}</p></div>
+                                </div></div>
+
+                                <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-5"><h3 className="mb-4 font-black text-white">Documents</h3><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                    {[["Aadhaar Number", partner.aadhaar_number, false], ["PAN Number", partner.pan_number, false], ["RC Book Number", partner.rc_book_number, false], ["Insurance Number", partner.insurance_number, false], ["Insurance Expires", formatDate(partner.insurance_expiry_date), false], ["Aadhaar Front", partner.aadhaar_front_url, true], ["Aadhaar Back", partner.aadhaar_back_url, true], ["PAN Card", partner.pan_card_url, true], ["License Front", partner.license_front_image, true], ["License Back", partner.license_back_image, true], ["Vehicle Front", partner.vehicle_front_photo, true], ["Vehicle Back", partner.vehicle_back_photo, true], ["Police Verification", partner.police_verification_certificate, true], ["Selfie Verification", partner.selfie_verification_url, true], ["Selfie With Vehicle", partner.selfie_with_vehicle, true], ["Selfie With Aadhaar", partner.selfie_with_aadhaar, true]].map(([label, value, isFile]) => <div key={label} className="flex items-center justify-between gap-3 rounded-xl bg-slate-900 p-3 text-sm"><span className="text-slate-400">{label}</span>{isFile && value ? <a href={imageUrl(value)} target="_blank" rel="noreferrer" className="font-bold text-emerald-400 hover:underline">View</a> : <span className="break-all text-right font-bold text-white">{displayValue(value)}</span>}</div>)}
+                                </div></div>
+                            </div>
+                        )}
 
                         </div>
 
