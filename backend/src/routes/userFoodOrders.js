@@ -87,12 +87,25 @@ const initUserFoodOrderTable = async () => {
         id INT PRIMARY KEY AUTO_INCREMENT,
         order_id INT NOT NULL,
         image_url VARCHAR(500) NOT NULL,
+        created_by VARCHAR(255) DEFAULT NULL,
+        updated_by VARCHAR(255) DEFAULT NULL,
         uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         KEY idx_order_packing_images_order_id (order_id),
         CONSTRAINT fk_order_packing_images_order
           FOREIGN KEY (order_id) REFERENCES user_food_order_table(id) ON DELETE CASCADE
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
+    try { await pool.execute('ALTER TABLE order_packing_images ADD COLUMN created_by VARCHAR(255) DEFAULT NULL'); } catch (e) {}
+    try { await pool.execute('ALTER TABLE order_packing_images ADD COLUMN updated_by VARCHAR(255) DEFAULT NULL'); } catch (e) {}
+    try {
+      await pool.execute(`
+        UPDATE order_packing_images pi
+        INNER JOIN user_food_order_table o ON o.id = pi.order_id
+        SET pi.created_by = COALESCE(pi.created_by, o.chef_user_id, o.chef_id),
+            pi.updated_by = COALESCE(pi.updated_by, o.chef_user_id, o.chef_id)
+        WHERE pi.created_by IS NULL OR pi.updated_by IS NULL
+      `);
+    } catch (e) {}
   } catch (err) {
     console.error('Error creating user_food_order_table:', err.message || err);
   }
@@ -406,10 +419,11 @@ router.post('/:id/packing-images', verifyToken, packingImageUpload.array('packin
     if (!orders.length) return res.status(404).json({ message: 'Order not found' });
 
     const imageUrls = req.files.map(file => `/uploads/packing-images/${file.filename}`);
+    const auditUser = req.user?.user_id || req.user?.id || null;
     for (const imageUrl of imageUrls) {
       await pool.execute(
-        'INSERT INTO order_packing_images (order_id, image_url) VALUES (?, ?)',
-        [req.params.id, imageUrl]
+        'INSERT INTO order_packing_images (order_id, image_url, created_by, updated_by) VALUES (?, ?, ?, ?)',
+        [req.params.id, imageUrl, auditUser, auditUser]
       );
     }
 
