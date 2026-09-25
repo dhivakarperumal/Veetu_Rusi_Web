@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import api from "../../api";
 import { toast } from "react-hot-toast";
-import { Search, Filter, Edit, Check, Eye, ChevronLeft, ChevronRight, XCircle, ShoppingBag, Clock, CheckCircle, Truck } from "lucide-react";
+import { Search, Filter, Edit, Check, Eye, ChevronLeft, ChevronRight, XCircle, ShoppingBag, Clock, CheckCircle, Truck, ImagePlus, Upload, X } from "lucide-react";
 import OrderCancellationModal from "../../Components/CommenComponents/OrderCancellationModal";
 import ChefDataToolbar from "../Components/ChefDataToolbar";
 
@@ -18,10 +18,13 @@ const OrderManagement = () => {
   const [viewMode, setViewMode] = useState("table");
   const [editingOrder, setEditingOrder] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [statusImage, setStatusImage] = useState(null);
+  const [statusImages, setStatusImages] = useState([]);
   const [trackingOrder, setTrackingOrder] = useState(null);
   const [trackingDetails, setTrackingDetails] = useState(null);
   const [cancelTargetOrder, setCancelTargetOrder] = useState(null);
+  const [packingOrder, setPackingOrder] = useState(null);
+  const [packingImages, setPackingImages] = useState([]);
+  const [uploadingPackingImages, setUploadingPackingImages] = useState(false);
 
   const CHEF_CANCEL_STATUSES = ['new order', 'order placed', 'order received', 'accepted', 'preparing'];
   
@@ -137,7 +140,7 @@ const OrderManagement = () => {
   const handleUpdateOrder = async (e) => {
     e.preventDefault();
     try {
-      if (statusImage) {
+      if (statusImages.length > 0) {
         const formData = new FormData();
         Object.keys(editingOrder).forEach(key => {
           if (editingOrder[key] !== null && editingOrder[key] !== undefined) {
@@ -149,7 +152,7 @@ const OrderManagement = () => {
             }
           }
         });
-        formData.append("status_image", statusImage);
+        statusImages.forEach((file) => formData.append("status_image", file));
         await api.put(`/user-food-orders/${editingOrder.id}`, formData, {
           headers: { "Content-Type": "multipart/form-data" }
         });
@@ -174,6 +177,28 @@ const OrderManagement = () => {
     }
   };
 
+  const handlePackingImagesUpload = async (e) => {
+    e.preventDefault();
+    if (!packingOrder || packingImages.length === 0) return;
+
+    try {
+      setUploadingPackingImages(true);
+      const formData = new FormData();
+      packingImages.forEach((file) => formData.append("packing_images", file));
+      await api.post(`/user-food-orders/${packingOrder.id}/packing-images`, formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+      toast.success("Packing images uploaded successfully");
+      setPackingOrder(null);
+      setPackingImages([]);
+      fetchOrders();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to upload packing images");
+    } finally {
+      setUploadingPackingImages(false);
+    }
+  };
+
   // Pending/New Order aliases for display checks
   const pendingAliases = ["Pending", "Order Placed", "New", "New Order"];
   const isPendingFilter = pendingAliases.some(a => a.toLowerCase() === statusFilter.toLowerCase());
@@ -194,7 +219,7 @@ const OrderManagement = () => {
 
   return (
     <>
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-black text-white tracking-tight uppercase italic">Order Management</h2>
@@ -339,6 +364,7 @@ const OrderManagement = () => {
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Delivery Slot</th>
 
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Amount</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Packing Images</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Status</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em] text-center">Actions</th>
                 </tr>
@@ -380,6 +406,14 @@ const OrderManagement = () => {
                       </td>
                       
                       <td className="px-6 py-5 text-sm font-black text-white">₹{chefAmount.toLocaleString()}</td>
+                      <td className="px-6 py-5 text-sm text-white/60">
+                        {Number(order.packing_image_count) > 0 ? (
+                          <div>
+                            <span className="font-black text-emerald-400">{order.packing_image_count} image{Number(order.packing_image_count) === 1 ? "" : "s"}</span>
+                            <p className="text-[10px] text-white/40 mt-1">{order.packing_images_uploaded_at ? new Date(order.packing_images_uploaded_at).toLocaleString() : "-"}</p>
+                          </div>
+                        ) : <span className="text-white/30">Not uploaded</span>}
+                      </td>
                       <td className="px-6 py-5">
                         <div className="flex flex-col gap-2 items-start">
                           <span
@@ -432,7 +466,7 @@ const OrderManagement = () => {
                           <button
                             onClick={() => {
                               setEditingOrder(order);
-                              setStatusImage(null);
+                              setStatusImages([]);
                               setIsModalOpen(true);
                             }}
                             className="p-2 hover:bg-white/10 text-white/70 hover:text-white rounded-xl transition"
@@ -447,6 +481,15 @@ const OrderManagement = () => {
                               title={`Update to: ${nextStatus}`}
                             >
                               <Check className="w-4 h-4" />
+                            </button>
+                          )}
+                          {statusKey === "packing" && (
+                            <button
+                              onClick={() => { setPackingOrder(order); setPackingImages([]); }}
+                              className="p-2 hover:bg-amber-500/10 text-amber-300 rounded-xl transition"
+                              title="Upload Packing Images"
+                            >
+                              <ImagePlus className="w-4 h-4" />
                             </button>
                           )}
                           {CHEF_CANCEL_STATUSES.includes(String(order.status || '').toLowerCase()) && (
@@ -465,7 +508,7 @@ const OrderManagement = () => {
                 })}
                 {paginatedOrders.length === 0 && (
                   <tr>
-                    <td colSpan="8" className="px-6 py-8 text-center text-xs text-white/30 italic">
+                    <td colSpan="9" className="px-6 py-8 text-center text-xs text-white/30 italic">
                       No order logs available.
                     </td>
                   </tr>
@@ -506,12 +549,50 @@ const OrderManagement = () => {
             return <div key={order.id} className="bg-slate-950/95 border border-slate-800 rounded-2xl p-5 shadow-xl text-slate-200">
               <div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Order ID</p><h3 className="mt-1 text-lg font-black text-white">{order.order_id}</h3></div><span className="rounded-lg bg-amber-500/10 px-2.5 py-1 text-[10px] font-black uppercase text-amber-300">{order.status}</span></div>
               <div className="mt-5 space-y-3 border-t border-slate-800 pt-4 text-sm"><div className="flex justify-between gap-3"><span className="text-slate-500">Customer</span><span className="font-bold text-white">{order.customer_name || "-"}</span></div><div className="flex justify-between gap-3"><span className="text-slate-500">Amount</span><span className="font-black text-emerald-400">₹{amount.toLocaleString()}</span></div><div className="flex justify-between gap-3"><span className="text-slate-500">Ordered</span><span className="text-right text-slate-300">{order.ordered_at || order.created_at ? new Date(order.ordered_at || order.created_at).toLocaleDateString() : "-"}</span></div></div>
-              <div className="mt-5 flex justify-end gap-2"><button onClick={() => navigate(`/chef/orders/${order.id}`)} className="rounded-xl border border-slate-700 p-2 text-slate-300 hover:bg-slate-800" title="View Details"><Eye className="w-4 h-4" /></button><button onClick={() => { setEditingOrder(order); setStatusImage(null); setIsModalOpen(true); }} className="rounded-xl border border-slate-700 p-2 text-slate-300 hover:bg-slate-800" title="Edit Order"><Edit className="w-4 h-4" /></button></div>
+              <div className="mt-5 flex justify-end gap-2"><button onClick={() => navigate(`/chef/orders/${order.id}`)} className="rounded-xl border border-slate-700 p-2 text-slate-300 hover:bg-slate-800" title="View Details"><Eye className="w-4 h-4" /></button><button onClick={() => { setEditingOrder(order); setStatusImages([]); setIsModalOpen(true); }} className="rounded-xl border border-slate-700 p-2 text-slate-300 hover:bg-slate-800" title="Edit Order"><Edit className="w-4 h-4" /></button></div>
             </div>;
           })}
         </div>
       )
       }
+
+      {/* Packing image upload modal */}
+      {packingOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm" onClick={() => !uploadingPackingImages && setPackingOrder(null)}></div>
+          <form onSubmit={handlePackingImagesUpload} className="bg-[#0B1120] border border-amber-500/20 w-full max-w-lg rounded-[2rem] shadow-2xl relative z-10 overflow-hidden">
+            <div className="p-6 border-b border-white/5 flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-black uppercase italic tracking-tight text-white">Packing Images</h3>
+                <p className="text-xs text-amber-300 font-bold uppercase tracking-widest mt-1">{packingOrder.order_id}</p>
+              </div>
+              <button type="button" onClick={() => setPackingOrder(null)} disabled={uploadingPackingImages} className="p-2 rounded-xl text-white/50 hover:text-white hover:bg-white/10 disabled:opacity-50" title="Close">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <label className="flex flex-col items-center justify-center gap-3 border border-dashed border-amber-500/30 rounded-2xl p-8 bg-amber-500/5 cursor-pointer hover:bg-amber-500/10 transition">
+                <Upload className="w-8 h-8 text-amber-300" />
+                <span className="text-sm font-black text-white">Select packing images</span>
+                <span className="text-xs text-white/40">Up to 10 images, 5 MB each</span>
+                <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple onChange={(e) => setPackingImages(Array.from(e.target.files || []))} className="hidden" />
+              </label>
+              {packingImages.length > 0 && (
+                <div className="rounded-xl bg-white/5 border border-white/10 p-3 text-xs text-white/70">
+                  {packingImages.length} image{packingImages.length === 1 ? "" : "s"} selected: {packingImages.map((file) => file.name).join(", ")}
+                </div>
+              )}
+            </div>
+            <div className="p-6 border-t border-white/5 flex gap-3">
+              <button type="submit" disabled={packingImages.length === 0 || uploadingPackingImages} className="flex-1 flex items-center justify-center gap-2 py-3 bg-amber-500 hover:bg-amber-400 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 font-black text-xs uppercase tracking-widest rounded-xl transition">
+                <Upload className="w-4 h-4" />
+                {uploadingPackingImages ? "Uploading..." : "Upload Images"}
+              </button>
+              <button type="button" onClick={() => setPackingOrder(null)} disabled={uploadingPackingImages} className="px-5 py-3 bg-white/5 hover:bg-white/10 disabled:opacity-50 text-white font-black text-xs uppercase tracking-widest rounded-xl transition">Cancel</button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* Edit / Assign Modal */}
       {isModalOpen && editingOrder && (
@@ -592,13 +673,14 @@ const OrderManagement = () => {
               {['Food Ready', 'Packing', 'Delivered'].includes(editingOrder.status) && (
                 <div className="animate-in fade-in slide-in-from-top-2 duration-300">
                   <label className="text-[10px] text-white/40 font-bold uppercase block mb-2">Upload Status Proof Image (Optional)</label>
-                  <input
+                          <input
                     type="file"
                     accept="image/*"
-                    onChange={(e) => setStatusImage(e.target.files[0])}
+                            multiple
+                            onChange={(e) => setStatusImages(Array.from(e.target.files || []))}
                     className="w-full px-4 py-3 bg-[#070b13]/60 border border-white/5 rounded-2xl outline-none font-medium text-white text-sm focus:border-emerald-500/30 transition-all file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:uppercase file:tracking-widest file:bg-emerald-500/10 file:text-emerald-400 hover:file:bg-emerald-500/20"
                   />
-                  {statusImage && <p className="text-xs text-emerald-400 mt-2 ml-2">Selected: {statusImage.name}</p>}
+                          {statusImages.length > 0 && <p className="text-xs text-emerald-400 mt-2 ml-2">Selected {statusImages.length} image{statusImages.length === 1 ? "" : "s"}: {statusImages.map((file) => file.name).join(", ")}</p>}
                 </div>
               )}
 

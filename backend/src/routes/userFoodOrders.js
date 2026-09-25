@@ -5,6 +5,29 @@ const { verifyToken } = require('../middleware/authMiddleware');
 const pool = require('../config/db');
 const { getIo } = require('../utils/socket');
 const upload = require('../config/multer');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const packingImageUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => {
+      const uploadDir = path.join(__dirname, '../../uploads/packing-images');
+      fs.mkdirSync(uploadDir, { recursive: true });
+      cb(null, uploadDir);
+    },
+    filename: (_req, file, cb) => {
+      const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(file.originalname).toLowerCase()}`;
+      cb(null, unique);
+    }
+  }),
+  fileFilter: (_req, file, cb) => {
+    if (['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/jpg'].includes(file.mimetype)) {
+      return cb(null, true);
+    }
+    cb(new Error('Only image files are allowed'), false);
+  },
+  limits: { files: 10, fileSize: 5 * 1024 * 1024 }
+});
 
 const initUserFoodOrderTable = async () => {
   try {
@@ -59,6 +82,17 @@ const initUserFoodOrderTable = async () => {
     try { await pool.execute('ALTER TABLE user_food_order_table ADD COLUMN delivery_partner_name VARCHAR(255)'); } catch (e) {}
     try { await pool.execute('ALTER TABLE user_food_order_table ADD COLUMN delivery_partner_phone VARCHAR(50)'); } catch (e) {}
     try { await pool.execute('ALTER TABLE user_food_order_table ADD COLUMN status_image VARCHAR(255)'); } catch (e) {}
+    await pool.execute(`
+      CREATE TABLE IF NOT EXISTS order_packing_images (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        order_id INT NOT NULL,
+        image_url VARCHAR(500) NOT NULL,
+        uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        KEY idx_order_packing_images_order_id (order_id),
+        CONSTRAINT fk_order_packing_images_order
+          FOREIGN KEY (order_id) REFERENCES user_food_order_table(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
   } catch (err) {
     console.error('Error creating user_food_order_table:', err.message || err);
   }
@@ -362,12 +396,37 @@ router.get('/:id', verifyToken, async (req, res) => {
   }
 });
 
-router.put('/:id', verifyToken, upload.single('status_image'), async (req, res) => {
+router.post('/:id/packing-images', verifyToken, packingImageUpload.array('packing_images', 10), async (req, res) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: 'Select at least one packing image' });
+    }
+
+    const [orders] = await pool.execute('SELECT id FROM user_food_order_table WHERE id = ?', [req.params.id]);
+    if (!orders.length) return res.status(404).json({ message: 'Order not found' });
+
+    const imageUrls = req.files.map(file => `/uploads/packing-images/${file.filename}`);
+    for (const imageUrl of imageUrls) {
+      await pool.execute(
+        'INSERT INTO order_packing_images (order_id, image_url) VALUES (?, ?)',
+        [req.params.id, imageUrl]
+      );
+    }
+
+    res.status(201).json({ message: 'Packing images uploaded successfully', images: imageUrls });
+  } catch (err) {
+    console.error('Error uploading packing images:', err);
+    res.status(500).json({ message: 'Failed to upload packing images', error: err.message });
+  }
+});
+
+router.put('/:id', verifyToken, upload.array('status_image', 10), async (req, res) => {
   try {
     const { id } = req.params;
     const updateData = { ...req.body };
-    if (req.file) {
-      updateData.status_image = `/uploads/${req.file.filename}`;
+    if (req.files?.length) {
+      const imageUrls = req.files.map(file => `/uploads/${file.filename}`);
+      updateData.status_image = imageUrls.length === 1 ? imageUrls[0] : JSON.stringify(imageUrls);
     }
     await controller.updateOrder(id, updateData);
     

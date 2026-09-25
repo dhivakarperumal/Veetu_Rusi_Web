@@ -435,7 +435,10 @@ const getAllOrders = async (filters = {}) => {
   const adminAllOrders = scope === 'all' && ['admin', 'superadmin'].includes(normalizedRole);
   const adminOwnedOrders = scope === 'owned' && normalizedRole === 'admin';
 
-  let query = 'SELECT * FROM user_food_order_table WHERE 1=1';
+  let query = `SELECT o.*,
+    (SELECT COUNT(*) FROM order_packing_images pi WHERE pi.order_id = o.id) AS packing_image_count,
+    (SELECT MAX(pi.uploaded_at) FROM order_packing_images pi WHERE pi.order_id = o.id) AS packing_images_uploaded_at
+    FROM user_food_order_table o WHERE 1=1`;
   const params = [];
   let chefFilterIds = chef_id ? [String(chef_id)] : [];
 
