@@ -115,7 +115,7 @@ const menuItems = [
 const Settings = () => {
   const [activeTab, setActiveTab] = useState("general");
   const [settings, setSettings] = useState({
-    storeName: "eMart Saree Collections",
+    storeName: "Veetu Rusi Store",
     email: "admin@emart.com",
     phone: "+91 9876543210",
     address: "Bangalore, Karnataka",
@@ -485,7 +485,7 @@ const Settings = () => {
                 <button
                   type="button"
                   onClick={() => setSettings({
-                    storeName: "eMart Saree Collections",
+                    storeName: "Veetu Rusi Store",
                     email: "admin@emart.com",
                     phone: "+91 9876543210",
                     address: "Bangalore, Karnataka",

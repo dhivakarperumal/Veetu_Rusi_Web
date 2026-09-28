@@ -29,7 +29,7 @@ export default function WishList() {
                 </h2>
 
                 <p className="text-gray-500 mt-2 max-w-sm">
-                  Looks like you haven't added any sarees yet. Browse our
+                  Looks like you haven't saved any products yet. Browse our
                   collections and save your favorites.
                 </p>
 

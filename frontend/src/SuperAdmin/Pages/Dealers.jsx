@@ -26,9 +26,9 @@ const Dealers = () => {
 
     // Mock history data
     const mockHistory = [
-        { id: "#INV-2024-001", date: "2024-03-01", items: "Wedding Silk Saree x 5", amount: "₹45,000", status: "Paid" },
-        { id: "#INV-2024-042", date: "2024-02-15", items: "Cotton Saree x 12", amount: "₹18,000", status: "Paid" },
-        { id: "#INV-2023-118", date: "2024-01-20", items: "Linen Saree x 2", amount: "₹4,200", status: "Pending" },
+        { id: "#INV-2024-001", date: "2024-03-01", items: "Product Bundle x 5", amount: "₹45,000", status: "Paid" },
+        { id: "#INV-2024-042", date: "2024-02-15", items: "Household Products x 12", amount: "₹18,000", status: "Paid" },
+        { id: "#INV-2023-118", date: "2024-01-20", items: "Gift Set x 2", amount: "₹4,200", status: "Pending" },
     ];
 
     useEffect(() => {

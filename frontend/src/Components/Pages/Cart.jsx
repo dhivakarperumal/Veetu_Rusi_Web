@@ -52,7 +52,7 @@ export default function CartPage() {
                   </h2>
 
                   <p className="text-gray-500 mt-2">
-                    Browse our saree collection and add items to your cart.
+                    Browse our products and add your favorites to the cart.
                   </p>
 
                   <button

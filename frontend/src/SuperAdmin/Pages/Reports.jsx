@@ -134,7 +134,7 @@ const Reports = () => {
 
                 <div className="superadmin-card p-8">
                     <h3 className="text-xl font-bold text-slate-800 mb-2">Category Distribution</h3>
-                    <p className="text-sm text-gray-400 font-medium mb-8">Sales percentage by saree types</p>
+                    <p className="text-sm text-gray-400 font-medium mb-8">Sales percentage by product category</p>
 
                     <div className="space-y-6">
                         {reportsData?.categoryDistribution?.map((cat, i) => (

@@ -104,7 +104,7 @@ const AllProducts = () => {
         try {
             await api.post("/franchise-products", {
                 ...rapidProd,
-                category: "Saree",
+                category: "General",
                 total_stock: 0,
                 variants: [],
                 franchise_user_id: franchiseUserId,

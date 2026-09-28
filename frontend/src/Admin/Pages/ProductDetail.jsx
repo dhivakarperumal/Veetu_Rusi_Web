@@ -171,7 +171,7 @@ const ProductDetail = () => {
                                 { label: "Fabric", value: product.material },
                                 { label: "Artisan Work", value: product.work_type },
                                 { label: "Care", value: product.wash_care },
-                                { label: "Saree Length", value: product.saree_length },
+                                { label: "Product Length", value: product.saree_length },
                                 { label: "Blouse Length", value: product.blouse_length },
                                 { label: "Top / Lehenga Length", value: product.top_length },
                                 { label: "Bottom Length", value: product.bottom_length },

@@ -358,7 +358,7 @@ const ContactUs = () => {
               style={{ animation: "fadeSlideUp 0.8s ease 0.2s both" }}
             >
               Whether you need style advice, order support, or just want to say
-              hello, our dedicated team of saree experts is here for you.
+              hello, our dedicated team is here to help with products, orders, and more.
             </p>
 
             
