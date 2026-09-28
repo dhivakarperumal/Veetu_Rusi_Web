@@ -349,7 +349,10 @@ router.get('/orders', async (req, res) => {
         LEFT JOIN home_chefs c ON (o.chef_id = c.id OR o.chef_user_id = c.user_id)
         LEFT JOIN users u ON o.user_id = u.user_id
        WHERE (o.delivery_partner = ? OR o.delivery_partner_user_id = ?) 
-         AND DATE(o.ordered_at) = CURDATE()
+           AND (
+             DATE(o.ordered_at) = CURDATE()
+             OR COALESCE(o.status, '') NOT IN ('Delivered', 'Cancelled', 'Completed')
+           )
     `;
     const params = [deliveryBoyId, deliveryBoyId];
 
