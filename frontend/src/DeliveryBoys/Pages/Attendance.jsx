@@ -53,22 +53,12 @@ const Attendance = () => {
   };
 
   const markAttendance = () => {
-    if (!navigator.geolocation) {
-      toast.error("Location services are not available in this browser.");
-      return;
-    }
-
     const action = attendance.currentSession ? "check_out" : "check_in";
-    setMarking(true);
-    navigator.geolocation.getCurrentPosition(async ({ coords }) => {
+
+    const saveAttendance = async (location = {}) => {
       try {
-        await api.post("/delivery/attendance", {
-          action,
-          latitude: coords.latitude,
-          longitude: coords.longitude,
-          accuracy: coords.accuracy,
-        });
-        toast.success(action === "check_in" ? "Checked in with your current location." : "Checked out with your current location.");
+        await api.post("/delivery/attendance", { action, ...location });
+        toast.success(action === "check_in" ? "Checked in with your current location." : "Checked out successfully.");
         const data = await loadAttendance();
         if (data) setAttendance({ today: data.today || "", currentSession: data.currentSession || null, records: Array.isArray(data.records) ? data.records : [] });
       } catch (error) {
@@ -76,6 +66,26 @@ const Attendance = () => {
       } finally {
         setMarking(false);
       }
+    };
+
+    if (action === "check_out") {
+      setMarking(true);
+      saveAttendance();
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      toast.error("Location services are not available in this browser.");
+      return;
+    }
+
+    setMarking(true);
+    navigator.geolocation.getCurrentPosition(async ({ coords }) => {
+      await saveAttendance({
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        accuracy: coords.accuracy,
+      });
     }, (error) => {
       const message = error.code === error.PERMISSION_DENIED
         ? "Allow location access to mark attendance."

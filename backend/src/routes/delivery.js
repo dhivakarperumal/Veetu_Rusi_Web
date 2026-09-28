@@ -101,16 +101,18 @@ router.post('/attendance', async (req, res) => {
     const latitude = Number(req.body?.latitude);
     const longitude = Number(req.body?.longitude);
     const accuracy = req.body?.accuracy == null ? null : Number(req.body.accuracy);
+    const hasAnyLocation = req.body?.latitude != null || req.body?.longitude != null;
+    const hasValidLocation = req.body?.latitude != null && req.body?.longitude != null &&
+      Number.isFinite(latitude) && latitude >= -90 && latitude <= 90 &&
+      Number.isFinite(longitude) && longitude >= -180 && longitude <= 180;
 
     if (!deliveryPartnerUserId || !['check_in', 'check_out'].includes(action) ||
-      req.body?.latitude == null || req.body?.longitude == null ||
-      !Number.isFinite(latitude) || latitude < -90 || latitude > 90 ||
-      !Number.isFinite(longitude) || longitude < -180 || longitude > 180 ||
+      ((action === 'check_in' || hasAnyLocation) && !hasValidLocation) ||
       (accuracy !== null && (!Number.isFinite(accuracy) || accuracy < 0))) {
-      return res.status(400).json({ message: 'A valid current location is required to mark attendance.' });
+      return res.status(400).json({ message: 'A valid current location is required to check in.' });
     }
 
-    const address = await reverseGeocode(latitude, longitude);
+    const address = hasValidLocation ? await reverseGeocode(latitude, longitude) : null;
     connection = await pool.getConnection();
     await connection.beginTransaction();
     transactionStarted = true;
