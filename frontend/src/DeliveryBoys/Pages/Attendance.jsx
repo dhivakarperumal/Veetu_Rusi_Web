@@ -73,7 +73,11 @@ const Attendance = () => {
         await api.post("/delivery/attendance", { action, ...location });
         toast.success(action === "check_in" ? "Checked in with your current location." : "Checked out successfully.");
         const data = await loadAttendance();
-        if (data) setAttendance({ today: data.today || "", currentSession: data.currentSession || null, records: Array.isArray(data.records) ? data.records : [] });
+        if (data) {
+          const nextAttendance = { today: data.today || "", currentSession: data.currentSession || null, records: Array.isArray(data.records) ? data.records : [] };
+          setAttendance(nextAttendance);
+          window.dispatchEvent(new CustomEvent("delivery-attendance-updated", { detail: nextAttendance }));
+        }
       } catch (error) {
         toast.error(error.response?.data?.message || "Unable to mark attendance.");
       } finally {

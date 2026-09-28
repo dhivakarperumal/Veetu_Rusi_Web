@@ -34,52 +34,47 @@ const AdminLayout = () => {
     const [rejectReason, setRejectReason] = useState("");
     const [isRejecting, setIsRejecting] = useState(false);
 
-    // Online & Location Tracking State
-    const [isOnline, setIsOnline] = useState(() => localStorage.getItem("delivery_isOnline") === "true");
-    const [lastOnline, setLastOnline] = useState(() => localStorage.getItem("delivery_lastOnline") || "Never");
-    const watchIdRef = useRef(null);
+    const [attendanceStatus, setAttendanceStatus] = useState({ currentSession: null, records: [] });
+    const isOnline = Boolean(attendanceStatus.currentSession);
+    const lastCheckOut = attendanceStatus.records.find(record => record.check_out_at)?.check_out_at;
+    const lastOnline = lastCheckOut
+        ? new Date(lastCheckOut).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+        : "Never";
 
     useEffect(() => {
-        if (isOnline) {
-            localStorage.setItem("delivery_isOnline", "true");
-            if (navigator.geolocation) {
-                watchIdRef.current = navigator.geolocation.watchPosition(
-                    (position) => {
-                        const { latitude, longitude } = position.coords;
-                        // Mock sending background ping
-                        console.log(`[Auto Location Update] Lat: ${latitude}, Lng: ${longitude} at ${new Date().toLocaleTimeString()}`);
-                        setLocationData(prev => ({ ...prev, latitude, longitude }));
-                    },
-                    (error) => {
-                        console.error("Background Location tracking error:", error);
-                        if (error.code === 1) {
-                            setIsOnline(false);
-                            toast.error("Please allow location access to go online.");
-                        }
-                    },
-                    { enableHighAccuracy: true, maximumAge: 10000, timeout: 10000 }
-                );
+        let isCurrent = true;
+        const syncAttendanceStatus = async (event) => {
+            if (event?.detail) {
+                setAttendanceStatus({
+                    currentSession: event.detail.currentSession || null,
+                    records: Array.isArray(event.detail.records) ? event.detail.records : [],
+                });
+                return;
             }
-        } else {
-            localStorage.setItem("delivery_isOnline", "false");
-            const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            localStorage.setItem("delivery_lastOnline", now);
-            setLastOnline(now);
-            if (watchIdRef.current) {
-                navigator.geolocation.clearWatch(watchIdRef.current);
-                watchIdRef.current = null;
-            }
-        }
-
-        return () => {
-            if (watchIdRef.current) {
-                navigator.geolocation.clearWatch(watchIdRef.current);
-                watchIdRef.current = null;
+            try {
+                const { data } = await api.get("/delivery/attendance");
+                if (isCurrent) {
+                    setAttendanceStatus({
+                        currentSession: data.currentSession || null,
+                        records: Array.isArray(data.records) ? data.records : [],
+                    });
+                }
+            } catch (error) {
+                console.error("Failed to sync delivery attendance status:", error);
             }
         };
-    }, [isOnline]);
 
-    const toggleOnlineStatus = () => setIsOnline(prev => !prev);
+        syncAttendanceStatus();
+        const interval = window.setInterval(() => syncAttendanceStatus(), 15000);
+        window.addEventListener("delivery-attendance-updated", syncAttendanceStatus);
+        return () => {
+            isCurrent = false;
+            window.clearInterval(interval);
+            window.removeEventListener("delivery-attendance-updated", syncAttendanceStatus);
+        };
+    }, [deliveryBoyId]);
+
+    const toggleOnlineStatus = () => navigate("/delivery/attendance");
 
     const playNotificationSound = () => {
         try {
