@@ -39,7 +39,7 @@ const Attendance = () => {
     let isCurrent = true;
     loadAttendance().then((data) => {
       if (!isCurrent) return;
-      if (data) setAttendance({ today: data.today || "", records: Array.isArray(data.records) ? data.records : [] });
+      if (data) setAttendance({ today: data.today || "", currentSession: data.currentSession || null, records: Array.isArray(data.records) ? data.records : [] });
       setLoading(false);
     });
     return () => { isCurrent = false; };
@@ -48,11 +48,9 @@ const Attendance = () => {
   const refreshAttendance = async () => {
     setLoading(true);
     const data = await loadAttendance();
-    if (data) setAttendance({ today: data.today || "", records: Array.isArray(data.records) ? data.records : [] });
+    if (data) setAttendance({ today: data.today || "", currentSession: data.currentSession || null, records: Array.isArray(data.records) ? data.records : [] });
     setLoading(false);
   };
-
-  const hasMarkedToday = attendance.records.some((record) => dateKey(record.attendance_date) === attendance.today);
 
   const markAttendance = () => {
     if (!navigator.geolocation) {
@@ -60,17 +58,19 @@ const Attendance = () => {
       return;
     }
 
+    const action = attendance.currentSession ? "check_out" : "check_in";
     setMarking(true);
     navigator.geolocation.getCurrentPosition(async ({ coords }) => {
       try {
         await api.post("/delivery/attendance", {
+          action,
           latitude: coords.latitude,
           longitude: coords.longitude,
           accuracy: coords.accuracy,
         });
-        toast.success("Attendance marked with your current location.");
+        toast.success(action === "check_in" ? "Checked in with your current location." : "Checked out with your current location.");
         const data = await loadAttendance();
-        if (data) setAttendance({ today: data.today || "", records: Array.isArray(data.records) ? data.records : [] });
+        if (data) setAttendance({ today: data.today || "", currentSession: data.currentSession || null, records: Array.isArray(data.records) ? data.records : [] });
       } catch (error) {
         toast.error(error.response?.data?.message || "Unable to mark attendance.");
       } finally {
@@ -107,22 +107,21 @@ const Attendance = () => {
               <span className="text-sm font-bold uppercase">Today</span>
             </div>
             <p className="mt-3 text-2xl font-extrabold">{formatDate(attendance.today)}</p>
-            {hasMarkedToday ? (
+            {attendance.currentSession && (
               <div className="mt-6 flex items-start gap-3 rounded-xl border border-emerald-400/20 bg-emerald-400/10 p-4">
                 <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-300" size={20} />
                 <div>
-                  <p className="font-bold text-emerald-200">Attendance marked</p>
-                  <p className="mt-1 text-sm text-slate-300">Check-in at {formatTime(attendance.records.find((record) => dateKey(record.attendance_date) === attendance.today)?.check_in_at)}</p>
+                  <p className="font-bold text-emerald-200">You are checked in</p>
+                  <p className="mt-1 text-sm text-slate-300">Session started at {formatTime(attendance.currentSession.check_in_at)}</p>
                 </div>
               </div>
-            ) : (
-              <button type="button" onClick={markAttendance} disabled={marking || loading} className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-400 px-5 py-3.5 font-extrabold text-slate-950 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-60">
-                {marking ? <LoaderCircle size={19} className="animate-spin" /> : <Navigation size={18} />}
-                {marking ? "Getting location..." : "Mark attendance"}
-              </button>
             )}
+            <button type="button" onClick={markAttendance} disabled={marking || loading} className={`mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3.5 font-extrabold transition disabled:cursor-not-allowed disabled:opacity-60 ${attendance.currentSession ? "bg-rose-400 text-slate-950 hover:bg-rose-300" : "bg-emerald-400 text-slate-950 hover:bg-emerald-300"}`}>
+              {marking ? <LoaderCircle size={19} className="animate-spin" /> : <Navigation size={18} />}
+              {marking ? "Getting location..." : attendance.currentSession ? "Check out now" : "Check in now"}
+            </button>
             <p className="mt-3 flex items-center gap-2 text-xs leading-5 text-slate-400">
-              <MapPin size={14} className="shrink-0" /> Your current GPS location is saved with each check-in.
+              <MapPin size={14} className="shrink-0" /> Your address and GPS location are saved at every check-in and check-out.
             </p>
           </div>
 
@@ -131,8 +130,9 @@ const Attendance = () => {
               <Clock3 size={20} />
               <span className="text-sm font-bold uppercase">Check-in policy</span>
             </div>
-            <p className="mt-3 text-lg font-bold">One attendance check-in per day</p>
-            <p className="mt-2 text-sm leading-6 text-slate-400">Location permission is required. Check-ins are recorded with the time and coordinates so your franchise admin can verify your attendance.</p>
+            <p className="mt-3 text-lg font-bold">Check in and out as needed</p>
+            <p className="mt-2 text-sm leading-6 text-slate-400">End your current session before starting another. Each event records the time, address, and GPS coordinates for your franchise admin.</p>
+            <p className="mt-3 text-xs text-slate-500">Address lookup: © OpenStreetMap contributors</p>
           </div>
         </section>
 
@@ -150,10 +150,12 @@ const Attendance = () => {
                 <div key={record.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 sm:px-6">
                   <div>
                     <p className="font-bold">{formatDate(record.attendance_date)}</p>
-                    <p className="mt-1 text-sm text-slate-400">Checked in at {formatTime(record.check_in_at)}</p>
+                    <p className="mt-1 text-sm text-slate-400">In {formatTime(record.check_in_at)} · Out {formatTime(record.check_out_at)}</p>
+                    <p className="mt-2 max-w-xl text-xs leading-5 text-slate-400">In: {record.check_in_address || `Near ${Number(record.latitude).toFixed(5)}, ${Number(record.longitude).toFixed(5)}`}</p>
+                    {record.check_out_at && <p className="mt-1 max-w-xl text-xs leading-5 text-slate-400">Out: {record.check_out_address || `Near ${Number(record.check_out_latitude).toFixed(5)}, ${Number(record.check_out_longitude).toFixed(5)}`}</p>}
                   </div>
-                  <a href={`https://www.google.com/maps?q=${record.latitude},${record.longitude}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-emerald-300 hover:bg-white/5">
-                    <MapPin size={14} /> View check-in location
+                  <a href={`https://www.google.com/maps?q=${record.check_out_at ? record.check_out_latitude : record.latitude},${record.check_out_at ? record.check_out_longitude : record.longitude}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-emerald-300 hover:bg-white/5">
+                    <MapPin size={14} /> View {record.check_out_at ? "check-out" : "check-in"} location
                   </a>
                 </div>
               ))}

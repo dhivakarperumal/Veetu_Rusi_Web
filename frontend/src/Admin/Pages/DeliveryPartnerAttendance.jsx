@@ -58,7 +58,7 @@ const DeliveryPartnerAttendance = () => {
           <div>
             <p className="text-sm font-semibold text-emerald-300">Delivery partners</p>
             <h1 className="mt-1 text-3xl font-black">Attendance</h1>
-            <p className="mt-2 text-sm text-slate-400">Partner check-ins and captured locations for your franchise.</p>
+            <p className="mt-2 text-sm text-slate-400">Partner work sessions, locations, and check-in/check-out history for your franchise.</p>
           </div>
           <div className="flex flex-wrap items-end gap-3">
             <label className="block">
@@ -76,26 +76,27 @@ const DeliveryPartnerAttendance = () => {
 
         <section className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-5 py-4 sm:px-6">
-            <h2 className="font-extrabold">Check-in records</h2>
-            <span className="text-sm text-slate-400">{records.length} {records.length === 1 ? "partner" : "partners"}</span>
+            <h2 className="font-extrabold">Attendance sessions</h2>
+            <span className="text-sm text-slate-400">{records.length} {records.length === 1 ? "session" : "sessions"}</span>
           </div>
+          <p className="border-b border-white/5 px-5 py-2 text-xs text-slate-500 sm:px-6">Address lookup: © OpenStreetMap contributors</p>
           {loading ? (
             <div className="flex items-center justify-center gap-2 p-12 text-sm text-slate-400"><LoaderCircle size={18} className="animate-spin" /> Loading attendance</div>
           ) : records.length === 0 ? (
             <div className="p-12 text-center">
               <p className="font-semibold text-slate-200">No check-ins for {formatDate(date)}</p>
-              <p className="mt-2 text-sm text-slate-400">Attendance marked by your delivery partners will appear here.</p>
+              <p className="mt-2 text-sm text-slate-400">Sessions started by your delivery partners will appear here.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-190 text-left text-sm">
+              <table className="w-full min-w-260 text-left text-sm">
                 <thead className="bg-slate-950/70 text-xs uppercase text-slate-400">
                   <tr>
                     <th className="px-6 py-3 font-bold">Delivery partner</th>
-                    <th className="px-6 py-3 font-bold">Check-in</th>
+                    <th className="px-6 py-3 font-bold">Checked in</th>
+                    <th className="px-6 py-3 font-bold">Checked out</th>
                     <th className="px-6 py-3 font-bold">Phone</th>
-                    <th className="px-6 py-3 font-bold">Location</th>
-                    <th className="px-6 py-3 font-bold">GPS accuracy</th>
+                    <th className="px-6 py-3 font-bold">Locations</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
@@ -105,15 +106,29 @@ const DeliveryPartnerAttendance = () => {
                         <p className="font-bold text-white">{record.delivery_partner_name}</p>
                         <p className="mt-1 text-xs text-slate-500">{formatDate(record.attendance_date)}</p>
                       </td>
-                      <td className="px-6 py-4 text-slate-300">{new Date(record.check_in_at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}</td>
+                      <td className="px-6 py-4 text-slate-300">
+                        <p>{new Date(record.check_in_at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}</p>
+                        <p className="mt-1 max-w-xs whitespace-normal text-xs leading-5 text-slate-400">{record.check_in_address || "Address unavailable for older session"}</p>
+                      </td>
+                      <td className="px-6 py-4 text-slate-300">
+                        {record.check_out_at ? (
+                          <>
+                            <p>{new Date(record.check_out_at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}</p>
+                            <p className="mt-1 max-w-xs whitespace-normal text-xs leading-5 text-slate-400">{record.check_out_address || "Address unavailable for older session"}</p>
+                          </>
+                        ) : <span className="rounded-full bg-emerald-400/10 px-2.5 py-1 text-xs font-bold text-emerald-300">Active</span>}
+                      </td>
                       <td className="px-6 py-4 text-slate-300">{record.mobile || "-"}</td>
                       <td className="px-6 py-4">
                         <a href={`https://www.google.com/maps?q=${record.latitude},${record.longitude}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-emerald-300 hover:text-emerald-200">
-                          <MapPin size={15} /> View map
+                          <MapPin size={15} /> Check-in map
                         </a>
-                        <p className="mt-1 font-mono text-xs text-slate-500">{Number(record.latitude).toFixed(5)}, {Number(record.longitude).toFixed(5)}</p>
+                        {record.check_out_at && (
+                          <a href={`https://www.google.com/maps?q=${record.check_out_latitude},${record.check_out_longitude}`} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-2 text-emerald-300 hover:text-emerald-200">
+                            <MapPin size={15} /> Check-out map
+                          </a>
+                        )}
                       </td>
-                      <td className="px-6 py-4 text-slate-300">{record.accuracy_m == null ? "-" : `±${Math.round(Number(record.accuracy_m))} m`}</td>
                     </tr>
                   ))}
                 </tbody>

@@ -550,12 +550,27 @@ const createDeliveryAttendanceTable = async () => {
                 latitude DECIMAL(10, 7) NOT NULL,
                 longitude DECIMAL(10, 7) NOT NULL,
                 accuracy_m DECIMAL(10, 2),
+                check_in_address LONGTEXT,
+                check_out_at DATETIME,
+                check_out_latitude DECIMAL(10, 7),
+                check_out_longitude DECIMAL(10, 7),
+                check_out_accuracy_m DECIMAL(10, 2),
+                check_out_address LONGTEXT,
                 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                UNIQUE KEY uq_delivery_partner_attendance_day (delivery_partner_user_id, attendance_date),
                 KEY idx_delivery_attendance_franchise_date (franchise_admin_id, attendance_date),
-                KEY idx_delivery_attendance_date (attendance_date)
+                KEY idx_delivery_attendance_date (attendance_date),
+                KEY idx_delivery_attendance_partner_date (delivery_partner_user_id, attendance_date)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         `);
+        await ensureColumnExists('delivery_partner_attendance', 'check_in_address', 'LONGTEXT');
+        await ensureColumnExists('delivery_partner_attendance', 'check_out_at', 'DATETIME NULL');
+        await ensureColumnExists('delivery_partner_attendance', 'check_out_latitude', 'DECIMAL(10, 7) NULL');
+        await ensureColumnExists('delivery_partner_attendance', 'check_out_longitude', 'DECIMAL(10, 7) NULL');
+        await ensureColumnExists('delivery_partner_attendance', 'check_out_accuracy_m', 'DECIMAL(10, 2) NULL');
+        await ensureColumnExists('delivery_partner_attendance', 'check_out_address', 'LONGTEXT');
+        try {
+            await pool.execute('ALTER TABLE delivery_partner_attendance DROP INDEX uq_delivery_partner_attendance_day');
+        } catch {}
         console.log('✓ delivery_partner_attendance table created or already exists');
     } catch (error) {
         console.error('✗ Error creating delivery_partner_attendance table:', error.message);

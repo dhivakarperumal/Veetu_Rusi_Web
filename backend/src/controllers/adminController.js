@@ -796,7 +796,10 @@ exports.getDeliveryPartnerAttendance = async (req, res) => {
             SELECT attendance.id, attendance.delivery_partner_name,
               DATE_FORMAT(attendance.attendance_date, '%Y-%m-%d') AS attendance_date,
              attendance.check_in_at, attendance.latitude, attendance.longitude,
-             attendance.accuracy_m, dp.mobile, dp.vehicle_number
+                    attendance.accuracy_m, attendance.check_in_address,
+                    attendance.check_out_at, attendance.check_out_latitude,
+                    attendance.check_out_longitude, attendance.check_out_accuracy_m,
+                    attendance.check_out_address, dp.mobile, dp.vehicle_number
       FROM delivery_partner_attendance attendance
       LEFT JOIN delivery_partners dp ON dp.id = attendance.delivery_partner_id
       WHERE attendance.franchise_admin_id IN (${adminIds.map(() => '?').join(', ')})`;

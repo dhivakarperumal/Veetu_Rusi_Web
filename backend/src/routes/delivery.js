@@ -3,6 +3,45 @@ const router = express.Router();
 const pool = require('../config/db');
 const { verifyToken, requireRole } = require('../middleware/authMiddleware');
 
+const geocodeCache = new Map();
+let geocodeQueue = Promise.resolve();
+let lastGeocodeRequestAt = 0;
+const reverseGeocode = async (latitude, longitude) => {
+  const cacheKey = `${latitude.toFixed(5)},${longitude.toFixed(5)}`;
+  const cached = geocodeCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.address;
+
+  try {
+    const url = new URL('https://nominatim.openstreetmap.org/reverse');
+    url.search = new URLSearchParams({
+      format: 'jsonv2',
+      lat: String(latitude),
+      lon: String(longitude),
+      zoom: '18',
+      addressdetails: '1',
+    }).toString();
+    const request = geocodeQueue.then(async () => {
+      const delay = Math.max(0, 1000 - (Date.now() - lastGeocodeRequestAt));
+      if (delay) await new Promise((resolve) => setTimeout(resolve, delay));
+      lastGeocodeRequestAt = Date.now();
+      return fetch(url, {
+        headers: { 'User-Agent': 'VeetuRusiDeliveryAttendance/1.0' },
+        signal: AbortSignal.timeout(5000),
+      });
+    });
+    geocodeQueue = request.then(() => undefined, () => undefined);
+    const response = await request;
+    if (!response.ok) throw new Error(`Geocoder returned ${response.status}`);
+    const data = await response.json();
+    const address = data.display_name || `Near ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+    geocodeCache.set(cacheKey, { address, expiresAt: Date.now() + 60 * 60 * 1000 });
+    return address;
+  } catch (error) {
+    console.warn('Attendance reverse geocoding failed:', error.message);
+    return `Near ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+  }
+};
+
 router.use(verifyToken);
 router.use(requireRole(['delivery_partner']));
 
@@ -10,16 +49,22 @@ router.get('/attendance', async (req, res) => {
   try {
     const deliveryPartnerUserId = req.user?.user_id || req.user?.id;
     const [rows] = await pool.execute(
-            `SELECT id, delivery_partner_name, DATE_FORMAT(attendance_date, '%Y-%m-%d') AS attendance_date,
-              check_in_at, latitude, longitude, accuracy_m
+      `SELECT id, delivery_partner_name, DATE_FORMAT(attendance_date, '%Y-%m-%d') AS attendance_date,
+              check_in_at, latitude, longitude, accuracy_m, check_in_address,
+              check_out_at, check_out_latitude, check_out_longitude,
+              check_out_accuracy_m, check_out_address
        FROM delivery_partner_attendance
        WHERE delivery_partner_user_id = ?
-       ORDER BY attendance_date DESC
-       LIMIT 30`,
+       ORDER BY check_in_at DESC
+       LIMIT 100`,
       [String(deliveryPartnerUserId)]
     );
     const [[todayRow]] = await pool.execute("SELECT DATE_FORMAT(CURDATE(), '%Y-%m-%d') AS today");
-    res.json({ today: todayRow.today, records: rows });
+    res.json({
+      today: todayRow.today,
+      currentSession: rows.find((record) => !record.check_out_at) || null,
+      records: rows,
+    });
   } catch (error) {
     console.error('Delivery partner attendance fetch error:', error);
     res.status(500).json({ message: 'Unable to load attendance.' });
@@ -27,53 +72,103 @@ router.get('/attendance', async (req, res) => {
 });
 
 router.post('/attendance', async (req, res) => {
+  let connection;
+  let transactionStarted = false;
   try {
     const deliveryPartnerUserId = String(req.user?.user_id || req.user?.id || '');
+    const action = req.body?.action || 'check_in';
     const latitude = Number(req.body?.latitude);
     const longitude = Number(req.body?.longitude);
     const accuracy = req.body?.accuracy == null ? null : Number(req.body.accuracy);
 
-    if (!deliveryPartnerUserId || req.body?.latitude == null || req.body?.longitude == null ||
+    if (!deliveryPartnerUserId || !['check_in', 'check_out'].includes(action) ||
+      req.body?.latitude == null || req.body?.longitude == null ||
       !Number.isFinite(latitude) || latitude < -90 || latitude > 90 ||
-        !Number.isFinite(longitude) || longitude < -180 || longitude > 180 ||
-        (accuracy !== null && (!Number.isFinite(accuracy) || accuracy < 0))) {
+      !Number.isFinite(longitude) || longitude < -180 || longitude > 180 ||
+      (accuracy !== null && (!Number.isFinite(accuracy) || accuracy < 0))) {
       return res.status(400).json({ message: 'A valid current location is required to mark attendance.' });
     }
 
-    const [partners] = await pool.execute(
+    const address = await reverseGeocode(latitude, longitude);
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+    transactionStarted = true;
+
+    const [partners] = await connection.execute(
       `SELECT id, name, created_by
        FROM delivery_partners
        WHERE user_id = ? OR delivery_partner_user_id = ?
        ORDER BY id DESC
-       LIMIT 1`,
+       LIMIT 1
+       FOR UPDATE`,
       [deliveryPartnerUserId, deliveryPartnerUserId]
     );
     if (!partners.length) {
+      await connection.rollback();
+      transactionStarted = false;
       return res.status(404).json({ message: 'Delivery partner profile not found.' });
     }
 
     const partner = partners[0];
-    const [result] = await pool.execute(
-      `INSERT INTO delivery_partner_attendance
-         (delivery_partner_id, delivery_partner_user_id, delivery_partner_name, franchise_admin_id,
-          attendance_date, check_in_at, latitude, longitude, accuracy_m)
-       VALUES (?, ?, ?, ?, CURDATE(), NOW(), ?, ?, ?)`,
-      [partner.id, deliveryPartnerUserId, partner.name || req.user?.name || 'Delivery Partner',
-        partner.created_by || null, latitude, longitude, accuracy]
+    const [openSessions] = await connection.execute(
+      `SELECT id FROM delivery_partner_attendance
+       WHERE delivery_partner_user_id = ? AND check_out_at IS NULL
+       ORDER BY check_in_at DESC LIMIT 1 FOR UPDATE`,
+      [deliveryPartnerUserId]
     );
-    const [rows] = await pool.execute(
-            `SELECT id, delivery_partner_name, DATE_FORMAT(attendance_date, '%Y-%m-%d') AS attendance_date,
-              check_in_at, latitude, longitude, accuracy_m
-       FROM delivery_partner_attendance WHERE id = ?`,
-      [result.insertId]
-    );
-    res.status(201).json({ message: 'Attendance marked successfully.', record: rows[0] });
-  } catch (error) {
-    if (error.code === 'ER_DUP_ENTRY') {
-      return res.status(409).json({ message: 'Attendance has already been marked for today.' });
+
+    let sessionId;
+    let message;
+    if (action === 'check_in') {
+      if (openSessions.length) {
+        await connection.rollback();
+        transactionStarted = false;
+        return res.status(409).json({ message: 'Check out of your current session before starting another.' });
+      }
+      const [result] = await connection.execute(
+        `INSERT INTO delivery_partner_attendance
+           (delivery_partner_id, delivery_partner_user_id, delivery_partner_name, franchise_admin_id,
+            attendance_date, check_in_at, latitude, longitude, accuracy_m, check_in_address)
+         VALUES (?, ?, ?, ?, CURDATE(), NOW(), ?, ?, ?, ?)`,
+        [partner.id, deliveryPartnerUserId, partner.name || req.user?.name || 'Delivery Partner',
+          partner.created_by || null, latitude, longitude, accuracy, address]
+      );
+      sessionId = result.insertId;
+      message = 'Checked in successfully.';
+    } else {
+      if (!openSessions.length) {
+        await connection.rollback();
+        transactionStarted = false;
+        return res.status(409).json({ message: 'There is no active session to check out.' });
+      }
+      sessionId = openSessions[0].id;
+      await connection.execute(
+        `UPDATE delivery_partner_attendance
+         SET check_out_at = NOW(), check_out_latitude = ?, check_out_longitude = ?,
+             check_out_accuracy_m = ?, check_out_address = ?
+         WHERE id = ?`,
+        [latitude, longitude, accuracy, address, sessionId]
+      );
+      message = 'Checked out successfully.';
     }
+
+    await connection.commit();
+    transactionStarted = false;
+    const [rows] = await pool.execute(
+      `SELECT id, delivery_partner_name, DATE_FORMAT(attendance_date, '%Y-%m-%d') AS attendance_date,
+              check_in_at, latitude, longitude, accuracy_m, check_in_address,
+              check_out_at, check_out_latitude, check_out_longitude,
+              check_out_accuracy_m, check_out_address
+       FROM delivery_partner_attendance WHERE id = ?`,
+      [sessionId]
+    );
+    res.status(action === 'check_in' ? 201 : 200).json({ message, record: rows[0] });
+  } catch (error) {
+    if (transactionStarted && connection) await connection.rollback();
     console.error('Delivery partner attendance save error:', error);
     res.status(500).json({ message: 'Unable to save attendance.' });
+  } finally {
+    connection?.release();
   }
 });
 
