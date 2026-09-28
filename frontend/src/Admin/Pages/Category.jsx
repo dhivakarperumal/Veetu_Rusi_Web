@@ -449,7 +449,7 @@ const Category = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Auto-Generated ID</label>
-                    <div className="bg-emerald-50 border text-white border-emerald-100 rounded-2xl px-5 py-3.5 font-black text-sm shadow-inner flex items-center gap-3">
+                    <div className="bg-emerald-50 border text-slate-900 border-emerald-100 rounded-2xl px-5 py-3.5 font-black text-sm shadow-inner flex items-center gap-3">
                       <FaFileAlt className="opacity-60" /> {category.catId}
                     </div>
                   </div>
@@ -462,7 +462,7 @@ const Category = () => {
                       value={category.name}
                       onChange={handleChange}
                       placeholder="Enter name (e.g. Dry Fruits)"
-                      className="w-full bg-slate-50 text-white border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-emerald-600 focus:ring-4 focus:ring-emerald-600/5 transition-all font-black  text-sm"
+                      className="w-full bg-slate-50 text-slate-900 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-emerald-600 focus:ring-4 focus:ring-emerald-600/5 transition-all font-black text-sm placeholder:text-slate-400"
                       required
                     />
                   </div>
@@ -476,7 +476,7 @@ const Category = () => {
                     onChange={handleChange}
                     rows={3}
                     placeholder="What items fall under this category?"
-                    className="w-full bg-slate-50 border text-white border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-emerald-600 transition-all font-black text-sm resize-none"
+                    className="w-full bg-slate-50 border text-slate-900 border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-emerald-600 transition-all font-black text-sm resize-none placeholder:text-slate-400"
                     required
                   />
                 </div>
