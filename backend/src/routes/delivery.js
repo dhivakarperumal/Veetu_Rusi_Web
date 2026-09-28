@@ -45,6 +45,27 @@ const reverseGeocode = async (latitude, longitude) => {
 router.use(verifyToken);
 router.use(requireRole(['delivery_partner']));
 
+const getDeliveryPartnerOrderAccess = async (deliveryPartnerUserId) => {
+  const partnerId = String(deliveryPartnerUserId || '');
+  const [[state]] = await pool.execute(
+    `SELECT
+       EXISTS (
+         SELECT 1 FROM delivery_partner_attendance
+         WHERE delivery_partner_user_id = ? AND check_out_at IS NULL
+       ) AS is_checked_in,
+       EXISTS (
+         SELECT 1 FROM user_food_order_table
+         WHERE (delivery_partner = ? OR delivery_partner_user_id = ?)
+           AND status NOT IN ('Delivered', 'Cancelled')
+       ) AS has_active_order`,
+    [partnerId, partnerId, partnerId]
+  );
+  return {
+    isCheckedIn: Boolean(state.is_checked_in),
+    hasActiveOrder: Boolean(state.has_active_order),
+  };
+};
+
 router.get('/attendance', async (req, res) => {
   try {
     const deliveryPartnerUserId = req.user?.user_id || req.user?.id;
@@ -311,6 +332,9 @@ router.get('/dashboard-stats', async (req, res) => {
 router.get('/orders', async (req, res) => {
   try {
     const deliveryBoyId = req.user?.user_id || req.user?.id;
+    const { isCheckedIn } = await getDeliveryPartnerOrderAccess(deliveryBoyId);
+    if (!isCheckedIn) return res.json([]);
+
     const { status } = req.query;
     
     let query = `
@@ -394,6 +418,8 @@ router.get('/wallet-history', async (req, res) => {
 router.get('/orders/available', async (req, res) => {
   try {
     const deliveryBoyId = req.user?.user_id || req.user?.id;
+    const { isCheckedIn, hasActiveOrder } = await getDeliveryPartnerOrderAccess(deliveryBoyId);
+    if (!isCheckedIn || hasActiveOrder) return res.json([]);
 
     // ── Step 1: Try to find franchise/admin context from delivery_partners table ──
     let franchiseAdminId = null;
@@ -480,6 +506,13 @@ router.patch('/orders/:id/assign', async (req, res) => {
     const { latitude, longitude, pincode, area, district } = req.body || {};
     // Prioritize user_id (e.g. 'DEL-xxx') to avoid global user ID mismatches
     const deliveryBoyId = req.user?.user_id || req.user?.id || null;
+    const { isCheckedIn, hasActiveOrder } = await getDeliveryPartnerOrderAccess(deliveryBoyId);
+    if (!isCheckedIn) {
+      return res.status(403).json({ message: 'Check in before accepting delivery orders.' });
+    }
+    if (hasActiveOrder) {
+      return res.status(409).json({ message: 'Complete your current delivery before accepting another order.' });
+    }
 
     // First, look up the delivery partner's details
     console.log('🔍 [Assignment] Looking up delivery partner with id:', deliveryBoyId);
