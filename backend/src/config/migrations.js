@@ -536,6 +536,32 @@ const createDeliveryPartnersTable = async () => {
     }
 };
 
+const createDeliveryAttendanceTable = async () => {
+    try {
+        await pool.execute(`
+            CREATE TABLE IF NOT EXISTS delivery_partner_attendance (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                delivery_partner_id INT NOT NULL,
+                delivery_partner_user_id VARCHAR(255) NOT NULL,
+                delivery_partner_name VARCHAR(255) NOT NULL,
+                franchise_admin_id VARCHAR(255),
+                attendance_date DATE NOT NULL,
+                check_in_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                latitude DECIMAL(10, 7) NOT NULL,
+                longitude DECIMAL(10, 7) NOT NULL,
+                accuracy_m DECIMAL(10, 2),
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE KEY uq_delivery_partner_attendance_day (delivery_partner_user_id, attendance_date),
+                KEY idx_delivery_attendance_franchise_date (franchise_admin_id, attendance_date),
+                KEY idx_delivery_attendance_date (attendance_date)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `);
+        console.log('✓ delivery_partner_attendance table created or already exists');
+    } catch (error) {
+        console.error('✗ Error creating delivery_partner_attendance table:', error.message);
+    }
+};
+
 const createReviewsTable = async () => {
     try {
         // Product Reviews Table
@@ -1328,6 +1354,7 @@ const createReferralTables = async () => {
         createFranchiseProductsTable,
         createChefFoodTable,
         createDeliveryPartnersTable,
+        createDeliveryAttendanceTable,
         createSubscriptionPlansTable,
         createSubscriptionPaymentsTable,
         createReviewsTable,

@@ -53,6 +53,7 @@ router.patch('/homechefs/:id/status', adminController.updateHomeChefStatus);
 
 // Delivery Partner Management
 router.get('/delivery-partners', adminController.getDeliveryPartners);
+router.get('/delivery-partners/attendance', adminController.getDeliveryPartnerAttendance);
 router.get('/delivery-partners/:id', adminController.getDeliveryPartnerById);
 router.post('/delivery-partners', deliveryPartnerUploadFields, adminController.createDeliveryPartner);
 router.put('/delivery-partners/:id', deliveryPartnerUploadFields, adminController.updateDeliveryPartner);

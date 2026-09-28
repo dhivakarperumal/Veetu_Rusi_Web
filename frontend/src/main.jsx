@@ -67,6 +67,7 @@ const FoodOrderDetails = React.lazy(() => import("./Admin/Pages/FoodOrderDetails
 const FoodProducts = React.lazy(() => import("./Admin/Pages/FoodProducts.jsx"));
 const FoodProductDetails = React.lazy(() => import("./Admin/Pages/FoodProductDetails.jsx"));
 const DeliveryPartnerManagement = React.lazy(() => import("./Admin/Pages/DeliveryPartnerManagement.jsx"));
+const DeliveryPartnerAttendance = React.lazy(() => import("./Admin/Pages/DeliveryPartnerAttendance.jsx"));
 const DeliveryPartnerDetails = React.lazy(() => import("./Admin/Pages/DeliveryPartnerDetails.jsx"));
 const ReferralManagement = React.lazy(() => import("./Admin/Pages/ReferralManagement.jsx"));
 const Referral = React.lazy(() => import("./Components/Pages/Referral.jsx"));
@@ -300,6 +301,7 @@ const router = createHashRouter([
       { path: "homechefs/categories", element: <AdminHomeChefCategories /> },
       { path: "homechefs/:id", element: <HomeChefDetail /> },
       { path: "delivery-partners", element: <DeliveryPartnerManagement /> },
+      { path: "delivery-partners/attendance", element: <DeliveryPartnerAttendance /> },
       { path: "delivery-partners/:id", element: <DeliveryPartnerDetails /> },
       { path: "users", element: <UserManagement /> },
       { path: "orders", element: <AdminOrderManagement /> },

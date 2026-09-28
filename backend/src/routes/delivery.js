@@ -6,6 +6,77 @@ const { verifyToken, requireRole } = require('../middleware/authMiddleware');
 router.use(verifyToken);
 router.use(requireRole(['delivery_partner']));
 
+router.get('/attendance', async (req, res) => {
+  try {
+    const deliveryPartnerUserId = req.user?.user_id || req.user?.id;
+    const [rows] = await pool.execute(
+            `SELECT id, delivery_partner_name, DATE_FORMAT(attendance_date, '%Y-%m-%d') AS attendance_date,
+              check_in_at, latitude, longitude, accuracy_m
+       FROM delivery_partner_attendance
+       WHERE delivery_partner_user_id = ?
+       ORDER BY attendance_date DESC
+       LIMIT 30`,
+      [String(deliveryPartnerUserId)]
+    );
+    const [[todayRow]] = await pool.execute("SELECT DATE_FORMAT(CURDATE(), '%Y-%m-%d') AS today");
+    res.json({ today: todayRow.today, records: rows });
+  } catch (error) {
+    console.error('Delivery partner attendance fetch error:', error);
+    res.status(500).json({ message: 'Unable to load attendance.' });
+  }
+});
+
+router.post('/attendance', async (req, res) => {
+  try {
+    const deliveryPartnerUserId = String(req.user?.user_id || req.user?.id || '');
+    const latitude = Number(req.body?.latitude);
+    const longitude = Number(req.body?.longitude);
+    const accuracy = req.body?.accuracy == null ? null : Number(req.body.accuracy);
+
+    if (!deliveryPartnerUserId || req.body?.latitude == null || req.body?.longitude == null ||
+      !Number.isFinite(latitude) || latitude < -90 || latitude > 90 ||
+        !Number.isFinite(longitude) || longitude < -180 || longitude > 180 ||
+        (accuracy !== null && (!Number.isFinite(accuracy) || accuracy < 0))) {
+      return res.status(400).json({ message: 'A valid current location is required to mark attendance.' });
+    }
+
+    const [partners] = await pool.execute(
+      `SELECT id, name, created_by
+       FROM delivery_partners
+       WHERE user_id = ? OR delivery_partner_user_id = ?
+       ORDER BY id DESC
+       LIMIT 1`,
+      [deliveryPartnerUserId, deliveryPartnerUserId]
+    );
+    if (!partners.length) {
+      return res.status(404).json({ message: 'Delivery partner profile not found.' });
+    }
+
+    const partner = partners[0];
+    const [result] = await pool.execute(
+      `INSERT INTO delivery_partner_attendance
+         (delivery_partner_id, delivery_partner_user_id, delivery_partner_name, franchise_admin_id,
+          attendance_date, check_in_at, latitude, longitude, accuracy_m)
+       VALUES (?, ?, ?, ?, CURDATE(), NOW(), ?, ?, ?)`,
+      [partner.id, deliveryPartnerUserId, partner.name || req.user?.name || 'Delivery Partner',
+        partner.created_by || null, latitude, longitude, accuracy]
+    );
+    const [rows] = await pool.execute(
+            `SELECT id, delivery_partner_name, DATE_FORMAT(attendance_date, '%Y-%m-%d') AS attendance_date,
+              check_in_at, latitude, longitude, accuracy_m
+       FROM delivery_partner_attendance WHERE id = ?`,
+      [result.insertId]
+    );
+    res.status(201).json({ message: 'Attendance marked successfully.', record: rows[0] });
+  } catch (error) {
+    if (error.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ message: 'Attendance has already been marked for today.' });
+    }
+    console.error('Delivery partner attendance save error:', error);
+    res.status(500).json({ message: 'Unable to save attendance.' });
+  }
+});
+
 // Get dashboard stats
 router.get('/dashboard-stats', async (req, res) => {
   try {

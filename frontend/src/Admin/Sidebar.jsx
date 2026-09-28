@@ -19,6 +19,7 @@ import {
   Handshake,
   ChefHat,
   Bike,
+  ClipboardCheck,
   ShoppingBag,
   CreditCard,
   ShieldCheck,
@@ -39,7 +40,14 @@ const navItems = [
       { path: "/admin/homechefs/categories", label: "Category New One", icon: Layers },
     ],
   },
-  { path: "/admin/delivery-partners", label: "Delivery Partners", icon: Bike },
+  {
+    label: "Delivery Partners",
+    icon: Bike,
+    children: [
+      { path: "/admin/delivery-partners", label: "Delivery Partners List", icon: Bike },
+      { path: "/admin/delivery-partners/attendance", label: "Attendance", icon: ClipboardCheck, adminOnly: true },
+    ],
+  },
   {
     label: "Food Orders",
     icon: ShoppingCart,
@@ -232,8 +240,9 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
 
             /* ===== DROPDOWN ITEM ===== */
             if (item.children) {
+              const visibleChildren = item.children.filter((sub) => !sub.adminOnly || prefix === "/admin");
               const isMenuOpen = openMenu === item.label;
-              const isParentActive = isActiveRoute(item);
+              const isParentActive = visibleChildren.some((sub) => isSubActive(sub, visibleChildren));
               const isParentHighlighted = isMenuOpen || isParentActive;
 
               return (
@@ -261,10 +270,10 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                       className={`ml-4 pl-4 border-l border-white/5 space-y-1 overflow-y-auto hide-scrollbar transition-all duration-300
                       ${isMenuOpen ? "max-h-60 opacity-100 py-1" : "max-h-0 opacity-0"}`}
                     >
-                      {item.children.map((sub) => {
+                      {visibleChildren.map((sub) => {
                         const SubIcon = sub.icon;
                         const subPath = getDynamicPath(sub.path);
-                        const isActive = isSubActive(sub, item.children);
+                        const isActive = isSubActive(sub, visibleChildren);
 
                         return (
                           <NavLink

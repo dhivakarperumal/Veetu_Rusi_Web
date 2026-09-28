@@ -784,6 +784,36 @@ exports.getDeliveryPartners = async (req, res) => {
     res.status(500).json({ message: 'Error retrieving delivery partners.', error: error.message });
   }
 };
+
+exports.getDeliveryPartnerAttendance = async (req, res) => {
+  try {
+    const adminIds = [req.user?.user_id, req.user?.id]
+      .filter((value) => value !== undefined && value !== null && String(value).trim() !== '')
+      .map(String);
+    if (!adminIds.length) return res.status(401).json({ message: 'Unauthorized' });
+
+    let query = `
+            SELECT attendance.id, attendance.delivery_partner_name,
+              DATE_FORMAT(attendance.attendance_date, '%Y-%m-%d') AS attendance_date,
+             attendance.check_in_at, attendance.latitude, attendance.longitude,
+             attendance.accuracy_m, dp.mobile, dp.vehicle_number
+      FROM delivery_partner_attendance attendance
+      LEFT JOIN delivery_partners dp ON dp.id = attendance.delivery_partner_id
+      WHERE attendance.franchise_admin_id IN (${adminIds.map(() => '?').join(', ')})`;
+    const params = [...adminIds];
+    if (req.query.date && /^\d{4}-\d{2}-\d{2}$/.test(req.query.date)) {
+      query += ' AND attendance.attendance_date = ?';
+      params.push(req.query.date);
+    }
+    query += ' ORDER BY attendance.check_in_at DESC LIMIT 500';
+
+    const [rows] = await pool.execute(query, params);
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving delivery partner attendance.', error: error.message });
+  }
+};
+
 exports.getDeliveryPartnerById = superadminController.getDeliveryPartnerById;
 exports.createDeliveryPartner = superadminController.createDeliveryPartner;
 exports.updateDeliveryPartner = superadminController.updateDeliveryPartner;
