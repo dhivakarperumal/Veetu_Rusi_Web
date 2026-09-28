@@ -28,7 +28,16 @@ const initialForm = {
 
 const dietaryOptions = ["veg", "non-veg"];
 const packagingOptions = ["Pouch", "Box", "Foil", "Bottle", "Packet"];
-const cuisineOptions = ["Multi Cuisine", "North Indian", "South Indian", "Continental", "Chinese", "Italian", "Thai", "Mexican"];
+const cuisineOptions = [
+  { name: "Multi Cuisine", image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=96&h=96&q=75" },
+  { name: "North Indian", image: "https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=96&h=96&q=75" },
+  { name: "South Indian", image: "https://images.unsplash.com/photo-1668236543090-82eba5ee5976?auto=format&fit=crop&w=96&h=96&q=75" },
+  { name: "Continental", image: "https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=96&h=96&q=75" },
+  { name: "Chinese", image: "https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=96&h=96&q=75" },
+  { name: "Italian", image: "https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=96&h=96&q=75" },
+  { name: "Thai", image: "https://images.unsplash.com/photo-1559847844-5315695dadae?auto=format&fit=crop&w=96&h=96&q=75" },
+  { name: "Mexican", image: "https://images.unsplash.com/photo-1511690743698-d9d85f2fbf38?auto=format&fit=crop&w=96&h=96&q=75" }
+];
 
 const ChefFoodAdd = () => {
   const [profile, setProfile] = useState(null);
@@ -37,6 +46,7 @@ const ChefFoodAdd = () => {
   const [editId, setEditId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [activeStepIndex, setActiveStepIndex] = useState(0);
+  const [isCuisineOpen, setIsCuisineOpen] = useState(false);
   const navigate = useNavigate();
   const { id } = useParams();
 
@@ -325,12 +335,43 @@ const ChefFoodAdd = () => {
 
                       <div>
                         <label className="block text-xs font-black text-slate-300 uppercase mb-2">Cuisine</label>
-                        <select value={form.cuisine} onChange={(e) => setForm((p) => ({ ...p, cuisine: e.target.value }))} className={fieldClass}>
-                          <option value="">Select cuisine</option>
-                          {cuisineOptions.map((cuisine) => (
-                            <option key={cuisine} value={cuisine}>{cuisine}</option>
-                          ))}
-                        </select>
+                        <div className="relative">
+                          <button
+                            type="button"
+                            aria-haspopup="listbox"
+                            aria-expanded={isCuisineOpen}
+                            onClick={() => setIsCuisineOpen((open) => !open)}
+                            className={`${fieldClass} flex items-center gap-3 text-left`}
+                          >
+                            {form.cuisine ? (
+                              <>
+                                <img src={cuisineOptions.find((cuisine) => cuisine.name === form.cuisine)?.image} alt="" className="h-10 w-10 rounded-xl object-cover" />
+                                <span>{form.cuisine}</span>
+                              </>
+                            ) : <span className="text-slate-400">Select cuisine</span>}
+                            <span className="ml-auto text-slate-400" aria-hidden="true">{isCuisineOpen ? "▲" : "▼"}</span>
+                          </button>
+                          {isCuisineOpen && (
+                            <div role="listbox" aria-label="Cuisine" className="absolute z-20 mt-2 max-h-72 w-full overflow-y-auto rounded-2xl border border-white/10 bg-[#0b0d10] p-2 shadow-2xl">
+                              {cuisineOptions.map((cuisine) => (
+                                <button
+                                  key={cuisine.name}
+                                  type="button"
+                                  role="option"
+                                  aria-selected={form.cuisine === cuisine.name}
+                                  onClick={() => {
+                                    setForm((previous) => ({ ...previous, cuisine: cuisine.name }));
+                                    setIsCuisineOpen(false);
+                                  }}
+                                  className={`flex w-full items-center gap-3 rounded-xl p-2 text-left transition-colors hover:bg-white/10 ${form.cuisine === cuisine.name ? "bg-white/10" : ""}`}
+                                >
+                                  <img src={cuisine.image} alt="" className="h-10 w-10 shrink-0 rounded-xl object-cover" />
+                                  <span className="text-sm font-semibold text-white">{cuisine.name}</span>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
 
