@@ -20,6 +20,19 @@ const formatTime = (value) => value
   ? new Date(value).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })
   : "-";
 
+const requestLocation = (options) => new Promise((resolve, reject) => {
+  navigator.geolocation.getCurrentPosition(resolve, reject, options);
+});
+
+const getCurrentLocation = async () => {
+  try {
+    return await requestLocation({ enableHighAccuracy: false, maximumAge: 60000, timeout: 12000 });
+  } catch (error) {
+    if (error.code === 1) throw error;
+    return requestLocation({ enableHighAccuracy: true, maximumAge: 0, timeout: 45000 });
+  }
+};
+
 const Attendance = () => {
   const [attendance, setAttendance] = useState({ today: "", records: [] });
   const [loading, setLoading] = useState(true);
@@ -80,21 +93,21 @@ const Attendance = () => {
     }
 
     setMarking(true);
-    navigator.geolocation.getCurrentPosition(async ({ coords }) => {
+    getCurrentLocation().then(async ({ coords }) => {
       await saveAttendance({
         latitude: coords.latitude,
         longitude: coords.longitude,
         accuracy: coords.accuracy,
       });
-    }, (error) => {
+    }).catch((error) => {
       const message = error.code === error.PERMISSION_DENIED
         ? "Allow location access to mark attendance."
         : error.code === error.TIMEOUT
-          ? "Could not get your location in time. Please try again."
+          ? "Location is taking too long. Check that device location is on and try near a window or outdoors."
           : "Unable to get your location. Please try again.";
       toast.error(message);
       setMarking(false);
-    }, { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 });
+    });
   };
 
   return (
