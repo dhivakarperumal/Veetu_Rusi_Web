@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../../api";
 import { toast, Toaster } from "react-hot-toast";
@@ -170,21 +170,27 @@ const NewOrders = () => {
   const [viewMode, setViewMode]         = useState("table"); // "card" | "table"
   const [acceptingOrder, setAcceptingOrder] = useState(null);
 
-  const fetchOrders = async () => {
-    setLoading(true);
+  const fetchOrders = useCallback(async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     try {
       const { data } = await api.get("/delivery/orders/available");
       setOrders(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
-      toast.error("Unable to fetch new orders.");
-      setOrders([]);
+      if (showLoading) {
+        toast.error("Unable to fetch new orders.");
+        setOrders([]);
+      }
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
-  };
+  }, []);
 
-  useEffect(() => { fetchOrders(); }, []);
+  useEffect(() => {
+    fetchOrders();
+    const interval = window.setInterval(() => fetchOrders(false), 9000);
+    return () => window.clearInterval(interval);
+  }, [fetchOrders]);
 
   const filtered = orders.filter((o) => {
     // Exclude orders that are already assigned to a delivery partner
