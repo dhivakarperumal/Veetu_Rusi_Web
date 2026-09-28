@@ -17,6 +17,19 @@ const fmt = (n) =>
 
 const statusStyle = () => "bg-amber-950 text-amber-300 border-amber-800";
 
+const requestCurrentPosition = (options) => new Promise((resolve, reject) => {
+  navigator.geolocation.getCurrentPosition(resolve, reject, options);
+});
+
+const getCurrentPositionWithFallback = async () => {
+  try {
+    return await requestCurrentPosition({ enableHighAccuracy: false, maximumAge: 60000, timeout: 12000 });
+  } catch (error) {
+    if (error.code === 1) throw error;
+    return requestCurrentPosition({ enableHighAccuracy: true, maximumAge: 0, timeout: 45000 });
+  }
+};
+
 /* ─── Location Modal ─────────────────────────────────────────────────── */
 const LocationModal = ({ order, onClose, onSaved }) => {
   const [locationData, setLocationData] = useState({
@@ -31,11 +44,13 @@ const LocationModal = ({ order, onClose, onSaved }) => {
       return;
     }
     setFetchingLocation(true);
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
+    getCurrentPositionWithFallback().then(async (position) => {
         const { latitude, longitude } = position.coords;
         try {
-          const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+          const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`, {
+            signal: AbortSignal.timeout(10000),
+          });
+          if (!response.ok) throw new Error(`Address lookup failed with status ${response.status}`);
           const data = await response.json();
           if (data && data.address) {
             setLocationData({
@@ -53,16 +68,18 @@ const LocationModal = ({ order, onClose, onSaved }) => {
           console.error("Reverse geocoding failed", error);
           toast.error("Failed to fetch address details. Using coordinates only.");
           setLocationData((prev) => ({ ...prev, latitude, longitude }));
-        } finally {
-          setFetchingLocation(false);
         }
-      },
-      (error) => {
+      }).catch((error) => {
         console.error("Geolocation error", error);
-        toast.error("Unable to retrieve your location");
+        const message = error.code === 1
+          ? "Allow location access in browser settings, then retry GPS."
+          : error.code === 3
+            ? "Location is taking too long. Check device location and try near a window or outdoors."
+            : "Unable to determine your location. Check device location and retry.";
+        toast.error(message);
+      }).finally(() => {
         setFetchingLocation(false);
-      }
-    );
+      });
   };
 
   useEffect(() => {
