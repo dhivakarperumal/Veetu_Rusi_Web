@@ -56,7 +56,7 @@ const getDeliveryPartnerOrderAccess = async (deliveryPartnerUserId) => {
        EXISTS (
          SELECT 1 FROM user_food_order_table
          WHERE (delivery_partner = ? OR delivery_partner_user_id = ?)
-           AND status NOT IN ('Delivered', 'Cancelled')
+           AND status NOT IN ('Delivered', 'Cancelled', 'Completed')
        ) AS has_active_order`,
     [partnerId, partnerId, partnerId]
   );
@@ -439,26 +439,38 @@ router.get('/orders/available', async (req, res) => {
       console.warn('[orders/available] delivery_partners lookup failed:', e.message);
     }
 
-    // ── Step 2: Fallback — check users table for franchise context ──
-    if (!franchiseAdminId) {
+    // ── Step 2: Prefer the explicit franchise link over the audit creator ──
+    try {
+      const [userRows] = await pool.execute(
+        `SELECT created_by, franchise_user_id
+           FROM users
+          WHERE user_id = ? AND role = 'delivery_partner'
+          LIMIT 1`,
+        [deliveryBoyId]
+      );
+      if (userRows.length > 0) {
+        franchiseAdminId = userRows[0].franchise_user_id || franchiseAdminId || userRows[0].created_by || null;
+      }
+    } catch (e) {
+      console.warn('[orders/available] users franchise lookup failed:', e.message);
+    }
+
+    let franchiseId = null;
+    if (franchiseAdminId) {
       try {
-        const [userRows] = await pool.execute(
-          `SELECT created_by, franchise_user_id
-             FROM users
-            WHERE user_id = ? AND role = 'delivery_partner'
+        const [franchiseRows] = await pool.execute(
+          `SELECT franchise_id FROM franchise_owners
+            WHERE franch_user_id = ? OR franchise_id = ? OR CAST(id AS CHAR) = ?
             LIMIT 1`,
-          [deliveryBoyId]
+          [franchiseAdminId, franchiseAdminId, franchiseAdminId]
         );
-        if (userRows.length > 0) {
-          franchiseAdminId =
-            userRows[0].franchise_user_id || userRows[0].created_by || null;
-        }
+        franchiseId = franchiseRows[0]?.franchise_id || null;
       } catch (e) {
-        console.warn('[orders/available] users franchise lookup failed:', e.message);
+        console.warn('[orders/available] franchise lookup failed:', e.message);
       }
     }
 
-    console.log(`[orders/available] deliveryBoyId: ${deliveryBoyId}, franchiseAdminId: ${franchiseAdminId}`);
+    console.log(`[orders/available] deliveryBoyId: ${deliveryBoyId}, franchiseAdminId: ${franchiseAdminId}, franchiseId: ${franchiseId}`);
 
     // ── Step 3: Build query ────────────────────────────────────────────────────
     // Base: orders that are awaiting a delivery partner (unassigned)
@@ -479,14 +491,22 @@ router.get('/orders/available', async (req, res) => {
     const params = [];
 
     if (franchiseAdminId) {
-      // Show orders that belong to the same franchise admin
-      // (either by chef's created_by or order's franchise_user_id)
+      const franchiseIdToMatch = franchiseId || franchiseAdminId;
       query += ` AND (
         c.created_by = ?
         OR o.franchise_user_id = ?
+        OR c.franchise_user_id = ?
+        OR o.franchise_id = ?
+        OR c.franchise_id = ?
         OR c.created_by IS NULL
       )`;
-      params.push(franchiseAdminId, franchiseAdminId);
+      params.push(
+        franchiseAdminId,
+        franchiseAdminId,
+        franchiseAdminId,
+        franchiseIdToMatch,
+        franchiseIdToMatch
+      );
     }
     // If no franchise context found → show ALL unassigned orders (no extra filter)
 
