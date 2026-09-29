@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { CalendarDays, CheckCircle2, Clock3, LoaderCircle, LogIn, LogOut, RefreshCw } from "lucide-react";
+import { CalendarDays, CheckCircle2, Clock3, LoaderCircle, LogIn, LogOut } from "lucide-react";
 import { toast } from "react-hot-toast";
 import api from "../../api";
 import AttendanceDateFilters, { filterAttendanceRecords } from "../../Components/CommenComponents/AttendanceDateFilters";
@@ -101,19 +101,6 @@ const Attendance = () => {
     return () => { isCurrent = false; };
   }, [loadAttendance]);
 
-  const refreshAttendance = async () => {
-    setLoading(true);
-    const data = await loadAttendance();
-    if (data) {
-      setAttendance({
-        today: data.today || "",
-        currentSession: data.currentSession || null,
-        records: Array.isArray(data.records) ? data.records : [],
-      });
-    }
-    setLoading(false);
-  };
-
   const markAttendance = async () => {
     const action = attendance.currentSession ? "check_out" : "check_in";
     setMarking(true);
@@ -151,9 +138,22 @@ const Attendance = () => {
             <h1 className="text-3xl font-black uppercase tracking-tight text-white">Attendance</h1>
             <p className="mt-2 text-xs font-bold uppercase tracking-widest text-slate-300">Manage your work sessions and attendance history</p>
           </div>
-          <button type="button" onClick={refreshAttendance} disabled={loading} className="flex items-center justify-center gap-2 self-start rounded-xl bg-emerald-700 px-6 py-3.5 text-xs font-black uppercase tracking-widest text-white shadow-md transition hover:bg-emerald-800 hover:shadow-lg active:scale-95 disabled:opacity-50 sm:self-auto">
-            <RefreshCw size={16} className={loading ? "animate-spin" : ""} /> Refresh
-          </button>
+          <div className="flex flex-wrap items-center gap-3 self-start sm:self-auto">
+            {attendance.currentSession && (
+              <span className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-xs font-bold text-emerald-300">
+                Checked in since {formatTime(attendance.currentSession.check_in_at)}
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={markAttendance}
+              disabled={marking || loading}
+              className={`inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-xs font-black uppercase tracking-widest text-white shadow-md transition hover:shadow-lg active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 ${attendance.currentSession ? "bg-rose-700 hover:bg-rose-800" : "bg-emerald-700 hover:bg-emerald-800"}`}
+            >
+              {marking ? <LoaderCircle size={16} className="animate-spin" /> : attendance.currentSession ? <LogOut size={16} /> : <LogIn size={16} />}
+              {marking ? "Updating..." : attendance.currentSession ? "Check out" : "Check in"}
+            </button>
+          </div>
         </header>
 
         <section className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
@@ -180,6 +180,7 @@ const Attendance = () => {
           placeholder="Search attendance date, time or status..."
           viewMode={viewMode}
           onViewModeChange={setViewMode}
+          showFilterIcon={false}
           filters={(
             <AttendanceDateFilters
               filter={dateFilter}
