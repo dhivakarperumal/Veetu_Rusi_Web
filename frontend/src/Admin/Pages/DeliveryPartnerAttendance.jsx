@@ -1,14 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
-import { CalendarDays, ChevronLeft, ChevronRight, LayoutGrid, List, LoaderCircle, MapPin, RefreshCw, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, LayoutGrid, List, LoaderCircle, MapPin, RefreshCw, Search } from "lucide-react";
 import { toast } from "react-hot-toast";
 import api from "../../api";
 import AdminAttendanceSummaryCards from "../Components/AdminAttendanceSummaryCards";
 import AttendanceSessionCard from "../Components/AttendanceSessionCard";
-
-const localDate = () => {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-};
+import AttendanceDateRangeFilter, { getAttendanceDateParams, getTodayDateKey } from "../Components/AttendanceDateRangeFilter";
 
 const formatDate = (value) => {
   const key = String(value || "").slice(0, 10);
@@ -22,7 +18,9 @@ const formatDate = (value) => {
 };
 
 const DeliveryPartnerAttendance = () => {
-  const [date, setDate] = useState(localDate);
+  const [dateFilter, setDateFilter] = useState("today");
+  const [customStartDate, setCustomStartDate] = useState(getTodayDateKey);
+  const [customEndDate, setCustomEndDate] = useState(getTodayDateKey);
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -33,13 +31,14 @@ const DeliveryPartnerAttendance = () => {
 
   const loadAttendance = useCallback(async () => {
     try {
-      const { data } = await api.get("/admin/delivery-partners/attendance", { params: { date } });
+      const params = getAttendanceDateParams(dateFilter, customStartDate, customEndDate);
+      const { data } = await api.get("/admin/delivery-partners/attendance", { params });
       return data;
     } catch (error) {
       toast.error(error.response?.data?.message || "Unable to load attendance records.");
       return null;
     }
-  }, [date]);
+  }, [dateFilter, customStartDate, customEndDate]);
 
   useEffect(() => {
     let isCurrent = true;
@@ -56,6 +55,25 @@ const DeliveryPartnerAttendance = () => {
     const data = await loadAttendance();
     setRecords(Array.isArray(data) ? data : []);
     setLoading(false);
+  };
+
+  const handleDateFilterChange = (value) => {
+    setDateFilter(value);
+    setCurrentPage(1);
+    setLoading(true);
+  };
+
+  const handleCustomStartDateChange = (value) => {
+    setCustomStartDate(value);
+    if (customEndDate && value > customEndDate) setCustomEndDate(value);
+    setCurrentPage(1);
+    setLoading(true);
+  };
+
+  const handleCustomEndDateChange = (value) => {
+    setCustomEndDate(value);
+    setCurrentPage(1);
+    setLoading(true);
   };
 
   const partnerOptions = [...new Map(records.map((record) => {
@@ -105,10 +123,14 @@ const DeliveryPartnerAttendance = () => {
             />
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-            <label className="flex items-center gap-2 rounded-xl border border-white/10 bg-slate-950/80 px-3 py-2.5">
-              <CalendarDays size={17} className="shrink-0 text-emerald-300" />
-              <input type="date" value={date} aria-label="Filter by attendance date" onChange={(event) => { setCurrentPage(1); setLoading(true); setDate(event.target.value); }} className="scheme-dark min-w-0 bg-transparent text-sm text-white outline-none" />
-            </label>
+            <AttendanceDateRangeFilter
+              filter={dateFilter}
+              onFilterChange={handleDateFilterChange}
+              startDate={customStartDate}
+              endDate={customEndDate}
+              onStartDateChange={handleCustomStartDateChange}
+              onEndDateChange={handleCustomEndDateChange}
+            />
             <select
               value={partnerFilter}
               onChange={(event) => { setPartnerFilter(event.target.value); setCurrentPage(1); }}
@@ -135,7 +157,7 @@ const DeliveryPartnerAttendance = () => {
             <div className="flex items-center justify-center gap-2 p-12 text-sm text-slate-400"><LoaderCircle size={18} className="animate-spin" /> Loading attendance</div>
           ) : filteredRecords.length === 0 ? (
             <div className="p-12 text-center">
-              <p className="font-semibold text-slate-200">{records.length ? "No sessions match these filters." : `No check-ins for ${formatDate(date)}`}</p>
+              <p className="font-semibold text-slate-200">{records.length ? "No sessions match these filters." : "No check-ins for this date range."}</p>
               <p className="mt-2 text-sm text-slate-400">Sessions started by your delivery partners will appear here.</p>
             </div>
           ) : viewMode === "cards" ? (
