@@ -17,6 +17,11 @@ const formatDate = (value) => {
   });
 };
 
+const truncateFilterLabel = (value, maxLength) => {
+  const text = String(value || "");
+  return text.length > maxLength ? `${text.slice(0, maxLength - 3)}...` : text;
+};
+
 const DeliveryPartnerAttendance = () => {
   const [dateFilter, setDateFilter] = useState("today");
   const [customStartDate, setCustomStartDate] = useState(getTodayDateKey);
@@ -80,7 +85,10 @@ const DeliveryPartnerAttendance = () => {
     const id = String(record.delivery_partner_user_id || "");
     const name = record.delivery_partner_name || "Delivery Partner";
     const value = id || `name:${name}`;
-    return [value, { value, label: id ? `${name} (ID: ${id})` : name }];
+    const label = id
+      ? `${truncateFilterLabel(name, 20)} (${truncateFilterLabel(id, 14)})`
+      : truncateFilterLabel(name, 32);
+    return [value, { value, label }];
   })).values()];
   const filteredRecords = records.filter((record) => {
     const query = search.trim().toLowerCase();
@@ -135,7 +143,7 @@ const DeliveryPartnerAttendance = () => {
               value={partnerFilter}
               onChange={(event) => { setPartnerFilter(event.target.value); setCurrentPage(1); }}
               aria-label="Filter by delivery partner"
-              className="w-full cursor-pointer rounded-xl border border-white/10 bg-slate-950/80 px-3.5 py-3 text-xs font-bold uppercase tracking-widest text-slate-100 outline-none focus:border-emerald-600/40 sm:w-auto"
+              className="w-full max-w-full truncate cursor-pointer rounded-xl border border-white/10 bg-slate-950/80 px-3.5 py-3 text-xs font-bold uppercase tracking-widest text-slate-100 outline-none focus:border-emerald-600/40 sm:w-56"
             >
               <option value="all">All delivery partners</option>
               {partnerOptions.map((partner) => <option key={partner.value} value={partner.value}>{partner.label}</option>)}

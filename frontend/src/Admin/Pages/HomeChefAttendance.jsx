@@ -21,6 +21,11 @@ const formatTime = (value) => value
   ? new Date(value).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })
   : "-";
 
+const truncateFilterLabel = (value, maxLength) => {
+  const text = String(value || "");
+  return text.length > maxLength ? `${text.slice(0, maxLength - 3)}...` : text;
+};
+
 const HomeChefAttendance = () => {
   const [dateFilter, setDateFilter] = useState("today");
   const [customStartDate, setCustomStartDate] = useState(getTodayDateKey);
@@ -84,7 +89,10 @@ const HomeChefAttendance = () => {
     const id = String(record.home_chef_user_id || "");
     const name = record.home_chef_name || "Home Chef";
     const value = id || `name:${name}`;
-    return [value, { value, label: id ? `${name} (ID: ${id})` : name }];
+    const label = id
+      ? `${truncateFilterLabel(name, 20)} (${truncateFilterLabel(id, 14)})`
+      : truncateFilterLabel(name, 32);
+    return [value, { value, label }];
   })).values()];
   const filteredRecords = records.filter((record) => {
     const query = search.trim().toLowerCase();
@@ -138,7 +146,7 @@ const HomeChefAttendance = () => {
               value={chefFilter}
               onChange={(event) => { setChefFilter(event.target.value); setCurrentPage(1); }}
               aria-label="Filter by home chef"
-              className="w-full cursor-pointer rounded-xl border border-white/10 bg-slate-950/80 px-3.5 py-3 text-xs font-bold uppercase tracking-widest text-slate-100 outline-none focus:border-emerald-600/40 sm:w-auto"
+              className="w-full max-w-full truncate cursor-pointer rounded-xl border border-white/10 bg-slate-950/80 px-3.5 py-3 text-xs font-bold uppercase tracking-widest text-slate-100 outline-none focus:border-emerald-600/40 sm:w-56"
             >
               <option value="all">All home chefs</option>
               {chefOptions.map((chef) => <option key={chef.value} value={chef.value}>{chef.label}</option>)}
