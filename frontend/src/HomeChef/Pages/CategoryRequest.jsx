@@ -79,7 +79,7 @@ const CategoryRequest = ({ popup = false, onClose, onSubmitted }) => {
   };
 
   const requestForm = (
-        <form onSubmit={submitRequest} className={`overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl ${popup ? "flex min-h-0 flex-1 flex-col" : ""}`}>
+        <form onSubmit={submitRequest} className={`overflow-hidden bg-white ${popup ? "flex min-h-0 flex-1 flex-col" : "rounded-3xl border border-slate-200 shadow-xl"}`}>
           <div className={`space-y-6 p-6 sm:p-9 ${popup ? "min-h-0 flex-1 overflow-y-auto overscroll-contain touch-pan-y" : ""}`}>
             <div className="grid gap-5 sm:grid-cols-2">
               <label className="space-y-2 text-[11px] font-black uppercase tracking-wide text-slate-900">
@@ -136,10 +136,10 @@ const CategoryRequest = ({ popup = false, onClose, onSubmitted }) => {
 
   if (popup) {
     return createPortal(
-      <div className="fixed inset-0 z-10000 flex justify-end" role="presentation">
+      <div className="fixed inset-0 z-10000 flex items-center justify-center overflow-y-auto p-4 sm:p-6" role="presentation">
         <button type="button" aria-label="Close category request" onClick={close} className="absolute inset-0 bg-slate-950/65 backdrop-blur-sm" />
-        <section role="dialog" aria-modal="true" aria-labelledby="category-request-title" className="relative flex h-full min-h-0 w-full max-w-190 flex-col overflow-hidden bg-white shadow-2xl animate-in slide-in-from-right duration-300">
-          <header className="sticky top-0 z-10 flex items-center justify-between bg-emerald-600 px-6 py-6 text-white sm:px-9">
+        <section role="dialog" aria-modal="true" aria-labelledby="category-request-title" className="relative flex max-h-[92vh] min-h-0 w-full max-w-3xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+          <header className="flex shrink-0 items-center justify-between bg-emerald-600 px-6 py-6 text-white sm:px-9">
             <div>
               <h1 id="category-request-title" className="text-2xl font-black uppercase">New Category Request</h1>
               <p className="mt-1 text-xs font-bold uppercase tracking-wide text-emerald-100">Submit a product classification for review</p>
