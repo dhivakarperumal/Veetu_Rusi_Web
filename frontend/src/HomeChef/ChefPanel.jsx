@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import { io } from 'socket.io-client';
 import { toast, Toaster } from 'react-hot-toast';
 import api from '../api';
@@ -28,9 +28,7 @@ const AdminLayout = () => {
     const displayedOrderIdsRef = useRef(new Set());
     const [calculatedDistance, setCalculatedDistance] = useState(null);
 
-    const navigate = useNavigate();
     const formatCurrency = (amount) => `₹${Number(amount || 0).toFixed(2)}`;
-    const toggleOnlineStatus = () => navigate("/chef/attendance");
 
     useEffect(() => {
         let isCurrent = true;
@@ -323,7 +321,6 @@ const AdminLayout = () => {
                     onMenuClick={() => setSidebarOpen(true)}
                     isOnline={isOnline}
                     lastOnline={lastOnline}
-                    toggleOnlineStatus={toggleOnlineStatus}
                 />
                 <main className="flex-1 p-4 sm:p-5 lg:p-6 overflow-y-auto">
                     <div className="glass-container">
