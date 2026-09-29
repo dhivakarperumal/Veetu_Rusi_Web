@@ -1322,6 +1322,58 @@ const createReferralTables = async () => {
     }
 };
 
+    const createHomeChefCategoriesTable = async () => {
+        try {
+            await pool.execute(`
+                CREATE TABLE IF NOT EXISTS home_chef_categorys (
+                    id INT PRIMARY KEY AUTO_INCREMENT,
+                    CatId VARCHAR(50) NOT NULL UNIQUE,
+                    c_name VARCHAR(255) NOT NULL,
+                    discripti LONGTEXT,
+                    image LONGTEXT,
+                    subcategory LONGTEXT,
+                    category_type VARCHAR(100) DEFAULT 'Food',
+                    created_by VARCHAR(255),
+                    updated_by VARCHAR(255),
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    KEY idx_home_chef_category_type (category_type),
+                    KEY idx_home_chef_category_created_by (created_by)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            `);
+            console.log('✓ home_chef_categorys table created or already exists');
+        } catch (err) {
+            console.error('✗ Error creating home_chef_categorys table:', err.message || err);
+        }
+    };
+
+    const createCategoryRequestsTable = async () => {
+        try {
+            await pool.execute(`
+                CREATE TABLE IF NOT EXISTS home_chef_category_requests (
+                    id INT PRIMARY KEY AUTO_INCREMENT,
+                    category_type VARCHAR(100) NOT NULL DEFAULT 'Food',
+                    c_name VARCHAR(255) NOT NULL,
+                    discripti LONGTEXT NOT NULL,
+                    image LONGTEXT NOT NULL,
+                    subcategory LONGTEXT,
+                    chef_user_id VARCHAR(255) NOT NULL,
+                    chef_name VARCHAR(255),
+                    status VARCHAR(20) NOT NULL DEFAULT 'Pending',
+                    review_note LONGTEXT,
+                    reviewed_by VARCHAR(255),
+                    reviewed_at TIMESTAMP NULL DEFAULT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    KEY idx_category_request_status (status),
+                    KEY idx_category_request_chef (chef_user_id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            `);
+            console.log('✓ home_chef_category_requests table created or already exists');
+        } catch (err) {
+            console.error('✗ Error creating home_chef_category_requests table:', err.message || err);
+        }
+    };
+
     module.exports = {
         createProductsTable,
         createRecipeDetailsTable,
@@ -1346,6 +1398,8 @@ const createReferralTables = async () => {
         createCouponsTable,
         createCouponUsageTable,
         createReferralTables,
+        createHomeChefCategoriesTable,
+        createCategoryRequestsTable,
         // Ensure audit columns exist on all tables
         ensureAuditColumns: async () => {
             try {

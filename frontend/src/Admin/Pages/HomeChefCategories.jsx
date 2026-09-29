@@ -30,6 +30,8 @@ const HomeChefCategories = () => {
   const [previewImgs, setPreviewImgs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
+  const [categoryRequests, setCategoryRequests] = useState([]);
+  const [reviewingRequest, setReviewingRequest] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [viewMode, setViewMode] = useState("table");
   const [searchTerm, setSearchTerm] = useState("");
@@ -90,7 +92,31 @@ const HomeChefCategories = () => {
 
   useEffect(() => {
     fetchCategories();
+    fetchCategoryRequests();
   }, []);
+
+  const fetchCategoryRequests = async () => {
+    try {
+      const response = await api.get("/category-requests");
+      setCategoryRequests(Array.isArray(response.data) ? response.data : []);
+    } catch (err) {
+      console.error("Failed to load category requests:", err);
+      toast.error("Failed to load category requests.");
+    }
+  };
+
+  const reviewCategoryRequest = async (request, status) => {
+    setReviewingRequest(request.id);
+    try {
+      await api.patch(`/category-requests/${request.id}`, { status });
+      toast.success(`Category request ${status.toLowerCase()}.`);
+      await Promise.all([fetchCategoryRequests(), status === "Approved" ? fetchCategories() : Promise.resolve()]);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Could not review category request.");
+    } finally {
+      setReviewingRequest(null);
+    }
+  };
 
   const handleImageChange = async (e) => {
     const files = Array.from(e.target.files);
@@ -262,6 +288,7 @@ const HomeChefCategories = () => {
   }, [searchTerm, categoryTypeFilter]);
 
   const categoryTypes = [...new Set(categories.map((item) => item.category_type || "Food"))];
+  const pendingCategoryRequests = categoryRequests.filter((request) => request.status === "Pending");
 
   return (
     <div className="min-h-screen p-4 md:p-8 animate-in fade-in duration-700">
@@ -276,6 +303,40 @@ const HomeChefCategories = () => {
             <FaPlus /> Add New Category
           </button>
         </div>
+
+        <section className="mb-8 rounded-2xl border border-emerald-900/50 bg-slate-950/70 p-5 sm:p-6">
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-black text-white">Category Requests</h2>
+              <p className="mt-1 text-xs text-slate-400">Review categories submitted by home chefs.</p>
+            </div>
+            <span className="rounded-full bg-amber-400/10 px-3 py-1 text-xs font-black text-amber-300">{pendingCategoryRequests.length} pending</span>
+          </div>
+          {pendingCategoryRequests.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-slate-800 px-4 py-6 text-center text-sm text-slate-500">No category requests waiting for review.</p>
+          ) : (
+            <div className="space-y-4">
+              {pendingCategoryRequests.map((request) => (
+                <article key={request.id} className="grid gap-4 rounded-xl border border-slate-800 bg-slate-900/70 p-4 md:grid-cols-[112px_minmax(0,1fr)_auto]">
+                  {request.image?.[0] ? <img src={getImageUrl(request.image[0])} alt={request.c_name} className="h-24 w-full rounded-lg object-cover md:w-28" /> : <div className="grid h-24 place-items-center rounded-lg bg-slate-800 text-slate-500"><FaImage size={24} /></div>}
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="font-black text-white">{request.c_name}</h3>
+                      <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-black uppercase text-emerald-300">{request.category_type}</span>
+                    </div>
+                    <p className="mt-1 text-xs text-slate-400">Requested by {request.chef_name || `Chef ${request.chef_user_id}`}</p>
+                    <p className="mt-2 text-sm text-slate-300">{request.discripti}</p>
+                    {!!request.subcategory?.length && <div className="mt-3 flex flex-wrap gap-2">{request.subcategory.map((subcategory, index) => <span key={`${subcategory}-${index}`} className="rounded-full bg-slate-800 px-2.5 py-1 text-[10px] font-bold text-slate-300">{subcategory}</span>)}</div>}
+                  </div>
+                  <div className="flex items-center gap-2 md:flex-col md:items-stretch">
+                    <button type="button" disabled={reviewingRequest === request.id} onClick={() => reviewCategoryRequest(request, "Approved")} className="rounded-lg bg-emerald-600 px-4 py-2.5 text-xs font-black text-white transition hover:bg-emerald-500 disabled:opacity-50">Approve</button>
+                    <button type="button" disabled={reviewingRequest === request.id} onClick={() => reviewCategoryRequest(request, "Rejected")} className="rounded-lg border border-rose-900/60 px-4 py-2.5 text-xs font-black text-rose-300 transition hover:bg-rose-950/50 disabled:opacity-50">Reject</button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
 
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">

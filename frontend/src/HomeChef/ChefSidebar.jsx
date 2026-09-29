@@ -24,7 +24,7 @@ import {
   Clock,
   ShoppingCart,
   Star,
-  Users
+  Users,
 } from "lucide-react";
 import { useAuth } from "../PrivateRouter/AuthContext";
 
@@ -38,9 +38,9 @@ const navItems = [
       // { path: "/chef/food/add", label: "Add Food", icon: PlusCircle },
       { path: "/chef/food/all", label: "All Food", icon: UtensilsCrossed },
       { path: "/chef/products", label: "All Products", icon: List },
-      // { path: "/chef/add-products", label: "Add Product", icon: PlusSquare },
-      // { path: "/chef/products/stock", label: "Stock Details", icon: Archive }
-    ]
+      { path: "/chef/categoryrequest", label: "Category Request", icon: PlusSquare },
+      
+    ],
   },
   {
     path: "/chef/orders",
@@ -48,13 +48,29 @@ const navItems = [
     icon: ClipboardList,
     children: [
       { path: "/chef/orders?status=Pending", label: "New Order", icon: Clock },
-      { path: "/chef/orders?status=All", label: "All Orders", icon: ListOrdered },
-      
-      { path: "/chef/orders?status=Accepted", label: "Accept Order", icon: CheckCircle },
-     
-      { path: "/chef/orders?status=Delivered", label: "Delivered Order", icon: CheckCircle },
-      { path: "/chef/orders?status=Cancelled", label: "Cancelled Order", icon: XCircle }
-    ]
+      {
+        path: "/chef/orders?status=All",
+        label: "All Orders",
+        icon: ListOrdered,
+      },
+
+      {
+        path: "/chef/orders?status=Accepted",
+        label: "Accept Order",
+        icon: CheckCircle,
+      },
+
+      {
+        path: "/chef/orders?status=Delivered",
+        label: "Delivered Order",
+        icon: CheckCircle,
+      },
+      {
+        path: "/chef/orders?status=Cancelled",
+        label: "Cancelled Order",
+        icon: XCircle,
+      },
+    ],
   },
   { path: "/chef/material", label: "Buy Materials", icon: ShoppingCart },
   { path: "/chef/reviews", label: "Reviews", icon: Star },
@@ -97,7 +113,7 @@ const ChefSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
 
     // 2. Dropdown parent check: check if any child is perfectly active or a sub-path
     if (item.children) {
-      return item.children.some(child => {
+      return item.children.some((child) => {
         const childPath = getDynamicPath(child.path).split("?")[0];
         const activePaths = [childPath];
 
@@ -108,7 +124,9 @@ const ChefSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
           activePaths.push("/chef/add-products");
         }
 
-        return activePaths.some(path => currentPath === path || currentPath.startsWith(path + "/"));
+        return activePaths.some(
+          (path) => currentPath === path || currentPath.startsWith(path + "/"),
+        );
       });
     }
 
@@ -122,7 +140,7 @@ const ChefSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
 
   /* Dropdown logic - only one open at a time */
   const toggleMenu = (label) => {
-    setOpenMenu(prev => prev === label ? null : label);
+    setOpenMenu((prev) => (prev === label ? null : label));
   };
 
   return (
@@ -153,14 +171,21 @@ const ChefSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
               src="/logo.png"
               alt="Logo"
               className="w-8 h-8 object-contain"
-              onError={(e) => { e.target.src = "https://ui-avatars.com/api/?name=SP&background=2563EB&color=fff"; }}
+              onError={(e) => {
+                e.target.src =
+                  "https://ui-avatars.com/api/?name=SP&background=2563EB&color=fff";
+              }}
             />
           </div>
 
           {!collapsed && (
             <div className="overflow-hidden">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-emerald-400 opacity-80 mb-1">Platform Control</p>
-              <h1 className="text-lg font-black text-white tracking-tight">Veetu Rusi</h1>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-emerald-400 opacity-80 mb-1">
+                Platform Control
+              </p>
+              <h1 className="text-lg font-black text-white tracking-tight">
+                Veetu Rusi
+              </h1>
             </div>
           )}
 
@@ -187,18 +212,23 @@ const ChefSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                     onClick={() => toggleMenu(item.label)}
                     className={`
                       relative w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-200
-                      ${isMenuOpen
-                        ? "bg-slate-900/80 text-white ring-1 ring-emerald-500/25"
-                        : "text-slate-300 hover:bg-slate-800/80 hover:text-white"
+                      ${
+                        isMenuOpen
+                          ? "bg-slate-900/80 text-white ring-1 ring-emerald-500/25"
+                          : "text-slate-300 hover:bg-slate-800/80 hover:text-white"
                       }
                     `}
                   >
-                    <span className={`absolute left-0 top-1/2 h-10 w-1.5 -translate-y-1/2 rounded-r-full transition-all ${isMenuOpen ? 'bg-emerald-400' : 'bg-transparent'}`} />
+                    <span
+                      className={`absolute left-0 top-1/2 h-10 w-1.5 -translate-y-1/2 rounded-r-full transition-all ${isMenuOpen ? "bg-emerald-400" : "bg-transparent"}`}
+                    />
                     <Icon className="w-5 h-5 shrink-0 text-emerald-300" />
 
                     {!collapsed && (
                       <>
-                        <span className="flex-1 text-left text-sm font-semibold tracking-wide">{item.label}</span>
+                        <span className="flex-1 text-left text-sm font-semibold tracking-wide">
+                          {item.label}
+                        </span>
                         <ChevronDown
                           className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isMenuOpen ? "rotate-180 text-white" : ""}`}
                         />
@@ -218,26 +248,35 @@ const ChefSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                         const basePath = subPath.split("?")[0];
                         const targetQuery = subPath.split("?")[1] || "";
                         const currentQuery = location.search.replace("?", "");
-                        
+
                         let isActive = false;
-                        const isFoodForm = basePath === "/chef/food/all" && (
-                          location.pathname === "/chef/food/add" ||
-                          location.pathname.startsWith("/chef/food/edit/")
-                        );
-                        const isProductForm = basePath === "/chef/products" && (
-                          location.pathname === "/chef/add-products" ||
-                          location.pathname.startsWith("/chef/add-products/")
-                        );
-                        const isProductStock = basePath === "/chef/products" && (
-                          location.pathname === "/chef/products/stock" ||
-                          location.pathname.startsWith("/chef/products/stock/")
-                        );
+                        const isFoodForm =
+                          basePath === "/chef/food/all" &&
+                          (location.pathname === "/chef/food/add" ||
+                            location.pathname.startsWith("/chef/food/edit/"));
+                        const isProductForm =
+                          basePath === "/chef/products" &&
+                          (location.pathname === "/chef/add-products" ||
+                            location.pathname.startsWith(
+                              "/chef/add-products/",
+                            ));
+                        const isProductStock =
+                          basePath === "/chef/products" &&
+                          (location.pathname === "/chef/products/stock" ||
+                            location.pathname.startsWith(
+                              "/chef/products/stock/",
+                            ));
 
                         if (isFoodForm || isProductForm) {
                           isActive = true;
-                        } else if (!isProductStock && location.pathname === basePath) {
+                        } else if (
+                          !isProductStock &&
+                          location.pathname === basePath
+                        ) {
                           if (targetQuery) {
-                            isActive = currentQuery === targetQuery || (!currentQuery && targetQuery === "status=All");
+                            isActive =
+                              currentQuery === targetQuery ||
+                              (!currentQuery && targetQuery === "status=All");
                           } else {
                             isActive = currentQuery === "";
                           }
@@ -250,9 +289,10 @@ const ChefSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                             onClick={() => isOpen && onClose()}
                             className={`
                               flex items-center gap-3 px-4 py-3 rounded-2xl text-[13px] font-semibold transition-all duration-200
-                              ${isActive
-                                ? "bg-emerald-500/10 text-white shadow-sm shadow-emerald-500/10 border border-emerald-500/20"
-                                : "text-slate-400 hover:text-white hover:bg-slate-800/80"
+                              ${
+                                isActive
+                                  ? "bg-emerald-500/10 text-white shadow-sm shadow-emerald-500/10 border border-emerald-500/20"
+                                  : "text-slate-400 hover:text-white hover:bg-slate-800/80"
                               }
                             `}
                           >
@@ -282,15 +322,22 @@ const ChefSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                 }}
                 className={`
                   relative flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-200
-                  ${isActive
-                    ? "bg-slate-900/90 text-white shadow-xl shadow-slate-950/40"
-                    : "text-slate-300 hover:bg-slate-800/80 hover:text-white"
+                  ${
+                    isActive
+                      ? "bg-slate-900/90 text-white shadow-xl shadow-slate-950/40"
+                      : "text-slate-300 hover:bg-slate-800/80 hover:text-white"
                   }
                 `}
               >
-                <span className={`absolute left-0 top-1/2 h-10 w-1.5 -translate-y-1/2 rounded-r-full transition-all ${isActive ? 'bg-emerald-400' : 'bg-transparent'}`} />
+                <span
+                  className={`absolute left-0 top-1/2 h-10 w-1.5 -translate-y-1/2 rounded-r-full transition-all ${isActive ? "bg-emerald-400" : "bg-transparent"}`}
+                />
                 <Icon className="w-5 h-5 shrink-0 text-emerald-300" />
-                {!collapsed && <span className="text-sm font-semibold tracking-wide">{item.label}</span>}
+                {!collapsed && (
+                  <span className="text-sm font-semibold tracking-wide">
+                    {item.label}
+                  </span>
+                )}
               </NavLink>
             );
           })}
@@ -299,14 +346,20 @@ const ChefSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
         {/* ========== FOOTER / PROFILE ========== */}
         {!collapsed && (
           <div className="p-4 mx-3 mb-6 bg-[#0f141a] rounded-[2rem] border border-slate-800 shadow-inner shadow-slate-950/30">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-300 mb-3">Secure Mode</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-300 mb-3">
+              Secure Mode
+            </p>
             <div className="flex items-center gap-3">
               <div className="w-11 h-11 rounded-3xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-300 text-sm font-black shadow-sm">
                 {profileName?.charAt(0) || "A"}
               </div>
               <div className="overflow-hidden">
-                <p className="text-sm font-black text-white truncate">{profileName || "Administrator"}</p>
-                <p className="text-[10px] text-slate-400 uppercase tracking-[0.18em] mt-1">Live protection enabled</p>
+                <p className="text-sm font-black text-white truncate">
+                  {profileName || "Administrator"}
+                </p>
+                <p className="text-[10px] text-slate-400 uppercase tracking-[0.18em] mt-1">
+                  Live protection enabled
+                </p>
               </div>
             </div>
             <p className="mt-4 text-xs leading-5 text-slate-500">
@@ -328,8 +381,9 @@ const ChefSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
           "
         >
           <ChevronLeft
-            className={`w-4 h-4 transition-transform ${collapsed ? "rotate-180" : ""
-              }`}
+            className={`w-4 h-4 transition-transform ${
+              collapsed ? "rotate-180" : ""
+            }`}
           />
         </button>
       </aside>

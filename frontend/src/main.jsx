@@ -107,6 +107,7 @@ const SuperAdminWalletAndEarnings = React.lazy(() => import("./SuperAdmin/Pages/
 const ChefCategories = React.lazy(() => import("./HomeChef/Pages/ChefCategory.jsx"));
 const ChefFoodCategories = React.lazy(() => import("./HomeChef/Pages/ChefFoodCategories.jsx"));
 const ChefFoodCategoryAdd = React.lazy(() => import("./HomeChef/Pages/ChefFoodCategoryAdd.jsx"));
+const CategoryRequest = React.lazy(() => import("./HomeChef/Pages/CategoryRequest.jsx"));
 const SuperOrderManagement = React.lazy(() => import("./SuperAdmin/Pages/OrderManagement.jsx"));
 const SuperPayoutManagement = React.lazy(() => import("./SuperAdmin/Pages/PayoutManagement.jsx"));
 const FranchiseOwnerManagement = React.lazy(() => import("./SuperAdmin/Pages/FranchiseOwnerManagement.jsx"));
@@ -238,6 +239,7 @@ const router = createHashRouter([
       { path: "categories", element: <ChefCategories /> },
       { path: "food/categories", element: <ChefFoodCategories /> },
       { path: "food/categories/add", element: <ChefFoodCategoryAdd /> },
+      { path: "categoryrequest", element: <CategoryRequest /> },
       { path: "analytics", element: <AnalyticsDashboard /> },
       { path: "earnings", element: <WalletAndEarnings /> },
       { path: "customers", element: <ChefCustomers /> },

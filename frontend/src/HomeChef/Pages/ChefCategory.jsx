@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { FaPlus, FaEdit, FaTrash, FaTimes, FaImage } from "react-icons/fa";
 import api from "../../api";
 import toast from "react-hot-toast";
@@ -6,6 +7,7 @@ import imageCompression from "browser-image-compression";
 
 const ChefCategory = () => {
   const [categories, setCategories] = useState([]);
+  const [categoryRequests, setCategoryRequests] = useState([]);
   const [category, setCategory] = useState({
     catId: "",
     name: "",
@@ -32,7 +34,10 @@ const ChefCategory = () => {
   }, []);
 
   useEffect(() => {
-    if (profile) fetchCategories();
+    if (profile) {
+      fetchCategories();
+      fetchCategoryRequests();
+    }
   }, [profile]);
 
   const safeParse = (value) => {
@@ -76,6 +81,16 @@ const ChefCategory = () => {
     } catch (err) {
       console.error('Failed loading chef categories', err);
       toast.error('Could not load your category list.');
+    }
+  };
+
+  const fetchCategoryRequests = async () => {
+    try {
+      const res = await api.get('/category-requests/mine');
+      setCategoryRequests(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error('Failed loading category requests', err);
+      toast.error('Could not load your category requests.');
     }
   };
 
@@ -203,14 +218,58 @@ const ChefCategory = () => {
             <h1 className="text-3xl font-black text-white">Chef Categories</h1>
             <p className="text-sm text-slate-300 mt-2">Manage categories that belong to your chef profile.</p>
           </div>
-          <button
-            type="button"
-            onClick={openAddModal}
-            className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-emerald-600 text-white font-bold hover:bg-emerald-700 transition"
-          >
-            <FaPlus /> Add Category
-          </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <Link
+              to="/chef/categoryrequest"
+              className="inline-flex items-center gap-2 rounded-2xl border border-emerald-500/60 px-5 py-3 font-bold text-emerald-300 transition hover:bg-emerald-500/10"
+            >
+              <FaPlus /> Request Category
+            </Link>
+          </div>
         </div>
+
+        <section className="mb-8 overflow-hidden rounded-2xl border border-slate-800 bg-[#0b0d10]">
+          <div className="flex items-center justify-between border-b border-slate-800 px-5 py-4">
+            <div>
+              <h2 className="text-lg font-black text-white">Your Category Requests</h2>
+              <p className="mt-1 text-xs text-slate-400">Track the review status of categories you submitted.</p>
+            </div>
+            <span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-bold text-slate-300">{categoryRequests.length} total</span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-155 text-left text-sm">
+              <thead className="bg-slate-900/70 text-[11px] uppercase tracking-wide text-slate-400">
+                <tr>
+                  <th className="px-5 py-3 font-bold">Category</th>
+                  <th className="px-5 py-3 font-bold">Type</th>
+                  <th className="px-5 py-3 font-bold">Requested</th>
+                  <th className="px-5 py-3 font-bold">Status</th>
+                  <th className="px-5 py-3 font-bold">Review note</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800 text-slate-200">
+                {categoryRequests.length ? categoryRequests.map((request) => {
+                  const statusClass = request.status === 'Approved'
+                    ? 'bg-emerald-500/10 text-emerald-300'
+                    : request.status === 'Rejected'
+                      ? 'bg-rose-500/10 text-rose-300'
+                      : 'bg-amber-500/10 text-amber-300';
+                  return (
+                    <tr key={request.id}>
+                      <td className="px-5 py-4 font-bold">{request.c_name}</td>
+                      <td className="px-5 py-4 text-slate-400">{request.category_type}</td>
+                      <td className="px-5 py-4 text-slate-400">{new Date(request.created_at).toLocaleDateString()}</td>
+                      <td className="px-5 py-4"><span className={`rounded-full px-3 py-1 text-xs font-bold ${statusClass}`}>{request.status}</span></td>
+                      <td className="max-w-xs px-5 py-4 text-slate-400">{request.review_note || '-'}</td>
+                    </tr>
+                  );
+                }) : (
+                  <tr><td colSpan="5" className="px-5 py-8 text-center text-slate-500">You have not submitted any category requests yet.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
 
         {categories.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-slate-800 p-12 text-center text-slate-400 bg-[#0b0d10]">

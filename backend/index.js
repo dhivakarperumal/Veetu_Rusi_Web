@@ -14,6 +14,7 @@ const franchiseProductsRouter = require('./src/routes/franchiseProducts');
 const categoriesRouter = require('./src/routes/categories');
 const reviewsRouter = require('./src/routes/reviews');
 const chefCategoriesRouter = require('./src/routes/chefCategories');
+const categoryRequestsRouter = require('./src/routes/categoryRequests');
 const chefFoodCategoriesRouter = require('./src/routes/chefFoodCategories');
 const chefFoodsRouter = require('./src/routes/chefFoods');
 const recipesRouter = require('./src/routes/recipes');
@@ -49,6 +50,8 @@ let createDpEarningsTables = async () => {};
 let createCouponsTable = async () => {};
 let createCouponUsageTable = async () => {};
 let createReferralTables = async () => {};
+let createHomeChefCategoriesTable = async () => {};
+let createCategoryRequestsTable = async () => {};
 try {
   const migrations = require('./src/config/migrations');
   createProductsTable = migrations.createProductsTable || createProductsTable;
@@ -75,6 +78,8 @@ try {
   createCouponsTable = migrations.createCouponsTable || createCouponsTable;
   createCouponUsageTable = migrations.createCouponUsageTable || createCouponUsageTable;
   createReferralTables = migrations.createReferralTables || createReferralTables;
+  createHomeChefCategoriesTable = migrations.createHomeChefCategoriesTable || createHomeChefCategoriesTable;
+  createCategoryRequestsTable = migrations.createCategoryRequestsTable || createCategoryRequestsTable;
 } catch (err) {
   console.error('Warning: could not load migrations module:', err.message || err);
 }
@@ -136,6 +141,7 @@ app.use('/api/franchise-products', franchiseProductsRouter);
 app.use('/api/reviews', reviewsRouter);
 app.use('/api/categories', categoriesRouter);
 app.use('/api/chef-categories', chefCategoriesRouter);
+app.use('/api/category-requests', categoryRequestsRouter);
 app.use('/api/chef-food-categories', chefFoodCategoriesRouter);
 app.use('/api/chef-foods', chefFoodsRouter);
 app.use('/api/preorders', preordersRouter);
@@ -216,6 +222,8 @@ const startServer = async () => {
     await createCouponsTable();
     await createCouponUsageTable();
     await createReferralTables();
+    await createHomeChefCategoriesTable();
+    await createCategoryRequestsTable();
   } catch (err) {
     console.error('Migration error:', err.message || err);
   }
