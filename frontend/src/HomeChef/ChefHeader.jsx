@@ -348,26 +348,6 @@ const ChefHeader = ({ onMenuClick, isOnline, lastOnline }) => {
             {!isOnline && <span className="mt-1 flex items-center gap-1 text-[9px] font-bold tracking-wider text-slate-500"><Clock className="h-3 w-3" /> Last: {lastOnline}</span>}
           </div>
 
-          <div className="hidden md:flex flex-col items-end mr-2">
-            <button
-              type="button"
-              onClick={toggleOnlineStatus}
-              title="Open attendance to check in or out"
-              className={`relative flex items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all ${isOnline
-                ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]"
-                : "border-white/10 bg-slate-800 text-slate-400 hover:text-slate-300"
-              }`}
-            >
-              <span className={`h-2 w-2 rounded-full ${isOnline ? "animate-pulse bg-emerald-500 shadow-[0_0_8px_#10B981]" : "bg-slate-500"}`} />
-              {isOnline ? "Online" : "Offline"}
-            </button>
-            {!isOnline && (
-              <span className="mt-1 flex items-center gap-1 text-[9px] font-bold tracking-wider text-slate-500">
-                <Clock className="h-3 w-3" /> Last: {lastOnline}
-              </span>
-            )}
-          </div>
-
           {/* SEARCH */}
           <div className="relative flex items-center" ref={searchWrapperRef}>
             <div className={`flex items-center transition-all duration-300 overflow-visible ${showSearch ? 'w-56 sm:w-72 opacity-100 mr-2' : 'w-0 opacity-0 pointer-events-none'}`}>
