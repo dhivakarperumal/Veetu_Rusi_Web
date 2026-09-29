@@ -81,14 +81,14 @@ const HomeChefAttendance = () => {
   };
 
   const chefOptions = [...new Map(records.map((record) => {
-    const id = String(record.home_chef_id || "");
+    const id = String(record.home_chef_user_id || "");
     const name = record.home_chef_name || "Home Chef";
     const value = id || `name:${name}`;
     return [value, { value, label: id ? `${name} (ID: ${id})` : name }];
   })).values()];
   const filteredRecords = records.filter((record) => {
     const query = search.trim().toLowerCase();
-    const id = String(record.home_chef_id || "");
+    const id = String(record.home_chef_user_id || "");
     const chefKey = id || `name:${record.home_chef_name || "Home Chef"}`;
     return (chefFilter === "all" || chefKey === chefFilter) &&
       (!query || `${record.home_chef_name || ""} ${id}`.toLowerCase().includes(query));
@@ -120,8 +120,8 @@ const HomeChefAttendance = () => {
               type="search"
               value={search}
               onChange={(event) => { setSearch(event.target.value); setCurrentPage(1); }}
-              placeholder="Search by home chef name or ID..."
-              aria-label="Search home chef attendance by name or ID"
+              placeholder="Search by home chef name or user ID..."
+              aria-label="Search home chef attendance by name or user ID"
               className="w-full rounded-xl border border-white/10 bg-slate-950/80 py-3 pl-11 pr-4 text-sm font-medium text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-emerald-600/40 focus:bg-slate-900"
             />
           </div>
@@ -168,7 +168,7 @@ const HomeChefAttendance = () => {
                 <AttendanceSessionCard
                   key={record.id}
                   name={record.home_chef_name || "Home Chef"}
-                  personId={record.home_chef_id}
+                  personId={record.home_chef_user_id}
                   date={formatDate(record.attendance_date)}
                   phone={record.mobile}
                   checkIn={record.check_in_at}
@@ -182,7 +182,7 @@ const HomeChefAttendance = () => {
                 <thead className="bg-slate-950/70 text-xs uppercase text-slate-400">
                   <tr>
                     <th className="px-6 py-3 font-bold">Home chef</th>
-                    <th className="px-6 py-3 font-bold">ID</th>
+                    <th className="px-6 py-3 font-bold">User ID</th>
                     <th className="px-6 py-3 font-bold">Date</th>
                     <th className="px-6 py-3 font-bold">Checked in</th>
                     <th className="px-6 py-3 font-bold">Checked out</th>
@@ -193,7 +193,7 @@ const HomeChefAttendance = () => {
                   {paginatedRecords.map((record) => (
                     <tr key={record.id} className="transition hover:bg-white/5">
                       <td className="px-6 py-4 font-bold text-white">{record.home_chef_name || "Home Chef"}</td>
-                      <td className="px-6 py-4 font-mono text-xs text-slate-300">{record.home_chef_id || "-"}</td>
+                      <td className="px-6 py-4 font-mono text-xs text-slate-300">{record.home_chef_user_id || "-"}</td>
                       <td className="px-6 py-4 text-slate-300">{formatDate(record.attendance_date)}</td>
                       <td className="px-6 py-4 text-slate-300">{formatTime(record.check_in_at)}</td>
                       <td className="px-6 py-4">{record.check_out_at ? <span className="text-slate-300">{formatTime(record.check_out_at)}</span> : <span className="font-semibold text-emerald-300">Active</span>}</td>

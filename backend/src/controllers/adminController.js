@@ -814,7 +814,7 @@ exports.getDeliveryPartnerAttendance = async (req, res) => {
     if (!adminIds.length) return res.status(401).json({ message: 'Unauthorized' });
 
     let query = `
-            SELECT attendance.id, attendance.delivery_partner_id, attendance.delivery_partner_name,
+            SELECT attendance.id, attendance.delivery_partner_user_id, attendance.delivery_partner_name,
               DATE_FORMAT(attendance.attendance_date, '%Y-%m-%d') AS attendance_date,
              attendance.check_in_at, attendance.latitude, attendance.longitude,
                     attendance.accuracy_m, attendance.check_in_address,
@@ -843,7 +843,7 @@ exports.getHomeChefAttendance = async (req, res) => {
     if (!adminIds.length) return res.status(401).json({ message: 'Unauthorized' });
 
     let query = `
-      SELECT attendance.id, attendance.home_chef_id, attendance.home_chef_name,
+      SELECT attendance.id, attendance.home_chef_user_id, attendance.home_chef_name,
              DATE_FORMAT(attendance.attendance_date, '%Y-%m-%d') AS attendance_date,
              attendance.check_in_at, attendance.check_out_at,
              hc.mobile

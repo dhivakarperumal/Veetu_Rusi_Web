@@ -20,7 +20,7 @@ const AttendanceSessionCard = ({ name, personId, date, phone, checkIn, checkOut,
           </div>
           <div className="min-w-0">
             <h3 className="truncate font-bold text-white">{name || "-"}</h3>
-            <p className="mt-1 truncate font-mono text-xs text-slate-500">ID: {personId || "-"}</p>
+            <p className="mt-1 truncate font-mono text-xs text-slate-500">User ID: {personId || "-"}</p>
           </div>
         </div>
         <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wider ${isActive ? "bg-emerald-400/10 text-emerald-300" : "bg-slate-700/60 text-slate-300"}`}>

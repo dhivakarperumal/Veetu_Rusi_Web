@@ -77,14 +77,14 @@ const DeliveryPartnerAttendance = () => {
   };
 
   const partnerOptions = [...new Map(records.map((record) => {
-    const id = String(record.delivery_partner_id || "");
+    const id = String(record.delivery_partner_user_id || "");
     const name = record.delivery_partner_name || "Delivery Partner";
     const value = id || `name:${name}`;
     return [value, { value, label: id ? `${name} (ID: ${id})` : name }];
   })).values()];
   const filteredRecords = records.filter((record) => {
     const query = search.trim().toLowerCase();
-    const id = String(record.delivery_partner_id || "");
+    const id = String(record.delivery_partner_user_id || "");
     const partnerKey = id || `name:${record.delivery_partner_name || "Delivery Partner"}`;
     return (partnerFilter === "all" || partnerKey === partnerFilter) &&
       (!query || `${record.delivery_partner_name || ""} ${id}`.toLowerCase().includes(query));
@@ -117,8 +117,8 @@ const DeliveryPartnerAttendance = () => {
               type="search"
               value={search}
               onChange={(event) => { setSearch(event.target.value); setCurrentPage(1); }}
-              placeholder="Search by delivery partner name or ID..."
-              aria-label="Search delivery partner attendance by name or ID"
+              placeholder="Search by delivery partner name or user ID..."
+              aria-label="Search delivery partner attendance by name or user ID"
               className="w-full rounded-xl border border-white/10 bg-slate-950/80 py-3 pl-11 pr-4 text-sm font-medium text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-emerald-600/40 focus:bg-slate-900"
             />
           </div>
@@ -166,7 +166,7 @@ const DeliveryPartnerAttendance = () => {
                 <AttendanceSessionCard
                   key={record.id}
                   name={record.delivery_partner_name || "Delivery Partner"}
-                  personId={record.delivery_partner_id}
+                  personId={record.delivery_partner_user_id}
                   date={formatDate(record.attendance_date)}
                   phone={record.mobile}
                   checkIn={record.check_in_at}
@@ -207,7 +207,7 @@ const DeliveryPartnerAttendance = () => {
                     <tr key={record.id} className="transition hover:bg-white/2.5">
                       <td className="px-6 py-4">
                         <p className="font-bold text-white">{record.delivery_partner_name}</p>
-                        <p className="mt-1 font-mono text-xs text-slate-500">ID: {record.delivery_partner_id || "-"}</p>
+                        <p className="mt-1 font-mono text-xs text-slate-500">User ID: {record.delivery_partner_user_id || "-"}</p>
                         <p className="mt-1 text-xs text-slate-500">{formatDate(record.attendance_date)}</p>
                       </td>
                       <td className="px-6 py-4 text-slate-300">
