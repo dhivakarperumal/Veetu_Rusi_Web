@@ -133,8 +133,9 @@ const Attendance = () => {
               {marking ? "Updating attendance..." : attendance.currentSession ? "Check out now" : "Check in now"}
             </button>
           </div>
+        </section>
 
-          <section className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900">
+        <section className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900">
             <div className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-4 sm:px-6">
               <h2 className="font-extrabold">Recent sessions</h2>
               <span className="text-sm text-slate-400">{filteredRecords.length}</span>
@@ -182,7 +183,6 @@ const Attendance = () => {
                 </table>
               </div>
             )}
-          </section>
         </section>
       </div>
     </div>
