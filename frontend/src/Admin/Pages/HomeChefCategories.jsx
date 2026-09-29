@@ -32,6 +32,7 @@ const HomeChefCategories = () => {
   const [categories, setCategories] = useState([]);
   const [categoryRequests, setCategoryRequests] = useState([]);
   const [reviewingRequest, setReviewingRequest] = useState(null);
+  const [showCategoryRequestsModal, setShowCategoryRequestsModal] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [viewMode, setViewMode] = useState("table");
   const [searchTerm, setSearchTerm] = useState("");
@@ -295,7 +296,15 @@ const HomeChefCategories = () => {
       <div className="max-w-7xl mx-auto mt-0">
 
         {/* Header Section */}
-        <div className="flex justify-end mb-5">
+        <div className="mb-5 flex flex-wrap justify-end gap-3">
+          <button
+            type="button"
+            onClick={() => setShowCategoryRequestsModal(true)}
+            className="flex items-center gap-2 rounded-2xl border border-emerald-500/60 px-6 py-3.5 text-sm font-black uppercase tracking-widest text-emerald-300 transition hover:bg-emerald-500/10"
+          >
+            <FaFileAlt /> Category Requests
+            <span className="rounded-full bg-amber-400/15 px-2 py-0.5 text-xs text-amber-300">{pendingCategoryRequests.length}</span>
+          </button>
           <button
             onClick={openAddModal}
             className="flex items-center gap-2 px-6 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-2xl font-black text-sm transition-all shadow-xl shadow-emerald-500/20 uppercase tracking-widest"
@@ -303,41 +312,6 @@ const HomeChefCategories = () => {
             <FaPlus /> Add New Category
           </button>
         </div>
-
-        <section className="mb-8 rounded-2xl border border-emerald-900/50 bg-slate-950/70 p-5 sm:p-6">
-          <div className="mb-5 flex items-center justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-black text-white">Category Requests</h2>
-              <p className="mt-1 text-xs text-slate-400">Review categories submitted by home chefs.</p>
-            </div>
-            <span className="rounded-full bg-amber-400/10 px-3 py-1 text-xs font-black text-amber-300">{pendingCategoryRequests.length} pending</span>
-          </div>
-          {pendingCategoryRequests.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-slate-800 px-4 py-6 text-center text-sm text-slate-500">No category requests waiting for review.</p>
-          ) : (
-            <div className="space-y-4">
-              {pendingCategoryRequests.map((request) => (
-                <article key={request.id} className="grid gap-4 rounded-xl border border-slate-800 bg-slate-900/70 p-4 md:grid-cols-[112px_minmax(0,1fr)_auto]">
-                  {request.image?.[0] ? <img src={getImageUrl(request.image[0])} alt={request.c_name} className="h-24 w-full rounded-lg object-cover md:w-28" /> : <div className="grid h-24 place-items-center rounded-lg bg-slate-800 text-slate-500"><FaImage size={24} /></div>}
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="font-black text-white">{request.c_name}</h3>
-                      <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-black uppercase text-emerald-300">{request.category_type}</span>
-                    </div>
-                    <p className="mt-1 text-xs text-slate-400">Requested by {request.chef_name || `Chef ${request.chef_user_id}`}</p>
-                    <p className="mt-2 text-sm text-slate-300">{request.discripti}</p>
-                    {!!request.subcategory?.length && <div className="mt-3 flex flex-wrap gap-2">{request.subcategory.map((subcategory, index) => <span key={`${subcategory}-${index}`} className="rounded-full bg-slate-800 px-2.5 py-1 text-[10px] font-bold text-slate-300">{subcategory}</span>)}</div>}
-                  </div>
-                  <div className="flex items-center gap-2 md:flex-col md:items-stretch">
-                    <button type="button" disabled={reviewingRequest === request.id} onClick={() => reviewCategoryRequest(request, "Approved")} className="rounded-lg bg-emerald-600 px-4 py-2.5 text-xs font-black text-white transition hover:bg-emerald-500 disabled:opacity-50">Approve</button>
-                    <button type="button" disabled={reviewingRequest === request.id} onClick={() => reviewCategoryRequest(request, "Rejected")} className="rounded-lg border border-rose-900/60 px-4 py-2.5 text-xs font-black text-rose-300 transition hover:bg-rose-950/50 disabled:opacity-50">Reject</button>
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
-        </section>
-
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
           <AdminStatCard label="Total Categories" value={categories.length} description="All home chef categories" icon={FaFileAlt} iconGradient="linear-gradient(135deg,#7C3AED 0%,#4338CA 100%)" glow="rgba(124,58,237,0.22)" />
@@ -517,6 +491,66 @@ const HomeChefCategories = () => {
               Next
             </button>
           </div>
+        )}
+
+        {showCategoryRequestsModal && createPortal(
+          <div className="fixed inset-0 z-9999 flex items-center justify-center p-4">
+            <button type="button" aria-label="Close category requests" onClick={() => setShowCategoryRequestsModal(false)} className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm" />
+            <section role="dialog" aria-modal="true" aria-labelledby="category-requests-title" className="relative z-10000 flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-slate-700 bg-[#08120f] shadow-2xl">
+              <header className="flex shrink-0 items-center justify-between border-b border-slate-800 px-5 py-4 sm:px-7">
+                <div>
+                  <h2 id="category-requests-title" className="text-lg font-black text-white">Category Requests</h2>
+                  <p className="mt-1 text-xs text-slate-400">Review categories submitted by home chefs.</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="rounded-full bg-amber-400/10 px-3 py-1 text-xs font-black text-amber-300">{pendingCategoryRequests.length} pending</span>
+                  <button type="button" aria-label="Close" onClick={() => setShowCategoryRequestsModal(false)} className="rounded-lg border border-slate-700 p-2 text-slate-300 transition hover:bg-slate-800 hover:text-white"><FaTimes /></button>
+                </div>
+              </header>
+              <div className="min-h-0 flex-1 overflow-auto p-4 sm:p-6">
+                {pendingCategoryRequests.length === 0 ? (
+                  <p className="rounded-xl border border-dashed border-slate-800 px-4 py-10 text-center text-sm text-slate-500">No category requests waiting for review.</p>
+                ) : (
+                  <div className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900/70">
+                    <div className="overflow-x-auto">
+                      <table className="w-full min-w-200 text-left text-sm text-slate-200">
+                        <thead className="bg-slate-900 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                          <tr>
+                            <th className="px-4 py-4">Image</th>
+                            <th className="px-4 py-4">Category</th>
+                            <th className="px-4 py-4">Type</th>
+                            <th className="px-4 py-4">Chef</th>
+                            <th className="px-4 py-4">Description</th>
+                            <th className="px-4 py-4 text-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800">
+                          {pendingCategoryRequests.map((request) => (
+                            <tr key={request.id} className="transition-colors hover:bg-slate-800/40">
+                              <td className="px-4 py-4">
+                                {request.image?.[0] ? <img src={getImageUrl(request.image[0])} alt={request.c_name} className="size-14 rounded-lg object-cover" /> : <div className="grid size-14 place-items-center rounded-lg bg-slate-800 text-slate-500"><FaImage size={20} /></div>}
+                              </td>
+                              <td className="px-4 py-4 font-bold text-white">{request.c_name}</td>
+                              <td className="px-4 py-4"><span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-black uppercase text-emerald-300">{request.category_type}</span></td>
+                              <td className="px-4 py-4 text-slate-300">{request.chef_name || `Chef ${request.chef_user_id}`}</td>
+                              <td className="max-w-sm px-4 py-4 text-slate-400">{request.discripti}</td>
+                              <td className="px-4 py-4">
+                                <div className="flex justify-end gap-2">
+                                  <button type="button" disabled={reviewingRequest === request.id} onClick={() => reviewCategoryRequest(request, "Approved")} className="rounded-lg bg-emerald-600 px-4 py-2.5 text-xs font-black text-white transition hover:bg-emerald-500 disabled:opacity-50">Approve</button>
+                                  <button type="button" disabled={reviewingRequest === request.id} onClick={() => reviewCategoryRequest(request, "Rejected")} className="rounded-lg border border-rose-900/60 px-4 py-2.5 text-xs font-black text-rose-300 transition hover:bg-rose-950/50 disabled:opacity-50">Reject</button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </section>
+          </div>,
+          document.body
         )}
 
         {/* Modal Overlay */}
