@@ -528,8 +528,9 @@ router.patch('/status/:id', verifyToken, async (req, res) => {
       return res.status(400).json({ message: 'Status is required' });
     }
     if (['chef', 'homechef'].includes(String(req.user?.role || '').toLowerCase())) {
-      const chefIds = await getAuthenticatedChefIds(req.user);
-      if (!chefIds.length) return res.status(404).json({ message: 'Home chef profile not found.' });
+      const chef = await getAuthenticatedChef(req.user);
+      if (!chef?.user_id) return res.status(404).json({ message: 'Home chef profile not found.' });
+      const chefIds = [...new Set([chef.user_id, chef.id].map(String))];
       if (!await controller.chefOwnsOrder(id, chefIds)) {
         return res.status(403).json({ message: 'You are not authorized to update this order.' });
       }
