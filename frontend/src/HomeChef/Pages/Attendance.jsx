@@ -106,7 +106,7 @@ const Attendance = () => {
 
   return (
     <div className="min-h-full py-6 text-white">
-      <div className="mx-auto max-w-5xl space-y-6">
+      <div className="w-full space-y-6">
         <header className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-sm font-semibold text-emerald-300">Home chef</p>
