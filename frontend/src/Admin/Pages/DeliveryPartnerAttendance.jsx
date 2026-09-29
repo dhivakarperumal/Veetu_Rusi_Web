@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { CalendarDays, LoaderCircle, MapPin, RefreshCw } from "lucide-react";
+import { CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, Clock3, LoaderCircle, MapPin, RefreshCw, Search, Users } from "lucide-react";
 import { toast } from "react-hot-toast";
 import api from "../../api";
 
@@ -23,6 +23,9 @@ const DeliveryPartnerAttendance = () => {
   const [date, setDate] = useState(localDate);
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const loadAttendance = useCallback(async () => {
     try {
@@ -51,6 +54,15 @@ const DeliveryPartnerAttendance = () => {
     setLoading(false);
   };
 
+  const filteredRecords = records.filter((record) => {
+    const query = search.trim().toLowerCase();
+    return !query || `${record.delivery_partner_name || ""} ${record.delivery_partner_id || ""}`.toLowerCase().includes(query);
+  });
+  const totalPages = Math.ceil(filteredRecords.length / itemsPerPage);
+  const paginatedRecords = filteredRecords.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const activeSessions = records.filter((record) => !record.check_out_at).length;
+  const completedSessions = records.length - activeSessions;
+
   return (
     <div className="min-h-screen bg-slate-950 px-4 py-6 text-white sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
@@ -65,7 +77,7 @@ const DeliveryPartnerAttendance = () => {
               <span className="mb-2 block text-xs font-bold uppercase text-slate-400">Attendance date</span>
               <span className="flex items-center gap-2 rounded-xl border border-white/10 bg-slate-900 px-3 py-2.5">
                 <CalendarDays size={17} className="text-emerald-300" />
-                <input type="date" value={date} onChange={(event) => setDate(event.target.value)} className="scheme-dark bg-transparent text-sm text-white outline-none" />
+                <input type="date" value={date} onChange={(event) => { setCurrentPage(1); setLoading(true); setDate(event.target.value); }} className="scheme-dark bg-transparent text-sm text-white outline-none" />
               </span>
             </label>
             <button type="button" onClick={refreshAttendance} disabled={loading} aria-label="Refresh attendance" className="grid h-11 w-11 place-items-center rounded-xl border border-white/10 text-slate-200 transition hover:bg-white/5 disabled:opacity-50">
@@ -74,17 +86,50 @@ const DeliveryPartnerAttendance = () => {
           </div>
         </header>
 
+        <section className="grid gap-4 sm:grid-cols-3">
+          <div className="rounded-2xl border border-emerald-400/15 bg-linear-to-br from-emerald-950/70 to-slate-900 p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div><p className="text-xs font-bold uppercase text-emerald-200/70">Total sessions</p><p className="mt-2 text-3xl font-black">{records.length}</p></div>
+              <Users className="text-emerald-300" size={22} />
+            </div>
+          </div>
+          <div className="rounded-2xl border border-sky-400/15 bg-linear-to-br from-sky-950/70 to-slate-900 p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div><p className="text-xs font-bold uppercase text-sky-200/70">Active sessions</p><p className="mt-2 text-3xl font-black">{activeSessions}</p></div>
+              <Clock3 className="text-sky-300" size={22} />
+            </div>
+          </div>
+          <div className="rounded-2xl border border-amber-400/15 bg-linear-to-br from-amber-950/70 to-slate-900 p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div><p className="text-xs font-bold uppercase text-amber-200/70">Completed sessions</p><p className="mt-2 text-3xl font-black">{completedSessions}</p></div>
+              <CheckCircle2 className="text-amber-300" size={22} />
+            </div>
+          </div>
+        </section>
+
+        <div className="relative w-full max-w-xl">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
+          <input
+            type="search"
+            value={search}
+            onChange={(event) => { setSearch(event.target.value); setCurrentPage(1); }}
+            placeholder="Search delivery partner name or ID..."
+            aria-label="Search delivery partner attendance by name or ID"
+            className="w-full rounded-xl border border-white/10 bg-slate-900 py-3 pl-11 pr-4 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-emerald-400/50"
+          />
+        </div>
+
         <section className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-5 py-4 sm:px-6">
             <h2 className="font-extrabold">Attendance sessions</h2>
-            <span className="text-sm text-slate-400">{records.length} {records.length === 1 ? "session" : "sessions"}</span>
+            <span className="text-sm text-slate-400">{filteredRecords.length} {filteredRecords.length === 1 ? "session" : "sessions"}</span>
           </div>
           <p className="border-b border-white/5 px-5 py-2 text-xs text-slate-500 sm:px-6">Address lookup: © OpenStreetMap contributors</p>
           {loading ? (
             <div className="flex items-center justify-center gap-2 p-12 text-sm text-slate-400"><LoaderCircle size={18} className="animate-spin" /> Loading attendance</div>
-          ) : records.length === 0 ? (
+          ) : filteredRecords.length === 0 ? (
             <div className="p-12 text-center">
-              <p className="font-semibold text-slate-200">No check-ins for {formatDate(date)}</p>
+              <p className="font-semibold text-slate-200">{records.length ? "No delivery partners match this search." : `No check-ins for ${formatDate(date)}`}</p>
               <p className="mt-2 text-sm text-slate-400">Sessions started by your delivery partners will appear here.</p>
             </div>
           ) : (
@@ -100,10 +145,11 @@ const DeliveryPartnerAttendance = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {records.map((record) => (
+                  {paginatedRecords.map((record) => (
                     <tr key={record.id} className="transition hover:bg-white/2.5">
                       <td className="px-6 py-4">
                         <p className="font-bold text-white">{record.delivery_partner_name}</p>
+                        <p className="mt-1 font-mono text-xs text-slate-500">ID: {record.delivery_partner_id || "-"}</p>
                         <p className="mt-1 text-xs text-slate-500">{formatDate(record.attendance_date)}</p>
                       </td>
                       <td className="px-6 py-4 text-slate-300">
@@ -133,6 +179,16 @@ const DeliveryPartnerAttendance = () => {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+          {!loading && totalPages > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 px-5 py-4 sm:px-6">
+              <p className="text-sm text-slate-400">Showing {(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, filteredRecords.length)} of {filteredRecords.length}</p>
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={() => setCurrentPage((page) => Math.max(1, page - 1))} disabled={currentPage === 1} aria-label="Previous page" className="rounded-lg border border-white/10 p-2 text-slate-200 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"><ChevronLeft size={17} /></button>
+                <span className="min-w-24 text-center text-sm text-slate-300">Page {currentPage} of {totalPages}</span>
+                <button type="button" onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))} disabled={currentPage === totalPages} aria-label="Next page" className="rounded-lg border border-white/10 p-2 text-slate-200 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"><ChevronRight size={17} /></button>
+              </div>
             </div>
           )}
         </section>
