@@ -118,9 +118,9 @@ const DeliveryPartnerAttendance = () => {
               <option value="all">All delivery partners</option>
               {partnerOptions.map((partner) => <option key={partner.value} value={partner.value}>{partner.label}</option>)}
             </select>
-            <div role="group" aria-label="Attendance layout" className="flex items-center gap-1 rounded-xl border border-white/10 bg-slate-950/80 p-1">
-              <button type="button" onClick={() => setViewMode("table")} aria-label="Table view" aria-pressed={viewMode === "table"} title="Table view" className={`rounded-lg p-2 transition ${viewMode === "table" ? "bg-white text-emerald-700 shadow-sm" : "text-slate-400 hover:text-white"}`}><List size={17} /></button>
-              <button type="button" onClick={() => setViewMode("cards")} aria-label="Card view" aria-pressed={viewMode === "cards"} title="Card view" className={`rounded-lg p-2 transition ${viewMode === "cards" ? "bg-white text-emerald-700 shadow-sm" : "text-slate-400 hover:text-white"}`}><LayoutGrid size={17} /></button>
+            <div data-admin-view-toggle role="group" aria-label="Attendance layout" className="admin-view-toggle flex rounded-xl border border-white/10 bg-slate-950/80 p-1">
+              <button type="button" onClick={() => setViewMode("table")} aria-label="Table view" aria-pressed={viewMode === "table"} title="Table View" className={`rounded-lg p-2 transition ${viewMode === "table" ? "bg-white text-emerald-700 shadow-sm" : "text-slate-500 hover:text-emerald-700"}`}><List className="h-4 w-4" /></button>
+              <button type="button" onClick={() => setViewMode("cards")} aria-label="Card view" aria-pressed={viewMode === "cards"} title="Card View" className={`rounded-lg p-2 transition ${viewMode === "cards" ? "bg-white text-emerald-700 shadow-sm" : "text-slate-500 hover:text-emerald-700"}`}><LayoutGrid className="h-4 w-4" /></button>
             </div>
           </div>
         </div>
