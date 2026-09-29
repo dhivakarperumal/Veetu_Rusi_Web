@@ -3,6 +3,7 @@ import { CalendarDays, ChevronLeft, ChevronRight, LayoutGrid, List, LoaderCircle
 import { toast } from "react-hot-toast";
 import api from "../../api";
 import AdminAttendanceSummaryCards from "../Components/AdminAttendanceSummaryCards";
+import AttendanceSessionCard from "../Components/AttendanceSessionCard";
 
 const localDate = () => {
   const now = new Date();
@@ -140,31 +141,31 @@ const DeliveryPartnerAttendance = () => {
           ) : viewMode === "cards" ? (
             <div className="grid gap-3 p-4 sm:grid-cols-2 xl:grid-cols-3">
               {paginatedRecords.map((record) => (
-                <article key={record.id} className="rounded-xl border border-white/10 bg-slate-950/60 p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <h3 className="truncate font-bold text-white">{record.delivery_partner_name || "Delivery Partner"}</h3>
-                      <p className="mt-1 font-mono text-xs text-slate-400">ID: {record.delivery_partner_id || "-"}</p>
-                    </div>
-                    <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${record.check_out_at ? "bg-slate-700/60 text-slate-300" : "bg-emerald-400/10 text-emerald-300"}`}>
-                      {record.check_out_at ? "Completed" : "Active"}
-                    </span>
-                  </div>
-                  <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-white/5 pt-3 text-sm">
-                    <div><dt className="text-xs text-slate-500">Date</dt><dd className="mt-1 text-slate-200">{formatDate(record.attendance_date)}</dd></div>
-                    <div><dt className="text-xs text-slate-500">Phone</dt><dd className="mt-1 text-slate-200">{record.mobile || "-"}</dd></div>
-                    <div><dt className="text-xs text-slate-500">Checked in</dt><dd className="mt-1 text-slate-200">{new Date(record.check_in_at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}</dd></div>
-                    <div><dt className="text-xs text-slate-500">Checked out</dt><dd className="mt-1 text-slate-200">{record.check_out_at ? new Date(record.check_out_at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : "-"}</dd></div>
-                  </dl>
-                  <div className="mt-3 border-t border-white/5 pt-3 text-xs text-slate-400">
-                    <p>{record.check_in_address || "Check-in address unavailable"}</p>
-                    {record.check_out_at && <p className="mt-1">{record.check_out_address || "Check-out address unavailable"}</p>}
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-3">
-                    {record.latitude != null && record.longitude != null && <a href={`https://www.google.com/maps?q=${record.latitude},${record.longitude}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-300 hover:text-emerald-200"><MapPin size={14} /> Check-in map</a>}
-                    {record.check_out_at && record.check_out_latitude != null && record.check_out_longitude != null && <a href={`https://www.google.com/maps?q=${record.check_out_latitude},${record.check_out_longitude}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-300 hover:text-emerald-200"><MapPin size={14} /> Check-out map</a>}
-                  </div>
-                </article>
+                <AttendanceSessionCard
+                  key={record.id}
+                  name={record.delivery_partner_name || "Delivery Partner"}
+                  personId={record.delivery_partner_id}
+                  date={formatDate(record.attendance_date)}
+                  phone={record.mobile}
+                  checkIn={record.check_in_at}
+                  checkOut={record.check_out_at}
+                  locations={[
+                    {
+                      label: "Check-in",
+                      address: record.check_in_address,
+                      mapUrl: record.latitude != null && record.longitude != null
+                        ? `https://www.google.com/maps?q=${record.latitude},${record.longitude}`
+                        : null,
+                    },
+                    ...(record.check_out_at ? [{
+                      label: "Check-out",
+                      address: record.check_out_address,
+                      mapUrl: record.check_out_latitude != null && record.check_out_longitude != null
+                        ? `https://www.google.com/maps?q=${record.check_out_latitude},${record.check_out_longitude}`
+                        : null,
+                    }] : []),
+                  ]}
+                />
               ))}
             </div>
           ) : (

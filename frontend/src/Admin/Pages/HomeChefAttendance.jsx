@@ -3,6 +3,7 @@ import { CalendarDays, ChevronLeft, ChevronRight, LayoutGrid, List, LoaderCircle
 import { toast } from "react-hot-toast";
 import api from "../../api";
 import AdminAttendanceSummaryCards from "../Components/AdminAttendanceSummaryCards";
+import AttendanceSessionCard from "../Components/AttendanceSessionCard";
 
 const localDate = () => {
   const now = new Date();
@@ -142,23 +143,15 @@ const HomeChefAttendance = () => {
           ) : viewMode === "cards" ? (
             <div className="grid gap-3 p-4 sm:grid-cols-2 xl:grid-cols-3">
               {paginatedRecords.map((record) => (
-                <article key={record.id} className="rounded-xl border border-white/10 bg-slate-950/60 p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <h3 className="truncate font-bold text-white">{record.home_chef_name || "Home Chef"}</h3>
-                      <p className="mt-1 font-mono text-xs text-slate-400">ID: {record.home_chef_id || "-"}</p>
-                    </div>
-                    <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${record.check_out_at ? "bg-slate-700/60 text-slate-300" : "bg-emerald-400/10 text-emerald-300"}`}>
-                      {record.check_out_at ? "Completed" : "Active"}
-                    </span>
-                  </div>
-                  <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-white/5 pt-3 text-sm">
-                    <div><dt className="text-xs text-slate-500">Date</dt><dd className="mt-1 text-slate-200">{formatDate(record.attendance_date)}</dd></div>
-                    <div><dt className="text-xs text-slate-500">Phone</dt><dd className="mt-1 text-slate-200">{record.mobile || "-"}</dd></div>
-                    <div><dt className="text-xs text-slate-500">Checked in</dt><dd className="mt-1 text-slate-200">{formatTime(record.check_in_at)}</dd></div>
-                    <div><dt className="text-xs text-slate-500">Checked out</dt><dd className="mt-1 text-slate-200">{formatTime(record.check_out_at)}</dd></div>
-                  </dl>
-                </article>
+                <AttendanceSessionCard
+                  key={record.id}
+                  name={record.home_chef_name || "Home Chef"}
+                  personId={record.home_chef_id}
+                  date={formatDate(record.attendance_date)}
+                  phone={record.mobile}
+                  checkIn={record.check_in_at}
+                  checkOut={record.check_out_at}
+                />
               ))}
             </div>
           ) : (
