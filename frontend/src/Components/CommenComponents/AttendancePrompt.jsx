@@ -1,14 +1,10 @@
 import { useEffect, useState } from "react";
-import { CalendarCheck, CheckCircle2, LoaderCircle, LogIn, LogOut, MapPin, X } from "lucide-react";
+import { CalendarCheck, LoaderCircle, LogIn, MapPin, X } from "lucide-react";
 import { toast } from "react-hot-toast";
 import api from "../../api";
 
-const formatTime = (value) => value
-  ? new Date(value).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })
-  : "";
-
 const AttendancePrompt = ({ endpoint, roleLabel, requiresLocation = false, updateEvent }) => {
-  const [attendance, setAttendance] = useState(null);
+  const [isCheckedIn, setIsCheckedIn] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [marking, setMarking] = useState(false);
 
@@ -17,12 +13,9 @@ const AttendancePrompt = ({ endpoint, roleLabel, requiresLocation = false, updat
     api.get(endpoint)
       .then(({ data }) => {
         if (!isCurrent) return;
-        setAttendance({
-          today: data.today || "",
-          currentSession: data.currentSession || null,
-          records: Array.isArray(data.records) ? data.records : [],
-        });
-        setIsOpen(true);
+        const checkedIn = Boolean(data.currentSession);
+        setIsCheckedIn(checkedIn);
+        setIsOpen(!checkedIn);
       })
       .catch((error) => {
         toast.error(error.response?.data?.message || "Unable to load attendance.");
@@ -31,7 +24,7 @@ const AttendancePrompt = ({ endpoint, roleLabel, requiresLocation = false, updat
   }, [endpoint]);
 
   const markAttendance = async () => {
-    const action = attendance?.currentSession ? "check_out" : "check_in";
+    const action = "check_in";
     setMarking(true);
     try {
       let location = {};
@@ -57,15 +50,21 @@ const AttendancePrompt = ({ endpoint, roleLabel, requiresLocation = false, updat
       await api.post(endpoint, { action, ...location });
       const { data } = await api.get(endpoint);
       const nextAttendance = {
-        today: data.today || "",
         currentSession: data.currentSession || null,
-        records: Array.isArray(data.records) ? data.records : [],
       };
-      setAttendance(nextAttendance);
+      const checkedIn = Boolean(nextAttendance.currentSession);
+      setIsCheckedIn(checkedIn);
+      setIsOpen(!checkedIn);
       if (updateEvent) {
-        window.dispatchEvent(new CustomEvent(updateEvent, { detail: nextAttendance }));
+        window.dispatchEvent(new CustomEvent(updateEvent, {
+          detail: {
+            today: data.today || "",
+            currentSession: nextAttendance.currentSession,
+            records: Array.isArray(data.records) ? data.records : [],
+          },
+        }));
       }
-      toast.success(action === "check_in" ? "Checked in successfully." : "Checked out successfully.");
+      toast.success("Checked in successfully.");
     } catch (error) {
       const message = requiresLocation && error.code === 1
         ? "Allow location access to mark attendance."
@@ -76,9 +75,7 @@ const AttendancePrompt = ({ endpoint, roleLabel, requiresLocation = false, updat
     }
   };
 
-  if (!isOpen || !attendance) return null;
-
-  const isCheckedIn = Boolean(attendance.currentSession);
+  if (!isOpen || isCheckedIn) return null;
 
   return (
     <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
@@ -94,27 +91,17 @@ const AttendancePrompt = ({ endpoint, roleLabel, requiresLocation = false, updat
         </header>
 
         <div className="px-6 py-5">
-          {isCheckedIn ? (
-            <div className="flex items-start gap-3 rounded-xl border border-emerald-400/20 bg-emerald-400/10 p-4">
-              <CheckCircle2 size={20} className="mt-0.5 shrink-0 text-emerald-300" />
-              <div>
-                <p className="font-bold text-emerald-200">You are checked in</p>
-                {attendance.currentSession.check_in_at && <p className="mt-1 text-sm text-slate-300">Session started at {formatTime(attendance.currentSession.check_in_at)}</p>}
-              </div>
-            </div>
-          ) : (
-            <p className="text-sm leading-6 text-slate-300">You are not checked in yet. Start your attendance session to go online.</p>
-          )}
-          {requiresLocation && !isCheckedIn && (
+          <p className="text-sm leading-6 text-slate-300">You are not checked in yet. Start your attendance session to go online.</p>
+          {requiresLocation && (
             <p className="mt-3 flex items-center gap-2 text-xs text-slate-400"><MapPin size={14} /> Location access is required for check-in.</p>
           )}
           <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <button type="button" onClick={() => setIsOpen(false)} disabled={marking} className="rounded-xl border border-white/10 px-4 py-3 text-sm font-semibold text-slate-300 transition hover:bg-white/5 disabled:opacity-50">
               Not now
             </button>
-            <button type="button" onClick={markAttendance} disabled={marking} className={`inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-extrabold transition disabled:cursor-wait disabled:opacity-60 ${isCheckedIn ? "bg-rose-400 text-slate-950 hover:bg-rose-300" : "bg-emerald-400 text-slate-950 hover:bg-emerald-300"}`}>
-              {marking ? <LoaderCircle size={17} className="animate-spin" /> : isCheckedIn ? <LogOut size={17} /> : <LogIn size={17} />}
-              {marking ? "Updating..." : isCheckedIn ? "Check out" : "Check in"}
+            <button type="button" onClick={markAttendance} disabled={marking} className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-400 px-5 py-3 text-sm font-extrabold text-slate-950 transition hover:bg-emerald-300 disabled:cursor-wait disabled:opacity-60">
+              {marking ? <LoaderCircle size={17} className="animate-spin" /> : <LogIn size={17} />}
+              {marking ? "Checking in..." : "Check in"}
             </button>
           </div>
         </div>
