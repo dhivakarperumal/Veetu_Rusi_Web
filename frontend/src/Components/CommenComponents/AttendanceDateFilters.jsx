@@ -46,34 +46,36 @@ export const filterAttendanceRecords = (records, filter, customDate) => {
     const monthKey = todayKey.slice(0, 7);
     return records.filter((record) => String(record.attendance_date || record.check_in_at || "").slice(0, 7) === monthKey);
   }
+  if (filter === "year") {
+    const yearKey = todayKey.slice(0, 4);
+    return records.filter((record) => String(record.attendance_date || record.check_in_at || "").slice(0, 4) === yearKey);
+  }
   return records;
 };
 
 const AttendanceDateFilters = ({ filter, customDate, onFilterChange, onCustomDateChange }) => (
   <div className="flex flex-wrap items-center gap-2">
-    <div role="group" aria-label="Filter attendance by date" className="flex flex-wrap gap-1 rounded-xl border border-white/10 bg-slate-950 p-1">
-      {presets.map((preset) => (
-        <button
-          key={preset.id}
-          type="button"
-          aria-pressed={filter === preset.id}
-          onClick={() => onFilterChange(preset.id)}
-          className={`rounded-lg px-3 py-2 text-xs font-bold transition ${filter === preset.id ? "bg-emerald-400 text-slate-950" : "text-slate-300 hover:bg-white/5 hover:text-white"}`}
-        >
-          {preset.label}
-        </button>
-      ))}
-    </div>
-    <label className="flex items-center gap-2 rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-xs font-semibold text-slate-300">
-      <span>Custom date</span>
-      <input
-        type="date"
-        value={customDate}
-        onChange={(event) => onCustomDateChange(event.target.value)}
-        aria-label="Choose attendance date"
-        className="min-w-0 bg-transparent text-white outline-none scheme-dark"
-      />
-    </label>
+    <select
+      value={filter}
+      onChange={(event) => onFilterChange(event.target.value)}
+      aria-label="Filter attendance by date"
+      className="cursor-pointer rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-xs font-bold text-slate-200 outline-none transition focus:border-emerald-500/60"
+    >
+      {presets.map((preset) => <option key={preset.id} value={preset.id}>{preset.label}</option>)}
+      <option value="year">This year</option>
+      <option value="custom">Custom date</option>
+    </select>
+    {filter === "custom" && (
+      <label className="flex items-center gap-2 rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-xs font-semibold text-slate-300">
+        <input
+          type="date"
+          value={customDate}
+          onChange={(event) => onCustomDateChange(event.target.value)}
+          aria-label="Choose attendance date"
+          className="min-w-0 bg-transparent text-white outline-none scheme-dark"
+        />
+      </label>
+    )}
   </div>
 );
 
