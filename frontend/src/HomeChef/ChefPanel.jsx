@@ -14,6 +14,12 @@ const AdminLayout = () => {
     const [isLargeScreen, setIsLargeScreen] = useState(
         window.innerWidth >= 1024
     );
+    const [attendanceStatus, setAttendanceStatus] = useState({ currentSession: null, records: [] });
+    const isOnline = Boolean(attendanceStatus.currentSession);
+    const lastCheckOut = attendanceStatus.records.find((record) => record.check_out_at)?.check_out_at;
+    const lastOnline = lastCheckOut
+        ? new Date(lastCheckOut).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+        : "Never";
 
     // Socket.IO and Polling - listen for new orders for this chef
     const [popupVisible, setPopupVisible] = useState(false);
@@ -24,6 +30,40 @@ const AdminLayout = () => {
 
     const navigate = useNavigate();
     const formatCurrency = (amount) => `₹${Number(amount || 0).toFixed(2)}`;
+    const toggleOnlineStatus = () => navigate("/chef/attendance");
+
+    useEffect(() => {
+        let isCurrent = true;
+        const syncAttendanceStatus = async (event) => {
+            if (event?.detail) {
+                setAttendanceStatus({
+                    currentSession: event.detail.currentSession || null,
+                    records: Array.isArray(event.detail.records) ? event.detail.records : [],
+                });
+                return;
+            }
+            try {
+                const { data } = await api.get("/home-chef-attendance");
+                if (isCurrent) {
+                    setAttendanceStatus({
+                        currentSession: data.currentSession || null,
+                        records: Array.isArray(data.records) ? data.records : [],
+                    });
+                }
+            } catch (error) {
+                console.error("Failed to sync home chef attendance status:", error);
+            }
+        };
+
+        syncAttendanceStatus();
+        const interval = window.setInterval(() => syncAttendanceStatus(), 15000);
+        window.addEventListener("home-chef-attendance-updated", syncAttendanceStatus);
+        return () => {
+            isCurrent = false;
+            window.clearInterval(interval);
+            window.removeEventListener("home-chef-attendance-updated", syncAttendanceStatus);
+        };
+    }, []);
 
     const calculateDistance = (lat1, lon1, lat2, lon2) => {
         if (!lat1 || !lon1 || !lat2 || !lon2) return null;
@@ -279,7 +319,12 @@ const AdminLayout = () => {
           ${isLargeScreen ? (sidebarCollapsed ? "lg:ml-20" : "lg:ml-72") : ""}
         `}
             >
-                <ChefHeader onMenuClick={() => setSidebarOpen(true)} />
+                <ChefHeader
+                    onMenuClick={() => setSidebarOpen(true)}
+                    isOnline={isOnline}
+                    lastOnline={lastOnline}
+                    toggleOnlineStatus={toggleOnlineStatus}
+                />
                 <main className="flex-1 p-4 sm:p-5 lg:p-6 overflow-y-auto">
                     <div className="glass-container">
                         <Outlet />
@@ -428,7 +473,7 @@ const AdminLayout = () => {
                     />
                 )}
 
-                <AttendancePrompt endpoint="/home-chef-attendance" roleLabel="Home chef" />
+                <AttendancePrompt endpoint="/home-chef-attendance" roleLabel="Home chef" updateEvent="home-chef-attendance-updated" />
 
                 <footer className="glass-footer text-center py-4 mt-10 text-sm text-white/70">
                     © {new Date().getFullYear()} Q-Techx Solutions. All rights reserved.
