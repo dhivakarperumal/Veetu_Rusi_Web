@@ -262,7 +262,7 @@ const Attendance = () => {
           </div>
         )}
 
-        {totalPages > 1 && (
+        {filteredRecords.length > 0 && (
           <div className="mt-6 flex flex-col items-center justify-between gap-4 sm:flex-row">
             <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
               Showing {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredRecords.length)} of {filteredRecords.length} sessions
