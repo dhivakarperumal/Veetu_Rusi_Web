@@ -13,7 +13,6 @@ const OrderManagement = () => {
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [partners, setPartners] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isCheckedIn, setIsCheckedIn] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [viewMode, setViewMode] = useState("table");
@@ -65,12 +64,6 @@ const OrderManagement = () => {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      setIsCheckedIn(false);
-      setOrders([]);
-      setFilteredOrders([]);
-      const attendance = await api.get("/home-chef-attendance");
-      if (!attendance.data?.currentSession) return;
-      setIsCheckedIn(true);
       const res = await api.get("/user-food-orders/chef");
       const mapped = (Array.isArray(res.data) ? res.data : []).map((order) => ({
         ...order,
@@ -223,22 +216,6 @@ const OrderManagement = () => {
     const s = (o.status || "").toLowerCase().trim();
     return ["delivered", "completed"].includes(s);
   }).length;
-
-  if (!loading && !isCheckedIn) {
-    return (
-      <div className="mx-auto max-w-2xl rounded-2xl border border-amber-400/20 bg-slate-900 p-8 text-center text-white">
-        <h2 className="text-xl font-black">Check in to view orders</h2>
-        <p className="mt-2 text-sm text-slate-400">Orders are available only during an active attendance session.</p>
-        <button
-          type="button"
-          onClick={() => navigate("/chef/attendance")}
-          className="mt-5 rounded-xl bg-emerald-400 px-5 py-3 font-bold text-slate-950 transition hover:bg-emerald-300"
-        >
-          Go to Attendance
-        </button>
-      </div>
-    );
-  }
 
   return (
     <>
