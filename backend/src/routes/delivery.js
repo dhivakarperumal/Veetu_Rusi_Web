@@ -422,8 +422,6 @@ router.get('/wallet-history', async (req, res) => {
 router.get('/orders/available', async (req, res) => {
   try {
     const deliveryBoyId = req.user?.user_id || req.user?.id;
-    const { isCheckedIn, hasActiveOrder } = await getDeliveryPartnerOrderAccess(deliveryBoyId);
-    if (!isCheckedIn || hasActiveOrder) return res.json([]);
 
     // ── Step 1: Try to find franchise/admin context from delivery_partners table ──
     let franchiseAdminId = null;
@@ -488,7 +486,6 @@ router.get('/orders/available', async (req, res) => {
        WHERE o.status IN ('Searching Delivery Partner', 'Order Placed', 'Accepted')
          AND (o.delivery_partner IS NULL OR o.delivery_partner = '')
          AND (o.delivery_partner_user_id IS NULL OR o.delivery_partner_user_id = '')
-         AND DATE(o.ordered_at) = CURDATE()
     `;
     const params = [];
 
