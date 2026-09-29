@@ -100,7 +100,6 @@ const Attendance = () => {
       formatTime(record.check_out_at),
       status,
       record.check_in_address || "",
-      record.check_out_address || "",
     ].some((value) => value.toLowerCase().includes(query));
   });
   const totalPages = Math.ceil(filteredRecords.length / itemsPerPage);
@@ -242,7 +241,6 @@ const Attendance = () => {
                   <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Check in</th>
                   <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Check-in location</th>
                   <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Check out</th>
-                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Check-out location</th>
                   <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Status</th>
                 </tr></thead>
                 <tbody className="divide-y divide-slate-800">
@@ -255,10 +253,6 @@ const Attendance = () => {
                         {hasCoordinates(record.latitude, record.longitude) && <a href={mapUrl(record.latitude, record.longitude)} target="_blank" rel="noreferrer" className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-emerald-300 hover:text-emerald-200"><MapPin size={13} /> View map</a>}
                       </td>
                       <td className="whitespace-nowrap px-8 py-5 font-semibold text-slate-200">{formatTime(record.check_out_at)}</td>
-                      <td className="max-w-64 px-8 py-5 text-slate-300">
-                        <p className="line-clamp-2">{formatLocation(record.check_out_address, record.check_out_latitude, record.check_out_longitude)}</p>
-                        {hasCoordinates(record.check_out_latitude, record.check_out_longitude) && <a href={mapUrl(record.check_out_latitude, record.check_out_longitude)} target="_blank" rel="noreferrer" className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-emerald-300 hover:text-emerald-200"><MapPin size={13} /> View map</a>}
-                      </td>
                       <td className="whitespace-nowrap px-8 py-5"><span className={`inline-block rounded-full border px-4 py-1.5 text-[9px] font-black uppercase tracking-widest ${record.check_out_at ? "border-slate-700 bg-slate-800 text-slate-300" : "border-emerald-800 bg-emerald-900/20 text-emerald-300"}`}>{record.check_out_at ? "Completed" : "Active"}</span></td>
                     </tr>
                   ))}
@@ -280,10 +274,8 @@ const Attendance = () => {
                 </div>
                 <div className="mt-auto space-y-2 border-t border-slate-800 px-5 py-4 text-xs text-slate-400">
                   <p><span className="font-semibold text-slate-300">In:</span> {formatLocation(record.check_in_address, record.latitude, record.longitude)}</p>
-                  {record.check_out_at && <p><span className="font-semibold text-slate-300">Out:</span> {formatLocation(record.check_out_address, record.check_out_latitude, record.check_out_longitude)}</p>}
                   <div className="flex flex-wrap gap-3 pt-1">
                     {hasCoordinates(record.latitude, record.longitude) && <a href={mapUrl(record.latitude, record.longitude)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-semibold text-emerald-300 hover:text-emerald-200"><MapPin size={13} /> Check-in map</a>}
-                    {hasCoordinates(record.check_out_latitude, record.check_out_longitude) && <a href={mapUrl(record.check_out_latitude, record.check_out_longitude)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-semibold text-emerald-300 hover:text-emerald-200"><MapPin size={13} /> Check-out map</a>}
                   </div>
                 </div>
               </article>
