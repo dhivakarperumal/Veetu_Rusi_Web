@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { CalendarDays, ChevronLeft, ChevronRight, LoaderCircle, RefreshCw, Search } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, LayoutGrid, List, LoaderCircle, RefreshCw, Search } from "lucide-react";
 import { toast } from "react-hot-toast";
 import api from "../../api";
 import AdminAttendanceSummaryCards from "../Components/AdminAttendanceSummaryCards";
@@ -30,6 +30,7 @@ const HomeChefAttendance = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [chefFilter, setChefFilter] = useState("all");
+  const [viewMode, setViewMode] = useState("table");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -86,23 +87,14 @@ const HomeChefAttendance = () => {
             <p className="text-sm font-semibold text-emerald-300">Home chefs</p>
             <h1 className="mt-1 text-3xl font-black">Attendance</h1>
           </div>
-          <div className="flex flex-wrap items-end gap-3">
-            <label className="block">
-              <span className="mb-2 block text-xs font-bold uppercase text-slate-400">Attendance date</span>
-              <span className="flex items-center gap-2 rounded-xl border border-white/10 bg-slate-900 px-3 py-2.5">
-                <CalendarDays size={17} className="text-emerald-300" />
-                <input type="date" value={date} onChange={(event) => { setCurrentPage(1); setLoading(true); setDate(event.target.value); }} className="scheme-dark bg-transparent text-sm text-white outline-none" />
-              </span>
-            </label>
-            <button type="button" onClick={refreshAttendance} disabled={loading} aria-label="Refresh attendance" className="grid h-11 w-11 place-items-center rounded-xl border border-white/10 text-slate-200 transition hover:bg-white/5 disabled:opacity-50">
-              <RefreshCw size={17} className={loading ? "animate-spin" : ""} />
-            </button>
-          </div>
+          <button type="button" onClick={refreshAttendance} disabled={loading} aria-label="Refresh attendance" className="grid h-11 w-11 place-items-center rounded-xl border border-white/10 text-slate-200 transition hover:bg-white/5 disabled:opacity-50">
+            <RefreshCw size={17} className={loading ? "animate-spin" : ""} />
+          </button>
         </header>
 
         <AdminAttendanceSummaryCards total={records.length} active={activeSessions} completed={completedSessions} />
 
-        <div className="admin-reference-toolbar flex flex-col gap-4 rounded-xl p-4 md:flex-row md:items-center md:justify-between">
+        <div className="admin-reference-toolbar flex flex-col gap-4 rounded-xl p-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="relative w-full flex-1 md:max-w-md">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
             <input
@@ -114,15 +106,25 @@ const HomeChefAttendance = () => {
               className="w-full rounded-xl border border-white/10 bg-slate-950/80 py-3 pl-11 pr-4 text-sm font-medium text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-emerald-600/40 focus:bg-slate-900"
             />
           </div>
-          <select
-            value={chefFilter}
-            onChange={(event) => { setChefFilter(event.target.value); setCurrentPage(1); }}
-            aria-label="Filter by home chef"
-            className="w-full cursor-pointer rounded-xl border border-white/10 bg-slate-950/80 px-3.5 py-3 text-xs font-bold uppercase tracking-widest text-slate-100 outline-none focus:border-emerald-600/40 sm:w-auto"
-          >
-            <option value="all">All home chefs</option>
-            {chefOptions.map((chef) => <option key={chef.value} value={chef.value}>{chef.label}</option>)}
-          </select>
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <label className="flex items-center gap-2 rounded-xl border border-white/10 bg-slate-950/80 px-3 py-2.5">
+              <CalendarDays size={17} className="shrink-0 text-emerald-300" />
+              <input type="date" value={date} aria-label="Filter by attendance date" onChange={(event) => { setCurrentPage(1); setLoading(true); setDate(event.target.value); }} className="scheme-dark min-w-0 bg-transparent text-sm text-white outline-none" />
+            </label>
+            <select
+              value={chefFilter}
+              onChange={(event) => { setChefFilter(event.target.value); setCurrentPage(1); }}
+              aria-label="Filter by home chef"
+              className="w-full cursor-pointer rounded-xl border border-white/10 bg-slate-950/80 px-3.5 py-3 text-xs font-bold uppercase tracking-widest text-slate-100 outline-none focus:border-emerald-600/40 sm:w-auto"
+            >
+              <option value="all">All home chefs</option>
+              {chefOptions.map((chef) => <option key={chef.value} value={chef.value}>{chef.label}</option>)}
+            </select>
+            <div role="group" aria-label="Attendance layout" className="flex items-center gap-1 rounded-xl border border-white/10 bg-slate-950/80 p-1">
+              <button type="button" onClick={() => setViewMode("table")} aria-label="Table view" aria-pressed={viewMode === "table"} title="Table view" className={`rounded-lg p-2 transition ${viewMode === "table" ? "bg-white text-emerald-700 shadow-sm" : "text-slate-400 hover:text-white"}`}><List size={17} /></button>
+              <button type="button" onClick={() => setViewMode("cards")} aria-label="Card view" aria-pressed={viewMode === "cards"} title="Card view" className={`rounded-lg p-2 transition ${viewMode === "cards" ? "bg-white text-emerald-700 shadow-sm" : "text-slate-400 hover:text-white"}`}><LayoutGrid size={17} /></button>
+            </div>
+          </div>
         </div>
 
         <section className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900">
@@ -136,6 +138,28 @@ const HomeChefAttendance = () => {
             <div className="p-12 text-center">
               <p className="font-semibold text-slate-200">{records.length ? "No sessions match these filters." : `No home chef check-ins for ${formatDate(date)}`}</p>
               <p className="mt-2 text-sm text-slate-400">Marked sessions from your home chefs will appear here.</p>
+            </div>
+          ) : viewMode === "cards" ? (
+            <div className="grid gap-3 p-4 sm:grid-cols-2 xl:grid-cols-3">
+              {paginatedRecords.map((record) => (
+                <article key={record.id} className="rounded-xl border border-white/10 bg-slate-950/60 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="truncate font-bold text-white">{record.home_chef_name || "Home Chef"}</h3>
+                      <p className="mt-1 font-mono text-xs text-slate-400">ID: {record.home_chef_id || "-"}</p>
+                    </div>
+                    <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${record.check_out_at ? "bg-slate-700/60 text-slate-300" : "bg-emerald-400/10 text-emerald-300"}`}>
+                      {record.check_out_at ? "Completed" : "Active"}
+                    </span>
+                  </div>
+                  <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-white/5 pt-3 text-sm">
+                    <div><dt className="text-xs text-slate-500">Date</dt><dd className="mt-1 text-slate-200">{formatDate(record.attendance_date)}</dd></div>
+                    <div><dt className="text-xs text-slate-500">Phone</dt><dd className="mt-1 text-slate-200">{record.mobile || "-"}</dd></div>
+                    <div><dt className="text-xs text-slate-500">Checked in</dt><dd className="mt-1 text-slate-200">{formatTime(record.check_in_at)}</dd></div>
+                    <div><dt className="text-xs text-slate-500">Checked out</dt><dd className="mt-1 text-slate-200">{formatTime(record.check_out_at)}</dd></div>
+                  </dl>
+                </article>
+              ))}
             </div>
           ) : (
             <div className="overflow-x-auto">
