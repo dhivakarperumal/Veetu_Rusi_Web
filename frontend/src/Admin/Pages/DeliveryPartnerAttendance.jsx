@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import { CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, Clock3, LoaderCircle, MapPin, RefreshCw, Search, Users } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, LoaderCircle, MapPin, RefreshCw, Search } from "lucide-react";
 import { toast } from "react-hot-toast";
 import api from "../../api";
+import AdminAttendanceSummaryCards from "../Components/AdminAttendanceSummaryCards";
 
 const localDate = () => {
   const now = new Date();
@@ -24,6 +25,7 @@ const DeliveryPartnerAttendance = () => {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [partnerFilter, setPartnerFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -54,9 +56,18 @@ const DeliveryPartnerAttendance = () => {
     setLoading(false);
   };
 
+  const partnerOptions = [...new Map(records.map((record) => {
+    const id = String(record.delivery_partner_id || "");
+    const name = record.delivery_partner_name || "Delivery Partner";
+    const value = id || `name:${name}`;
+    return [value, { value, label: id ? `${name} (ID: ${id})` : name }];
+  })).values()];
   const filteredRecords = records.filter((record) => {
     const query = search.trim().toLowerCase();
-    return !query || `${record.delivery_partner_name || ""} ${record.delivery_partner_id || ""}`.toLowerCase().includes(query);
+    const id = String(record.delivery_partner_id || "");
+    const partnerKey = id || `name:${record.delivery_partner_name || "Delivery Partner"}`;
+    return (partnerFilter === "all" || partnerKey === partnerFilter) &&
+      (!query || `${record.delivery_partner_name || ""} ${id}`.toLowerCase().includes(query));
   });
   const totalPages = Math.ceil(filteredRecords.length / itemsPerPage);
   const paginatedRecords = filteredRecords.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -86,37 +97,29 @@ const DeliveryPartnerAttendance = () => {
           </div>
         </header>
 
-        <section className="grid gap-4 sm:grid-cols-3">
-          <div className="rounded-2xl border border-emerald-400/15 bg-linear-to-br from-emerald-950/70 to-slate-900 p-5">
-            <div className="flex items-center justify-between gap-3">
-              <div><p className="text-xs font-bold uppercase text-emerald-200/70">Total sessions</p><p className="mt-2 text-3xl font-black">{records.length}</p></div>
-              <Users className="text-emerald-300" size={22} />
-            </div>
-          </div>
-          <div className="rounded-2xl border border-sky-400/15 bg-linear-to-br from-sky-950/70 to-slate-900 p-5">
-            <div className="flex items-center justify-between gap-3">
-              <div><p className="text-xs font-bold uppercase text-sky-200/70">Active sessions</p><p className="mt-2 text-3xl font-black">{activeSessions}</p></div>
-              <Clock3 className="text-sky-300" size={22} />
-            </div>
-          </div>
-          <div className="rounded-2xl border border-amber-400/15 bg-linear-to-br from-amber-950/70 to-slate-900 p-5">
-            <div className="flex items-center justify-between gap-3">
-              <div><p className="text-xs font-bold uppercase text-amber-200/70">Completed sessions</p><p className="mt-2 text-3xl font-black">{completedSessions}</p></div>
-              <CheckCircle2 className="text-amber-300" size={22} />
-            </div>
-          </div>
-        </section>
+        <AdminAttendanceSummaryCards total={records.length} active={activeSessions} completed={completedSessions} />
 
-        <div className="relative w-full max-w-xl">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
-          <input
-            type="search"
-            value={search}
-            onChange={(event) => { setSearch(event.target.value); setCurrentPage(1); }}
-            placeholder="Search delivery partner name or ID..."
-            aria-label="Search delivery partner attendance by name or ID"
-            className="w-full rounded-xl border border-white/10 bg-slate-900 py-3 pl-11 pr-4 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-emerald-400/50"
-          />
+        <div className="admin-reference-toolbar flex flex-col gap-4 rounded-xl p-4 md:flex-row md:items-center md:justify-between">
+          <div className="relative w-full flex-1 md:max-w-md">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => { setSearch(event.target.value); setCurrentPage(1); }}
+              placeholder="Search by delivery partner name or ID..."
+              aria-label="Search delivery partner attendance by name or ID"
+              className="w-full rounded-xl border border-white/10 bg-slate-950/80 py-3 pl-11 pr-4 text-sm font-medium text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-emerald-600/40 focus:bg-slate-900"
+            />
+          </div>
+          <select
+            value={partnerFilter}
+            onChange={(event) => { setPartnerFilter(event.target.value); setCurrentPage(1); }}
+            aria-label="Filter by delivery partner"
+            className="w-full cursor-pointer rounded-xl border border-white/10 bg-slate-950/80 px-3.5 py-3 text-xs font-bold uppercase tracking-widest text-slate-100 outline-none focus:border-emerald-600/40 sm:w-auto"
+          >
+            <option value="all">All delivery partners</option>
+            {partnerOptions.map((partner) => <option key={partner.value} value={partner.value}>{partner.label}</option>)}
+          </select>
         </div>
 
         <section className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900">
@@ -129,7 +132,7 @@ const DeliveryPartnerAttendance = () => {
             <div className="flex items-center justify-center gap-2 p-12 text-sm text-slate-400"><LoaderCircle size={18} className="animate-spin" /> Loading attendance</div>
           ) : filteredRecords.length === 0 ? (
             <div className="p-12 text-center">
-              <p className="font-semibold text-slate-200">{records.length ? "No delivery partners match this search." : `No check-ins for ${formatDate(date)}`}</p>
+              <p className="font-semibold text-slate-200">{records.length ? "No sessions match these filters." : `No check-ins for ${formatDate(date)}`}</p>
               <p className="mt-2 text-sm text-slate-400">Sessions started by your delivery partners will appear here.</p>
             </div>
           ) : (
