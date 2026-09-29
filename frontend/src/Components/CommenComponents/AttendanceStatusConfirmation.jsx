@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { LoaderCircle, LogIn, LogOut, MapPin, X } from "lucide-react";
 import { toast } from "react-hot-toast";
 import api from "../../api";
@@ -64,7 +65,7 @@ const AttendanceStatusConfirmation = ({ isOpen, isOnline, endpoint, updateEvent,
   const actionLabel = isOnline ? "Go offline" : "Go online";
   const buttonLabel = isOnline ? "Yes, check out" : "Yes, check in";
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-120 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
       <section role="dialog" aria-modal="true" aria-labelledby="attendance-status-title" className="w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-slate-950 text-white shadow-2xl">
         <header className="flex items-start justify-between gap-4 border-b border-white/10 px-6 py-5">
@@ -90,7 +91,8 @@ const AttendanceStatusConfirmation = ({ isOpen, isOnline, endpoint, updateEvent,
           </div>
         </div>
       </section>
-    </div>
+    </div>,
+    document.body
   );
 };
 
