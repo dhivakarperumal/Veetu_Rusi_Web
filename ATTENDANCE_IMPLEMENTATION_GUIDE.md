@@ -36,7 +36,7 @@ Do not create separate attendance tables or duplicate attendance state in each f
 - The session row stores `franchise_admin_id` from `delivery_partners.created_by`. Verify that this is the canonical Franchise Admin identifier in the separate apps; prefer an explicit franchise link over an audit/creator field if the schema distinguishes them.
 - The Delivery Partner dashboard prompts for attendance and requires browser location for check-in. Its online/offline control also asks for confirmation. The client polls every 15 seconds and uses `delivery-attendance-updated` to synchronize the layout.
 - `GET /api/delivery/orders` returns no assigned orders while the partner is checked out. `PATCH /api/delivery/orders/:id/assign` requires an open attendance session and rejects a partner who already has an active order. These are server-side safeguards and must remain server-enforced.
-- `GET /api/delivery/orders/available` currently allows an authenticated partner to see eligible unassigned orders whether checked in or not, so an order placed while the partner was logged out can still be seen after login. The assignment endpoint still requires check-in. This is intentional separation between viewing and accepting.
+- `GET /api/delivery/orders/available` returns an empty list unless the partner is checked in and has no active order. Otherwise, it returns only unassigned orders whose status is exactly `Searching Delivery Partner`; statuses such as `Order Placed` and `Accepted` are not included. The New Orders page also filters to that exact status. An order placed while the partner was logged out can appear after the partner checks in if it is still unassigned and has this status.
 
 ### Franchise Admin
 
@@ -89,7 +89,7 @@ The existing migrations live in `backend/src/config/migrations.js`. They create 
 1. After authentication, call `GET /api/delivery/attendance` and derive online status from `currentSession`.
 2. Prompt for check-in if offline. Request browser geolocation only when checking in; send latitude, longitude, and accuracy to `POST /api/delivery/attendance`.
 3. Provide a status control for check-in/check-out. Check-out should be possible without GPS; if location is sent, validate and persist it.
-4. Show available unassigned orders while offline if the intended flow is “log in and see pending orders.” Clearly disable or explain acceptance until checked in.
+4. Show New Orders only while checked in and without an active delivery. The list must contain only unassigned orders with status exactly `Searching Delivery Partner`; keep the same filter in the backend and frontend. Poll or refresh after check-in so eligible orders placed while the partner was logged out appear.
 5. Always enforce check-in, no-active-order, and unassigned-order conditions in the server assignment endpoint. The frontend alone is not a security boundary.
 6. Refresh attendance after mutations and synchronize header, order, and dashboard components. Treat location permission denial, timeout, invalid coordinates, 403, 404, and 409 as distinct recoverable errors.
 
@@ -111,6 +111,7 @@ The existing migrations live in `backend/src/config/migrations.js`. They create 
 - Return 409 for duplicate check-in and checkout without an open session; return 401/403 for authentication/role failures, 404 for a missing profile, and 500 only for unexpected server failures.
 - Use server-generated timestamps and attendance dates. Do not accept client timestamps as authoritative attendance evidence.
 - Require valid GPS coordinates for Delivery Partner check-in on the server, even if the app requests location first. Do not make GPS mandatory for Home Chef unless that is a separate product requirement.
+- For Delivery Partner available orders, return no rows while checked out or while the partner has an active order. When eligible, query only unassigned rows with status exactly `Searching Delivery Partner`; do not rely on frontend filtering as the only enforcement.
 - Keep Franchise Admin reporting tenant-scoped in SQL. Validate date query values as `YYYY-MM-DD`, parameterize SQL, and cap/page result sets.
 - Do not end a session automatically on logout unless that is a deliberate business policy. Current behavior requires an explicit checkout, so an interrupted session remains open and needs a defined recovery/admin workflow.
 
@@ -154,7 +155,8 @@ For reports, send `?date=YYYY-MM-DD` or `?date_from=YYYY-MM-DD&date_to=YYYY-MM-D
 - Repeated check-in and checkout without a session each return 409, including concurrent requests from two tabs/devices.
 - Delivery Partner check-in fails without coordinates, with out-of-range coordinates, and when location permission is denied; valid coordinates create a session and address fallback still works if geocoding is unavailable.
 - Delivery Partner can check out without location; if checkout location is submitted, it is validated and saved.
-- Logging in after an order was created still shows the unassigned order in the Delivery Partner available list. Accepting it while checked out returns 403; after check-in it can be accepted if no other active order exists.
+- While checked out, the Delivery Partner available-orders endpoint returns an empty list. After check-in, it shows unassigned orders with status exactly `Searching Delivery Partner`, including eligible orders created while the partner was logged out; it excludes `Order Placed`, `Accepted`, and already-assigned orders.
+- The assignment endpoint returns 403 if called while checked out and rejects acceptance when the partner already has an active order. After check-in with no active delivery, an eligible unassigned searching order can be accepted.
 - A Delivery Partner with an active order cannot accept another one. Two partners racing to accept the same order result in only one successful assignment.
 - Checking out a Home Chef filters orders created after checkout according to the current order route; separately test the chosen policy for a chef with no attendance history.
 - A Franchise Admin sees only its own chefs' and delivery partners' sessions. Another franchise's sessions are not returned by changing query parameters or IDs.
