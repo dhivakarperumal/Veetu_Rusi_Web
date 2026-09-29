@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { CalendarDays, CheckCircle2, LoaderCircle, LogIn, LogOut, RefreshCw } from "lucide-react";
+import { CalendarDays, CheckCircle2, Clock3, LoaderCircle, LogIn, LogOut, RefreshCw } from "lucide-react";
 import { toast } from "react-hot-toast";
 import api from "../../api";
 import AttendanceDateFilters, { filterAttendanceRecords } from "../../Components/CommenComponents/AttendanceDateFilters";
@@ -28,6 +28,13 @@ const Attendance = () => {
   const [dateFilter, setDateFilter] = useState("all");
   const [customDate, setCustomDate] = useState("");
   const filteredRecords = filterAttendanceRecords(attendance.records, dateFilter, customDate);
+  const today = new Date();
+  const currentMonth = attendance.today
+    ? attendance.today.slice(0, 7)
+    : `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
+  const monthlySessions = attendance.records.filter((record) => dateKey(record.attendance_date).startsWith(currentMonth));
+  const completedSessions = attendance.records.filter((record) => record.check_out_at).length;
+  const latestSession = attendance.records[0] || null;
 
   const loadAttendance = useCallback(async () => {
     try {
@@ -132,6 +139,36 @@ const Attendance = () => {
               {marking ? <LoaderCircle size={19} className="animate-spin" /> : attendance.currentSession ? <LogOut size={18} /> : <LogIn size={18} />}
               {marking ? "Updating attendance..." : attendance.currentSession ? "Check out now" : "Check in now"}
             </button>
+          </div>
+
+          <div className="rounded-2xl border border-white/10 bg-slate-900 p-6">
+            <div className="flex items-center gap-3 text-slate-300">
+              <Clock3 size={20} className="text-emerald-300" />
+              <h2 className="text-sm font-bold uppercase">Session overview</h2>
+            </div>
+            <div className="mt-6 grid grid-cols-2 gap-4">
+              <div className="rounded-xl border border-white/5 bg-white/3 p-4">
+                <p className="text-xs font-semibold text-slate-400">Sessions this month</p>
+                <p className="mt-2 text-3xl font-black text-white">{monthlySessions.length}</p>
+              </div>
+              <div className="rounded-xl border border-white/5 bg-white/3 p-4">
+                <p className="text-xs font-semibold text-slate-400">Completed sessions</p>
+                <p className="mt-2 text-3xl font-black text-white">{completedSessions}</p>
+              </div>
+            </div>
+            <div className="mt-5 border-t border-white/10 pt-4">
+              <p className="text-xs font-bold uppercase text-slate-400">Latest session</p>
+              {latestSession ? (
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-semibold text-white">{formatDate(latestSession.attendance_date)}</span>
+                  <span className={latestSession.check_out_at ? "text-sm text-slate-400" : "text-sm font-semibold text-emerald-300"}>
+                    {latestSession.check_out_at ? `Checked out ${formatTime(latestSession.check_out_at)}` : "Active session"}
+                  </span>
+                </div>
+              ) : (
+                <p className="mt-2 text-sm text-slate-400">No sessions recorded yet.</p>
+              )}
+            </div>
           </div>
         </section>
 
