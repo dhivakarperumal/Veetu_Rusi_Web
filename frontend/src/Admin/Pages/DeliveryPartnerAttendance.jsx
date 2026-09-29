@@ -196,6 +196,7 @@ const DeliveryPartnerAttendance = () => {
                 <thead className="bg-slate-950/70 text-xs uppercase text-slate-400">
                   <tr>
                     <th className="px-6 py-3 font-bold">Delivery partner</th>
+                    <th className="px-6 py-3 font-bold">User ID</th>
                     <th className="px-6 py-3 font-bold">Checked in</th>
                     <th className="px-6 py-3 font-bold">Checked out</th>
                     <th className="px-6 py-3 font-bold">Phone</th>
@@ -207,9 +208,9 @@ const DeliveryPartnerAttendance = () => {
                     <tr key={record.id} className="transition hover:bg-white/2.5">
                       <td className="px-6 py-4">
                         <p className="font-bold text-white">{record.delivery_partner_name}</p>
-                        <p className="mt-1 font-mono text-xs text-slate-500">User ID: {record.delivery_partner_user_id || "-"}</p>
                         <p className="mt-1 text-xs text-slate-500">{formatDate(record.attendance_date)}</p>
                       </td>
+                      <td className="px-6 py-4 font-mono text-xs text-slate-300">{record.delivery_partner_user_id || "-"}</td>
                       <td className="px-6 py-4 text-slate-300">
                         <p>{new Date(record.check_in_at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}</p>
                         <p className="mt-1 max-w-xs whitespace-normal text-xs leading-5 text-slate-400">{record.check_in_address || "Address unavailable for older session"}</p>
