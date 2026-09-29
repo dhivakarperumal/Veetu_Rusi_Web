@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import { CalendarDays, CheckCircle2, Clock3, LoaderCircle, LogIn, LogOut, RefreshCw } from "lucide-react";
+import { CalendarDays, CheckCircle2, LoaderCircle, LogIn, LogOut, RefreshCw } from "lucide-react";
 import { toast } from "react-hot-toast";
 import api from "../../api";
+import AttendanceDateFilters, { filterAttendanceRecords } from "../../Components/CommenComponents/AttendanceDateFilters";
 
 const dateKey = (value) => String(value || "").slice(0, 10);
 
@@ -24,6 +25,9 @@ const Attendance = () => {
   const [attendance, setAttendance] = useState({ today: "", currentSession: null, records: [] });
   const [loading, setLoading] = useState(true);
   const [marking, setMarking] = useState(false);
+  const [dateFilter, setDateFilter] = useState("all");
+  const [customDate, setCustomDate] = useState("");
+  const filteredRecords = filterAttendanceRecords(attendance.records, dateFilter, customDate);
 
   const loadAttendance = useCallback(async () => {
     try {
@@ -133,25 +137,49 @@ const Attendance = () => {
           <section className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900">
             <div className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-4 sm:px-6">
               <h2 className="font-extrabold">Recent sessions</h2>
-              <span className="text-sm text-slate-400">{attendance.records.length}</span>
+              <span className="text-sm text-slate-400">{filteredRecords.length}</span>
+            </div>
+            <div className="border-b border-white/10 px-5 py-4 sm:px-6">
+              <AttendanceDateFilters
+                filter={dateFilter}
+                customDate={customDate}
+                onFilterChange={setDateFilter}
+                onCustomDateChange={(value) => {
+                  setCustomDate(value);
+                  setDateFilter("custom");
+                }}
+              />
             </div>
             {loading ? (
               <div className="flex items-center justify-center gap-2 p-12 text-sm text-slate-400"><LoaderCircle size={18} className="animate-spin" /> Loading attendance</div>
-            ) : attendance.records.length === 0 ? (
-              <div className="p-12 text-center text-sm text-slate-400">Your marked sessions will appear here.</div>
+            ) : filteredRecords.length === 0 ? (
+              <div className="p-12 text-center text-sm text-slate-400">{attendance.records.length ? "No sessions match this date filter." : "Your marked sessions will appear here."}</div>
             ) : (
-              <div className="divide-y divide-white/5">
-                {attendance.records.map((record) => (
-                  <article key={record.id} className="flex flex-wrap items-center justify-between gap-4 px-5 py-4 sm:px-6">
-                    <div>
-                      <p className="font-semibold text-white">{formatDate(record.attendance_date)}</p>
-                      <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-400"><Clock3 size={14} /> Check in {formatTime(record.check_in_at)}</p>
-                    </div>
-                    <div className="text-sm text-slate-300">
-                      {record.check_out_at ? `Check out ${formatTime(record.check_out_at)}` : <span className="font-semibold text-emerald-300">Session active</span>}
-                    </div>
-                  </article>
-                ))}
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-130 text-left text-sm">
+                  <thead className="bg-white/3 text-xs uppercase text-slate-400">
+                    <tr>
+                      <th scope="col" className="px-5 py-3 font-bold sm:px-6">Date</th>
+                      <th scope="col" className="px-5 py-3 font-bold">Check in</th>
+                      <th scope="col" className="px-5 py-3 font-bold">Check out</th>
+                      <th scope="col" className="px-5 py-3 font-bold">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {filteredRecords.map((record) => (
+                      <tr key={record.id} className="text-slate-200">
+                        <td className="whitespace-nowrap px-5 py-4 font-semibold sm:px-6">{formatDate(record.attendance_date)}</td>
+                        <td className="whitespace-nowrap px-5 py-4">{formatTime(record.check_in_at)}</td>
+                        <td className="whitespace-nowrap px-5 py-4">{formatTime(record.check_out_at)}</td>
+                        <td className="whitespace-nowrap px-5 py-4">
+                          <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${record.check_out_at ? "bg-slate-700/60 text-slate-300" : "bg-emerald-400/10 text-emerald-300"}`}>
+                            {record.check_out_at ? "Completed" : "Active"}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </section>
