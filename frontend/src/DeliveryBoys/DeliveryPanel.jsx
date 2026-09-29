@@ -5,6 +5,7 @@ import Header from "./DeliveryHeader";
 import { useAuth } from "../PrivateRouter/AuthContext.jsx";
 import api from "../api";
 import { toast, Toaster } from "react-hot-toast";
+import AttendancePrompt from "../Components/CommenComponents/AttendancePrompt";
 
 const AdminLayout = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -593,6 +594,13 @@ const AdminLayout = () => {
                     </div>
                 </div>
             )}
+
+            <AttendancePrompt
+                endpoint="/delivery/attendance"
+                roleLabel="Delivery partner"
+                requiresLocation
+                updateEvent="delivery-attendance-updated"
+            />
 
         </div>
     );
