@@ -205,13 +205,37 @@ const addUserFoodOrder = async (payload) => {
   return { insertId: result.insertId, order_id };
 };
 
-const getChefOrders = async (chefUserId) => {
-  const patterns = [
-    `%"chef_user_id":"${chefUserId}"%`,
-    `%"chef_user_id":${chefUserId}%`,
-    `%"chef_id":"${chefUserId}"%`,
-    `%"chef_id":${chefUserId}%`
-  ];
+const normalizeChefIds = (chefIds) => [...new Set((Array.isArray(chefIds) ? chefIds : [chefIds])
+  .filter((value) => value !== undefined && value !== null && String(value).trim() !== '')
+  .map(String))];
+
+const orderBelongsToChef = (row, chefIds) => {
+  const identifiers = new Set(normalizeChefIds(chefIds));
+  const items = parseJson(row.items);
+  const orderLevelMatch = identifiers.has(String(row.chef_user_id)) || identifiers.has(String(row.chef_id));
+  const chefItems = items.filter((item) =>
+    identifiers.has(String(item.chef_user_id)) ||
+    identifiers.has(String(item.chef_id)) ||
+    identifiers.has(String(item.created_by_user_id))
+  );
+  return { items, chefItems, orderLevelMatch };
+};
+
+const getChefOrders = async (chefIds) => {
+  const identifiers = normalizeChefIds(chefIds);
+  if (!identifiers.length) return [];
+
+  const orderClauses = identifiers.map(() => '(ufo.chef_user_id = ? OR ufo.chef_id = ? OR ufo.items LIKE ? OR ufo.items LIKE ? OR ufo.items LIKE ? OR ufo.items LIKE ? OR ufo.items LIKE ? OR ufo.items LIKE ?)');
+  const params = identifiers.flatMap((chefId) => [
+    chefId,
+    chefId,
+    `%"chef_user_id":"${chefId}"%`,
+    `%"chef_user_id":${chefId}%`,
+    `%"chef_id":"${chefId}"%`,
+    `%"chef_id":${chefId}%`,
+    `%"created_by_user_id":"${chefId}"%`,
+    `%"created_by_user_id":${chefId}%`,
+  ]);
 
   const [rows] = await pool.execute(
     `SELECT ufo.*,
@@ -223,29 +247,14 @@ const getChefOrders = async (chefUserId) => {
      LEFT JOIN users cust_u ON cust_u.user_id = ufo.user_id
      LEFT JOIN home_chefs hc ON (hc.user_id = ufo.chef_user_id OR hc.id = ufo.chef_id)
      LEFT JOIN users chef_u ON (chef_u.user_id = ufo.chef_user_id OR (hc.user_id IS NOT NULL AND chef_u.user_id = hc.user_id))
-     WHERE ufo.chef_user_id = ?
-        OR ufo.chef_id = ?
-        OR ufo.items LIKE ?
-        OR ufo.items LIKE ?
-        OR ufo.items LIKE ?
-        OR ufo.items LIKE ?
+     WHERE ${orderClauses.join(' OR ')}
      ORDER BY COALESCE(ufo.ordered_at, ufo.updated_at) DESC`,
-    [chefUserId, chefUserId, ...patterns]
+    params
   );
 
   const chefOrders = [];
   for (const row of rows) {
-    const items = parseJson(row.items);
-    const chefItems = items.filter((item) =>
-      String(item.chef_user_id) === String(chefUserId) ||
-      String(item.chef_id) === String(chefUserId) ||
-      String(item.created_by_user_id) === String(chefUserId)
-    );
-
-    // If no matching items in the JSON but the order-level chef_user_id matches, include all items
-    const orderLevelMatch =
-      String(row.chef_user_id) === String(chefUserId) ||
-      String(row.chef_id) === String(chefUserId);
+    const { items, chefItems, orderLevelMatch } = orderBelongsToChef(row, identifiers);
 
     const effectiveItems = chefItems.length > 0 ? chefItems : orderLevelMatch ? items : [];
     if (!effectiveItems.length && !orderLevelMatch) continue;
@@ -279,6 +288,18 @@ const getChefOrders = async (chefUserId) => {
   }
 
   return chefOrders;
+};
+
+const chefOwnsOrder = async (orderId, chefIds) => {
+  const identifiers = normalizeChefIds(chefIds);
+  if (!identifiers.length) return false;
+  const [rows] = await pool.execute(
+    'SELECT chef_user_id, chef_id, items FROM user_food_order_table WHERE id = ? LIMIT 1',
+    [orderId]
+  );
+  if (!rows.length) return false;
+  const { chefItems, orderLevelMatch } = orderBelongsToChef(rows[0], identifiers);
+  return orderLevelMatch || chefItems.length > 0;
 };
 
 const getUserOrders = async (userId) => {
@@ -741,6 +762,7 @@ module.exports = {
   addUserFoodOrder,
   getAllOrders,
   getChefOrders,
+  chefOwnsOrder,
   getUserOrders,
   getOrderById,
   updateOrder,

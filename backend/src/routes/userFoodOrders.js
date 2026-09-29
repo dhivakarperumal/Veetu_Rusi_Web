@@ -350,14 +350,37 @@ router.post('/', verifyToken, async (req, res) => {
   }
 });
 
+const getAuthenticatedChefIds = async (user) => {
+  const clauses = [];
+  const params = [];
+  if (user?.user_id) {
+    clauses.push('user_id = ?');
+    params.push(String(user.user_id));
+  }
+  if (user?.email) {
+    clauses.push('email = ?');
+    params.push(user.email);
+  }
+  if (!clauses.length) return [];
+
+  const [rows] = await pool.execute(
+    `SELECT id, user_id FROM home_chefs WHERE ${clauses.join(' OR ')} ORDER BY id DESC LIMIT 1`,
+    params
+  );
+  if (!rows.length) return [];
+  return [...new Set([rows[0].user_id, rows[0].id]
+    .filter((value) => value !== undefined && value !== null && String(value).trim() !== '')
+    .map(String))];
+};
+
 router.get('/chef', verifyToken, async (req, res) => {
   try {
-    const chefUserId = req.user?.user_id || req.user?.id;
-    if (!chefUserId) {
+    if (!['chef', 'homechef'].includes(String(req.user?.role || '').toLowerCase())) {
       return res.status(403).json({ message: 'Chef authentication required' });
     }
-
-    const rows = await controller.getChefOrders(chefUserId);
+    const chefIds = await getAuthenticatedChefIds(req.user);
+    if (!chefIds.length) return res.status(404).json({ message: 'Home chef profile not found.' });
+    const rows = await controller.getChefOrders(chefIds);
     res.json(rows);
   } catch (err) {
     console.error('Error fetching chef orders:', err);
@@ -498,6 +521,13 @@ router.patch('/status/:id', verifyToken, async (req, res) => {
     const { status } = req.body;
     if (!status) {
       return res.status(400).json({ message: 'Status is required' });
+    }
+    if (['chef', 'homechef'].includes(String(req.user?.role || '').toLowerCase())) {
+      const chefIds = await getAuthenticatedChefIds(req.user);
+      if (!chefIds.length) return res.status(404).json({ message: 'Home chef profile not found.' });
+      if (!await controller.chefOwnsOrder(id, chefIds)) {
+        return res.status(403).json({ message: 'You are not authorized to update this order.' });
+      }
     }
     await controller.updateOrderStatus(id, status);
 

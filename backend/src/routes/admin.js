@@ -45,6 +45,7 @@ router.use(requireRole(['admin']));
 
 // Home Chef Management
 router.get('/homechefs', adminController.getHomeChefs);
+router.get('/home-chefs/attendance', adminController.getHomeChefAttendance);
 router.get('/homechefs/:id', adminController.getHomeChefById);
 router.post('/homechefs', homeChefUploadFields, adminController.createHomeChef);
 router.put('/homechefs/:id', homeChefUploadFields, adminController.updateHomeChef);

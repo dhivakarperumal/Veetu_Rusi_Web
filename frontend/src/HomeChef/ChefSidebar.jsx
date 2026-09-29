@@ -24,7 +24,8 @@ import {
   Clock,
   ShoppingCart,
   Star,
-  Users
+  Users,
+  CalendarDays
 } from "lucide-react";
 import { useAuth } from "../PrivateRouter/AuthContext";
 
@@ -57,6 +58,7 @@ const navItems = [
     ]
   },
   { path: "/chef/material", label: "Buy Materials", icon: ShoppingCart },
+  { path: "/chef/attendance", label: "Attendance", icon: CalendarDays },
   { path: "/chef/reviews", label: "Reviews", icon: Star },
   { path: "/chef/customers", label: "Customers", icon: Users },
   { path: "/chef/earnings", label: "Wallet & Earnings", icon: Wallet },

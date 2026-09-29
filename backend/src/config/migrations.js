@@ -577,6 +577,29 @@ const createDeliveryAttendanceTable = async () => {
     }
 };
 
+const createHomeChefAttendanceTable = async () => {
+    try {
+        await pool.execute(`
+            CREATE TABLE IF NOT EXISTS home_chef_attendance (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                home_chef_id INT NOT NULL,
+                home_chef_user_id VARCHAR(255) NOT NULL,
+                home_chef_name VARCHAR(255) NOT NULL,
+                franchise_admin_id VARCHAR(255),
+                attendance_date DATE NOT NULL,
+                check_in_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                check_out_at DATETIME,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                KEY idx_home_chef_attendance_franchise_date (franchise_admin_id, attendance_date),
+                KEY idx_home_chef_attendance_chef_date (home_chef_user_id, attendance_date)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `);
+        console.log('✓ home_chef_attendance table created or already exists');
+    } catch (error) {
+        console.error('✗ Error creating home_chef_attendance table:', error.message);
+    }
+};
+
 const createReviewsTable = async () => {
     try {
         // Product Reviews Table
@@ -1370,6 +1393,7 @@ const createReferralTables = async () => {
         createChefFoodTable,
         createDeliveryPartnersTable,
         createDeliveryAttendanceTable,
+        createHomeChefAttendanceTable,
         createSubscriptionPlansTable,
         createSubscriptionPaymentsTable,
         createReviewsTable,

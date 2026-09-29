@@ -817,6 +817,35 @@ exports.getDeliveryPartnerAttendance = async (req, res) => {
   }
 };
 
+exports.getHomeChefAttendance = async (req, res) => {
+  try {
+    const adminIds = [req.user?.user_id, req.user?.id]
+      .filter((value) => value !== undefined && value !== null && String(value).trim() !== '')
+      .map(String);
+    if (!adminIds.length) return res.status(401).json({ message: 'Unauthorized' });
+
+    let query = `
+      SELECT attendance.id, attendance.home_chef_name,
+             DATE_FORMAT(attendance.attendance_date, '%Y-%m-%d') AS attendance_date,
+             attendance.check_in_at, attendance.check_out_at,
+             hc.mobile
+      FROM home_chef_attendance attendance
+      LEFT JOIN home_chefs hc ON hc.id = attendance.home_chef_id
+      WHERE attendance.franchise_admin_id IN (${adminIds.map(() => '?').join(', ')})`;
+    const params = [...adminIds];
+    if (req.query.date && /^\d{4}-\d{2}-\d{2}$/.test(req.query.date)) {
+      query += ' AND attendance.attendance_date = ?';
+      params.push(req.query.date);
+    }
+    query += ' ORDER BY attendance.check_in_at DESC LIMIT 500';
+
+    const [rows] = await pool.execute(query, params);
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving home chef attendance.', error: error.message });
+  }
+};
+
 exports.getDeliveryPartnerById = superadminController.getDeliveryPartnerById;
 exports.createDeliveryPartner = superadminController.createDeliveryPartner;
 exports.updateDeliveryPartner = superadminController.updateDeliveryPartner;

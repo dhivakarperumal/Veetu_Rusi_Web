@@ -38,6 +38,7 @@ const navItems = [
     children: [
       { path: "/admin/homechefs", label: "Home Chefs List", icon: List },
       { path: "/admin/homechefs/categories", label: "Category New One", icon: Layers },
+      { path: "/admin/home-chefs/attendance", label: "Attendance", icon: ClipboardCheck },
     ],
   },
   {
