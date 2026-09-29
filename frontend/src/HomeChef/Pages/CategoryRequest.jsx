@@ -1,11 +1,12 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, FileText, ImagePlus, Plus, X } from "lucide-react";
 import imageCompression from "browser-image-compression";
 import toast from "react-hot-toast";
 import api from "../../api";
 
-const CategoryRequest = () => {
+const CategoryRequest = ({ popup = false, onClose, onSubmitted }) => {
   const navigate = useNavigate();
   const [categoryType, setCategoryType] = useState("Food");
   const [name, setName] = useState("");
@@ -15,7 +16,10 @@ const CategoryRequest = () => {
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const close = () => navigate("/chef/categories");
+  const close = () => {
+    if (onClose) onClose();
+    else navigate("/chef/categories");
+  };
 
   const addSubcategory = () => {
     const value = subcategoryInput.trim();
@@ -65,6 +69,7 @@ const CategoryRequest = () => {
         chef_name: user.name || user.full_name || user.username || "",
       });
       toast.success("Category request sent for review.");
+      onSubmitted?.();
       close();
     } catch (error) {
       toast.error(error.response?.data?.message || "Could not submit the category request.");
@@ -73,21 +78,9 @@ const CategoryRequest = () => {
     }
   };
 
-  return (
-    <div className="min-h-screen p-4 md:p-8 animate-in fade-in duration-300">
-      <div className="mx-auto max-w-4xl">
-        <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-black text-white">New Category Request</h1>
-            <p className="mt-2 text-sm text-slate-300">Submit a product classification for review.</p>
-          </div>
-          <button type="button" onClick={close} className="inline-flex items-center justify-center gap-2 self-start rounded-xl border border-slate-700 px-4 py-3 text-sm font-bold text-slate-200 transition hover:bg-slate-800 sm:self-auto">
-            <ArrowLeft size={17} /> Back to Categories
-          </button>
-        </header>
-
-        <form onSubmit={submitRequest} className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl">
-          <div className="space-y-6 p-6 sm:p-9">
+  const requestForm = (
+        <form onSubmit={submitRequest} className={`overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl ${popup ? "flex min-h-0 flex-1 flex-col" : ""}`}>
+          <div className={`space-y-6 p-6 sm:p-9 ${popup ? "min-h-0 flex-1 overflow-y-auto overscroll-contain touch-pan-y" : ""}`}>
             <div className="grid gap-5 sm:grid-cols-2">
               <label className="space-y-2 text-[11px] font-black uppercase tracking-wide text-slate-900">
                 Category type <span className="text-rose-500">*</span>
@@ -138,7 +131,41 @@ const CategoryRequest = () => {
             <button type="button" onClick={close} className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50">Cancel</button>
             <button type="submit" disabled={loading} className="rounded-xl bg-emerald-600 px-6 py-3 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60">{loading ? "Sending..." : "Submit Request"}</button>
           </footer>
-        </form>
+    </form>
+  );
+
+  if (popup) {
+    return createPortal(
+      <div className="fixed inset-0 z-10000 flex justify-end" role="presentation">
+        <button type="button" aria-label="Close category request" onClick={close} className="absolute inset-0 bg-slate-950/65 backdrop-blur-sm" />
+        <section role="dialog" aria-modal="true" aria-labelledby="category-request-title" className="relative flex h-full min-h-0 w-full max-w-190 flex-col overflow-hidden bg-white shadow-2xl animate-in slide-in-from-right duration-300">
+          <header className="sticky top-0 z-10 flex items-center justify-between bg-emerald-600 px-6 py-6 text-white sm:px-9">
+            <div>
+              <h1 id="category-request-title" className="text-2xl font-black uppercase">New Category Request</h1>
+              <p className="mt-1 text-xs font-bold uppercase tracking-wide text-emerald-100">Submit a product classification for review</p>
+            </div>
+            <button type="button" onClick={close} aria-label="Close" className="rounded-xl bg-black/10 p-3 transition hover:bg-black/20"><X size={20} /></button>
+          </header>
+          {requestForm}
+        </section>
+      </div>,
+      document.body
+    );
+  }
+
+  return (
+    <div className="min-h-screen p-4 md:p-8 animate-in fade-in duration-300">
+      <div className="mx-auto max-w-4xl">
+        <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-black text-white">New Category Request</h1>
+            <p className="mt-2 text-sm text-slate-300">Submit a product classification for review.</p>
+          </div>
+          <button type="button" onClick={close} className="inline-flex items-center justify-center gap-2 self-start rounded-xl border border-slate-700 px-4 py-3 text-sm font-bold text-slate-200 transition hover:bg-slate-800 sm:self-auto">
+            <ArrowLeft size={17} /> Back to Categories
+          </button>
+        </header>
+        {requestForm}
       </div>
     </div>
   );

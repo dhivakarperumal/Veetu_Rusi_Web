@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
 import { FaPlus, FaEdit, FaTrash, FaTimes, FaImage } from "react-icons/fa";
 import api from "../../api";
 import toast from "react-hot-toast";
 import imageCompression from "browser-image-compression";
+import CategoryRequest from "./CategoryRequest";
 
 const ChefCategory = () => {
   const [categories, setCategories] = useState([]);
@@ -19,6 +19,7 @@ const ChefCategory = () => {
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showRequestPopup, setShowRequestPopup] = useState(false);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -219,12 +220,13 @@ const ChefCategory = () => {
             <p className="text-sm text-slate-300 mt-2">Manage categories that belong to your chef profile.</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <Link
-              to="/chef/categoryrequest"
+            <button
+              type="button"
+              onClick={() => setShowRequestPopup(true)}
               className="inline-flex items-center gap-2 rounded-2xl border border-emerald-500/60 px-5 py-3 font-bold text-emerald-300 transition hover:bg-emerald-500/10"
             >
               <FaPlus /> Request Category
-            </Link>
+            </button>
           </div>
         </div>
 
@@ -397,6 +399,13 @@ const ChefCategory = () => {
               </form>
             </div>
           </div>
+        )}
+        {showRequestPopup && (
+          <CategoryRequest
+            popup
+            onClose={() => setShowRequestPopup(false)}
+            onSubmitted={fetchCategoryRequests}
+          />
         )}
       </div>
     </div>
