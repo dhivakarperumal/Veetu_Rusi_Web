@@ -6,6 +6,7 @@ import api from '../api';
 import ChefSidebar from "./ChefSidebar";
 import ChefHeader from "./ChefHeader";
 import OrderCancellationModal from "../Components/CommenComponents/OrderCancellationModal";
+import AttendancePrompt from "../Components/CommenComponents/AttendancePrompt";
 
 const AdminLayout = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -426,6 +427,8 @@ const AdminLayout = () => {
                         apiCall={(id, payload) => api.post(`/user-food-orders/cancel/${id}`, payload)}
                     />
                 )}
+
+                <AttendancePrompt endpoint="/home-chef-attendance" roleLabel="Home chef" />
 
                 <footer className="glass-footer text-center py-4 mt-10 text-sm text-white/70">
                     © {new Date().getFullYear()} Q-Techx Solutions. All rights reserved.

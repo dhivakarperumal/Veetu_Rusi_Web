@@ -39,8 +39,7 @@ const selectAttendance = async (chefUserId) => {
             check_in_at, check_out_at
      FROM home_chef_attendance
      WHERE home_chef_user_id = ?
-     ORDER BY check_in_at DESC
-     LIMIT 100`,
+    ORDER BY check_in_at DESC`,
     [chefUserId]
   );
   const [[todayRow]] = await pool.execute("SELECT DATE_FORMAT(CURDATE(), '%Y-%m-%d') AS today");

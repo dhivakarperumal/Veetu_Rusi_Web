@@ -785,6 +785,27 @@ exports.getDeliveryPartners = async (req, res) => {
   }
 };
 
+const appendAttendanceDateFilter = (query, params, filters) => {
+  const isDate = (value) => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
+  const hasStart = isDate(filters.date_from);
+  const hasEnd = isDate(filters.date_to);
+
+  if (hasStart && hasEnd) {
+    query += ' AND attendance.attendance_date BETWEEN ? AND ?';
+    params.push(filters.date_from, filters.date_to);
+  } else if (hasStart) {
+    query += ' AND attendance.attendance_date >= ?';
+    params.push(filters.date_from);
+  } else if (hasEnd) {
+    query += ' AND attendance.attendance_date <= ?';
+    params.push(filters.date_to);
+  } else if (isDate(filters.date)) {
+    query += ' AND attendance.attendance_date = ?';
+    params.push(filters.date);
+  }
+  return query;
+};
+
 exports.getDeliveryPartnerAttendance = async (req, res) => {
   try {
     const adminIds = [req.user?.user_id, req.user?.id]
@@ -793,7 +814,7 @@ exports.getDeliveryPartnerAttendance = async (req, res) => {
     if (!adminIds.length) return res.status(401).json({ message: 'Unauthorized' });
 
     let query = `
-            SELECT attendance.id, attendance.delivery_partner_name,
+            SELECT attendance.id, attendance.delivery_partner_user_id, attendance.delivery_partner_name,
               DATE_FORMAT(attendance.attendance_date, '%Y-%m-%d') AS attendance_date,
              attendance.check_in_at, attendance.latitude, attendance.longitude,
                     attendance.accuracy_m, attendance.check_in_address,
@@ -804,10 +825,7 @@ exports.getDeliveryPartnerAttendance = async (req, res) => {
       LEFT JOIN delivery_partners dp ON dp.id = attendance.delivery_partner_id
       WHERE attendance.franchise_admin_id IN (${adminIds.map(() => '?').join(', ')})`;
     const params = [...adminIds];
-    if (req.query.date && /^\d{4}-\d{2}-\d{2}$/.test(req.query.date)) {
-      query += ' AND attendance.attendance_date = ?';
-      params.push(req.query.date);
-    }
+    query = appendAttendanceDateFilter(query, params, req.query);
     query += ' ORDER BY attendance.check_in_at DESC LIMIT 500';
 
     const [rows] = await pool.execute(query, params);
@@ -825,7 +843,7 @@ exports.getHomeChefAttendance = async (req, res) => {
     if (!adminIds.length) return res.status(401).json({ message: 'Unauthorized' });
 
     let query = `
-      SELECT attendance.id, attendance.home_chef_name,
+      SELECT attendance.id, attendance.home_chef_user_id, attendance.home_chef_name,
              DATE_FORMAT(attendance.attendance_date, '%Y-%m-%d') AS attendance_date,
              attendance.check_in_at, attendance.check_out_at,
              hc.mobile
@@ -833,10 +851,7 @@ exports.getHomeChefAttendance = async (req, res) => {
       LEFT JOIN home_chefs hc ON hc.id = attendance.home_chef_id
       WHERE attendance.franchise_admin_id IN (${adminIds.map(() => '?').join(', ')})`;
     const params = [...adminIds];
-    if (req.query.date && /^\d{4}-\d{2}-\d{2}$/.test(req.query.date)) {
-      query += ' AND attendance.attendance_date = ?';
-      params.push(req.query.date);
-    }
+    query = appendAttendanceDateFilter(query, params, req.query);
     query += ' ORDER BY attendance.check_in_at DESC LIMIT 500';
 
     const [rows] = await pool.execute(query, params);
