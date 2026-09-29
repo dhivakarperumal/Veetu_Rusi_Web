@@ -105,7 +105,7 @@ const Attendance = () => {
   };
 
   return (
-    <div className="min-h-full px-4 py-6 text-white sm:px-6 lg:px-8">
+    <div className="min-h-full py-6 text-white">
       <div className="mx-auto max-w-5xl space-y-6">
         <header className="flex flex-wrap items-end justify-between gap-4">
           <div>
