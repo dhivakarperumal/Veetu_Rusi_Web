@@ -350,7 +350,7 @@ router.post('/', verifyToken, async (req, res) => {
   }
 });
 
-const getAuthenticatedChefIds = async (user) => {
+const getAuthenticatedChef = async (user) => {
   const clauses = [];
   const params = [];
   if (user?.user_id) {
@@ -361,16 +361,13 @@ const getAuthenticatedChefIds = async (user) => {
     clauses.push('email = ?');
     params.push(user.email);
   }
-  if (!clauses.length) return [];
+  if (!clauses.length) return null;
 
   const [rows] = await pool.execute(
     `SELECT id, user_id FROM home_chefs WHERE ${clauses.join(' OR ')} ORDER BY id DESC LIMIT 1`,
     params
   );
-  if (!rows.length) return [];
-  return [...new Set([rows[0].user_id, rows[0].id]
-    .filter((value) => value !== undefined && value !== null && String(value).trim() !== '')
-    .map(String))];
+  return rows[0] || null;
 };
 
 router.get('/chef', verifyToken, async (req, res) => {
@@ -378,8 +375,16 @@ router.get('/chef', verifyToken, async (req, res) => {
     if (!['chef', 'homechef'].includes(String(req.user?.role || '').toLowerCase())) {
       return res.status(403).json({ message: 'Chef authentication required' });
     }
-    const chefIds = await getAuthenticatedChefIds(req.user);
-    if (!chefIds.length) return res.status(404).json({ message: 'Home chef profile not found.' });
+    const chef = await getAuthenticatedChef(req.user);
+    if (!chef?.user_id) return res.status(404).json({ message: 'Home chef profile not found.' });
+    const [activeSessions] = await pool.execute(
+      `SELECT id FROM home_chef_attendance
+       WHERE home_chef_user_id = ? AND check_out_at IS NULL
+       LIMIT 1`,
+      [chef.user_id]
+    );
+    if (!activeSessions.length) return res.json([]);
+    const chefIds = [...new Set([chef.user_id, chef.id].map(String))];
     const rows = await controller.getChefOrders(chefIds);
     res.json(rows);
   } catch (err) {

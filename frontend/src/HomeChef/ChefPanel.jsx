@@ -60,6 +60,13 @@ const AdminLayout = () => {
 
     const fetchPendingOrders = async () => {
         try {
+            const attendance = await api.get("/home-chef-attendance");
+            if (!attendance.data?.currentSession) {
+                setPopupVisible(false);
+                setPopupOrder(null);
+                popupOrderRef.current = null;
+                return;
+            }
             const res = await api.get("/user-food-orders/chef");
             const allOrders = Array.isArray(res.data) ? res.data : [];
             const pendingOrders = allOrders.filter(order => order.status === 'New Order');
