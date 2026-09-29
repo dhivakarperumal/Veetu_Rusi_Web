@@ -7,6 +7,7 @@ const ChefDataToolbar = ({
   filters,
   viewMode,
   onViewModeChange,
+  showFilterIcon = true,
 }) => (
   <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-slate-900/95 border border-slate-800 p-4 rounded-[1.75rem] shadow-2xl shadow-slate-950/30">
     <div className="relative flex-1 max-w-xl w-full">
@@ -22,7 +23,7 @@ const ChefDataToolbar = ({
     <div className="flex flex-wrap items-center gap-3 self-end xl:self-auto">
       {filters && (
         <div className="flex items-center gap-2 text-slate-400">
-          <Filter className="w-4 h-4" />
+          {showFilterIcon && <Filter className="w-4 h-4" />}
           {filters}
         </div>
       )}

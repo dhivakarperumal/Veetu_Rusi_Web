@@ -76,8 +76,7 @@ router.get('/attendance', async (req, res) => {
               check_out_accuracy_m, check_out_address
        FROM delivery_partner_attendance
        WHERE delivery_partner_user_id = ?
-       ORDER BY check_in_at DESC
-       LIMIT 100`,
+      ORDER BY check_in_at DESC`,
       [String(deliveryPartnerUserId)]
     );
     const [[todayRow]] = await pool.execute("SELECT DATE_FORMAT(CURDATE(), '%Y-%m-%d') AS today");

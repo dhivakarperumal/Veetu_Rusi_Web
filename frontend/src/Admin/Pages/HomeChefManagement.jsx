@@ -1249,7 +1249,7 @@ const HomeChefManagement = () => {
       )}
 
       {/* Pagination Controls */}
-      {totalPages > 1 && (
+      {filteredChefs.length > 0 && (
         <div className="flex justify-center items-center gap-2 mt-6">
           <button
             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
