@@ -1424,6 +1424,7 @@ const createReferralTables = async () => {
                     chef_user_id VARCHAR(255) NOT NULL,
                     chef_name VARCHAR(255),
                     status VARCHAR(20) NOT NULL DEFAULT 'Pending',
+                    approved_category_id INT DEFAULT NULL,
                     review_note LONGTEXT,
                     reviewed_by VARCHAR(255),
                     reviewed_at TIMESTAMP NULL DEFAULT NULL,
@@ -1432,6 +1433,8 @@ const createReferralTables = async () => {
                     KEY idx_category_request_chef (chef_user_id)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
             `);
+            await ensureColumnExists('home_chef_category_requests', 'approved_category_id', 'INT DEFAULT NULL');
+            await ensureColumnExists('home_chef_category_requests', 'reviewed_at', 'TIMESTAMP NULL DEFAULT NULL');
             console.log('✓ home_chef_category_requests table created or already exists');
         } catch (err) {
             console.error('✗ Error creating home_chef_category_requests table:', err.message || err);

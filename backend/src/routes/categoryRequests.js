@@ -5,6 +5,8 @@ const { verifyTokenWithoutSubscription, requireRole } = require('../middleware/a
 
 router.post('/', verifyTokenWithoutSubscription, requireRole(['chef', 'homechef']), controller.create);
 router.get('/mine', verifyTokenWithoutSubscription, requireRole(['chef', 'homechef']), controller.listMine);
+router.put('/:id', verifyTokenWithoutSubscription, requireRole(['chef', 'homechef']), controller.updateMine);
+router.delete('/:id', verifyTokenWithoutSubscription, requireRole(['chef', 'homechef']), controller.deleteMine);
 router.get('/', verifyTokenWithoutSubscription, requireRole(['admin']), controller.list);
 router.patch('/:id', verifyTokenWithoutSubscription, requireRole(['admin']), controller.review);
 

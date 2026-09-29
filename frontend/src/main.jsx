@@ -109,7 +109,7 @@ const SuperAdminWalletAndEarnings = React.lazy(() => import("./SuperAdmin/Pages/
 const ChefCategories = React.lazy(() => import("./HomeChef/Pages/ChefCategory.jsx"));
 const ChefFoodCategories = React.lazy(() => import("./HomeChef/Pages/ChefFoodCategories.jsx"));
 const ChefFoodCategoryAdd = React.lazy(() => import("./HomeChef/Pages/ChefFoodCategoryAdd.jsx"));
-const CategoryRequest = React.lazy(() => import("./HomeChef/Pages/CategoryRequest.jsx"));
+const CategoryRequest = React.lazy(() => import("./HomeChef/Pages/CategoryRequestPage.jsx"));
 const SuperOrderManagement = React.lazy(() => import("./SuperAdmin/Pages/OrderManagement.jsx"));
 const SuperPayoutManagement = React.lazy(() => import("./SuperAdmin/Pages/PayoutManagement.jsx"));
 const FranchiseOwnerManagement = React.lazy(() => import("./SuperAdmin/Pages/FranchiseOwnerManagement.jsx"));

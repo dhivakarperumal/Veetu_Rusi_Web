@@ -6,14 +6,14 @@ import imageCompression from "browser-image-compression";
 import toast from "react-hot-toast";
 import api from "../../api";
 
-const CategoryRequest = ({ popup = false, onClose, onSubmitted }) => {
+const CategoryRequest = ({ popup = false, onClose, onSubmitted, request = null }) => {
   const navigate = useNavigate();
-  const [categoryType, setCategoryType] = useState("Food");
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+  const [categoryType, setCategoryType] = useState(request?.category_type || "Food");
+  const [name, setName] = useState(request?.c_name || "");
+  const [description, setDescription] = useState(request?.discripti || "");
   const [subcategoryInput, setSubcategoryInput] = useState("");
-  const [subcategories, setSubcategories] = useState([]);
-  const [images, setImages] = useState([]);
+  const [subcategories, setSubcategories] = useState(request?.subcategory || []);
+  const [images, setImages] = useState(request?.image || []);
   const [loading, setLoading] = useState(false);
 
   const close = () => {
@@ -60,15 +60,17 @@ const CategoryRequest = ({ popup = false, onClose, onSubmitted }) => {
     setLoading(true);
     try {
       const user = JSON.parse(localStorage.getItem("user") || "{}");
-      await api.post("/category-requests", {
+      const payload = {
         category_type: categoryType,
         c_name: name,
         discripti: description,
         subcategory: subcategories,
         image: images,
         chef_name: user.name || user.full_name || user.username || "",
-      });
-      toast.success("Category request sent for review.");
+      };
+      if (request) await api.put(`/category-requests/${request.id}`, payload);
+      else await api.post("/category-requests", payload);
+      toast.success(request ? "Category request updated." : "Category request sent for review.");
       onSubmitted?.();
       close();
     } catch (error) {
@@ -129,7 +131,7 @@ const CategoryRequest = ({ popup = false, onClose, onSubmitted }) => {
 
           <footer className="flex justify-end gap-3 border-t border-slate-100 px-6 py-5 sm:px-9">
             <button type="button" onClick={close} className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50">Cancel</button>
-            <button type="submit" disabled={loading} className="rounded-xl bg-emerald-600 px-6 py-3 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60">{loading ? "Sending..." : "Submit Request"}</button>
+            <button type="submit" disabled={loading} className="rounded-xl bg-emerald-600 px-6 py-3 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60">{loading ? "Saving..." : request ? "Save Changes" : "Submit Request"}</button>
           </footer>
     </form>
   );
@@ -141,7 +143,7 @@ const CategoryRequest = ({ popup = false, onClose, onSubmitted }) => {
         <section role="dialog" aria-modal="true" aria-labelledby="category-request-title" className="relative flex max-h-[92vh] min-h-0 w-full max-w-3xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-200">
           <header className="flex shrink-0 items-center justify-between bg-emerald-600 px-6 py-6 text-white sm:px-9">
             <div>
-              <h1 id="category-request-title" className="text-2xl font-black uppercase">New Category Request</h1>
+              <h1 id="category-request-title" className="text-2xl font-black uppercase">{request ? "Edit Category Request" : "New Category Request"}</h1>
               <p className="mt-1 text-xs font-bold uppercase tracking-wide text-emerald-100">Submit a product classification for review</p>
             </div>
             <button type="button" onClick={close} aria-label="Close" className="rounded-xl bg-black/10 p-3 transition hover:bg-black/20"><X size={20} /></button>
@@ -158,7 +160,7 @@ const CategoryRequest = ({ popup = false, onClose, onSubmitted }) => {
       <div className="mx-auto max-w-4xl">
         <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-black text-white">New Category Request</h1>
+            <h1 className="text-3xl font-black text-white">{request ? "Edit Category Request" : "New Category Request"}</h1>
             <p className="mt-2 text-sm text-slate-300">Submit a product classification for review.</p>
           </div>
           <button type="button" onClick={close} className="inline-flex items-center justify-center gap-2 self-start rounded-xl border border-slate-700 px-4 py-3 text-sm font-bold text-slate-200 transition hover:bg-slate-800 sm:self-auto">
