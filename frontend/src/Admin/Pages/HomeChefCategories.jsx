@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import api from "../../api";
 import imageCompression from "browser-image-compression";
 import toast from "react-hot-toast";
@@ -17,6 +18,8 @@ import {
 import AdminStatCard from "../Components/AdminStatCard";
 
 const HomeChefCategories = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [category, setCategory] = useState({
     CatId: "",
     c_name: "",
@@ -95,6 +98,18 @@ const HomeChefCategories = () => {
     fetchCategories();
     fetchCategoryRequests();
   }, []);
+
+  useEffect(() => {
+    const openRequests = () => setShowCategoryRequestsModal(true);
+    window.addEventListener("open-category-requests", openRequests);
+    return () => window.removeEventListener("open-category-requests", openRequests);
+  }, []);
+
+  useEffect(() => {
+    if (!location.state?.openCategoryRequests) return;
+    setShowCategoryRequestsModal(true);
+    navigate(location.pathname, { replace: true, state: null });
+  }, [location.key, location.pathname, location.state, navigate]);
 
   const fetchCategoryRequests = async () => {
     try {
@@ -297,14 +312,6 @@ const HomeChefCategories = () => {
 
         {/* Header Section */}
         <div className="mb-5 flex flex-wrap justify-end gap-3">
-          <button
-            type="button"
-            onClick={() => setShowCategoryRequestsModal(true)}
-            className="flex items-center gap-2 rounded-2xl border border-emerald-500/60 px-6 py-3.5 text-sm font-black uppercase tracking-widest text-emerald-300 transition hover:bg-emerald-500/10"
-          >
-            <FaFileAlt /> Category Requests
-            <span className="rounded-full bg-amber-400/15 px-2 py-0.5 text-xs text-amber-300">{pendingCategoryRequests.length}</span>
-          </button>
           <button
             onClick={openAddModal}
             className="flex items-center gap-2 px-6 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-2xl font-black text-sm transition-all shadow-xl shadow-emerald-500/20 uppercase tracking-widest"

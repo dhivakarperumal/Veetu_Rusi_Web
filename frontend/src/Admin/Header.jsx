@@ -14,6 +14,7 @@ import {
   X,
   AlertTriangle,
   TrendingDown,
+  FileText,
 } from "lucide-react";
 
 import { useAuth } from "../PrivateRouter/AuthContext";
@@ -315,13 +316,22 @@ const Header = ({ onMenuClick }) => {
           </div>
         </div>
 
-        <div className="hidden md:flex items-center gap-2 rounded-3xl border border-white/10 bg-white/5 px-3 py-2 shadow-inner text-[10px] uppercase tracking-[0.3em] text-slate-300">
-          <span className="text-emerald-300 font-black">Live</span>
-          <span className="text-slate-400">real-time insights</span>
-        </div>
-
         {/* RIGHT */}
         <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              if (location.pathname === "/admin/homechefs/categories") {
+                window.dispatchEvent(new Event("open-category-requests"));
+              } else {
+                navigate("/admin/homechefs/categories", { state: { openCategoryRequests: true } });
+              }
+            }}
+            title="Open category requests"
+            className="inline-flex items-center gap-2 rounded-xl border border-emerald-500/50 bg-emerald-500/10 px-4 py-2.5 text-xs font-black uppercase tracking-wide text-emerald-300 transition hover:bg-emerald-500/20"
+          >
+            <FileText className="size-4" /> <span>CR</span>
+          </button>
 
           {/* SEARCH */}
           <div className="relative flex items-center" ref={searchWrapperRef}>
