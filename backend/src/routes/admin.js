@@ -45,6 +45,7 @@ router.use(requireRole(['admin']));
 
 // Home Chef Management
 router.get('/homechefs', adminController.getHomeChefs);
+router.get('/home-chefs/attendance', adminController.getHomeChefAttendance);
 router.get('/homechefs/:id', adminController.getHomeChefById);
 router.post('/homechefs', homeChefUploadFields, adminController.createHomeChef);
 router.put('/homechefs/:id', homeChefUploadFields, adminController.updateHomeChef);
@@ -53,6 +54,7 @@ router.patch('/homechefs/:id/status', adminController.updateHomeChefStatus);
 
 // Delivery Partner Management
 router.get('/delivery-partners', adminController.getDeliveryPartners);
+router.get('/delivery-partners/attendance', adminController.getDeliveryPartnerAttendance);
 router.get('/delivery-partners/:id', adminController.getDeliveryPartnerById);
 router.post('/delivery-partners', deliveryPartnerUploadFields, adminController.createDeliveryPartner);
 router.put('/delivery-partners/:id', deliveryPartnerUploadFields, adminController.updateDeliveryPartner);

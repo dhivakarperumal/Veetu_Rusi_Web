@@ -31,6 +31,8 @@ let createRecipeDetailsTable = async () => {};
 let createFranchiseProductsTable = async () => {};
 let createChefFoodTable = async () => {};
 let createDeliveryPartnersTable = async () => {};
+let createDeliveryAttendanceTable = async () => {};
+let createHomeChefAttendanceTable = async () => {};
 let createSubscriptionPlansTable = async () => {};
 let createSubscriptionPaymentsTable = async () => {};
 let createReviewsTable = async () => {};
@@ -59,6 +61,8 @@ try {
   createFranchiseProductsTable = migrations.createFranchiseProductsTable || createFranchiseProductsTable;
   createChefFoodTable = migrations.createChefFoodTable || createChefFoodTable;
   createDeliveryPartnersTable = migrations.createDeliveryPartnersTable || createDeliveryPartnersTable;
+  createDeliveryAttendanceTable = migrations.createDeliveryAttendanceTable || createDeliveryAttendanceTable;
+  createHomeChefAttendanceTable = migrations.createHomeChefAttendanceTable || createHomeChefAttendanceTable;
   createSubscriptionPlansTable = migrations.createSubscriptionPlansTable || createSubscriptionPlansTable;
   createSubscriptionPaymentsTable = migrations.createSubscriptionPaymentsTable || createSubscriptionPaymentsTable;
   createReviewsTable = migrations.createReviewsTable || createReviewsTable;
@@ -87,6 +91,7 @@ const userFoodRouter = require('./src/routes/userFood');
 const userFoodOrdersRouter = require('./src/routes/userFoodOrders');
 const addressesRouter = require('./src/routes/addresses');
 const deliveryRouter = require('./src/routes/delivery');
+const homeChefAttendanceRouter = require('./src/routes/homeChefAttendance');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -159,6 +164,7 @@ app.use('/api/user-food-orders', userFoodOrdersRouter);
 app.use('/api/addresses', addressesRouter);
 app.use('/api/userFoodOrders', userFoodOrdersRouter);
 app.use('/api/delivery', deliveryRouter);
+app.use('/api/home-chef-attendance', homeChefAttendanceRouter);
 
 const dpSettingsRoutes = require('./src/routes/dpSettingsRoutes');
 app.use('/api/settings/delivery-partner', dpSettingsRoutes);
@@ -207,6 +213,8 @@ const startServer = async () => {
     await createFranchiseProductsTable();
     await createChefFoodTable();
     await createDeliveryPartnersTable();
+    await createDeliveryAttendanceTable();
+    await createHomeChefAttendanceTable();
     await createSubscriptionPlansTable();
     await createSubscriptionPaymentsTable();
     await createReviewsTable();

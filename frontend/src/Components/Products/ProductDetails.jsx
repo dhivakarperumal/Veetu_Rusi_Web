@@ -652,7 +652,7 @@ const ProductDetails = () => {
 
                   {product.saree_length && (
                     <>
-                      <span className="text-gray-500">Saree Length</span>
+                      <span className="text-gray-500">Product Length</span>
                       <span className="font-medium text-gray-800">
                         {product.saree_length}
                       </span>

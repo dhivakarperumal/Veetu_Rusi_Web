@@ -3,8 +3,197 @@ const router = express.Router();
 const pool = require('../config/db');
 const { verifyToken, requireRole } = require('../middleware/authMiddleware');
 
+const geocodeCache = new Map();
+let geocodeQueue = Promise.resolve();
+let lastGeocodeRequestAt = 0;
+const reverseGeocode = async (latitude, longitude) => {
+  const cacheKey = `${latitude.toFixed(5)},${longitude.toFixed(5)}`;
+  const cached = geocodeCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.address;
+
+  try {
+    const url = new URL('https://nominatim.openstreetmap.org/reverse');
+    url.search = new URLSearchParams({
+      format: 'jsonv2',
+      lat: String(latitude),
+      lon: String(longitude),
+      zoom: '18',
+      addressdetails: '1',
+    }).toString();
+    const request = geocodeQueue.then(async () => {
+      const delay = Math.max(0, 1000 - (Date.now() - lastGeocodeRequestAt));
+      if (delay) await new Promise((resolve) => setTimeout(resolve, delay));
+      lastGeocodeRequestAt = Date.now();
+      return fetch(url, {
+        headers: { 'User-Agent': 'VeetuRusiDeliveryAttendance/1.0' },
+        signal: AbortSignal.timeout(5000),
+      });
+    });
+    geocodeQueue = request.then(() => undefined, () => undefined);
+    const response = await request;
+    if (!response.ok) throw new Error(`Geocoder returned ${response.status}`);
+    const data = await response.json();
+    const address = data.display_name || `Near ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+    geocodeCache.set(cacheKey, { address, expiresAt: Date.now() + 60 * 60 * 1000 });
+    return address;
+  } catch (error) {
+    console.warn('Attendance reverse geocoding failed:', error.message);
+    return `Near ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+  }
+};
+
 router.use(verifyToken);
 router.use(requireRole(['delivery_partner']));
+
+const getDeliveryPartnerOrderAccess = async (deliveryPartnerUserId) => {
+  const partnerId = String(deliveryPartnerUserId || '');
+  const [[state]] = await pool.execute(
+    `SELECT
+       EXISTS (
+         SELECT 1 FROM delivery_partner_attendance
+         WHERE delivery_partner_user_id = ? AND check_out_at IS NULL
+       ) AS is_checked_in,
+       EXISTS (
+         SELECT 1 FROM user_food_order_table
+         WHERE (delivery_partner = ? OR delivery_partner_user_id = ?)
+           AND status NOT IN ('Delivered', 'Cancelled', 'Completed')
+       ) AS has_active_order`,
+    [partnerId, partnerId, partnerId]
+  );
+  return {
+    isCheckedIn: Boolean(state.is_checked_in),
+    hasActiveOrder: Boolean(state.has_active_order),
+  };
+};
+
+router.get('/attendance', async (req, res) => {
+  try {
+    const deliveryPartnerUserId = req.user?.user_id || req.user?.id;
+    const [rows] = await pool.execute(
+      `SELECT id, delivery_partner_name, DATE_FORMAT(attendance_date, '%Y-%m-%d') AS attendance_date,
+              check_in_at, latitude, longitude, accuracy_m, check_in_address,
+              check_out_at, check_out_latitude, check_out_longitude,
+              check_out_accuracy_m, check_out_address
+       FROM delivery_partner_attendance
+       WHERE delivery_partner_user_id = ?
+       ORDER BY check_in_at DESC
+       LIMIT 100`,
+      [String(deliveryPartnerUserId)]
+    );
+    const [[todayRow]] = await pool.execute("SELECT DATE_FORMAT(CURDATE(), '%Y-%m-%d') AS today");
+    res.json({
+      today: todayRow.today,
+      currentSession: rows.find((record) => !record.check_out_at) || null,
+      records: rows,
+    });
+  } catch (error) {
+    console.error('Delivery partner attendance fetch error:', error);
+    res.status(500).json({ message: 'Unable to load attendance.' });
+  }
+});
+
+router.post('/attendance', async (req, res) => {
+  let connection;
+  let transactionStarted = false;
+  try {
+    const deliveryPartnerUserId = String(req.user?.user_id || req.user?.id || '');
+    const action = req.body?.action || 'check_in';
+    const latitude = Number(req.body?.latitude);
+    const longitude = Number(req.body?.longitude);
+    const accuracy = req.body?.accuracy == null ? null : Number(req.body.accuracy);
+    const hasAnyLocation = req.body?.latitude != null || req.body?.longitude != null;
+    const hasValidLocation = req.body?.latitude != null && req.body?.longitude != null &&
+      Number.isFinite(latitude) && latitude >= -90 && latitude <= 90 &&
+      Number.isFinite(longitude) && longitude >= -180 && longitude <= 180;
+
+    if (!deliveryPartnerUserId || !['check_in', 'check_out'].includes(action) ||
+      ((action === 'check_in' || hasAnyLocation) && !hasValidLocation) ||
+      (accuracy !== null && (!Number.isFinite(accuracy) || accuracy < 0))) {
+      return res.status(400).json({ message: 'A valid current location is required to check in.' });
+    }
+
+    const address = hasValidLocation ? await reverseGeocode(latitude, longitude) : null;
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+    transactionStarted = true;
+
+    const [partners] = await connection.execute(
+      `SELECT id, name, created_by
+       FROM delivery_partners
+       WHERE user_id = ? OR delivery_partner_user_id = ?
+       ORDER BY id DESC
+       LIMIT 1
+       FOR UPDATE`,
+      [deliveryPartnerUserId, deliveryPartnerUserId]
+    );
+    if (!partners.length) {
+      await connection.rollback();
+      transactionStarted = false;
+      return res.status(404).json({ message: 'Delivery partner profile not found.' });
+    }
+
+    const partner = partners[0];
+    const [openSessions] = await connection.execute(
+      `SELECT id FROM delivery_partner_attendance
+       WHERE delivery_partner_user_id = ? AND check_out_at IS NULL
+       ORDER BY check_in_at DESC LIMIT 1 FOR UPDATE`,
+      [deliveryPartnerUserId]
+    );
+
+    let sessionId;
+    let message;
+    if (action === 'check_in') {
+      if (openSessions.length) {
+        await connection.rollback();
+        transactionStarted = false;
+        return res.status(409).json({ message: 'Check out of your current session before starting another.' });
+      }
+      const [result] = await connection.execute(
+        `INSERT INTO delivery_partner_attendance
+           (delivery_partner_id, delivery_partner_user_id, delivery_partner_name, franchise_admin_id,
+            attendance_date, check_in_at, latitude, longitude, accuracy_m, check_in_address)
+         VALUES (?, ?, ?, ?, CURDATE(), NOW(), ?, ?, ?, ?)`,
+        [partner.id, deliveryPartnerUserId, partner.name || req.user?.name || 'Delivery Partner',
+          partner.created_by || null, latitude, longitude, accuracy, address]
+      );
+      sessionId = result.insertId;
+      message = 'Checked in successfully.';
+    } else {
+      if (!openSessions.length) {
+        await connection.rollback();
+        transactionStarted = false;
+        return res.status(409).json({ message: 'There is no active session to check out.' });
+      }
+      sessionId = openSessions[0].id;
+      await connection.execute(
+        `UPDATE delivery_partner_attendance
+         SET check_out_at = NOW(), check_out_latitude = ?, check_out_longitude = ?,
+             check_out_accuracy_m = ?, check_out_address = ?
+         WHERE id = ?`,
+        [latitude, longitude, accuracy, address, sessionId]
+      );
+      message = 'Checked out successfully.';
+    }
+
+    await connection.commit();
+    transactionStarted = false;
+    const [rows] = await pool.execute(
+      `SELECT id, delivery_partner_name, DATE_FORMAT(attendance_date, '%Y-%m-%d') AS attendance_date,
+              check_in_at, latitude, longitude, accuracy_m, check_in_address,
+              check_out_at, check_out_latitude, check_out_longitude,
+              check_out_accuracy_m, check_out_address
+       FROM delivery_partner_attendance WHERE id = ?`,
+      [sessionId]
+    );
+    res.status(action === 'check_in' ? 201 : 200).json({ message, record: rows[0] });
+  } catch (error) {
+    if (transactionStarted && connection) await connection.rollback();
+    console.error('Delivery partner attendance save error:', error);
+    res.status(500).json({ message: 'Unable to save attendance.' });
+  } finally {
+    connection?.release();
+  }
+});
 
 // Get dashboard stats
 router.get('/dashboard-stats', async (req, res) => {
@@ -145,6 +334,9 @@ router.get('/dashboard-stats', async (req, res) => {
 router.get('/orders', async (req, res) => {
   try {
     const deliveryBoyId = req.user?.user_id || req.user?.id;
+    const { isCheckedIn } = await getDeliveryPartnerOrderAccess(deliveryBoyId);
+    if (!isCheckedIn) return res.json([]);
+
     const { status } = req.query;
     
     let query = `
@@ -157,7 +349,10 @@ router.get('/orders', async (req, res) => {
         LEFT JOIN home_chefs c ON (o.chef_id = c.id OR o.chef_user_id = c.user_id)
         LEFT JOIN users u ON o.user_id = u.user_id
        WHERE (o.delivery_partner = ? OR o.delivery_partner_user_id = ?) 
-         AND DATE(o.ordered_at) = CURDATE()
+           AND (
+             DATE(o.ordered_at) = CURDATE()
+             OR COALESCE(o.status, '') NOT IN ('Delivered', 'Cancelled', 'Completed')
+           )
     `;
     const params = [deliveryBoyId, deliveryBoyId];
 
@@ -228,6 +423,8 @@ router.get('/wallet-history', async (req, res) => {
 router.get('/orders/available', async (req, res) => {
   try {
     const deliveryBoyId = req.user?.user_id || req.user?.id;
+    const { isCheckedIn, hasActiveOrder } = await getDeliveryPartnerOrderAccess(deliveryBoyId);
+    if (!isCheckedIn || hasActiveOrder) return res.json([]);
 
     // ── Step 1: Try to find franchise/admin context from delivery_partners table ──
     let franchiseAdminId = null;
@@ -245,26 +442,38 @@ router.get('/orders/available', async (req, res) => {
       console.warn('[orders/available] delivery_partners lookup failed:', e.message);
     }
 
-    // ── Step 2: Fallback — check users table for franchise context ──
-    if (!franchiseAdminId) {
+    // ── Step 2: Prefer the explicit franchise link over the audit creator ──
+    try {
+      const [userRows] = await pool.execute(
+        `SELECT created_by, franchise_user_id
+           FROM users
+          WHERE user_id = ? AND role = 'delivery_partner'
+          LIMIT 1`,
+        [deliveryBoyId]
+      );
+      if (userRows.length > 0) {
+        franchiseAdminId = userRows[0].franchise_user_id || franchiseAdminId || userRows[0].created_by || null;
+      }
+    } catch (e) {
+      console.warn('[orders/available] users franchise lookup failed:', e.message);
+    }
+
+    let franchiseId = null;
+    if (franchiseAdminId) {
       try {
-        const [userRows] = await pool.execute(
-          `SELECT created_by, franchise_user_id
-             FROM users
-            WHERE user_id = ? AND role = 'delivery_partner'
+        const [franchiseRows] = await pool.execute(
+          `SELECT franchise_id FROM franchise_owners
+            WHERE franch_user_id = ? OR franchise_id = ? OR CAST(id AS CHAR) = ?
             LIMIT 1`,
-          [deliveryBoyId]
+          [franchiseAdminId, franchiseAdminId, franchiseAdminId]
         );
-        if (userRows.length > 0) {
-          franchiseAdminId =
-            userRows[0].franchise_user_id || userRows[0].created_by || null;
-        }
+        franchiseId = franchiseRows[0]?.franchise_id || null;
       } catch (e) {
-        console.warn('[orders/available] users franchise lookup failed:', e.message);
+        console.warn('[orders/available] franchise lookup failed:', e.message);
       }
     }
 
-    console.log(`[orders/available] deliveryBoyId: ${deliveryBoyId}, franchiseAdminId: ${franchiseAdminId}`);
+    console.log(`[orders/available] deliveryBoyId: ${deliveryBoyId}, franchiseAdminId: ${franchiseAdminId}, franchiseId: ${franchiseId}`);
 
     // ── Step 3: Build query ────────────────────────────────────────────────────
     // Base: orders that are awaiting a delivery partner (unassigned)
@@ -285,14 +494,22 @@ router.get('/orders/available', async (req, res) => {
     const params = [];
 
     if (franchiseAdminId) {
-      // Show orders that belong to the same franchise admin
-      // (either by chef's created_by or order's franchise_user_id)
+      const franchiseIdToMatch = franchiseId || franchiseAdminId;
       query += ` AND (
         c.created_by = ?
         OR o.franchise_user_id = ?
+        OR c.franchise_user_id = ?
+        OR o.franchise_id = ?
+        OR c.franchise_id = ?
         OR c.created_by IS NULL
       )`;
-      params.push(franchiseAdminId, franchiseAdminId);
+      params.push(
+        franchiseAdminId,
+        franchiseAdminId,
+        franchiseAdminId,
+        franchiseIdToMatch,
+        franchiseIdToMatch
+      );
     }
     // If no franchise context found → show ALL unassigned orders (no extra filter)
 
@@ -314,6 +531,13 @@ router.patch('/orders/:id/assign', async (req, res) => {
     const { latitude, longitude, pincode, area, district } = req.body || {};
     // Prioritize user_id (e.g. 'DEL-xxx') to avoid global user ID mismatches
     const deliveryBoyId = req.user?.user_id || req.user?.id || null;
+    const { isCheckedIn, hasActiveOrder } = await getDeliveryPartnerOrderAccess(deliveryBoyId);
+    if (!isCheckedIn) {
+      return res.status(403).json({ message: 'Check in before accepting delivery orders.' });
+    }
+    if (hasActiveOrder) {
+      return res.status(409).json({ message: 'Complete your current delivery before accepting another order.' });
+    }
 
     // First, look up the delivery partner's details
     console.log('🔍 [Assignment] Looking up delivery partner with id:', deliveryBoyId);

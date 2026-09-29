@@ -15,7 +15,7 @@ export default function About() {
             <img
               src="/ChatGPT Image Mar 6, 2026, 05_28_53 PM.png"
               className="rounded-2xl shadow-xl w-full object-cover"
-              alt="About Sarees"
+              alt="About Veetu Rusi products"
             />
 
             {/* Decorative Border */}
@@ -29,14 +29,13 @@ export default function About() {
             </span>
 
             <h2 className="text-4xl md:text-5xl font-bold text-primary-light mt-3 mb-6 leading-tight">
-              Timeless Saree Elegance
+              Thoughtful Products for Everyday Living
             </h2>
 
             <p className="text-gray-600 text-lg leading-relaxed mb-8 max-w-xl">
-              Our saree collections celebrate the rich heritage of Indian
-              craftsmanship. Each piece is designed with luxurious fabrics,
-              intricate patterns, and timeless elegance to make every occasion
-              special.
+              Explore a thoughtfully selected range of quality products for
+              everyday needs and special occasions. We bring together useful,
+              well-made finds with the care and service you deserve.
             </p>
 
             <Link to="/about">

@@ -70,6 +70,11 @@ const ChefHeader = ({ onMenuClick }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const hasActiveAttendance = async () => {
+    const { data } = await api.get("/home-chef-attendance");
+    return Boolean(data?.currentSession);
+  };
+
   const prefix = location.pathname.startsWith("/superadmin")
     ? "/superadmin"
     : location.pathname.startsWith("/chef")
@@ -112,6 +117,11 @@ const ChefHeader = ({ onMenuClick }) => {
 
   const fetchNotifications = async () => {
     try {
+      if (!(await hasActiveAttendance())) {
+        setNotifications({ today: [], earlier: [] });
+        setUnreadCount(0);
+        return;
+      }
       const response = await api.get("/orders");
       const data = response.data || [];
 
@@ -159,6 +169,10 @@ const ChefHeader = ({ onMenuClick }) => {
   useEffect(() => {
     const loadAllOrders = async () => {
       try {
+        if (!(await hasActiveAttendance())) {
+          setAllOrders([]);
+          return;
+        }
         const res = await api.get("/orders");
         setAllOrders(Array.isArray(res.data) ? res.data : []);
       } catch (e) {

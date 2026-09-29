@@ -65,7 +65,7 @@ const OrderManagement = () => {
     try {
       setLoading(true);
       const res = await api.get("/user-food-orders/chef");
-      const mapped = res.data.map((order) => ({
+      const mapped = (Array.isArray(res.data) ? res.data : []).map((order) => ({
         ...order,
         restaurant_or_chef: order.chef_name || order.restaurant_or_chef || "Unknown Chef"
       }));

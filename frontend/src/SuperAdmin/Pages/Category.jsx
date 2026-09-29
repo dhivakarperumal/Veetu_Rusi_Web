@@ -515,7 +515,7 @@ const Category = () => {
                                             name="name"
                                             value={formData.name}
                                             onChange={handleInputChange}
-                                            placeholder="e.g. Silk Sarees"
+                                            placeholder="e.g. Home Essentials"
                                             className="w-full bg-gray-50 border border-gray-200 text-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium"
                                         />
                                     </div>

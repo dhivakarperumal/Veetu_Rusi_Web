@@ -64,7 +64,7 @@ export default function Banner() {
 
           {/* Subtitle */}
           <span className="inline-block text-[11px] md:text-xs font-bold tracking-[0.4em] text-rose-400 uppercase bg-white/10 px-4 py-2 rounded-full backdrop-blur-md">
-            {offer.subtitle || "Exclusive Saree Collection"}
+            {offer.subtitle || "Explore Our Product Collection"}
           </span>
 
           {/* Title */}

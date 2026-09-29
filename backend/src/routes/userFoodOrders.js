@@ -350,14 +350,50 @@ router.post('/', verifyToken, async (req, res) => {
   }
 });
 
+const getAuthenticatedChef = async (user) => {
+  const clauses = [];
+  const params = [];
+  if (user?.user_id) {
+    clauses.push('user_id = ?');
+    params.push(String(user.user_id));
+  }
+  if (user?.email) {
+    clauses.push('email = ?');
+    params.push(user.email);
+  }
+  if (!clauses.length) return null;
+
+  const [rows] = await pool.execute(
+    `SELECT id, user_id FROM home_chefs WHERE ${clauses.join(' OR ')} ORDER BY id DESC LIMIT 1`,
+    params
+  );
+  return rows[0] || null;
+};
+
 router.get('/chef', verifyToken, async (req, res) => {
   try {
-    const chefUserId = req.user?.user_id || req.user?.id;
-    if (!chefUserId) {
+    if (!['chef', 'homechef'].includes(String(req.user?.role || '').toLowerCase())) {
       return res.status(403).json({ message: 'Chef authentication required' });
     }
-
-    const rows = await controller.getChefOrders(chefUserId);
+    const chef = await getAuthenticatedChef(req.user);
+    if (!chef?.user_id) return res.status(404).json({ message: 'Home chef profile not found.' });
+    const [attendanceSessions] = await pool.execute(
+      `SELECT check_out_at FROM home_chef_attendance
+       WHERE home_chef_user_id = ?
+       ORDER BY check_in_at DESC
+       LIMIT 1`,
+      [chef.user_id]
+    );
+    const chefIds = [...new Set([chef.user_id, chef.id].map(String))];
+    const rows = await controller.getChefOrders(chefIds);
+    const latestSession = attendanceSessions[0];
+    if (latestSession?.check_out_at) {
+      const checkoutTime = new Date(latestSession.check_out_at).getTime();
+      return res.json(rows.filter((order) => {
+        const orderTime = new Date(order.ordered_at).getTime();
+        return !Number.isFinite(checkoutTime) || !Number.isFinite(orderTime) || orderTime <= checkoutTime;
+      }));
+    }
     res.json(rows);
   } catch (err) {
     console.error('Error fetching chef orders:', err);
@@ -498,6 +534,14 @@ router.patch('/status/:id', verifyToken, async (req, res) => {
     const { status } = req.body;
     if (!status) {
       return res.status(400).json({ message: 'Status is required' });
+    }
+    if (['chef', 'homechef'].includes(String(req.user?.role || '').toLowerCase())) {
+      const chef = await getAuthenticatedChef(req.user);
+      if (!chef?.user_id) return res.status(404).json({ message: 'Home chef profile not found.' });
+      const chefIds = [...new Set([chef.user_id, chef.id].map(String))];
+      if (!await controller.chefOwnsOrder(id, chefIds)) {
+        return res.status(403).json({ message: 'You are not authorized to update this order.' });
+      }
     }
     await controller.updateOrderStatus(id, status);
 

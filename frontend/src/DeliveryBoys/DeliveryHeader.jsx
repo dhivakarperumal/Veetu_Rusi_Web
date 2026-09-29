@@ -392,6 +392,7 @@ const Header = ({ onMenuClick, isOnline, lastOnline, toggleOnlineStatus }) => {
           <div className="hidden md:flex flex-col items-end mr-2">
             <button
               onClick={toggleOnlineStatus}
+              title="Open attendance to check in or out"
               className={`relative flex items-center gap-2 px-3 py-1.5 rounded-full font-black text-[10px] uppercase tracking-widest transition-all ${
                 isOnline 
                   ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.2)]" 

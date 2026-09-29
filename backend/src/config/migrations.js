@@ -536,6 +536,70 @@ const createDeliveryPartnersTable = async () => {
     }
 };
 
+const createDeliveryAttendanceTable = async () => {
+    try {
+        await pool.execute(`
+            CREATE TABLE IF NOT EXISTS delivery_partner_attendance (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                delivery_partner_id INT NOT NULL,
+                delivery_partner_user_id VARCHAR(255) NOT NULL,
+                delivery_partner_name VARCHAR(255) NOT NULL,
+                franchise_admin_id VARCHAR(255),
+                attendance_date DATE NOT NULL,
+                check_in_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                latitude DECIMAL(10, 7) NOT NULL,
+                longitude DECIMAL(10, 7) NOT NULL,
+                accuracy_m DECIMAL(10, 2),
+                check_in_address LONGTEXT,
+                check_out_at DATETIME,
+                check_out_latitude DECIMAL(10, 7),
+                check_out_longitude DECIMAL(10, 7),
+                check_out_accuracy_m DECIMAL(10, 2),
+                check_out_address LONGTEXT,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                KEY idx_delivery_attendance_franchise_date (franchise_admin_id, attendance_date),
+                KEY idx_delivery_attendance_date (attendance_date),
+                KEY idx_delivery_attendance_partner_date (delivery_partner_user_id, attendance_date)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `);
+        await ensureColumnExists('delivery_partner_attendance', 'check_in_address', 'LONGTEXT');
+        await ensureColumnExists('delivery_partner_attendance', 'check_out_at', 'DATETIME NULL');
+        await ensureColumnExists('delivery_partner_attendance', 'check_out_latitude', 'DECIMAL(10, 7) NULL');
+        await ensureColumnExists('delivery_partner_attendance', 'check_out_longitude', 'DECIMAL(10, 7) NULL');
+        await ensureColumnExists('delivery_partner_attendance', 'check_out_accuracy_m', 'DECIMAL(10, 2) NULL');
+        await ensureColumnExists('delivery_partner_attendance', 'check_out_address', 'LONGTEXT');
+        try {
+            await pool.execute('ALTER TABLE delivery_partner_attendance DROP INDEX uq_delivery_partner_attendance_day');
+        } catch {}
+        console.log('✓ delivery_partner_attendance table created or already exists');
+    } catch (error) {
+        console.error('✗ Error creating delivery_partner_attendance table:', error.message);
+    }
+};
+
+const createHomeChefAttendanceTable = async () => {
+    try {
+        await pool.execute(`
+            CREATE TABLE IF NOT EXISTS home_chef_attendance (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                home_chef_id INT NOT NULL,
+                home_chef_user_id VARCHAR(255) NOT NULL,
+                home_chef_name VARCHAR(255) NOT NULL,
+                franchise_admin_id VARCHAR(255),
+                attendance_date DATE NOT NULL,
+                check_in_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                check_out_at DATETIME,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                KEY idx_home_chef_attendance_franchise_date (franchise_admin_id, attendance_date),
+                KEY idx_home_chef_attendance_chef_date (home_chef_user_id, attendance_date)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `);
+        console.log('✓ home_chef_attendance table created or already exists');
+    } catch (error) {
+        console.error('✗ Error creating home_chef_attendance table:', error.message);
+    }
+};
+
 const createReviewsTable = async () => {
     try {
         // Product Reviews Table
@@ -1380,6 +1444,8 @@ const createReferralTables = async () => {
         createFranchiseProductsTable,
         createChefFoodTable,
         createDeliveryPartnersTable,
+        createDeliveryAttendanceTable,
+        createHomeChefAttendanceTable,
         createSubscriptionPlansTable,
         createSubscriptionPaymentsTable,
         createReviewsTable,

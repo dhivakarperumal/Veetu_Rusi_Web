@@ -67,6 +67,8 @@ const FoodOrderDetails = React.lazy(() => import("./Admin/Pages/FoodOrderDetails
 const FoodProducts = React.lazy(() => import("./Admin/Pages/FoodProducts.jsx"));
 const FoodProductDetails = React.lazy(() => import("./Admin/Pages/FoodProductDetails.jsx"));
 const DeliveryPartnerManagement = React.lazy(() => import("./Admin/Pages/DeliveryPartnerManagement.jsx"));
+const DeliveryPartnerAttendance = React.lazy(() => import("./Admin/Pages/DeliveryPartnerAttendance.jsx"));
+const AdminHomeChefAttendance = React.lazy(() => import("./Admin/Pages/HomeChefAttendance.jsx"));
 const DeliveryPartnerDetails = React.lazy(() => import("./Admin/Pages/DeliveryPartnerDetails.jsx"));
 const ReferralManagement = React.lazy(() => import("./Admin/Pages/ReferralManagement.jsx"));
 const Referral = React.lazy(() => import("./Components/Pages/Referral.jsx"));
@@ -123,6 +125,7 @@ const ChefOrderDetails = React.lazy(() => import("./HomeChef/Pages/ChefOrderDeta
 const ChefCart = React.lazy(() => import("./HomeChef/Pages/ChefCart.jsx"));
 const ChefWishlist = React.lazy(() => import("./HomeChef/Pages/ChefWishlist.jsx"));
 const ChefCustomers = React.lazy(() => import("./HomeChef/Pages/Customers.jsx"));
+const ChefAttendance = React.lazy(() => import("./HomeChef/Pages/Attendance.jsx"));
 
 // home chef
 const Material = React.lazy(() => import("./HomeChef/Pages/Material.jsx"));
@@ -243,6 +246,7 @@ const router = createHashRouter([
       { path: "analytics", element: <AnalyticsDashboard /> },
       { path: "earnings", element: <WalletAndEarnings /> },
       { path: "customers", element: <ChefCustomers /> },
+      { path: "attendance", element: <ChefAttendance /> },
       { path: "orders", element: <ChefOrderManagement /> },
       { path: "orders/:id", element: <ChefOrderDetails /> },
       { path: "reviews", element: <ChefReviews /> },
@@ -300,8 +304,10 @@ const router = createHashRouter([
       { path: "restaurants", element: <AdminRestaurantManagement /> },
       { path: "homechefs", element: <AdminHomeChefManagement /> },
       { path: "homechefs/categories", element: <AdminHomeChefCategories /> },
+      { path: "home-chefs/attendance", element: <AdminHomeChefAttendance /> },
       { path: "homechefs/:id", element: <HomeChefDetail /> },
       { path: "delivery-partners", element: <DeliveryPartnerManagement /> },
+      { path: "delivery-partners/attendance", element: <DeliveryPartnerAttendance /> },
       { path: "delivery-partners/:id", element: <DeliveryPartnerDetails /> },
       { path: "users", element: <UserManagement /> },
       { path: "orders", element: <AdminOrderManagement /> },

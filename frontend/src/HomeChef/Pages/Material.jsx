@@ -217,7 +217,7 @@ const Materials = () => {
                     <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
                         type="text"
-                        placeholder="Search sarees, codes..."
+                        placeholder="Search materials, codes..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full pl-12 pr-4 py-4 bg-white border border-gray-100 rounded-2xl shadow-sm text-slate-800 font-medium placeholder-gray-300 focus:outline-none focus:border-blue-300 transition-all"
@@ -336,7 +336,7 @@ const Materials = () => {
                     <div className="w-20 h-20 bg-gray-50 rounded-3xl flex items-center justify-center mx-auto mb-4 text-gray-200">
                         <FiSearch size={36} />
                     </div>
-                    <h3 className="text-xl font-black text-slate-800 mb-2">No Sarees Found</h3>
+                    <h3 className="text-xl font-black text-slate-800 mb-2">No Materials Found</h3>
                     <p className="text-gray-400 font-medium">Try adjusting your search or filters</p>
                     <button
                         onClick={() => { setSearchTerm(""); setSelectedCategory("All"); setSelectedAge("All"); }}
