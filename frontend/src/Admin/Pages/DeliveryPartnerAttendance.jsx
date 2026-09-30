@@ -187,13 +187,6 @@ const DeliveryPartnerAttendance = () => {
                         ? `https://www.google.com/maps?q=${record.latitude},${record.longitude}`
                         : null,
                     },
-                    ...(record.check_out_at ? [{
-                      label: "Check-out",
-                      address: record.check_out_address,
-                      mapUrl: record.check_out_latitude != null && record.check_out_longitude != null
-                        ? `https://www.google.com/maps?q=${record.check_out_latitude},${record.check_out_longitude}`
-                        : null,
-                    }] : []),
                   ]}
                 />
               ))}
@@ -225,10 +218,7 @@ const DeliveryPartnerAttendance = () => {
                       </td>
                       <td className="px-6 py-4 text-slate-300">
                         {record.check_out_at ? (
-                          <>
-                            <p>{new Date(record.check_out_at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}</p>
-                            <p className="mt-1 max-w-xs whitespace-normal text-xs leading-5 text-slate-400">{record.check_out_address || "Address unavailable for older session"}</p>
-                          </>
+                          <p>{new Date(record.check_out_at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}</p>
                         ) : <span className="rounded-full bg-emerald-400/10 px-2.5 py-1 text-xs font-bold text-emerald-300">Active</span>}
                       </td>
                       <td className="px-6 py-4 text-slate-300">{record.mobile || "-"}</td>
@@ -236,11 +226,6 @@ const DeliveryPartnerAttendance = () => {
                         <a href={`https://www.google.com/maps?q=${record.latitude},${record.longitude}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-emerald-300 hover:text-emerald-200">
                           <MapPin size={15} /> Check-in map
                         </a>
-                        {record.check_out_at && (
-                          <a href={`https://www.google.com/maps?q=${record.check_out_latitude},${record.check_out_longitude}`} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-2 text-emerald-300 hover:text-emerald-200">
-                            <MapPin size={15} /> Check-out map
-                          </a>
-                        )}
                       </td>
                     </tr>
                   ))}
