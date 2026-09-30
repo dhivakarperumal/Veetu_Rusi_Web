@@ -422,6 +422,8 @@ router.get('/wallet-history', async (req, res) => {
 router.get('/orders/available', async (req, res) => {
   try {
     const deliveryBoyId = req.user?.user_id || req.user?.id;
+    const { isCheckedIn, hasActiveOrder } = await getDeliveryPartnerOrderAccess(deliveryBoyId);
+    if (!isCheckedIn || hasActiveOrder) return res.json([]);
 
     // ── Step 1: Try to find franchise/admin context from delivery_partners table ──
     let franchiseAdminId = null;
@@ -483,7 +485,7 @@ router.get('/orders/available', async (req, res) => {
              c.longitude      AS home_chef_lng
         FROM user_food_order_table o
         LEFT JOIN home_chefs c ON (o.chef_id = c.id OR o.chef_user_id = c.user_id)
-       WHERE o.status IN ('Searching Delivery Partner', 'Order Placed', 'Accepted')
+       WHERE o.status = 'Searching Delivery Partner'
          AND (o.delivery_partner IS NULL OR o.delivery_partner = '')
          AND (o.delivery_partner_user_id IS NULL OR o.delivery_partner_user_id = '')
     `;

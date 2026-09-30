@@ -823,8 +823,9 @@ exports.getDeliveryPartnerAttendance = async (req, res) => {
                     attendance.check_out_address, dp.mobile, dp.vehicle_number
       FROM delivery_partner_attendance attendance
       LEFT JOIN delivery_partners dp ON dp.id = attendance.delivery_partner_id
-      WHERE attendance.franchise_admin_id IN (${adminIds.map(() => '?').join(', ')})`;
-    const params = [...adminIds];
+      WHERE (attendance.franchise_admin_id IN (${adminIds.map(() => '?').join(', ')})
+        OR dp.created_by IN (${adminIds.map(() => '?').join(', ')}))`;
+    const params = [...adminIds, ...adminIds];
     query = appendAttendanceDateFilter(query, params, req.query);
     query += ' ORDER BY attendance.check_in_at DESC LIMIT 500';
 
@@ -849,8 +850,10 @@ exports.getHomeChefAttendance = async (req, res) => {
              hc.mobile
       FROM home_chef_attendance attendance
       LEFT JOIN home_chefs hc ON hc.id = attendance.home_chef_id
-      WHERE attendance.franchise_admin_id IN (${adminIds.map(() => '?').join(', ')})`;
-    const params = [...adminIds];
+      WHERE (attendance.franchise_admin_id IN (${adminIds.map(() => '?').join(', ')})
+        OR hc.created_by IN (${adminIds.map(() => '?').join(', ')})
+        OR hc.franchise_user_id IN (${adminIds.map(() => '?').join(', ')}))`;
+    const params = [...adminIds, ...adminIds, ...adminIds];
     query = appendAttendanceDateFilter(query, params, req.query);
     query += ' ORDER BY attendance.check_in_at DESC LIMIT 500';
 

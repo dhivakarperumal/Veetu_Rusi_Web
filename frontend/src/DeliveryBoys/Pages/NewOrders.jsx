@@ -210,11 +210,10 @@ const NewOrders = () => {
   }, [fetchOrders]);
 
   const filtered = orders.filter((o) => {
+    if (o.status !== "Searching Delivery Partner") return false;
+
     // Exclude orders that are already assigned to a delivery partner
     if (o.delivery_boy_id) return false;
-    if (["New Order", "Order Placed", "Delivery Partner Assigned", "Picked Up", "Out for Delivery", "Delivered", "Cancelled"].includes(o.status)) {
-        return false;
-    }
     if (statusFilter !== "All" && o.status !== statusFilter) return false;
 
     const q = searchTerm.trim().toLowerCase();
