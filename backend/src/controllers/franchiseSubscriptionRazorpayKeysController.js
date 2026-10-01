@@ -31,19 +31,15 @@ exports.create = async (req, res) => {
     if (!cleanKeyName || !cleanKeyId) {
       return res.status(400).json({ message: 'Key name and Key ID are required.' });
     }
-    if (!cleanSecret && cleanKeyId !== process.env.RAZORPAY_KEY_ID) {
-      return res.status(400).json({ message: 'Razorpay Key Secret is required when registering a custom Key ID.' });
-    }
     const [existing] = await pool.execute('SELECT id FROM franchise_razorpay_keys WHERE key_id = ? LIMIT 1', [cleanKeyId]);
     if (existing.length) return res.status(409).json({ message: 'This franchise subscription Key ID is already registered.' });
 
-    const finalSecret = cleanSecret || (cleanKeyId === process.env.RAZORPAY_KEY_ID ? process.env.RAZORPAY_KEY_SECRET || '' : '');
     const actor = getAuditActor(req);
     const [result] = await pool.execute(
       `INSERT INTO franchise_razorpay_keys
          (franchise_id, franchise_user_id, key_name, key_id, key_secret, business_name, key_usage, status, created_by, updated_by)
        VALUES (NULL, NULL, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [cleanKeyName, cleanKeyId, finalSecret ? encryptSecret(finalSecret) : null, String(business_name || '').trim() || null, KEY_USAGE, normalizeStatus(req.body.status || 'Inactive'), actor, actor]
+      [cleanKeyName, cleanKeyId, cleanSecret ? encryptSecret(cleanSecret) : null, String(business_name || '').trim() || null, KEY_USAGE, normalizeStatus(req.body.status || 'Inactive'), actor, actor]
     );
     res.status(201).json({ id: result.insertId, message: 'Franchise subscription Razorpay key added.' });
   } catch (error) {
@@ -71,18 +67,11 @@ exports.update = async (req, res) => {
     const [duplicate] = await pool.execute('SELECT id FROM franchise_razorpay_keys WHERE key_id = ? AND id <> ? LIMIT 1', [cleanKeyId, id]);
     if (duplicate.length) return res.status(409).json({ message: 'This franchise subscription Key ID is already registered.' });
 
-    if (existing[0].key_id !== cleanKeyId && !cleanSecret && cleanKeyId !== process.env.RAZORPAY_KEY_ID) {
-      return res.status(400).json({ message: 'Razorpay Key Secret is required when changing to a custom Key ID.' });
-    }
-
     const fields = ['key_name = ?', 'key_id = ?', 'business_name = ?', 'status = ?', 'updated_by = ?'];
     const params = [cleanKeyName, cleanKeyId, String(business_name || '').trim() || null, normalizeStatus(req.body.status), getAuditActor(req)];
     if (cleanSecret) {
       fields.push('key_secret = ?');
       params.push(encryptSecret(cleanSecret));
-    } else if (cleanKeyId === process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
-      fields.push('key_secret = ?');
-      params.push(encryptSecret(process.env.RAZORPAY_KEY_SECRET));
     }
     params.push(id, KEY_USAGE);
     await pool.execute(

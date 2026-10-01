@@ -144,38 +144,40 @@ const FranchiseOwnerManagement = () => {
       const res = await api.post('/subscriptions/checkout', { franchiseId: purchaseTarget.id, planId: selectedSubPlan.id });
       const { order, plan, key_id } = res.data;
 
-      if (order?.id && key_id) {
+      if (key_id) {
         const script = document.createElement('script');
         script.src = 'https://checkout.razorpay.com/v1/checkout.js';
         document.body.appendChild(script);
         script.onload = () => {
           const options = {
             key: key_id,
-            amount: order.amount,
-            currency: order.currency || plan.currency,
+            amount: order?.amount || Math.round(plan.amount * 100),
+            currency: order?.currency || plan.currency || 'INR',
             name: purchaseTarget.franchise_name,
             description: plan.name,
-            order_id: order.id,
+            ...(order?.id ? { order_id: order.id } : {}),
             handler: async function (response) {
               try {
                 await api.post('/subscriptions/confirm', {
                   franchiseId: purchaseTarget.id,
                   planId: plan.id,
                   razorpay_payment_id: response.razorpay_payment_id,
-                  razorpay_order_id: response.razorpay_order_id,
-                  razorpay_signature: response.razorpay_signature
+                  razorpay_order_id: response.razorpay_order_id || null,
+                  razorpay_signature: response.razorpay_signature || null
                 });
                 toast.success('Subscription activated!');
                 setPurchaseTarget(null);
                 fetchFranchises();
-              } catch { toast.error('Payment verification failed'); }
+              } catch (confirmErr) {
+                toast.error(confirmErr?.response?.data?.message || 'Payment verification failed');
+              }
             },
             modal: { ondismiss: function () { toast('Payment cancelled'); } }
           };
           const rz = new window.Razorpay(options);
           rz.open();
         };
-      } else toast.error('Franchise subscription Razorpay keys are not configured correctly.');
+      } else toast.error('Franchise subscription Razorpay key is not configured in database.');
     } catch (err) {
       toast.error(err?.response?.data?.message || err?.response?.data?.error || 'Checkout failed');
     }

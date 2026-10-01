@@ -56,14 +56,9 @@ const getAssignedRazorpayConfig = async (userIdentity) => {
        LIMIT 1`,
       [identity, identity, identity]
     );
-    if (rows.length) {
+    if (rows.length && rows[0].key_id) {
       const storedSecret = rows[0].key_secret ? decryptStoredSecret(rows[0].key_secret) : '';
-      if (storedSecret) {
-        return { id: rows[0].id, keyId: rows[0].key_id, keySecret: storedSecret };
-      }
-      if (process.env.RAZORPAY_KEY_ID && rows[0].key_id === process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
-        return { id: rows[0].id, keyId: rows[0].key_id, keySecret: process.env.RAZORPAY_KEY_SECRET };
-      }
+      return { id: rows[0].id, keyId: rows[0].key_id, keySecret: storedSecret };
     }
   } catch (err) {
     console.error('getAssignedRazorpayConfig database error:', err.message);
@@ -78,25 +73,15 @@ const getAssignedRazorpayConfig = async (userIdentity) => {
        ORDER BY updated_at DESC, id DESC
        LIMIT 1`
     );
-    if (fallbackRows.length) {
+    if (fallbackRows.length && fallbackRows[0].key_id) {
       const storedSecret = fallbackRows[0].key_secret ? decryptStoredSecret(fallbackRows[0].key_secret) : '';
-      if (storedSecret) {
-        return { id: fallbackRows[0].id, keyId: fallbackRows[0].key_id, keySecret: storedSecret };
-      }
-      if (process.env.RAZORPAY_KEY_ID && fallbackRows[0].key_id === process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
-        return { id: fallbackRows[0].id, keyId: fallbackRows[0].key_id, keySecret: process.env.RAZORPAY_KEY_SECRET };
-      }
+      return { id: fallbackRows[0].id, keyId: fallbackRows[0].key_id, keySecret: storedSecret };
     }
   } catch (err) {
     console.error('getAssignedRazorpayConfig fallback query error:', err.message);
   }
 
-  // Fallback to environment variables
-  if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
-    return { id: 0, keyId: process.env.RAZORPAY_KEY_ID, keySecret: process.env.RAZORPAY_KEY_SECRET };
-  }
-
-  throw new Error('Razorpay payment configuration is not assigned for this account.');
+  throw new Error('Razorpay payment configuration is not assigned for this account in database.');
 };
 
 const getUserCheckoutRazorpayConfig = async () => {
@@ -118,37 +103,20 @@ const getUserCheckoutRazorpayConfig = async () => {
          LIMIT 1`
       );
     }
-    if (rows.length) {
+    if (rows.length && rows[0].key_id) {
       const storedSecret = rows[0].key_secret ? decryptStoredSecret(rows[0].key_secret) : '';
-      if (storedSecret) {
-        return { id: rows[0].id, keyId: rows[0].key_id, keySecret: storedSecret };
-      }
-      if (process.env.RAZORPAY_KEY_ID && rows[0].key_id === process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
-        return { id: rows[0].id, keyId: rows[0].key_id, keySecret: process.env.RAZORPAY_KEY_SECRET };
-      }
-      console.warn(`User checkout key "${rows[0].key_id}" has no valid secret; falling back to environment credentials.`);
+      return { id: rows[0].id, keyId: rows[0].key_id, keySecret: storedSecret };
     }
   } catch (err) {
     console.error('getUserCheckoutRazorpayConfig error:', err.message);
   }
 
-  if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
-    return { id: 0, keyId: process.env.RAZORPAY_KEY_ID, keySecret: process.env.RAZORPAY_KEY_SECRET };
-  }
-
-  throw new Error('Razorpay User Checkout key is not configured or active.');
+  throw new Error('Razorpay User Checkout key is not configured or active in database.');
 };
 
 const getUserCheckoutRazorpayKeyId = async () => {
-  try {
-    const config = await getUserCheckoutRazorpayConfig();
-    return { id: config.id, keyId: config.keyId };
-  } catch (err) {
-    if (process.env.RAZORPAY_KEY_ID) {
-      return { id: 0, keyId: process.env.RAZORPAY_KEY_ID };
-    }
-    throw new Error('Razorpay User Checkout key is not configured or active.');
-  }
+  const config = await getUserCheckoutRazorpayConfig();
+  return { id: config.id, keyId: config.keyId };
 };
 
 const getFranchiseSubscriptionRazorpayConfig = async () => {
@@ -161,26 +129,32 @@ const getFranchiseSubscriptionRazorpayConfig = async () => {
        ORDER BY updated_at DESC, id DESC
        LIMIT 1`
     );
-    if (rows.length) {
-      const keyId = rows[0].key_id;
+    if (rows.length && rows[0].key_id) {
       const storedSecret = rows[0].key_secret ? decryptStoredSecret(rows[0].key_secret) : '';
-      if (storedSecret) {
-        return { id: rows[0].id, keyId, keySecret: storedSecret };
-      }
-      if (process.env.RAZORPAY_KEY_ID && keyId === process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
-        return { id: rows[0].id, keyId, keySecret: process.env.RAZORPAY_KEY_SECRET };
-      }
-      console.warn(`Franchise subscription key "${keyId}" has no valid secret; falling back to environment credentials.`);
+      return { id: rows[0].id, keyId: rows[0].key_id, keySecret: storedSecret };
     }
   } catch (err) {
-    console.error('getFranchiseSubscriptionRazorpayConfig error:', err.message);
+    console.error('getFranchiseSubscriptionRazorpayConfig database error:', err.message);
   }
 
-  if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
-    return { id: 0, keyId: process.env.RAZORPAY_KEY_ID, keySecret: process.env.RAZORPAY_KEY_SECRET };
+  // Fallback to active key in razorpay_keys table if franchise_razorpay_keys has no active key
+  try {
+    const [fallbackRows] = await pool.execute(
+      `SELECT id, key_id, key_secret
+       FROM razorpay_keys
+       WHERE LOWER(status) = 'active'
+       ORDER BY updated_at DESC, id DESC
+       LIMIT 1`
+    );
+    if (fallbackRows.length && fallbackRows[0].key_id) {
+      const storedSecret = fallbackRows[0].key_secret ? decryptStoredSecret(fallbackRows[0].key_secret) : '';
+      return { id: fallbackRows[0].id, keyId: fallbackRows[0].key_id, keySecret: storedSecret };
+    }
+  } catch (err) {
+    console.error('getFranchiseSubscriptionRazorpayConfig razorpay_keys fallback error:', err.message);
   }
 
-  throw new Error('Franchise subscription payment credentials are not configured on the server.');
+  throw new Error('Franchise subscription Razorpay key is not configured or active in database.');
 };
 
 module.exports = {

@@ -68,18 +68,18 @@ const SubscriptionPaymentModal = ({ isOpen, onClose, franchiseId, customerEmail 
 
       const { order, plan, key_id } = checkoutRes.data;
 
-      if (!key_id || !order?.id) {
-        throw new Error("Franchise subscription Razorpay keys are not configured correctly.");
+      if (!key_id) {
+        throw new Error("Franchise subscription Razorpay key is not configured in database.");
       }
 
       // Open Razorpay payment modal
       const options = {
         key: key_id,
-        amount: order.amount,
-        currency: plan.currency,
+        amount: order?.amount || Math.round(plan.amount * 100),
+        currency: plan.currency || "INR",
         name: "Veetu Rusi",
         description: `${plan.name} Subscription`,
-        order_id: order.id,
+        ...(order?.id ? { order_id: order.id } : {}),
         modal: {
           ondismiss: () => {
             setPaymentProcessing(false);
