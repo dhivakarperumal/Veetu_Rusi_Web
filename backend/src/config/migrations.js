@@ -1328,6 +1328,45 @@ const createRazorpayKeysTable = async () => {
     }
 };
 
+const createFranchiseRazorpayKeysTable = async () => {
+    try {
+        await pool.execute(`
+            CREATE TABLE IF NOT EXISTS franchise_razorpay_keys (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                franchise_id INT NULL,
+                franchise_user_id VARCHAR(255) NULL,
+                key_name VARCHAR(150) NOT NULL,
+                key_id VARCHAR(255) NOT NULL,
+                key_secret TEXT NULL,
+                business_name VARCHAR(255) NULL,
+                key_usage VARCHAR(40) NOT NULL DEFAULT 'General',
+                status VARCHAR(20) NOT NULL DEFAULT 'Inactive',
+                created_by VARCHAR(255) NULL,
+                updated_by VARCHAR(255) NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX idx_frk_fid (franchise_id),
+                INDEX idx_frk_uid (franchise_user_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `);
+        await pool.execute(`
+            CREATE TABLE IF NOT EXISTS franchise_user_razorpay_keys (
+                user_id INT PRIMARY KEY,
+                razorpay_key_id INT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                KEY idx_furk_key_id (razorpay_key_id),
+                CONSTRAINT fk_furk_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                CONSTRAINT fk_furk_key FOREIGN KEY (razorpay_key_id) REFERENCES franchise_razorpay_keys(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `);
+    } catch (err) {
+        if (!String(err.message || '').includes('Duplicate key name')) {
+            console.error('Franchise Razorpay key migration error:', err.message || err);
+        }
+    }
+};
+
 const createReferralTables = async () => {
     try {
         await pool.execute(`
@@ -1524,6 +1563,7 @@ const createReferralTables = async () => {
         createCouponUsageTable,
         createReferralTables,
         createRazorpayKeysTable,
+        createFranchiseRazorpayKeysTable,
         createHomeChefCategoriesTable,
         createCategoryRequestsTable,
         // Ensure audit columns exist on all tables

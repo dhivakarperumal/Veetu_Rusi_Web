@@ -90,6 +90,11 @@ const SubscriptionPaymentModal = ({ isOpen, onClose, franchiseId, customerEmail 
         name: "Veetu Rusi",
         description: `${plan.name} Subscription`,
         ...(order.id && !order.id.startsWith("TEST_") ? { order_id: order.id } : {}),
+        modal: {
+          ondismiss: () => {
+            setPaymentProcessing(false);
+          },
+        },
         handler: async (response) => {
           try {
             // Confirm payment with backend
@@ -97,8 +102,8 @@ const SubscriptionPaymentModal = ({ isOpen, onClose, franchiseId, customerEmail 
               franchiseId,
               planId: selectedPlan,
               razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_signature: response.razorpay_signature,
+              razorpay_order_id: response.razorpay_order_id || null,
+              razorpay_signature: response.razorpay_signature || null,
             });
 
             toast.success("Subscription activated successfully!");

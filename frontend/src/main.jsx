@@ -83,6 +83,7 @@ const SuperHomeChefManagement = React.lazy(() => import("./SuperAdmin/Pages/Home
 const HomeChefDetail = React.lazy(() => import("./Admin/Pages/HomeChefDetail.jsx"));
 const SuperDeliveryPartnerManagement = React.lazy(() => import("./SuperAdmin/Pages/DeliveryPartnerManagement.jsx"));
 const SuperUserManagement = React.lazy(() => import("./SuperAdmin/Pages/UserManagement.jsx"));
+const SuperRazorpayKeys = React.lazy(() => import("./SuperAdmin/Pages/RazorpayKeys.jsx"));
 const SuperReviews = React.lazy(() => import("./SuperAdmin/Pages/Reviews.jsx"));
 const SuperAdminProfile = React.lazy(() => import("./SuperAdmin/Pages/Profile.jsx"));
 const HomeChefPanel = React.lazy(() => import("./HomeChef/ChefPanel.jsx"));
@@ -198,7 +199,7 @@ const router = createHashRouter([
       { path: "homechefs", element: <SuperHomeChefManagement /> },
       { path: "delivery-partners", element: <DeliveryPartnerManagement /> },
       { path: "users", element: <UserManagement /> },
-      { path: "razorpay-keys", element: <RazorpayKeys /> },
+      { path: "razorpay-keys", element: <SuperRazorpayKeys /> },
       { path: "orders", element: <AdminOrderManagement /> },
       { path: "earnings", element: <SuperAdminWalletAndEarnings /> },
       { path: "reviews", element: <SuperReviews /> },

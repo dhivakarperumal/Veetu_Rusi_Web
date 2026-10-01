@@ -18,6 +18,7 @@ import {
   ChevronLeft,
   ShieldCheck,
   Activity,
+  KeyRound,
 } from "lucide-react";
 import { useAuth } from "../PrivateRouter/AuthContext";
 // AddAreaModal intentionally unused; using dedicated page instead
@@ -28,6 +29,7 @@ const navItems = [
  
   { path: "/superadmin/franchises", label: "Franchise Owners", icon: Landmark },
   { path: "/superadmin/plans", label: "Subscription Plans", icon: CreditCard },
+  { path: "/superadmin/razorpay-keys", label: "Razorpay Keys", icon: KeyRound },
   // { path: "/superadmin/areas", label: "Areas", icon: Activity },
   { path: "/superadmin/earnings", label: "Wallet & Earnings", icon: Wallet },
   { path: "/superadmin/reviews", label: "All Reviews", icon: MessageSquare },
