@@ -177,7 +177,7 @@ const FranchiseOwnerManagement = () => {
         };
       } else toast.error('Franchise subscription Razorpay keys are not configured correctly.');
     } catch (err) {
-      toast.error(err?.response?.data?.message || 'Checkout failed');
+      toast.error(err?.response?.data?.message || err?.response?.data?.error || 'Checkout failed');
     }
   };
 
