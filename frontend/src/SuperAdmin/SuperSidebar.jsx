@@ -29,7 +29,6 @@ const navItems = [
  
   { path: "/superadmin/franchises", label: "Franchise Owners", icon: Landmark },
   { path: "/superadmin/plans", label: "Subscription Plans", icon: CreditCard },
-  { path: "/superadmin/razorpay-keys", label: "Razorpay Keys", icon: KeyRound },
   { path: "/superadmin/franchise-subscription-razorpay-keys", label: "Franchise Subscription Keys", icon: KeyRound },
   // { path: "/superadmin/areas", label: "Areas", icon: Activity },
   { path: "/superadmin/earnings", label: "Wallet & Earnings", icon: Wallet },
