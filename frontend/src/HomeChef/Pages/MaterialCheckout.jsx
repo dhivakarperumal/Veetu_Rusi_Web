@@ -303,6 +303,7 @@ const MaterialCheckout = () => {
       const { data: paymentOrder } = await api.post("/payments/razorpay/order", {
         amount: Math.round(total * 100),
         currency: "INR",
+        payment_profile: "home_chef",
       });
       const options = {
         key: paymentOrder.key_id,
@@ -334,7 +335,7 @@ const MaterialCheckout = () => {
 
     } catch (error) {
       console.error(error);
-      alert("Payment failed");
+      toast.error(error.response?.data?.message || "Payment failed");
     }
   };
 

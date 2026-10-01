@@ -117,20 +117,37 @@ export default function FoodCheckout() {
     }
   }, [user]);
 
+  const targetFranchiseUserId = useMemo(() => {
+    const item = checkoutItems.find((i) => i?.franchise_user_id || i?.franchise_id);
+    return item?.franchise_user_id || item?.franchise_id || "";
+  }, [checkoutItems]);
+
+  const targetChefUserId = useMemo(() => {
+    const item = checkoutItems.find((i) => i?.chef_user_id || i?.chef_id);
+    return item?.chef_user_id || item?.chef_id || "";
+  }, [checkoutItems]);
+
   useEffect(() => {
     if (!user?.user_id) return;
     let mounted = true;
-    api.get("/payments/razorpay/user-checkout-key")
+    api.get("/payments/razorpay/user-checkout-key", {
+      params: {
+        franchise_user_id: targetFranchiseUserId,
+        chef_user_id: targetChefUserId,
+      },
+    })
       .then(({ data }) => {
         if (!mounted) return;
         setRazorpayKeyId(data?.key_id || "");
         console.info("[FoodCheckout] Active User Checkout Razorpay key ID:", data?.key_id || "missing");
       })
       .catch((error) => {
+        if (!mounted) return;
+        setRazorpayKeyId("");
         console.error("[FoodCheckout] Could not load User Checkout Razorpay key ID:", error.response?.data?.message || error.message);
       });
     return () => { mounted = false; };
-  }, [user?.user_id]);
+  }, [user?.user_id, targetFranchiseUserId, targetChefUserId]);
 
   const resolveImageUrl = (url) => {
     if (!url || typeof url !== "string") return null;
@@ -339,18 +356,26 @@ export default function FoodCheckout() {
       let checkoutKeyId = razorpayKeyId;
       if (!checkoutKeyId) {
         try {
-          const { data } = await api.get("/payments/razorpay/user-checkout-key");
+          const { data } = await api.get("/payments/razorpay/user-checkout-key", {
+            params: {
+              franchise_user_id: targetFranchiseUserId,
+              chef_user_id: targetChefUserId,
+            },
+          });
           checkoutKeyId = data?.key_id;
           if (checkoutKeyId) {
             setRazorpayKeyId(checkoutKeyId);
           }
         } catch (keyErr) {
-          console.error("Failed to load User Checkout Razorpay key ID:", keyErr);
+          const errMsg = keyErr.response?.data?.message || "Razorpay payment key is not configured or active.";
+          toast.error(errMsg);
+          setIsSubmitting(false);
+          return;
         }
       }
 
       if (!checkoutKeyId) {
-        toast.error("User Checkout Razorpay key is not configured or active.");
+        toast.error("Razorpay payment key is not configured or active.");
         setIsSubmitting(false);
         return;
       }

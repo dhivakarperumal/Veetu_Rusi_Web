@@ -1,13 +1,35 @@
 const pool = require('../config/db');
-const { encryptSecret } = require('../utils/razorpayConfig');
+const { encryptSecret, getFranchiseAdminIdentifiers } = require('../utils/razorpayConfig');
 
-const normalizeStatus = (value) => String(value || '').toLowerCase() === 'active' ? 'Active' : 'Inactive';
+const normalizeStatus = (value) => String(value || '').toLowerCase() === 'inactive' ? 'Inactive' : 'Active';
 const normalizeUsage = (value) => ['User Checkout', 'Delivery Partner', 'Home Chef', 'General'].includes(value) ? value : null;
 const getAuditActor = (req) => req.user?.user_id || req.user?.id || req.user?.email || 'system';
 
 exports.list = async (req, res) => {
   try {
     const activeOnly = req.query.active === 'true';
+    const conditions = [];
+    const params = [];
+
+    if (activeOnly) {
+      conditions.push("LOWER(rk.status) = 'active'");
+    }
+
+    if (req.user?.role === 'admin') {
+      const actorId = req.user.user_id || req.user.id || req.user.email;
+      const identifiers = await getFranchiseAdminIdentifiers(actorId);
+      if (identifiers.length) {
+        const ph = identifiers.map(() => '?').join(', ');
+        conditions.push(`(rk.created_by IN (${ph}) OR rk.updated_by IN (${ph}))`);
+        params.push(...identifiers, ...identifiers);
+      } else {
+        conditions.push('(rk.created_by = ? OR rk.created_by = ?)');
+        params.push(actorId, req.user.email || actorId);
+      }
+    }
+
+    const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+
     const [rows] = await pool.execute(
       `SELECT rk.id, rk.key_name, rk.key_id, rk.business_name, rk.key_usage, rk.status, rk.created_at, rk.updated_at, rk.created_by, rk.updated_by,
               COUNT(DISTINCT u.id) AS assigned_count,
@@ -15,8 +37,9 @@ exports.list = async (req, res) => {
        FROM razorpay_keys rk
       LEFT JOIN user_razorpay_keys urk ON urk.razorpay_key_id = rk.id
       LEFT JOIN users u ON u.id = urk.user_id
-       ${activeOnly ? "WHERE LOWER(rk.status) = 'active'" : ''}
-       GROUP BY rk.id ORDER BY rk.created_at DESC`
+       ${whereClause}
+       GROUP BY rk.id ORDER BY rk.created_at DESC`,
+      params
     );
     res.json(rows);
   } catch (error) {
@@ -50,7 +73,21 @@ exports.create = async (req, res) => {
 exports.update = async (req, res) => {
   try {
     const { id } = req.params;
-    const [existing] = await pool.execute('SELECT id FROM razorpay_keys WHERE id = ? LIMIT 1', [id]);
+    let findQuery = 'SELECT id, created_by FROM razorpay_keys WHERE id = ?';
+    const findParams = [id];
+    if (req.user?.role === 'admin') {
+      const actorId = req.user.user_id || req.user.id || req.user.email;
+      const identifiers = await getFranchiseAdminIdentifiers(actorId);
+      if (identifiers.length) {
+        const ph = identifiers.map(() => '?').join(', ');
+        findQuery += ` AND (created_by IN (${ph}) OR updated_by IN (${ph}))`;
+        findParams.push(...identifiers, ...identifiers);
+      } else {
+        findQuery += ' AND (created_by = ? OR created_by = ?)';
+        findParams.push(actorId, req.user.email || actorId);
+      }
+    }
+    const [existing] = await pool.execute(findQuery + ' LIMIT 1', findParams);
     if (!existing.length) return res.status(404).json({ message: 'Razorpay key not found.' });
     const { key_name, key_id, key_secret, business_name } = req.body;
     const keyUsage = normalizeUsage(req.body.key_usage);
@@ -77,7 +114,21 @@ exports.update = async (req, res) => {
 exports.setStatus = async (req, res) => {
   try {
     const status = normalizeStatus(req.body.status);
-    const [result] = await pool.execute('UPDATE razorpay_keys SET status = ?, updated_by = ? WHERE id = ?', [status, getAuditActor(req), req.params.id]);
+    let updateQuery = 'UPDATE razorpay_keys SET status = ?, updated_by = ? WHERE id = ?';
+    const updateParams = [status, getAuditActor(req), req.params.id];
+    if (req.user?.role === 'admin') {
+      const actorId = req.user.user_id || req.user.id || req.user.email;
+      const identifiers = await getFranchiseAdminIdentifiers(actorId);
+      if (identifiers.length) {
+        const ph = identifiers.map(() => '?').join(', ');
+        updateQuery += ` AND (created_by IN (${ph}) OR updated_by IN (${ph}))`;
+        updateParams.push(...identifiers, ...identifiers);
+      } else {
+        updateQuery += ' AND (created_by = ? OR created_by = ?)';
+        updateParams.push(actorId, req.user.email || actorId);
+      }
+    }
+    const [result] = await pool.execute(updateQuery, updateParams);
     if (!result.affectedRows) return res.status(404).json({ message: 'Razorpay key not found.' });
     res.json({ message: `Razorpay key ${status.toLowerCase()}.`, status });
   } catch (error) {
@@ -89,7 +140,21 @@ exports.remove = async (req, res) => {
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
-    const [existing] = await connection.execute('SELECT id FROM razorpay_keys WHERE id = ? LIMIT 1', [req.params.id]);
+    let findQuery = 'SELECT id FROM razorpay_keys WHERE id = ?';
+    const findParams = [req.params.id];
+    if (req.user?.role === 'admin') {
+      const actorId = req.user.user_id || req.user.id || req.user.email;
+      const identifiers = await getFranchiseAdminIdentifiers(actorId);
+      if (identifiers.length) {
+        const ph = identifiers.map(() => '?').join(', ');
+        findQuery += ` AND (created_by IN (${ph}) OR updated_by IN (${ph}))`;
+        findParams.push(...identifiers, ...identifiers);
+      } else {
+        findQuery += ' AND (created_by = ? OR created_by = ?)';
+        findParams.push(actorId, req.user.email || actorId);
+      }
+    }
+    const [existing] = await connection.execute(findQuery + ' LIMIT 1', findParams);
     if (!existing.length) {
       await connection.rollback();
       return res.status(404).json({ message: 'Razorpay key not found.' });

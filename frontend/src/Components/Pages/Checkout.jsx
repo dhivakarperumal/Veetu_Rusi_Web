@@ -300,9 +300,16 @@ const Checkout = () => {
         return;
       }
 
+      const firstItem = checkoutItems.find(i => i?.franchise_user_id || i?.franchise_id || i?.chef_user_id || i?.created_by);
+      const targetFranchiseUserId = firstItem?.franchise_user_id || firstItem?.franchise_id || user?.franchise_user_id || "";
+      const targetChefUserId = firstItem?.chef_user_id || firstItem?.created_by || "";
+
       const { data: paymentOrder } = await api.post("/payments/razorpay/order", {
         amount: Math.round(total * 100),
         currency: "INR",
+        payment_profile: "user_checkout",
+        franchise_user_id: targetFranchiseUserId,
+        chef_user_id: targetChefUserId,
       });
       const options = {
         key: paymentOrder.key_id,
@@ -338,7 +345,7 @@ const Checkout = () => {
 
     } catch (error) {
       console.error(error);
-      alert("Payment failed");
+      toast.error(error.response?.data?.message || "Payment failed");
     }
   };
 

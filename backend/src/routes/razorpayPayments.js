@@ -7,22 +7,36 @@ const { getAssignedRazorpayConfig, getUserCheckoutRazorpayConfig, getUserCheckou
 const router = express.Router();
 router.use(verifyTokenWithoutSubscription);
 
-const getPaymentConfig = (req) => req.body?.payment_profile === 'user_checkout'
-  ? getUserCheckoutRazorpayConfig()
-  : getAssignedRazorpayConfig(req.user?.id || req.user?.user_id);
-
-const isConfigurationError = (error) => [
-  'Razorpay payment configuration is not assigned for this account.',
-  'Razorpay User Checkout key is not configured or active.',
-].includes(error.message);
+const getPaymentConfig = (req) => {
+  const profile = req.body?.payment_profile;
+  const franchiseUserId = req.body?.franchise_user_id || req.query?.franchise_user_id;
+  const chefUserId = req.body?.chef_user_id || req.query?.chef_user_id;
+  if (profile === 'user_checkout') {
+    return getUserCheckoutRazorpayConfig({
+      franchiseUserId,
+      chefUserId,
+      userId: req.user?.user_id || req.user?.id,
+      userRole: req.user?.role
+    });
+  }
+  return getAssignedRazorpayConfig(req.user?.user_id || req.user?.id, {
+    paymentProfile: profile,
+    franchiseUserId,
+    userRole: req.user?.role
+  });
+};
 
 router.get('/user-checkout-key', async (req, res) => {
   try {
-    const key = await getUserCheckoutRazorpayKeyId();
+    const key = await getUserCheckoutRazorpayKeyId({
+      franchiseUserId: req.query.franchise_user_id,
+      chefUserId: req.query.chef_user_id,
+      userId: req.user?.user_id || req.user?.id,
+      userRole: req.user?.role
+    });
     res.json({ key_id: key.keyId });
   } catch (error) {
-    const needsConfiguration = isConfigurationError(error);
-    res.status(needsConfiguration ? 400 : 500).json({ message: needsConfiguration ? error.message : 'Unable to load the User Checkout key ID.' });
+    res.status(400).json({ message: error.message || 'Unable to load the User Checkout key ID.' });
   }
 });
 
@@ -62,11 +76,8 @@ router.post('/order', async (req, res) => {
       key_id: config.keyId,
     });
   } catch (error) {
-    const needsConfiguration = isConfigurationError(error);
     console.error('Razorpay order initialization error:', error.message);
-    const status = needsConfiguration ? 400 : 500;
-    const message = needsConfiguration ? error.message : 'Unable to initialize Razorpay payment.';
-    res.status(status).json({ message });
+    res.status(400).json({ message: error.message || 'Unable to initialize Razorpay payment.' });
   }
 });
 

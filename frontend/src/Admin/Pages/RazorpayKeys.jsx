@@ -6,7 +6,7 @@ import { toast, Toaster } from "react-hot-toast";
 import api from "../../api";
 
 const usageOptions = ["User Checkout", "Delivery Partner", "Home Chef", "General"];
-const emptyForm = { key_name: "", key_id: "", key_secret: "", business_name: "", key_usage: "", status: "Inactive" };
+const emptyForm = { key_name: "", key_id: "", key_secret: "", business_name: "", key_usage: "", status: "Active" };
 
 const maskKey = (value = "") => value.length > 10 ? `${value.slice(0, 6)}...${value.slice(-4)}` : value;
 const formatDate = (value) => value ? new Date(value).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) : "-";
@@ -54,7 +54,7 @@ const RazorpayKeys = () => {
 
   const openAdd = () => {
     setEditingKey(null);
-    setForm(isFranchiseSubscriptionKeys ? { ...emptyForm, key_usage: "Franchise Subscription" } : emptyForm);
+    setForm(isFranchiseSubscriptionKeys ? { ...emptyForm, key_usage: "Franchise Subscription", status: "Active" } : { ...emptyForm, status: "Active" });
     setModalOpen(true);
   };
 
