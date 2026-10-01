@@ -336,6 +336,10 @@ export default function FoodCheckout() {
     setIsSubmitting(true);
 
     if (paymentMethod === "Online Payment") {
+      console.info(
+        "[FoodCheckout] Place Order clicked; User Checkout Razorpay key ID:",
+        razorpayKeyId || "not loaded",
+      );
       try {
         const loaded = await loadRazorpay();
         if (!loaded) {
