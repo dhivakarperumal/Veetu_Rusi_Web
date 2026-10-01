@@ -367,7 +367,7 @@ export default function FoodCheckout() {
             setRazorpayKeyId(checkoutKeyId);
           }
         } catch (keyErr) {
-          const errMsg = keyErr.response?.data?.message || "Razorpay payment key is not configured or active.";
+          const errMsg = keyErr.response?.data?.message || "Razorpay key not configured by your admin yet";
           toast.error(errMsg);
           setIsSubmitting(false);
           return;
@@ -375,7 +375,7 @@ export default function FoodCheckout() {
       }
 
       if (!checkoutKeyId) {
-        toast.error("Razorpay payment key is not configured or active.");
+        toast.error("Razorpay key not configured by your admin yet");
         setIsSubmitting(false);
         return;
       }
@@ -431,7 +431,7 @@ export default function FoodCheckout() {
         paymentObject.open();
       } catch (err) {
         console.error(err);
-        toast.error(err.response?.data?.message || err.message || "Payment failed. Please try again.");
+        toast.error(err.response?.data?.message || "Razorpay key not configured by your admin yet");
         setIsSubmitting(false);
       }
       return;

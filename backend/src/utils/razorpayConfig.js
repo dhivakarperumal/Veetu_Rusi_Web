@@ -284,14 +284,17 @@ const getAssignedRazorpayConfig = async (userIdentity, { paymentProfile, franchi
         }
       } catch (err) {}
     }
+
+    throw new Error('Razorpay key not configured by your admin yet');
   }
 
-  // 3. Fallback to active platform keys in razorpay_keys
+  // 3. Fallback to active platform keys in razorpay_keys if no franchise context
   try {
     const [specRows] = await pool.execute(
       `SELECT id, key_id, key_secret
        FROM razorpay_keys
        WHERE (LOWER(TRIM(key_usage)) = LOWER(?) OR LOWER(TRIM(key_name)) LIKE ?)
+         AND (created_by IS NULL OR created_by = 'system' OR created_by = 'superadmin' OR (created_by NOT LIKE 'FRAN-%' AND created_by NOT LIKE 'franchise%'))
          AND LOWER(status) = 'active'
        ORDER BY updated_at DESC, id DESC
        LIMIT 1`,
@@ -308,6 +311,7 @@ const getAssignedRazorpayConfig = async (userIdentity, { paymentProfile, franchi
       `SELECT id, key_id, key_secret
        FROM razorpay_keys
        WHERE (LOWER(TRIM(key_usage)) = 'general' OR LOWER(TRIM(key_name)) LIKE '%general%')
+         AND (created_by IS NULL OR created_by = 'system' OR created_by = 'superadmin' OR (created_by NOT LIKE 'FRAN-%' AND created_by NOT LIKE 'franchise%'))
          AND LOWER(status) = 'active'
        ORDER BY updated_at DESC, id DESC
        LIMIT 1`
@@ -318,35 +322,7 @@ const getAssignedRazorpayConfig = async (userIdentity, { paymentProfile, franchi
     }
   } catch (err) {}
 
-  try {
-    const [anyRows] = await pool.execute(
-      `SELECT id, key_id, key_secret
-       FROM razorpay_keys
-       WHERE LOWER(status) = 'active'
-       ORDER BY updated_at DESC, id DESC
-       LIMIT 1`
-    );
-    if (anyRows.length && anyRows[0].key_id) {
-      const storedSecret = anyRows[0].key_secret ? decryptStoredSecret(anyRows[0].key_secret) : '';
-      return { id: anyRows[0].id, keyId: anyRows[0].key_id, keySecret: storedSecret };
-    }
-  } catch (err) {}
-
-  try {
-    const [fRows] = await pool.execute(
-      `SELECT id, key_id, key_secret
-       FROM franchise_razorpay_keys
-       WHERE LOWER(status) = 'active'
-       ORDER BY updated_at DESC, id DESC
-       LIMIT 1`
-    );
-    if (fRows.length && fRows[0].key_id) {
-      const storedSecret = fRows[0].key_secret ? decryptStoredSecret(fRows[0].key_secret) : '';
-      return { id: fRows[0].id, keyId: fRows[0].key_id, keySecret: storedSecret };
-    }
-  } catch (err) {}
-
-  throw new Error(`No active Razorpay payment key is configured for ${targetUsage} in the database.`);
+  throw new Error('Razorpay key not configured by your admin yet');
 };
 
 const getUserCheckoutRazorpayConfig = async ({ franchiseUserId, chefUserId, userId, userRole } = {}) => {
@@ -495,7 +471,7 @@ const getUserCheckoutRazorpayConfig = async ({ franchiseUserId, chefUserId, user
     }
   } catch (err) {}
 
-  throw new Error('No active Razorpay payment key is configured in the database. Please add an active key in Admin > Razorpay Keys.');
+  throw new Error('Razorpay key not configured by your admin yet');
 };
 
 const getUserCheckoutRazorpayKeyId = async (options = {}) => {

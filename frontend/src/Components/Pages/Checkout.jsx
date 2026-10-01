@@ -311,10 +311,15 @@ const Checkout = () => {
         franchise_user_id: targetFranchiseUserId,
         chef_user_id: targetChefUserId,
       });
+      if (!paymentOrder?.key_id) {
+        toast.error("Razorpay key not configured by your admin yet");
+        return;
+      }
+
       const options = {
         key: paymentOrder.key_id,
-        amount: paymentOrder.order.amount,
-        currency: paymentOrder.order.currency,
+        amount: paymentOrder.order?.amount || Math.round(total * 100),
+        currency: paymentOrder.order?.currency || "INR",
         ...(paymentOrder.order?.id ? { order_id: paymentOrder.order.id } : {}),
         name: "Veetu Rusi",
         description: "Order Payment",
@@ -340,12 +345,21 @@ const Checkout = () => {
         }
       };
 
-      const paymentObject = new window.Razorpay(options);
-      paymentObject.open();
+      try {
+        const paymentObject = new window.Razorpay(options);
+        paymentObject.on('payment.failed', function (response) {
+          toast.error(response.error?.description || "Payment failed");
+        });
+        paymentObject.open();
+      } catch (rzpErr) {
+        console.error("Razorpay open error:", rzpErr);
+        toast.error("Razorpay key not configured by your admin yet");
+      }
 
     } catch (error) {
       console.error(error);
-      toast.error(error.response?.data?.message || "Payment failed");
+      const errMsg = error.response?.data?.message || "Razorpay key not configured by your admin yet";
+      toast.error(errMsg);
     }
   };
 
