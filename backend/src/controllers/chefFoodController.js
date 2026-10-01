@@ -118,6 +118,10 @@ exports.getFoods = async (req, res) => {
     let query = `
 SELECT
     cf.*,
+    COALESCE(NULLIF(cf.franchise_user_id, ''), NULLIF(hc.created_by, ''), NULLIF(hc.franchise_user_id, ''), NULLIF(u.created_by, '')) AS franchise_user_id,
+    COALESCE(NULLIF(fo.franchise_name, ''), NULLIF(fu.full_name, ''), 'Veetu Rusi Franchise') AS franchise_name,
+    fu.email AS franchise_email,
+    fu.mobile_number AS franchise_phone,
     u.full_name AS chef_name,
 
     NULL AS delivery_radius,
@@ -135,7 +139,12 @@ SELECT
       query += `, NULL as distance`;
     }
 
-    query += ' FROM chef_food_table cf LEFT JOIN users u ON cf.created_by = u.user_id LEFT JOIN home_chefs hc ON cf.created_by = hc.user_id WHERE 1=1';
+    query += ` FROM chef_food_table cf 
+    LEFT JOIN users u ON cf.created_by = u.user_id 
+    LEFT JOIN home_chefs hc ON cf.created_by = hc.user_id 
+    LEFT JOIN users fu ON fu.user_id = COALESCE(NULLIF(cf.franchise_user_id, ''), NULLIF(hc.created_by, ''), NULLIF(hc.franchise_user_id, ''), NULLIF(u.created_by, ''))
+    LEFT JOIN franchise_owners fo ON (fo.franch_user_id = COALESCE(NULLIF(cf.franchise_user_id, ''), NULLIF(hc.created_by, ''), NULLIF(hc.franchise_user_id, ''), NULLIF(u.created_by, '')) OR fo.franchise_id = COALESCE(NULLIF(cf.franchise_user_id, ''), NULLIF(hc.created_by, ''), NULLIF(hc.franchise_user_id, ''), NULLIF(u.created_by, '')))
+    WHERE 1=1`;
     const params = [];
 
     if (shouldFilterOfflineChefs(req.user)) {
@@ -239,10 +248,20 @@ exports.getFoodById = async (req, res) => {
         )`
       : '';
     const [rows] = await pool.execute(
-      `SELECT cf.*, u.full_name AS chef_name, u.user_id AS chef_user_id, u.email AS chef_email, u.mobile_number AS chef_phone
+      `SELECT cf.*, 
+              COALESCE(NULLIF(cf.franchise_user_id, ''), NULLIF(hc.created_by, ''), NULLIF(hc.franchise_user_id, ''), NULLIF(u.created_by, '')) AS franchise_user_id,
+              COALESCE(NULLIF(fo.franchise_name, ''), NULLIF(fu.full_name, ''), 'Veetu Rusi Franchise') AS franchise_name,
+              fu.email AS franchise_email,
+              fu.mobile_number AS franchise_phone,
+              u.full_name AS chef_name, 
+              u.user_id AS chef_user_id, 
+              u.email AS chef_email, 
+              u.mobile_number AS chef_phone
        FROM chef_food_table cf
        LEFT JOIN users u ON cf.created_by = u.user_id
        LEFT JOIN home_chefs hc ON cf.created_by = hc.user_id
+       LEFT JOIN users fu ON fu.user_id = COALESCE(NULLIF(cf.franchise_user_id, ''), NULLIF(hc.created_by, ''), NULLIF(hc.franchise_user_id, ''), NULLIF(u.created_by, ''))
+       LEFT JOIN franchise_owners fo ON (fo.franch_user_id = COALESCE(NULLIF(cf.franchise_user_id, ''), NULLIF(hc.created_by, ''), NULLIF(hc.franchise_user_id, ''), NULLIF(u.created_by, '')) OR fo.franchise_id = COALESCE(NULLIF(cf.franchise_user_id, ''), NULLIF(hc.created_by, ''), NULLIF(hc.franchise_user_id, ''), NULLIF(u.created_by, '')))
        WHERE cf.id = ?${onlineFilter}`,
       [id]
     );

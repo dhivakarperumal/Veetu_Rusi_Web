@@ -20,7 +20,14 @@ router.post('/', async (req, res) => {
     const result = await userFood.addToUserFoodCart(payload);
     res.status(201).json({ message: 'Added to user food cart', result });
   } catch (err) {
-    res.status(500).json({ message: 'Error adding to user food cart', error: err.message });
+    const status = err.statusCode || 500;
+    res.status(status).json({
+      message: err.message || 'Error adding to user food cart',
+      code: err.code || 'CART_ERROR',
+      existingFranchiseName: err.existingFranchiseName,
+      existingFranchiseUserId: err.existingFranchiseUserId,
+      error: err.message
+    });
   }
 });
 

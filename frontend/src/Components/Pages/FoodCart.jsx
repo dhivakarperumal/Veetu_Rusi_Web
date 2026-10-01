@@ -8,7 +8,7 @@ import PageHeader from "../CommenComponents/PageHeader";
 import PageContainer from "../CommenComponents/PageContainer";
 
 export default function FoodCartPage() {
-  const { userFoodCart, removeFromFoodCart, updateFoodCartQuantity } = useContext(StoreContext);
+  const { userFoodCart, removeFromFoodCart, updateFoodCartQuantity, clearUserFoodCart } = useContext(StoreContext);
   const { user } = useAuth();
   const navigate = useNavigate();
   const [appliedCoupon, setAppliedCoupon] = React.useState(null);
@@ -21,6 +21,20 @@ export default function FoodCartPage() {
     const finalPath = cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`;
     return `${backendUrl}${finalPath}`;
   };
+
+  const distinctFranchises = React.useMemo(() => {
+    const map = new Map();
+    userFoodCart.forEach((item) => {
+      const fid = String(item.franchise_user_id || item.franchise_id || '').trim();
+      if (fid && !map.has(fid)) {
+        map.set(fid, item.franchise_name || item.chef_name || 'Franchise Branch');
+      }
+    });
+    return Array.from(map.entries());
+  }, [userFoodCart]);
+
+  const hasMultipleFranchises = distinctFranchises.length > 1;
+  const activeFranchiseName = userFoodCart[0]?.franchise_name || userFoodCart[0]?.franchise_user_id || 'Home Chef Franchise';
 
   const subtotal = userFoodCart.reduce(
     (total, item) => total + parseFloat(item.price || 0) * item.quantity,
@@ -37,6 +51,49 @@ export default function FoodCartPage() {
           <div className="grid lg:grid-cols-3 gap-10">
 
             <div className="lg:col-span-2">
+              {/* Franchise Indicator or Conflict Banner */}
+              {hasMultipleFranchises && (
+                <div className="mb-6 p-4 rounded-2xl bg-amber-50 border border-amber-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+                  <div className="flex items-start gap-3">
+                    <span className="p-2 bg-amber-100 text-amber-700 rounded-xl text-lg mt-0.5">⚠️</span>
+                    <div>
+                      <h4 className="font-bold text-amber-900 text-sm">Multiple Franchises in Cart</h4>
+                      <p className="text-xs text-amber-800 mt-1 leading-relaxed">
+                        Your cart contains dishes from different franchise admins ({distinctFranchises.map(([_, name]) => name).join(', ')}). Razorpay online payment requires checkout from one franchise at a time. Please remove items from other franchises or clear your cart to proceed.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={clearUserFoodCart}
+                    className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-semibold whitespace-nowrap shadow transition cursor-pointer"
+                  >
+                    Clear Food Cart
+                  </button>
+                </div>
+              )}
+
+              {!isCartEmpty && !hasMultipleFranchises && (
+                <div className="mb-6 px-5 py-3.5 rounded-2xl bg-emerald-50/80 border border-emerald-200/80 flex items-center justify-between shadow-sm">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span className="text-xs font-bold text-emerald-800 tracking-wide uppercase">
+                      Ordering from Franchise:
+                    </span>
+                    <span className="text-sm font-semibold text-emerald-950">
+                      {activeFranchiseName}
+                    </span>
+                  </div>
+                  <button
+                    onClick={clearUserFoodCart}
+                    className="text-xs font-medium text-red-500 hover:text-red-700 hover:underline flex items-center gap-1.5 transition cursor-pointer"
+                    title="Clear all food items from cart"
+                  >
+                    <FiTrash2 size={13} />
+                    Clear Cart
+                  </button>
+                </div>
+              )}
+
               <div className="overflow-x-auto bg-white rounded-3xl shadow-md">
                 <table className="min-w-full text-left">
                   <thead className="bg-gray-50">
@@ -167,13 +224,14 @@ export default function FoodCartPage() {
 
               <button
                 onClick={() => navigate("/food-checkout", { state: { appliedCoupon } })}
-                disabled={isCartEmpty}
-                className={`w-full mt-3 py-3 rounded-lg font-semibold transition ${isCartEmpty
+                disabled={isCartEmpty || hasMultipleFranchises}
+                className={`w-full mt-3 py-3 rounded-lg font-semibold transition ${
+                  isCartEmpty || hasMultipleFranchises
                     ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                     : "bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
-                  }`}
+                }`}
               >
-                Food Checkout
+                {hasMultipleFranchises ? "Resolve Franchise Conflict" : "Food Checkout"}
               </button>
 
               <button

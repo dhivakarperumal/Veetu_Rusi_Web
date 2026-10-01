@@ -117,6 +117,19 @@ export default function FoodCheckout() {
     }
   }, [user]);
 
+  const distinctFranchises = useMemo(() => {
+    const map = new Map();
+    checkoutItems.forEach((item) => {
+      const fid = String(item?.franchise_user_id || item?.franchise_id || "").trim();
+      if (fid && !map.has(fid)) {
+        map.set(fid, item.franchise_name || item.chef_name || "Franchise Branch");
+      }
+    });
+    return Array.from(map.entries());
+  }, [checkoutItems]);
+
+  const hasMultipleFranchises = distinctFranchises.length > 1;
+
   const targetFranchiseUserId = useMemo(() => {
     const item = checkoutItems.find((i) => i?.franchise_user_id || i?.franchise_id);
     return item?.franchise_user_id || item?.franchise_id || "";
@@ -344,6 +357,11 @@ export default function FoodCheckout() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (hasMultipleFranchises) {
+      toast.error("Your order contains dishes from multiple franchise admins. Please return to your food cart to resolve.");
+      navigate("/food-cart");
+      return;
+    }
     const error = validateDelivery();
     if (error) {
       toast.error(error);
@@ -447,6 +465,27 @@ export default function FoodCheckout() {
         <PageContainer>
           <div className="grid gap-10 lg:grid-cols-3">
             <div className="lg:col-span-2 space-y-6">
+              {/* Multiple Franchises Alert Banner */}
+              {hasMultipleFranchises && (
+                <div className="bg-amber-50 border border-amber-300 rounded-3xl p-6 text-amber-900 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-base font-bold text-amber-900 flex items-center gap-2">
+                      <span>⚠️</span> Multiple Franchise Admins in Order
+                    </h3>
+                    <p className="text-xs text-amber-800 mt-1">
+                      This order contains products from multiple franchise admins ({distinctFranchises.map(([_, n]) => n).join(', ')}). Because payment keys differ, you can only order from one franchise at a time.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => navigate("/food-cart")}
+                    className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-semibold whitespace-nowrap shadow transition cursor-pointer"
+                  >
+                    Return to Food Cart
+                  </button>
+                </div>
+              )}
+
               {/* Location Search */}
               <div className="bg-white rounded-3xl shadow p-8">
                 <div className="relative max-w-4xl">
@@ -859,10 +898,10 @@ export default function FoodCheckout() {
 
                 <button
                   onClick={handleSubmit}
-                  disabled={isSubmitting}
-                  className="mt-8 w-full rounded-2xl bg-emerald-600 px-6 py-4 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={isSubmitting || hasMultipleFranchises}
+                  className="mt-8 w-full rounded-2xl bg-emerald-600 px-6 py-4 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
                 >
-                  {isSubmitting ? "Placing order..." : "Place Order"}
+                  {isSubmitting ? "Placing order..." : hasMultipleFranchises ? "Resolve Franchise Conflict" : "Place Order"}
                 </button>
 
                 <button

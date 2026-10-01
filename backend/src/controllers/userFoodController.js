@@ -47,7 +47,7 @@ const getCartByUser = async (user_id) => {
 };
 
 const addToUserFoodCart = async (data) => {
-  const {
+  let {
     user_id,
     product_id,
     name,
@@ -71,11 +71,65 @@ const addToUserFoodCart = async (data) => {
     ordered_by_phone,
   } = data;
 
-  // check if same product for same user exists
-  const [existing] = await pool.execute(
-    'SELECT * FROM `user_food_cart` WHERE user_id = ? AND product_id = ?',
-    [user_id, product_id]
+  let finalFranchiseUserId = franchise_user_id ? String(franchise_user_id).trim() : '';
+  let finalFranchiseName = franchise_name ? String(franchise_name).trim() : '';
+
+  // If franchise_user_id is missing, try to resolve it from chef_food_table or home_chefs
+  if (!finalFranchiseUserId && product_id) {
+    try {
+      const [cfRows] = await pool.execute(
+        `SELECT COALESCE(NULLIF(cf.franchise_user_id, ''), NULLIF(hc.created_by, ''), NULLIF(hc.franchise_user_id, ''), NULLIF(u.created_by, '')) AS resolved_franchise_user_id,
+                COALESCE(NULLIF(fo.franchise_name, ''), NULLIF(fu.full_name, ''), 'Veetu Rusi Franchise') AS resolved_franchise_name,
+                fu.email AS resolved_franchise_email,
+                fu.mobile_number AS resolved_franchise_phone
+         FROM chef_food_table cf
+         LEFT JOIN users u ON cf.created_by = u.user_id
+         LEFT JOIN home_chefs hc ON cf.created_by = hc.user_id
+         LEFT JOIN users fu ON fu.user_id = COALESCE(NULLIF(cf.franchise_user_id, ''), NULLIF(hc.created_by, ''), NULLIF(hc.franchise_user_id, ''), NULLIF(u.created_by, ''))
+         LEFT JOIN franchise_owners fo ON (fo.franch_user_id = COALESCE(NULLIF(cf.franchise_user_id, ''), NULLIF(hc.created_by, ''), NULLIF(hc.franchise_user_id, ''), NULLIF(u.created_by, '')) OR fo.franchise_id = COALESCE(NULLIF(cf.franchise_user_id, ''), NULLIF(hc.created_by, ''), NULLIF(hc.franchise_user_id, ''), NULLIF(u.created_by, '')))
+         WHERE cf.id = ? LIMIT 1`,
+        [product_id]
+      );
+      if (cfRows.length > 0 && cfRows[0].resolved_franchise_user_id) {
+        finalFranchiseUserId = String(cfRows[0].resolved_franchise_user_id).trim();
+        finalFranchiseName = finalFranchiseName || cfRows[0].resolved_franchise_name || '';
+        franchise_email = franchise_email || cfRows[0].resolved_franchise_email || '';
+        franchise_phone = franchise_phone || cfRows[0].resolved_franchise_phone || '';
+      }
+    } catch (err) {
+      console.warn('Error resolving franchise for food cart:', err.message);
+    }
+  }
+
+  // Check if existing items in cart belong to a DIFFERENT franchise
+  const [existingCartItems] = await pool.execute(
+    'SELECT * FROM `user_food_cart` WHERE user_id = ?',
+    [user_id]
   );
+
+  if (existingCartItems.length > 0) {
+    const existingItemWithFranchise = existingCartItems.find(
+      (item) => item.franchise_user_id && String(item.franchise_user_id).trim() !== ''
+    );
+
+    if (
+      existingItemWithFranchise &&
+      finalFranchiseUserId &&
+      String(existingItemWithFranchise.franchise_user_id).trim() !== finalFranchiseUserId
+    ) {
+      const conflictError = new Error(
+        `Your food cart contains items from another franchise (${existingItemWithFranchise.franchise_name || 'different franchise'}). You can only order from one franchise admin's home chefs at a time.`
+      );
+      conflictError.statusCode = 409;
+      conflictError.code = 'FRANCHISE_CONFLICT';
+      conflictError.existingFranchiseName = existingItemWithFranchise.franchise_name || 'Current Franchise';
+      conflictError.existingFranchiseUserId = existingItemWithFranchise.franchise_user_id;
+      throw conflictError;
+    }
+  }
+
+  // check if same product for same user exists
+  const existing = existingCartItems.filter((i) => String(i.product_id) === String(product_id));
 
   if (existing.length > 0) {
     const item = existing[0];
@@ -103,9 +157,9 @@ const addToUserFoodCart = async (data) => {
       chef_phone || '',
       chef_email || '',
       franchise_id || '',
-      franchise_user_id || '',
+      finalFranchiseUserId,
       franchise_email || '',
-      franchise_name || '',
+      finalFranchiseName,
       franchise_phone || '',
       ordered_by_name || '',
       ordered_by_user_id || '',

@@ -2,6 +2,7 @@ import React, { createContext, useState, useEffect, useContext, useCallback } fr
 import { toast } from "react-hot-toast";
 import api from "../api";
 import { AuthContext } from "./AuthContext";
+import FranchiseCartConflictModal from "../Components/CommenComponents/FranchiseCartConflictModal";
 
 export const StoreContext = createContext();
 
@@ -19,6 +20,13 @@ export const StoreProvider = ({ children }) => {
     const [lastFetchTime, setLastFetchTime] = useState(0);
     const [chefFoodsCache, setChefFoodsCache] = useState([]);
     const [lastChefFoodsFetchTime, setLastChefFoodsFetchTime] = useState(0);
+    const [franchiseConflict, setFranchiseConflict] = useState({
+        isOpen: false,
+        existingFranchiseName: "",
+        newFranchiseName: "",
+        newProductName: "",
+        pendingAction: null,
+    });
 
     // ─── Fetch cart from backend ─────────────────────────────────
     const fetchCart = useCallback(async () => {
@@ -117,16 +125,61 @@ export const StoreProvider = ({ children }) => {
         }
     };
 
-    const addToFoodCart = async (product, variant = null, size = null, qty = 1) => {
+    const addToFoodCart = async (product, variant = null, size = null, qty = 1, forceReplace = false) => {
         if (!user?.user_id) {
             toast.error('Please login to add items to cart');
             return;
         }
 
         // Prepare fields expected by user_food_cart
-        const productImages = typeof product.images === 'string' ? JSON.parse(product.images) : (product.images || []);
+        let productImages = [];
+        if (typeof product.images === 'string') {
+            try {
+                productImages = JSON.parse(product.images);
+            } catch {
+                productImages = [product.images];
+            }
+        } else if (Array.isArray(product.images)) {
+            productImages = product.images;
+        }
         const image = productImages[0] || product.image || '';
         const price = parseFloat(product.final_price ?? product.offer_price ?? product.mrp ?? product.price ?? 0);
+
+        const incomingFranchiseUserId = String(product.franchise_user_id || product.created_by_franchise || '').trim();
+        const incomingFranchiseName = String(product.franchise_name || '').trim();
+
+        // Check for franchise conflict if cart already has items and not in forceReplace mode
+        if (!forceReplace && userFoodCart && userFoodCart.length > 0) {
+            const existingFranchiseItem = userFoodCart.find(
+                (item) => item.franchise_user_id && String(item.franchise_user_id).trim() !== ''
+            );
+
+            if (
+                existingFranchiseItem &&
+                incomingFranchiseUserId &&
+                String(existingFranchiseItem.franchise_user_id).trim() !== incomingFranchiseUserId
+            ) {
+                // Show conflict modal
+                setFranchiseConflict({
+                    isOpen: true,
+                    existingFranchiseName: existingFranchiseItem.franchise_name || 'Current Franchise',
+                    newFranchiseName: incomingFranchiseName || 'Another Franchise',
+                    newProductName: product.name || 'Food item',
+                    pendingAction: () => addToFoodCart(product, variant, size, qty, true),
+                });
+                return;
+            }
+        }
+
+        // If forceReplace is requested by user, clear cart before adding new item
+        if (forceReplace) {
+            try {
+                await api.delete(`/user-food/clear/${user.user_id}`);
+                setUserFoodCart([]);
+            } catch (clearErr) {
+                console.warn('Failed to clear cart before adding replacement item:', clearErr);
+            }
+        }
 
         const payload = {
             user_id: user.user_id,
@@ -138,7 +191,6 @@ export const StoreProvider = ({ children }) => {
             quantity: qty,
 
             // chef_user_id is the chef's user_id (user.user_id of the chef)
-            // getFoodById now returns this correctly via the users JOIN
             chef_user_id: product.chef_user_id || product.created_by || product.created_by_user_id || '',
             chef_id: product.chef_id || product.id_in_home_chefs || '',
             chef_name: product.chef_name || product.created_by_name || '',
@@ -146,9 +198,9 @@ export const StoreProvider = ({ children }) => {
             chef_email: product.chef_email || product.created_by_email || '',
 
             franchise_id: product.franchise_id || '',
-            franchise_user_id: product.franchise_user_id || '',
+            franchise_user_id: incomingFranchiseUserId,
             franchise_email: product.franchise_email || '',
-            franchise_name: product.franchise_name || '',
+            franchise_name: incomingFranchiseName,
             franchise_phone: product.franchise_phone || '',
 
             ordered_by_name: user.name || user.fullname || user.username || '',
@@ -159,11 +211,26 @@ export const StoreProvider = ({ children }) => {
 
         try {
             await api.post('/user-food', payload);
-            toast.success('Added to food cart');
+            if (forceReplace) {
+                toast.success('Cart updated with new franchise items');
+            } else {
+                toast.success('Added to food cart');
+            }
             await fetchUserFoodCart();
         } catch (err) {
             console.error('Add to food cart error:', err);
-            toast.error('Failed to add to food cart');
+            if (err.response?.status === 409 && err.response?.data?.code === 'FRANCHISE_CONFLICT') {
+                // Backend detected franchise conflict
+                setFranchiseConflict({
+                    isOpen: true,
+                    existingFranchiseName: err.response.data.existingFranchiseName || 'Current Franchise',
+                    newFranchiseName: incomingFranchiseName || 'Another Franchise',
+                    newProductName: product.name || 'Food item',
+                    pendingAction: () => addToFoodCart(product, variant, size, qty, true),
+                });
+            } else {
+                toast.error(err.response?.data?.message || 'Failed to add to food cart');
+            }
         }
     };
 
@@ -408,6 +475,30 @@ export const StoreProvider = ({ children }) => {
         }
     };
 
+    const handleConfirmFranchiseConflict = async () => {
+        const action = franchiseConflict.pendingAction;
+        setFranchiseConflict({
+            isOpen: false,
+            existingFranchiseName: "",
+            newFranchiseName: "",
+            newProductName: "",
+            pendingAction: null,
+        });
+        if (typeof action === 'function') {
+            await action();
+        }
+    };
+
+    const handleCancelFranchiseConflict = () => {
+        setFranchiseConflict({
+            isOpen: false,
+            existingFranchiseName: "",
+            newFranchiseName: "",
+            newProductName: "",
+            pendingAction: null,
+        });
+    };
+
     return (
         <StoreContext.Provider value={{
             cart, wishlist, userFoodCart,
@@ -425,6 +516,14 @@ export const StoreProvider = ({ children }) => {
             lastChefFoodsFetchTime, setLastChefFoodsFetchTime,
         }}>
             {children}
+            <FranchiseCartConflictModal
+                isOpen={franchiseConflict.isOpen}
+                existingFranchiseName={franchiseConflict.existingFranchiseName}
+                newFranchiseName={franchiseConflict.newFranchiseName}
+                newProductName={franchiseConflict.newProductName}
+                onConfirm={handleConfirmFranchiseConflict}
+                onCancel={handleCancelFranchiseConflict}
+            />
         </StoreContext.Provider>
     );
 };
