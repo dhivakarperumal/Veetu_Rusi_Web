@@ -787,6 +787,50 @@ exports.getDeliveryPartners = async (req, res) => {
 
 const ATTENDANCE_LOCAL_DATE_SQL = "DATE(CONVERT_TZ(attendance.check_in_at, @@session.time_zone, '+05:30'))";
 
+const logEmptyAttendanceReport = async ({ report, req, adminIds, table, joins, scope, scopeParams }) => {
+  try {
+    const [[counts]] = await pool.execute(
+      `SELECT (SELECT COUNT(*) FROM ${table}) AS table_rows,
+              COUNT(*) AS franchise_rows,
+              DATE_FORMAT(MIN(${ATTENDANCE_LOCAL_DATE_SQL}), '%Y-%m-%d') AS oldest_local_date,
+              DATE_FORMAT(MAX(${ATTENDANCE_LOCAL_DATE_SQL}), '%Y-%m-%d') AS newest_local_date
+       FROM ${table} attendance ${joins}
+       WHERE ${scope}`,
+      scopeParams
+    );
+    const [[databaseTime]] = await pool.execute(
+      `SELECT @@session.time_zone AS database_time_zone,
+              DATE_FORMAT(CONVERT_TZ(NOW(), @@session.time_zone, '+05:30'), '%Y-%m-%d') AS india_today`
+    );
+
+    console.warn('[attendance-report-empty]', {
+      report,
+      dateFrom: req.query.date_from || null,
+      dateTo: req.query.date_to || null,
+      date: req.query.date || null,
+      adminIdentityCount: adminIds.length,
+      tableRows: Number(counts.table_rows),
+      franchiseRows: Number(counts.franchise_rows),
+      oldestLocalDate: counts.oldest_local_date,
+      newestLocalDate: counts.newest_local_date,
+      databaseTimeZone: databaseTime.database_time_zone,
+      indiaToday: databaseTime.india_today,
+    });
+  } catch (error) {
+    console.error('[attendance-report-diagnostics-failed]', { report, message: error.message });
+  }
+};
+
+const logAttendanceReportResult = ({ report, req, rowCount }) => {
+  console.info('[attendance-report-result]', {
+    report,
+    rowCount,
+    dateFrom: req.query.date_from || null,
+    dateTo: req.query.date_to || null,
+    date: req.query.date || null,
+  });
+};
+
 const appendAttendanceDateFilter = (query, params, filters) => {
   const isDate = (value) => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
   const hasStart = isDate(filters.date_from);
@@ -815,6 +859,9 @@ exports.getDeliveryPartnerAttendance = async (req, res) => {
       .map(String);
     if (!adminIds.length) return res.status(401).json({ message: 'Unauthorized' });
 
+    const joins = 'LEFT JOIN delivery_partners dp ON dp.id = attendance.delivery_partner_id';
+    const scope = `(attendance.franchise_admin_id IN (${adminIds.map(() => '?').join(', ')})
+      OR dp.created_by IN (${adminIds.map(() => '?').join(', ')}))`;
     let query = `
             SELECT attendance.id, attendance.delivery_partner_user_id, attendance.delivery_partner_name,
               DATE_FORMAT(${ATTENDANCE_LOCAL_DATE_SQL}, '%Y-%m-%d') AS attendance_date,
@@ -824,14 +871,20 @@ exports.getDeliveryPartnerAttendance = async (req, res) => {
                     attendance.check_out_longitude, attendance.check_out_accuracy_m,
                     attendance.check_out_address, dp.mobile, dp.vehicle_number
       FROM delivery_partner_attendance attendance
-      LEFT JOIN delivery_partners dp ON dp.id = attendance.delivery_partner_id
-      WHERE (attendance.franchise_admin_id IN (${adminIds.map(() => '?').join(', ')})
-        OR dp.created_by IN (${adminIds.map(() => '?').join(', ')}))`;
+      ${joins}
+      WHERE ${scope}`;
     const params = [...adminIds, ...adminIds];
     query = appendAttendanceDateFilter(query, params, req.query);
     query += ' ORDER BY attendance.check_in_at DESC LIMIT 500';
 
     const [rows] = await pool.execute(query, params);
+  logAttendanceReportResult({ report: 'delivery-partners', req, rowCount: rows.length });
+    if (!rows.length) {
+      await logEmptyAttendanceReport({
+        report: 'delivery-partners', req, adminIds,
+        table: 'delivery_partner_attendance', joins, scope, scopeParams: [...adminIds, ...adminIds],
+      });
+    }
     res.json(rows);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving delivery partner attendance.', error: error.message });
@@ -845,21 +898,31 @@ exports.getHomeChefAttendance = async (req, res) => {
       .map(String);
     if (!adminIds.length) return res.status(401).json({ message: 'Unauthorized' });
 
+    const joins = 'LEFT JOIN home_chefs hc ON hc.id = attendance.home_chef_id';
+    const adminPlaceholders = adminIds.map(() => '?').join(', ');
+    const scope = `(attendance.franchise_admin_id IN (${adminPlaceholders})
+      OR hc.created_by IN (${adminPlaceholders})
+      OR hc.franchise_user_id IN (${adminPlaceholders}))`;
     let query = `
       SELECT attendance.id, attendance.home_chef_user_id, attendance.home_chef_name,
              DATE_FORMAT(${ATTENDANCE_LOCAL_DATE_SQL}, '%Y-%m-%d') AS attendance_date,
              attendance.check_in_at, attendance.check_out_at,
              hc.mobile
       FROM home_chef_attendance attendance
-      LEFT JOIN home_chefs hc ON hc.id = attendance.home_chef_id
-      WHERE (attendance.franchise_admin_id IN (${adminIds.map(() => '?').join(', ')})
-        OR hc.created_by IN (${adminIds.map(() => '?').join(', ')})
-        OR hc.franchise_user_id IN (${adminIds.map(() => '?').join(', ')}))`;
+                ${joins}
+                WHERE ${scope}`;
     const params = [...adminIds, ...adminIds, ...adminIds];
     query = appendAttendanceDateFilter(query, params, req.query);
     query += ' ORDER BY attendance.check_in_at DESC LIMIT 500';
 
     const [rows] = await pool.execute(query, params);
+  logAttendanceReportResult({ report: 'home-chefs', req, rowCount: rows.length });
+    if (!rows.length) {
+      await logEmptyAttendanceReport({
+        report: 'home-chefs', req, adminIds,
+        table: 'home_chef_attendance', joins, scope, scopeParams: [...adminIds, ...adminIds, ...adminIds],
+      });
+    }
     res.json(rows);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving home chef attendance.', error: error.message });
