@@ -31,8 +31,9 @@ const getAssignedRazorpayConfig = async (userIdentity) => {
   const [rows] = await pool.execute(
     `SELECT rk.id, rk.key_id, rk.key_secret
      FROM users u
-     INNER JOIN razorpay_keys rk ON rk.id = u.razorpay_key_id
-    WHERE (u.id = ? OR u.user_id = ? OR u.email = ?) AND LOWER(rk.status) = 'active'
+     INNER JOIN user_razorpay_keys urk ON urk.user_id = u.id
+     INNER JOIN razorpay_keys rk ON rk.id = urk.razorpay_key_id
+     WHERE (u.id = ? OR u.user_id = ? OR u.email = ?) AND LOWER(rk.status) = 'active'
      LIMIT 1`,
       [identity, identity, identity]
   );

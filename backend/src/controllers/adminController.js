@@ -947,8 +947,9 @@ exports.getUsers = async (req, res) => {
     const adminIdInt = req.user?.id || -1;
 
     const query = `
-      SELECT DISTINCT u.id, u.user_id, u.full_name AS name, u.email, u.mobile_number AS phone, u.role, u.status AS active, u.created_at, u.razorpay_key_id
+      SELECT DISTINCT u.id, u.user_id, u.full_name AS name, u.email, u.mobile_number AS phone, u.role, u.status AS active, u.created_at, urk.razorpay_key_id
       FROM users u
+      LEFT JOIN user_razorpay_keys urk ON urk.user_id = u.id
       LEFT JOIN home_chefs hc ON (u.user_id = hc.user_id OR (u.email = hc.email AND u.email IS NOT NULL AND u.email != ''))
       LEFT JOIN delivery_partners dp ON (u.user_id = dp.user_id OR u.user_id = dp.delivery_partner_user_id OR (u.email = dp.email AND u.email IS NOT NULL AND u.email != ''))
       LEFT JOIN user_food_order_table o ON u.user_id = o.user_id
@@ -998,21 +999,30 @@ exports.updateUser = async (req, res) => {
       const [keys] = await pool.execute('SELECT id, status FROM razorpay_keys WHERE id = ? LIMIT 1', [keyId]);
       if (!keys.length) return res.status(400).json({ message: 'Select an active Razorpay key.' });
       if (String(keys[0].status).toLowerCase() !== 'active') {
-        const [assigned] = await pool.execute('SELECT razorpay_key_id FROM users WHERE id = ? LIMIT 1', [req.params.id]);
+        const [assigned] = await pool.execute('SELECT razorpay_key_id FROM user_razorpay_keys WHERE user_id = ? LIMIT 1', [req.params.id]);
         if (Number(assigned[0]?.razorpay_key_id) !== keyId) return res.status(400).json({ message: 'Select an active Razorpay key.' });
       }
     }
 
     const [existing] = await pool.execute('SELECT id FROM users WHERE id = ? LIMIT 1', [req.params.id]);
     if (!existing.length) return res.status(404).json({ message: 'User not found.' });
-    const fields = ['full_name = ?', 'email = ?', 'mobile_number = ?', 'role = ?', 'razorpay_key_id = ?'];
-    const params = [name, email, phone || null, role, keyId];
+    const fields = ['full_name = ?', 'email = ?', 'mobile_number = ?', 'role = ?'];
+    const params = [name, email, phone || null, role];
     if (password) {
       fields.push('password = ?');
       params.push(hashPassword(password));
     }
     params.push(userId);
     await pool.execute(`UPDATE users SET ${fields.join(', ')} WHERE id = ?`, params);
+    if (keyId === null) {
+      await pool.execute('DELETE FROM user_razorpay_keys WHERE user_id = ?', [userId]);
+    } else {
+      await pool.execute(
+        `INSERT INTO user_razorpay_keys (user_id, razorpay_key_id) VALUES (?, ?)
+         ON DUPLICATE KEY UPDATE razorpay_key_id = VALUES(razorpay_key_id)`,
+        [userId, keyId]
+      );
+    }
     res.json({ message: 'User updated successfully.' });
   } catch (error) {
     res.status(error.code === 'ER_DUP_ENTRY' ? 409 : 500).json({ message: error.code === 'ER_DUP_ENTRY' ? 'Email is already in use.' : 'Unable to update user.' });

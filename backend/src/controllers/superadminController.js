@@ -1044,7 +1044,7 @@ exports.deleteRestaurant = async (req, res) => {
 // ==================== USER MANAGEMENT ====================
 exports.getUsers = async (req, res) => {
   try {
-    const [rows] = await pool.execute("SELECT id, user_id, full_name AS name, email, mobile_number AS phone, role, status AS active, created_at, razorpay_key_id FROM users ORDER BY created_at DESC");
+    const [rows] = await pool.execute("SELECT u.id, u.user_id, u.full_name AS name, u.email, u.mobile_number AS phone, u.role, u.status AS active, u.created_at, urk.razorpay_key_id FROM users u LEFT JOIN user_razorpay_keys urk ON urk.user_id = u.id ORDER BY u.created_at DESC");
     res.json(rows);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving users.', error: error.message });
@@ -1094,9 +1094,12 @@ exports.createUser = async (req, res) => {
     const hashedPw = hashPassword(password);
     const userIdStr = generateRoleId(role || 'user');
     const [result] = await pool.execute(
-      'INSERT INTO users (user_id, full_name, email, mobile_number, password, role, status, razorpay_key_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [userIdStr, full_name, email, mobile_number || null, hashedPw, role || 'user', 'Active', keyId]
+      'INSERT INTO users (user_id, full_name, email, mobile_number, password, role, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [userIdStr, full_name, email, mobile_number || null, hashedPw, role || 'user', 'Active']
     );
+    if (keyId !== null) {
+      await pool.execute('INSERT INTO user_razorpay_keys (user_id, razorpay_key_id) VALUES (?, ?)', [result.insertId, keyId]);
+    }
     res.status(201).json({ message: 'User created successfully.', id: result.insertId, user_id: userIdStr });
   } catch (error) {
     res.status(500).json({ message: 'Error creating user.', error: error.message });

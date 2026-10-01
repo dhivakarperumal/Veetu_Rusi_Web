@@ -3,16 +3,18 @@ const { encryptSecret } = require('../utils/razorpayConfig');
 
 const normalizeStatus = (value) => String(value || '').toLowerCase() === 'active' ? 'Active' : 'Inactive';
 const normalizeUsage = (value) => ['User Checkout', 'Delivery Partner', 'Home Chef', 'General'].includes(value) ? value : null;
+const getAuditActor = (req) => req.user?.user_id || req.user?.id || req.user?.email || 'system';
 
 exports.list = async (req, res) => {
   try {
     const activeOnly = req.query.active === 'true';
     const [rows] = await pool.execute(
-      `SELECT rk.id, rk.key_name, rk.key_id, rk.business_name, rk.key_usage, rk.status, rk.created_at, rk.updated_at,
+      `SELECT rk.id, rk.key_name, rk.key_id, rk.business_name, rk.key_usage, rk.status, rk.created_at, rk.updated_at, rk.created_by, rk.updated_by,
               COUNT(DISTINCT u.id) AS assigned_count,
               GROUP_CONCAT(DISTINCT COALESCE(NULLIF(u.full_name, ''), u.email) ORDER BY u.full_name SEPARATOR ', ') AS assigned_to
        FROM razorpay_keys rk
-       LEFT JOIN users u ON u.razorpay_key_id = rk.id
+      LEFT JOIN user_razorpay_keys urk ON urk.razorpay_key_id = rk.id
+      LEFT JOIN users u ON u.id = urk.user_id
        ${activeOnly ? "WHERE LOWER(rk.status) = 'active'" : ''}
        GROUP BY rk.id ORDER BY rk.created_at DESC`
     );
@@ -30,10 +32,11 @@ exports.create = async (req, res) => {
       return res.status(400).json({ message: 'Key name, Key ID, and Key Secret are required.' });
     }
     if (!keyUsage) return res.status(400).json({ message: 'Select a valid Razorpay usage.' });
+    const actor = getAuditActor(req);
     const [result] = await pool.execute(
-      `INSERT INTO razorpay_keys (key_name, key_id, key_secret, business_name, key_usage, status)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [String(key_name).trim(), String(key_id).trim(), encryptSecret(String(key_secret)), String(business_name || '').trim() || null, keyUsage, normalizeStatus(req.body.status || 'Inactive')]
+      `INSERT INTO razorpay_keys (key_name, key_id, key_secret, business_name, key_usage, status, created_by, updated_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [String(key_name).trim(), String(key_id).trim(), encryptSecret(String(key_secret)), String(business_name || '').trim() || null, keyUsage, normalizeStatus(req.body.status || 'Inactive'), actor, actor]
     );
     res.status(201).json({ id: result.insertId, message: 'Razorpay key added.' });
   } catch (error) {
@@ -54,8 +57,8 @@ exports.update = async (req, res) => {
       return res.status(400).json({ message: 'Key name and Key ID are required.' });
     }
     if (!keyUsage) return res.status(400).json({ message: 'Select a valid Razorpay usage.' });
-    const fields = ['key_name = ?', 'key_id = ?', 'business_name = ?', 'key_usage = ?', 'status = ?'];
-    const params = [String(key_name).trim(), String(key_id).trim(), String(business_name || '').trim() || null, keyUsage, normalizeStatus(req.body.status)];
+    const fields = ['key_name = ?', 'key_id = ?', 'business_name = ?', 'key_usage = ?', 'status = ?', 'updated_by = ?'];
+    const params = [String(key_name).trim(), String(key_id).trim(), String(business_name || '').trim() || null, keyUsage, normalizeStatus(req.body.status), getAuditActor(req)];
     if (String(key_secret || '').trim()) {
       fields.push('key_secret = ?');
       params.push(encryptSecret(String(key_secret)));
@@ -73,7 +76,7 @@ exports.update = async (req, res) => {
 exports.setStatus = async (req, res) => {
   try {
     const status = normalizeStatus(req.body.status);
-    const [result] = await pool.execute('UPDATE razorpay_keys SET status = ? WHERE id = ?', [status, req.params.id]);
+    const [result] = await pool.execute('UPDATE razorpay_keys SET status = ?, updated_by = ? WHERE id = ?', [status, getAuditActor(req), req.params.id]);
     if (!result.affectedRows) return res.status(404).json({ message: 'Razorpay key not found.' });
     res.json({ message: `Razorpay key ${status.toLowerCase()}.`, status });
   } catch (error) {
@@ -90,7 +93,7 @@ exports.remove = async (req, res) => {
       await connection.rollback();
       return res.status(404).json({ message: 'Razorpay key not found.' });
     }
-    await connection.execute('UPDATE users SET razorpay_key_id = NULL WHERE razorpay_key_id = ?', [req.params.id]);
+    await connection.execute('DELETE FROM user_razorpay_keys WHERE razorpay_key_id = ?', [req.params.id]);
     await connection.execute('DELETE FROM razorpay_keys WHERE id = ?', [req.params.id]);
     await connection.commit();
     res.json({ message: 'Razorpay key deleted and user assignments cleared.' });
@@ -106,7 +109,9 @@ exports.getUserKey = async (req, res) => {
   try {
     const [rows] = await pool.execute(
       `SELECT rk.id, rk.key_name, rk.key_id, rk.business_name, rk.status
-       FROM users u LEFT JOIN razorpay_keys rk ON rk.id = u.razorpay_key_id
+      FROM users u
+      LEFT JOIN user_razorpay_keys urk ON urk.user_id = u.id
+      LEFT JOIN razorpay_keys rk ON rk.id = urk.razorpay_key_id
        WHERE u.id = ? LIMIT 1`,
       [req.params.id]
     );
@@ -127,7 +132,15 @@ exports.assignUserKey = async (req, res) => {
       const [keys] = await pool.execute('SELECT id FROM razorpay_keys WHERE id = ? AND LOWER(status) = \'active\' LIMIT 1', [keyId]);
       if (!keys.length) return res.status(400).json({ message: 'Select an active Razorpay key.' });
     }
-    await pool.execute('UPDATE users SET razorpay_key_id = ? WHERE id = ?', [keyId, req.params.id]);
+    if (keyId === null) {
+      await pool.execute('DELETE FROM user_razorpay_keys WHERE user_id = ?', [req.params.id]);
+    } else {
+      await pool.execute(
+        `INSERT INTO user_razorpay_keys (user_id, razorpay_key_id) VALUES (?, ?)
+         ON DUPLICATE KEY UPDATE razorpay_key_id = VALUES(razorpay_key_id)`,
+        [req.params.id, keyId]
+      );
+    }
     res.json({ message: keyId ? 'Razorpay key assigned to user.' : 'Razorpay key assignment removed.', razorpay_key_id: keyId });
   } catch (error) {
     res.status(500).json({ message: 'Unable to assign the Razorpay key.' });

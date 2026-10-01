@@ -1289,20 +1289,37 @@ const createRazorpayKeysTable = async () => {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         `);
         await ensureColumnExists('razorpay_keys', 'key_usage', "VARCHAR(40) NOT NULL DEFAULT 'General'");
-        await ensureColumnExists('users', 'razorpay_key_id', 'INT DEFAULT NULL');
-        const [indexes] = await pool.execute(
-            `SELECT INDEX_NAME FROM INFORMATION_SCHEMA.STATISTICS
-             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND INDEX_NAME = 'idx_users_razorpay_key_id'`
+        await pool.execute(`
+            CREATE TABLE IF NOT EXISTS user_razorpay_keys (
+                user_id INT PRIMARY KEY,
+                razorpay_key_id INT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                KEY idx_user_razorpay_keys_key_id (razorpay_key_id),
+                CONSTRAINT fk_user_razorpay_keys_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                CONSTRAINT fk_user_razorpay_keys_key FOREIGN KEY (razorpay_key_id) REFERENCES razorpay_keys(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `);
+
+        const [legacyColumn] = await pool.execute(
+            `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'razorpay_key_id'`
         );
-        if (!indexes.length) await pool.execute('CREATE INDEX idx_users_razorpay_key_id ON users (razorpay_key_id)');
-        const [constraints] = await pool.execute(
-            `SELECT CONSTRAINT_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
-             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users'
-               AND COLUMN_NAME = 'razorpay_key_id' AND REFERENCED_TABLE_NAME = 'razorpay_keys'`
-        );
-        if (!constraints.length) {
-            await pool.execute(`ALTER TABLE users ADD CONSTRAINT fk_users_razorpay_key
-                FOREIGN KEY (razorpay_key_id) REFERENCES razorpay_keys(id) ON DELETE SET NULL`);
+        if (legacyColumn.length) {
+            await pool.execute(`
+                INSERT INTO user_razorpay_keys (user_id, razorpay_key_id)
+                SELECT id, razorpay_key_id FROM users WHERE razorpay_key_id IS NOT NULL
+                ON DUPLICATE KEY UPDATE razorpay_key_id = VALUES(razorpay_key_id)
+            `);
+            const [constraints] = await pool.execute(
+                `SELECT CONSTRAINT_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+                 WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'razorpay_key_id'
+                   AND REFERENCED_TABLE_NAME IS NOT NULL`
+            );
+            for (const { CONSTRAINT_NAME: name } of constraints) {
+                await pool.execute(`ALTER TABLE users DROP FOREIGN KEY \`${name.replace(/`/g, '``')}\``);
+            }
+            await pool.execute('ALTER TABLE users DROP COLUMN razorpay_key_id');
         }
     } catch (err) {
         if (!String(err.message || '').includes('Duplicate key name')) {

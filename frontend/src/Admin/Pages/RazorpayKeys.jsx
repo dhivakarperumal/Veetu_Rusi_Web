@@ -43,7 +43,7 @@ const RazorpayKeys = () => {
   }, [apiPath]);
 
   const filteredKeys = keys.filter((key) =>
-    [key.key_name, key.key_id, key.business_name, key.assigned_to].some((value) => String(value || "").toLowerCase().includes(search.toLowerCase()))
+    [key.key_name, key.key_id, key.business_name].some((value) => String(value || "").toLowerCase().includes(search.toLowerCase()))
   );
 
   const openAdd = () => {
@@ -144,27 +144,25 @@ const RazorpayKeys = () => {
           <table className="w-full min-w-205 text-left">
             <thead className="bg-white/3 text-[10px] uppercase tracking-wider text-slate-400">
               <tr>
+                <th className="w-16 whitespace-nowrap px-4 py-3 font-bold">S.No</th>
                 <th className="px-4 py-3 font-bold">Configuration</th>
                 <th className="px-4 py-3 font-bold">Key ID</th>
-                <th className="px-4 py-3 font-bold">Assigned To</th>
                 <th className="px-4 py-3 font-bold">Status</th>
                 <th className="px-4 py-3 font-bold">Dates</th>
                 <th className="px-4 py-3 text-right font-bold">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/[0.07]">
-              {filteredKeys.map((key) => (
+              {filteredKeys.map((key, index) => (
                 <tr key={key.id} className="align-top transition hover:bg-white/2.5">
+                  <td className="whitespace-nowrap px-4 py-4 text-sm tabular-nums text-slate-400">{index + 1}</td>
                   <td className="px-4 py-4">
                     <p className="font-semibold text-white">{key.key_name}</p>
-                    <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-400"><Building2 size={13} />{key.business_name || "Business not specified"} · {key.key_usage || "General"}</p>
+                    <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-400"><Building2 size={13} />{[key.business_name, key.key_usage || "General"].filter(Boolean).join(" · ")}</p>
                   </td>
                   <td className="px-4 py-4 font-mono text-sm text-slate-300">{maskKey(key.key_id)}</td>
-                  <td className="max-w-60 px-4 py-4 text-sm text-slate-300">
-                    {Number(key.assigned_count) > 0 ? <><span className="font-semibold text-white">{key.assigned_count} user{Number(key.assigned_count) === 1 ? "" : "s"}</span><p className="mt-1 truncate text-xs text-slate-400" title={key.assigned_to}>{key.assigned_to}</p></> : <span className="text-slate-500">Unassigned</span>}
-                  </td>
                   <td className="px-4 py-4"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${key.status === "Active" ? "bg-emerald-400/10 text-emerald-300" : "bg-slate-400/10 text-slate-400"}`}>{key.status}</span></td>
-                  <td className="px-4 py-4 text-xs text-slate-400"><p className="flex items-center gap-1.5"><CalendarDays size={13} />Created {formatDate(key.created_at)}</p><p className="mt-1 pl-5">Updated {formatDate(key.updated_at)}</p></td>
+                  <td className="px-4 py-4 text-xs text-slate-400"><p className="flex items-center gap-1.5"><CalendarDays size={13} />{formatDate(key.created_at)}</p></td>
                   <td className="px-4 py-4">
                     <div className="flex justify-end gap-1">
                       <button onClick={() => toggleStatus(key)} title={key.status === "Active" ? "Deactivate key" : "Activate key"} aria-label={key.status === "Active" ? "Deactivate key" : "Activate key"} className="rounded-md p-2 text-slate-400 transition hover:bg-emerald-400/10 hover:text-emerald-300"><Power size={16} /></button>
