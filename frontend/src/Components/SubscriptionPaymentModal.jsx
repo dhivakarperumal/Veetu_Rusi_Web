@@ -68,8 +68,8 @@ const SubscriptionPaymentModal = ({ isOpen, onClose, franchiseId, customerEmail 
 
       const { order, plan, key_id } = checkoutRes.data;
 
-      if (!key_id) {
-        throw new Error("Franchise subscription Razorpay key is not configured in database.");
+      if (!key_id || !/^rzp_(test|live)_[a-zA-Z0-9]{14,}$/i.test(key_id)) {
+        throw new Error("Razorpay key not configured by your admin yet");
       }
 
       // Open Razorpay payment modal

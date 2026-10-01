@@ -54,13 +54,16 @@ exports.create = async (req, res) => {
     if (!String(key_name || '').trim() || !String(key_id || '').trim()) {
       return res.status(400).json({ message: 'Key name and Key ID are required.' });
     }
+    if (!/^rzp_(test|live)_[a-zA-Z0-9]{14,}$/i.test(String(key_id).trim())) {
+      return res.status(400).json({ message: 'Invalid Razorpay Key ID. It must start with rzp_test_ or rzp_live_ followed by 14 alphanumeric characters.' });
+    }
     if (!keyUsage) return res.status(400).json({ message: 'Select a valid Razorpay usage.' });
     const actor = getAuditActor(req);
     const secretVal = String(key_secret || '').trim() ? encryptSecret(String(key_secret).trim()) : '';
     const [result] = await pool.execute(
       `INSERT INTO razorpay_keys (key_name, key_id, key_secret, business_name, key_usage, status, created_by, updated_by)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [String(key_name).trim(), String(key_id).trim(), secretVal, String(business_name || '').trim() || null, keyUsage, normalizeStatus(req.body.status || 'Inactive'), actor, actor]
+      [String(key_name).trim(), String(key_id).trim(), secretVal, String(business_name || '').trim() || null, keyUsage, normalizeStatus(req.body.status || 'Active'), actor, actor]
     );
     res.status(201).json({ id: result.insertId, message: 'Razorpay key added.' });
   } catch (error) {
@@ -94,9 +97,12 @@ exports.update = async (req, res) => {
     if (!String(key_name || '').trim() || !String(key_id || '').trim()) {
       return res.status(400).json({ message: 'Key name and Key ID are required.' });
     }
+    if (!/^rzp_(test|live)_[a-zA-Z0-9]{14,}$/i.test(String(key_id).trim())) {
+      return res.status(400).json({ message: 'Invalid Razorpay Key ID. It must start with rzp_test_ or rzp_live_ followed by 14 alphanumeric characters.' });
+    }
     if (!keyUsage) return res.status(400).json({ message: 'Select a valid Razorpay usage.' });
     const fields = ['key_name = ?', 'key_id = ?', 'business_name = ?', 'key_usage = ?', 'status = ?', 'updated_by = ?'];
-    const params = [String(key_name).trim(), String(key_id).trim(), String(business_name || '').trim() || null, keyUsage, normalizeStatus(req.body.status), getAuditActor(req)];
+    const params = [String(key_name).trim(), String(key_id).trim(), String(business_name || '').trim() || null, keyUsage, normalizeStatus(req.body.status || 'Active'), getAuditActor(req)];
     if (String(key_secret || '').trim()) {
       fields.push('key_secret = ?');
       params.push(encryptSecret(String(key_secret)));

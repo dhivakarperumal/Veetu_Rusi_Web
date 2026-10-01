@@ -354,7 +354,7 @@ export default function FoodCheckout() {
 
     if (paymentMethod === "Online Payment") {
       let checkoutKeyId = razorpayKeyId;
-      if (!checkoutKeyId) {
+      if (!checkoutKeyId || !/^rzp_(test|live)_[a-zA-Z0-9]{14,}$/i.test(checkoutKeyId)) {
         try {
           const { data } = await api.get("/payments/razorpay/user-checkout-key", {
             params: {
@@ -374,7 +374,7 @@ export default function FoodCheckout() {
         }
       }
 
-      if (!checkoutKeyId) {
+      if (!checkoutKeyId || !/^rzp_(test|live)_[a-zA-Z0-9]{14,}$/i.test(checkoutKeyId)) {
         toast.error("Razorpay key not configured by your admin yet");
         setIsSubmitting(false);
         return;

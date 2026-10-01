@@ -311,7 +311,7 @@ const Checkout = () => {
         franchise_user_id: targetFranchiseUserId,
         chef_user_id: targetChefUserId,
       });
-      if (!paymentOrder?.key_id) {
+      if (!paymentOrder?.key_id || !/^rzp_(test|live)_[a-zA-Z0-9]{14,}$/i.test(paymentOrder.key_id)) {
         toast.error("Razorpay key not configured by your admin yet");
         return;
       }

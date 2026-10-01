@@ -306,7 +306,7 @@ const MaterialCheckout = () => {
         payment_profile: "home_chef",
       });
 
-      if (!paymentOrder?.key_id) {
+      if (!paymentOrder?.key_id || !/^rzp_(test|live)_[a-zA-Z0-9]{14,}$/i.test(paymentOrder.key_id)) {
         toast.error("Razorpay key not configured by your admin yet");
         return;
       }

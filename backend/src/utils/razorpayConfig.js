@@ -405,14 +405,17 @@ const getUserCheckoutRazorpayConfig = async ({ franchiseUserId, chefUserId, user
         }
       } catch (err) {}
     }
+
+    throw new Error('Razorpay key not configured by your admin yet');
   }
 
-  // 5. Fallback to active User Checkout key across platform
+  // 5. Fallback to active platform keys (superadmin / system only) when there is no franchise context
   try {
     const [rows] = await pool.execute(
       `SELECT id, key_id, key_secret
        FROM razorpay_keys
        WHERE (LOWER(TRIM(key_usage)) = 'user checkout' OR LOWER(TRIM(key_name)) LIKE '%user%' OR LOWER(TRIM(key_name)) LIKE '%checkout%')
+         AND (created_by IS NULL OR created_by = 'system' OR created_by = 'superadmin' OR (created_by NOT LIKE 'FRAN-%' AND created_by NOT LIKE 'franchise%'))
          AND LOWER(status) = 'active'
        ORDER BY updated_at DESC, id DESC
        LIMIT 1`
@@ -422,15 +425,16 @@ const getUserCheckoutRazorpayConfig = async ({ franchiseUserId, chefUserId, user
       return { id: rows[0].id, keyId: rows[0].key_id, keySecret: storedSecret };
     }
   } catch (err) {
-    console.error('getUserCheckoutRazorpayConfig user checkout fallback error:', err.message);
+    console.error('getUserCheckoutRazorpayConfig platform fallback error:', err.message);
   }
 
-  // 6. Fallback to active General key across platform
+  // 6. Fallback to active General key across platform (system only)
   try {
     const [genRows] = await pool.execute(
       `SELECT id, key_id, key_secret
        FROM razorpay_keys
        WHERE (LOWER(TRIM(key_usage)) = 'general' OR LOWER(TRIM(key_name)) LIKE '%general%')
+         AND (created_by IS NULL OR created_by = 'system' OR created_by = 'superadmin' OR (created_by NOT LIKE 'FRAN-%' AND created_by NOT LIKE 'franchise%'))
          AND LOWER(status) = 'active'
        ORDER BY updated_at DESC, id DESC
        LIMIT 1`
@@ -438,36 +442,6 @@ const getUserCheckoutRazorpayConfig = async ({ franchiseUserId, chefUserId, user
     if (genRows.length && genRows[0].key_id) {
       const storedSecret = genRows[0].key_secret ? decryptStoredSecret(genRows[0].key_secret) : '';
       return { id: genRows[0].id, keyId: genRows[0].key_id, keySecret: storedSecret };
-    }
-  } catch (err) {}
-
-  // 7. Fallback to ANY active key in razorpay_keys
-  try {
-    const [anyRows] = await pool.execute(
-      `SELECT id, key_id, key_secret
-       FROM razorpay_keys
-       WHERE LOWER(status) = 'active'
-       ORDER BY updated_at DESC, id DESC
-       LIMIT 1`
-    );
-    if (anyRows.length && anyRows[0].key_id) {
-      const storedSecret = anyRows[0].key_secret ? decryptStoredSecret(anyRows[0].key_secret) : '';
-      return { id: anyRows[0].id, keyId: anyRows[0].key_id, keySecret: storedSecret };
-    }
-  } catch (err) {}
-
-  // 8. Fallback to ANY active key in franchise_razorpay_keys
-  try {
-    const [fRows] = await pool.execute(
-      `SELECT id, key_id, key_secret
-       FROM franchise_razorpay_keys
-       WHERE LOWER(status) = 'active'
-       ORDER BY updated_at DESC, id DESC
-       LIMIT 1`
-    );
-    if (fRows.length && fRows[0].key_id) {
-      const storedSecret = fRows[0].key_secret ? decryptStoredSecret(fRows[0].key_secret) : '';
-      return { id: fRows[0].id, keyId: fRows[0].key_id, keySecret: storedSecret };
     }
   } catch (err) {}
 

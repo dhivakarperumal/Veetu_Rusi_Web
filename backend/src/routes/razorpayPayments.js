@@ -34,9 +34,12 @@ router.get('/user-checkout-key', async (req, res) => {
       userId: req.user?.user_id || req.user?.id,
       userRole: req.user?.role
     });
+    if (!key?.keyId || !/^rzp_(test|live)_[a-zA-Z0-9]{14,}$/i.test(String(key.keyId).trim())) {
+      return res.status(400).json({ message: 'Razorpay key not configured by your admin yet' });
+    }
     res.json({ key_id: key.keyId });
   } catch (error) {
-    res.status(400).json({ message: error.message || 'Unable to load the User Checkout key ID.' });
+    res.status(400).json({ message: error.message || 'Razorpay key not configured by your admin yet' });
   }
 });
 
@@ -50,6 +53,10 @@ router.post('/order', async (req, res) => {
     const config = await getPaymentConfig(req);
     const receipt = `vr_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
 
+    if (!config?.keyId || !/^rzp_(test|live)_[a-zA-Z0-9]{14,}$/i.test(String(config.keyId).trim())) {
+      return res.status(400).json({ message: 'Razorpay key not configured by your admin yet' });
+    }
+
     // If keySecret is configured and valid, attempt to create server order with Razorpay API
     if (config.keySecret) {
       try {
@@ -61,7 +68,8 @@ router.post('/order', async (req, res) => {
         });
         return res.json({ order, key_id: config.keyId });
       } catch (orderErr) {
-        console.warn('Razorpay server order creation failed, proceeding with client-side checkout using key_id only:', orderErr.message);
+        console.warn('Razorpay server order creation failed:', orderErr.message);
+        return res.status(400).json({ message: 'Razorpay key not configured by your admin yet' });
       }
     }
 
@@ -77,7 +85,7 @@ router.post('/order', async (req, res) => {
     });
   } catch (error) {
     console.error('Razorpay order initialization error:', error.message);
-    res.status(400).json({ message: error.message || 'Unable to initialize Razorpay payment.' });
+    res.status(400).json({ message: error.message || 'Razorpay key not configured by your admin yet' });
   }
 });
 
