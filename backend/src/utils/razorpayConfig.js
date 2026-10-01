@@ -26,6 +26,16 @@ const decryptSecret = (value) => {
   return Buffer.concat([decipher.update(Buffer.from(encryptedHex, 'hex')), decipher.final()]).toString('utf8');
 };
 
+const decryptStoredSecret = (value) => {
+  try {
+    return decryptSecret(value);
+  } catch {
+    const error = new Error('The stored Razorpay Key Secret cannot be decrypted. Re-save the key using the current server encryption settings.');
+    error.code = 'RAZORPAY_SECRET_DECRYPTION_FAILED';
+    throw error;
+  }
+};
+
 const getAssignedRazorpayConfig = async (userIdentity) => {
   const identity = userIdentity == null ? '' : String(userIdentity);
   const [rows] = await pool.execute(
@@ -40,7 +50,7 @@ const getAssignedRazorpayConfig = async (userIdentity) => {
   if (!rows.length) {
     throw new Error('Razorpay payment configuration is not assigned for this account.');
   }
-  return { id: rows[0].id, keyId: rows[0].key_id, keySecret: decryptSecret(rows[0].key_secret) };
+  return { id: rows[0].id, keyId: rows[0].key_id, keySecret: decryptStoredSecret(rows[0].key_secret) };
 };
 
 const getUserCheckoutRazorpayConfig = async () => {
@@ -56,7 +66,7 @@ const getUserCheckoutRazorpayConfig = async () => {
   if (!rows.length) {
     throw new Error('Razorpay User Checkout key is not configured or active.');
   }
-  return { id: rows[0].id, keyId: rows[0].key_id, keySecret: decryptSecret(rows[0].key_secret) };
+  return { id: rows[0].id, keyId: rows[0].key_id, keySecret: decryptStoredSecret(rows[0].key_secret) };
 };
 
 module.exports = { encryptSecret, decryptSecret, getAssignedRazorpayConfig, getUserCheckoutRazorpayConfig };

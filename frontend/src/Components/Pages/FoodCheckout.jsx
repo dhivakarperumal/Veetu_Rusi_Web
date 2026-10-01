@@ -333,6 +333,14 @@ export default function FoodCheckout() {
           currency: "INR",
           payment_profile: "user_checkout",
         });
+        if (
+          typeof paymentOrder?.key_id !== "string" ||
+          !paymentOrder.key_id.trim() ||
+          typeof paymentOrder?.order?.id !== "string" ||
+          !paymentOrder.order.id.trim()
+        ) {
+          throw new Error("The payment server returned an incomplete Razorpay configuration. Check the active User Checkout key.");
+        }
         const options = {
           key: paymentOrder.key_id,
           amount: paymentOrder.order.amount,
@@ -366,7 +374,7 @@ export default function FoodCheckout() {
         paymentObject.open();
       } catch (err) {
         console.error(err);
-        toast.error(err.response?.data?.message || "Payment failed. Please try again.");
+        toast.error(err.response?.data?.message || err.message || "Payment failed. Please try again.");
         setIsSubmitting(false);
       }
       return;
