@@ -53,6 +53,7 @@ let createCouponsTable = async () => {};
 let createCouponUsageTable = async () => {};
 let createReferralTables = async () => {};
 let createRazorpayKeysTable = async () => {};
+let createFranchiseRazorpayKeysTable = async () => {};
 let createHomeChefCategoriesTable = async () => {};
 let createCategoryRequestsTable = async () => {};
 try {
@@ -84,6 +85,7 @@ try {
   createCouponUsageTable = migrations.createCouponUsageTable || createCouponUsageTable;
   createReferralTables = migrations.createReferralTables || createReferralTables;
   createRazorpayKeysTable = migrations.createRazorpayKeysTable || createRazorpayKeysTable;
+  createFranchiseRazorpayKeysTable = migrations.createFranchiseRazorpayKeysTable || createFranchiseRazorpayKeysTable;
   createHomeChefCategoriesTable = migrations.createHomeChefCategoriesTable || createHomeChefCategoriesTable;
   createCategoryRequestsTable = migrations.createCategoryRequestsTable || createCategoryRequestsTable;
 } catch (err) {
@@ -128,6 +130,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/superadmin', superadminRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/payments/razorpay', require('./src/routes/razorpayPayments'));
+app.use('/api/franchise-admin/razorpay-keys', require('./src/routes/franchiseRazorpayKeys'));
 app.use('/api/banners', bannersRouter);
 app.use('/api/videos', videosRouter);
 app.use('/api/upload', uploadRouter);
@@ -234,6 +237,7 @@ const startServer = async () => {
     await createCouponUsageTable();
     await createReferralTables();
     await createRazorpayKeysTable();
+    await createFranchiseRazorpayKeysTable();
     await createHomeChefCategoriesTable();
     await createCategoryRequestsTable();
   } catch (err) {

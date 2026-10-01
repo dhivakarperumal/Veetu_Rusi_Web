@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { useLocation } from "react-router-dom";
 import { Building2, CalendarDays, KeyRound, Pencil, Plus, Power, Search, ShieldCheck, Trash2, Users, X } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
+import { useAuth } from "../../PrivateRouter/AuthContext";
 import api from "../../api";
 
 const usageOptions = ["User Checkout", "Delivery Partner", "Home Chef", "General"];
@@ -13,7 +14,13 @@ const formatDate = (value) => value ? new Date(value).toLocaleDateString(undefin
 
 const RazorpayKeys = () => {
   const location = useLocation();
-  const apiPath = location.pathname.startsWith("/superadmin") ? "/superadmin/razorpay-keys" : "/admin/razorpay-keys";
+  const { user } = useAuth();
+  const isFranchiseAdmin = user?.role === "admin" && String(user?.user_id || "").startsWith("FRAN-");
+  const apiPath = location.pathname.startsWith("/superadmin")
+    ? "/superadmin/razorpay-keys"
+    : isFranchiseAdmin
+      ? "/franchise-admin/razorpay-keys"
+      : "/admin/razorpay-keys";
   const [keys, setKeys] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -108,8 +115,8 @@ const RazorpayKeys = () => {
             <KeyRound size={16} />
             <span className="text-[11px] font-black uppercase tracking-[0.18em]">Payments / Configuration</span>
           </div>
-          <h1 className="text-2xl font-black text-white">Razorpay Keys</h1>
-          <p className="mt-1 text-sm text-slate-400">Manage payment accounts and user assignments.</p>
+          <h1 className="text-2xl font-black text-white">{isFranchiseAdmin ? "Franchise Razorpay Keys" : "Razorpay Keys"}</h1>
+          <p className="mt-1 text-sm text-slate-400">{isFranchiseAdmin ? "Manage payment keys for your franchise." : "Manage payment accounts and user assignments."}</p>
         </div>
         <button onClick={openAdd} className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-500 px-4 py-2.5 text-sm font-bold text-emerald-950 transition hover:bg-emerald-400">
           <Plus size={17} /> Add Razorpay Key
