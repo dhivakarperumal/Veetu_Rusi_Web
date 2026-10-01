@@ -300,18 +300,25 @@ const Checkout = () => {
         return;
       }
 
-      const options = {
-        key: "rzp_test_SGj8n5SyKSE10b",
-        amount: total * 100,
+      const { data: paymentOrder } = await api.post("/payments/razorpay/order", {
+        amount: Math.round(total * 100),
         currency: "INR",
+      });
+      const options = {
+        key: paymentOrder.key_id,
+        amount: paymentOrder.order.amount,
+        currency: paymentOrder.order.currency,
+        order_id: paymentOrder.order.id,
         name: "Veetu Rusi",
         description: "Order Payment",
 
         handler: async function (response) {
-
-          console.log("Payment Success:", response);
-
-          await saveOrder(response.razorpay_payment_id);
+          try {
+            await api.post("/payments/razorpay/verify", response);
+            await saveOrder(response.razorpay_payment_id);
+          } catch (error) {
+            toast.error(error.response?.data?.message || "Payment verification failed.");
+          }
 
         },
 

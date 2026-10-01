@@ -14,10 +14,12 @@ const defaultForm = {
   mobile_number: "",
   password: "",
   role: "user",
+  razorpay_key_id: "",
 };
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
+  const [razorpayKeys, setRazorpayKeys] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [updatingId, setUpdatingId] = useState(null);
@@ -40,6 +42,15 @@ const UserManagement = () => {
       toast.error("Failed to load user accounts.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchRazorpayKeys = async () => {
+    try {
+      const res = await api.get("/superadmin/razorpay-keys?active=true");
+      setRazorpayKeys(res.data || []);
+    } catch {
+      toast.error("Failed to load active Razorpay keys.");
     }
   };
 
@@ -69,7 +80,21 @@ const UserManagement = () => {
 
   useEffect(() => {
     fetchUsers();
+    fetchRazorpayKeys();
   }, []);
+
+  const assignRazorpayKey = async (userId, keyId) => {
+    try {
+      setUpdatingId(userId);
+      await api.put(`/superadmin/users/${userId}/razorpay-key`, { razorpay_key_id: keyId || null });
+      toast.success("Razorpay key assignment updated.");
+      fetchUsers();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to assign Razorpay key.");
+    } finally {
+      setUpdatingId(null);
+    }
+  };
 
   const handleToggleStatus = async (id, currentActive) => {
     const nextActive = isActiveStatus(currentActive) ? 0 : 1;
@@ -196,6 +221,7 @@ const UserManagement = () => {
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Email Address</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Phone / Mobile</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Role</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Razorpay Key</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Registered Date</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Status</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-[0.2em] text-center">Actions</th>
@@ -233,6 +259,19 @@ const UserManagement = () => {
                           {u.role?.replace(/_/g, " ") || "user"}
                         </span>
                       )}
+                    </td>
+                    <td className="px-6 py-5">
+                      <select
+                        aria-label={`Razorpay key for ${u.name}`}
+                        value={u.razorpay_key_id || ""}
+                        onChange={(event) => assignRazorpayKey(u.id, event.target.value)}
+                        disabled={updatingId === u.id}
+                        className="max-w-56 rounded-lg border border-white/10 bg-[#070b13] px-2.5 py-2 text-xs text-white outline-none focus:border-emerald-500/50 disabled:opacity-50"
+                      >
+                        <option value="">No key assigned</option>
+                        {razorpayKeys.map((key) => <option key={key.id} value={key.id}>{key.key_name} · {key.key_id.slice(0, 6)}...{key.key_id.slice(-4)}</option>)}
+                      </select>
+                      {u.razorpay_key_id && !razorpayKeys.some((key) => String(key.id) === String(u.razorpay_key_id)) && <p className="mt-1 text-[10px] text-amber-300">Assigned key inactive</p>}
                     </td>
                     <td className="px-6 py-5 text-xs font-bold text-white/40">
                       {new Date(u.created_at).toLocaleDateString()}
@@ -280,7 +319,7 @@ const UserManagement = () => {
                 ))}
                 {filteredUsers.length === 0 && (
                   <tr>
-                    <td colSpan="7" className="px-6 py-8 text-center text-xs text-white/30 italic">
+                    <td colSpan="8" className="px-6 py-8 text-center text-xs text-white/30 italic">
                       No customer accounts found.
                     </td>
                   </tr>
@@ -437,6 +476,19 @@ const UserManagement = () => {
                         </button>
                       ))}
                     </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">Razorpay Key</label>
+                    <select
+                      value={form.razorpay_key_id}
+                      onChange={(e) => setForm((f) => ({ ...f, razorpay_key_id: e.target.value }))}
+                      className="w-full rounded-xl border border-white/10 bg-[#070b13]/80 px-4 py-3 text-sm text-white outline-none focus:border-emerald-500/40"
+                    >
+                      <option value="">No key assigned</option>
+                      {razorpayKeys.map((key) => <option key={key.id} value={key.id}>{key.key_name} · {key.key_id.slice(0, 6)}...{key.key_id.slice(-4)}</option>)}
+                    </select>
+                    {form.razorpay_key_id && <p className="mt-1.5 text-[10px] text-emerald-300">The selected active key will be used for this account&apos;s future payments.</p>}
                   </div>
 
                   {/* Password */}

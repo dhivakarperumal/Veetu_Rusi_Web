@@ -1044,7 +1044,7 @@ exports.deleteRestaurant = async (req, res) => {
 // ==================== USER MANAGEMENT ====================
 exports.getUsers = async (req, res) => {
   try {
-    const [rows] = await pool.execute("SELECT id, user_id, full_name AS name, email, mobile_number AS phone, role, status AS active, created_at FROM users ORDER BY created_at DESC");
+    const [rows] = await pool.execute("SELECT u.id, u.user_id, u.full_name AS name, u.email, u.mobile_number AS phone, u.role, u.status AS active, u.created_at, urk.razorpay_key_id FROM users u LEFT JOIN user_razorpay_keys urk ON urk.user_id = u.id ORDER BY u.created_at DESC");
     res.json(rows);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving users.', error: error.message });
@@ -1076,9 +1076,15 @@ exports.patchUserRole = async (req, res) => {
 
 exports.createUser = async (req, res) => {
   try {
-    const { full_name, email, mobile_number, password, role } = req.body;
+    const { full_name, email, mobile_number, password, role, razorpay_key_id } = req.body;
     if (!full_name || !email || !password) {
       return res.status(400).json({ message: 'Full name, email and password are required.' });
+    }
+    const keyId = razorpay_key_id == null || razorpay_key_id === '' ? null : Number(razorpay_key_id);
+    if (keyId !== null) {
+      if (!Number.isInteger(keyId) || keyId < 1) return res.status(400).json({ message: 'Invalid Razorpay key.' });
+      const [keys] = await pool.execute('SELECT id FROM razorpay_keys WHERE id = ? AND LOWER(status) = \'active\' LIMIT 1', [keyId]);
+      if (!keys.length) return res.status(400).json({ message: 'Select an active Razorpay key.' });
     }
     // Check duplicate email
     const [existing] = await pool.execute('SELECT id FROM users WHERE email = ?', [email]);
@@ -1091,6 +1097,9 @@ exports.createUser = async (req, res) => {
       'INSERT INTO users (user_id, full_name, email, mobile_number, password, role, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [userIdStr, full_name, email, mobile_number || null, hashedPw, role || 'user', 'Active']
     );
+    if (keyId !== null) {
+      await pool.execute('INSERT INTO user_razorpay_keys (user_id, razorpay_key_id) VALUES (?, ?)', [result.insertId, keyId]);
+    }
     res.status(201).json({ message: 'User created successfully.', id: result.insertId, user_id: userIdStr });
   } catch (error) {
     res.status(500).json({ message: 'Error creating user.', error: error.message });

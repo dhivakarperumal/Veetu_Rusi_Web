@@ -23,7 +23,8 @@ import {
   ShoppingBag,
   CreditCard,
   ShieldCheck,
-  Ticket
+  Ticket,
+  KeyRound
 } from "lucide-react";
 
 import { useAuth } from "../PrivateRouter/AuthContext";
@@ -63,6 +64,7 @@ const navItems = [
   { path: "/admin/coupons", label: "Coupons", icon: Ticket },
   { path: "/admin/referrals", label: "Referral Management", icon: ShieldCheck },
   { path: "/admin/users", label: "User Management", icon: Users },
+  { path: "/admin/razorpay-keys", label: "Razorpay Keys", icon: KeyRound },
   { path: "/admin/earnings", label: "Wallet & Earnings", icon: CreditCard },
   { path: "/admin/reviews", label: "Customer Reviews", icon: MessageSquare },
   // { path: "/admin/orders", label: "Order Management", icon: ShoppingBag },
@@ -237,6 +239,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
         {/* ========== NAVIGATION ========== */}
         <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto hide-scrollbar">
           {navItems.map((item) => {
+            if (item.adminOnly && prefix !== "/admin") return null;
             const Icon = item.icon;
 
             /* ===== DROPDOWN ITEM ===== */

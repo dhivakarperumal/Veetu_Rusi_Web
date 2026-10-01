@@ -1272,6 +1272,62 @@ const createCouponUsageTable = async () => {
     }
 };
 
+const createRazorpayKeysTable = async () => {
+    try {
+        await pool.execute(`
+            CREATE TABLE IF NOT EXISTS razorpay_keys (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                key_name VARCHAR(150) NOT NULL,
+                key_id VARCHAR(255) NOT NULL,
+                key_secret TEXT NOT NULL,
+                business_name VARCHAR(255),
+                key_usage VARCHAR(40) NOT NULL DEFAULT 'General',
+                status VARCHAR(20) NOT NULL DEFAULT 'Inactive',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                UNIQUE KEY uq_razorpay_keys_key_id (key_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `);
+        await ensureColumnExists('razorpay_keys', 'key_usage', "VARCHAR(40) NOT NULL DEFAULT 'General'");
+        await pool.execute(`
+            CREATE TABLE IF NOT EXISTS user_razorpay_keys (
+                user_id INT PRIMARY KEY,
+                razorpay_key_id INT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                KEY idx_user_razorpay_keys_key_id (razorpay_key_id),
+                CONSTRAINT fk_user_razorpay_keys_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                CONSTRAINT fk_user_razorpay_keys_key FOREIGN KEY (razorpay_key_id) REFERENCES razorpay_keys(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `);
+
+        const [legacyColumn] = await pool.execute(
+            `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'razorpay_key_id'`
+        );
+        if (legacyColumn.length) {
+            await pool.execute(`
+                INSERT INTO user_razorpay_keys (user_id, razorpay_key_id)
+                SELECT id, razorpay_key_id FROM users WHERE razorpay_key_id IS NOT NULL
+                ON DUPLICATE KEY UPDATE razorpay_key_id = VALUES(razorpay_key_id)
+            `);
+            const [constraints] = await pool.execute(
+                `SELECT CONSTRAINT_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+                 WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'razorpay_key_id'
+                   AND REFERENCED_TABLE_NAME IS NOT NULL`
+            );
+            for (const { CONSTRAINT_NAME: name } of constraints) {
+                await pool.execute(`ALTER TABLE users DROP FOREIGN KEY \`${name.replace(/`/g, '``')}\``);
+            }
+            await pool.execute('ALTER TABLE users DROP COLUMN razorpay_key_id');
+        }
+    } catch (err) {
+        if (!String(err.message || '').includes('Duplicate key name')) {
+            console.error('Razorpay key migration error:', err.message || err);
+        }
+    }
+};
+
 const createReferralTables = async () => {
     try {
         await pool.execute(`
@@ -1467,6 +1523,7 @@ const createReferralTables = async () => {
         createCouponsTable,
         createCouponUsageTable,
         createReferralTables,
+        createRazorpayKeysTable,
         createHomeChefCategoriesTable,
         createCategoryRequestsTable,
         // Ensure audit columns exist on all tables

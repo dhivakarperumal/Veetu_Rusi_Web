@@ -39,6 +39,7 @@ const pageTitles = {
   "/admin/users/all": "Users",
   "/admin/users/new": "New Users",
   "/admin/users": "Users",
+  "/admin/razorpay-keys": "Razorpay Keys",
   "/admin/billing": "Billing",
   "/admin/dealers": "Dealers",
   "/admin/dealers/add": "Add Dealer",

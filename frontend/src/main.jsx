@@ -44,6 +44,7 @@ const AddStock = React.lazy(() => import("./Admin/Pages/AddStock.jsx"));
 const Orders = React.lazy(() => import("./Admin/Pages/Orders.jsx"));
 const Users = React.lazy(() => import("./Admin/Pages/Users.jsx"));
 const UserManagement = React.lazy(() => import("./Admin/Pages/UserManagement.jsx"));
+const RazorpayKeys = React.lazy(() => import("./Admin/Pages/RazorpayKeys.jsx"));
 const Billing = React.lazy(() => import("./Admin/Pages/Billing.jsx"));
 const Dealers = React.lazy(() => import("./Admin/Pages/Dealers.jsx"));
 const Reviews = React.lazy(() => import("./Admin/Pages/Reviews.jsx"));
@@ -197,6 +198,7 @@ const router = createHashRouter([
       { path: "homechefs", element: <SuperHomeChefManagement /> },
       { path: "delivery-partners", element: <DeliveryPartnerManagement /> },
       { path: "users", element: <UserManagement /> },
+      { path: "razorpay-keys", element: <RazorpayKeys /> },
       { path: "orders", element: <AdminOrderManagement /> },
       { path: "earnings", element: <SuperAdminWalletAndEarnings /> },
       { path: "reviews", element: <SuperReviews /> },
@@ -310,6 +312,7 @@ const router = createHashRouter([
       { path: "delivery-partners/attendance", element: <DeliveryPartnerAttendance /> },
       { path: "delivery-partners/:id", element: <DeliveryPartnerDetails /> },
       { path: "users", element: <UserManagement /> },
+      { path: "razorpay-keys", element: <RazorpayKeys /> },
       { path: "orders", element: <AdminOrderManagement /> },
       { path: "earnings", element: <AdminWalletAndEarnings /> },
       { path: "payouts", element: <PayoutManagement /> },

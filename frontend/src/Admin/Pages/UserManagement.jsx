@@ -6,6 +6,7 @@ import { Search, ShieldAlert, ShieldCheck, Trash2, Users, UserCheck, UserX, Filt
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
+  const [razorpayKeys, setRazorpayKeys] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -17,17 +18,17 @@ const UserManagement = () => {
   const [newRole, setNewRole] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState("add"); // "add" or "edit"
-  const [formData, setFormData] = useState({ id: null, name: "", email: "", phone: "", role: "user", password: "" });
+  const [formData, setFormData] = useState({ id: null, name: "", email: "", phone: "", role: "user", password: "", razorpay_key_id: "" });
 
   const openAddModal = () => {
     setModalMode("add");
-    setFormData({ id: null, name: "", email: "", phone: "", role: "user", password: "" });
+    setFormData({ id: null, name: "", email: "", phone: "", role: "user", password: "", razorpay_key_id: "" });
     setIsModalOpen(true);
   };
 
   const openEditModal = (user) => {
     setModalMode("edit");
-    setFormData({ id: user.id, name: user.name, email: user.email, phone: user.phone || "", role: user.role || "user", password: "" });
+    setFormData({ id: user.id, name: user.name, email: user.email, phone: user.phone || "", role: user.role || "user", password: "", razorpay_key_id: user.razorpay_key_id || "" });
     setIsModalOpen(true);
   };
 
@@ -35,11 +36,25 @@ const UserManagement = () => {
     e.preventDefault();
     try {
       if (modalMode === "add") {
-        await api.post("/admin/users", formData);
+        await api.post("/admin/users", {
+          full_name: formData.name,
+          email: formData.email,
+          mobile_number: formData.phone,
+          role: formData.role,
+          password: formData.password,
+          razorpay_key_id: formData.razorpay_key_id || null,
+        });
         toast.success("User added successfully.");
       } else {
-        const payload = { ...formData };
+        const payload = {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          role: formData.role,
+          razorpay_key_id: formData.razorpay_key_id || null,
+        };
         if (!payload.password) delete payload.password;
+        if (formData.password) payload.password = formData.password;
         await api.put(`/admin/users/${formData.id}`, payload);
         toast.success("User updated successfully.");
       }
@@ -62,9 +77,19 @@ const UserManagement = () => {
     }
   }
 
+  async function fetchRazorpayKeys() {
+    try {
+      const res = await api.get("/admin/razorpay-keys");
+      setRazorpayKeys(res.data || []);
+    } catch {
+      toast.error("Failed to load Razorpay configurations.");
+    }
+  }
+
   useEffect(() => {
     // eslint-disable-next-line
     fetchUsers();
+    fetchRazorpayKeys();
   }, []);
 
   const filteredUsers = useMemo(() => {
@@ -609,6 +634,34 @@ const UserManagement = () => {
                   <option value="delivery_partner">Delivery Partner</option>
                 </select>
               </div>
+
+              <section className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <div>
+                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-700">Razorpay Configuration</h4>
+                  <p className="mt-1 text-xs text-slate-500">One key can be shared by multiple users.</p>
+                </div>
+                <select
+                  value={formData.razorpay_key_id}
+                  onChange={(e) => setFormData({ ...formData, razorpay_key_id: e.target.value })}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 outline-none focus:border-emerald-500"
+                >
+                  <option value="">No key assigned</option>
+                  {razorpayKeys.map((key) => (
+                    <option key={key.id} value={key.id} disabled={key.status !== "Active" && String(formData.razorpay_key_id) !== String(key.id)}>
+                      {key.key_name} · {key.status} · {key.key_id.slice(0, 6)}...{key.key_id.slice(-4)}
+                    </option>
+                  ))}
+                </select>
+                {formData.razorpay_key_id && (() => {
+                  const selectedKey = razorpayKeys.find((key) => String(key.id) === String(formData.razorpay_key_id));
+                  return selectedKey ? (
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                      <span className="font-semibold text-slate-700">{selectedKey.key_name} · {selectedKey.key_id.slice(0, 6)}...{selectedKey.key_id.slice(-4)}</span>
+                      <span className={`font-bold ${selectedKey.status === "Active" ? "text-emerald-700" : "text-amber-700"}`}>{selectedKey.status}</span>
+                    </div>
+                  ) : null;
+                })()}
+              </section>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Password {modalMode === "add" && "*"}</label>

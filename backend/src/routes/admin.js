@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
 const superadminController = require('../controllers/superadminController');
+const razorpayKeysController = require('../controllers/razorpayKeysController');
 const { verifyToken, requireRole } = require('../middleware/authMiddleware');
 const upload = require('../config/multer');
 
@@ -63,9 +64,19 @@ router.patch('/delivery-partners/:id/status', adminController.updateDeliveryPart
 
 // User Management (Admin also needs to manage users)
 router.get('/users', adminController.getUsers);
+router.put('/users/:id', adminController.updateUser);
+router.get('/users/:id/razorpay-key', razorpayKeysController.getUserKey);
+router.put('/users/:id/razorpay-key', razorpayKeysController.assignUserKey);
 router.post('/users', superadminController.createUser);
 router.patch('/users/status/:id', superadminController.patchUserStatus);
 router.patch('/users/role/:id', superadminController.patchUserRole);
 router.delete('/users/:id', superadminController.deleteUser);
+
+// Razorpay key management
+router.get('/razorpay-keys', razorpayKeysController.list);
+router.post('/razorpay-keys', razorpayKeysController.create);
+router.put('/razorpay-keys/:id', razorpayKeysController.update);
+router.patch('/razorpay-keys/:id/status', razorpayKeysController.setStatus);
+router.delete('/razorpay-keys/:id', razorpayKeysController.remove);
 
 module.exports = router;
