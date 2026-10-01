@@ -127,10 +127,10 @@ const videosRouter = require('./src/routes/videos');
 const uploadRouter = require('./src/routes/upload');
 
 app.use('/api/auth', authRouter);
+app.use('/api/superadmin/franchise-subscription-razorpay-keys', require('./src/routes/franchiseSubscriptionRazorpayKeys'));
 app.use('/api/superadmin', superadminRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/payments/razorpay', require('./src/routes/razorpayPayments'));
-app.use('/api/franchise-admin/razorpay-keys', require('./src/routes/franchiseRazorpayKeys'));
 app.use('/api/banners', bannersRouter);
 app.use('/api/videos', videosRouter);
 app.use('/api/upload', uploadRouter);

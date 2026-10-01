@@ -3,7 +3,6 @@ import { createPortal } from "react-dom";
 import { useLocation } from "react-router-dom";
 import { Building2, CalendarDays, KeyRound, Pencil, Plus, Power, Search, ShieldCheck, Trash2, Users, X } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
-import { useAuth } from "../../PrivateRouter/AuthContext";
 import api from "../../api";
 
 const usageOptions = ["User Checkout", "Delivery Partner", "Home Chef", "General"];
@@ -14,13 +13,13 @@ const formatDate = (value) => value ? new Date(value).toLocaleDateString(undefin
 
 const RazorpayKeys = () => {
   const location = useLocation();
-  const { user } = useAuth();
-  const isFranchiseAdmin = user?.role === "admin" && String(user?.user_id || "").startsWith("FRAN-");
-  const apiPath = location.pathname.startsWith("/superadmin")
-    ? "/superadmin/razorpay-keys"
-    : isFranchiseAdmin
-      ? "/franchise-admin/razorpay-keys"
+  const isFranchiseSubscriptionKeys = location.pathname === "/superadmin/franchise-subscription-razorpay-keys";
+  const apiPath = isFranchiseSubscriptionKeys
+    ? "/superadmin/franchise-subscription-razorpay-keys"
+    : location.pathname.startsWith("/superadmin")
+      ? "/superadmin/razorpay-keys"
       : "/admin/razorpay-keys";
+  const currentUsageOptions = isFranchiseSubscriptionKeys ? ["Franchise Subscription"] : usageOptions;
   const [keys, setKeys] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -55,7 +54,7 @@ const RazorpayKeys = () => {
 
   const openAdd = () => {
     setEditingKey(null);
-    setForm(emptyForm);
+    setForm(isFranchiseSubscriptionKeys ? { ...emptyForm, key_usage: "Franchise Subscription" } : emptyForm);
     setModalOpen(true);
   };
 
@@ -115,15 +114,15 @@ const RazorpayKeys = () => {
             <KeyRound size={16} />
             <span className="text-[11px] font-black uppercase tracking-[0.18em]">Payments / Configuration</span>
           </div>
-          <h1 className="text-2xl font-black text-white">{isFranchiseAdmin ? "Franchise Razorpay Keys" : "Razorpay Keys"}</h1>
-          <p className="mt-1 text-sm text-slate-400">{isFranchiseAdmin ? "Manage payment keys for your franchise." : "Manage payment accounts and user assignments."}</p>
+          <h1 className="text-2xl font-black text-white">{isFranchiseSubscriptionKeys ? "Franchise Subscription Razorpay Keys" : "Razorpay Keys"}</h1>
+          <p className="mt-1 text-sm text-slate-400">{isFranchiseSubscriptionKeys ? "Manage the payment key used for franchise owner subscription plans." : "Manage payment accounts and user assignments."}</p>
         </div>
         <button onClick={openAdd} className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-500 px-4 py-2.5 text-sm font-bold text-emerald-950 transition hover:bg-emerald-400">
           <Plus size={17} /> Add Razorpay Key
         </button>
       </header>
 
-      <section className="grid gap-3 sm:grid-cols-3">
+      <section className={`grid gap-3 ${isFranchiseSubscriptionKeys ? "sm:grid-cols-2" : "sm:grid-cols-3"}`}>
         <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-[#0c1915] p-4">
           <span className="rounded-md bg-emerald-400/10 p-2 text-emerald-300"><KeyRound size={19} /></span>
           <div><p className="text-xs text-slate-400">Configurations</p><p className="text-xl font-bold text-white">{keys.length}</p></div>
@@ -132,10 +131,10 @@ const RazorpayKeys = () => {
           <span className="rounded-md bg-teal-400/10 p-2 text-teal-300"><ShieldCheck size={19} /></span>
           <div><p className="text-xs text-slate-400">Active keys</p><p className="text-xl font-bold text-white">{activeCount}</p></div>
         </div>
-        <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-[#0c1915] p-4">
+        {!isFranchiseSubscriptionKeys && <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-[#0c1915] p-4">
           <span className="rounded-md bg-sky-400/10 p-2 text-sky-300"><Users size={19} /></span>
           <div><p className="text-xs text-slate-400">User assignments</p><p className="text-xl font-bold text-white">{assignedCount}</p></div>
-        </div>
+        </div>}
       </section>
 
       <section className="overflow-hidden rounded-lg border border-white/10 bg-[#0b1512]">
@@ -196,9 +195,9 @@ const RazorpayKeys = () => {
             <div className="space-y-4 p-5">
               <label className="block space-y-1.5"><span className="text-xs font-semibold text-slate-300">Key Name *</span><input required maxLength={150} value={form.key_name} onChange={(event) => setForm({ ...form, key_name: event.target.value })} placeholder="e.g. Franchise Payments" className="w-full rounded-md border border-white/10 bg-[#06100c] px-3 py-2.5 text-sm text-white outline-none focus:border-emerald-500/60" /></label>
               <label className="block space-y-1.5"><span className="text-xs font-semibold text-slate-300">Razorpay Key ID *</span><input required value={form.key_id} onChange={(event) => setForm({ ...form, key_id: event.target.value })} placeholder="rzp_live_..." className="w-full rounded-md border border-white/10 bg-[#06100c] px-3 py-2.5 font-mono text-sm text-white outline-none focus:border-emerald-500/60" /></label>
-              <label className="block space-y-1.5"><span className="text-xs font-semibold text-slate-300">Razorpay Key Secret (optional)</span><input type="password" autoComplete="new-password" value={form.key_secret} onChange={(event) => setForm({ ...form, key_secret: event.target.value })} placeholder="Enter secret (optional)" className="w-full rounded-md border border-white/10 bg-[#06100c] px-3 py-2.5 text-sm text-white outline-none focus:border-emerald-500/60" /></label>
+              <label className="block space-y-1.5"><span className="text-xs font-semibold text-slate-300">Razorpay Key Secret {isFranchiseSubscriptionKeys && !editingKey ? "*" : "(optional)"}</span><input required={isFranchiseSubscriptionKeys && !editingKey} type="password" autoComplete="new-password" value={form.key_secret} onChange={(event) => setForm({ ...form, key_secret: event.target.value })} placeholder={isFranchiseSubscriptionKeys ? "Required for subscription payments" : "Enter secret (optional)"} className="w-full rounded-md border border-white/10 bg-[#06100c] px-3 py-2.5 text-sm text-white outline-none focus:border-emerald-500/60" /></label>
               <label className="block space-y-1.5"><span className="text-xs font-semibold text-slate-300">Account / Business Name</span><input maxLength={255} value={form.business_name} onChange={(event) => setForm({ ...form, business_name: event.target.value })} placeholder="Business or account name" className="w-full rounded-md border border-white/10 bg-[#06100c] px-3 py-2.5 text-sm text-white outline-none focus:border-emerald-500/60" /></label>
-              <label className="block space-y-1.5"><span className="text-xs font-semibold text-slate-300">Razorpay Usage *</span><select required value={form.key_usage} onChange={(event) => setForm({ ...form, key_usage: event.target.value })} className="w-full rounded-md border border-white/10 bg-[#06100c] px-3 py-2.5 text-sm text-white outline-none focus:border-emerald-500/60"><option value="" disabled>Select Razorpay Usage</option>{usageOptions.map((usage) => <option key={usage} value={usage}>{usage}</option>)}</select></label>
+              <label className="block space-y-1.5"><span className="text-xs font-semibold text-slate-300">Razorpay Usage *</span><select required value={form.key_usage} onChange={(event) => setForm({ ...form, key_usage: event.target.value })} className="w-full rounded-md border border-white/10 bg-[#06100c] px-3 py-2.5 text-sm text-white outline-none focus:border-emerald-500/60"><option value="" disabled>Select Razorpay Usage</option>{currentUsageOptions.map((usage) => <option key={usage} value={usage}>{usage}</option>)}</select></label>
               <label className="block space-y-1.5"><span className="text-xs font-semibold text-slate-300">Status</span><select value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value })} className="w-full rounded-md border border-white/10 bg-[#06100c] px-3 py-2.5 text-sm text-white outline-none focus:border-emerald-500/60"><option>Active</option><option>Inactive</option></select></label>
             </div>
             <div className="flex justify-end gap-2 border-t border-white/10 p-5">

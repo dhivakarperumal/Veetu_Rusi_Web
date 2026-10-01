@@ -3,7 +3,7 @@ const router = express.Router();
 const pool = require('../config/db');
 // Dynamic plans fetched from DB
 const { attachUser, verifyTokenWithoutSubscription } = require('../middleware/authMiddleware');
-const { getAssignedRazorpayConfig } = require('../utils/razorpayConfig');
+const { getFranchiseSubscriptionRazorpayConfig } = require('../utils/razorpayConfig');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
 require('dotenv').config();
@@ -141,38 +141,20 @@ router.post('/checkout', verifyTokenWithoutSubscription, async (req, res) => {
     if (rows.length === 0) return res.status(404).json({ message: 'Plan not found' });
     const plan = rows[0];
     if (!await authorizeFranchisePayment(req, franchiseId)) return res.status(403).json({ message: 'You cannot create a payment for this account.' });
-    const paymentUserId = await resolveFranchiseUserId(franchiseId);
-    let config;
-    try {
-      config = await getAssignedRazorpayConfig(paymentUserId);
-    } catch (cfgErr) {
-      const [keys] = await pool.execute(`SELECT id, key_id, key_secret FROM razorpay_keys WHERE LOWER(status) = 'active' ORDER BY updated_at DESC, id DESC LIMIT 1`);
-      if (keys.length) {
-        config = { id: keys[0].id, keyId: keys[0].key_id, keySecret: keys[0].key_secret };
-      } else if (process.env.RAZORPAY_KEY_ID) {
-        config = { id: 0, keyId: process.env.RAZORPAY_KEY_ID, keySecret: process.env.RAZORPAY_KEY_SECRET || '' };
-      } else {
-        throw new Error('Razorpay payment configuration is not configured or active.');
-      }
-    }
+    const config = await getFranchiseSubscriptionRazorpayConfig();
+    if (!config.keySecret) throw new Error('Franchise subscription Razorpay key secret is missing.');
     const amountPaise = Math.round(plan.amount * 100);
     const receipt = `rcpt_${Date.now()}`;
-    let order = { id: null, amount: amountPaise, currency: plan.currency, receipt };
-
-    if (config.keySecret) {
-      try {
-        const razor = new Razorpay({ key_id: config.keyId, key_secret: config.keySecret });
-        order = await razor.orders.create({ amount: amountPaise, currency: plan.currency, receipt });
-      } catch (orderErr) {
-        console.warn('Subscription server order creation failed, proceeding with client-side checkout using key_id only:', orderErr.message);
-      }
-    }
+    const razor = new Razorpay({ key_id: config.keyId, key_secret: config.keySecret });
+    const order = await razor.orders.create({ amount: amountPaise, currency: plan.currency, receipt });
     return res.json({ order, plan, key_id: config.keyId });
   } catch (err) {
-    console.error('Checkout error:', err);
-    const missingConfig = err.message === 'Razorpay payment configuration is not assigned for this account.';
+    console.error('Franchise subscription checkout error:', err.message || err);
+    const missingConfig = err.message === 'Franchise subscription Razorpay key is not configured or active.' || err.message === 'Franchise subscription Razorpay key secret is missing.';
+    const unauthorizedKey = Number(err.statusCode) === 401;
     const errorMsg = err.error ? err.error.description || err.error.message : err.message;
-    res.status(missingConfig ? 400 : 500).json({ message: missingConfig ? err.message : 'Checkout error', error: missingConfig ? undefined : errorMsg });
+    const status = missingConfig ? 503 : unauthorizedKey ? 502 : 500;
+    res.status(status).json({ message: missingConfig ? err.message : unauthorizedKey ? 'Razorpay rejected the configured franchise subscription key pair.' : 'Checkout error', error: missingConfig ? undefined : errorMsg });
   }
 });
 
@@ -180,26 +162,17 @@ router.post('/checkout', verifyTokenWithoutSubscription, async (req, res) => {
 router.post('/confirm', verifyTokenWithoutSubscription, async (req, res) => {
   try {
     const { franchiseId, planId, razorpay_payment_id, razorpay_order_id, razorpay_signature } = req.body;
-    if (!franchiseId || !planId || !razorpay_payment_id) return res.status(400).json({ message: 'Missing params' });
+    if (!franchiseId || !planId || !razorpay_payment_id || !razorpay_order_id || !razorpay_signature) return res.status(400).json({ message: 'Payment verification details are required.' });
 
     if (!await authorizeFranchisePayment(req, franchiseId)) return res.status(403).json({ message: 'You cannot confirm a payment for this account.' });
     const paymentUserId = await resolveFranchiseUserId(franchiseId);
-    let config = null;
-    try {
-      config = await getAssignedRazorpayConfig(paymentUserId);
-    } catch (e) {}
-
-    if (config && config.keySecret && razorpay_order_id && razorpay_signature) {
-      try {
-        const generated = crypto.createHmac('sha256', config.keySecret).update(razorpay_order_id + '|' + razorpay_payment_id).digest('hex');
-        const supplied = Buffer.from(String(razorpay_signature));
-        const expected = Buffer.from(generated);
-        if (supplied.length !== expected.length || !crypto.timingSafeEqual(supplied, expected)) {
-          console.warn('Subscription signature mismatch, continuing with activation');
-        }
-      } catch (sigErr) {
-        console.warn('Subscription signature verification error:', sigErr.message);
-      }
+    const config = await getFranchiseSubscriptionRazorpayConfig();
+    if (!config.keySecret) return res.status(503).json({ message: 'Franchise subscription Razorpay key secret is missing.' });
+    const generated = crypto.createHmac('sha256', config.keySecret).update(`${razorpay_order_id}|${razorpay_payment_id}`).digest('hex');
+    const supplied = Buffer.from(String(razorpay_signature));
+    const expected = Buffer.from(generated);
+    if (supplied.length !== expected.length || !crypto.timingSafeEqual(supplied, expected)) {
+      return res.status(400).json({ message: 'Invalid Razorpay payment signature.' });
     }
 
     // Activate or renew subscription in DB
@@ -316,8 +289,9 @@ router.post('/confirm', verifyTokenWithoutSubscription, async (req, res) => {
 
     res.json({ message: 'Subscription activated', start_date: startDate, expiry_date: expiryDate });
   } catch (err) {
-    console.error('Confirm error', err);
-    res.status(500).json({ message: 'Confirm error', error: err.message });
+    console.error('Subscription confirmation error:', err.message || err);
+    const missingConfig = err.message === 'Franchise subscription Razorpay key is not configured or active.';
+    res.status(missingConfig ? 503 : 500).json({ message: missingConfig ? err.message : 'Subscription confirmation failed.' });
   }
 });
 

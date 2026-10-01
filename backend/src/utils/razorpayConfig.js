@@ -153,11 +153,27 @@ const getUserCheckoutRazorpayKeyId = async () => {
   throw new Error('Razorpay User Checkout key is not configured or active.');
 };
 
+const getFranchiseSubscriptionRazorpayConfig = async () => {
+  const [rows] = await pool.execute(
+    `SELECT id, key_id, key_secret
+     FROM franchise_razorpay_keys
+     WHERE LOWER(TRIM(key_usage)) = 'franchise subscription'
+       AND LOWER(status) = 'active'
+     ORDER BY updated_at DESC, id DESC
+     LIMIT 1`
+  );
+  if (!rows.length) {
+    throw new Error('Franchise subscription Razorpay key is not configured or active.');
+  }
+  return { id: rows[0].id, keyId: rows[0].key_id, keySecret: decryptStoredSecret(rows[0].key_secret) };
+};
+
 module.exports = {
   encryptSecret,
   decryptSecret,
   decryptStoredSecret,
   getAssignedRazorpayConfig,
   getUserCheckoutRazorpayConfig,
-  getUserCheckoutRazorpayKeyId
+  getUserCheckoutRazorpayKeyId,
+  getFranchiseSubscriptionRazorpayConfig
 };

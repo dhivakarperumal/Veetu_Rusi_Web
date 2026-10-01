@@ -200,6 +200,7 @@ const router = createHashRouter([
       { path: "delivery-partners", element: <DeliveryPartnerManagement /> },
       { path: "users", element: <UserManagement /> },
       { path: "razorpay-keys", element: <SuperRazorpayKeys /> },
+      { path: "franchise-subscription-razorpay-keys", element: <SuperRazorpayKeys /> },
       { path: "orders", element: <AdminOrderManagement /> },
       { path: "earnings", element: <SuperAdminWalletAndEarnings /> },
       { path: "reviews", element: <SuperReviews /> },

@@ -68,18 +68,8 @@ const SubscriptionPaymentModal = ({ isOpen, onClose, franchiseId, customerEmail 
 
       const { order, plan, key_id } = checkoutRes.data;
 
-      if (!key_id) {
-        // Fallback for testing without Razorpay
-        await api.post("/subscriptions/confirm", {
-          franchiseId,
-          planId: selectedPlan,
-          razorpay_payment_id: `TEST_PAYMENT_${Date.now()}`,
-          razorpay_order_id: `TEST_ORDER_${Date.now()}`,
-        });
-        toast.success("Subscription activated successfully!");
-        setPaymentSuccess(true);
-        setTimeout(() => window.location.reload(), 1500);
-        return;
+      if (!key_id || !order?.id) {
+        throw new Error("Franchise subscription Razorpay keys are not configured correctly.");
       }
 
       // Open Razorpay payment modal
@@ -89,7 +79,7 @@ const SubscriptionPaymentModal = ({ isOpen, onClose, franchiseId, customerEmail 
         currency: plan.currency,
         name: "Veetu Rusi",
         description: `${plan.name} Subscription`,
-        ...(order.id && !order.id.startsWith("TEST_") ? { order_id: order.id } : {}),
+        order_id: order.id,
         modal: {
           ondismiss: () => {
             setPaymentProcessing(false);

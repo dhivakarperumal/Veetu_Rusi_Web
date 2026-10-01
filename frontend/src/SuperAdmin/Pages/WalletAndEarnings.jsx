@@ -63,7 +63,7 @@ const SuperAdminWalletAndEarnings = () => {
       const res = await api.post('/subscriptions/checkout', { franchiseId: purchaseTarget.id, planId: selectedPlan.id });
       const { order, plan, key_id } = res.data;
 
-      if (order && key_id) {
+      if (order?.id && key_id) {
         const script = document.createElement('script');
         script.src = 'https://checkout.razorpay.com/v1/checkout.js';
         document.body.appendChild(script);
@@ -74,7 +74,7 @@ const SuperAdminWalletAndEarnings = () => {
             currency: order.currency || plan.currency,
             name: purchaseTarget.franchise_name,
             description: plan.name,
-            ...(order.id && !order.id.startsWith('TEST_') ? { order_id: order.id } : {}),
+            order_id: order.id,
             handler: async function (response) {
               try {
                 await api.post('/subscriptions/confirm', {
@@ -95,13 +95,7 @@ const SuperAdminWalletAndEarnings = () => {
           const rz = new window.Razorpay(options);
           rz.open();
         };
-      } else {
-        await api.post('/subscriptions/confirm', { franchiseId: purchaseTarget.id, planId: selectedPlan.id, razorpay_payment_id: 'TEST', razorpay_order_id: order.id });
-        toast.success('Subscription activated (test)!');
-        setPurchaseTarget(null);
-        fetchStats();
-        fetchFranchises();
-      }
+      } else toast.error('Franchise subscription Razorpay keys are not configured correctly.');
     } catch (err) { toast.error(err?.response?.data?.message || 'Checkout failed'); }
   };
 
