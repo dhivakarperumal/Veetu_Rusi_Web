@@ -1284,11 +1284,18 @@ const createRazorpayKeysTable = async () => {
                 key_usage VARCHAR(40) NOT NULL DEFAULT 'General',
                 status VARCHAR(20) NOT NULL DEFAULT 'Inactive',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                UNIQUE KEY uq_razorpay_keys_key_id (key_id)
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         `);
         await ensureColumnExists('razorpay_keys', 'key_usage', "VARCHAR(40) NOT NULL DEFAULT 'General'");
+        const [keyIdUniqueIndex] = await pool.execute(
+            `SELECT INDEX_NAME FROM INFORMATION_SCHEMA.STATISTICS
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'razorpay_keys'
+               AND INDEX_NAME = 'uq_razorpay_keys_key_id' AND NON_UNIQUE = 0`
+        );
+        if (keyIdUniqueIndex.length) {
+            await pool.execute('ALTER TABLE razorpay_keys DROP INDEX uq_razorpay_keys_key_id');
+        }
         await pool.execute(`
             CREATE TABLE IF NOT EXISTS user_razorpay_keys (
                 user_id INT PRIMARY KEY,

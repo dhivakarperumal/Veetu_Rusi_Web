@@ -75,9 +75,8 @@ exports.create = async (req, res) => {
     );
     res.status(201).json({ id: result.insertId, message: 'Razorpay key added.' });
   } catch (error) {
-    const duplicate = error.code === 'ER_DUP_ENTRY';
     const configError = error.message?.startsWith('Configure RAZORPAY_KEY_ENCRYPTION_SECRET');
-    res.status(duplicate ? 409 : configError ? 503 : 500).json({ message: duplicate ? 'This Razorpay Key ID is already registered.' : configError ? error.message : 'Unable to add Razorpay key.' });
+    res.status(configError ? 503 : 500).json({ message: configError ? error.message : 'Unable to add Razorpay key.' });
   }
 };
 
@@ -119,9 +118,8 @@ exports.update = async (req, res) => {
     await pool.execute(`UPDATE razorpay_keys SET ${fields.join(', ')} WHERE id = ?`, params);
     res.json({ message: 'Razorpay key updated.' });
   } catch (error) {
-    const duplicate = error.code === 'ER_DUP_ENTRY';
     const configError = error.message?.startsWith('Configure RAZORPAY_KEY_ENCRYPTION_SECRET');
-    res.status(duplicate ? 409 : configError ? 503 : 500).json({ message: duplicate ? 'This Razorpay Key ID is already registered.' : configError ? error.message : 'Unable to update Razorpay key.' });
+    res.status(configError ? 503 : 500).json({ message: configError ? error.message : 'Unable to update Razorpay key.' });
   }
 };
 
