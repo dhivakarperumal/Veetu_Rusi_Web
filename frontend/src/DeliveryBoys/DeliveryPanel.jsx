@@ -75,8 +75,6 @@ const AdminLayout = () => {
         };
     }, [deliveryBoyId]);
 
-    const toggleOnlineStatus = () => navigate("/delivery/attendance");
-
     const playNotificationSound = () => {
         try {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -322,7 +320,6 @@ const AdminLayout = () => {
                     onMenuClick={() => setSidebarOpen(true)} 
                     isOnline={isOnline} 
                     lastOnline={lastOnline} 
-                    toggleOnlineStatus={toggleOnlineStatus}
                 />
 
                 {/* Page Content */}

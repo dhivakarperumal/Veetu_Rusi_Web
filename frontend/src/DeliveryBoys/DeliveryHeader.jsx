@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "../PrivateRouter/AuthContext";
+import AttendanceStatusConfirmation from "../Components/CommenComponents/AttendanceStatusConfirmation";
 
 const pageTitles = {
   "/delivery": "Dashboard",
@@ -43,10 +44,11 @@ const pageTitles = {
   "/delivery/settings": "Settings",
 };
 
-const Header = ({ onMenuClick, isOnline, lastOnline, toggleOnlineStatus }) => {
+const Header = ({ onMenuClick, isOnline, lastOnline }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [showAttendanceConfirmation, setShowAttendanceConfirmation] = useState(false);
   const [notifications, setNotifications] = useState({ today: [], earlier: [] });
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -391,8 +393,8 @@ const Header = ({ onMenuClick, isOnline, lastOnline, toggleOnlineStatus }) => {
           {/* ONLINE STATUS TOGGLE & LAST ONLINE */}
           <div className="hidden md:flex flex-col items-end mr-2">
             <button
-              onClick={toggleOnlineStatus}
-              title="Open attendance to check in or out"
+              onClick={() => setShowAttendanceConfirmation(true)}
+              title={isOnline ? "Check out and go offline" : "Check in and go online"}
               className={`relative flex items-center gap-2 px-3 py-1.5 rounded-full font-black text-[10px] uppercase tracking-widest transition-all ${
                 isOnline 
                   ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.2)]" 
@@ -767,6 +769,14 @@ const Header = ({ onMenuClick, isOnline, lastOnline, toggleOnlineStatus }) => {
           </div>
         </div>
       </div>
+      <AttendanceStatusConfirmation
+        isOpen={showAttendanceConfirmation}
+        isOnline={isOnline}
+        endpoint="/delivery/attendance"
+        requiresLocation
+        updateEvent="delivery-attendance-updated"
+        onClose={() => setShowAttendanceConfirmation(false)}
+      />
     </header>
   );
 };

@@ -17,10 +17,12 @@ import {
   AlertTriangle,
   TrendingDown,
   ChefHat,
+  Clock,
 } from "lucide-react";
 
 import { useAuth } from "../PrivateRouter/AuthContext";
 import { StoreContext } from "../PrivateRouter/StoreContext";
+import AttendanceStatusConfirmation from "../Components/CommenComponents/AttendanceStatusConfirmation";
 
 const pageTitles = {
   "/chef": "Dashboard",
@@ -37,10 +39,11 @@ const pageTitles = {
   "/chef/profile": "Profile",
 };
 
-const ChefHeader = ({ onMenuClick }) => {
+const ChefHeader = ({ onMenuClick, isOnline, lastOnline }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [showAttendanceConfirmation, setShowAttendanceConfirmation] = useState(false);
   const [notifications, setNotifications] = useState({ today: [], earlier: [] });
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -328,6 +331,22 @@ const ChefHeader = ({ onMenuClick }) => {
 
         {/* RIGHT */}
         <div className="flex items-center gap-3">
+
+          <div className="hidden md:flex flex-col items-end mr-2">
+            <button
+              type="button"
+              onClick={() => setShowAttendanceConfirmation(true)}
+              title={isOnline ? "Check out and go offline" : "Check in and go online"}
+              className={`relative flex items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all ${isOnline
+                ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]"
+                : "border-white/10 bg-slate-800 text-slate-400 hover:text-slate-300"
+              }`}
+            >
+              <span className={`h-2 w-2 rounded-full ${isOnline ? "animate-pulse bg-emerald-500 shadow-[0_0_8px_#10B981]" : "bg-slate-500"}`} />
+              {isOnline ? "Online" : "Offline"}
+            </button>
+            {!isOnline && <span className="mt-1 flex items-center gap-1 text-[9px] font-bold tracking-wider text-slate-500"><Clock className="h-3 w-3" /> Last: {lastOnline}</span>}
+          </div>
 
           {/* SEARCH */}
           <div className="relative flex items-center" ref={searchWrapperRef}>
@@ -702,6 +721,13 @@ const ChefHeader = ({ onMenuClick }) => {
           </div>
         </div>
       </div>
+      <AttendanceStatusConfirmation
+        isOpen={showAttendanceConfirmation}
+        isOnline={isOnline}
+        endpoint="/home-chef-attendance"
+        updateEvent="home-chef-attendance-updated"
+        onClose={() => setShowAttendanceConfirmation(false)}
+      />
     </header>
   );
 };

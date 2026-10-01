@@ -23,7 +23,7 @@ const getHomeChefProfile = async (user, connection = pool, lock = false) => {
   if (!clauses.length) return null;
 
   const [rows] = await connection.execute(
-    `SELECT id, user_id, name, email, created_by
+      `SELECT id, user_id, name, email, created_by, franchise_user_id
      FROM home_chefs
      WHERE ${clauses.join(' OR ')}
      ORDER BY id DESC
@@ -100,7 +100,8 @@ router.post('/', async (req, res) => {
            (home_chef_id, home_chef_user_id, home_chef_name, franchise_admin_id,
             attendance_date, check_in_at)
          VALUES (?, ?, ?, ?, CURDATE(), NOW())`,
-        [chef.id, chef.user_id, chef.name || req.user?.name || 'Home Chef', chef.created_by || null]
+        [chef.id, chef.user_id, chef.name || req.user?.name || 'Home Chef',
+          chef.created_by || chef.franchise_user_id || null]
       );
       sessionId = result.insertId;
       message = 'Checked in successfully.';

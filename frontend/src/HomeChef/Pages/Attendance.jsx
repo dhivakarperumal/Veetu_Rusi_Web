@@ -106,21 +106,15 @@ const Attendance = () => {
     setMarking(true);
     try {
       const { data } = await api.post("/home-chef-attendance", { action });
-      if (data.attendance) {
-        setAttendance({
-          today: data.attendance.today || "",
-          currentSession: data.attendance.currentSession || null,
-          records: Array.isArray(data.attendance.records) ? data.attendance.records : [],
-        });
-      } else {
-        const latestAttendance = await loadAttendance();
-        if (latestAttendance) {
-          setAttendance({
-            today: latestAttendance.today || "",
-            currentSession: latestAttendance.currentSession || null,
-            records: Array.isArray(latestAttendance.records) ? latestAttendance.records : [],
-          });
-        }
+      const updatedAttendance = data.attendance || await loadAttendance();
+      if (updatedAttendance) {
+        const nextAttendance = {
+          today: updatedAttendance.today || "",
+          currentSession: updatedAttendance.currentSession || null,
+          records: Array.isArray(updatedAttendance.records) ? updatedAttendance.records : [],
+        };
+        setAttendance(nextAttendance);
+        window.dispatchEvent(new CustomEvent("home-chef-attendance-updated", { detail: nextAttendance }));
       }
       toast.success(data.message || "Attendance updated.");
     } catch (error) {

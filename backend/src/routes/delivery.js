@@ -333,9 +333,6 @@ router.get('/dashboard-stats', async (req, res) => {
 router.get('/orders', async (req, res) => {
   try {
     const deliveryBoyId = req.user?.user_id || req.user?.id;
-    const { isCheckedIn } = await getDeliveryPartnerOrderAccess(deliveryBoyId);
-    if (!isCheckedIn) return res.json([]);
-
     const { status } = req.query;
     
     let query = `
@@ -347,11 +344,7 @@ router.get('/orders', async (req, res) => {
         FROM user_food_order_table o
         LEFT JOIN home_chefs c ON (o.chef_id = c.id OR o.chef_user_id = c.user_id)
         LEFT JOIN users u ON o.user_id = u.user_id
-       WHERE (o.delivery_partner = ? OR o.delivery_partner_user_id = ?) 
-           AND (
-             DATE(o.ordered_at) = CURDATE()
-             OR COALESCE(o.status, '') NOT IN ('Delivered', 'Cancelled', 'Completed')
-           )
+         WHERE (o.delivery_partner = ? OR o.delivery_partner_user_id = ?)
     `;
     const params = [deliveryBoyId, deliveryBoyId];
 
@@ -485,10 +478,9 @@ router.get('/orders/available', async (req, res) => {
              c.longitude      AS home_chef_lng
         FROM user_food_order_table o
         LEFT JOIN home_chefs c ON (o.chef_id = c.id OR o.chef_user_id = c.user_id)
-       WHERE o.status IN ('Searching Delivery Partner', 'Order Placed', 'Accepted')
+       WHERE o.status = 'Searching Delivery Partner'
          AND (o.delivery_partner IS NULL OR o.delivery_partner = '')
          AND (o.delivery_partner_user_id IS NULL OR o.delivery_partner_user_id = '')
-         AND DATE(o.ordered_at) = CURDATE()
     `;
     const params = [];
 

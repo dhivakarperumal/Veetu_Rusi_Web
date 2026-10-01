@@ -11,6 +11,9 @@ const parseJsonField = (value) => {
     }
 };
 
+const shouldFilterOfflineChefs = (user) =>
+    !['chef', 'homechef', 'admin', 'franchise', 'superadmin'].includes(String(user?.role || '').toLowerCase());
+
 const normalizeDateField = (value) => {
     if (value === null || value === undefined || value === '') return null;
     if (value instanceof Date) {
@@ -94,6 +97,12 @@ exports.getAllProducts = async (req, res) => {
                 query += ' AND (hc.id = ? OR hc.user_id = ?)';
                 params.push(chefLookup, chefLookup);
             }
+            if (shouldFilterOfflineChefs(req.user)) {
+                query += ` AND EXISTS (
+                    SELECT 1 FROM home_chef_attendance hca
+                    WHERE hca.home_chef_user_id = hc.user_id AND hca.check_out_at IS NULL
+                )`;
+            }
             if (franchise_user_id) {
                 query += ' AND t.franchise_user_id = ?';
                 params.push(franchise_user_id);
@@ -161,12 +170,26 @@ exports.getAllProducts = async (req, res) => {
 exports.getProductById = async (req, res) => {
     try {
         const { id } = req.params;
-        const [chefProducts] = await pool.execute('SELECT * FROM chef_products WHERE id = ?', [id]);
+        const [chefProducts] = await pool.execute(
+            `SELECT cp.*,
+                    EXISTS (
+                        SELECT 1 FROM home_chef_attendance hca
+                        WHERE hca.home_chef_user_id = hc.user_id AND hca.check_out_at IS NULL
+                    ) AS chef_is_online
+             FROM chef_products cp
+             LEFT JOIN home_chefs hc ON cp.created_by = hc.user_id
+             WHERE cp.id = ?`,
+            [id]
+        );
 
         if (chefProducts.length > 0) {
             const product = chefProducts[0];
+            if (shouldFilterOfflineChefs(req.user) && !product.chef_is_online) {
+                return res.status(404).json({ message: 'Product not found' });
+            }
+            const { chef_is_online, ...visibleProduct } = product;
             return res.json({
-                ...product,
+                ...visibleProduct,
                 variants: parseJsonField(product.variants) || [],
                 images: parseJsonField(product.images) || []
             });
@@ -207,6 +230,13 @@ exports.getProductsByUserId = async (req, res) => {
             LEFT JOIN users u ON cp.created_by = u.user_id
             WHERE cp.created_by = ?
         `;
+
+        if (shouldFilterOfflineChefs(req.user)) {
+            query += ` AND EXISTS (
+                SELECT 1 FROM home_chef_attendance hca
+                WHERE hca.home_chef_user_id = cp.created_by AND hca.check_out_at IS NULL
+            )`;
+        }
 
         if (category) {
             query += ' AND cp.category = ?';

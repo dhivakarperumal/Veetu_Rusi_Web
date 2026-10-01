@@ -4,10 +4,10 @@ const productController = require('../controllers/productController');
 const { attachUser } = require('../middleware/authMiddleware');
 
 // Get all products with filters
-router.get('/', productController.getAllProducts);
+router.get('/', attachUser, productController.getAllProducts);
 
 // Get products by user ID
-router.get('/user/:user_id', productController.getProductsByUserId);
+router.get('/user/:user_id', attachUser, productController.getProductsByUserId);
 
 // Get categories
 router.get('/categories', productController.getCategories);
@@ -16,7 +16,7 @@ router.get('/categories', productController.getCategories);
 router.get('/latest-code', productController.getLatestProductCode);
 
 // Get product by ID
-router.get('/:id', productController.getProductById);
+router.get('/:id', attachUser, productController.getProductById);
 
 // Create product
 router.post('/', attachUser, productController.createProduct);

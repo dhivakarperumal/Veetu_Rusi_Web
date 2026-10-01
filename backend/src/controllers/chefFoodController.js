@@ -26,6 +26,9 @@ const normalizeJsonField = (value) => {
   return value;
 };
 
+const shouldFilterOfflineChefs = (user) =>
+  !['chef', 'homechef', 'admin', 'franchise', 'superadmin'].includes(String(user?.role || '').toLowerCase());
+
 const resolveChefFoodMetadata = async (req, body) => {
   const {
     chef_id,
@@ -135,6 +138,13 @@ SELECT
     query += ' FROM chef_food_table cf LEFT JOIN users u ON cf.created_by = u.user_id LEFT JOIN home_chefs hc ON cf.created_by = hc.user_id WHERE 1=1';
     const params = [];
 
+    if (shouldFilterOfflineChefs(req.user)) {
+      query += ` AND EXISTS (
+        SELECT 1 FROM home_chef_attendance hca
+        WHERE hca.home_chef_user_id = hc.user_id AND hca.check_out_at IS NULL
+      )`;
+    }
+
     // Enforce role-based restrictions
     if (req.user) {
       const currentUserId = req.user.user_id || req.user.id || null;
@@ -222,11 +232,18 @@ SELECT
 exports.getFoodById = async (req, res) => {
   try {
     const { id } = req.params;
+    const onlineFilter = shouldFilterOfflineChefs(req.user)
+      ? ` AND EXISTS (
+          SELECT 1 FROM home_chef_attendance hca
+          WHERE hca.home_chef_user_id = hc.user_id AND hca.check_out_at IS NULL
+        )`
+      : '';
     const [rows] = await pool.execute(
       `SELECT cf.*, u.full_name AS chef_name, u.user_id AS chef_user_id, u.email AS chef_email, u.mobile_number AS chef_phone
        FROM chef_food_table cf
        LEFT JOIN users u ON cf.created_by = u.user_id
-       WHERE cf.id = ?`,
+       LEFT JOIN home_chefs hc ON cf.created_by = hc.user_id
+       WHERE cf.id = ?${onlineFilter}`,
       [id]
     );
     if (rows.length === 0) {
