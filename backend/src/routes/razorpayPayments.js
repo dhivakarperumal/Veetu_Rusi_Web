@@ -33,7 +33,15 @@ router.post('/order', async (req, res) => {
     res.json({ order, key_id: config.keyId });
   } catch (error) {
     const needsConfiguration = isConfigurationError(error);
-    res.status(needsConfiguration ? 400 : 500).json({ message: needsConfiguration ? error.message : 'Unable to create Razorpay payment order.' });
+    const razorpayRejectedKey = Number(error.statusCode) === 401;
+    console.error('Razorpay order creation failed:', error.message, error.statusCode || '');
+    const status = needsConfiguration ? 400 : razorpayRejectedKey ? 502 : 500;
+    const message = needsConfiguration
+      ? error.message
+      : razorpayRejectedKey
+        ? 'Razorpay rejected the configured User Checkout key. Verify that the Key ID and Key Secret belong to the same Razorpay account.'
+        : 'Unable to create Razorpay payment order.';
+    res.status(status).json({ message });
   }
 });
 
