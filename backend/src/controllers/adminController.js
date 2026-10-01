@@ -785,22 +785,24 @@ exports.getDeliveryPartners = async (req, res) => {
   }
 };
 
+const ATTENDANCE_LOCAL_DATE_SQL = "DATE(CONVERT_TZ(attendance.check_in_at, @@session.time_zone, '+05:30'))";
+
 const appendAttendanceDateFilter = (query, params, filters) => {
   const isDate = (value) => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
   const hasStart = isDate(filters.date_from);
   const hasEnd = isDate(filters.date_to);
 
   if (hasStart && hasEnd) {
-    query += ' AND attendance.attendance_date BETWEEN ? AND ?';
+    query += ` AND ${ATTENDANCE_LOCAL_DATE_SQL} BETWEEN ? AND ?`;
     params.push(filters.date_from, filters.date_to);
   } else if (hasStart) {
-    query += ' AND attendance.attendance_date >= ?';
+    query += ` AND ${ATTENDANCE_LOCAL_DATE_SQL} >= ?`;
     params.push(filters.date_from);
   } else if (hasEnd) {
-    query += ' AND attendance.attendance_date <= ?';
+    query += ` AND ${ATTENDANCE_LOCAL_DATE_SQL} <= ?`;
     params.push(filters.date_to);
   } else if (isDate(filters.date)) {
-    query += ' AND attendance.attendance_date = ?';
+    query += ` AND ${ATTENDANCE_LOCAL_DATE_SQL} = ?`;
     params.push(filters.date);
   }
   return query;
@@ -815,7 +817,7 @@ exports.getDeliveryPartnerAttendance = async (req, res) => {
 
     let query = `
             SELECT attendance.id, attendance.delivery_partner_user_id, attendance.delivery_partner_name,
-              DATE_FORMAT(attendance.attendance_date, '%Y-%m-%d') AS attendance_date,
+              DATE_FORMAT(${ATTENDANCE_LOCAL_DATE_SQL}, '%Y-%m-%d') AS attendance_date,
              attendance.check_in_at, attendance.latitude, attendance.longitude,
                     attendance.accuracy_m, attendance.check_in_address,
                     attendance.check_out_at, attendance.check_out_latitude,
@@ -845,7 +847,7 @@ exports.getHomeChefAttendance = async (req, res) => {
 
     let query = `
       SELECT attendance.id, attendance.home_chef_user_id, attendance.home_chef_name,
-             DATE_FORMAT(attendance.attendance_date, '%Y-%m-%d') AS attendance_date,
+             DATE_FORMAT(${ATTENDANCE_LOCAL_DATE_SQL}, '%Y-%m-%d') AS attendance_date,
              attendance.check_in_at, attendance.check_out_at,
              hc.mobile
       FROM home_chef_attendance attendance
