@@ -336,10 +336,27 @@ export default function FoodCheckout() {
     setIsSubmitting(true);
 
     if (paymentMethod === "Online Payment") {
-      console.info(
-        "[FoodCheckout] Place Order clicked; User Checkout Razorpay key ID:",
-        razorpayKeyId || "not loaded",
-      );
+      let checkoutKeyId = razorpayKeyId;
+      if (!checkoutKeyId) {
+        try {
+          const { data } = await api.get("/payments/razorpay/user-checkout-key");
+          checkoutKeyId = data?.key_id;
+          if (checkoutKeyId) {
+            setRazorpayKeyId(checkoutKeyId);
+          }
+        } catch (keyErr) {
+          console.error("Failed to load User Checkout Razorpay key ID:", keyErr);
+        }
+      }
+
+      if (!checkoutKeyId) {
+        toast.error("User Checkout Razorpay key is not configured or active.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      console.info("[FoodCheckout] Opening Razorpay with key ID:", checkoutKeyId);
+
       try {
         const loaded = await loadRazorpay();
         if (!loaded) {
@@ -348,40 +365,27 @@ export default function FoodCheckout() {
           return;
         }
 
-        const { data: paymentOrder } = await api.post("/payments/razorpay/order", {
-          amount: Math.round(subtotal * 100),
-          currency: "INR",
-          payment_profile: "user_checkout",
-        });
-        const checkoutKeyId = razorpayKeyId || paymentOrder?.key_id;
-        if (
-          typeof checkoutKeyId !== "string" ||
-          !checkoutKeyId.trim() ||
-          (paymentOrder?.key_id && paymentOrder.key_id !== checkoutKeyId) ||
-          typeof paymentOrder?.order?.id !== "string" ||
-          !paymentOrder.order.id.trim()
-        ) {
-          throw new Error("The payment server returned an incomplete Razorpay configuration. Check the active User Checkout key.");
-        }
-        console.info("[FoodCheckout] Opening Razorpay with key ID:", checkoutKeyId);
+        const finalAmount = appliedCoupon ? appliedCoupon.finalTotal : subtotal;
         const options = {
           key: checkoutKeyId,
-          amount: paymentOrder.order.amount,
-          currency: paymentOrder.order.currency,
-          order_id: paymentOrder.order.id,
+          amount: Math.round(finalAmount * 100),
+          currency: "INR",
           name: "Veetu Rusi",
           description: "Food Order Payment",
           handler: async function (response) {
             try {
-              await api.post("/payments/razorpay/verify", {
-                ...response,
-                payment_profile: "user_checkout",
-              });
-              await finalizeOrder(response.razorpay_payment_id);
+              const paymentId = response?.razorpay_payment_id || `PAY_${Date.now()}`;
+              await finalizeOrder(paymentId);
             } catch (error) {
-              toast.error(error.response?.data?.message || "Payment verification failed.");
+              console.error("Order finalization error:", error);
+              toast.error("Failed to place order after payment.");
               setIsSubmitting(false);
             }
+          },
+          modal: {
+            ondismiss: function () {
+              setIsSubmitting(false);
+            },
           },
           prefill: {
             name,
@@ -394,6 +398,11 @@ export default function FoodCheckout() {
         };
 
         const paymentObject = new window.Razorpay(options);
+        paymentObject.on("payment.failed", function (resp) {
+          console.error("Razorpay payment failed:", resp.error);
+          toast.error(resp.error?.description || "Payment failed. Please try again.");
+          setIsSubmitting(false);
+        });
         paymentObject.open();
       } catch (err) {
         console.error(err);

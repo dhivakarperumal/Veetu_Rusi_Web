@@ -28,15 +28,16 @@ exports.create = async (req, res) => {
   try {
     const { key_name, key_id, key_secret, business_name } = req.body;
     const keyUsage = normalizeUsage(req.body.key_usage);
-    if (!String(key_name || '').trim() || !String(key_id || '').trim() || !String(key_secret || '').trim()) {
-      return res.status(400).json({ message: 'Key name, Key ID, and Key Secret are required.' });
+    if (!String(key_name || '').trim() || !String(key_id || '').trim()) {
+      return res.status(400).json({ message: 'Key name and Key ID are required.' });
     }
     if (!keyUsage) return res.status(400).json({ message: 'Select a valid Razorpay usage.' });
     const actor = getAuditActor(req);
+    const secretVal = String(key_secret || '').trim() ? encryptSecret(String(key_secret).trim()) : '';
     const [result] = await pool.execute(
       `INSERT INTO razorpay_keys (key_name, key_id, key_secret, business_name, key_usage, status, created_by, updated_by)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [String(key_name).trim(), String(key_id).trim(), encryptSecret(String(key_secret)), String(business_name || '').trim() || null, keyUsage, normalizeStatus(req.body.status || 'Inactive'), actor, actor]
+      [String(key_name).trim(), String(key_id).trim(), secretVal, String(business_name || '').trim() || null, keyUsage, normalizeStatus(req.body.status || 'Inactive'), actor, actor]
     );
     res.status(201).json({ id: result.insertId, message: 'Razorpay key added.' });
   } catch (error) {

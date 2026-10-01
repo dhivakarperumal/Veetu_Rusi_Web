@@ -308,7 +308,7 @@ const Checkout = () => {
         key: paymentOrder.key_id,
         amount: paymentOrder.order.amount,
         currency: paymentOrder.order.currency,
-        order_id: paymentOrder.order.id,
+        ...(paymentOrder.order?.id ? { order_id: paymentOrder.order.id } : {}),
         name: "Veetu Rusi",
         description: "Order Payment",
 
