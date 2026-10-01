@@ -25,8 +25,8 @@ exports.list = async (req, res) => {
 exports.create = async (req, res) => {
   try {
     const { key_name, key_id, key_secret, business_name } = req.body;
-    if (!String(key_name || '').trim() || !String(key_id || '').trim() || !String(key_secret || '').trim()) {
-      return res.status(400).json({ message: 'Key name, Key ID, and Key Secret are required.' });
+    if (!String(key_name || '').trim() || !String(key_id || '').trim()) {
+      return res.status(400).json({ message: 'Key name and Key ID are required.' });
     }
     const [existing] = await pool.execute('SELECT id FROM franchise_razorpay_keys WHERE key_id = ? LIMIT 1', [String(key_id).trim()]);
     if (existing.length) return res.status(409).json({ message: 'This franchise subscription Key ID is already registered.' });
@@ -36,7 +36,7 @@ exports.create = async (req, res) => {
       `INSERT INTO franchise_razorpay_keys
          (franchise_id, franchise_user_id, key_name, key_id, key_secret, business_name, key_usage, status, created_by, updated_by)
        VALUES (NULL, NULL, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [String(key_name).trim(), String(key_id).trim(), encryptSecret(String(key_secret).trim()), String(business_name || '').trim() || null, KEY_USAGE, normalizeStatus(req.body.status || 'Inactive'), actor, actor]
+      [String(key_name).trim(), String(key_id).trim(), String(key_secret || '').trim() ? encryptSecret(String(key_secret).trim()) : null, String(business_name || '').trim() || null, KEY_USAGE, normalizeStatus(req.body.status || 'Inactive'), actor, actor]
     );
     res.status(201).json({ id: result.insertId, message: 'Franchise subscription Razorpay key added.' });
   } catch (error) {

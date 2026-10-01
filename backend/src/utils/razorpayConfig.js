@@ -165,7 +165,15 @@ const getFranchiseSubscriptionRazorpayConfig = async () => {
   if (!rows.length) {
     throw new Error('Franchise subscription Razorpay key is not configured or active.');
   }
-  return { id: rows[0].id, keyId: rows[0].key_id, keySecret: decryptStoredSecret(rows[0].key_secret) };
+  const keyId = rows[0].key_id;
+  const storedSecret = rows[0].key_secret ? decryptStoredSecret(rows[0].key_secret) : '';
+  const storedSecretFailedToDecrypt = String(rows[0].key_secret || '').startsWith('v1:') && storedSecret === rows[0].key_secret;
+  const keySecret = storedSecret && !storedSecretFailedToDecrypt
+    ? storedSecret
+    : process.env.RAZORPAY_KEY_ID === keyId
+      ? process.env.RAZORPAY_KEY_SECRET || ''
+      : '';
+  return { id: rows[0].id, keyId, keySecret };
 };
 
 module.exports = {
