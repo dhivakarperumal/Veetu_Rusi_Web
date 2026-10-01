@@ -322,7 +322,6 @@ router.post('/', verifyToken, async (req, res) => {
             created_at: new Date().toISOString()
           };
           
-          console.log(`📤 Emitting new_order event to chef:${orderPayload.chef_user_id}`, orderData);
           io.to(chefRoom).emit('new_order', orderData);
         }
       } catch (socketErr) {
