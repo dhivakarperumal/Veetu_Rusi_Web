@@ -44,6 +44,7 @@ export default function FoodCheckout() {
   const [phone, setPhone] = useState("");
   const [savedAddresses, setSavedAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
+  const [razorpayKeyId, setRazorpayKeyId] = useState("");
   const location = useLocation();
   const buyNowItem = location.state?.product ? location.state : null;
   const appliedCoupon = location.state?.appliedCoupon || null;
@@ -115,6 +116,21 @@ export default function FoodCheckout() {
         .catch((error) => console.error("Failed to load saved addresses", error));
     }
   }, [user]);
+
+  useEffect(() => {
+    if (!user?.user_id) return;
+    let mounted = true;
+    api.get("/payments/razorpay/user-checkout-key")
+      .then(({ data }) => {
+        if (!mounted) return;
+        setRazorpayKeyId(data?.key_id || "");
+        console.info("[FoodCheckout] Active User Checkout Razorpay key ID:", data?.key_id || "missing");
+      })
+      .catch((error) => {
+        console.error("[FoodCheckout] Could not load User Checkout Razorpay key ID:", error.response?.data?.message || error.message);
+      });
+    return () => { mounted = false; };
+  }, [user?.user_id]);
 
   const resolveImageUrl = (url) => {
     if (!url || typeof url !== "string") return null;
@@ -333,16 +349,19 @@ export default function FoodCheckout() {
           currency: "INR",
           payment_profile: "user_checkout",
         });
+        const checkoutKeyId = razorpayKeyId || paymentOrder?.key_id;
         if (
-          typeof paymentOrder?.key_id !== "string" ||
-          !paymentOrder.key_id.trim() ||
+          typeof checkoutKeyId !== "string" ||
+          !checkoutKeyId.trim() ||
+          (paymentOrder?.key_id && paymentOrder.key_id !== checkoutKeyId) ||
           typeof paymentOrder?.order?.id !== "string" ||
           !paymentOrder.order.id.trim()
         ) {
           throw new Error("The payment server returned an incomplete Razorpay configuration. Check the active User Checkout key.");
         }
+        console.info("[FoodCheckout] Opening Razorpay with key ID:", checkoutKeyId);
         const options = {
-          key: paymentOrder.key_id,
+          key: checkoutKeyId,
           amount: paymentOrder.order.amount,
           currency: paymentOrder.order.currency,
           order_id: paymentOrder.order.id,

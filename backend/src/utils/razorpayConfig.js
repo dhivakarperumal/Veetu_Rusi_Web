@@ -69,4 +69,20 @@ const getUserCheckoutRazorpayConfig = async () => {
   return { id: rows[0].id, keyId: rows[0].key_id, keySecret: decryptStoredSecret(rows[0].key_secret) };
 };
 
-module.exports = { encryptSecret, decryptSecret, getAssignedRazorpayConfig, getUserCheckoutRazorpayConfig };
+const getUserCheckoutRazorpayKeyId = async () => {
+  const [rows] = await pool.execute(
+    `SELECT id, key_id
+     FROM razorpay_keys
+     WHERE LOWER(TRIM(key_name)) = 'user'
+       AND LOWER(TRIM(key_usage)) = 'user checkout'
+       AND LOWER(status) = 'active'
+     ORDER BY updated_at DESC, id DESC
+     LIMIT 1`
+  );
+  if (!rows.length) {
+    throw new Error('Razorpay User Checkout key is not configured or active.');
+  }
+  return { id: rows[0].id, keyId: rows[0].key_id };
+};
+
+module.exports = { encryptSecret, decryptSecret, getAssignedRazorpayConfig, getUserCheckoutRazorpayConfig, getUserCheckoutRazorpayKeyId };

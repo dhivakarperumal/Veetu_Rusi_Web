@@ -2,7 +2,7 @@ const express = require('express');
 const crypto = require('crypto');
 const Razorpay = require('razorpay');
 const { verifyTokenWithoutSubscription } = require('../middleware/authMiddleware');
-const { getAssignedRazorpayConfig, getUserCheckoutRazorpayConfig } = require('../utils/razorpayConfig');
+const { getAssignedRazorpayConfig, getUserCheckoutRazorpayConfig, getUserCheckoutRazorpayKeyId } = require('../utils/razorpayConfig');
 
 const router = express.Router();
 router.use(verifyTokenWithoutSubscription);
@@ -15,6 +15,16 @@ const isConfigurationError = (error) => [
   'Razorpay payment configuration is not assigned for this account.',
   'Razorpay User Checkout key is not configured or active.',
 ].includes(error.message);
+
+router.get('/user-checkout-key', async (req, res) => {
+  try {
+    const key = await getUserCheckoutRazorpayKeyId();
+    res.json({ key_id: key.keyId });
+  } catch (error) {
+    const needsConfiguration = isConfigurationError(error);
+    res.status(needsConfiguration ? 400 : 500).json({ message: needsConfiguration ? error.message : 'Unable to load the User Checkout key ID.' });
+  }
+});
 
 router.post('/order', async (req, res) => {
   try {
