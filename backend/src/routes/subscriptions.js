@@ -142,7 +142,7 @@ router.post('/checkout', verifyTokenWithoutSubscription, async (req, res) => {
     const plan = rows[0];
     if (!await authorizeFranchisePayment(req, franchiseId)) return res.status(403).json({ message: 'You cannot create a payment for this account.' });
     const config = await getFranchiseSubscriptionRazorpayConfig();
-    if (!config.keySecret) throw new Error('Franchise subscription Razorpay key secret is missing.');
+    if (!config.keySecret) throw new Error('Franchise subscription payment credentials are not configured on the server.');
     const amountPaise = Math.round(plan.amount * 100);
     const receipt = `rcpt_${Date.now()}`;
     const razor = new Razorpay({ key_id: config.keyId, key_secret: config.keySecret });
@@ -150,7 +150,7 @@ router.post('/checkout', verifyTokenWithoutSubscription, async (req, res) => {
     return res.json({ order, plan, key_id: config.keyId });
   } catch (err) {
     console.error('Franchise subscription checkout error:', err.message || err);
-    const missingConfig = err.message === 'Franchise subscription Razorpay key is not configured or active.' || err.message === 'Franchise subscription Razorpay key secret is missing.';
+    const missingConfig = err.message === 'Franchise subscription Razorpay key is not configured or active.' || err.message === 'Franchise subscription payment credentials are not configured on the server.';
     const unauthorizedKey = Number(err.statusCode) === 401;
     const errorMsg = err.error ? err.error.description || err.error.message : err.message;
     const status = missingConfig ? 503 : unauthorizedKey ? 502 : 500;
@@ -167,7 +167,7 @@ router.post('/confirm', verifyTokenWithoutSubscription, async (req, res) => {
     if (!await authorizeFranchisePayment(req, franchiseId)) return res.status(403).json({ message: 'You cannot confirm a payment for this account.' });
     const paymentUserId = await resolveFranchiseUserId(franchiseId);
     const config = await getFranchiseSubscriptionRazorpayConfig();
-    if (!config.keySecret) return res.status(503).json({ message: 'Franchise subscription Razorpay key secret is missing.' });
+    if (!config.keySecret) return res.status(503).json({ message: 'Franchise subscription payment credentials are not configured on the server.' });
     const generated = crypto.createHmac('sha256', config.keySecret).update(`${razorpay_order_id}|${razorpay_payment_id}`).digest('hex');
     const supplied = Buffer.from(String(razorpay_signature));
     const expected = Buffer.from(generated);

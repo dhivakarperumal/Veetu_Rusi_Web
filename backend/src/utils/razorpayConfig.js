@@ -170,9 +170,7 @@ const getFranchiseSubscriptionRazorpayConfig = async () => {
   const storedSecretFailedToDecrypt = String(rows[0].key_secret || '').startsWith('v1:') && storedSecret === rows[0].key_secret;
   const keySecret = storedSecret && !storedSecretFailedToDecrypt
     ? storedSecret
-    : process.env.RAZORPAY_KEY_ID === keyId
-      ? process.env.RAZORPAY_KEY_SECRET || ''
-      : '';
+    : process.env.RAZORPAY_KEY_SECRET || '';
   return { id: rows[0].id, keyId, keySecret };
 };
 
