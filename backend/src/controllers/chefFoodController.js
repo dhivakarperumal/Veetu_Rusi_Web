@@ -1,5 +1,12 @@
 const pool = require('../config/db');
 
+const FRANCHISE_USER_ID_EXPRESSION = `COALESCE(
+  NULLIF(cf.franchise_user_id COLLATE utf8mb4_unicode_ci, ''),
+  NULLIF(hc.created_by COLLATE utf8mb4_unicode_ci, ''),
+  NULLIF(hc.franchise_user_id COLLATE utf8mb4_unicode_ci, ''),
+  NULLIF(u.created_by COLLATE utf8mb4_unicode_ci, '')
+) COLLATE utf8mb4_unicode_ci`;
+
 const parseJsonField = (value) => {
   if (value === null || value === undefined) return null;
   if (typeof value === 'object') return value;
@@ -118,7 +125,7 @@ exports.getFoods = async (req, res) => {
     let query = `
 SELECT
     cf.*,
-    COALESCE(NULLIF(cf.franchise_user_id, ''), NULLIF(hc.created_by, ''), NULLIF(hc.franchise_user_id, ''), NULLIF(u.created_by, '')) AS franchise_user_id,
+    ${FRANCHISE_USER_ID_EXPRESSION} AS franchise_user_id,
     COALESCE(NULLIF(fo.franchise_name, ''), NULLIF(fu.full_name, ''), 'Veetu Rusi Franchise') AS franchise_name,
     fu.email AS franchise_email,
     fu.mobile_number AS franchise_phone,
@@ -140,17 +147,21 @@ SELECT
     }
 
     query += ` FROM chef_food_table cf 
-    LEFT JOIN users u ON cf.created_by = u.user_id 
-    LEFT JOIN home_chefs hc ON cf.created_by = hc.user_id 
-    LEFT JOIN users fu ON fu.user_id = COALESCE(NULLIF(cf.franchise_user_id, ''), NULLIF(hc.created_by, ''), NULLIF(hc.franchise_user_id, ''), NULLIF(u.created_by, ''))
-    LEFT JOIN franchise_owners fo ON (fo.franch_user_id = COALESCE(NULLIF(cf.franchise_user_id, ''), NULLIF(hc.created_by, ''), NULLIF(hc.franchise_user_id, ''), NULLIF(u.created_by, '')) OR fo.franchise_id = COALESCE(NULLIF(cf.franchise_user_id, ''), NULLIF(hc.created_by, ''), NULLIF(hc.franchise_user_id, ''), NULLIF(u.created_by, '')))
+    LEFT JOIN users u ON cf.created_by COLLATE utf8mb4_unicode_ci = u.user_id COLLATE utf8mb4_unicode_ci
+    LEFT JOIN home_chefs hc ON cf.created_by COLLATE utf8mb4_unicode_ci = hc.user_id COLLATE utf8mb4_unicode_ci
+    LEFT JOIN users fu ON fu.user_id COLLATE utf8mb4_unicode_ci = ${FRANCHISE_USER_ID_EXPRESSION}
+    LEFT JOIN franchise_owners fo ON (
+      fo.franch_user_id COLLATE utf8mb4_unicode_ci = ${FRANCHISE_USER_ID_EXPRESSION}
+      OR fo.franchise_id COLLATE utf8mb4_unicode_ci = ${FRANCHISE_USER_ID_EXPRESSION}
+    )
     WHERE 1=1`;
     const params = [];
 
     if (shouldFilterOfflineChefs(req.user)) {
       query += ` AND EXISTS (
         SELECT 1 FROM home_chef_attendance hca
-        WHERE hca.home_chef_user_id = hc.user_id AND hca.check_out_at IS NULL
+        WHERE hca.home_chef_user_id COLLATE utf8mb4_unicode_ci = hc.user_id COLLATE utf8mb4_unicode_ci
+          AND hca.check_out_at IS NULL
       )`;
     }
 
@@ -244,12 +255,13 @@ exports.getFoodById = async (req, res) => {
     const onlineFilter = shouldFilterOfflineChefs(req.user)
       ? ` AND EXISTS (
           SELECT 1 FROM home_chef_attendance hca
-          WHERE hca.home_chef_user_id = hc.user_id AND hca.check_out_at IS NULL
+          WHERE hca.home_chef_user_id COLLATE utf8mb4_unicode_ci = hc.user_id COLLATE utf8mb4_unicode_ci
+            AND hca.check_out_at IS NULL
         )`
       : '';
     const [rows] = await pool.execute(
       `SELECT cf.*, 
-              COALESCE(NULLIF(cf.franchise_user_id, ''), NULLIF(hc.created_by, ''), NULLIF(hc.franchise_user_id, ''), NULLIF(u.created_by, '')) AS franchise_user_id,
+              ${FRANCHISE_USER_ID_EXPRESSION} AS franchise_user_id,
               COALESCE(NULLIF(fo.franchise_name, ''), NULLIF(fu.full_name, ''), 'Veetu Rusi Franchise') AS franchise_name,
               fu.email AS franchise_email,
               fu.mobile_number AS franchise_phone,
@@ -258,10 +270,13 @@ exports.getFoodById = async (req, res) => {
               u.email AS chef_email, 
               u.mobile_number AS chef_phone
        FROM chef_food_table cf
-       LEFT JOIN users u ON cf.created_by = u.user_id
-       LEFT JOIN home_chefs hc ON cf.created_by = hc.user_id
-       LEFT JOIN users fu ON fu.user_id = COALESCE(NULLIF(cf.franchise_user_id, ''), NULLIF(hc.created_by, ''), NULLIF(hc.franchise_user_id, ''), NULLIF(u.created_by, ''))
-       LEFT JOIN franchise_owners fo ON (fo.franch_user_id = COALESCE(NULLIF(cf.franchise_user_id, ''), NULLIF(hc.created_by, ''), NULLIF(hc.franchise_user_id, ''), NULLIF(u.created_by, '')) OR fo.franchise_id = COALESCE(NULLIF(cf.franchise_user_id, ''), NULLIF(hc.created_by, ''), NULLIF(hc.franchise_user_id, ''), NULLIF(u.created_by, '')))
+       LEFT JOIN users u ON cf.created_by COLLATE utf8mb4_unicode_ci = u.user_id COLLATE utf8mb4_unicode_ci
+       LEFT JOIN home_chefs hc ON cf.created_by COLLATE utf8mb4_unicode_ci = hc.user_id COLLATE utf8mb4_unicode_ci
+       LEFT JOIN users fu ON fu.user_id COLLATE utf8mb4_unicode_ci = ${FRANCHISE_USER_ID_EXPRESSION}
+       LEFT JOIN franchise_owners fo ON (
+         fo.franch_user_id COLLATE utf8mb4_unicode_ci = ${FRANCHISE_USER_ID_EXPRESSION}
+         OR fo.franchise_id COLLATE utf8mb4_unicode_ci = ${FRANCHISE_USER_ID_EXPRESSION}
+       )
        WHERE cf.id = ?${onlineFilter}`,
       [id]
     );

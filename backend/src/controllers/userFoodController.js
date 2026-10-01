@@ -1,5 +1,12 @@
 const pool = require('../config/db');
 
+const FRANCHISE_USER_ID_EXPRESSION = `COALESCE(
+  NULLIF(cf.franchise_user_id COLLATE utf8mb4_unicode_ci, ''),
+  NULLIF(hc.created_by COLLATE utf8mb4_unicode_ci, ''),
+  NULLIF(hc.franchise_user_id COLLATE utf8mb4_unicode_ci, ''),
+  NULLIF(u.created_by COLLATE utf8mb4_unicode_ci, '')
+) COLLATE utf8mb4_unicode_ci`;
+
 const initUserFoodTable = async () => {
   try {
     await pool.execute(`
@@ -78,15 +85,18 @@ const addToUserFoodCart = async (data) => {
   if (!finalFranchiseUserId && product_id) {
     try {
       const [cfRows] = await pool.execute(
-        `SELECT COALESCE(NULLIF(cf.franchise_user_id, ''), NULLIF(hc.created_by, ''), NULLIF(hc.franchise_user_id, ''), NULLIF(u.created_by, '')) AS resolved_franchise_user_id,
+        `SELECT ${FRANCHISE_USER_ID_EXPRESSION} AS resolved_franchise_user_id,
                 COALESCE(NULLIF(fo.franchise_name, ''), NULLIF(fu.full_name, ''), 'Veetu Rusi Franchise') AS resolved_franchise_name,
                 fu.email AS resolved_franchise_email,
                 fu.mobile_number AS resolved_franchise_phone
          FROM chef_food_table cf
-         LEFT JOIN users u ON cf.created_by = u.user_id
-         LEFT JOIN home_chefs hc ON cf.created_by = hc.user_id
-         LEFT JOIN users fu ON fu.user_id = COALESCE(NULLIF(cf.franchise_user_id, ''), NULLIF(hc.created_by, ''), NULLIF(hc.franchise_user_id, ''), NULLIF(u.created_by, ''))
-         LEFT JOIN franchise_owners fo ON (fo.franch_user_id = COALESCE(NULLIF(cf.franchise_user_id, ''), NULLIF(hc.created_by, ''), NULLIF(hc.franchise_user_id, ''), NULLIF(u.created_by, '')) OR fo.franchise_id = COALESCE(NULLIF(cf.franchise_user_id, ''), NULLIF(hc.created_by, ''), NULLIF(hc.franchise_user_id, ''), NULLIF(u.created_by, '')))
+         LEFT JOIN users u ON cf.created_by COLLATE utf8mb4_unicode_ci = u.user_id COLLATE utf8mb4_unicode_ci
+         LEFT JOIN home_chefs hc ON cf.created_by COLLATE utf8mb4_unicode_ci = hc.user_id COLLATE utf8mb4_unicode_ci
+         LEFT JOIN users fu ON fu.user_id COLLATE utf8mb4_unicode_ci = ${FRANCHISE_USER_ID_EXPRESSION}
+         LEFT JOIN franchise_owners fo ON (
+           fo.franch_user_id COLLATE utf8mb4_unicode_ci = ${FRANCHISE_USER_ID_EXPRESSION}
+           OR fo.franchise_id COLLATE utf8mb4_unicode_ci = ${FRANCHISE_USER_ID_EXPRESSION}
+         )
          WHERE cf.id = ? LIMIT 1`,
         [product_id]
       );
