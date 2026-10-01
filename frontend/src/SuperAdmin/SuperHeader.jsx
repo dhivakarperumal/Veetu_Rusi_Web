@@ -24,6 +24,7 @@ const pageTitles = {
   "/superadmin/homechefs": "Home Chef Management",
   "/superadmin/delivery-partners": "Delivery Partners",
   "/superadmin/users": "User Management",
+  "/superadmin/razorpay-keys": "Razorpay Keys",
   "/superadmin/orders": "Order Management",
   "/superadmin/earnings": "Wallet & Earnings",
   "/superadmin/reviews": "All Reviews",

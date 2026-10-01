@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/superadminController');
+const razorpayKeysController = require('../controllers/razorpayKeysController');
 const { verifyToken, requireRole } = require('../middleware/authMiddleware');
 const upload = require('../config/multer');
 
@@ -38,6 +39,15 @@ router.post('/users', controller.createUser);
 router.patch('/users/status/:id', controller.patchUserStatus);
 router.patch('/users/role/:id', controller.patchUserRole);
 router.delete('/users/:id', controller.deleteUser);
+router.get('/users/:id/razorpay-key', razorpayKeysController.getUserKey);
+router.put('/users/:id/razorpay-key', razorpayKeysController.assignUserKey);
+
+// Razorpay key management
+router.get('/razorpay-keys', razorpayKeysController.list);
+router.post('/razorpay-keys', razorpayKeysController.create);
+router.put('/razorpay-keys/:id', razorpayKeysController.update);
+router.patch('/razorpay-keys/:id/status', razorpayKeysController.setStatus);
+router.delete('/razorpay-keys/:id', razorpayKeysController.remove);
 
 // Order Management
 router.get('/orders', controller.getOrders);

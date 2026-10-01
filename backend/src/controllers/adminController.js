@@ -879,7 +879,7 @@ exports.getUsers = async (req, res) => {
     const adminIdInt = req.user?.id || -1;
 
     const query = `
-      SELECT DISTINCT u.id, u.user_id, u.full_name AS name, u.email, u.mobile_number AS phone, u.role, u.status AS active, u.created_at
+      SELECT DISTINCT u.id, u.user_id, u.full_name AS name, u.email, u.mobile_number AS phone, u.role, u.status AS active, u.created_at, u.razorpay_key_id
       FROM users u
       LEFT JOIN home_chefs hc ON (u.user_id = hc.user_id OR (u.email = hc.email AND u.email IS NOT NULL AND u.email != ''))
       LEFT JOIN delivery_partners dp ON (u.user_id = dp.user_id OR u.user_id = dp.delivery_partner_user_id OR (u.email = dp.email AND u.email IS NOT NULL AND u.email != ''))
@@ -891,7 +891,7 @@ exports.getUsers = async (req, res) => {
          
       UNION ALL
       
-      SELECT CONCAT('HC_', id) AS id, user_id, name, email, mobile AS phone, 'homechef' AS role, status AS active, created_at
+      SELECT CONCAT('HC_', id) AS id, user_id, name, email, mobile AS phone, 'homechef' AS role, status AS active, created_at, NULL AS razorpay_key_id
       FROM home_chefs
       WHERE created_by IN (?, ?)
         AND (email IS NULL OR email NOT IN (SELECT email FROM users WHERE email IS NOT NULL))
@@ -899,7 +899,7 @@ exports.getUsers = async (req, res) => {
         
       UNION ALL
       
-      SELECT CONCAT('DP_', id) AS id, user_id, name, email, mobile AS phone, 'delivery_partner' AS role, status AS active, created_at
+      SELECT CONCAT('DP_', id) AS id, user_id, name, email, mobile AS phone, 'delivery_partner' AS role, status AS active, created_at, NULL AS razorpay_key_id
       FROM delivery_partners
       WHERE created_by IN (?, ?)
         AND (email IS NULL OR email NOT IN (SELECT email FROM users WHERE email IS NOT NULL))
@@ -917,6 +917,37 @@ exports.getUsers = async (req, res) => {
     res.json(rows);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving users.', error: error.message });
+  }
+};
+
+exports.updateUser = async (req, res) => {
+  try {
+    const { name, email, phone, role, password, razorpay_key_id } = req.body;
+    const userId = req.params.id;
+    const keyId = razorpay_key_id == null || razorpay_key_id === '' ? null : Number(razorpay_key_id);
+    if (keyId !== null) {
+      if (!Number.isInteger(keyId) || keyId < 1) return res.status(400).json({ message: 'Invalid Razorpay key.' });
+      const [keys] = await pool.execute('SELECT id, status FROM razorpay_keys WHERE id = ? LIMIT 1', [keyId]);
+      if (!keys.length) return res.status(400).json({ message: 'Select an active Razorpay key.' });
+      if (String(keys[0].status).toLowerCase() !== 'active') {
+        const [assigned] = await pool.execute('SELECT razorpay_key_id FROM users WHERE id = ? LIMIT 1', [req.params.id]);
+        if (Number(assigned[0]?.razorpay_key_id) !== keyId) return res.status(400).json({ message: 'Select an active Razorpay key.' });
+      }
+    }
+
+    const [existing] = await pool.execute('SELECT id FROM users WHERE id = ? LIMIT 1', [req.params.id]);
+    if (!existing.length) return res.status(404).json({ message: 'User not found.' });
+    const fields = ['full_name = ?', 'email = ?', 'mobile_number = ?', 'role = ?', 'razorpay_key_id = ?'];
+    const params = [name, email, phone || null, role, keyId];
+    if (password) {
+      fields.push('password = ?');
+      params.push(hashPassword(password));
+    }
+    params.push(userId);
+    await pool.execute(`UPDATE users SET ${fields.join(', ')} WHERE id = ?`, params);
+    res.json({ message: 'User updated successfully.' });
+  } catch (error) {
+    res.status(error.code === 'ER_DUP_ENTRY' ? 409 : 500).json({ message: error.code === 'ER_DUP_ENTRY' ? 'Email is already in use.' : 'Unable to update user.' });
   }
 };
 

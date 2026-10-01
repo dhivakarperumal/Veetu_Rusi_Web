@@ -328,14 +328,25 @@ export default function FoodCheckout() {
           return;
         }
 
-        const options = {
-          key: "rzp_test_SGj8n5SyKSE10b",
+        const { data: paymentOrder } = await api.post("/payments/razorpay/order", {
           amount: Math.round(subtotal * 100),
           currency: "INR",
+        });
+        const options = {
+          key: paymentOrder.key_id,
+          amount: paymentOrder.order.amount,
+          currency: paymentOrder.order.currency,
+          order_id: paymentOrder.order.id,
           name: "Veetu Rusi",
           description: "Food Order Payment",
           handler: async function (response) {
-            await finalizeOrder(response.razorpay_payment_id);
+            try {
+              await api.post("/payments/razorpay/verify", response);
+              await finalizeOrder(response.razorpay_payment_id);
+            } catch (error) {
+              toast.error(error.response?.data?.message || "Payment verification failed.");
+              setIsSubmitting(false);
+            }
           },
           prefill: {
             name,
@@ -351,7 +362,7 @@ export default function FoodCheckout() {
         paymentObject.open();
       } catch (err) {
         console.error(err);
-        toast.error("Payment failed. Please try again.");
+        toast.error(err.response?.data?.message || "Payment failed. Please try again.");
         setIsSubmitting(false);
       }
       return;

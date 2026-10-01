@@ -2,12 +2,36 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../config/db');
 // Dynamic plans fetched from DB
-const { attachUser } = require('../middleware/authMiddleware');
+const { attachUser, verifyTokenWithoutSubscription } = require('../middleware/authMiddleware');
+const { getAssignedRazorpayConfig } = require('../utils/razorpayConfig');
 const Razorpay = require('razorpay');
+const crypto = require('crypto');
 require('dotenv').config();
 
-const RAZOR_KEY_ID = process.env.RAZORPAY_KEY_ID || process.env.RAZOR_KEY_ID;
-const RAZOR_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || process.env.RAZOR_KEY_SECRET;
+const resolveFranchiseUserId = async (franchiseId) => {
+  const [franchises] = await pool.execute(
+    'SELECT franch_user_id, created_by, email FROM franchise_owners WHERE id = ? LIMIT 1',
+    [franchiseId]
+  );
+  if (!franchises.length) return null;
+  const franchise = franchises[0];
+  if (franchise.franch_user_id) return franchise.franch_user_id;
+  if (franchise.email) {
+    const [users] = await pool.execute('SELECT user_id FROM users WHERE email = ? LIMIT 1', [franchise.email]);
+    if (users.length) return users[0].user_id;
+  }
+  return franchise.email || null;
+};
+
+const authorizeFranchisePayment = async (req, franchiseId) => {
+  if (req.user?.role === 'superadmin') return true;
+  if (req.user?.role !== 'admin' || !req.user?.email) return false;
+  const [rows] = await pool.execute(
+    'SELECT id FROM franchise_owners WHERE id = ? AND email = ? LIMIT 1',
+    [franchiseId, req.user.email]
+  );
+  return rows.length > 0;
+};
 
 // Allow an admin who has no active subscription to identify their franchise before login.
 router.post('/lookup', async (req, res) => {
@@ -108,7 +132,7 @@ router.get('/plans', async (req, res) => {
 });
 
 // Create a checkout/order for Razorpay (server-side)
-router.post('/checkout', async (req, res) => {
+router.post('/checkout', verifyTokenWithoutSubscription, async (req, res) => {
   try {
     const { franchiseId, planId } = req.body;
     if (!franchiseId || !planId) return res.status(400).json({ message: 'franchiseId and planId required' });
@@ -116,36 +140,35 @@ router.post('/checkout', async (req, res) => {
     const [rows] = await pool.execute('SELECT * FROM subscription_plans WHERE id = ?', [planId]);
     if (rows.length === 0) return res.status(404).json({ message: 'Plan not found' });
     const plan = rows[0];
-
-    // Create a Razorpay order if keys present
-    if (RAZOR_KEY_ID && RAZOR_KEY_SECRET) {
-      const razor = new Razorpay({ key_id: RAZOR_KEY_ID, key_secret: RAZOR_KEY_SECRET });
-      const amountPaise = Math.round(plan.amount * 100);
-      const order = await razor.orders.create({ amount: amountPaise, currency: plan.currency, receipt: `rcpt_${Date.now()}` });
-      return res.json({ order, plan, key_id: RAZOR_KEY_ID });
-    }
-
-    // Fallback: return plan and fake order id
-    return res.json({ order: { id: `TEST_ORDER_${Date.now()}`, amount: plan.amount * 100 }, plan, key_id: RAZOR_KEY_ID });
+    if (!await authorizeFranchisePayment(req, franchiseId)) return res.status(403).json({ message: 'You cannot create a payment for this account.' });
+    const paymentUserId = await resolveFranchiseUserId(franchiseId);
+    const config = await getAssignedRazorpayConfig(paymentUserId);
+    const razor = new Razorpay({ key_id: config.keyId, key_secret: config.keySecret });
+    const amountPaise = Math.round(plan.amount * 100);
+    const order = await razor.orders.create({ amount: amountPaise, currency: plan.currency, receipt: `rcpt_${Date.now()}` });
+    return res.json({ order, plan, key_id: config.keyId });
   } catch (err) {
     console.error('Checkout error:', err);
+    const missingConfig = err.message === 'Razorpay payment configuration is not assigned for this account.';
     const errorMsg = err.error ? err.error.description || err.error.message : err.message;
-    res.status(500).json({ message: 'Checkout error', error: errorMsg });
+    res.status(missingConfig ? 400 : 500).json({ message: missingConfig ? err.message : 'Checkout error', error: missingConfig ? undefined : errorMsg });
   }
 });
 
 // Confirm payment (verifies signature) and activate subscription
-router.post('/confirm', async (req, res) => {
+router.post('/confirm', verifyTokenWithoutSubscription, async (req, res) => {
   try {
     const { franchiseId, planId, razorpay_payment_id, razorpay_order_id, razorpay_signature } = req.body;
     if (!franchiseId || !planId || !razorpay_payment_id || !razorpay_order_id) return res.status(400).json({ message: 'Missing params' });
 
-    // Verify signature when secret is available
-    if (RAZOR_KEY_SECRET && razorpay_signature) {
-      const crypto = require('crypto');
-      const generated = crypto.createHmac('sha256', RAZOR_KEY_SECRET).update(razorpay_order_id + '|' + razorpay_payment_id).digest('hex');
-      if (generated !== razorpay_signature) return res.status(400).json({ message: 'Invalid signature' });
-    }
+    if (!await authorizeFranchisePayment(req, franchiseId)) return res.status(403).json({ message: 'You cannot confirm a payment for this account.' });
+    const paymentUserId = await resolveFranchiseUserId(franchiseId);
+    const config = await getAssignedRazorpayConfig(paymentUserId);
+    if (!razorpay_signature) return res.status(400).json({ message: 'Razorpay payment signature is required.' });
+    const generated = crypto.createHmac('sha256', config.keySecret).update(razorpay_order_id + '|' + razorpay_payment_id).digest('hex');
+    const supplied = Buffer.from(String(razorpay_signature));
+    const expected = Buffer.from(generated);
+    if (supplied.length !== expected.length || !crypto.timingSafeEqual(supplied, expected)) return res.status(400).json({ message: 'Invalid signature' });
 
     // Activate or renew subscription in DB
     const [rows] = await pool.execute('SELECT * FROM subscription_plans WHERE id = ?', [planId]);
@@ -157,14 +180,6 @@ router.post('/confirm', async (req, res) => {
       [franchiseId]
     );
     const franchise = franchiseRows[0] || {};
-    let paymentUserId = franchise.franch_user_id || franchise.created_by || null;
-    if (!paymentUserId && franchise.email) {
-      const [userRows] = await pool.execute('SELECT user_id FROM users WHERE email = ? LIMIT 1', [franchise.email]);
-      paymentUserId = userRows[0]?.user_id || franchise.email;
-    }
-    if (!paymentUserId) {
-      return res.status(400).json({ message: 'Franchise owner identity is missing; payment was not recorded.' });
-    }
     const now = new Date();
     let startDate = now;
     let expiryDate = new Date(now.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
