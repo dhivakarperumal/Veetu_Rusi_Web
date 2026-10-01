@@ -1,9 +1,17 @@
 const pool = require('../config/db');
-const { encryptSecret, getFranchiseAdminIdentifiers } = require('../utils/razorpayConfig');
+const { encryptSecret, getFranchiseAdminIdentifiers, resolveFranchiseAdminId } = require('../utils/razorpayConfig');
 
 const normalizeStatus = (value) => String(value || '').toLowerCase() === 'inactive' ? 'Inactive' : 'Active';
 const normalizeUsage = (value) => ['User Checkout', 'Delivery Partner', 'Home Chef', 'General'].includes(value) ? value : null;
-const getAuditActor = (req) => req.user?.user_id || req.user?.id || req.user?.email || 'system';
+const getAuditActor = async (req) => {
+  const actor = req.user?.user_id || req.user?.id || req.user?.email || 'system';
+  if (req.user?.role !== 'admin') return actor;
+
+  const identifiers = await getFranchiseAdminIdentifiers(actor);
+  return identifiers.find((identifier) => /^FRAN-/i.test(identifier))
+    || await resolveFranchiseAdminId({ userId: actor, userRole: req.user.role })
+    || actor;
+};
 
 exports.list = async (req, res) => {
   try {
@@ -58,7 +66,7 @@ exports.create = async (req, res) => {
       return res.status(400).json({ message: 'Invalid Razorpay Key ID. It must start with rzp_test_ or rzp_live_ followed by 14 alphanumeric characters.' });
     }
     if (!keyUsage) return res.status(400).json({ message: 'Select a valid Razorpay usage.' });
-    const actor = getAuditActor(req);
+    const actor = await getAuditActor(req);
     const secretVal = String(key_secret || '').trim() ? encryptSecret(String(key_secret).trim()) : '';
     const [result] = await pool.execute(
       `INSERT INTO razorpay_keys (key_name, key_id, key_secret, business_name, key_usage, status, created_by, updated_by)
@@ -102,7 +110,7 @@ exports.update = async (req, res) => {
     }
     if (!keyUsage) return res.status(400).json({ message: 'Select a valid Razorpay usage.' });
     const fields = ['key_name = ?', 'key_id = ?', 'business_name = ?', 'key_usage = ?', 'status = ?', 'updated_by = ?'];
-    const params = [String(key_name).trim(), String(key_id).trim(), String(business_name || '').trim() || null, keyUsage, normalizeStatus(req.body.status || 'Active'), getAuditActor(req)];
+    const params = [String(key_name).trim(), String(key_id).trim(), String(business_name || '').trim() || null, keyUsage, normalizeStatus(req.body.status || 'Active'), await getAuditActor(req)];
     if (String(key_secret || '').trim()) {
       fields.push('key_secret = ?');
       params.push(encryptSecret(String(key_secret)));
@@ -121,7 +129,7 @@ exports.setStatus = async (req, res) => {
   try {
     const status = normalizeStatus(req.body.status);
     let updateQuery = 'UPDATE razorpay_keys SET status = ?, updated_by = ? WHERE id = ?';
-    const updateParams = [status, getAuditActor(req), req.params.id];
+    const updateParams = [status, await getAuditActor(req), req.params.id];
     if (req.user?.role === 'admin') {
       const actorId = req.user.user_id || req.user.id || req.user.email;
       const identifiers = await getFranchiseAdminIdentifiers(actorId);

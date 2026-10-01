@@ -180,6 +180,10 @@ const resolveFranchiseAdminId = async ({ franchiseUserId, chefUserId, userId, us
 
 const getAssignedRazorpayConfig = async (userIdentity, { paymentProfile, franchiseUserId, userRole } = {}) => {
   const identity = userIdentity == null ? '' : String(userIdentity);
+  const role = userRole || (identity.startsWith('CHEF-') ? 'home_chef' : identity.startsWith('DEL-') ? 'delivery' : null);
+  const franchiseAdminId = await resolveFranchiseAdminId({ franchiseUserId, userId: identity, userRole: role });
+  const targetUsage = (paymentProfile === 'home_chef' || role === 'home_chef') ? 'Home Chef' :
+                      (paymentProfile === 'delivery' || role === 'delivery') ? 'Delivery Partner' : 'User Checkout';
 
   // 1. Direct assignment in user_razorpay_keys
   try {
@@ -188,9 +192,11 @@ const getAssignedRazorpayConfig = async (userIdentity, { paymentProfile, franchi
        FROM users u
        INNER JOIN user_razorpay_keys urk ON urk.user_id = u.id
        INNER JOIN razorpay_keys rk ON rk.id = urk.razorpay_key_id
-       WHERE (u.id = ? OR u.user_id = ? OR u.email = ?) AND LOWER(rk.status) = 'active'
+       WHERE (u.id = ? OR u.user_id = ? OR u.email = ?)
+         AND (LOWER(TRIM(rk.key_usage)) = LOWER(?) OR LOWER(TRIM(rk.key_usage)) = 'general')
+         AND LOWER(rk.status) = 'active'
        LIMIT 1`,
-      [identity, identity, identity]
+      [identity, identity, identity, targetUsage]
     );
     if (rows.length && rows[0].key_id) {
       const storedSecret = rows[0].key_secret ? decryptStoredSecret(rows[0].key_secret) : '';
@@ -201,12 +207,6 @@ const getAssignedRazorpayConfig = async (userIdentity, { paymentProfile, franchi
   }
 
   // 2. Franchise admin scope
-  const role = userRole || (identity.startsWith('CHEF-') ? 'home_chef' : identity.startsWith('DEL-') ? 'delivery' : null);
-  const franchiseAdminId = await resolveFranchiseAdminId({ franchiseUserId, userId: identity, userRole: role });
-
-  const targetUsage = (paymentProfile === 'home_chef' || role === 'home_chef') ? 'Home Chef' :
-                      (paymentProfile === 'delivery' || role === 'delivery') ? 'Delivery Partner' : 'User Checkout';
-
   if (franchiseAdminId) {
     const adminIdentifiers = await getFranchiseAdminIdentifiers(franchiseAdminId);
     if (adminIdentifiers.length) {
@@ -218,11 +218,11 @@ const getAssignedRazorpayConfig = async (userIdentity, { paymentProfile, franchi
           `SELECT id, key_id, key_secret
            FROM razorpay_keys
            WHERE (created_by IN (${placeholders}) OR updated_by IN (${placeholders}))
-             AND (LOWER(TRIM(key_usage)) = LOWER(?) OR LOWER(TRIM(key_name)) LIKE ?)
+             AND LOWER(TRIM(key_usage)) = LOWER(?)
              AND LOWER(status) = 'active'
            ORDER BY updated_at DESC, id DESC
            LIMIT 1`,
-          [...adminIdentifiers, ...adminIdentifiers, targetUsage, `%${targetUsage.toLowerCase()}%`]
+          [...adminIdentifiers, ...adminIdentifiers, targetUsage]
         );
         if (rows.length && rows[0].key_id) {
           const storedSecret = rows[0].key_secret ? decryptStoredSecret(rows[0].key_secret) : '';
@@ -238,7 +238,7 @@ const getAssignedRazorpayConfig = async (userIdentity, { paymentProfile, franchi
           `SELECT id, key_id, key_secret
            FROM razorpay_keys
            WHERE (created_by IN (${placeholders}) OR updated_by IN (${placeholders}))
-             AND (LOWER(TRIM(key_usage)) = 'general' OR LOWER(TRIM(key_name)) LIKE '%general%')
+             AND LOWER(TRIM(key_usage)) = 'general'
              AND LOWER(status) = 'active'
            ORDER BY updated_at DESC, id DESC
            LIMIT 1`,
@@ -250,39 +250,6 @@ const getAssignedRazorpayConfig = async (userIdentity, { paymentProfile, franchi
         }
       } catch (err) {}
 
-      // 2c. Franchise admin's ANY active key in razorpay_keys
-      try {
-        const [anyRows] = await pool.execute(
-          `SELECT id, key_id, key_secret
-           FROM razorpay_keys
-           WHERE (created_by IN (${placeholders}) OR updated_by IN (${placeholders}))
-             AND LOWER(status) = 'active'
-           ORDER BY updated_at DESC, id DESC
-           LIMIT 1`,
-          [...adminIdentifiers, ...adminIdentifiers]
-        );
-        if (anyRows.length && anyRows[0].key_id) {
-          const storedSecret = anyRows[0].key_secret ? decryptStoredSecret(anyRows[0].key_secret) : '';
-          return { id: anyRows[0].id, keyId: anyRows[0].key_id, keySecret: storedSecret, franchiseAdminId };
-        }
-      } catch (err) {}
-
-      // 2d. Franchise admin's ANY active key in franchise_razorpay_keys
-      try {
-        const [fRows] = await pool.execute(
-          `SELECT id, key_id, key_secret
-           FROM franchise_razorpay_keys
-           WHERE (created_by IN (${placeholders}) OR updated_by IN (${placeholders}) OR franchise_user_id IN (${placeholders}))
-             AND LOWER(status) = 'active'
-           ORDER BY updated_at DESC, id DESC
-           LIMIT 1`,
-          [...adminIdentifiers, ...adminIdentifiers, ...adminIdentifiers]
-        );
-        if (fRows.length && fRows[0].key_id) {
-          const storedSecret = fRows[0].key_secret ? decryptStoredSecret(fRows[0].key_secret) : '';
-          return { id: fRows[0].id, keyId: fRows[0].key_id, keySecret: storedSecret, franchiseAdminId };
-        }
-      } catch (err) {}
     }
 
     throw new Error('Razorpay key not configured by your admin yet');
@@ -293,12 +260,12 @@ const getAssignedRazorpayConfig = async (userIdentity, { paymentProfile, franchi
     const [specRows] = await pool.execute(
       `SELECT id, key_id, key_secret
        FROM razorpay_keys
-       WHERE (LOWER(TRIM(key_usage)) = LOWER(?) OR LOWER(TRIM(key_name)) LIKE ?)
+       WHERE LOWER(TRIM(key_usage)) = LOWER(?)
          AND (created_by IS NULL OR created_by = 'system' OR created_by = 'superadmin' OR (created_by NOT LIKE 'FRAN-%' AND created_by NOT LIKE 'franchise%'))
          AND LOWER(status) = 'active'
        ORDER BY updated_at DESC, id DESC
        LIMIT 1`,
-      [targetUsage, `%${targetUsage.toLowerCase()}%`]
+      [targetUsage]
     );
     if (specRows.length && specRows[0].key_id) {
       const storedSecret = specRows[0].key_secret ? decryptStoredSecret(specRows[0].key_secret) : '';
@@ -310,7 +277,7 @@ const getAssignedRazorpayConfig = async (userIdentity, { paymentProfile, franchi
     const [genRows] = await pool.execute(
       `SELECT id, key_id, key_secret
        FROM razorpay_keys
-       WHERE (LOWER(TRIM(key_usage)) = 'general' OR LOWER(TRIM(key_name)) LIKE '%general%')
+       WHERE LOWER(TRIM(key_usage)) = 'general'
          AND (created_by IS NULL OR created_by = 'system' OR created_by = 'superadmin' OR (created_by NOT LIKE 'FRAN-%' AND created_by NOT LIKE 'franchise%'))
          AND LOWER(status) = 'active'
        ORDER BY updated_at DESC, id DESC
@@ -339,7 +306,7 @@ const getUserCheckoutRazorpayConfig = async ({ franchiseUserId, chefUserId, user
           `SELECT id, key_id, key_secret
            FROM razorpay_keys
            WHERE (created_by IN (${placeholders}) OR updated_by IN (${placeholders}))
-             AND (LOWER(TRIM(key_usage)) = 'user checkout' OR LOWER(TRIM(key_name)) LIKE '%user%' OR LOWER(TRIM(key_name)) LIKE '%checkout%')
+             AND LOWER(TRIM(key_usage)) = 'user checkout'
              AND LOWER(status) = 'active'
            ORDER BY updated_at DESC, id DESC
            LIMIT 1`,
@@ -359,7 +326,7 @@ const getUserCheckoutRazorpayConfig = async ({ franchiseUserId, chefUserId, user
           `SELECT id, key_id, key_secret
            FROM razorpay_keys
            WHERE (created_by IN (${placeholders}) OR updated_by IN (${placeholders}))
-             AND (LOWER(TRIM(key_usage)) = 'general' OR LOWER(TRIM(key_name)) LIKE '%general%')
+             AND LOWER(TRIM(key_usage)) = 'general'
              AND LOWER(status) = 'active'
            ORDER BY updated_at DESC, id DESC
            LIMIT 1`,
@@ -371,39 +338,6 @@ const getUserCheckoutRazorpayConfig = async ({ franchiseUserId, chefUserId, user
         }
       } catch (err) {}
 
-      // 3. Franchise admin's ANY active key in razorpay_keys
-      try {
-        const [anyRows] = await pool.execute(
-          `SELECT id, key_id, key_secret
-           FROM razorpay_keys
-           WHERE (created_by IN (${placeholders}) OR updated_by IN (${placeholders}))
-             AND LOWER(status) = 'active'
-           ORDER BY updated_at DESC, id DESC
-           LIMIT 1`,
-          [...adminIdentifiers, ...adminIdentifiers]
-        );
-        if (anyRows.length && anyRows[0].key_id) {
-          const storedSecret = anyRows[0].key_secret ? decryptStoredSecret(anyRows[0].key_secret) : '';
-          return { id: anyRows[0].id, keyId: anyRows[0].key_id, keySecret: storedSecret, franchiseAdminId };
-        }
-      } catch (err) {}
-
-      // 4. Franchise admin's ANY active key in franchise_razorpay_keys
-      try {
-        const [fRows] = await pool.execute(
-          `SELECT id, key_id, key_secret
-           FROM franchise_razorpay_keys
-           WHERE (created_by IN (${placeholders}) OR updated_by IN (${placeholders}) OR franchise_user_id IN (${placeholders}))
-             AND LOWER(status) = 'active'
-           ORDER BY updated_at DESC, id DESC
-           LIMIT 1`,
-          [...adminIdentifiers, ...adminIdentifiers, ...adminIdentifiers]
-        );
-        if (fRows.length && fRows[0].key_id) {
-          const storedSecret = fRows[0].key_secret ? decryptStoredSecret(fRows[0].key_secret) : '';
-          return { id: fRows[0].id, keyId: fRows[0].key_id, keySecret: storedSecret, franchiseAdminId };
-        }
-      } catch (err) {}
     }
 
     throw new Error('Razorpay key not configured by your admin yet');
@@ -414,7 +348,7 @@ const getUserCheckoutRazorpayConfig = async ({ franchiseUserId, chefUserId, user
     const [rows] = await pool.execute(
       `SELECT id, key_id, key_secret
        FROM razorpay_keys
-       WHERE (LOWER(TRIM(key_usage)) = 'user checkout' OR LOWER(TRIM(key_name)) LIKE '%user%' OR LOWER(TRIM(key_name)) LIKE '%checkout%')
+       WHERE LOWER(TRIM(key_usage)) = 'user checkout'
          AND (created_by IS NULL OR created_by = 'system' OR created_by = 'superadmin' OR (created_by NOT LIKE 'FRAN-%' AND created_by NOT LIKE 'franchise%'))
          AND LOWER(status) = 'active'
        ORDER BY updated_at DESC, id DESC
@@ -433,7 +367,7 @@ const getUserCheckoutRazorpayConfig = async ({ franchiseUserId, chefUserId, user
     const [genRows] = await pool.execute(
       `SELECT id, key_id, key_secret
        FROM razorpay_keys
-       WHERE (LOWER(TRIM(key_usage)) = 'general' OR LOWER(TRIM(key_name)) LIKE '%general%')
+       WHERE LOWER(TRIM(key_usage)) = 'general'
          AND (created_by IS NULL OR created_by = 'system' OR created_by = 'superadmin' OR (created_by NOT LIKE 'FRAN-%' AND created_by NOT LIKE 'franchise%'))
          AND LOWER(status) = 'active'
        ORDER BY updated_at DESC, id DESC
