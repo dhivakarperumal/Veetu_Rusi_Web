@@ -11,8 +11,8 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        // target: 'https://localhost:5000',
-        target: 'https://veeturusi.qtechx.com',
+        target: 'https://localhost:5000',
+        // target: 'https://veeturusi.qtechx.com',
         changeOrigin: true,
         secure: false,
       },

@@ -331,6 +331,7 @@ export default function FoodCheckout() {
         const { data: paymentOrder } = await api.post("/payments/razorpay/order", {
           amount: Math.round(subtotal * 100),
           currency: "INR",
+          payment_profile: "user_checkout",
         });
         const options = {
           key: paymentOrder.key_id,
@@ -341,7 +342,10 @@ export default function FoodCheckout() {
           description: "Food Order Payment",
           handler: async function (response) {
             try {
-              await api.post("/payments/razorpay/verify", response);
+              await api.post("/payments/razorpay/verify", {
+                ...response,
+                payment_profile: "user_checkout",
+              });
               await finalizeOrder(response.razorpay_payment_id);
             } catch (error) {
               toast.error(error.response?.data?.message || "Payment verification failed.");
