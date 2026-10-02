@@ -5,7 +5,7 @@ const pool = require('../config/db');
 const { attachUser, verifyTokenWithoutSubscription } = require('../middleware/authMiddleware');
 const {
   getFranchiseSubscriptionRazorpayConfig,
-  getSuperAdminFranchiseSubscriptionRazorpayConfig
+  getDedicatedFranchiseSubscriptionRazorpayConfig
 } = require('../utils/razorpayConfig');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
@@ -37,11 +37,13 @@ const authorizeFranchisePayment = async (req, franchiseId) => {
 };
 
 const getSubscriptionPaymentConfig = async (req) => {
-  if (req.body?.paymentSource === 'superadmin-franchise-management') {
-    if (req.user?.role !== 'superadmin') {
+  const paymentSource = req.body?.paymentSource;
+  if (paymentSource === 'superadmin-franchise-management' || paymentSource === 'franchise-admin-login') {
+    const expectedRole = paymentSource === 'superadmin-franchise-management' ? 'superadmin' : 'admin';
+    if (req.user?.role !== expectedRole) {
       throw new Error('Only superadmins can use franchise subscription keys.');
     }
-    return getSuperAdminFranchiseSubscriptionRazorpayConfig();
+    return getDedicatedFranchiseSubscriptionRazorpayConfig();
   }
   return getFranchiseSubscriptionRazorpayConfig();
 };
@@ -152,7 +154,10 @@ router.post('/checkout', verifyTokenWithoutSubscription, async (req, res) => {
   try {
     const { franchiseId, planId } = req.body;
     if (!franchiseId || !planId) return res.status(400).json({ message: 'franchiseId and planId required' });
-    if (req.body?.paymentSource === 'superadmin-franchise-management' && req.user?.role !== 'superadmin') {
+    if (
+      (req.body?.paymentSource === 'superadmin-franchise-management' && req.user?.role !== 'superadmin') ||
+      (req.body?.paymentSource === 'franchise-admin-login' && req.user?.role !== 'admin')
+    ) {
       return res.status(403).json({ message: 'Only superadmins can use franchise subscription keys.' });
     }
 
@@ -195,7 +200,10 @@ router.post('/confirm', verifyTokenWithoutSubscription, async (req, res) => {
     if (!franchiseId || !planId || !razorpay_payment_id) {
       return res.status(400).json({ message: 'Payment verification details are required.' });
     }
-    if (req.body?.paymentSource === 'superadmin-franchise-management' && req.user?.role !== 'superadmin') {
+    if (
+      (req.body?.paymentSource === 'superadmin-franchise-management' && req.user?.role !== 'superadmin') ||
+      (req.body?.paymentSource === 'franchise-admin-login' && req.user?.role !== 'admin')
+    ) {
       return res.status(403).json({ message: 'Only superadmins can use franchise subscription keys.' });
     }
 

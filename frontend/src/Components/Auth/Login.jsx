@@ -52,9 +52,14 @@ function Login() {
 
       // If the user is inactive or deactivated (usually 403)
       if (error.response?.status === 403) {
+        const responseData = error.response?.data;
+        if (responseData?.message?.includes("No active subscription") && responseData.user && responseData.token) {
+          login(responseData.user, responseData.token);
+          setSubscriptionPrompt(responseData.franchise || null);
+        }
         const currentTime = new Date().toLocaleString();
         errorMessage = `${errorMessage} (Login attempt at: ${currentTime})`;
-        if (error.response?.data?.message?.includes("No active subscription")) {
+        if (responseData?.message?.includes("No active subscription") && !responseData.franchise) {
           try {
             const lookup = await api.post("/subscriptions/lookup", { identifier: form.identifier });
             setSubscriptionPrompt(lookup.data.franchise);
@@ -260,6 +265,7 @@ function Login() {
           onClose={() => setShowSubscriptionModal(false)}
           franchiseId={subscriptionPrompt.id}
           customerEmail={subscriptionPrompt.email}
+          paymentSource="franchise-admin-login"
         />
       )}
     </div>

@@ -5,7 +5,7 @@ import api from "../api";
 import { toast } from "react-hot-toast";
 import { useAuth } from "../PrivateRouter/AuthContext";
 
-const SubscriptionPaymentModal = ({ isOpen, onClose, franchiseId, customerEmail = "" }) => {
+const SubscriptionPaymentModal = ({ isOpen, onClose, franchiseId, customerEmail = "", paymentSource }) => {
   const { email: userEmail } = useAuth();
   const [plans, setPlans] = useState([]);
   const [selectedPlan, setSelectedPlan] = useState(null);
@@ -64,6 +64,7 @@ const SubscriptionPaymentModal = ({ isOpen, onClose, franchiseId, customerEmail 
       const checkoutRes = await api.post("/subscriptions/checkout", {
         franchiseId,
         planId: selectedPlan,
+        ...(paymentSource ? { paymentSource } : {}),
       });
 
       const { order, plan, key_id } = checkoutRes.data;
@@ -91,6 +92,7 @@ const SubscriptionPaymentModal = ({ isOpen, onClose, franchiseId, customerEmail 
             const confirmRes = await api.post("/subscriptions/confirm", {
               franchiseId,
               planId: selectedPlan,
+              ...(paymentSource ? { paymentSource } : {}),
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_order_id: response.razorpay_order_id || null,
               razorpay_signature: response.razorpay_signature || null,

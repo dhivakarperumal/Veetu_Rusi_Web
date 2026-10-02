@@ -408,7 +408,7 @@ const getFranchiseSubscriptionRazorpayConfig = async () => {
   throw new Error('Franchise subscription Razorpay key is not configured or active in database.');
 };
 
-const getSuperAdminFranchiseSubscriptionRazorpayConfig = async () => {
+const getDedicatedFranchiseSubscriptionRazorpayConfig = async () => {
   const [rows] = await pool.execute(
     `SELECT id, key_id, key_secret
      FROM franchise_razorpay_keys
@@ -434,5 +434,5 @@ module.exports = {
   getUserCheckoutRazorpayConfig,
   getUserCheckoutRazorpayKeyId,
   getFranchiseSubscriptionRazorpayConfig,
-  getSuperAdminFranchiseSubscriptionRazorpayConfig
+  getDedicatedFranchiseSubscriptionRazorpayConfig
 };
