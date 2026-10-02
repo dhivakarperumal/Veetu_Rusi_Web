@@ -399,6 +399,7 @@ const Dashboard = () => {
           isOpen={showPaymentModal}
           onClose={() => setShowPaymentModal(false)}
           franchiseId={franchiseId}
+          paymentSource="franchise-admin-login"
         />
       )}
     </div>
