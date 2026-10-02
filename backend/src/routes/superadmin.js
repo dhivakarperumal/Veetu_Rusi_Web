@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/superadminController');
 const razorpayKeysController = require('../controllers/razorpayKeysController');
+const franchiseRazorpayKeysController = require('../controllers/superadminFranchiseRazorpayKeysController');
 const { verifyToken, requireRole } = require('../middleware/authMiddleware');
 const upload = require('../config/multer');
 
@@ -43,6 +44,11 @@ router.get('/users/:id/razorpay-key', razorpayKeysController.getUserKey);
 router.put('/users/:id/razorpay-key', razorpayKeysController.assignUserKey);
 
 // Razorpay key management
+router.get('/franchise-razorpay-keys', franchiseRazorpayKeysController.list);
+router.post('/franchise-razorpay-keys', franchiseRazorpayKeysController.create);
+router.put('/franchise-razorpay-keys/:id', franchiseRazorpayKeysController.update);
+router.patch('/franchise-razorpay-keys/:id/status', franchiseRazorpayKeysController.setStatus);
+router.delete('/franchise-razorpay-keys/:id', franchiseRazorpayKeysController.remove);
 router.get('/razorpay-keys', razorpayKeysController.list);
 router.post('/razorpay-keys', razorpayKeysController.create);
 router.put('/razorpay-keys/:id', razorpayKeysController.update);

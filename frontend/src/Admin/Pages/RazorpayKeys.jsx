@@ -6,6 +6,7 @@ import { toast, Toaster } from "react-hot-toast";
 import api from "../../api";
 
 const usageOptions = ["User Checkout", "Delivery Partner", "Home Chef", "General"];
+const franchiseUsageOptions = [...usageOptions, "Franchise Subscription"];
 const emptyForm = { key_name: "", key_id: "", key_secret: "", business_name: "", key_usage: "", status: "Active" };
 
 const maskKey = (value = "") => value.length > 10 ? `${value.slice(0, 6)}...${value.slice(-4)}` : value;
@@ -14,12 +15,17 @@ const formatDate = (value) => value ? new Date(value).toLocaleDateString(undefin
 const RazorpayKeys = () => {
   const location = useLocation();
   const isFranchiseSubscriptionKeys = location.pathname === "/superadmin/franchise-subscription-razorpay-keys";
+  const isSuperAdmin = location.pathname.startsWith("/superadmin");
   const apiPath = isFranchiseSubscriptionKeys
     ? "/superadmin/franchise-subscription-razorpay-keys"
-    : location.pathname.startsWith("/superadmin")
-      ? "/superadmin/razorpay-keys"
+    : isSuperAdmin
+      ? "/superadmin/franchise-razorpay-keys"
       : "/admin/razorpay-keys";
-  const currentUsageOptions = isFranchiseSubscriptionKeys ? ["Franchise Subscription"] : usageOptions;
+  const currentUsageOptions = isFranchiseSubscriptionKeys
+    ? ["Franchise Subscription"]
+    : isSuperAdmin
+      ? franchiseUsageOptions
+      : usageOptions;
   const [keys, setKeys] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -49,7 +55,8 @@ const RazorpayKeys = () => {
   }, [apiPath]);
 
   const filteredKeys = keys.filter((key) =>
-    [key.key_name, key.key_id, key.business_name].some((value) => String(value || "").toLowerCase().includes(search.toLowerCase()))
+    [key.key_name, key.key_id, key.business_name, key.franchise_id, key.franchise_user_id]
+      .some((value) => String(value || "").toLowerCase().includes(search.toLowerCase()))
   );
 
   const openAdd = () => {
@@ -165,6 +172,7 @@ const RazorpayKeys = () => {
                   <td className="px-4 py-4">
                     <p className="font-semibold text-white">{key.key_name}</p>
                     <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-400"><Building2 size={13} />{[key.business_name, key.key_usage || "General"].filter(Boolean).join(" · ")}</p>
+                    {(key.franchise_id || key.franchise_user_id) && <p className="mt-1 text-[11px] text-slate-500">{[key.franchise_id && `Franchise #${key.franchise_id}`, key.franchise_user_id].filter(Boolean).join(" · ")}</p>}
                   </td>
                   <td className="px-4 py-4 font-mono text-sm text-slate-300">{maskKey(key.key_id)}</td>
                   <td className="px-4 py-4"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${key.status === "Active" ? "bg-emerald-400/10 text-emerald-300" : "bg-slate-400/10 text-slate-400"}`}>{key.status}</span></td>
