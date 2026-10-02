@@ -141,7 +141,11 @@ const FranchiseOwnerManagement = () => {
   const startSubCheckout = async () => {
     if (!selectedSubPlan || !purchaseTarget) return toast.error('Select a plan');
     try {
-      const res = await api.post('/subscriptions/checkout', { franchiseId: purchaseTarget.id, planId: selectedSubPlan.id });
+      const res = await api.post('/subscriptions/checkout', {
+        franchiseId: purchaseTarget.id,
+        planId: selectedSubPlan.id,
+        paymentSource: 'superadmin-franchise-management'
+      });
       const { order, plan, key_id } = res.data;
 
       if (key_id) {
@@ -161,6 +165,7 @@ const FranchiseOwnerManagement = () => {
                 await api.post('/subscriptions/confirm', {
                   franchiseId: purchaseTarget.id,
                   planId: plan.id,
+                  paymentSource: 'superadmin-franchise-management',
                   razorpay_payment_id: response.razorpay_payment_id,
                   razorpay_order_id: response.razorpay_order_id || null,
                   razorpay_signature: response.razorpay_signature || null

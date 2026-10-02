@@ -388,40 +388,7 @@ const getUserCheckoutRazorpayKeyId = async (options = {}) => {
 };
 
 const getFranchiseSubscriptionRazorpayConfig = async () => {
-  // 1. Check franchise_razorpay_keys for specific usage
-  try {
-    const [rows] = await pool.execute(
-      `SELECT id, key_id, key_secret
-       FROM franchise_razorpay_keys
-       WHERE LOWER(TRIM(key_usage)) = 'franchise subscription'
-         AND LOWER(status) = 'active'
-       ORDER BY updated_at DESC, id DESC
-       LIMIT 1`
-    );
-    if (rows.length && rows[0].key_id) {
-      const storedSecret = rows[0].key_secret ? decryptStoredSecret(rows[0].key_secret) : '';
-      return { id: rows[0].id, keyId: rows[0].key_id, keySecret: storedSecret };
-    }
-  } catch (err) {
-    console.error('getFranchiseSubscriptionRazorpayConfig database error:', err.message);
-  }
-
-  // 2. Check franchise_razorpay_keys for any active key
-  try {
-    const [anyFRows] = await pool.execute(
-      `SELECT id, key_id, key_secret
-       FROM franchise_razorpay_keys
-       WHERE LOWER(status) = 'active'
-       ORDER BY updated_at DESC, id DESC
-       LIMIT 1`
-    );
-    if (anyFRows.length && anyFRows[0].key_id) {
-      const storedSecret = anyFRows[0].key_secret ? decryptStoredSecret(anyFRows[0].key_secret) : '';
-      return { id: anyFRows[0].id, keyId: anyFRows[0].key_id, keySecret: storedSecret };
-    }
-  } catch (err) {}
-
-  // 3. Fallback to active key in razorpay_keys table
+  // General subscription payments use the existing platform Razorpay keys.
   try {
     const [fallbackRows] = await pool.execute(
       `SELECT id, key_id, key_secret
@@ -441,6 +408,22 @@ const getFranchiseSubscriptionRazorpayConfig = async () => {
   throw new Error('Franchise subscription Razorpay key is not configured or active in database.');
 };
 
+const getSuperAdminFranchiseSubscriptionRazorpayConfig = async () => {
+  const [rows] = await pool.execute(
+    `SELECT id, key_id, key_secret
+     FROM franchise_razorpay_keys
+     WHERE LOWER(TRIM(key_usage)) = 'franchise subscription'
+       AND LOWER(status) = 'active'
+     ORDER BY updated_at DESC, id DESC
+     LIMIT 1`
+  );
+  if (!rows.length || !rows[0].key_id) {
+    throw new Error('Franchise subscription Razorpay key is not configured or active in database.');
+  }
+  const storedSecret = rows[0].key_secret ? decryptStoredSecret(rows[0].key_secret) : '';
+  return { id: rows[0].id, keyId: rows[0].key_id, keySecret: storedSecret };
+};
+
 module.exports = {
   encryptSecret,
   decryptSecret,
@@ -450,5 +433,6 @@ module.exports = {
   getAssignedRazorpayConfig,
   getUserCheckoutRazorpayConfig,
   getUserCheckoutRazorpayKeyId,
-  getFranchiseSubscriptionRazorpayConfig
+  getFranchiseSubscriptionRazorpayConfig,
+  getSuperAdminFranchiseSubscriptionRazorpayConfig
 };
